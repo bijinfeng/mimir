@@ -1,0 +1,15 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: 041afb8656a7ac7cba587fe9a1b7b1a761d98668236d44f27d1877594c18da4a
+URL: https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/utils/documentPreviewMarkdown.ts
+Fetched UTC: 2026-10-19T17:59:13.971678+00:00
+
+5: import { domPurifyAllowedUriRegexp } from './markdownDomPurify.ts'
+7: import { escapeHTML, safeMarkdownToHTML, sanitizeDocumentPreviewHTML } from './security.ts'
+12: export function isSafePreviewImageHref(href: unknown): href is string {
+33: function createPreviewMarkdownRenderer(): Renderer {
+39:     return `<img src="${safeHref}" alt="${escapeHTML(text || '')}"${safeTitle} class="markdown-image" ${PREVIEW_IMAGE_ATTRIBUTES}>`
+51:   renderer: createPreviewMarkdownRenderer(),
+63: export function renderDocumentPreviewMarkdown(
+64:   markdown: string,
+65:   sanitize: (html: string) => string = sanitizeDocumentPreviewHTML,
+67:   const mathSafe = preprocessMathDelimiters(markdown)
+68:   return sanitize(previewMarked.parse(safeMarkdownToHTML(mathSafe)) as string)

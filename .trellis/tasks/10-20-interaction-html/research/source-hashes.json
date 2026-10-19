@@ -1,0 +1,126 @@
+{
+  "observed_at_utc": "2026-10-19T18:01:18.440110+00:00",
+  "note": "Live pre-implementation read snapshot; no git operations. Compare to parent frozen baseline before treating as commit-exact.",
+  "files": [
+    {
+      "path": "packages/office/src/agent/html-agent.ts",
+      "bytes": 22797,
+      "sha256": "5ab68ff7f27b450ef64401ee02efb98631426f067b5b176428d7b5c91802f307"
+    },
+    {
+      "path": "packages/office/src/editors/CompactToolbar.tsx",
+      "bytes": 9479,
+      "sha256": "616537059b202af3c2a37d208a4f3b7cd8a68788137fcd9657f1c9f576634523"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlAgentPrompt.test.tsx",
+      "bytes": 8426,
+      "sha256": "4d46026c93a8d795ef0aec38206d434a5dc4529b5e8db1f755ebcef7e745cb78"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlAgentPrompt.tsx",
+      "bytes": 17778,
+      "sha256": "a562148047187feb37834ad81794c813bf36216980915a0fd8edbd9d415e48a8"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlCssControls.tsx",
+      "bytes": 2653,
+      "sha256": "4a7daf3cff630d0b75cae0e08db5b4c83d7ca49b7ad9ba3fbe28eef25fc4cc86"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlEditor.complete-tools.test.tsx",
+      "bytes": 22791,
+      "sha256": "e5d5f3f493eb4146f39e012e3c91ecf4631d3e3c06acfb79c202e5b763a83cae"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlEditor.picture.test.tsx",
+      "bytes": 4268,
+      "sha256": "1b323b34c3c7efea51c5878c80b9717bcf7303c22a31aa23215a8d04a795707d"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlEditor.test.tsx",
+      "bytes": 41615,
+      "sha256": "060233ac3a29a699ae793ef1c6242b0c174446b290926c9ed7b2fba8eea18b08"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlEditor.tsx",
+      "bytes": 68670,
+      "sha256": "226d71f7e955604a41db3b45a90e75082f874c18d44a5f77950ad2d3ae1b5c3c"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlElementMenu.tsx",
+      "bytes": 34763,
+      "sha256": "4d2e18d168d4384bdb7ac05171d0001c657da4d8c2e13e7032f6e060729c4e96"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlInsertMenu.tsx",
+      "bytes": 2931,
+      "sha256": "076a96d316554b0881e7baf5c9bfa347d3de0247ccfb7d0818a536bfed885a58"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlPresentation.tsx",
+      "bytes": 2475,
+      "sha256": "a7841b485b21b925d4ab4284620873a7e6d5d40fb2703d09307494b12c059380"
+    },
+    {
+      "path": "packages/office/src/editors/HtmlWritingPreview.tsx",
+      "bytes": 5067,
+      "sha256": "15c0fbcde89a85d981b5689877950329a5b13f38aced85dc88e273a278ae3c9c"
+    },
+    {
+      "path": "packages/office/src/editors/editors.css",
+      "bytes": 36389,
+      "sha256": "08e417c89183e800352c5a39929f23bcdc2d2d420cf6991568d233c0102bfca6"
+    },
+    {
+      "path": "packages/office/src/editors/html-inspector.css",
+      "bytes": 5964,
+      "sha256": "77c7ea9b2ba3cdd0b4f9caa7e79e4d4ca8fdbddab58ddf981c32690cb92b117d"
+    },
+    {
+      "path": "packages/office/src/editors/html-output.ts",
+      "bytes": 1342,
+      "sha256": "efacfd058ad91755f30b076762317f782c8d4e012d87e52e567ba657954514f0"
+    },
+    {
+      "path": "packages/office/src/editors/html-presentation.css",
+      "bytes": 432,
+      "sha256": "a55607bcafde0dc6aef604e9cc2a37602add4539be57cc29f935f9d00adce7b2"
+    },
+    {
+      "path": "packages/office/src/shell/EditorShell.tsx",
+      "bytes": 103263,
+      "sha256": "dfd9033878e28660a0a41c0074a1e32eaf60d8a765dd7006a782993b923e3c4e"
+    },
+    {
+      "path": "packages/office/vendor/UPSTREAM.json",
+      "bytes": 20863,
+      "sha256": "332d919005a1ca6c5aab8695e3d8d2243ab2e25712d11befd98ecb1758bd67a0"
+    },
+    {
+      "path": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js",
+      "bytes": 42761,
+      "sha256": "1166a434d384a7dc88b90f20d7f5f1cb3036f776e29546e2e5a98a9801c1a67f"
+    },
+    {
+      "path": "packages/office/vendor/apps/html/src/renderer/source/SourceEditor.tsx",
+      "bytes": 5980,
+      "sha256": "d8093ff6fe770b4ae8227c055bd9c8d799d1adb4b5b7658ef479a5e5fc924bce"
+    },
+    {
+      "path": "packages/office/vendor/apps/html/src/renderer/source/cm-setup.ts",
+      "bytes": 4267,
+      "sha256": "9cb822708cc156b38d34ff94332482dfc5c28161498c7420d76288b5a7733311"
+    },
+    {
+      "path": "packages/office/vendor/packages/ui/src/image-dialogs.css",
+      "bytes": 2815,
+      "sha256": "ca34e0b8a3322d197850a19b182c3a4de4478fb0daed1c082c0514eb628f6352"
+    },
+    {
+      "path": "packages/office/vendor/packages/ui/src/image-dialogs.tsx",
+      "bytes": 17110,
+      "sha256": "05b3e9afa27cdfc8b3bbc4914de41b32f08ff9cce0eb7490033ac2334b5aece6"
+    }
+  ]
+}

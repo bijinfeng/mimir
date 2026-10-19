@@ -28,10 +28,12 @@
     "10-18-interaction-chat",
     "10-20-interaction-settings",
     "10-20-interaction-login",
-    "10-20-interaction-markdown"
+    "10-20-interaction-markdown",
+    "10-20-interaction-html",
+    "10-20-chat-start-refinement"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "用户2026-10-19授权后续模块直接实施并留真实对比。模块1–10已实施，设置、登录/全局恢复和Markdown完成全仓质量门与真实前后存档。继续模块11–16；原生及外部操作未验边界见各任务，历史审批保留。",
+  "notes": "用户2026-10-19授权后续模块直接实施并留真实对比。模块1–10已实施，设置、登录/全局恢复和Markdown完成全仓质量门与真实前后存档。继续模块11–16；原生及外部操作未验边界见各任务，历史审批保留。 附加主对话起始页二次精修已验收并保存6组真实前后对比；模块11HTML仅研究和gallery准备，仍未实施验收。",
   "meta": {}
 }

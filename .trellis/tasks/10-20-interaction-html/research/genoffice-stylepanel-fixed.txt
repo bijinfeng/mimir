@@ -1,0 +1,9 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: 944bb2baffd2fa944e72b4bf7ce1d5ed67f53e6cee68eea44e1a5ef7f10b7913
+URL: https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/html/src/renderer/components/StylePanel.tsx
+Fetched UTC: 2026-10-19T17:59:10.392777+00:00
+
+40: function PxInput({
+77: function useDraft(base: string, write: (value: string) => void) {
+108: function ImageSection(p: Props & { altCommitRef: MutableRefObject<() => void> }) {
+161: /** right-hand style inspector for the selected element: every change previews live and lands in the source as one set_style op */
+162: export function StylePanel(p: Props) {

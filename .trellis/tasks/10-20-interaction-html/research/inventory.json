@@ -1,0 +1,2949 @@
+{
+  "query": "模块11 HTML既有交互完整盘点",
+  "scope": "internal",
+  "date": "2026-10-20",
+  "source_phase": "pre-implementation observed source",
+  "count": 92,
+  "groups": [
+    {
+      "id": "HTML-001",
+      "title": "读取与外壳",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1037",
+      "entry": "打开HTML文档",
+      "states": "读取中、解析中、读取失败长错误、重试恢复；加载时无伪工具",
+      "kind": "loading",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "有可点击恢复控件时适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-001"
+    },
+    {
+      "id": "HTML-002",
+      "title": "源码/分栏/预览",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1213",
+      "entry": "视图→视图三切换",
+      "states": "普通、按下、hover、focus、键盘；切换保留CodeMirror实例/历史/草稿",
+      "kind": "view",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-002"
+    },
+    {
+      "id": "HTML-003",
+      "title": "分类与快捷操作",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1092",
+      "entry": "开始/插入/视图与固定快捷区",
+      "states": "分类左右键/Home/End，分组自动压缩；保存/撤销/重做始终可达",
+      "kind": "shell",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-003"
+    },
+    {
+      "id": "HTML-004",
+      "title": "保存状态与重试",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:950",
+      "entry": "修改源码→保存到库",
+      "states": "未改禁用、已改、保存中禁用、失败保留内容后重试、已保存；等待时再次修改仍dirty",
+      "kind": "save",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-004"
+    },
+    {
+      "id": "HTML-005",
+      "title": "源码编辑与行列",
+      "source": "packages/office/vendor/apps/html/src/renderer/source/SourceEditor.tsx:47",
+      "entry": "源码CodeMirror",
+      "states": "文本/多选/折叠/括号/Tab缩进/中文、长行、光标行列；vendor行为保持",
+      "kind": "source",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-005"
+    },
+    {
+      "id": "HTML-006",
+      "title": "撤销与重做",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1104",
+      "entry": "快捷区或源码Mod+Z/Mod+Shift+Z",
+      "states": "空历史禁用原因；手动、Agent与预览改动共用源码画布历史",
+      "kind": "history",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-006"
+    },
+    {
+      "id": "HTML-007",
+      "title": "原件格式保真",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:136",
+      "entry": "加载BOM/CRLF/末尾换行文档并保存",
+      "states": "字节级验收BOM、EOL和末尾换行；渲染截图不证明保真",
+      "kind": "contract",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "N/A：非独立视觉动作，相关入口另有组",
+        "focus": "相关入口组验证",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "N/A：协议/字节断言，相关界面仍验浅深"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-007"
+    },
+    {
+      "id": "HTML-008",
+      "title": "源码单栏宽窄",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1475",
+      "entry": "视图→只看源码",
+      "states": "宽中窄、长文本、短高、浅深、滚动与焦点；无预览栏但未卸载",
+      "kind": "source",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-008"
+    },
+    {
+      "id": "HTML-009",
+      "title": "分栏宽窄与高度",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1470",
+      "entry": "视图→分栏",
+      "states": "源码/预览独立滚动，窄列及短高；现CSS按浏览器1100px媒体查询，非编辑列宽",
+      "kind": "view",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-009"
+    },
+    {
+      "id": "HTML-010",
+      "title": "源码高亮与主题",
+      "source": "packages/office/vendor/apps/html/src/renderer/source/SourceEditor.tsx:60",
+      "entry": "查看源码文字/选区/行号",
+      "states": "浅深正文、标签/属性/字符串/注释、选区、光标、活动行与折叠可辨",
+      "kind": "source",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-010"
+    },
+    {
+      "id": "HTML-011",
+      "title": "查找打开和重复聚焦",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:918",
+      "entry": "开始→查找或Mod+F",
+      "states": "预览单栏自动分栏；重复Mod+F聚焦当前查询不关闭",
+      "kind": "find",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-011"
+    },
+    {
+      "id": "HTML-012",
+      "title": "查找词与结果导航",
+      "source": "packages/office/src/shell/EditorShell.tsx:2270",
+      "entry": "查询输入→Enter/Shift+Enter或前后箭头",
+      "states": "空查询、无匹配、单/多匹配、计数、源码高亮、长查询",
+      "kind": "find",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-012"
+    },
+    {
+      "id": "HTML-013",
+      "title": "查找选项",
+      "source": "packages/office/src/shell/EditorShell.tsx:2418",
+      "entry": "Aa与全词匹配",
+      "states": "按下/取消、键盘、结果重新计算、中文与边界匹配",
+      "kind": "find",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-013"
+    },
+    {
+      "id": "HTML-014",
+      "title": "替换单个与全部",
+      "source": "packages/office/src/shell/EditorShell.tsx:2460",
+      "entry": "替换框、替换、全部替换",
+      "states": "空/非空替换、无匹配禁用、Enter替换当前、源码与历史更新",
+      "kind": "find",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-014"
+    },
+    {
+      "id": "HTML-015",
+      "title": "查找关闭与回焦",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1419",
+      "entry": "关闭查找或输入框Escape",
+      "states": "清除高亮、回源码焦点；当前仅setFindOpen(false)，需浏览器验证回焦缺口",
+      "kind": "find",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-015"
+    },
+    {
+      "id": "HTML-016",
+      "title": "预览加载/就绪",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1458",
+      "entry": "等待gx:ready",
+      "states": "加载中、真实标题、选中状态；旧version消息不使当前预览就绪；长标题应折行或截断",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-016"
+    },
+    {
+      "id": "HTML-017",
+      "title": "桌面/平板/手机",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1249",
+      "entry": "视图→设备三档",
+      "states": "100%下桌面铺满、平板768、手机390；源码单栏操作自动带回分栏",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-017"
+    },
+    {
+      "id": "HTML-018",
+      "title": "预览缩放",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1266",
+      "entry": "视图→缩放字段",
+      "states": "50–200%、10步进归一、空/非数字不提交；缩放不改文档/dirty",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-018"
+    },
+    {
+      "id": "HTML-019",
+      "title": "预览缩放滚动与快捷键",
+      "source": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js:991",
+      "entry": "iframe焦点→Mod +/-/0与Ctrl/Meta+wheel",
+      "states": "放大两端可达，预览独立滚动；还原100%；文档布局不被错误挤窄",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-019"
+    },
+    {
+      "id": "HTML-020",
+      "title": "预览点选与取消",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:609",
+      "entry": "iframe内点击元素/空白",
+      "states": "hover轮廓、选中、空白/动态元素清除；source与版本验证不变",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-020"
+    },
+    {
+      "id": "HTML-021",
+      "title": "预览源码互定位",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:878",
+      "entry": "源码光标/预览点选→定位源码",
+      "states": "无选中、预览未ready、源码隐藏各自禁用原因；源码光标同步当前sid",
+      "kind": "selection",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-021"
+    },
+    {
+      "id": "HTML-022",
+      "title": "元素路径",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1433",
+      "entry": "选择深层元素→面包屑",
+      "states": "祖先到当前、点击选中、键盘、长class/深层路径；只显示首class，分隔装饰",
+      "kind": "selection",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-022"
+    },
+    {
+      "id": "HTML-023",
+      "title": "清除行内样式",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1350",
+      "entry": "开始→清除行内样式",
+      "states": "无选择/无style禁用原因；有style整属性移除，历史/dirty更新",
+      "kind": "selection",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-023"
+    },
+    {
+      "id": "HTML-024",
+      "title": "预览直接文字编辑",
+      "source": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js:900",
+      "entry": "iframe单击文字/双击元素按vendor入口",
+      "states": "文字编辑、Mod+Enter/Escape提交、未改不产历史；宿主收到textEditCommit",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-024"
+    },
+    {
+      "id": "HTML-025",
+      "title": "预览内部HTML编辑",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:673",
+      "entry": "vendor iframe htmlEditCommit对应入口",
+      "states": "源码补丁、当前版本验证；非独立Mimir对话框，不虚构可见按钮",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-025"
+    },
+    {
+      "id": "HTML-026",
+      "title": "预览拖拽移动",
+      "source": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js:581",
+      "entry": "选中框拖拽→目标前/后",
+      "states": "有效/无效目标、取消Escape、拖动提示、源码顺序；另有Inspector键盘等价动作",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-026"
+    },
+    {
+      "id": "HTML-027",
+      "title": "预览手柄缩放",
+      "source": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js:527",
+      "entry": "选择可缩放元素→拖动八向手柄",
+      "states": "实时变化、提交一次set_style、无变化不提交；不修改vendor",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-027"
+    },
+    {
+      "id": "HTML-028",
+      "title": "预览键盘选择与删除",
+      "source": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js:1016",
+      "entry": "iframe选中后箭头/Delete/Backspace",
+      "states": "父/子/前/后、Escape清除、删除、Alt上下移动；输入字段不误触快捷命令",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-028"
+    },
+    {
+      "id": "HTML-029",
+      "title": "预览文字加粗斜体",
+      "source": "packages/office/vendor/apps/html/src/renderer/preview/inspector.js:971",
+      "entry": "iframe内选中文字→Mod+B/I",
+      "states": "提交当前文字后按直接文本节点wrap_text；无选区不伪执行",
+      "kind": "preview",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-029"
+    },
+    {
+      "id": "HTML-030",
+      "title": "插入类型与普通元素",
+      "source": "packages/office/src/editors/HtmlInsertMenu.tsx:12",
+      "entry": "插入→插入HTML元素",
+      "states": "标题/段落/列表/按钮/图片/表格/章节/分隔线八类型都可见；hover/focus/键盘",
+      "kind": "insert",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-030"
+    },
+    {
+      "id": "HTML-031",
+      "title": "插入图片URL",
+      "source": "packages/office/src/editors/HtmlInsertMenu.tsx:38",
+      "entry": "插入类型→图片URL",
+      "states": "空/无http(s)报错、有效URL成功、长URL；当前消息无role须检查宣读",
+      "kind": "insert",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-031"
+    },
+    {
+      "id": "HTML-032",
+      "title": "插入表格",
+      "source": "packages/office/src/editors/HtmlInsertMenu.tsx:45",
+      "entry": "插入类型→表格",
+      "states": "行1–8列1–10、非整数/越界/空、有效成功；字段需有可见标签",
+      "kind": "insert",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-032"
+    },
+    {
+      "id": "HTML-033",
+      "title": "插入结果与位置",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1286",
+      "entry": "选中/未选中后插入",
+      "states": "当前选中sid、空页面无位置错误、成功反馈、切类型清消息、保存再开",
+      "kind": "insert",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-033"
+    },
+    {
+      "id": "HTML-034",
+      "title": "Inspector打开/关闭",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:802",
+      "entry": "开始→编辑元素",
+      "states": "打开聚焦aside，关闭/Escape回触发器，外部已有焦点不抢；宽侧栏/窄覆盖层",
+      "kind": "inspector",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-034"
+    },
+    {
+      "id": "HTML-035",
+      "title": "Inspector无选中与刷新",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:342",
+      "entry": "打开未选择/选择后刷新",
+      "states": "空态说明可行路径；刷新重挂当前字段/版本，选中变化重新初始化",
+      "kind": "inspector",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-035"
+    },
+    {
+      "id": "HTML-036",
+      "title": "Inspector分类键盘",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:314",
+      "entry": "文字样式/内容与结构/图片/CSS",
+      "states": "tablist、左右键/Home/End roving tabindex、关联tabpanel；图片tab只img可用",
+      "kind": "inspector",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-036"
+    },
+    {
+      "id": "HTML-037",
+      "title": "Inspector过期版本",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:352",
+      "entry": "属性草稿打开→外部源码变更",
+      "states": "通知、fieldset禁用、提交禁用、刷新恢复；保留草稿并拒绝旧version写入",
+      "kind": "inspector",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-037"
+    },
+    {
+      "id": "HTML-038",
+      "title": "文字加粗与斜体",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:381",
+      "entry": "文字样式→加粗/斜体",
+      "states": "当前computed按下态、即时应用、撤销、请求失败消息",
+      "kind": "style",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-038"
+    },
+    {
+      "id": "HTML-039",
+      "title": "文字字号",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:413",
+      "entry": "文字样式→字号−/+",
+      "states": "computed当前值、减小下限8px、每次2px；不新增字号能力",
+      "kind": "style",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-039"
+    },
+    {
+      "id": "HTML-040",
+      "title": "文字对齐",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:438",
+      "entry": "文字样式→左/中/右",
+      "states": "按下值、即时应用、键盘、重复操作结果",
+      "kind": "style",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-040"
+    },
+    {
+      "id": "HTML-041",
+      "title": "文字和背景颜色",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:456",
+      "entry": "文字样式→颜色网格/清除",
+      "states": "七预设色、当前值与移除；文档色保持作者值，不随应用主题强行变色",
+      "kind": "style",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-041"
+    },
+    {
+      "id": "HTML-042",
+      "title": "元素宽高",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:476",
+      "entry": "文字样式→宽度/高度+应用",
+      "states": "未修改computed保持作者%/auto，带单位、清空移除、无效提示、长值",
+      "kind": "style",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-042"
+    },
+    {
+      "id": "HTML-043",
+      "title": "尺寸锁定比例",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:506",
+      "entry": "img→锁定比例→改宽高",
+      "states": "默认解锁/锁定按下、px+有效computed才联动；不满足条件解释",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-043"
+    },
+    {
+      "id": "HTML-044",
+      "title": "内容结构快捷移动",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:663",
+      "entry": "内容与结构→上移/下移",
+      "states": "首尾不能移动的真实结果、成功消息，版本与源码一致",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-044"
+    },
+    {
+      "id": "HTML-045",
+      "title": "复制元素",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:681",
+      "entry": "内容与结构→复制元素",
+      "states": "复制整范围到后方、成功/失败反馈、历史与保存",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-045"
+    },
+    {
+      "id": "HTML-046",
+      "title": "命令选择与参数显示",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:58",
+      "entry": "内容与结构→元素命令",
+      "states": "13命令、不同参数显隐、切换清反馈；不隐藏void不适用命令而明确禁用",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-046"
+    },
+    {
+      "id": "HTML-047",
+      "title": "设置纯文本",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:94",
+      "entry": "元素命令→设置纯文本",
+      "states": "内容可空、嵌套内容整体替换、错误原子不落地、void禁用",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-047"
+    },
+    {
+      "id": "HTML-048",
+      "title": "设置内部HTML",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:96",
+      "entry": "元素命令→设置内部HTML",
+      "states": "多行长HTML、允许空、合法/失败反馈、void禁用",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-048"
+    },
+    {
+      "id": "HTML-049",
+      "title": "替换整个元素",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:97",
+      "entry": "元素命令→替换整个元素",
+      "states": "长HTML、当前sid版本、整批失败不落地，void也可选",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-049"
+    },
+    {
+      "id": "HTML-050",
+      "title": "插入HTML参数",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:99",
+      "entry": "元素命令→插入HTML",
+      "states": "前/后/内头/内尾四位置，void内部位置提交禁用，长内容",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-050"
+    },
+    {
+      "id": "HTML-051",
+      "title": "设置或移除属性",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:107",
+      "entry": "元素命令→设置或移除属性",
+      "states": "属性名必填、空值移除、长名称/值、编译失败保留草稿",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-051"
+    },
+    {
+      "id": "HTML-052",
+      "title": "设置或移除样式",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:109",
+      "entry": "元素命令→设置或移除行内样式",
+      "states": "CSS属性名必填、空值移除、长值、失败反馈",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-052"
+    },
+    {
+      "id": "HTML-053",
+      "title": "更换标签",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:113",
+      "entry": "元素命令→更换标签",
+      "states": "标签名必填、非法标签编译反馈；不另加语法方言",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-053"
+    },
+    {
+      "id": "HTML-054",
+      "title": "移动参照与位置",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:115",
+      "entry": "元素命令→移动到另一元素旁",
+      "states": "参照下拉含路径+最多42字符摘要，排除自身/后代，空目标、前/后、长选项",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-054"
+    },
+    {
+      "id": "HTML-055",
+      "title": "替换直接文本节点",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:124",
+      "entry": "元素命令→替换直接文本节点",
+      "states": "从0索引、内容、无效/超界结果、void禁用",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-055"
+    },
+    {
+      "id": "HTML-056",
+      "title": "包裹文本片段",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:128",
+      "entry": "元素命令→包裹文本片段",
+      "states": "索引、起/止偏移、标签名，非整数/非法范围反馈、void禁用",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-056"
+    },
+    {
+      "id": "HTML-057",
+      "title": "去掉元素标签",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:143",
+      "entry": "元素命令→去掉元素标签",
+      "states": "无参数提交保留内容，void禁用；不增加确认业务",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-057"
+    },
+    {
+      "id": "HTML-058",
+      "title": "删除元素",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:144",
+      "entry": "元素命令→删除元素",
+      "states": "无参数提交，当前元素消失，选择与源码/历史同步",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-058"
+    },
+    {
+      "id": "HTML-059",
+      "title": "源码替换文字",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:146",
+      "entry": "元素命令→在源码中替换文字",
+      "states": "原文必填、新文可空、未命中/歧义按编译合同反馈",
+      "kind": "structure",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-059"
+    },
+    {
+      "id": "HTML-060",
+      "title": "CSS输入与临时预览",
+      "source": "packages/office/src/editors/HtmlCssControls.tsx:27",
+      "entry": "Inspector→CSS→输入声明",
+      "states": "250ms debounce、有效/无效声明、长文本；仅替代previewHtml不改版本/源码/dirty",
+      "kind": "css",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-060"
+    },
+    {
+      "id": "HTML-061",
+      "title": "CSS应用/取消/关闭恢复",
+      "source": "packages/office/src/editors/HtmlCssControls.tsx:42",
+      "entry": "应用CSS/取消预览/切分类/关闭/文档过期",
+      "states": "空有效声明反馈、成功清草稿、失败保留；离开分类unmount清preview",
+      "kind": "css",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-061"
+    },
+    {
+      "id": "HTML-062",
+      "title": "图片类别和替代文字",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:518",
+      "entry": "选img默认图片tab→alt输入和应用",
+      "states": "现有alt、空装饰图、长描述；非图片不展示图片tab",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-062"
+    },
+    {
+      "id": "HTML-063",
+      "title": "图片填充方式",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:536",
+      "entry": "图片→填充方式",
+      "states": "fill/contain/cover/none/scale-down、当前computed、键盘和反馈",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-063"
+    },
+    {
+      "id": "HTML-064",
+      "title": "图片旋转与翻转",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:550",
+      "entry": "图片→左/右转90°、水平/垂直翻转",
+      "states": "保留并合成原transform、连续操作、撤销/保存再开",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-064"
+    },
+    {
+      "id": "HTML-065",
+      "title": "图片左中右对齐",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:601",
+      "entry": "图片→对齐三按钮",
+      "states": "现有imageAlignStyles真实写路径，源码/预览/历史同步",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-065"
+    },
+    {
+      "id": "HTML-066",
+      "title": "本地图片替换",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:619",
+      "entry": "图片→选择本地图片",
+      "states": "png/jpeg/webp/gif/svg、5MB上限、取消、读取失败、选中/文档变化拒绝过期",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-066"
+    },
+    {
+      "id": "HTML-067",
+      "title": "图片URL替换",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:652",
+      "entry": "图片→替换图片URL→替换",
+      "states": "http(s)校验、空/无效/长URL、成功/失败反馈，不新增远程资源请求",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-067"
+    },
+    {
+      "id": "HTML-068",
+      "title": "图片像素入口可用性",
+      "source": "packages/office/src/editors/HtmlElementMenu.tsx:216",
+      "entry": "图片→裁切/去背景",
+      "states": "缺src、过大data、相对地址均禁用原因；远程资源CORS失败说明",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-068"
+    },
+    {
+      "id": "HTML-069",
+      "title": "图片像素加载与版本",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:962",
+      "entry": "启动裁切/去背景等待图片资源",
+      "states": "凭据omit、类型校验、5MB、失败消息；读取完成前文档/选择/src改变则拒绝",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-069"
+    },
+    {
+      "id": "HTML-070",
+      "title": "裁切原vendor面板",
+      "source": "packages/office/vendor/packages/ui/src/image-dialogs.tsx:315",
+      "entry": "图片→裁切图片",
+      "states": "加载/加载失败、棋盘格、拖边/角/移动裁区、取消/Escape/遮罩、应用；原vendor不改",
+      "kind": "vendor-image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-070"
+    },
+    {
+      "id": "HTML-071",
+      "title": "去背景原vendor面板",
+      "source": "packages/office/vendor/packages/ui/src/image-dialogs.tsx:115",
+      "entry": "图片→去除背景",
+      "states": "初始容差30、滑块0–100和实时预览、移除百分比、处理中禁用、错误/取消",
+      "kind": "vendor-image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-071"
+    },
+    {
+      "id": "HTML-072",
+      "title": "像素应用守卫",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1003",
+      "entry": "裁切/去背景→应用PNG",
+      "states": ">5MB、version/sid/src改变均拒绝，原件未改；错误role=alert，成功关闭dialog",
+      "kind": "image",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-072"
+    },
+    {
+      "id": "HTML-073",
+      "title": "AI预设",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:1177",
+      "entry": "开始→问AI菜单",
+      "states": "美化、极简/杂志/科技/活泼/深色、总结七项；无宿主回调禁用原因",
+      "kind": "ai",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-073"
+    },
+    {
+      "id": "HTML-074",
+      "title": "AI单选问题",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:55",
+      "entry": "Agent ask_clarification单选",
+      "states": "题目/描述、选项+由AI决定、未选默认AI、补充说明、跳过/提交/关闭/Escape",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-074"
+    },
+    {
+      "id": "HTML-075",
+      "title": "AI多选问题",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:96",
+      "entry": "Agent ask_clarification multi",
+      "states": "Checkbox.Group多选/取消/全空默认AI、按原option顺序返回selections及兼容摘要",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-075"
+    },
+    {
+      "id": "HTML-076",
+      "title": "问题ID与生命周期",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:783",
+      "entry": "前一问题取消/停止/后继问题/换文档",
+      "states": "signal只关闭所属请求、迟到结果不重开、constructor/__proto__等ID安全读取",
+      "kind": "contract",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "N/A：非独立视觉动作，相关入口另有组",
+        "focus": "相关入口组验证",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "N/A：协议/字节断言，相关界面仍验浅深"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-076"
+    },
+    {
+      "id": "HTML-077",
+      "title": "提纲内容主张/标题/读者",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:233",
+      "entry": "Agent plan_page→确认提纲",
+      "states": "现值/长值/空字段，内容主张和至少一章节必填，确认错误不关闭，修正恢复",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-077"
+    },
+    {
+      "id": "HTML-078",
+      "title": "提纲视觉方向",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:254",
+      "entry": "确认提纲→选择方向",
+      "states": "原方向和alternatives、样本色/名/语气/色板；选择structuredClone并记录user_edited",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-078"
+    },
+    {
+      "id": "HTML-079",
+      "title": "提纲配色字体布局",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:288",
+      "entry": "展开配色、字体与布局",
+      "states": "五色/自定义RGB、语气、标题/正文/层级、圆角/间距/阴影、布局/密度、Word友好",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-079"
+    },
+    {
+      "id": "HTML-080",
+      "title": "提纲章节",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:376",
+      "entry": "章节标题/用途、添加、移除",
+      "states": "稳定key、最少1最多20、按钮禁用原因、长标题/用途、20章节滚动",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-080"
+    },
+    {
+      "id": "HTML-081",
+      "title": "提纲文档要求与重新拟定",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:434",
+      "entry": "展开文档要求→语言/长度/重新拟定说明",
+      "states": "可选值、重新拟定返回redo+说明trim/slice2000，取消返回null，确认返回brief",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-081"
+    },
+    {
+      "id": "HTML-082",
+      "title": "规划侧栏焦点/动作",
+      "source": "packages/office/src/editors/HtmlAgentPrompt.tsx:461",
+      "entry": "问题/提纲面板出现、关闭、外部焦点",
+      "states": "auto focus aside、Escape取消、回原触发或分类tab、不抢外焦点；长内容固定footer",
+      "kind": "planning",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-082"
+    },
+    {
+      "id": "HTML-083",
+      "title": "生成开始/流式计数",
+      "source": "packages/office/src/editors/HtmlWritingPreview.tsx:30",
+      "entry": "Agent write_document→onDelta",
+      "states": "空草稿开始、字符累计、生成中停止、说明尚未写原文；不把临时预览说已保存",
+      "kind": "writing",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-083"
+    },
+    {
+      "id": "HTML-084",
+      "title": "生成完成与无内容失败",
+      "source": "packages/office/src/editors/HtmlWritingPreview.tsx:63",
+      "entry": "Writer complete或抛错",
+      "states": "完整页由handle落地；零内容失败无可保留草稿；200000字符上限",
+      "kind": "writing",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-084"
+    },
+    {
+      "id": "HTML-085",
+      "title": "停止/错误部分稿",
+      "source": "packages/office/src/editors/HtmlWritingPreview.tsx:73",
+      "entry": "停止或服务失败且有部分文本",
+      "states": "停止说明/服务长错误、保留部分/丢弃；未选择前不改源码",
+      "kind": "writing",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-085"
+    },
+    {
+      "id": "HTML-086",
+      "title": "过期草稿与外部取消",
+      "source": "packages/office/src/editors/HtmlWritingPreview.tsx:109",
+      "entry": "部分稿等待时手动编辑/外部abort",
+      "states": "过期警告、保留禁用、丢弃可达；外部取消直接终止且不覆盖",
+      "kind": "writing",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-086"
+    },
+    {
+      "id": "HTML-087",
+      "title": "演示覆盖层",
+      "source": "packages/office/src/editors/HtmlPresentation.tsx:5",
+      "entry": "视图→演示",
+      "states": "dialog/aria-modal、隔离iframe不加编辑映射、退出、Escape、回原焦点、Tab首尾",
+      "kind": "output",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-087"
+    },
+    {
+      "id": "HTML-088",
+      "title": "全屏及不支持错误",
+      "source": "packages/office/src/editors/HtmlPresentation.tsx:48",
+      "entry": "演示→全屏",
+      "states": "支持成功/拒绝/不支持短说明；短高/窄屏错误不挤丢退出动作",
+      "kind": "output",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-088"
+    },
+    {
+      "id": "HTML-089",
+      "title": "独立窗口演示",
+      "source": "packages/office/src/editors/html-output.ts:17",
+      "entry": "视图→新窗口",
+      "states": "被拦截role=alert，允许后重试；opener=null、隔离srcdoc、不带编辑映射",
+      "kind": "output",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-089"
+    },
+    {
+      "id": "HTML-090",
+      "title": "导出HTML",
+      "source": "packages/office/src/editors/html-output.ts:7",
+      "entry": "视图→导出HTML",
+      "states": "当前未保存源码+原BOM/EOL，Blob下载page.html、释放URL；截图不证明下载字节",
+      "kind": "output",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "控件适用",
+        "focus": "键盘可达控件适用",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-090"
+    },
+    {
+      "id": "HTML-091",
+      "title": "安全与消息合同",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:562",
+      "entry": "预览/演示/伪消息输入",
+      "states": "source==iframe.contentWindow且version==handle.version；sandbox无allow-same-origin、no-referrer",
+      "kind": "contract",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "N/A：非独立视觉动作，相关入口另有组",
+        "focus": "相关入口组验证",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "N/A：协议/字节断言，相关界面仍验浅深"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-091"
+    },
+    {
+      "id": "HTML-092",
+      "title": "宿主离开守卫",
+      "source": "packages/office/src/editors/HtmlEditor.tsx:307",
+      "entry": "编辑后导航/换文档/关闭页面",
+      "states": "onDirtyChange与onSaveRequest注册现有宿主守卫，UI精修不能跳过保存/丢弃/取消三选项",
+      "kind": "contract",
+      "applicable_states": {
+        "normal": "适用",
+        "hover": "N/A：非独立视觉动作，相关入口另有组",
+        "focus": "相关入口组验证",
+        "disabled": "只验源码实际存在禁用条件，不补造",
+        "loading": "仅源码存在异步等待时适用",
+        "empty": "按本行空输入/无选择/无数据适用；不存在则N/A",
+        "error": "按本行已有校验/IO/编译错误适用；不存在则N/A",
+        "recovery": "已有重试/刷新/取消/修正路径适用",
+        "keyboard": "Tab/Enter/Space及本行指定快捷键",
+        "long_content": "标签/输入/文档/错误长内容按入口适用",
+        "widths": [
+          "宽编辑列1100",
+          "中编辑列760/690",
+          "窄编辑列420/390"
+        ],
+        "short_height": "320/420px可用编辑区，检查滚动/固定动作",
+        "themes": [
+          "N/A：协议/字节断言，相关界面仍验浅深"
+        ]
+      },
+      "evidence_status": "source-inventory-only; browser verification pending",
+      "browser_entry_suggestion": "HTML-092"
+    }
+  ]
+}

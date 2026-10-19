@@ -1,0 +1,113 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: 72c4a9fd0c6ea874a1143feccc343c851f5b1bb775191e738ff16e1f47986f5c
+URL: https://support.microsoft.com/en-us/office/keyboard-shortcuts-in-word-95ef89dd-7142-4b50-afb2-f762f663ceb2
+Fetched UTC: 2026-10-19T17:58:09.915528+00:00
+
+Keyboard shortcuts in Word | Microsoft Support
+Keyboard shortcuts in Word
+Using an external keyboard with keyboard shortcuts in Word may help you work more efficiently. For people with mobility or vision disabilities, keyboard shortcuts can be easier than using a touchscreen, and are a helpful alternative to using a mouse.
+The shortcuts in this topic refer to the US keyboard layout. Keys for other layouts might not fully correspond to the keys on a US keyboard.
+This article describes the keyboard shortcuts and function keys in Word for Windows.
+To quickly find a shortcut in this article, press Ctrl+F, and enter your search word.
+Ribbon keyboard shortcuts
+To close a task pane using the keyboard:
+Ribbon keyboard shortcuts
+The ribbon area groups together related options in tabs. For example, on the
+key to display the ribbon shortcuts -- called Key Tips -- as seen below.
+Add-ins and other programs can add new tabs to the ribbon and possibly provide access keys for those tabs.
+For various ribbon options you can combine the Key Tips letters with the Alt key to make shortcuts called Access Keys. For example, press Alt+H to open the
+Use the Access Keys for ribbon tabs
+To go directly to a tab on the ribbon, press one of the following access keys. Additional tabs might appear depending on your selection in the document.
+field on the Ribbon to search for assistance or Help content.
+tab to use common formatting commands, paragraph styles, and the Find tool.
+Work in the ribbon with the keyboard
+Select the active tab on the ribbon and activate the access keys.
+Move the focus to commands on the ribbon.
+Move between command groupings on the ribbon.
+Move among the items on the ribbon.
+Show the tooltip for the ribbon element currently in focus.
+Expand or collapse the ribbon.
+Or, on a Windows keyboard, the Windows Menu key (between the right Alt and right Ctrl keys)
+Expand or collapse the ribbon.
+Replace
+dialog box, to find and replace text, specific formatting, or special items.
+To find out the Unicode character code for a selected character, press Alt+X.
+To use the following keyboard shortcuts, the
+ribbon tab must be selected. To select the
+If you type extensively in another language, you might prefer to switch to a different keyboard instead.
+Switch to the Japanese Input Method Editor (IME) for a 101-key keyboard, if available.
+Switch to the Korean Input Method Editor (IME) for a 101-key keyboard, if available.
+Switch to the Chinese Input Method Editor (IME) for a 101-key keyboard, if available.
+Ctrl+F1: displays or hides the ribbon.
+Find
+F6 alone: switch between the document, task pane, status bar, and ribbon. In a document that has been split, F6 includes the split panes when switching between panes and the task pane.
+Shift+F6: switches between the document, ribbon, status bar, and task pane.
+Alt+F7: finds the next spelling or grammatical error.
+This article describes the keyboard shortcuts and function keys in Word for Mac.
+The settings in some versions of the Mac operating system (OS) and some utility applications might conflict with keyboard shortcuts and function key operations in Microsoft 365 for Mac. For information about changing the key assignment for a keyboard shortcut, see Mac Help for your version of macOS, your utility application, or refer to
+If you don't find a keyboard shortcut here that meets your needs, you can create a custom keyboard shortcut. For instructions, go to
+Create a custom keyboard shortcut for Office for Mac
+Many of the shortcuts that use the Ctrl key on a Windows keyboard also work with the Control key in Word for Mac. However, not all do.
+To quickly find a shortcut in this article, you can use Search. Press Command+F, and then type your search words.
+For the best experience using your keyboard with the ribbon, enable your keyboard to access all controls.
+Keyboard Settings
+keyboard
+Full Keyboard Access
+Find text (move focus to the
+Find and Replace
+Expand or minimize the ribbon.
+Find the next spelling or grammatical error. The
+Some Word for Mac keyboard shortcuts conflict with default macOS keyboard shortcuts. This topic flags such shortcuts with an asterisk ( * ). To use these shortcuts, you may have to change your Mac keyboard settings to change the shortcut for the key.
+Change system preferences for keyboard shortcuts
+Keyboard
+Clear the check box for the keyboard shortcut conflicting with the Word for Mac shortcut that you want to use.
+(The End key is not available on all keyboards.)
+Before you can use these keyboard shortcuts, you need to ensure keyboard shortcuts are enabled for the language you are using:
+Keyboard
+Enable keyboard shortcuts
+Find
+Find
+F6 alone: switch between the document, task pane, status bar, and ribbon. In a document that has been split, F6 includes the split panes when switching between panes and the task pane.
+Shift+F6: switches between the document, ribbon, status bar, and task pane.
+Option+F7: finds the next spelling or grammatical error.
+Keyboard
+Keyboard
+This article describes the keyboard shortcuts in Word for iOS.
+If you're familiar with keyboard shortcuts on your macOS computer, the same key combinations work with Word for iOS using an external keyboard, too.
+To quickly find a shortcut in this article, you can use Search. Press
+Find text.
+Find the next occurrence of text.
+Find the previous occurrence of text.
+Find and replace text.
+This article describes the keyboard shortcuts in Word for Android.
+To quickly find a shortcut in this article, you can use Search. Press Ctrl+F, and then type your search words.
+Find text.
+This article describes the keyboard shortcuts in Word for the web.
+To quickly find a shortcut in this article, you can use Search. Press Ctrl+F and then type your search words.
+When you use Word for the web, we recommend that you use Microsoft Edge as your web browser. Because Word for the web runs in your web browser, the keyboard shortcuts are different from those in the desktop program. For example, you'll use Ctrl+F6 instead of F6 for jumping in and out of the commands. Also, common shortcuts like F1 (Help) and Ctrl+O (Open) apply to the web browser – not Word for the web.
+Ribbon keyboard shortcuts
+This table lists the most frequently used shortcuts in Word for the web.
+To quickly create a new document in Word for the web, open your browser, type
+Find text in the Reading view.
+Find text in the Editing view.
+Find and replace text in the Editing view.
+Ribbon keyboard shortcuts
+Word for the web offers shortcuts called access keys to navigate the ribbon. If you've used access keys to save time on Word for desktop computers, you'll find access keys very similar in Word for the web.
+On a Windows computer, access keys all start with Alt+Period (.) or Alt+Windows logo key, then add a letter for the ribbon tab. For example, to go to the
+If you're using Word for the web on a Mac computer, press Control+Period (.) to start.
+To get to the ribbon, press Alt+Period or Alt+Windows logo key. You can alternatively press Ctrl+F6 until you reach the
+To move between tabs on the ribbon, press the Tab key.
+To hide the ribbon so you have more room to work, press Ctrl+F3. Repeat to display the ribbon again.
+Go to the access keys for the ribbon
+To go directly to a tab on the ribbon, press one of the following access keys:
+text field on the ribbon to type a search term.
+Find
+To find an option or perform an action quickly, use the
+Find what you need with Microsoft Search
+Work in the ribbon tabs and menus
+The following shortcuts can save time when you work with the ribbon tabs and ribbon menus.
+Select the active tab on the ribbon, and activate the access keys.
+When a Ribbon tab is selected, move the focus to the tab commands.
+Collapse or expand the ribbon.
+The following keyboard shortcuts only work when the
+Word for the Web
+for technical assistance. The Disability Answer Desk support team is trained in using many popular assistive technologies and can offer assistance in English, Spanish, French, and American Sign Language. Please go to the Microsoft Disability Answer Desk site to find out the contact details for your region.

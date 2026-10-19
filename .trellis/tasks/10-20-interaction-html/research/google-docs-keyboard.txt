@@ -1,0 +1,48 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: 260ef5fc6c9289e2053e34da02526311781c6764a8a5b2c3ba0b0f5438445058
+URL: https://support.google.com/docs/answer/179738?hl=en
+Fetched UTC: 2026-10-19T17:58:13.476681+00:00
+
+Keyboard shortcuts for Google Docs - Computer - Google Docs Editors Help
+Google Docs Editors Help
+Google Docs Editors
+Google Docs Editors
+Keyboard shortcuts for Google Docs
+Keyboard shortcuts for Google Docs
+Use keyboard shortcuts in Google Docs to navigate, format, and edit.
+Some shortcuts might not work for all languages or keyboards.
+To open a list of keyboard shortcuts in Google Docs, press
+Tool finder (formerly search the menus), press
+You can also use menu access keys. Open any application menu using the keyboard, then type the underlined letter for the item you'd like to select. For example, to open the Insert menu on a Mac, press
+Show common keyboard shortcuts
+Find
+Find and replace
+Find again
+Find previous
+Tool finder(formerly Search the menus)
+Use keyboard shortcuts on selected comments
+Text selection with keyboard
+Show common keyboard shortcuts
+Find
+Find and replace
+Find again
+Find previous
+Tool finder (formerly Search the menus)
+Use keyboard shortcuts on selected comments
+Text selection with keyboard
+Show common keyboard shortcuts
+Find
+Find and replace
+Find again
+Find previous
+Tool finder (formerly Search the menus)
+Use keyboard shortcuts on selected comments
+Text selection with keyboard
+Learn more about Tool finder for Docs, Sheets & Slides
+Search and use find and replace
+Check your spelling & grammar in Google Docs
+Keyboard shortcuts for Google Docs
+Find what's changed in a file
+Compare documents in Google Docs
+Using Google products, like Google Docs, at work or school? Try powerful tips, tutorials, and templates. Learn to work on Office files without installing Office, create dynamic project plans and team calendars, auto-organize your inbox, and more.
+function nPa(){var a=!1;document.addEventListener("keydown",function(){return a=!0}); document.addEventListener("mousedown",function(){return a=!1}); document.addEventListener("focusin",function(b){return Vm(b.target,"keyboard-focus",a)}); document.addEventListener("focusout",function(b){return Vm(b.target,"keyboard-focus",!1)})} function oPa(){pPa||(pPa=new nPa)} nPa.setUp=oPa;var pPa;pb("hcfe.KeyboardFocus.setUp",oPa);
+hcfe.KeyboardFocus.setUp();

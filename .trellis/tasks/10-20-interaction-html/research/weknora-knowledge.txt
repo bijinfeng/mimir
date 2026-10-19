@@ -1,0 +1,22 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: c2e96f6cee2db8bc74d952f07bc584f9428026b3e5f797901a27bac760b1b59b
+URL: https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/views/knowledge/KnowledgeBase.vue
+Fetched UTC: 2026-10-19T17:59:13.151141+00:00
+
+16: import { useEditorResourcesStore } from '@/stores/editorResources';
+17: import KnowledgeBaseEditorModal from './KnowledgeBaseEditorModal.vue';
+22: const editorResources = useEditorResourcesStore();
+110:   return t('knowledgeEditor.wikiBrowser.queueStatus', { count: wikiStatus.value.pendingTasks || 0 })
+116:   const w = 'knowledgeEditor.wikiBrowser'
+210: const parserEngines = computed<ParserEngineInfo[]>(() => editorResources.parserEngines);
+335: // shared KBs only an 'admin' share grant qualifies — editor/viewer (and
+347: // It lives in KB settings (KnowledgeBaseEditorModal) for Owner/Admin in the home tenant.
+352: // role check, an org-share-editor whose tenant role is Viewer would see
+365: // restrictive than viewing parsed content or using the preview tab. A tenant
+367: // permission must additionally be Editor or Admin.
+371:   return !permission || permission === 'owner' || permission === 'admin' || permission === 'editor';
+1327:   editorResources.ensureParserEngines();
+1498: // Open source document preview from WikiBrowser
+1619: const manualEditorSuccess = ({ kbId: savedKbId }: { kbId: string; knowledgeId: string; status: 'draft' | 'publish' }) => {
+1633:     MessagePlugin.warning(t('knowledgeEditor.messages.missingId'));
+1786:   uiStore.openManualEditor({
+1790:     onSuccess: manualEditorSuccess,

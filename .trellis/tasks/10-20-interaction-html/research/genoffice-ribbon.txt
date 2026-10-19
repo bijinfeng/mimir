@@ -1,0 +1,17 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: d1a15da76012acdac27b339dc71c3f06907bb5edfb6f8ec584b3c2072d9a529c
+URL: https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/html/src/renderer/components/Ribbon.tsx
+Fetched UTC: 2026-10-19T17:59:11.238561+00:00
+
+26:   IconPreview,
+38: export type ViewMode = 'preview' | 'split' | 'source'
+48: export const VIEW_MODES: ViewMode[] = ['preview', 'split', 'source']
+51:   preview: 'viewPreview',
+53:   source: 'viewSource',
+57:   preview: IconPreview,
+59:   source: IconCode,
+132:   const collapse = useRibbonCollapse('htmlapp.ribbonCollapsed')
+134:   const themeRef = useRef<HTMLDivElement>(null)
+147:   const presentRef = useRef<HTMLDivElement>(null)
+164:   const imageRef = useRef<HTMLDivElement>(null)
+165:   const tableRef = useRef<HTMLDivElement>(null)
+166:   const moreRef = useRef<HTMLDivElement>(null)

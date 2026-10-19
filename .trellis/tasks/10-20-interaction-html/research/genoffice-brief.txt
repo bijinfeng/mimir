@@ -1,0 +1,22 @@
+Excerpt of fetched response, NOT full response. Full response SHA256: 2f7c1b12b30e14f32f0789d13dff29f1b4dcbbe1e6bddf8c93bd173ac5007f1a
+URL: https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/html/src/renderer/components/BriefCard.tsx
+Fetched UTC: 2026-10-19T17:59:12.013640+00:00
+
+5: import type { Brief, BriefSection, BriefStyle } from '../document/brief'
+9: const PALETTE_KEYS = ['primary', 'accent', 'bg', 'surface', 'text'] as const
+11: type PaletteKey = (typeof PALETTE_KEYS)[number]
+13: const PALETTE_LABEL: Record<PaletteKey, StringKey> = {
+33:     palette: { ...s.palette },
+39: /** Miniature of one direction rendered from its own palette / fonts / tokens: document colors, not chrome. */
+53:   const p = style.palette
+121:     sections: brief.sections.map((s) => ({ ...s })),
+136:   const setPalette = (key: PaletteKey, value: string) =>
+137:     patchStyle((s) => ({ ...s, palette: { ...s.palette, [key]: value } }), `style.palette.${key}`)
+149:   const setSection = (i: number, patch: Partial<BriefSection>) => {
+152:       sections: d.sections.map((s, k) => (k === i ? { ...s, ...patch } : s)),
+154:     touch(`sections[${i}]`)
+156:   const removeSection = (i: number) => {
+157:     setDraft((d) => ({ ...d, sections: d.sections.filter((_, k) => k !== i) }))
+158:     touch('sections')
+160:   const addSection = () => {
+161:     setDraft((d) => ({ ...d, sections: [...d.sections, { title: '', brief: '' }] }))
