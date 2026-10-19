@@ -1148,3 +1148,27 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 40: 对话渲染精修与侧栏单行工具栏
+<!-- trellis-session: v=2 fp=101856ae844bc6f3 -->
+
+**Date**: 2026-10-19
+**Task**: 对话渲染精修与侧栏单行工具栏
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成 TanStack 官方 Headless UI 对话呈现精修与侧栏工具单行布局，验证 280/320/390px 窄容器、菜单键盘回焦和草稿保护。最终 pnpm check 4867 项通过、2 项既有跳过，Web 与桌面构建通过；23 组真实组件前后对比、11 张产品截图和完整日志已本地归档。实现提交 e5c39a3，未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9c080f1` | test(server): budget worker-backed attachment validation matrix |
+| `e5c39a3` | fix(chat): polish conversation rendering and compact sidebar tools |
+| `7965c2b` | docs(chat): retain successful polish validation logs |
+
+### Status
+
+[OK] **Completed**
