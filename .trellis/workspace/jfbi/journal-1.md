@@ -909,3 +909,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 33: 输入框业务控制位置修订
+<!-- trellis-session: v=2 fp=03a7e8e050dee106 -->
+
+**Date**: 2026-10-19
+**Task**: 输入框业务控制位置修订
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+记录用户要求模型/思考强度/知识库范围在输入框内。核对固定官方源码：ModelSelector/Effort存在，但完整Thread没有Composer工具栏插槽；只读绑定与标准/深入业务语义不能直接冒充provider reasoningEffort。保存原件与证据，更新规划及待确认边界；v3冻结和产品代码未动，等待仅Composer有限组合例外的产品决定。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `fc09bbd` | docs(chat): clarify required controls inside composer |
+
+### Status
+
+[OK] **Completed**
