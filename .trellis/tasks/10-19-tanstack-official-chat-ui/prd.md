@@ -6,7 +6,7 @@
 
 ## 背景与已知事实
 
-- 2026-10-19 用户批准本任务“创建并规划”；该批准尚未包含最新规划摘要的实施验收。
+- 2026-10-19 用户先批准本任务“创建并规划”，再以“可以”批准最终规划摘要，进入实施。
 - 当前产品已安装 `@tanstack/ai-react@0.30.4`，发布包包含 `/ui` 子路径、`createChatUI` 与 `createChatHook`。现有产品使用底层 `useChat`，自行遍历消息和内容。
 - 前轮交付：TanStack/Mimir 对话、供应商分组模型与实际推理等级、临时附件、独立 FIFO、停止保稿、Agent 守卫与精确回答保存；验收见 `../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md`。
 - 用户之前要求模块视觉改动须先交付 HTML 对比稿并获认可；本次保留 v7 已批准外观，接入官方无样式封装，不新增设计方向。
@@ -40,4 +40,4 @@
 
 ## 规划收敛状态
 
-用户目标、范围、兼容行为和验收标准已明确，没有阻塞规划的产品决策。`design.md`、`implement.md` 以及 implement/check 上下文均已准备。迁移后的行为与视觉验证尚未执行；本轮只完成规划。后续若发现需要有意改变可见交互，按既有要求先提交独立 HTML 对比并等待认可。
+规划已获用户批准并完成实施。官方封装、真实 HTTP/SSE 回归、主/侧栏 GUI 抽验、全仓检查、Web/Desktop 构建和独立复核均已完成；结果与未执行边界见 [verification/acceptance.md](verification/acceptance.md)。本次沿用 v7，没有新增视觉设计。后续若需要有意改变可见交互，仍先提交独立 HTML 对比并等待认可。

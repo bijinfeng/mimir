@@ -2,8 +2,8 @@
   "id": "tanstack-official-chat-ui",
   "name": "tanstack-official-chat-ui",
   "title": "接入 TanStack 官方 Headless UI",
-  "description": "采用 @tanstack/ai-react/ui 官方封装组织消息、内容与中断，保留批准的 Mimir 视觉、发送队列、临时附件和文档 Agent 行为；本阶段规划",
-  "status": "planning",
+  "description": "采用 @tanstack/ai-react/ui 官方封装组织消息、内容与中断，保留批准的 Mimir 视觉、发送队列、临时附件和文档 Agent 行为",
+  "status": "in_progress",
   "dev_type": "frontend",
   "scope": "chat",
   "package": "chat",
@@ -25,16 +25,24 @@
     "design.md",
     "implement.md",
     "research/official-ui-boundary.md",
-    "research/evidence.json"
+    "research/evidence.json",
+    "verification/acceptance.md",
+    "verification/browser-qa.md",
+    "verification/quality-gate.json",
+    "verification/independent-review.md"
   ],
-  "notes": "本轮仅规划；官方UI接现有唯一useChat host，保留批准v7外观与业务合同。最新完整规划摘要待用户确认。",
+  "notes": "官方 Headless UI 已实施；独立复核无未解决项，pnpm check 与 Web/Desktop 构建通过；GUI 抽验和未测边界已落盘。待本轮限定提交后归档。",
   "meta": {
     "creation_approved_on": "2026-10-19",
     "creation_user_quote": "可以，创建并规划",
-    "implementation_approved": false,
+    "implementation_approved": true,
     "target": "@tanstack/ai-react/ui createChatUI",
     "preserved_visual_baseline": "chat-review-v7",
     "previous_implementation_commit": "c497002",
-    "planning_status": "research_and_artifacts_ready_for_final_review"
+    "planning_status": "approved",
+    "implementation_approved_on": "2026-10-19",
+    "implementation_user_quote": "可以",
+    "verification_status": "passed",
+    "verification_record": "verification/acceptance.md"
   }
 }

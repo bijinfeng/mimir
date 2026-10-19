@@ -13,7 +13,7 @@ ChatPanel（主视图与侧栏共用）
         TextPart + 原 CodeBlock
         thinking/tool/media/structured 等注册 Mimir 展示组件
     Input → 原 Composer + 原发送快照入口
-    Interrupts → 官方中断选择 + 原 Agent 桥/缓存续传
+    DocxInterruptBridge → 原 client_tool 中断/目标守卫/缓存续传
 ```
 
 官方封装负责通用UI组织；Mimir业务上下文只保留宿主业务与已批准交互，不维持第二份UIMessage数组或第二套SDK实例。详细证据见 [research/official-ui-boundary.md](research/official-ui-boundary.md)。
@@ -47,7 +47,7 @@ ChatPanel（主视图与侧栏共用）
 
 ## 中断与队列
 
-官方Interrupts处理真实SDK中断选择与展示位置，客户端文档执行仍只由原桥消费可信 `metadata.kind=client_tool`。二者不能重复显示执行按钮或重复执行工具。通用/未知中断只保留原可操作提示与恢复边界，不新增后端审批能力。缓存续传成功/失败必须继续检查SDK布尔结果和原run目标。
+实施源码核查补充：ai-client0.39.3的 `src/types.ts:239` 和 `interrupt-manager.ts:1033` 明确将 client-tool-execution 排除在公开 ChatInterrupt 列表之外。因此文档执行仍由原 onChunk 捕获终局中断，仅原桥消费可信 `metadata.kind=client_tool`；不能把官方 Interrupts 列表作为替代输入。官方消息/内容选择可读取公开中断关联信息，当前产品没有generic/tool-approval审批业务，本轮不新增对应可见审批UI或执行器。缓存续传成功/失败必须继续检查SDK布尔结果和原run目标。该技术澄清保持原Agent交互及授权范围。
 
 原Composer通过官方Input slot接入。发送入口继续调用Mimir业务send；官方SDK queue不承担Mimir尚未上传完成/租约/截图函数和复杂SendIntent的所有权。业务队列显示与取回/取消仍读原单一FIFO，不为了使用 `<Queue/>` 复制或伪造一份SDK队列。组件封装接入不是业务算法改写。
 

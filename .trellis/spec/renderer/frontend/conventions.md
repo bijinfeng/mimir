@@ -203,17 +203,16 @@ useEffect(() => {
 
 ---
 
-## 对话：不要手搓状态，也不要手搓 UI
+## 对话：宿主只做适配
 
-对话是这类应用里最容易写错的一块：流式 token 的拼接顺序、并发发送的排队、
-中断后的清理、半截 markdown 的渲染与转义。这些**都别自己写**——整块面板
-（消息区 / 检索过程 / 引用 / 失败卡 / 输入区 / 状态层）在
-**`packages/chat`（`@mimir/chat`）**里，宿主只做适配。
+整块对话面板（消息区、引用、失败卡、输入区与状态层）由
+**`packages/chat`（`@mimir/chat`）**维护。消息状态与内容分发使用官方封装；
+发送快照、保稿队列和文档执行守卫仍归包内业务层，宿主只做适配。
 
 | 层 | 用什么 |
 |---|---|
-| 消息状态、流式接收、队列、停止、滚动跟随 | `@assistant-ui/react` + `@assistant-ui/react-ag-ui`（包内 `runtime/use-mimir-runtime.ts` 是唯一入口） |
-| 消息渲染 | 包内的 `parts/*`（正文走 `@tanstack/markdown`） |
+| 运行与消息渲染 | TanStack `useChat` 与官方 Headless UI，具体所有权见 [chat 规范](../../chat/frontend/conventions.md) |
+| 保稿队列、附件、Agent 与滚动 | 包内业务层；宿主不复制实现 |
 | 宿主侧 | `lib/chat-io.ts`（动作，实现 `ChatIo`）+ `lib/use-chat-composer-status.ts`（数据槽）+ `components/chat/ChatThemeBridge.tsx`（字号与 gutter 变量）+ `routes/_app.chat.tsx` / `components/document/DocChatSidebar.tsx`（两个宿主） |
 
 **宿主不要做的事**（做了就绕开包、两处必然漂移）：
@@ -239,10 +238,8 @@ useEffect(() => {
    而消息其实已经落库）。打开历史会话由包的历史适配器出骨架屏，
    宿主**不再**需要「数据没到位就不许挂载」的 `messagesLoading` 硬契约
 
-**历史读取失败的拦阻仍在宿主**（`_app.chat.tsx` 的 `LoadError`）：用户点开
-一个旧会话，看到的若是「问点什么」的全新空态，那比报错更吓人——看起来像
-对话被清空了。包只把 `io.loadConversation` 返回的 `null` 当空会话放行，
-「读不到该怎么说」是宿主的产品判断。
+**历史读取失败必须和空会话区分**：宿主通过 `io.loadConversation` 提供数据或失败，
+包内显示加载与重试。`null` 不能解释成全新空态，具体合同以 [chat 规范](../../chat/frontend/conventions.md) 为准。
 
 包内约定（主题变量、data part、引擎的两个反直觉点、测试怎么跑）见
 `.trellis/spec/chat/frontend/index.md`——改对话前先读那一页。

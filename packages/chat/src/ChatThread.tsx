@@ -1,7 +1,8 @@
 import { useChatRuntime } from './runtime/runtime-context.js'
+import { useContext } from 'react'
 import type { ReactNode } from 'react'
 import { useChatPanelStyles } from './ChatPanel.style.js'
-import { MessageItem } from './parts/MessageItem.js'
+import { SelectedMessagesContext, useChatComposition } from './ui/context.js'
 
 /**
  * 消息区（滚动容器里的那一列）。
@@ -51,6 +52,7 @@ export function ChatThread({
 }) {
   const { styles } = useChatPanelStyles()
   const runtime = useChatRuntime()
+  const { Messages } = useChatComposition()
   const isEmpty = runtime.messages.length === 0
   const isLoading = runtime.loading
   if (runtime.loadError)
@@ -127,9 +129,19 @@ export function ChatThread({
           </button>
         </nav>
       )}
-      {runtime.messages.map((message, index) => (
-        <MessageItem key={message.id} message={message} index={index} />
-      ))}
+      <Messages />
+      <PendingMessage />
     </div>
   )
+}
+
+// Waiting/failure before the first assistant frame is business chrome, not a
+// second SDK message source. Render its existing shell through official Message.
+function PendingMessage() {
+  const runtime = useChatRuntime()
+  const selected = useContext(SelectedMessagesContext)
+  const { Message } = useChatComposition()
+  const last = runtime.messages.at(-1)
+  if (!last || selected.some((item) => item.message.id === last.id)) return null
+  return <Message message={last} />
 }

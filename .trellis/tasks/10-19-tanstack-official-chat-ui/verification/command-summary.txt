@@ -1,0 +1,60 @@
+full_check (exit 0)
+$ pnpm lint && pnpm lint:styles && pnpm format:check && pnpm -r typecheck && pnpm test
+apps/server/src/routes/files.ts:131:8: warning oxc(no-async-endpoint-handlers): Express endpoint handler for `/:id/file` should not be `async`. help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`). Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+apps/miniapp/src/pages/capture/index.tsx:167:23: warning eslint(preserve-caught-error): There is no cause error attached to this new thrown error. help: Preserve the original error by using the `cause` property when re-throwing errors.
+apps/miniapp/src/pages/editor/index.tsx:286:11: warning eslint(preserve-caught-error): There is no cause error attached to this new thrown error. help: Preserve the original error by using the `cause` property when re-throwing errors.
+$ node scripts/check-style-backticks.mjs
+Checking formatting...
+All matched files use the correct format.
+apps/miniapp test: ✔ run errors remain failures even if a later terminal event arrives (0.060792ms)
+apps/miniapp test: ℹ tests 8
+apps/miniapp test: ℹ pass 8
+apps/miniapp test: ℹ fail 0
+plugins/storage test:  Test Files  1 passed | 1 skipped (2)
+plugins/storage test:       Tests  13 passed | 2 skipped (15)
+plugins/provider test:  Test Files  2 passed (2)
+plugins/provider test:       Tests  31 passed (31)
+packages/chat test:  Test Files  8 passed (8)
+packages/chat test:       Tests  87 passed (87)
+packages/office test:  Test Files  230 passed (230)
+packages/office test:       Tests  2709 passed (2709)
+packages/renderer test:  Test Files  75 passed (75)
+packages/renderer test:       Tests  581 passed (581)
+apps/server test:  Test Files  122 passed (122)
+apps/server test:       Tests  1365 passed (1365)
+apps/server test:  Test Files  1 passed (1)
+apps/server test:       Tests  10 passed (10)
+apps/server test:  Test Files  1 passed (1)
+apps/server test:       Tests  4 passed (4)
+apps/server test: ℹ tests 2
+apps/server test: ℹ pass 2
+apps/server test: ℹ fail 0
+apps/desktop test:  Test Files  7 passed (7)
+apps/desktop test:       Tests  50 passed (50)
+ℹ tests 6
+ℹ pass 6
+ℹ fail 0
+
+web_build (exit 0)
+  78 |             detail: `文件太大（${formatBytes(file.size)}），上限 ${formatBytes(FILE_MAX_BYTES)}`,
+ 239 |           ...stylePatch,
+ 240 |           ...(scope === 'cell' && !stylePatch.styleName
+ 245 |         setStylePatch((current) => (current === stylePatch ? {} : current))
+ 326 |         if (formatDirty) throw new Error('请先应用或重置其他格式草稿')
+ 326 |         if (formatDirty) throw new Error('请先应用或重置其他格式草稿')
+ [38;5;240m   │[0m [38;5;115mHelp[0m: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+ [38;5;240m   │[0m [38;5;115mHelp[0m: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+✓ built in 14.83s
+
+desktop_build (exit 0)
+✓ built in 28ms
+✓ built in 10ms
+  78 |             detail: `文件太大（${formatBytes(file.size)}），上限 ${formatBytes(FILE_MAX_BYTES)}`,
+ 239 |           ...stylePatch,
+ 240 |           ...(scope === 'cell' && !stylePatch.styleName
+ 245 |         setStylePatch((current) => (current === stylePatch ? {} : current))
+ 326 |         if (formatDirty) throw new Error('请先应用或重置其他格式草稿')
+ 326 |         if (formatDirty) throw new Error('请先应用或重置其他格式草稿')
+ [38;5;240m   │[0m [38;5;115mHelp[0m: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+ [38;5;240m   │[0m [38;5;115mHelp[0m: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+✓ built in 6.94s

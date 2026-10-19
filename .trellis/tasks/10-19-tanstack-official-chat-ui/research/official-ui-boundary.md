@@ -4,7 +4,7 @@
 
 ## 结论
 
-使用发布包 `@tanstack/ai-react/ui` 的 `createChatUI` 与真实 `useChat` 返回对象接线。官方消息、内容和中断选择器参与产品渲染；保留已批准 Mimir 自有展示组件与业务运行层。无需新增UI依赖、复制上游源码或安装已弃用的 `@tanstack/ai-react-ui`。
+使用发布包 `@tanstack/ai-react/ui` 的 `createChatUI` 与真实 `useChat` 返回对象接线。官方消息与内容分发参与产品渲染，公开中断关联使用官方selector；保留已批准 Mimir 自有展示组件与业务运行层。无需新增UI依赖、复制上游源码或安装已弃用的 `@tanstack/ai-react-ui`。
 
 ## 官方版本证据
 
@@ -34,7 +34,7 @@
 | --- | --- |
 | 连续工具共用折叠行 | 使用官方Message/Part选择结果形成薄的相邻分组布局，子项经官方Part/注册工具组件渲染；不复制selector逻辑。保留键/开合，不每token重挂 |
 | 所有格式及历史未知工具 | 复用共享工具目录注册稳定工具renderer；历史未知工具须通过官方公开手动Part render-prop保留只读名称/参数/结果，不能静默消失。展示注册不能成为执行授权 |
-| 文档Agent client_tool中断 | 官方Interrupts/中断上下文用于展示；metadata.kind=client_tool仍交DocxInterruptBridge原目标缓存续传，不能改为通用approval或addToolResult |
+| 文档Agent client_tool中断 | 已安装ai-client/src/types.ts:239及interrupt-manager.ts:1033明确从公开interrupt列表隐藏client-tool-execution；保留原onChunk/DocxInterruptBridge捕获、执行和缓存续传。当前无generic/tool-approval业务，不新增审批UI；不能改为通用approval或addToolResult |
 | 独立FIFO与停止保稿 | 官方Input slot注册现有Composer；Mimir发送动作仍冻结SendIntent并维护唯一业务FIFO。官方SDK queue不成为第二个发送入口。可视队列继续读取同一FIFO；不为了渲染Queue伪造SDK内部排队状态 |
 | 真实附件/专用截图 | 附件侧车、受保护链接、租约与截图目标guard继续使用现有合同；避免snapshot与native image重复 |
 | 回答动作与分支 | 保留sidecar/MessageContext及canonical ID，在官方message shell中按真实消息ID读取；普通UIMessage持久化内容不可被展示转换覆盖 |
@@ -51,6 +51,6 @@
 
 本任务检查官网 https://weknora.weixin.qq.com/ 和固定公开源 https://github.com/Tencent/WeKnora/tree/2c0d8384398ca756ee414eef01b71caf91e2caa6 。本轮官网请求成功（HTTP 200），固定源码包重新获取超时，结果见 `evidence.json`。frontend包0.8.3及Agent源码依据当日已归档证据 `.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/vendor-full-thread/weknora-reference-recheck.json`：AgentStreamDisplay.vue:421仅完成且非空回答开放动作，:448/:452为复制/存知识库。该例有助于核对Mimir动作门控及知识库/Agent业务边界；其Vue/TDesign、过程卡与事件模型不能证明TanStack React封装兼容性，不作为本次视觉或Office编辑参考，不新增它的能力。官网版本不证明线上部署SHA。
 
-## 尚未执行
+## 实施验证
 
-本轮只做发布源码与文档核对，没有改产品、没有运行迁移后产品测试，也没有把既有v7验收算为新接线通过。实施须验证真实host/官方slot/分组/未知工具/中断映射及主侧栏GUI，再给出结果。
+以上研究形成已批准方案，后续实施已完成。真实 host、官方 slot、分组、未知工具、中断边界及主/侧栏均有本轮独立证据；见 [验收记录](../verification/acceptance.md)。原有 v7 验收仅用作基线，没有替代新接线验证。

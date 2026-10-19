@@ -556,7 +556,7 @@ effect 之前**。
 
 **适用边界**：服务端 chat / embed / rerank / summarize 与适配器构造归 TanStack AI，
 适配器只在 `plugins/provider/` 里建。浏览器对话由 `@tanstack/ai-react` 的 `useChat`
-与 Mimir 自有组件承接（§5.4/§5.5）；宿主继续只提供数据、动作与主题。
+与官方 Headless UI 承接，注册 Mimir 展示组件（§5.4/§5.5）；宿主继续只提供数据、动作与主题。
 
 ### 5.1 它提供什么
 
@@ -624,7 +624,7 @@ RUN_STARTED → mimir.conversation → mimir.citations
 普通问答和非流式 `POST /api/conversations/:id/ask` 共用检索与模型选择；
 非流式 SDK 结果在 `services/model.ts` 提取 `ChatResult.text` 后才作为正文保存。
 
-### 5.5 前端：TanStack AI React 与自有组件
+### 5.5 前端：TanStack AI React 与官方 Headless UI
 
 对话整体位于 `packages/chat`：
 
@@ -632,8 +632,9 @@ RUN_STARTED → mimir.conversation → mimir.citations
 | --- | --- |
 | 流式消息状态、停止、恢复 | `@tanstack/ai-react` / `@tanstack/ai-client` |
 | 独立 FIFO、冻结发送快照、草稿与 Agent 守卫 | `runtime/use-mimir-runtime.ts` 与 transport/bridge |
-| 消息、思考、工具、媒体、动作与输入 UI | Mimir 自有组件，遵循批准稿与宿主主题 |
-| Markdown 与半截流式语法 | `@tanstack/markdown` + `streamingMarkdownExtension` |
+| 消息与内容组织 | `@tanstack/ai-react/ui` 的 `createChatUI` 接同一运行实例 |
+| 展示、动作与输入业务 | 注册 Mimir 组件，遵循批准稿与宿主主题 |
+| Markdown 与半截流式语法 | 官方 `TextPart`，接 Mimir 代码组件 |
 
 `use-mimir-runtime.ts` 是唯一运行时入口。宿主通过 `ChatIo` 提供建会话、读历史、存笔记、
 跳转与真实附件上传/删除/租约动作，通过 `composerStatus` 提供文档、模型目录和用量。

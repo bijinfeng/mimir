@@ -1,6 +1,6 @@
 # packages/chat — 对话面板
 
-`@tanstack/ai-react` 的 `useChat` 管理消息与流；Mimir 自有组件管理展示与交互。宿主只通过 `ChatIo` 和 `ChatComposerStatus` 提供动作、目录与状态。组件不得 import renderer 的 api、router 或 queryClient。
+`@tanstack/ai-react` 的 `useChat` 管理消息与流；`@tanstack/ai-react/ui` 官方 Headless UI 负责消息与内容分发，注册 Mimir 展示组件保留外观与业务交互。宿主只通过 `ChatIo` 和 `ChatComposerStatus` 提供动作、目录与状态。组件不得 import renderer 的 api、router 或 queryClient。
 
 ## 运行与展示入口
 
@@ -10,7 +10,8 @@
 - `runtime/DocxInterruptBridge.tsx`：原中断目标、画布工具执行和缓存续传。
 - `runtime/runtime-context.tsx`：原生 `UIMessage`、以消息 ID 关联的 `MessageSidecar`、发送意图与中断目标。
 - `ChatPanel` / `ChatThread`：历史加载、空态、消息列表、滚动与输入布局。
-- `parts/MessageItem.tsx`：按原生 parts 顺序展示正文、真实 reasoning、工具和媒体；引用、失败、停止、附件和动作从该消息 sidecar 读取。
+- `ui/`：模块级 `createChatUI` 接同一真实 `UseChatReturn`，官方 Messages/Message/Parts/Part 组织内容；官方 TextPart 接现有代码组件。不能另建运行实例或伪造 SDK queue 来适配独立 FIFO。
+- `parts/MessageItem.tsx`：消息壳与相邻工具布局保留批准稿；内容通过官方公开组合入口展示，引用、失败、停止、附件和动作从该消息 sidecar 读取。
 - `composer/Composer.tsx` / `ComposerMenus.tsx`：原生输入、IME、附件，以及框内模型、等级、范围菜单。
 
 ## 主题与几何

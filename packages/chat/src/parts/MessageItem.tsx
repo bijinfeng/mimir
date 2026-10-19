@@ -1,4 +1,5 @@
-import type { UIMessage, MessagePart } from '@tanstack/ai'
+import type { UIMessage } from '@tanstack/ai'
+import { MessageParts } from '../ui/MessageParts.js'
 import { useEffect, useRef, useState } from 'react'
 import { Copy, Download, MoreHorizontal, Pencil, RotateCcw, X } from 'lucide-react'
 import { createStyles } from 'antd-style'
@@ -10,10 +11,7 @@ import { AnswerActions } from './AnswerActions.js'
 import { CitationList } from './CitationList.js'
 import { DocxAgentHistoryNotice } from './DocxAgentHistoryNotice.js'
 import { FailureCard, StreamErrorCard } from './FailureNotice.js'
-import { MarkdownPart } from './MarkdownPart.js'
-import { FilePart, ImagePart } from './MediaParts.js'
-import { ReasoningPart } from './ReasoningPart.js'
-import { ToolCallPart, ToolGroup } from './ToolCallPart.js'
+import { ImagePart } from './MediaParts.js'
 import { StoppedNotice } from './StoppedNotice.js'
 const useStyles = createStyles(({ css, token }) => ({
   actions: css`
@@ -111,8 +109,9 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
 }))
-export function MessageItem({ message, index }: { message: UIMessage; index: number }) {
+export function MessageItem({ message }: { message: UIMessage }) {
   const runtime = useChatRuntime()
+  const index = runtime.messages.findIndex((item) => item.id === message.id)
   const api = useMimirChatApi()
   const { styles } = useChatPanelStyles()
   const { styles: local } = useStyles()
@@ -254,45 +253,7 @@ export function MessageItem({ message, index }: { message: UIMessage; index: num
             </div>
           </div>
         ) : (
-          keyedParts(message.parts, message.id).map(({ part, position: partIndex, key }) =>
-            user && part.type === 'text' ? (
-              <div key={key}>{part.content}</div>
-            ) : sidecar.snapshot && part.type === 'image' ? null : part.type === 'tool-call' ? (
-              message.parts[partIndex - 1]?.type === 'tool-call' ? null : (
-                <ToolGroup
-                  halted={
-                    sidecar.stopped
-                      ? 'cancelled'
-                      : sidecar.error || sidecar.failure
-                        ? 'error'
-                        : undefined
-                  }
-                  key={part.id}
-                  parts={message.parts
-                    .slice(
-                      partIndex,
-                      message.parts.findIndex(
-                        (next, i) => i > partIndex && next.type !== 'tool-call',
-                      ) < 0
-                        ? undefined
-                        : message.parts.findIndex(
-                            (next, i) => i > partIndex && next.type !== 'tool-call',
-                          ),
-                    )
-                    .filter(
-                      (next): next is Extract<MessagePart, { type: 'tool-call' }> =>
-                        next.type === 'tool-call',
-                    )}
-                />
-              )
-            ) : (
-              <NativePart
-                key={key}
-                part={part}
-                reasoningRunning={sidecar.reasoningRunning ?? running}
-              />
-            ),
-          )
+          <MessageParts message={message} />
         )}
         {!user &&
           running &&
@@ -409,81 +370,4 @@ export function MessageItem({ message, index }: { message: UIMessage; index: num
       </article>
     </MessageContext>
   )
-}
-function NativePart({ part, reasoningRunning }: { part: MessagePart; reasoningRunning: boolean }) {
-  if (part.type === 'text') return <MarkdownPart text={part.content} />
-  if (part.type === 'thinking' && part.redacted) return <p>加密思考内容不展示</p>
-  if (part.type === 'thinking')
-    return (
-      <ReasoningPart
-        text={part.content}
-        status={{ type: reasoningRunning ? 'running' : 'complete' }}
-      />
-    )
-  if (part.type === 'tool-call') return <ToolCallPart part={part} />
-  if (part.type === 'tool-result')
-    return (
-      <details>
-        <summary>工具结果</summary>
-        <pre>
-          {typeof part.content === 'string' ? part.content : JSON.stringify(part.content, null, 2)}
-        </pre>
-      </details>
-    )
-  if (
-    part.type === 'image' ||
-    part.type === 'document' ||
-    part.type === 'audio' ||
-    part.type === 'video'
-  ) {
-    const source = part.source
-    const mime = source.type === 'data' ? source.mimeType : 'application/octet-stream'
-    const value =
-      source.type === 'url'
-        ? source.value
-        : source.type === 'data'
-          ? `data:${mime};base64,${source.value}`
-          : ''
-    if (part.type === 'image') return <ImagePart image={value} />
-    if (part.type === 'audio') return <audio controls src={value} aria-label="音频附件" />
-    if (part.type === 'video')
-      return <video controls src={value} aria-label="视频附件" style={{ maxWidth: '100%' }} />
-    const metadata = part.metadata as Record<string, unknown> | undefined
-    return (
-      <FilePart
-        data={value}
-        mimeType={mime}
-        filename={typeof metadata?.filename === 'string' ? metadata.filename : '附件'}
-      />
-    )
-  }
-  if (part.type === 'activity')
-    return (
-      <details>
-        <summary>{part.activityType}</summary>
-        <pre>{JSON.stringify(part.content, null, 2)}</pre>
-      </details>
-    )
-  if (part.type === 'structured-output')
-    return <pre>{JSON.stringify(part.data ?? part.partial, null, 2)}</pre>
-  if (part.type === 'subagent')
-    return (
-      <details>
-        <summary>子任务 · {part.subagent.status}</summary>
-        <pre>{JSON.stringify(part.subagent.messages, null, 2)}</pre>
-      </details>
-    )
-  return null
-}
-
-function keyedParts(parts: MessagePart[], messageId: string) {
-  const counts = new Map<string, number>()
-  const result = []
-  let position = 0
-  for (const part of parts) {
-    const number = counts.get(part.type) ?? 0
-    counts.set(part.type, number + 1)
-    result.push({ part, position: position++, key: `${messageId}:${part.type}:${number}` })
-  }
-  return result
 }

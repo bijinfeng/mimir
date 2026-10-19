@@ -7,6 +7,8 @@
 |---|---|
 | 点停止后队首自动发送、输入框又清空 | React 复用停止/发送按钮 DOM，停止处理器回填队首并把按钮更新成 submit 后，浏览器才执行 click 默认动作。停止 click 须 preventDefault；DOM 测试要覆盖事件冒泡结束前提交 React 更新的顺序，不能只依赖 act 延后渲染 |
 | 截图排队后发成普通检索，或第二轮缺少真实会话/当前文档上下文 | 排队构造的实际 HTTP body 必须保留该项冻结参数及真实路由字段。PPTX 截图须在 fetch 边界检查真实 body，缺失时复用同一初始化函数补齐并再次校验目标；测试必须检查第二个真实 HTTP 请求，不能只检查内部初始化函数或队列状态 |
+| 官方 UI 有中断组件，文档 Agent 却等不到执行 | ai-client 将 client-tool-execution 排除在公开 ChatInterrupt 列表之外；DocxInterruptBridge 继续读取原 onChunk 捕获的可信终局中断，不能换成官方 Interrupts 列表或新增第二个执行消费者 |
+| 官方 TextPart 接入后段落间距或代码框接缝漂移 | 新 wrapper 会改变 first/last-child 语义，需核对实际段落边距；代码框覆盖规则须计算 Emotion 生成的完整祖先选择器。框架规则要严格高于正文规则，而非依赖同特异性的注入顺序；浅深主题切换后实测代码头与 pre 相接 |
 | 文档 Agent 工具已改画布，续轮失败后重试却重复执行或丢中断 | 续传必须绑定原 `threadId/runId` 和完整缓存工具结果；SDK fulfilled false 也属失败。桥保留缓存，重试前复核来源、轮次、画布版本，只重传结果。不要重新执行工具，也不再依赖已移除的 assistant-ui 补丁 |
 | **消息排版整批失灵（标记消失、正文回退浏览器默认），但类都定义着** | 样式类**定义了却没有人挂**：整组后代选择器（`[data-role='user'] …`）全靠一个容器类作祖先，容器类漏挂（重构时只渲染了 `<Messages/>` 忘了包壳）它们整批静默失配——界面能用、丑一圈、不报错（实测：抽包后 `ChatThread` 漏挂 `styles.thread`，`›` 标记与 markdown 规范全没了）。样式类必须有消费点，抽完壳 grep 一次 |
 | 打开历史会话空白或真实思考丢失 | SDK 初始消息不是异步历史加载器。先显示加载状态，完成后显式安装历史；`protocolEvents` 经同版 SDK reducer 重放，sidecar 按消息 ID 恢复。失败不能落成空会话 |

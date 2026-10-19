@@ -1,0 +1,112 @@
+{
+  "date": "2026-10-19",
+  "status": "passed",
+  "planning_commit": "c6d6c42",
+  "commands": [
+    {
+      "command": "pnpm check",
+      "exit_code": 0,
+      "session_id": 38259,
+      "includes": [
+        "lint",
+        "lint:styles",
+        "format:check",
+        "workspace typecheck",
+        "workspace tests"
+      ],
+      "passed_tests": {
+        "miniapp": 8,
+        "storage": 13,
+        "provider": 31,
+        "chat": 87,
+        "office": 2709,
+        "renderer": 581,
+        "server_main": 1365,
+        "server_compat": 10,
+        "server_provider": 4,
+        "server_backup": 2,
+        "desktop": 50,
+        "root_scripts": 6
+      },
+      "total_passed_tests": 4866,
+      "skipped_tests": {
+        "storage": 2
+      }
+    },
+    {
+      "command": "pnpm --filter @mimir/web build",
+      "exit_code": 0,
+      "session_id": 44590
+    },
+    {
+      "command": "pnpm --filter @mimir/desktop build",
+      "exit_code": 0,
+      "session_id": 44590
+    },
+    {
+      "command": "pnpm --filter @mimir/chat typecheck",
+      "exit_code": 0,
+      "executor": "implementer and independent reviewer; repeated after final CSS selector change"
+    },
+    {
+      "command": "pnpm --filter @mimir/chat test",
+      "exit_code": 0,
+      "files": 8,
+      "tests": 87,
+      "executor": "implementer, independent reviewer and full check"
+    },
+    {
+      "command": "pnpm --filter @mimir/renderer typecheck",
+      "exit_code": 0
+    },
+    {
+      "command": "related Renderer regressions",
+      "exit_code": 0,
+      "files": 5,
+      "tests": 120,
+      "executor": "implementer; full check additionally covers all 581 Renderer tests"
+    },
+    {
+      "command": "pnpm exec oxlint packages/chat/src",
+      "exit_code": 0,
+      "executor": "independent reviewer"
+    },
+    {
+      "command": "pnpm exec oxfmt --check packages/chat/src",
+      "exit_code": 0,
+      "files": 47,
+      "executor": "independent reviewer"
+    },
+    {
+      "command": "scoped oxlint/oxfmt and chat typecheck after CodeBlock.style.ts specificity fix",
+      "exit_code": 0,
+      "executor": "implementer and independent reviewer"
+    }
+  ],
+  "ordering_note": "Full check started before the final CSS selector-specificity correction; its Chat tests ran before that correction. Fresh scoped lint/format/typecheck and real light/dark theme-switch GUI verified the final CSS. No test rules, timeouts or exclusions were weakened.",
+  "logs": {
+    "full_check": {
+      "local_path": "/private/tmp/mimir-official-ui-check.log",
+      "bytes": 67878,
+      "sha256": "dcc93f931e9aa6299cc9b740ea07074345ce0929f0adb16992a24f54b4a1ffe6"
+    },
+    "web_build": {
+      "local_path": "/private/tmp/mimir-official-ui-web-build.log",
+      "bytes": 130434,
+      "sha256": "1dd0d0594d5c760e8a218ef654920b8109ca43cf8af6640c6a77d193103456c1"
+    },
+    "desktop_build": {
+      "local_path": "/private/tmp/mimir-official-ui-desktop-build.log",
+      "bytes": 130460,
+      "sha256": "1a6ebd21b1d9ff15c50ad7610b1c73fcda20f85f906885c4a3c93a2032a412f0"
+    }
+  },
+  "warnings": "Existing nonblocking lint, Vite config, dynamic-import and chunk-size warnings remain. Storage has 2 pre-existing skipped tests; they are not counted as passed.",
+  "independent_review": "independent-review.md",
+  "gui": "browser-qa.md",
+  "limitations": [
+    "No new native Electron, full IME or screen-reader certification",
+    "No paid-provider certification",
+    "Agent write/interrupt/branch/failure guards validated by actual HTTP/SSE regression tests, not all repeated as GUI actions"
+  ]
+}

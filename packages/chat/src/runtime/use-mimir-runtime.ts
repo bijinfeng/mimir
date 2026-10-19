@@ -880,7 +880,7 @@ export function useMimirRuntime(options: {
     reclaimQueued: restoreQueued,
     clearSnapshotAttachmentError: () => setError(null),
   }
-  return { runtime: view, api }
+  return { runtime: view, api, host: chat }
 }
 function errorText(error: unknown) {
   return error instanceof Error ? error.message : String(error)

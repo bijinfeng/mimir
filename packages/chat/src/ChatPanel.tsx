@@ -3,7 +3,8 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import type { ChatModelSelection } from '@mimir/shared'
 import { useChatPanelStyles } from './ChatPanel.style.js'
 import { ChatThread } from './ChatThread.js'
-import { Composer } from './composer/Composer.js'
+import { ChatUI, OfficialChatProvider } from './ui/kit.js'
+import { ComposerContext } from './ui/context.js'
 import { EmptyStage } from './EmptyStage.js'
 import { MimirChatProvider } from './runtime/chat-context.js'
 import { RuntimeContext } from './runtime/runtime-context.js'
@@ -16,7 +17,7 @@ export function ChatPanel(props: ChatPanelProps) {
   const [modelSelection, setModelSelection] = useState<ChatModelSelection>()
   const [documentId, setDocumentId] = useState<string | null>(props.draft?.documentId ?? null)
   const activeAgent = props.documentAgent ?? props.docxAgent
-  const { runtime, api } = useMimirRuntime({
+  const { runtime, api, host } = useMimirRuntime({
     io: props.io,
     conversationId: props.conversationId,
     onOpenCitation: props.onOpenCitation,
@@ -55,80 +56,90 @@ export function ChatPanel(props: ChatPanelProps) {
   })
   const empty = !runtime.messages.length && !runtime.loading
   const centered = empty && !props.guide
-  const composer = (
-    <Composer
-      runtime={runtime}
-      status={props.composerStatus}
-      io={props.io}
-      documentId={documentId}
-      onDocumentIdChange={setDocumentId}
-      modelSelection={effectiveSelection}
-      onModelSelectionChange={setModelSelection}
-      focusOnMount={props.focusComposer}
-    />
-  )
+  const composerConfig = {
+    runtime,
+    status: props.composerStatus,
+    io: props.io,
+    documentId,
+    onDocumentIdChange: setDocumentId,
+    modelSelection: effectiveSelection,
+    onModelSelectionChange: setModelSelection,
+    focusOnMount: props.focusComposer,
+  }
+  const Input = ChatUI.Input
+  if (!Input) throw new Error('Official composer registration is missing')
+  const composer = <Input />
   return (
     <RuntimeContext value={runtime}>
       <MimirChatProvider api={api}>
-        {activeAgent && (
-          <DocxInterruptBridge
-            agent={activeAgent}
-            getRound={runtime.getRound}
-            advanceVersion={runtime.advanceVersion}
-            registerToolCancel={runtime.registerToolCancel}
-            generateDocxImage={props.io.generateDocxImage}
-            fetchDocxImage={props.io.fetchDocxImage}
-            writeDocxDocument={props.io.writeDocxDocument}
-            analyzeDocxMedia={props.io.analyzeDocxMedia}
-            createDocxDocument={props.io.createDocxDocument}
-            onOpenDocument={props.io.onOpenDocument}
-            revisionMode={props.docxRevisionMode ?? false}
-          />
-        )}
-        <div className={styles.wrap} data-mimir-chat="">
-          <div className={styles.scrollWrap}>
-            <div
-              ref={scroll}
-              className={styles.scroll}
-              data-empty={centered ? '' : undefined}
-              onScroll={() => {
-                const node = scroll.current
-                if (!node) return
-                pinned.current = node.scrollHeight - node.scrollTop - node.clientHeight < 64
-                setAway(!pinned.current)
-                setScrolled(node.scrollTop > 0)
-              }}
-            >
-              <div className={centered ? styles.innerEmpty : styles.inner}>
-                <ChatThread
-                  stage={props.guide ? props.guide(api.ask) : <EmptyStage draft={props.draft} />}
-                  composer={centered ? composer : null}
-                />
+        <OfficialChatProvider chat={host}>
+          <ComposerContext value={composerConfig}>
+            {activeAgent && (
+              <DocxInterruptBridge
+                agent={activeAgent}
+                getRound={runtime.getRound}
+                advanceVersion={runtime.advanceVersion}
+                registerToolCancel={runtime.registerToolCancel}
+                generateDocxImage={props.io.generateDocxImage}
+                fetchDocxImage={props.io.fetchDocxImage}
+                writeDocxDocument={props.io.writeDocxDocument}
+                analyzeDocxMedia={props.io.analyzeDocxMedia}
+                createDocxDocument={props.io.createDocxDocument}
+                onOpenDocument={props.io.onOpenDocument}
+                revisionMode={props.docxRevisionMode ?? false}
+              />
+            )}
+            <div className={styles.wrap} data-mimir-chat="">
+              <div className={styles.scrollWrap}>
+                <div
+                  ref={scroll}
+                  className={styles.scroll}
+                  data-empty={centered ? '' : undefined}
+                  onScroll={() => {
+                    const node = scroll.current
+                    if (!node) return
+                    pinned.current = node.scrollHeight - node.scrollTop - node.clientHeight < 64
+                    setAway(!pinned.current)
+                    setScrolled(node.scrollTop > 0)
+                  }}
+                >
+                  <div className={centered ? styles.innerEmpty : styles.inner}>
+                    <ChatThread
+                      stage={
+                        props.guide ? props.guide(api.ask) : <EmptyStage draft={props.draft} />
+                      }
+                      composer={centered ? composer : null}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={styles.backToBottom}
+                  aria-label="回到底部"
+                  disabled={!away}
+                  onClick={() => {
+                    pinned.current = true
+                    setAway(false)
+                    scroll.current?.scrollTo({
+                      top: scroll.current.scrollHeight,
+                      behavior: 'smooth',
+                    })
+                  }}
+                >
+                  <ArrowDown size={16} />
+                </button>
               </div>
-            </div>
-            <button
-              type="button"
-              className={styles.backToBottom}
-              aria-label="回到底部"
-              disabled={!away}
-              onClick={() => {
-                pinned.current = true
-                setAway(false)
-                scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: 'smooth' })
-              }}
-            >
-              <ArrowDown size={16} />
-            </button>
-          </div>
-          {(!empty || props.guide) && (
-            <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
-              {empty && props.guideActions && !runtime.snapshot && (
-                <div className={styles.composerTop}>{props.guideActions(api.ask)}</div>
+              {(!empty || props.guide) && (
+                <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
+                  {empty && props.guideActions && !runtime.snapshot && (
+                    <div className={styles.composerTop}>{props.guideActions(api.ask)}</div>
+                  )}
+                  {composer}
+                </div>
               )}
-              {composer}
             </div>
-          )}
-        </div>
+          </ComposerContext>
+        </OfficialChatProvider>
       </MimirChatProvider>
     </RuntimeContext>
   )

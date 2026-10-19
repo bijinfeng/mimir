@@ -9,19 +9,14 @@ import { createStyles } from 'antd-style'
  * 块里（底色、边框、圆角、内边距——那是 markdown 正文的排版）。代码块的
  * **框架**要把上下两条圆角接起来，所以要盖掉其中几条。
  *
- * CSS 的胜负按**特异性**算：面板那条是 `[data-role='assistant'] pre`
- * （一个属性 + 一个元素）。这里两条选择器都是「属性 + 属性 + 元素」，
- * 数得比它多，所以在**任何顺序下**都赢——不必依赖样式注入的顺序
- * （那是最脆的一种依赖：注入顺序由 emotion 的插入时机决定，改了别处
- * 的组件就变）。
- *
- * 反过来说：如果把这两条写成「框架类里的 `pre`」（只有一个类 + 元素），
- * 特异性就**低于**面板那条，规则静默失效——症状是代码块顶部多一条边、
- * 圆角接不上，而控制台里什么都没有。
+ * 面板的完整选择器含 thread 哈希类：`.thread [data-role='assistant'] pre`
+ * 的特异性是 (0,2,1)。这里 `&&[data-code-frame] pre` 重复框架类，得到
+ * (0,3,1)，保证严格更高；不能只数模板里的属性而漏掉生成的祖先类。
+ * 因而切换主题或改变组件挂载顺序时，头与 pre 仍保持相接，不依赖注入顺序。
  *
  * ## 框架为什么用 `data-code-frame` 字面属性
  *
- * 它要能被上面那两条选择器命中，而那些选择器是**跨文件**写的
+ * 它要能被上面的选择器命中，而相关选择器是**跨文件**写的
  * （`ChatPanel.style.ts` 的 thread 里没有这个包的哈希类名）。字面属性是
  * 「跨文件的选择器钩子」——与 `apps/web` 里 `.kb-card` 那条先例同一性质
  * （antd-style 的哈希类挂不上字面的后代选择器）。
@@ -34,7 +29,7 @@ export const useCodeBlockStyles = createStyles(({ css, token }) => ({
 
     /* 面板的 thread 里那条「[data-role='assistant'] 后代 pre」给 pre 的
        全套观感——这里只把「与头相接的那两条」改掉 */
-    &[data-code-frame] pre {
+    &&[data-code-frame] pre {
       margin: 0;
       border-top: none;
       border-top-left-radius: 0;

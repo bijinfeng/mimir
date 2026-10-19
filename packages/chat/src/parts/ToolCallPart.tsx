@@ -2,6 +2,7 @@ import { Check, ChevronDown, Loader, XCircle, Wrench } from 'lucide-react'
 import type { ToolCallPart as NativeToolCall } from '@tanstack/ai'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
     margin: 8px 0;
@@ -136,8 +137,10 @@ export function ToolCallPart({
 export function ToolGroup({
   parts,
   halted,
+  children,
 }: {
   parts: NativeToolCall[]
+  children?: ReactNode
   halted?: 'cancelled' | 'error' | undefined
 }) {
   const { styles } = useStyles()
@@ -166,13 +169,16 @@ export function ToolGroup({
             ? '调用中…'
             : halted === 'cancelled'
               ? '已取消'
-              : halted === 'error' || parts.some((part) => outputFailed(part.output))
+              : halted === 'error' ||
+                  parts.some((part) => part.state === 'error' || outputFailed(part.output))
                 ? '调用失败'
                 : '已完成'}
         </small>
         <ChevronDown size={13} />
       </button>
-      {open && parts.map((part) => <ToolCallPart key={part.id} part={part} halted={halted} />)}
+      {open &&
+        (children ??
+          parts.map((part) => <ToolCallPart key={part.id} part={part} halted={halted} />))}
     </section>
   )
 }
