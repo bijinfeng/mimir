@@ -1,0 +1,2536 @@
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters: azure-text.ts
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters: evaluate.ts
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters: files.ts
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/image.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/image.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/image.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/image.ts	2026-10-19 16:49:53
+@@ -31,6 +31,8 @@
+ // Per OpenAI docs: dall-e-2 accepts 1 image to `images.edit()`; the
+ // gpt-image models accept up to 16; dall-e-3 does not support edit at all.
+ const EDIT_MAX_IMAGES: Record<OpenAIImageModel, number> = {
++  'gpt-image-2.5-flare': 16,
++  'gpt-image-2.5-sunburst': 16,
+   'dall-e-2': 1,
+   'gpt-image-1': 16,
+   'gpt-image-1-mini': 16,
+@@ -57,7 +59,8 @@
+  * OpenAI Image Generation Adapter
+  *
+  * Tree-shakeable adapter for OpenAI image generation functionality.
+- * Supports gpt-image-2, gpt-image-1, gpt-image-1-mini, dall-e-3, and dall-e-2 models.
++ * Supports gpt-image-2.5-flare, gpt-image-2.5-sunburst, gpt-image-2,
++ * gpt-image-1, gpt-image-1-mini, dall-e-3, and dall-e-2 models.
+  *
+  * Features:
+  * - Model-specific type-safe provider options
+@@ -123,12 +126,15 @@
+ 
+     // With exactOptionalPropertyTypes, vendor SDK request shapes reject
+     // `T | undefined` in optional fields. Build the request incrementally and
+-    // only set `size` when it's actually defined.
++    // only set `size` when it's actually defined. The SDK's `quality` type
++    // does not list the gpt-image-2.5 `xhigh` / `max` levels yet, so cast the
++    // spread.
+     const request: OpenAI_SDK.Images.ImageGenerateParams = {
+       model,
+       prompt,
+       n: numberOfImages ?? 1,
+-      ...(modelOptions ?? {}),
++      ...((modelOptions ??
++        {}) as Partial<OpenAI_SDK.Images.ImageGenerateParamsNonStreaming>),
+     }
+     if (size !== undefined) {
+       request.size = size
+@@ -192,10 +198,9 @@
+ 
+   /**
+    * Image-conditioned generation via OpenAI's `images.edit()` endpoint.
+-   * dall-e-2 accepts 1 input image; gpt-image-2 / gpt-image-1 /
+-   * gpt-image-1-mini accept up to 16; dall-e-3 rejects entirely. A part with
+-   * `metadata.role === 'mask'` is routed to the SDK's `mask` field (PNG with
+-   * alpha channel).
++   * dall-e-2 accepts 1 input image; the gpt-image models accept up to 16;
++   * dall-e-3 rejects entirely. A part with `metadata.role === 'mask'` is
++   * routed to the SDK's `mask` field (PNG with alpha channel).
+    */
+   private async editImages(args: {
+     model: OpenAIImageModel
+@@ -211,7 +216,7 @@
+     if (maxImages === 0) {
+       throw new Error(
+         `${this.name}: model "${model}" does not support image prompt parts. ` +
+-          `Use gpt-image-2, gpt-image-1, gpt-image-1-mini, or dall-e-2 for image-conditioned generation.`,
++          `Use a gpt-image model or dall-e-2 for image-conditioned generation.`,
+       )
+     }
+ 
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/text-chat-completions.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/text-chat-completions.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/text-chat-completions.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/text-chat-completions.ts	2026-10-19 16:49:53
+@@ -1,17 +1,24 @@
+ import OpenAI from 'openai'
+ import { OpenAIBaseChatCompletionsTextAdapter } from '@tanstack/openai-base'
+ import { getOpenAIApiKeyFromEnv } from '../utils/client'
++import {
++  OPENAI_MODEL_INPUT_MODALITIES,
++  OPENAI_MODEL_REASONING,
++} from '../model-meta'
++import { chatPromptCacheFields } from '../prompt-cache'
+ import type {
+   OPENAI_CHAT_MODELS,
+   OpenAIChatModel,
+   OpenAIChatModelProviderOptionsByName,
+   OpenAIChatModelToolCapabilitiesByName,
+   OpenAIModelInputModalitiesByName,
++  OpenAIModelReasoningByName,
+ } from '../model-meta'
+-import type { Modality } from '@tanstack/ai'
++import type { Modality, ReasoningCapability, TextOptions } from '@tanstack/ai'
+ import type { OpenAIMessageMetadataByModality } from '../message-types'
+ import type { OpenAIClientConfig } from '../utils/client'
+ import type { ExternalTextProviderOptions } from '../text/text-provider-options'
++import type { OpenAIBaseTextAdapterOptions } from '@tanstack/openai-base'
+ 
+ /**
+  * Configuration for the OpenAI Chat Completions adapter.
+@@ -21,7 +28,8 @@
+  * chat-completions-only knob (e.g. legacy `function_call`) has a place to land
+  * without leaking into the Responses adapter's surface.
+  */
+-export interface OpenAIChatCompletionsConfig extends OpenAIClientConfig {}
++export interface OpenAIChatCompletionsConfig
++  extends OpenAIClientConfig, OpenAIBaseTextAdapterOptions {}
+ 
+ export type OpenAIChatCompletionsProviderOptions = ExternalTextProviderOptions
+ 
+@@ -40,6 +48,11 @@
+     ? NonNullable<OpenAIChatModelToolCapabilitiesByName[TModel]>
+     : readonly []
+ 
++type ResolveReasoning<TModel extends string> =
++  TModel extends keyof OpenAIModelReasoningByName
++    ? OpenAIModelReasoningByName[TModel]
++    : never
++
+ /**
+  * OpenAI Text adapter targeting the **Chat Completions** API
+  * (`/v1/chat/completions`).
+@@ -55,17 +68,38 @@
+     ResolveInputModalities<TModel>,
+   TToolCapabilities extends ReadonlyArray<string> =
+     ResolveToolCapabilities<TModel>,
++  TReasoning extends ReasoningCapability = ResolveReasoning<TModel>,
+ > extends OpenAIBaseChatCompletionsTextAdapter<
+   TModel,
+   TProviderOptions,
+   TInputModalities,
+   OpenAIMessageMetadataByModality,
+-  TToolCapabilities
++  TToolCapabilities,
++  TReasoning
+ > {
+   override readonly kind = 'text' as const
++  override readonly inputModalities = OPENAI_MODEL_INPUT_MODALITIES[this.model]
+ 
+   constructor(config: OpenAIChatCompletionsConfig, model: TModel) {
+-    super(model, 'openai-chat', new OpenAI(config))
++    super(model, 'openai-chat', new OpenAI(config), config)
++  }
++
++  /** `chat({ reasoning })` goes out as `reasoning_effort`. */
++  protected override modelReasoning(model: string) {
++    return OPENAI_MODEL_REASONING[model]
++  }
++
++  /** The request, plus the prompt cache fields for `chat({ promptCache })`. */
++  protected override mapOptionsToRequest(options: TextOptions) {
++    // The cache fields go first, so a value the caller set in `modelOptions`
++    // (already on the base request) wins.
++    return {
++      ...chatPromptCacheFields(options.promptCache, {
++        baseURL: this.client.baseURL ?? '',
++        longRetention: true,
++      }),
++      ...super.mapOptionsToRequest(options),
++    }
+   }
+ }
+ 
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/text.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/text.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/text.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/text.ts	2026-10-19 16:49:53
+@@ -3,27 +3,56 @@
+ import { validateTextProviderOptions } from '../text/text-provider-options'
+ import { convertToolsToProviderFormat } from '../tools'
+ import { getOpenAIApiKeyFromEnv } from '../utils/client'
+-import { openAIModelRejectsSamplingParams } from '../model-meta'
++import {
++  OPENAI_MODEL_INPUT_MODALITIES,
++  OPENAI_MODEL_MID_CONVERSATION_CHANNELS,
++  OPENAI_MODEL_REASONING,
++  openAIModelRejectsSamplingParams,
++  openAIModelUsesExplicitPromptCache,
++} from '../model-meta'
++import { responsesPromptCacheFields } from '../prompt-cache'
+ import type {
+   OPENAI_CHAT_MODELS,
+   OpenAIChatModel,
+   OpenAIChatModelProviderOptionsByName,
+   OpenAIChatModelToolCapabilitiesByName,
+   OpenAIModelInputModalitiesByName,
++  OpenAIModelReasoningByName,
+ } from '../model-meta'
+-import type { ResponseCreateParams } from 'openai/resources/responses/responses'
+-import type { Modality, TextOptions } from '@tanstack/ai'
+ import type {
++  ResponseCreateParams,
++  Tool as ResponsesTool,
++} from 'openai/resources/responses/responses'
++import type {
++  AnyTool,
++  MidConversationChannels,
++  Modality,
++  ReasoningCapability,
++  TextOptions,
++} from '@tanstack/ai'
++import type {
+   ExternalTextProviderOptions,
+   InternalTextProviderOptions,
+ } from '../text/text-provider-options'
+ import type { OpenAIMessageMetadataByModality } from '../message-types'
+ import type { OpenAIClientConfig } from '../utils/client'
++import type { OpenAIBaseTextAdapterOptions } from '@tanstack/openai-base'
+ 
+ /**
+  * Configuration for OpenAI text adapter
+  */
+-export interface OpenAITextConfig extends OpenAIClientConfig {}
++export interface OpenAITextConfig
++  extends OpenAIClientConfig, OpenAIBaseTextAdapterOptions {
++  /**
++   * The mid-conversation channels (`additional_tools` and a mid-conversation
++   * `developer` message) of the models that have them. When absent, they are
++   * on only for OpenAI's own API: a `baseURL`, a `fetch`, or the SDK's
++   * `OPENAI_BASE_URL` env var turns the default off.
++   * `true` turns them on anyway, for a gateway that passes the changes.
++   * `false` turns them off, so every request is built as before.
++   */
++  midConversationChannels?: boolean
++}
+ 
+ /**
+  * Alias for TextProviderOptions
+@@ -52,6 +81,12 @@
+     ? OpenAIModelInputModalitiesByName[TModel]
+     : readonly ['text', 'image', 'audio']
+ 
++/** The reasoning levels of a model, for `chat({ reasoning })`. `never`: none. */
++type ResolveReasoning<TModel extends string> =
++  TModel extends keyof OpenAIModelReasoningByName
++    ? OpenAIModelReasoningByName[TModel]
++    : never
++
+ /**
+  * Resolve tool capabilities for a specific model.
+  * If the model has explicit tools in the map, use those; otherwise use empty tuple.
+@@ -83,25 +118,58 @@
+     ResolveInputModalities<TModel>,
+   TToolCapabilities extends ReadonlyArray<string> =
+     ResolveToolCapabilities<TModel>,
++  TReasoning extends ReasoningCapability = ResolveReasoning<TModel>,
+ > extends OpenAIBaseResponsesTextAdapter<
+   TModel,
+   TProviderOptions,
+   TInputModalities,
+   OpenAIMessageMetadataByModality,
+-  TToolCapabilities
++  TToolCapabilities,
++  TReasoning
+ > {
+   override readonly kind = 'text' as const
+   override readonly name = 'openai' as const
++  // OpenAI's Responses endpoint consumes `file_id` references issued by its
++  // Files API (`openaiFiles()`). The default is undefined (unsupported) so
++  // compatible subclasses of the openai-base adapter (Grok, Bedrock, custom)
++  // — which have no such surface — fail closed in preflight.
++  override readonly supportsFileSources = true
++  override readonly inputModalities = OPENAI_MODEL_INPUT_MODALITIES[this.model]
++  /** Set from `OPENAI_MODEL_MID_CONVERSATION_CHANNELS` in the constructor. */
++  override readonly midConversationChannels:
++    | MidConversationChannels
++    | undefined = undefined
+ 
+   constructor(config: OpenAITextConfig, model: TModel) {
+-    super(model, 'openai', new OpenAI(config))
++    super(model, 'openai', new OpenAI(config), config)
++    // On by default only on OpenAI's own API: a proxy or a gateway (a
++    // `baseURL`, a `fetch`, or the SDK's OPENAI_BASE_URL env var) may not
++    // pass the changes. The option wins.
++    const envBaseURL =
++      typeof process !== 'undefined' && Boolean(process.env.OPENAI_BASE_URL)
++    if (
++      config.midConversationChannels ??
++      !(config.baseURL || config.fetch || envBaseURL)
++    ) {
++      this.midConversationChannels =
++        OPENAI_MODEL_MID_CONVERSATION_CHANNELS[model]
++    }
+   }
+ 
++  /** OpenAI's full tool converter (file_search, web_search, etc.). */
++  protected override convertTools(tools: Array<AnyTool>): Array<ResponsesTool> {
++    return convertToolsToProviderFormat(tools)
++  }
++
++  /** `chat({ reasoning })` goes out as `reasoning: { effort, summary }`. */
++  protected override modelReasoning(model: string) {
++    return OPENAI_MODEL_REASONING[model]
++  }
++
+   /**
+    * Maps common options to OpenAI-specific format.
+-   * Overrides the base class to use OpenAI's full tool converter
+-   * (supporting special tool types like file_search, web_search, etc.)
+-   * and to apply OpenAI-specific provider option validation.
++   * Overrides the base class to apply OpenAI-specific provider option
++   * validation and request fields. The tools go through `convertTools`.
+    */
+   protected override mapOptionsToRequest(
+     options: TextOptions<TProviderOptions>,
+@@ -120,21 +188,28 @@
+       })
+     }
+ 
+-    // Delegate to the base for input mapping, system prompts, modelOptions
+-    // precedence, and native combined-mode `text.format` wiring (#605). We
+-    // hand it a tools-less view of `options` so the base doesn't run its
+-    // narrower tool converter — we re-run them through OpenAI's full
+-    // converter (file_search, web_search, etc.) and layer the result on top.
+-    const { tools: _baseTools, ...baseRequest } = super.mapOptionsToRequest({
+-      ...options,
+-      tools: undefined,
+-    })
++    // Delegate to the base for input mapping, system prompts, tools,
++    // modelOptions precedence, and native combined-mode `text.format` wiring
++    // (#605). The base converts the tools with `convertTools` (OpenAI's full
++    // converter), so a mid-conversation change sends the start set and its
++    // `additional_tools` items in this format too. The base also gives the
++    // strict-fallback warning.
++    const { tools: baseTools, ...baseRequest } = super.mapOptionsToRequest(
++      options,
++    )
++    // Only tools from `options.tools`, as before: the base also keeps a
++    // `modelOptions.tools`, which this adapter has never sent.
++    const tools = options.tools?.length ? baseTools : undefined
+ 
+-    const tools = options.tools
+-      ? convertToolsToProviderFormat(options.tools)
+-      : undefined
+-
++    // `chat({ promptCache })` fields go first, so a value the caller set in
++    // `modelOptions` (already on `baseRequest`) wins.
++    const promptCacheFields = responsesPromptCacheFields(options.promptCache, {
++      explicitMode: openAIModelUsesExplicitPromptCache(options.model),
++      longRetention: true,
++      baseURL: this.client.baseURL ?? '',
++    })
+     const request: Omit<ResponseCreateParams, 'stream'> = {
++      ...promptCacheFields,
+       ...baseRequest,
+       ...(tools && tools.length > 0 && { tools }),
+     }
+@@ -157,6 +232,23 @@
+       openAIModelRejectsSamplingParams(options.model)
+     ) {
+       request.include = ['reasoning.encrypted_content']
++    }
++
++    // OpenAI only returns the URLs used by a hosted web search when this
++    // response item is included. Preserve caller entries and add the item for
++    // branded web search tools only. A custom function named `web_search` has
++    // no internal provider-tool discriminator and must not change the request.
++    const hasWebSearchTool = options.tools?.some((tool) => {
++      const kind = tool.metadata?.['__kind']
++      return (
++        kind === 'openai.web_search' || kind === 'openai.web_search_preview'
++      )
++    })
++    if (hasWebSearchTool) {
++      const include = request.include ?? []
++      if (!include.includes('web_search_call.action.sources')) {
++        request.include = [...include, 'web_search_call.action.sources']
++      }
+     }
+ 
+     return request
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/video.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/video.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/adapters/video.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/adapters/video.ts	2026-10-19 16:49:53
+@@ -1,49 +1,36 @@
+ import OpenAI from 'openai'
+ import { resolveMediaPrompt } from '@tanstack/ai'
+-import { BaseVideoAdapter } from '@tanstack/ai/adapters'
++import { BaseVideoAdapter, snapToDurationOption } from '@tanstack/ai/adapters'
+ import { toRunErrorPayload } from '@tanstack/ai/adapter-internals'
+-import { arrayBufferToBase64 } from '@tanstack/ai-utils'
+ import { getOpenAIApiKeyFromEnv } from '../utils/client'
+ import { imagePartToFile } from '../image/image-input-to-file'
+ import {
++  getOpenAIVideoDurationOptions,
+   toApiSeconds,
+   validateVideoSeconds,
+   validateVideoSize,
+ } from '../video/video-provider-options'
++import type { DurationOptions } from '@tanstack/ai/adapters'
+ import type {
+   VideoGenerationOptions,
+   VideoJobResult,
+   VideoStatusResult,
++  VideoStreamResult,
+   VideoUrlResult,
+ } from '@tanstack/ai'
+ import type OpenAI_SDK from 'openai'
+ import type { OpenAIVideoModel } from '../model-meta'
+ import type {
++  OpenAIVideoModelDurationByName,
+   OpenAIVideoModelInputModalitiesByName,
+   OpenAIVideoModelProviderOptionsByName,
+   OpenAIVideoModelSizeByName,
+   OpenAIVideoProviderOptions,
++  OpenAIVideoSeconds,
+ } from '../video/video-provider-options'
+ import type { OpenAIClientConfig } from '../utils/client'
+ 
+ /**
+- * Threshold for emitting a "this download will probably OOM serverless
+- * runtimes" warning. Anything larger than this (in bytes) gets surfaced via
+- * console.warn — workers and small isolates routinely run out of memory once
+- * a downloaded video is base64-encoded.
+- */
+-const LARGE_MEDIA_BUFFER_BYTES = 10 * 1024 * 1024
+-
+-function warnIfLargeMediaBuffer(byteLength: number, source: string): void {
+-  if (byteLength <= LARGE_MEDIA_BUFFER_BYTES) return
+-  console.warn(
+-    `[openai.${source}] downloaded ${(byteLength / 1024 / 1024).toFixed(1)} MiB into memory before base64 encoding. ` +
+-      `Workers/serverless runtimes commonly run out of memory above ~10 MiB. ` +
+-      `Consider streaming the video through a CDN or your own storage layer instead.`,
+-  )
+-}
+-
+-/**
+  * Configuration for OpenAI video adapter.
+  *
+  * @experimental Video generation is an experimental feature and may change.
+@@ -81,7 +68,8 @@
+   OpenAIVideoProviderOptions,
+   OpenAIVideoModelProviderOptionsByName,
+   OpenAIVideoModelSizeByName,
+-  OpenAIVideoModelInputModalitiesByName
++  OpenAIVideoModelInputModalitiesByName,
++  OpenAIVideoModelDurationByName
+ > {
+   readonly name = 'openai' as const
+ 
+@@ -99,7 +87,11 @@
+   }
+ 
+   async createVideoJob(
+-    options: VideoGenerationOptions<OpenAIVideoProviderOptions>,
++    options: VideoGenerationOptions<
++      OpenAIVideoProviderOptions,
++      OpenAIVideoModelSizeByName[TModel],
++      OpenAIVideoModelDurationByName[TModel]
++    >,
+   ): Promise<VideoJobResult> {
+     const { model, size, duration, modelOptions } = options
+ 
+@@ -146,8 +138,6 @@
+       request.size = resolvedSize
+     }
+     if (seconds !== undefined) {
+-      // `toApiSeconds` returns `OpenAIVideoSeconds | undefined`; we already
+-      // guarded the input, but the signature still includes `undefined`.
+       const apiSeconds = toApiSeconds(seconds)
+       if (apiSeconds !== undefined) {
+         request.seconds = apiSeconds
+@@ -192,10 +182,7 @@
+       expires_at?: number
+       error?: { message?: string }
+     }>
+-    downloadContent?: (id: string) => Promise<Response>
+-    content?: (id: string) => Promise<unknown>
+-    getContent?: (id: string) => Promise<unknown>
+-    download?: (id: string) => Promise<unknown>
++    downloadContent: (id: string) => Promise<Response>
+   } {
+     return (this.client as { videos: any }).videos
+   }
+@@ -223,7 +210,9 @@
+     }
+   }
+ 
+-  async getVideoUrl(jobId: string): Promise<VideoUrlResult> {
++  override async getVideo(
++    jobId: string,
++  ): Promise<VideoUrlResult | VideoStreamResult> {
+     try {
+       const videosClient = this.getVideosClient()
+ 
+@@ -243,95 +232,14 @@
+         }
+       }
+ 
+-      // SDK download fall-through: try the various possible method names.
+-      if (typeof videosClient.downloadContent === 'function') {
+-        const contentResponse = await videosClient.downloadContent(jobId)
+-        const videoBlob = await contentResponse.blob()
+-        const buffer = await videoBlob.arrayBuffer()
+-        warnIfLargeMediaBuffer(buffer.byteLength, 'video.downloadContent')
+-        const base64 = arrayBufferToBase64(buffer)
+-        const mimeType =
+-          contentResponse.headers.get('content-type') || 'video/mp4'
+-        // Omit `expiresAt` to satisfy exactOptionalPropertyTypes; data URLs do
+-        // not have a vendor-provided expiry.
+-        return {
+-          jobId,
+-          url: `data:${mimeType};base64,${base64}`,
+-        }
+-      }
+-
+-      let response: any
+-      if (typeof videosClient.content === 'function') {
+-        response = await videosClient.content(jobId)
+-      } else if (typeof videosClient.getContent === 'function') {
+-        response = await videosClient.getContent(jobId)
+-      } else if (typeof videosClient.download === 'function') {
+-        response = await videosClient.download(jobId)
+-      } else {
+-        // Last resort: raw fetch with auth header.
+-        const baseUrl = this.clientConfig.baseURL || 'https://api.openai.com/v1'
+-        const apiKey = this.clientConfig.apiKey
+-
+-        const contentResponse = await fetch(
+-          `${baseUrl}/videos/${jobId}/content`,
+-          { method: 'GET', headers: { Authorization: `Bearer ${apiKey}` } },
+-        )
+-
+-        if (!contentResponse.ok) {
+-          const contentType = contentResponse.headers.get('content-type')
+-          if (contentType?.includes('application/json')) {
+-            const errorData = await contentResponse.json().catch(() => ({}))
+-            throw new Error(
+-              errorData.error?.message ||
+-                `Failed to get video content: ${contentResponse.status}`,
+-            )
+-          }
+-          throw new Error(
+-            `Failed to get video content: ${contentResponse.status}`,
+-          )
+-        }
+-
+-        const videoBlob = await contentResponse.blob()
+-        const buffer = await videoBlob.arrayBuffer()
+-        warnIfLargeMediaBuffer(buffer.byteLength, 'video.fetch')
+-        const base64 = arrayBufferToBase64(buffer)
+-        const mimeType =
+-          contentResponse.headers.get('content-type') || 'video/mp4'
+-        return {
+-          jobId,
+-          url: `data:${mimeType};base64,${base64}`,
+-        }
+-      }
+-
+-      // The fall-through SDK methods produce a Blob-ish or fetch-`Response`-ish
+-      // object. Read as bytes + wrap in a data URL so callers see a playable
+-      // URL instead of an endpoint URL.
+-      const fallthroughBlob =
+-        typeof response?.blob === 'function'
+-          ? await response.blob()
+-          : response instanceof Blob
+-            ? response
+-            : null
+-      if (!fallthroughBlob) {
+-        throw new Error(
+-          `Video content download via SDK fall-through returned an unexpected shape (no blob()).`,
+-        )
+-      }
+-      const fallthroughBuffer = await fallthroughBlob.arrayBuffer()
+-      warnIfLargeMediaBuffer(
+-        fallthroughBuffer.byteLength,
+-        'video.sdkFallthrough',
+-      )
+-      const fallthroughBase64 = arrayBufferToBase64(fallthroughBuffer)
+-      const fallthroughMime =
+-        (typeof response?.headers?.get === 'function'
+-          ? response.headers.get('content-type')
+-          : undefined) ||
+-        fallthroughBlob.type ||
+-        'video/mp4'
++      // No URL: hand the download stream to generation middleware (which
++      // stores it and sets the URL) instead of buffering the whole video.
++      const response = await videosClient.downloadContent(jobId)
++      if (!response.body) throw new Error('Video download returned no body')
+       return {
+         jobId,
+-        url: `data:${fallthroughMime};base64,${fallthroughBase64}`,
++        body: response.body,
++        contentType: response.headers.get('content-type') || 'video/mp4',
+       }
+     } catch (error: any) {
+       if (error.status === 404) {
+@@ -344,6 +252,23 @@
+       }
+       throw error
+     }
++  }
++
++  override availableDurations(): DurationOptions<OpenAIVideoSeconds> {
++    return getOpenAIVideoDurationOptions(this.model)
++  }
++
++  /**
++   * Returns the API string (`'4' | '8' | '12'`). Ties keep the earlier
++   * option, so `6` and `"6s"` snap to `'4'`.
++   */
++  override snapDuration(
++    input: number | string,
++  ): OpenAIVideoSeconds | undefined {
++    return snapToDurationOption(
++      input,
++      getOpenAIVideoDurationOptions(this.model),
++    )
+   }
+ 
+   protected mapStatus(
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/compatible/adapter.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/compatible/adapter.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/compatible/adapter.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/compatible/adapter.ts	2026-10-19 16:49:53
+@@ -3,8 +3,10 @@
+   OpenAIBaseResponsesTextAdapter,
+ } from '@tanstack/openai-base'
+ import type OpenAI from 'openai'
++import type { ClientOptions } from 'openai'
+ import type { Modality } from '@tanstack/ai'
+ import type { OpenAIMessageMetadataByModality } from '../message-types'
++import type { OpenAIBaseTextAdapterOptions } from '@tanstack/openai-base'
+ 
+ /**
+  * Generic OpenAI-compatible adapter over the Chat Completions API
+@@ -24,10 +26,43 @@
+   TToolCapabilities
+ > {
+   override readonly kind = 'text' as const
++  readonly maxTokensKey = 'max_tokens'
+ 
+-  constructor(client: OpenAI, model: TModel, name: string) {
+-    super(model, name, client)
++  constructor(
++    client: OpenAI,
++    model: TModel,
++    name: string,
++    options?: OpenAIBaseTextAdapterOptions & Pick<ClientOptions, 'fetch'>,
++  ) {
++    super(model, name, client, options)
+   }
++
++  /**
++   * OpenAI-compatible reasoning providers stream their thinking outside the
++   * OpenAI wire format, on `delta.reasoning_content` (DeepSeek, Qwen, GLM,
++   * Kimi, most vLLM/SGLang deployments), `delta.reasoning` (a smaller set of
++   * gateways), or `delta.reasoning_text` (GitHub Copilot). The base adapter has no reasoning hook by default because plain
++   * Chat Completions carries none, so without this the thinking was dropped
++   * silently and the only way to see it was to monkey-patch the prototype.
++   *
++   * Same shape as the dedicated adapters that already do this
++   * (`@tanstack/ai-cloudflare`, `@tanstack/ai-byteplus`, `@tanstack/ai-groq`).
++   * Providers that send neither field are unaffected.
++   */
++  protected override extractReasoning(
++    chunk: OpenAI.Chat.Completions.ChatCompletionChunk,
++  ): { text: string } | undefined {
++    const delta = chunk.choices?.[0]?.delta as
++      | {
++          reasoning?: unknown
++          reasoning_content?: unknown
++          reasoning_text?: unknown
++        }
++      | undefined
++    const raw =
++      delta?.reasoning_content ?? delta?.reasoning ?? delta?.reasoning_text
++    return typeof raw === 'string' && raw.length > 0 ? { text: raw } : undefined
++  }
+ }
+ 
+ /**
+@@ -48,8 +83,14 @@
+   TToolCapabilities
+ > {
+   override readonly kind = 'text' as const
++  readonly maxTokensKey = 'max_output_tokens'
+ 
+-  constructor(client: OpenAI, model: TModel, name: string) {
+-    super(model, name, client)
++  constructor(
++    client: OpenAI,
++    model: TModel,
++    name: string,
++    options?: OpenAIBaseTextAdapterOptions & Pick<ClientOptions, 'fetch'>,
++  ) {
++    super(model, name, client, options)
+   }
+ }
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/compatible/index.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/compatible/index.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/compatible/index.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/compatible/index.ts	2026-10-19 16:49:53
+@@ -50,6 +50,7 @@
+     name = DEFAULT_NAME,
+     models: _models,
+     api = 'chat-completions',
++    strictFallbackWarning,
+     ...clientOptions
+   } = config
+   const client = new OpenAI(clientOptions)
+@@ -61,14 +62,20 @@
+         ResolveCompatOptions<TModels, TModelName>,
+         ResolveCompatInput<TModels, TModelName>,
+         ResolveCompatTools<TModels, TModelName>
+-      >(client, model, name)
++      >(client, model, name, {
++        strictFallbackWarning,
++        fetch: clientOptions.fetch,
++      })
+     }
+     return new OpenAICompatibleChatAdapter<
+       TModelName,
+       ResolveCompatOptions<TModels, TModelName>,
+       ResolveCompatInput<TModels, TModelName>,
+       ResolveCompatTools<TModels, TModelName>
+-    >(client, model, name)
++    >(client, model, name, {
++      strictFallbackWarning,
++      fetch: clientOptions.fetch,
++    })
+   }
+ }
+ 
+@@ -93,11 +100,20 @@
+   const {
+     name = DEFAULT_NAME,
+     api = 'chat-completions',
++    strictFallbackWarning,
+     ...clientOptions
+   } = config
+   const client = new OpenAI(clientOptions)
+   if (api === 'responses') {
+-    return new OpenAICompatibleResponsesAdapter<TModelName>(client, model, name)
++    return new OpenAICompatibleResponsesAdapter<TModelName>(
++      client,
++      model,
++      name,
++      { strictFallbackWarning, fetch: clientOptions.fetch },
++    )
+   }
+-  return new OpenAICompatibleChatAdapter<TModelName>(client, model, name)
++  return new OpenAICompatibleChatAdapter<TModelName>(client, model, name, {
++    strictFallbackWarning,
++    fetch: clientOptions.fetch,
++  })
+ }
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/compatible/types.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/compatible/types.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/compatible/types.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/compatible/types.ts	2026-10-19 16:49:53
+@@ -1,5 +1,6 @@
+ import type { ExtendedModelDef } from '@tanstack/ai'
+ import type { ClientOptions } from 'openai'
++import type { OpenAIBaseTextAdapterOptions } from '@tanstack/openai-base'
+ 
+ /** A model entry: either a bare id string or a rich createModel() def. */
+ export type CompatibleModelInput = string | ExtendedModelDef
+@@ -75,7 +76,10 @@
+ /** Provider-factory configuration. */
+ export interface OpenAICompatibleConfig<
+   TModels extends ReadonlyArray<CompatibleModelInput>,
+-> extends Omit<ClientOptions, 'apiKey' | 'baseURL'> {
++>
++  extends
++    Omit<ClientOptions, 'apiKey' | 'baseURL'>,
++    OpenAIBaseTextAdapterOptions {
+   name?: string
+   baseURL: string
+   apiKey: NonNullable<ClientOptions['apiKey']>
+@@ -84,10 +88,10 @@
+ }
+ 
+ /** One-shot helper configuration (single model). */
+-export interface OpenAICompatibleTextConfig extends Omit<
+-  ClientOptions,
+-  'apiKey' | 'baseURL'
+-> {
++export interface OpenAICompatibleTextConfig
++  extends
++    Omit<ClientOptions, 'apiKey' | 'baseURL'>,
++    OpenAIBaseTextAdapterOptions {
+   name?: string
+   baseURL: string
+   apiKey: NonNullable<ClientOptions['apiKey']>
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/image/image-input-to-file.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/image/image-input-to-file.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/image/image-input-to-file.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/image/image-input-to-file.ts	2026-10-19 16:49:53
+@@ -1,4 +1,5 @@
+ import { base64ToArrayBuffer } from '@tanstack/ai-utils'
++import { isFileSource, unsupportedFileSourceError } from '@tanstack/ai'
+ import type { ImagePart, MediaInputMetadata } from '@tanstack/ai'
+ 
+ const DEFAULT_MIME = 'image/png'
+@@ -43,6 +44,15 @@
+   allowUrlFetch: boolean,
+ ): Promise<File> {
+   ensureFileSupport()
++
++  if (isFileSource(part.source)) {
++    // The edits / Sora input_reference endpoints are multipart and require the
++    // actual bytes; there's no "reference an uploaded file_id" option here.
++    throw unsupportedFileSourceError(
++      'openai',
++      'on the images/edits + Sora input_reference endpoints, which require uploaded bytes — pass a data: URI or inline image data',
++    )
++  }
+ 
+   if (part.source.type === 'data') {
+     const mimeType = part.source.mimeType || DEFAULT_MIME
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/image/image-provider-options.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/image/image-provider-options.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/image/image-provider-options.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/image/image-provider-options.ts	2026-10-19 16:49:53
+@@ -12,6 +12,11 @@
+ export type GptImageQuality = 'high' | 'medium' | 'low' | 'auto'
+ 
+ /**
++ * Quality options for gpt-image-2.5-flare and gpt-image-2.5-sunburst models
++ */
++export type GptImage25Quality = GptImageQuality | 'xhigh' | 'max'
++
++/**
+  * Quality options for dall-e-3 model
+  */
+ export type DallE3Quality = 'hd' | 'standard'
+@@ -123,6 +128,21 @@
+ export type GptImage1MiniProviderOptions = GptImage1ProviderOptions
+ 
+ /**
++ * Provider options for gpt-image-2.5-flare and gpt-image-2.5-sunburst models.
++ * Same as gpt-image-1, plus the `xhigh` and `max` quality levels.
++ */
++export interface GptImage25ProviderOptions extends Omit<
++  GptImage1ProviderOptions,
++  'quality'
++> {
++  /**
++   * The quality of the image.
++   * @default 'auto'
++   */
++  quality?: GptImage25Quality
++}
++
++/**
+  * Provider options for dall-e-3 model
+  * Field names match the OpenAI API for direct spreading
+  */
+@@ -171,6 +191,7 @@
+  * Union of all OpenAI image provider options
+  */
+ export type OpenAIImageProviderOptions =
++  | GptImage25ProviderOptions
+   | GptImage1ProviderOptions
+   | GptImage1MiniProviderOptions
+   | DallE3ProviderOptions
+@@ -181,6 +202,8 @@
+  * Used by the core AI types to narrow providerOptions based on the selected model.
+  */
+ export type OpenAIImageModelProviderOptionsByName = {
++  'gpt-image-2.5-flare': GptImage25ProviderOptions
++  'gpt-image-2.5-sunburst': GptImage25ProviderOptions
+   'gpt-image-2': GptImage1ProviderOptions
+   'gpt-image-1': GptImage1ProviderOptions
+   'gpt-image-1-mini': GptImage1MiniProviderOptions
+@@ -192,6 +215,8 @@
+  * Type-only map from model name to its supported sizes.
+  */
+ export type OpenAIImageModelSizeByName = {
++  'gpt-image-2.5-flare': GptImageSize
++  'gpt-image-2.5-sunburst': GptImageSize
+   'gpt-image-2': GptImageSize
+   'gpt-image-1': GptImageSize
+   'gpt-image-1-mini': GptImageSize
+@@ -205,6 +230,8 @@
+  * dall-e-3 has no edit endpoint, so its prompt is text-only at compile time.
+  */
+ export type OpenAIImageModelInputModalitiesByName = {
++  'gpt-image-2.5-flare': readonly ['image']
++  'gpt-image-2.5-sunburst': readonly ['image']
+   'gpt-image-2': readonly ['image']
+   'gpt-image-1': readonly ['image']
+   'gpt-image-1-mini': readonly ['image']
+@@ -232,6 +259,8 @@
+   if (!size || size === 'auto') return
+ 
+   const validSizes: Record<string, Array<string>> = {
++    'gpt-image-2.5-flare': ['1024x1024', '1536x1024', '1024x1536', 'auto'],
++    'gpt-image-2.5-sunburst': ['1024x1024', '1536x1024', '1024x1536', 'auto'],
+     'gpt-image-2': ['1024x1024', '1536x1024', '1024x1536', 'auto'],
+     'gpt-image-1': ['1024x1024', '1536x1024', '1024x1536', 'auto'],
+     'gpt-image-1-mini': ['1024x1024', '1536x1024', '1024x1536', 'auto'],
+@@ -279,7 +308,13 @@
+ 
+ export const validateBackground = (options: ImageValidationOptions) => {
+   if (options.background) {
+-    const supportedModels = ['gpt-image-2', 'gpt-image-1', 'gpt-image-1-mini']
++    const supportedModels = [
++      'gpt-image-2.5-flare',
++      'gpt-image-2.5-sunburst',
++      'gpt-image-2',
++      'gpt-image-1',
++      'gpt-image-1-mini',
++    ]
+     if (!supportedModels.includes(options.model)) {
+       throw new Error(
+         `The model ${options.model} does not support background option.`,
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/index.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/index.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/index.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/index.ts	2026-10-19 16:49:53
+@@ -20,6 +20,13 @@
+   type OpenAIChatCompletionsProviderOptions,
+ } from './adapters/text-chat-completions'
+ 
++export {
++  AzureOpenAITextAdapter,
++  azureOpenaiText,
++  createAzureOpenaiText,
++  type AzureOpenAITextConfig,
++} from './adapters/azure-text'
++
+ // Summarize - thin factory functions over @tanstack/ai's ChatStreamSummarizeAdapter
+ export {
+   createOpenaiSummarize,
+@@ -52,8 +59,10 @@
+ export type {
+   OpenAIVideoProviderOptions,
+   OpenAIVideoModelProviderOptionsByName,
++  OpenAIVideoModelDurationByName,
+   OpenAIVideoSize,
+-  // OpenAIVideoDuration,
++  OpenAIVideoSeconds,
++  OpenAIVideoDuration,
+ } from './video/video-provider-options'
+ 
+ // TTS adapter - for text-to-speech
+@@ -86,6 +95,24 @@
+   type OpenAIEmbeddingConfig,
+ } from './adapters/embedding'
+ export type { OpenAIEmbeddingProviderOptions } from './embedding/embedding-provider-options'
++
++// Evaluate adapter - for decide() via the Decisions API
++export {
++  OpenAIEvaluateAdapter,
++  createOpenaiDecider,
++  openaiDecider,
++  OPENAI_EVALUATE_MODELS,
++  type OpenAIEvaluateConfig,
++  type OpenAIEvaluateModel,
++} from './adapters/evaluate'
++
++// Files adapter - upload media to the OpenAI Files API and reference by file_id
++export {
++  OpenAIFilesAdapter,
++  createOpenaiFiles,
++  openaiFiles,
++  type OpenAIFilesConfig,
++} from './adapters/files'
+ 
+ // ============================================================================
+ // Type Exports
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/model-meta.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/model-meta.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/model-meta.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/model-meta.ts	2026-10-19 16:49:53
+@@ -1,18 +1,80 @@
+ import type {
++  MidConversationChannels,
++  Modality,
++  ModelReasoning,
++} from '@tanstack/ai'
++import type { ModelReasoningCapability } from '@tanstack/ai/adapter-internals'
++import type {
+   OpenAIBaseOptions,
+   OpenAIMetadataOptions,
+-  OpenAIReasoningOptions,
+-  OpenAIReasoningOptionsWithConcise,
+   OpenAIStreamingOptions,
+   OpenAIStructuredOutputOptions,
+   OpenAIToolsOptions,
+ } from './text/text-provider-options'
+ import type { OpenAIEmbeddingProviderOptions } from './embedding/embedding-provider-options'
+ 
++// Reasoning shapes: the levels a model has for `chat({ reasoning })`, and
++// the provider value to send for each. Each model points at one of them.
++const EFFORT_HIGH = { levels: { high: 'high' }, budget: false } as const
++const EFFORT_LOW_TO_HIGH = {
++  levels: { low: 'low', medium: 'medium', high: 'high' },
++  budget: false,
++} as const
++const EFFORT_LOW_TO_MAX = {
++  levels: {
++    low: 'low',
++    medium: 'medium',
++    high: 'high',
++    xhigh: 'xhigh',
++    max: 'max',
++  },
++  budget: false,
++} as const
++const EFFORT_MEDIUM = { levels: { medium: 'medium' }, budget: false } as const
++const EFFORT_MEDIUM_TO_XHIGH = {
++  levels: { medium: 'medium', high: 'high', xhigh: 'xhigh' },
++  budget: false,
++} as const
++const EFFORT_MINIMAL_TO_HIGH = {
++  levels: { minimal: 'minimal', low: 'low', medium: 'medium', high: 'high' },
++  budget: false,
++} as const
++const EFFORT_NONE_LOW_TO_HIGH = {
++  levels: { off: 'none', low: 'low', medium: 'medium', high: 'high' },
++  budget: false,
++} as const
++const EFFORT_NONE_LOW_TO_MAX = {
++  levels: {
++    off: 'none',
++    low: 'low',
++    medium: 'medium',
++    high: 'high',
++    xhigh: 'xhigh',
++    max: 'max',
++  },
++  budget: false,
++} as const
++const EFFORT_NONE_LOW_TO_XHIGH = {
++  levels: {
++    off: 'none',
++    low: 'low',
++    medium: 'medium',
++    high: 'high',
++    xhigh: 'xhigh',
++  },
++  budget: false,
++} as const
++
+ interface ModelMeta<TProviderOptions = unknown> {
+   name: string
+   supports: {
+     input: Array<'text' | 'image' | 'audio' | 'video' | 'document'>
++    /**
++     * The mid-conversation channels on the Responses API (from pi 0.87.1):
++     * added tools go out as an `additional_tools` item, and added prompts as
++     * a mid-conversation `developer` message.
++     */
++    mid_conversation_channels?: MidConversationChannels
+     output: Array<'text' | 'image' | 'audio' | 'video'>
+     endpoints: Array<
+       | 'chat'
+@@ -67,6 +129,8 @@
+    * Type-level description of which provider options this model supports.
+    */
+   providerOptions?: TProviderOptions
++  /** The model's data for `chat({ reasoning })`. None: it does not reason. */
++  reasoning?: ModelReasoning
+ }
+ 
+ const GPT5_2 = {
+@@ -106,9 +170,9 @@
+       normal: 14,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -145,9 +209,9 @@
+       normal: 168,
+     },
+   },
++  reasoning: EFFORT_MEDIUM_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+@@ -181,9 +245,9 @@
+       normal: 14,
+     },
+   },
++  reasoning: EFFORT_MEDIUM,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -226,9 +290,9 @@
+       normal: 10,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -263,9 +327,9 @@
+       normal: 10,
+     },
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -309,9 +373,9 @@
+       normal: 10,
+     },
+   },
++  reasoning: EFFORT_MINIMAL_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -350,9 +414,9 @@
+       normal: 2,
+     },
+   },
++  reasoning: EFFORT_MINIMAL_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -391,9 +455,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_MINIMAL_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -431,9 +495,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -468,9 +532,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -573,6 +637,48 @@
+   OpenAIBaseOptions & OpenAIStreamingOptions & OpenAIMetadataOptions
+ >
+ 
++const GPT_IMAGE_2_5_FLARE = {
++  name: 'gpt-image-2.5-flare',
++  pricing: {
++    input: {
++      normal: 5,
++      cached: 1.25,
++    },
++    output: {
++      normal: 30,
++    },
++  },
++  supports: {
++    input: ['text', 'image'],
++    output: ['image'],
++    endpoints: ['image-generation', 'image-edit'],
++    features: [],
++  },
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions & OpenAIStreamingOptions & OpenAIMetadataOptions
++>
++
++const GPT_IMAGE_2_5_SUNBURST = {
++  name: 'gpt-image-2.5-sunburst',
++  pricing: {
++    input: {
++      normal: 5,
++      cached: 1.25,
++    },
++    output: {
++      normal: 30,
++    },
++  },
++  supports: {
++    input: ['text', 'image'],
++    output: ['image'],
++    endpoints: ['image-generation', 'image-edit'],
++    features: [],
++  },
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions & OpenAIStreamingOptions & OpenAIMetadataOptions
++>
++
+ const GPT_IMAGE_2 = {
+   name: 'gpt-image-2',
+   knowledge_cutoff: '2026-04-21',
+@@ -628,10 +734,7 @@
+     ],
+   },
+ } as const satisfies ModelMeta<
+-  OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIStreamingOptions &
+-    OpenAIMetadataOptions
++  OpenAIBaseOptions & OpenAIStreamingOptions & OpenAIMetadataOptions
+ >
+ 
+ const O4_MINI_DEEP_RESEARCH = {
+@@ -667,10 +770,7 @@
+     ],
+   },
+ } as const satisfies ModelMeta<
+-  OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIStreamingOptions &
+-    OpenAIMetadataOptions
++  OpenAIBaseOptions & OpenAIStreamingOptions & OpenAIMetadataOptions
+ >
+ 
+ const O3_PRO = {
+@@ -704,9 +804,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -857,9 +957,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -903,6 +1003,7 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+     OpenAIStructuredOutputOptions &
+@@ -957,7 +1058,6 @@
+   },
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1087,9 +1187,9 @@
+     features: ['function_calling', 'structured_outputs'],
+     tools: ['file_search', 'code_interpreter', 'mcp'],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1118,7 +1218,6 @@
+   },
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptionsWithConcise &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+@@ -1204,9 +1303,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1290,9 +1389,9 @@
+     features: ['function_calling', 'structured_outputs', 'streaming'],
+     tools: ['file_search', 'code_interpreter', 'mcp'],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1361,7 +1460,6 @@
+   },
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1557,9 +1655,9 @@
+       'apply_patch',
+     ],
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1596,7 +1694,6 @@
+   },
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1822,7 +1919,6 @@
+   },
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1859,7 +1955,6 @@
+   },
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1915,6 +2010,7 @@
+   max_output_tokens: 128_000,
+   supports: {
+     input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
+     output: ['text'],
+     endpoints: ['chat', 'chat-completions'],
+     features: [
+@@ -1945,9 +2041,9 @@
+       normal: 4.5,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -1990,9 +2086,9 @@
+       normal: 1.25,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2035,9 +2131,9 @@
+       normal: 15,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2081,9 +2177,9 @@
+       normal: 30,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2097,6 +2193,7 @@
+   knowledge_cutoff: '2026-02-16',
+   supports: {
+     input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
+     output: ['text'],
+     endpoints: ['chat', 'chat-completions'],
+     features: [
+@@ -2127,9 +2224,9 @@
+       normal: 30,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2143,6 +2240,7 @@
+   knowledge_cutoff: '2026-02-16',
+   supports: {
+     input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
+     output: ['text'],
+     endpoints: ['chat', 'chat-completions'],
+     features: [
+@@ -2173,9 +2271,9 @@
+       normal: 12,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2189,6 +2287,7 @@
+   knowledge_cutoff: '2026-02-16',
+   supports: {
+     input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
+     output: ['text'],
+     endpoints: ['chat', 'chat-completions'],
+     features: [
+@@ -2219,9 +2318,9 @@
+       normal: 1.2,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2234,6 +2333,7 @@
+   max_output_tokens: 128_000,
+   supports: {
+     input: ['text', 'image', 'document'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
+     output: ['text'],
+     endpoints: ['chat', 'chat-completions'],
+     features: [
+@@ -2264,9 +2364,9 @@
+       normal: 30,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2308,9 +2408,9 @@
+       normal: 180,
+     },
+   },
++  reasoning: EFFORT_MEDIUM_TO_XHIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2353,9 +2453,9 @@
+       normal: 30,
+     },
+   },
++  reasoning: EFFORT_LOW_TO_HIGH,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2382,9 +2482,9 @@
+       normal: 1.2,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2411,9 +2511,9 @@
+       normal: 15,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2440,9 +2540,9 @@
+       normal: 12,
+     },
+   },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2455,10 +2555,20 @@
+   max_output_tokens: 128_000,
+   supports: {
+     input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
+     output: ['text'],
+     endpoints: ['chat', 'chat-completions'],
+     features: ['streaming', 'function_calling', 'structured_outputs'],
+-    tools: [],
++    tools: [
++      'web_search',
++      'file_search',
++      'image_generation',
++      'code_interpreter',
++      'mcp',
++      'computer_use',
++      'shell',
++      'apply_patch',
++    ],
+   },
+   pricing: {
+     input: {
+@@ -2469,9 +2579,9 @@
+       normal: 50,
+     },
+   },
++  reasoning: EFFORT_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2498,16 +2608,238 @@
+       normal: 50,
+     },
+   },
++  reasoning: EFFORT_LOW_TO_MAX,
+ } as const satisfies ModelMeta<
+   OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+ >
+ 
++const GPT_6_LUNA = {
++  name: 'gpt-6-luna',
++  context_window: 1_050_000,
++  max_output_tokens: 128_000,
++  supports: {
++    input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
++    output: ['text'],
++    endpoints: ['chat', 'chat-completions'],
++    features: ['streaming', 'function_calling', 'structured_outputs'],
++    tools: [
++      'web_search',
++      'file_search',
++      'image_generation',
++      'code_interpreter',
++      'mcp',
++      'computer_use',
++      'shell',
++      'apply_patch',
++    ],
++  },
++  pricing: {
++    input: {
++      normal: 0.1,
++      cached: 0.01,
++    },
++    output: {
++      normal: 0.5,
++    },
++  },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++>
++
++const GPT_6_LUNA_PRO = {
++  name: 'gpt-6-luna-pro',
++  context_window: 1_050_000,
++  max_output_tokens: 128_000,
++  supports: {
++    input: ['image', 'text'],
++    output: ['text'],
++    endpoints: ['chat', 'chat-completions'],
++    features: ['streaming', 'function_calling', 'structured_outputs'],
++    tools: [],
++  },
++  pricing: {
++    input: {
++      normal: 0.1,
++      cached: 0.01,
++    },
++    output: {
++      normal: 0.5,
++    },
++  },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++>
++
++const GPT_6_SOL = {
++  name: 'gpt-6-sol',
++  context_window: 1_050_000,
++  max_output_tokens: 128_000,
++  supports: {
++    input: ['image', 'text'],
++    mid_conversation_channels: { tools: true, systemPrompts: true },
++    output: ['text'],
++    endpoints: ['chat', 'chat-completions'],
++    features: ['streaming', 'function_calling', 'structured_outputs'],
++    tools: [
++      'web_search',
++      'file_search',
++      'image_generation',
++      'code_interpreter',
++      'mcp',
++      'computer_use',
++      'shell',
++      'apply_patch',
++    ],
++  },
++  pricing: {
++    input: {
++      normal: 2,
++      cached: 0.2,
++    },
++    output: {
++      normal: 10,
++    },
++  },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++>
++
++const GPT_6_SOL_PRO = {
++  name: 'gpt-6-sol-pro',
++  context_window: 1_050_000,
++  max_output_tokens: 128_000,
++  supports: {
++    input: ['image', 'text'],
++    output: ['text'],
++    endpoints: ['chat', 'chat-completions'],
++    features: ['streaming', 'function_calling', 'structured_outputs'],
++    tools: [],
++  },
++  pricing: {
++    input: {
++      normal: 2,
++      cached: 0.2,
++    },
++    output: {
++      normal: 10,
++    },
++  },
++  reasoning: EFFORT_NONE_LOW_TO_MAX,
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++>
++
++const GPT_6_1_SOL = {
++  name: 'gpt-6.1-sol',
++  context_window: 1_050_000,
++  max_output_tokens: 128_000,
++  supports: {
++    input: ['image', 'text'],
++    output: ['text'],
++    endpoints: ['chat', 'chat-completions'],
++    features: ['streaming', 'function_calling', 'structured_outputs'],
++    tools: [
++      'web_search',
++      'web_search_preview',
++      'file_search',
++      'image_generation',
++      'code_interpreter',
++      'mcp',
++      'computer_use',
++      'local_shell',
++      'shell',
++      'apply_patch',
++    ],
++  },
++  pricing: {
++    input: {
++      normal: 2,
++      cached: 0.1,
++    },
++    output: {
++      normal: 10,
++    },
++  },
++  reasoning: EFFORT_LOW_TO_MAX,
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++>
++
++const GPT_6_1_SOL_PRO = {
++  name: 'gpt-6.1-sol-pro',
++  context_window: 1_050_000,
++  max_output_tokens: 128_000,
++  supports: {
++    input: ['image', 'text'],
++    output: ['text'],
++    endpoints: ['chat', 'chat-completions'],
++    features: ['streaming', 'function_calling', 'structured_outputs'],
++    tools: [
++      'web_search',
++      'web_search_preview',
++      'file_search',
++      'image_generation',
++      'code_interpreter',
++      'mcp',
++      'computer_use',
++      'local_shell',
++      'shell',
++      'apply_patch',
++    ],
++  },
++  pricing: {
++    input: {
++      normal: 2,
++      cached: 0.1,
++    },
++    output: {
++      normal: 10,
++    },
++  },
++  reasoning: EFFORT_LOW_TO_MAX,
++} as const satisfies ModelMeta<
++  OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++>
++
+ export const OPENAI_CHAT_MODELS = [
++  GPT_6_1_SOL.name,
++  GPT_6_1_SOL_PRO.name,
++  GPT_6_LUNA.name,
++  GPT_6_LUNA_PRO.name,
++  GPT_6_SOL.name,
++  GPT_6_SOL_PRO.name,
+   GPT_6_ASTRA.name,
+   GPT_6_ASTRA_PRO.name,
+   GPT_5_6_LUNA_PRO.name,
+@@ -2593,8 +2925,25 @@
+   return false
+ }
+ 
++/**
++ * Whether a model takes OpenAI's explicit prompt cache controls
++ * (`prompt_cache_options`) in place of `prompt_cache_retention`.
++ * This is true for gpt-5.6 and later, and for gpt-6 and later.
++ */
++export function openAIModelUsesExplicitPromptCache(model: string) {
++  // ponytail: name match on the version number. If OpenAI ships a model that
++  // breaks this pattern, add a per-model flag to the model meta.
++  const match = /^gpt-(\d+)(?:\.(\d+))?/.exec(model)
++  if (!match) return false
++  const major = Number(match[1])
++  const minor = Number(match[2] ?? 0)
++  return major > 5 || (major === 5 && minor >= 6)
++}
++
+ // Image generation models (based on endpoints: "image-generation" or "image-edit")
+ export const OPENAI_IMAGE_MODELS = [
++  GPT_IMAGE_2_5_FLARE.name,
++  GPT_IMAGE_2_5_SUNBURST.name,
+   GPT_IMAGE_2.name,
+   GPT_IMAGE_1.name,
+   GPT_IMAGE_1_MINI.name,
+@@ -2696,54 +3045,45 @@
+  */
+ export type OpenAIChatModelProviderOptionsByName = {
+   [GPT5_2.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_2_CHAT.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_2_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_1.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_1_CODEX.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_MINI.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_NANO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT5_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+@@ -2795,26 +3135,14 @@
+   [CHATGPT_40.name]: OpenAIBaseOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+-  [O3.name]: OpenAIBaseOptions & OpenAIReasoningOptions & OpenAIMetadataOptions
+-  [O3_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIMetadataOptions
+-  [O3_MINI.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIMetadataOptions
+-  [O4_MINI.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIMetadataOptions
+-  [O3_DEEP_RESEARCH.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIMetadataOptions
+-  [O4_MINI_DEEP_RESEARCH.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIMetadataOptions
+-  [O1.name]: OpenAIBaseOptions & OpenAIReasoningOptions & OpenAIMetadataOptions
+-  [O1_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+-    OpenAIMetadataOptions
++  [O3.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O3_PRO.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O3_MINI.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O4_MINI.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O3_DEEP_RESEARCH.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O4_MINI_DEEP_RESEARCH.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O1.name]: OpenAIBaseOptions & OpenAIMetadataOptions
++  [O1_PRO.name]: OpenAIBaseOptions & OpenAIMetadataOptions
+ 
+   // Audio models
+   [GPT_AUDIO.name]: OpenAIBaseOptions &
+@@ -2832,11 +3160,9 @@
+ 
+   // Chat-only models
+   [GPT_5_1_CHAT.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIMetadataOptions
+   [GPT_5_CHAT.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIMetadataOptions
+ 
+@@ -2866,100 +3192,114 @@
+ 
+   // Special models
+   [COMPUTER_USE_PREVIEW.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptionsWithConcise &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_4_MINI.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_4_NANO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_4_IMAGE_2.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6_SOL.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6_TERRA.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6_LUNA.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_5.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_5_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_CHAT_LATEST.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6_LUNA_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6_SOL_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_5_6_TERRA_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_6_ASTRA.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
+   [GPT_6_ASTRA_PRO.name]: OpenAIBaseOptions &
+-    OpenAIReasoningOptions &
+     OpenAIStructuredOutputOptions &
+     OpenAIToolsOptions &
+     OpenAIStreamingOptions &
+     OpenAIMetadataOptions
++  [GPT_6_LUNA.name]: OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++  [GPT_6_LUNA_PRO.name]: OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++  [GPT_6_SOL.name]: OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++  [GPT_6_SOL_PRO.name]: OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++  [GPT_6_1_SOL.name]: OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
++  [GPT_6_1_SOL_PRO.name]: OpenAIBaseOptions &
++    OpenAIStructuredOutputOptions &
++    OpenAIToolsOptions &
++    OpenAIStreamingOptions &
++    OpenAIMetadataOptions
+ }
+ 
+ /**
+@@ -3018,6 +3358,12 @@
+   [GPT_CHAT_LATEST.name]: typeof GPT_CHAT_LATEST.supports.tools
+   [GPT_6_ASTRA.name]: typeof GPT_6_ASTRA.supports.tools
+   [GPT_6_ASTRA_PRO.name]: typeof GPT_6_ASTRA_PRO.supports.tools
++  [GPT_6_LUNA.name]: typeof GPT_6_LUNA.supports.tools
++  [GPT_6_LUNA_PRO.name]: typeof GPT_6_LUNA_PRO.supports.tools
++  [GPT_6_SOL.name]: typeof GPT_6_SOL.supports.tools
++  [GPT_6_SOL_PRO.name]: typeof GPT_6_SOL_PRO.supports.tools
++  [GPT_6_1_SOL.name]: typeof GPT_6_1_SOL.supports.tools
++  [GPT_6_1_SOL_PRO.name]: typeof GPT_6_1_SOL_PRO.supports.tools
+ }
+ 
+ /**
+@@ -3088,4 +3434,164 @@
+   [GPT_5_6_TERRA_PRO.name]: typeof GPT_5_6_TERRA_PRO.supports.input
+   [GPT_6_ASTRA.name]: typeof GPT_6_ASTRA.supports.input
+   [GPT_6_ASTRA_PRO.name]: typeof GPT_6_ASTRA_PRO.supports.input
++  [GPT_6_LUNA.name]: typeof GPT_6_LUNA.supports.input
++  [GPT_6_LUNA_PRO.name]: typeof GPT_6_LUNA_PRO.supports.input
++  [GPT_6_SOL.name]: typeof GPT_6_SOL.supports.input
++  [GPT_6_SOL_PRO.name]: typeof GPT_6_SOL_PRO.supports.input
++  [GPT_6_1_SOL.name]: typeof GPT_6_1_SOL.supports.input
++  [GPT_6_1_SOL_PRO.name]: typeof GPT_6_1_SOL_PRO.supports.input
++}
++
++/**
++ * Runtime map from chat model name to its supported input modalities, for the
++ * text adapter's `inputModalities`. `satisfies` keeps it equal to
++ * {@link OpenAIModelInputModalitiesByName}. An unknown name gives `undefined`.
++ */
++export const OPENAI_MODEL_INPUT_MODALITIES: Readonly<
++  Record<string, ReadonlyArray<Modality>>
++> = {
++  [GPT5_2.name]: GPT5_2.supports.input,
++  [GPT5_2_PRO.name]: GPT5_2_PRO.supports.input,
++  [GPT5_2_CHAT.name]: GPT5_2_CHAT.supports.input,
++  [GPT5_1.name]: GPT5_1.supports.input,
++  [GPT5_1_CODEX.name]: GPT5_1_CODEX.supports.input,
++  [GPT5.name]: GPT5.supports.input,
++  [GPT5_MINI.name]: GPT5_MINI.supports.input,
++  [GPT5_NANO.name]: GPT5_NANO.supports.input,
++  [GPT5_PRO.name]: GPT5_PRO.supports.input,
++  [GPT5_CODEX.name]: GPT5_CODEX.supports.input,
++  [GPT4_1.name]: GPT4_1.supports.input,
++  [GPT4_1_MINI.name]: GPT4_1_MINI.supports.input,
++  [GPT4_1_NANO.name]: GPT4_1_NANO.supports.input,
++  [GPT_4O.name]: GPT_4O.supports.input,
++  [GPT_4O_MINI.name]: GPT_4O_MINI.supports.input,
++  [GPT_4_TURBO.name]: GPT_4_TURBO.supports.input,
++  [CHATGPT_40.name]: CHATGPT_40.supports.input,
++  [GPT_5_1_CHAT.name]: GPT_5_1_CHAT.supports.input,
++  [GPT_5_CHAT.name]: GPT_5_CHAT.supports.input,
++  [GPT_5_1_CODEX_MINI.name]: GPT_5_1_CODEX_MINI.supports.input,
++  [CODEX_MINI_LATEST.name]: CODEX_MINI_LATEST.supports.input,
++  [COMPUTER_USE_PREVIEW.name]: COMPUTER_USE_PREVIEW.supports.input,
++  [O3.name]: O3.supports.input,
++  [O3_PRO.name]: O3_PRO.supports.input,
++  [O3_DEEP_RESEARCH.name]: O3_DEEP_RESEARCH.supports.input,
++  [O4_MINI_DEEP_RESEARCH.name]: O4_MINI_DEEP_RESEARCH.supports.input,
++  [O4_MINI.name]: O4_MINI.supports.input,
++  [O1.name]: O1.supports.input,
++  [O1_PRO.name]: O1_PRO.supports.input,
++  [GPT_AUDIO.name]: GPT_AUDIO.supports.input,
++  [GPT_AUDIO_MINI.name]: GPT_AUDIO_MINI.supports.input,
++  [GPT_4O_AUDIO.name]: GPT_4O_AUDIO.supports.input,
++  [GPT_4O_MINI_AUDIO.name]: GPT_4O_MINI_AUDIO.supports.input,
++  [GPT_4.name]: GPT_4.supports.input,
++  [GPT_3_5_TURBO.name]: GPT_3_5_TURBO.supports.input,
++  [O3_MINI.name]: O3_MINI.supports.input,
++  [GPT_4O_SEARCH_PREVIEW.name]: GPT_4O_SEARCH_PREVIEW.supports.input,
++  [GPT_4O_MINI_SEARCH_PREVIEW.name]: GPT_4O_MINI_SEARCH_PREVIEW.supports.input,
++  [GPT_5_4_MINI.name]: GPT_5_4_MINI.supports.input,
++  [GPT_5_4_NANO.name]: GPT_5_4_NANO.supports.input,
++  [GPT_5_4_IMAGE_2.name]: GPT_5_4_IMAGE_2.supports.input,
++  [GPT_5_6.name]: GPT_5_6.supports.input,
++  [GPT_5_6_SOL.name]: GPT_5_6_SOL.supports.input,
++  [GPT_5_6_TERRA.name]: GPT_5_6_TERRA.supports.input,
++  [GPT_5_6_LUNA.name]: GPT_5_6_LUNA.supports.input,
++  [GPT_5_5.name]: GPT_5_5.supports.input,
++  [GPT_5_5_PRO.name]: GPT_5_5_PRO.supports.input,
++  [GPT_CHAT_LATEST.name]: GPT_CHAT_LATEST.supports.input,
++  [GPT_5_6_LUNA_PRO.name]: GPT_5_6_LUNA_PRO.supports.input,
++  [GPT_5_6_SOL_PRO.name]: GPT_5_6_SOL_PRO.supports.input,
++  [GPT_5_6_TERRA_PRO.name]: GPT_5_6_TERRA_PRO.supports.input,
++  [GPT_6_ASTRA.name]: GPT_6_ASTRA.supports.input,
++  [GPT_6_ASTRA_PRO.name]: GPT_6_ASTRA_PRO.supports.input,
++  [GPT_6_LUNA.name]: GPT_6_LUNA.supports.input,
++  [GPT_6_LUNA_PRO.name]: GPT_6_LUNA_PRO.supports.input,
++  [GPT_6_SOL.name]: GPT_6_SOL.supports.input,
++  [GPT_6_SOL_PRO.name]: GPT_6_SOL_PRO.supports.input,
++  [GPT_6_1_SOL.name]: GPT_6_1_SOL.supports.input,
++  [GPT_6_1_SOL_PRO.name]: GPT_6_1_SOL_PRO.supports.input,
++} satisfies OpenAIModelInputModalitiesByName
++
++// Reasoning
++//
++// Each model's `reasoning` field holds its data for `chat({ reasoning })`: the
++// levels it has, with the provider value for each, and whether it takes a
++// thinking token budget. The data comes from models.dev. The generator that
++// writes it comes with the model catalog later. Until then, the sync scripts
++// keep these fields as they are.
++
++const OPENAI_REASONING = {
++  [GPT5_2.name]: GPT5_2.reasoning,
++  [GPT5_2_PRO.name]: GPT5_2_PRO.reasoning,
++  [GPT5_2_CHAT.name]: GPT5_2_CHAT.reasoning,
++  [GPT5_1.name]: GPT5_1.reasoning,
++  [GPT5_1_CODEX.name]: GPT5_1_CODEX.reasoning,
++  [GPT5.name]: GPT5.reasoning,
++  [GPT5_MINI.name]: GPT5_MINI.reasoning,
++  [GPT5_NANO.name]: GPT5_NANO.reasoning,
++  [GPT5_PRO.name]: GPT5_PRO.reasoning,
++  [GPT5_CODEX.name]: GPT5_CODEX.reasoning,
++  [GPT_5_1_CODEX_MINI.name]: GPT_5_1_CODEX_MINI.reasoning,
++  [O3.name]: O3.reasoning,
++  [O3_PRO.name]: O3_PRO.reasoning,
++  [O4_MINI.name]: O4_MINI.reasoning,
++  [O1.name]: O1.reasoning,
++  [O1_PRO.name]: O1_PRO.reasoning,
++  [O3_MINI.name]: O3_MINI.reasoning,
++  [GPT_5_4_MINI.name]: GPT_5_4_MINI.reasoning,
++  [GPT_5_4_NANO.name]: GPT_5_4_NANO.reasoning,
++  [GPT_5_4_IMAGE_2.name]: GPT_5_4_IMAGE_2.reasoning,
++  [GPT_5_6.name]: GPT_5_6.reasoning,
++  [GPT_5_6_SOL.name]: GPT_5_6_SOL.reasoning,
++  [GPT_5_6_TERRA.name]: GPT_5_6_TERRA.reasoning,
++  [GPT_5_6_LUNA.name]: GPT_5_6_LUNA.reasoning,
++  [GPT_5_5.name]: GPT_5_5.reasoning,
++  [GPT_5_5_PRO.name]: GPT_5_5_PRO.reasoning,
++  [GPT_CHAT_LATEST.name]: GPT_CHAT_LATEST.reasoning,
++  [GPT_5_6_LUNA_PRO.name]: GPT_5_6_LUNA_PRO.reasoning,
++  [GPT_5_6_SOL_PRO.name]: GPT_5_6_SOL_PRO.reasoning,
++  [GPT_5_6_TERRA_PRO.name]: GPT_5_6_TERRA_PRO.reasoning,
++  [GPT_6_ASTRA.name]: GPT_6_ASTRA.reasoning,
++  [GPT_6_ASTRA_PRO.name]: GPT_6_ASTRA_PRO.reasoning,
++  [GPT_6_LUNA.name]: GPT_6_LUNA.reasoning,
++  [GPT_6_LUNA_PRO.name]: GPT_6_LUNA_PRO.reasoning,
++  [GPT_6_SOL.name]: GPT_6_SOL.reasoning,
++  [GPT_6_SOL_PRO.name]: GPT_6_SOL_PRO.reasoning,
++  [GPT_6_1_SOL.name]: GPT_6_1_SOL.reasoning,
++  [GPT_6_1_SOL_PRO.name]: GPT_6_1_SOL_PRO.reasoning,
++}
++
++/**
++ * Each chat model's reasoning levels, and whether it takes a token budget,
++ * for `chat({ reasoning })`. Derived from the `reasoning` field. A model
++ * that is not here does not reason.
++ */
++export type OpenAIModelReasoningByName = {
++  [K in keyof typeof OPENAI_REASONING]: ModelReasoningCapability<
++    (typeof OPENAI_REASONING)[K]
++  >
++}
++
++/**
++ * Runtime map from chat model name to its reasoning data, for the text adapter.
++ * An unknown name gives `undefined`: the adapter sends no reasoning field.
++ */
++export const OPENAI_MODEL_REASONING: Readonly<Record<string, ModelReasoning>> =
++  OPENAI_REASONING
++
++/**
++ * The mid-conversation channels of each Responses model, from
++ * `supports.mid_conversation_channels`. An unknown name gives `undefined`,
++ * so the adapter has no channels.
++ */
++export const OPENAI_MODEL_MID_CONVERSATION_CHANNELS: Readonly<
++  Record<string, MidConversationChannels>
++> = {
++  [GPT_5_4_MINI.name]: GPT_5_4_MINI.supports.mid_conversation_channels,
++  [GPT_5_5.name]: GPT_5_5.supports.mid_conversation_channels,
++  [GPT_5_6_LUNA.name]: GPT_5_6_LUNA.supports.mid_conversation_channels,
++  [GPT_5_6_SOL.name]: GPT_5_6_SOL.supports.mid_conversation_channels,
++  [GPT_5_6_TERRA.name]: GPT_5_6_TERRA.supports.mid_conversation_channels,
++  [GPT_6_ASTRA.name]: GPT_6_ASTRA.supports.mid_conversation_channels,
++  [GPT_6_LUNA.name]: GPT_6_LUNA.supports.mid_conversation_channels,
++  [GPT_6_SOL.name]: GPT_6_SOL.supports.mid_conversation_channels,
+ }
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src: prompt-cache.ts
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/realtime/adapter.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/realtime/adapter.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/realtime/adapter.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/realtime/adapter.ts	2026-10-19 16:49:53
+@@ -49,7 +49,7 @@
+       token: RealtimeToken,
+       _clientTools?: ReadonlyArray<AnyClientTool>,
+     ): Promise<RealtimeConnection> {
+-      const model = token.config.model ?? 'gpt-realtime'
++      const model = token.config.model ?? 'gpt-realtime-2.1'
+       logger.request(`activity=realtime provider=openai model=${model}`, {
+         provider: 'openai',
+         model,
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/realtime/token.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/realtime/token.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/realtime/token.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/realtime/token.ts	2026-10-19 16:49:53
+@@ -72,7 +72,7 @@
+  * import { openaiRealtimeToken } from '@tanstack/ai-openai'
+  *
+  * const token = await realtimeToken({
+- *   adapter: openaiRealtimeToken({ model: 'gpt-realtime' }),
++ *   adapter: openaiRealtimeToken({ model: 'gpt-realtime-2.1' }),
+  * })
+  * ```
+  */
+@@ -85,7 +85,7 @@
+     provider: 'openai',
+ 
+     async generateToken(): Promise<RealtimeToken> {
+-      const model: OpenAIRealtimeModel = options.model ?? 'gpt-realtime'
++      const model: OpenAIRealtimeModel = options.model ?? 'gpt-realtime-2.1'
+ 
+       // Only the model is sent server-side; all other session config
+       // (instructions, voice, tools, VAD) is applied client-side via
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/realtime/types.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/realtime/types.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/realtime/types.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/realtime/types.ts	2026-10-19 16:49:53
+@@ -21,7 +21,13 @@
+  * The `gpt-4o-(mini-)realtime-preview` models were shut down by OpenAI on
+  * 2026-05-07 and are no longer listed here.
+  */
+-export type OpenAIRealtimeModel = 'gpt-realtime' | 'gpt-realtime-mini'
++export type OpenAIRealtimeModel =
++  | 'gpt-realtime'
++  | 'gpt-realtime-mini'
++  | 'gpt-realtime-1.5'
++  | 'gpt-realtime-2'
++  | 'gpt-realtime-2.1'
++  | 'gpt-realtime-2.1-mini'
+ 
+ /**
+  * OpenAI semantic VAD configuration
+@@ -51,7 +57,7 @@
+  * Options for the OpenAI realtime token adapter
+  */
+ export interface OpenAIRealtimeTokenOptions {
+-  /** Model to use (default: 'gpt-realtime') */
++  /** Model to use (default: 'gpt-realtime-2.1') */
+   model?: OpenAIRealtimeModel
+ }
+ 
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src: siwc.ts
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/text/text-provider-options.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/text/text-provider-options.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/text/text-provider-options.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/text/text-provider-options.ts	2026-10-19 16:49:53
+@@ -147,61 +147,6 @@
+ 
+ // Feature fragments that can be stitched per-model
+ 
+-// Shared base types for reasoning options
+-type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high'
+-type ReasoningSummary = 'auto' | 'detailed'
+-
+-/**
+- * Reasoning options for most models (excludes 'concise' summary).
+- */
+-export interface OpenAIReasoningOptions {
+-  /**
+-   * Reasoning controls for models that support it.
+-   * Lets you guide how much chain-of-thought computation to spend.
+-   * https://platform.openai.com/docs/api-reference/responses/create#responses_create-reasoning
+-   * https://platform.openai.com/docs/guides/reasoning
+-   */
+-  reasoning?: {
+-    /**
+-     * gpt-5.1 defaults to none, which does not perform reasoning. The supported reasoning values for gpt-5.1 are none, low, medium, and high. Tool calls are supported for all reasoning values in gpt-5.1.
+-     * All models before gpt-5.1 default to medium reasoning effort, and do not support none.
+-     * The gpt-5-pro model defaults to (and only supports) high reasoning effort.
+-     */
+-    effort?: ReasoningEffort
+-    /**
+-     * A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process.
+-     * https://platform.openai.com/docs/api-reference/responses/create#responses_create-reasoning-summary
+-     */
+-    summary?: ReasoningSummary
+-  }
+-}
+-
+-/**
+- * Reasoning options for computer-use-preview model (includes 'concise' summary).
+- */
+-export interface OpenAIReasoningOptionsWithConcise {
+-  /**
+-   * Reasoning controls for models that support it.
+-   * Lets you guide how much chain-of-thought computation to spend.
+-   * https://platform.openai.com/docs/api-reference/responses/create#responses_create-reasoning
+-   * https://platform.openai.com/docs/guides/reasoning
+-   */
+-  reasoning?: {
+-    /**
+-     * gpt-5.1 defaults to none, which does not perform reasoning. The supported reasoning values for gpt-5.1 are none, low, medium, and high. Tool calls are supported for all reasoning values in gpt-5.1.
+-     * All models before gpt-5.1 default to medium reasoning effort, and do not support none.
+-     * The gpt-5-pro model defaults to (and only supports) high reasoning effort.
+-     */
+-    effort?: ReasoningEffort
+-    /**
+-     * A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process.
+-     * `concise` is only supported for `computer-use-preview` models.
+-     * https://platform.openai.com/docs/api-reference/responses/create#responses_create-reasoning-summary
+-     */
+-    summary?: ReasoningSummary | 'concise'
+-  }
+-}
+-
+ export interface OpenAIStructuredOutputOptions {
+   /**
+    * Configuration options for a text response from the model. Can be plain text or structured JSON data. Learn more:
+@@ -256,7 +201,6 @@
+ }
+ 
+ export type ExternalTextProviderOptions = OpenAIBaseOptions &
+-  OpenAIReasoningOptions &
+   OpenAIStructuredOutputOptions &
+   OpenAIToolsOptions &
+   OpenAIStreamingOptions &
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/utils/client.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/utils/client.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/utils/client.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/utils/client.ts	2026-10-19 16:49:53
+@@ -17,3 +17,11 @@
+ export function getOpenAIApiKeyFromEnv(): string {
+   return getApiKeyFromEnv('OPENAI_API_KEY')
+ }
++
++/**
++ * Gets the Azure OpenAI API key from environment variables
++ * @throws Error if AZURE_OPENAI_API_KEY is not found
++ */
++export function getAzureOpenAIApiKeyFromEnv(): string {
++  return getApiKeyFromEnv('AZURE_OPENAI_API_KEY')
++}
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/video/video-provider-options.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/video/video-provider-options.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.22.8/src/video/video-provider-options.ts	2026-10-19 16:49:51
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-openai-0.30.0/src/video/video-provider-options.ts	2026-10-19 16:49:53
+@@ -6,6 +6,9 @@
+  * @experimental Video generation is an experimental feature and may change.
+  */
+ 
++import { durationToSeconds } from '@tanstack/ai/adapters'
++import type { DurationOptions, VideoDurationSpell } from '@tanstack/ai/adapters'
++
+ /**
+  * Supported video sizes for OpenAI Sora video generation.
+  * Based on the official API documentation.
+@@ -19,15 +22,24 @@
+   | '1024x1792' // Portrait tall
+ 
+ /**
+- * Supported video durations (in seconds) for OpenAI Sora video generation.
+- * The API uses the `seconds` parameter with STRING values '4', '8', or '12'.
+- * Yes, really. They're strings.
++ * Wire values for the Sora `seconds` parameter. The API stores these as
++ * strings: `'4'`, `'8'`, or `'12'`.
+  *
+  * @experimental Video generation is an experimental feature and may change.
+  */
+ export type OpenAIVideoSeconds = '4' | '8' | '12'
+ 
+ /**
++ * Spellings of a Sora clip length. Both `sora-2` and `sora-2-pro` accept
++ * 4, 8, or 12 seconds (Videos API, checked 2026-09-28). There is no `"auto"`.
++ * Callers may pass the number, the numeric string, or a `"4s"` template.
++ * The adapter sends {@link OpenAIVideoSeconds}.
++ *
++ * @experimental Video generation is an experimental feature and may change.
++ */
++export type OpenAIVideoDuration = VideoDurationSpell<4 | 8 | 12>
++
++/**
+  * Provider-specific options for OpenAI video generation.
+  *
+  * @experimental Video generation is an experimental feature and may change.
+@@ -67,6 +79,46 @@
+ }
+ 
+ /**
++ * Per-model duration union. Same vocabulary on both Sora models.
++ *
++ * @experimental Video generation is an experimental feature and may change.
++ */
++export type OpenAIVideoModelDurationByName = {
++  'sora-2': OpenAIVideoDuration
++  'sora-2-pro': OpenAIVideoDuration
++}
++
++const SORA_SECONDS = [
++  '4',
++  '8',
++  '12',
++] as const satisfies ReadonlyArray<OpenAIVideoSeconds>
++
++/**
++ * Runtime duration table backing `availableDurations()` / `snapDuration()`.
++ * `snapDuration` returns the API string (`'4' | '8' | '12'`).
++ *
++ * @experimental Video generation is an experimental feature and may change.
++ */
++export const OPENAI_VIDEO_DURATIONS = {
++  'sora-2': { kind: 'discrete', values: SORA_SECONDS },
++  'sora-2-pro': { kind: 'discrete', values: SORA_SECONDS },
++} as const satisfies {
++  [Model in keyof OpenAIVideoModelDurationByName]: DurationOptions<OpenAIVideoSeconds>
++}
++
++/**
++ * Look up the duration options for a Sora model.
++ *
++ * @experimental Video generation is an experimental feature and may change.
++ */
++export function getOpenAIVideoDurationOptions<
++  TModel extends keyof OpenAIVideoModelDurationByName,
++>(model: TModel): DurationOptions<OpenAIVideoSeconds> {
++  return OPENAI_VIDEO_DURATIONS[model]
++}
++
++/**
+  * Per-model prompt input modalities. Sora models accept a single image part
+  * in the prompt, mapped to the API's `input_reference` field.
+  *
+@@ -101,39 +153,33 @@
+ }
+ 
+ /**
+- * Validate video duration (seconds) for a given model.
+- * Accepts both string and number for convenience, but the API requires strings.
++ * Validate a Sora duration. Accepts `4`, `"4"`, and `"4s"` (and 8, 12).
++ * Rejects other lengths, including `"6s"` and `"auto"`.
+  *
+  * @experimental Video generation is an experimental feature and may change.
+  */
+ export function validateVideoSeconds(
+   model: string,
+   seconds?: number | string,
+-): asserts seconds is OpenAIVideoSeconds | number | undefined {
+-  const validSeconds: Array<string> = ['4', '8', '12']
+-  const validNumbers: Array<number> = [4, 8, 12]
++): asserts seconds is OpenAIVideoDuration | undefined {
++  if (seconds === undefined) return
++  if (toApiSeconds(seconds) !== undefined) return
+ 
+-  if (seconds !== undefined) {
+-    const isValid =
+-      typeof seconds === 'string'
+-        ? validSeconds.includes(seconds)
+-        : validNumbers.includes(seconds)
+-
+-    if (!isValid) {
+-      throw new Error(
+-        `Duration "${seconds}" is not supported by model "${model}". Supported durations: 4, 8, or 12 seconds`,
+-      )
+-    }
+-  }
++  throw new Error(
++    `Duration "${seconds}" is not supported by model "${model}". Supported durations: 4, 8, or 12 seconds ("4", "4s", or 4).`,
++  )
+ }
+ 
+ /**
+- * Convert duration to API format (string).
+- * The OpenAI Sora API inexplicably requires seconds as a string.
++ * Convert a duration spelling to the API string (`'4' | '8' | '12'`).
+  */
+ export function toApiSeconds(
+   seconds: number | string | undefined,
+ ): OpenAIVideoSeconds | undefined {
+   if (seconds === undefined) return undefined
+-  return String(seconds) as OpenAIVideoSeconds
++  const value = durationToSeconds(seconds)
++  if (value === 4) return '4'
++  if (value === 8) return '8'
++  if (value === 12) return '12'
++  return undefined
+ }

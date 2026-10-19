@@ -1,0 +1,3987 @@
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/adapter.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/adapter.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/adapter.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/adapter.ts	2026-10-19 16:49:18
+@@ -1,12 +1,16 @@
+ import type {
+   DefaultMessageMetadataByModality,
+   JSONSchema,
++  MidConversationChannels,
+   Modality,
++  ModelMessage,
++  TextCompactOptions,
+   TextOptions,
+   TokenUsage,
+ } from '../../types'
+ import type { AdapterYieldChunk } from '../../utilities/adapter-yield-chunk'
+ import type { CapabilityHandle } from './middleware/capabilities'
++import type { ReasoningCapability } from '../../reasoning'
+ 
+ /**
+  * Configuration for adapter instances
+@@ -44,6 +48,10 @@
+   rawText: string
+   /** Token usage information (if provided by the adapter) */
+   usage?: TokenUsage
++  /** Provider generation ID, when available. */
++  responseId?: string
++  /** Model reported by the provider. */
++  model?: string
+ }
+ 
+ /**
+@@ -72,11 +80,16 @@
+   TToolCapabilities extends ReadonlyArray<string> = ReadonlyArray<string>,
+   TToolCallMetadata = unknown,
+   TSystemPromptMetadata = never,
++  TReasoning extends ReasoningCapability = never,
+ > {
+   /** Discriminator for adapter kind */
+   readonly kind: 'text'
+   /** Provider name identifier (e.g., 'openai', 'anthropic') */
+   readonly name: string
++  /** Wire API identity. Defaults to the adapter kind when omitted. */
++  readonly api?: string
++  /** Provider identity. Defaults to `name` when omitted. */
++  readonly provider?: string
+   /** The model this adapter is configured for */
+   readonly model: TModel
+ 
+@@ -101,11 +114,20 @@
+   /**
+    * The input kinds the model reads, at runtime, from the provider's model
+    * metadata. `undefined` means not known. This mirrors the type-level
+-   * `'~types'.inputModalities`, which has no runtime value.
++   * `'~types'.inputModalities`, which has no runtime value. `| undefined`
++   * keeps model lookups assignable under `exactOptionalPropertyTypes`.
+    */
+-  readonly inputModalities?: ReadonlyArray<Modality>
++  readonly inputModalities?: ReadonlyArray<Modality> | undefined
+ 
+   /**
++   * The mid-conversation channels of the model: tools and system prompts
++   * added between model calls can go out with no change to the cached prompt
++   * prefix. `chat()` passes `TextOptions.midConversationChanges` only when a
++   * channel is on. `undefined` means no channels.
++   */
++  readonly midConversationChannels?: MidConversationChannels
++
++  /**
+    * @internal Type-only properties for inference. Not assigned at runtime.
+    */
+   '~types': {
+@@ -115,6 +137,13 @@
+     toolCapabilities: TToolCapabilities
+     toolCallMetadata: TToolCallMetadata
+     systemPromptMetadata: TSystemPromptMetadata
++    /**
++     * The model's reasoning levels, for `chat({ reasoning })`. `never`: the
++     * model does not reason (or the adapter does not map `reasoning`), and
++     * the option is a type error. Optional, so an adapter written before this
++     * key existed still type-checks (and gets no `reasoning` option).
++     */
++    reasoning?: TReasoning
+   }
+ 
+   /**
+@@ -155,6 +184,14 @@
+   ) => AsyncIterable<AdapterYieldChunk>
+ 
+   /**
++   * Compact the history with the provider's own compaction endpoint.
++   * Resolves to the history to send from the next call on. It can hold
++   * provider items that only this provider reads. Optional: adapters
++   * without native compaction omit it.
++   */
++  compact?: (options: TextCompactOptions) => Promise<Array<ModelMessage>>
++
++  /**
+    * Declares whether the adapter supports combining `tools` and a
+    * schema-constrained final answer in a single streaming request.
+    *
+@@ -196,7 +233,7 @@
+  * A TextAdapter with any/unknown type parameters.
+  * Useful as a constraint in generic functions and interfaces.
+  */
+-export type AnyTextAdapter = TextAdapter<any, any, any, any, any, any, any>
++export type AnyTextAdapter = TextAdapter<any, any, any, any, any, any, any, any>
+ 
+ /**
+  * Abstract base class for text adapters.
+@@ -212,6 +249,7 @@
+   TToolCapabilities extends ReadonlyArray<string> = ReadonlyArray<string>,
+   TToolCallMetadata = unknown,
+   TSystemPromptMetadata = never,
++  TReasoning extends ReasoningCapability = never,
+ > implements TextAdapter<
+   TModel,
+   TProviderOptions,
+@@ -219,10 +257,13 @@
+   TMessageMetadataByModality,
+   TToolCapabilities,
+   TToolCallMetadata,
+-  TSystemPromptMetadata
++  TSystemPromptMetadata,
++  TReasoning
+ > {
+   readonly kind = 'text' as const
+   abstract readonly name: string
++  readonly api?: string = undefined
++  readonly provider?: string = undefined
+   readonly model: TModel
+   readonly requires?: ReadonlyArray<CapabilityHandle> = undefined
+   readonly supportsFileSources: boolean = false
+@@ -230,7 +271,13 @@
+    * Provider subclasses override this from their model metadata, for example
+    * `override readonly inputModalities = INPUT_BY_MODEL[this.model]`.
+    */
+-  readonly inputModalities?: ReadonlyArray<Modality> = undefined
++  readonly inputModalities?: ReadonlyArray<Modality> | undefined = undefined
++  /**
++   * Provider subclasses override this from their model metadata, the same
++   * way as `inputModalities`. No channels by default.
++   */
++  readonly midConversationChannels?: MidConversationChannels | undefined =
++    undefined
+ 
+   // Type-only property - never assigned at runtime
+   declare '~types': {
+@@ -240,6 +287,7 @@
+     toolCapabilities: TToolCapabilities
+     toolCallMetadata: TToolCallMetadata
+     systemPromptMetadata: TSystemPromptMetadata
++    reasoning: TReasoning
+   }
+ 
+   protected config: TextAdapterConfig
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/agents/define-agent.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/agents/define-agent.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/agents/define-agent.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/agents/define-agent.ts	2026-10-19 16:49:18
+@@ -19,8 +19,8 @@
+   TInput extends SchemaInput | undefined = any,
+ > {
+   /**
+-   * The input the parent model wrote for this child, checked against
+-   * `inputSchema`. `undefined` when the agent has no `inputSchema`.
++   * The input the parent model or the router gave this child, checked
++   * against `inputSchema`. `undefined` when the agent has no `inputSchema`.
+    */
+   input: TInput extends SchemaInput ? InferSchemaType<TInput> : undefined
+   messages: Array<UIMessage | ModelMessage>
+@@ -71,9 +71,13 @@
+     ctx: SubagentRunContext<TInput>,
+   ) => AsyncIterable<StreamChunk> | Promise<AsyncIterable<StreamChunk>>
+   /**
+-   * The input the parent model writes when it calls this agent's tool, such
+-   * as a short brief. `run` reads it as `ctx.input`. Tool mode only: a
+-   * `subagents.router` cannot start an agent that has `inputSchema`.
++   * The input this agent needs, such as a short brief. `run` reads it as
++   * `ctx.input`. In tool mode, the parent model writes it when it calls this
++   * agent's tool. A `subagents.router` gives it in its pick as
++   * `{ name, input }`. The input is checked against this schema first. A
++   * router can start this agent only when the schema is a Standard Schema,
++   * such as a zod schema. A plain JSON Schema works in tool mode only. A
++   * turn with a router input cannot resume after an interrupt.
+    */
+   inputSchema?: TInput
+   tools?: TTools
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/agents/route.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/agents/route.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/agents/route.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/agents/route.ts	2026-10-19 16:49:18
+@@ -1,4 +1,5 @@
+ import { boolean, choice } from '../../evaluate/index'
++import type { InferSchemaType, SchemaInput } from '../../../types'
+ import type { DefinedAgent } from './define-agent'
+ import type { SubagentOrder, SubagentRouterPick } from './spawn'
+ 
+@@ -38,6 +39,32 @@
+   order: { value: SubagentOrder }
+ }
+ 
++/** The name and the `inputSchema` of an agent that has one. Else `never`. */
++type InputNeed<TAgent> = TAgent extends {
++  name: infer TName
++  inputSchema?: infer TSchema
++}
++  ? TSchema extends SchemaInput
++    ? { name: TName; inputSchema: TSchema }
++    : never
++  : never
++
++/** One input for each agent with an `inputSchema`, typed from that schema. */
++type RouteInputs<TAgents extends ReadonlyArray<DefinedAgent>> = {
++  [TNeed in InputNeed<TAgents[number]> as TNeed['name']]?: InferSchemaType<
++    TNeed['inputSchema']
++  >
++}
++
++interface RoutePickOptions<TAgents extends ReadonlyArray<DefinedAgent>> {
++  /**
++   * The input of each picked agent that has an `inputSchema`. The key is the
++   * agent name. `needsInput` lists the agents that need one. An input for an
++   * agent that is not picked is not used.
++   */
++  inputs?: RouteInputs<TAgents>
++}
++
+ /**
+  * Build `decide()` questions for a subagent router.
+  *
+@@ -49,6 +76,20 @@
+  * starts together. The `then` agents then run one after another in list
+  * order, and each reads the text so far. Used only when the router picks at
+  * least one agent from each group. Otherwise `pick` returns `{ names, order }`.
++ *
++ * An agent with `inputSchema` needs input. `needsInput(result)` lists the
++ * picked agents that need it, with their schemas. Make each input, then pass
++ * them as `pick(result, { inputs })`. Each name with an input becomes
++ * `{ name, input }`. `pick` throws when a picked agent with a schema has no
++ * input.
++ *
++ * @example
++ * ```ts
++ * const route = subagentRoute(agents)
++ * const result = await decide({ adapter, state, questions: route.questions })
++ * const inputs = { pricer: { sku: 'A-1' } }
++ * return route.pick(result, { inputs })
++ * ```
+  */
+ export function subagentRoute<
+   const TAgents extends ReadonlyArray<DefinedAgent>,
+@@ -86,30 +127,61 @@
+     })
+   }
+ 
+-  function pick(result: RouteAnswers<TAgents>): SubagentRouterPick {
+-    const names = agents
+-      .map((agent) => agent.name)
+-      .filter((name) => result[name as TAgents[number]['name']].value)
++  /** The agents with a yes answer, in agent-list order. */
++  function picked(result: RouteAnswers<TAgents>) {
++    return agents.filter(
++      (agent) => result[agent.name as TAgents[number]['name']].value,
++    )
++  }
++
++  /**
++   * The picked agents that have an `inputSchema`, in agent-list order. Make
++   * an input for each one and pass it to `pick` in `inputs`.
++   */
++  function needsInput(result: RouteAnswers<TAgents>) {
++    const needs = picked(result).flatMap(({ name, inputSchema }) =>
++      inputSchema === undefined ? [] : [{ name, inputSchema }],
++    )
++    // In this function each agent has only the wide `DefinedAgent` type,
++    // which loses the link between a name and its schema. The cast names
++    // the entry type of each agent again.
++    return needs as Array<InputNeed<TAgents[number]>>
++  }
++
++  function pick(
++    result: RouteAnswers<TAgents>,
++    pickOptions?: RoutePickOptions<TAgents>,
++  ): SubagentRouterPick {
++    const inputs: Readonly<Partial<Record<string, unknown>>> =
++      pickOptions?.inputs ?? {}
++    const toPickName = ({ name, inputSchema }: DefinedAgent) => {
++      const input = Object.hasOwn(inputs, name) ? inputs[name] : undefined
++      if (input !== undefined) return { name, input }
++      if (inputSchema !== undefined) {
++        throw new Error(`Agent "${name}" needs input. Pass it in inputs.`)
++      }
++      return name
++    }
++    const chosen = picked(result)
++    const names = chosen.map(toPickName)
+     if (names.length === 0) return 'main'
+     const only = names.length === 1 ? names[0] : undefined
+     if (only !== undefined) return only
+-    const later = new Set(options?.then ?? [])
+-    const lead = names.filter((name) => !later.has(name))
+-    const tail = names.filter((name) => later.has(name))
++    const later = new Set<string>(options?.then ?? [])
++    const lead = chosen
++      .filter((agent) => !later.has(agent.name))
++      .map(toPickName)
++    const tail = chosen.filter((agent) => later.has(agent.name)).map(toPickName)
+     if (lead.length === 0 || tail.length === 0) {
+       return { names, order: result.order.value }
+     }
+     return {
+       steps: [
+-        lead.length > 1
+-          ? { names: lead, order: 'parallel' as const }
+-          : { names: lead },
+-        tail.length > 1
+-          ? { names: tail, order: 'sequence' as const }
+-          : { names: tail },
++        lead.length > 1 ? { names: lead, order: 'parallel' } : { names: lead },
++        tail.length > 1 ? { names: tail, order: 'sequence' } : { names: tail },
+       ],
+     }
+   }
+ 
+-  return { questions: questions as RouteQuestions<TAgents>, pick }
++  return { questions: questions as RouteQuestions<TAgents>, pick, needsInput }
+ }
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/agents/spawn.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/agents/spawn.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/agents/spawn.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/agents/spawn.ts	2026-10-19 16:49:18
+@@ -36,14 +36,22 @@
+ 
+ export type SubagentOrder = 'parallel' | 'sequence'
+ 
++/**
++ * One agent in a router pick: its name, or its name and its input. An agent
++ * with `inputSchema` needs `{ name, input }`, and no other agent takes an
++ * input. `chat()` checks both when the turn starts. The type does not. The
++ * input is checked against the schema, and `run` reads it as `ctx.input`.
++ */
++export type SubagentPick = string | { name: string; input?: unknown }
++
+ export interface SubagentRouterPlan {
+-  names: ReadonlyArray<string>
++  names: ReadonlyArray<SubagentPick>
+   /** Overrides `subagents.order` for this turn. */
+   order?: SubagentOrder
+ }
+ 
+ export interface SubagentStep {
+-  names: ReadonlyArray<string>
++  names: ReadonlyArray<SubagentPick>
+   /** Overrides `subagents.order` for this step. */
+   order?: SubagentOrder
+ }
+@@ -54,11 +62,25 @@
+ 
+ export type SubagentRouterPick =
+   | 'main'
+-  | string
+-  | ReadonlyArray<string>
++  | SubagentPick
++  | ReadonlyArray<SubagentPick>
+   | SubagentRouterPlan
+   | SubagentStepsPlan
+ 
++/**
++ * A router pick after `normalizeRouterPick`. Each step has plain names, and
++ * `inputs` holds the raw input of each name that has one.
++ * `checkRoutedInputs` returns the same shape with the checked inputs. The
++ * plan on `SUBAGENT_STARTED` metadata has the names and the order only.
++ */
++export interface RoutedPlan {
++  steps: ReadonlyArray<{
++    names: ReadonlyArray<string>
++    inputs?: Record<string, unknown>
++    order?: SubagentOrder
++  }>
++}
++
+ export interface SubagentsBag<
+   TAgents extends ReadonlyArray<DefinedAgent> = ReadonlyArray<DefinedAgent>,
+ > {
+@@ -94,7 +116,7 @@
+ /** One child to start, or a suspended child to continue. */
+ export interface SpawnEntry {
+   name: string
+-  /** The checked tool input for an agent with `inputSchema`. */
++  /** The checked input of an agent with `inputSchema`, from a tool or a router. */
+   input?: unknown
+   resume?: {
+     subagentRunId: string
+@@ -266,7 +288,7 @@
+ }
+ 
+ const ROUTER_PICK_ERROR =
+-  'subagents.router must return main, a name, a list of names, { names, order }, or { steps }.'
++  'subagents.router must return main, a name, { name, input }, a list of them, { names, order }, or { steps }.'
+ 
+ function assertOrder(order: SubagentOrder | undefined) {
+   if (order !== undefined && order !== 'parallel' && order !== 'sequence') {
+@@ -274,56 +296,91 @@
+   }
+ }
+ 
+-function normalizeNames(
+-  names: ReadonlyArray<string>,
++/** One step of a pick: plain names, the input of each name that has one, and the order. */
++function normalizeStep(
++  picks: ReadonlyArray<SubagentPick>,
+   agents: ReadonlyArray<DefinedAgent>,
+-): ReadonlyArray<string> {
+-  if (names.length === 0) throw new Error(ROUTER_PICK_ERROR)
+-  const hasMain = names.includes('main')
+-  if (hasMain && names.length > 1) {
++  order?: SubagentOrder,
++): RoutedPlan['steps'][number] {
++  assertOrder(order)
++  if (!isPickList(picks) || picks.length === 0) {
++    throw new Error(ROUTER_PICK_ERROR)
++  }
++  const names = picks.map((pick) =>
++    typeof pick === 'string' ? pick : pick.name,
++  )
++  if (names.includes('main') && names.length > 1) {
+     throw new Error('Do not mix main into a subagent list.')
+   }
+-  if (hasMain) return ['main']
+-  for (const name of names) agentByName(agents, name)
+-  return [...names]
++  // ponytail: one input per name in a step, so a name with an input cannot
++  // repeat in that step. Key inputs by position if a router needs two.
++  const inputs: Record<string, unknown> = {}
++  for (const pick of picks) {
++    if (typeof pick === 'string') {
++      if (pick !== 'main') agentByName(agents, pick)
++      continue
++    }
++    if (pick.input === undefined) {
++      if (pick.name !== 'main') agentByName(agents, pick.name)
++      continue
++    }
++    if (pick.name === 'main') throw new Error('main takes no input.')
++    if (agentByName(agents, pick.name).inputSchema === undefined) {
++      throw new Error(
++        `Agent "${pick.name}" has no inputSchema, so it takes no input.`,
++      )
++    }
++    if (names.filter((name) => name === pick.name).length > 1) {
++      throw new Error(
++        `Agent "${pick.name}" has an input and is in one step more than once. Put each pick in its own step.`,
++      )
++    }
++    inputs[pick.name] = pick.input
++  }
++  return {
++    names,
++    ...(Object.keys(inputs).length > 0 && { inputs }),
++    ...(order !== undefined && { order }),
++  }
+ }
+ 
+-function isStringList(pick: SubagentRouterPick): pick is ReadonlyArray<string> {
++function isPickList(pick: unknown): pick is ReadonlyArray<SubagentPick> {
+   return Array.isArray(pick)
+ }
+ 
+ export function normalizeRouterPick(
+   pick: SubagentRouterPick,
+   agents: ReadonlyArray<DefinedAgent>,
+-): { steps: ReadonlyArray<SubagentStep> } {
+-  if (pick === 'main' || typeof pick === 'string') {
+-    return { steps: [{ names: normalizeNames([pick], agents) }] }
++): RoutedPlan {
++  if (isPickList(pick)) return { steps: [normalizeStep(pick, agents)] }
++  if (typeof pick === 'string')
++    return { steps: [normalizeStep([pick], agents)] }
++  // A router in plain JavaScript can return anything.
++  if (typeof pick !== 'object' || pick === null) {
++    throw new Error(ROUTER_PICK_ERROR)
+   }
+-  if (isStringList(pick)) {
+-    return { steps: [{ names: normalizeNames(pick, agents) }] }
+-  }
++  if ('name' in pick) return { steps: [normalizeStep([pick], agents)] }
+   if ('steps' in pick) {
+     if (pick.steps.length === 0) throw new Error(ROUTER_PICK_ERROR)
+-    const steps = pick.steps.map((step) => {
+-      assertOrder(step.order)
+-      const names = normalizeNames(step.names, agents)
+-      return step.order === undefined ? { names } : { names, order: step.order }
+-    })
++    const steps = pick.steps.map((step) =>
++      normalizeStep(step.names, agents, step.order),
++    )
+     const flat = steps.flatMap((step) => step.names)
+     if (flat.includes('main') && flat.length > 1) {
+       throw new Error('Do not mix main into a subagent list.')
+     }
+     return { steps }
+   }
+-  assertOrder(pick.order)
+-  const names = normalizeNames(pick.names, agents)
+-  return {
+-    steps: [
+-      pick.order === undefined ? { names } : { names, order: pick.order },
+-    ],
+-  }
++  return { steps: [normalizeStep(pick.names, agents, pick.order)] }
+ }
+ 
++/** The input of `name` in a step. Skips keys that `Object.prototype` has. */
++export function stepInput(step: RoutedPlan['steps'][number], name: string) {
++  return step.inputs && Object.hasOwn(step.inputs, name)
++    ? step.inputs[name]
++    : undefined
++}
++
+ /**
+  * Tag a child chunk with its subagent. A chunk that a nested child already
+  * tagged keeps its own id, and a nested child's start names this child as
+@@ -403,6 +460,14 @@
+   return withTanstackMetadata(next, { usage: leftover }) as ParentTerminal
+ }
+ 
++/**
++ * Run one agent and stream its chunks, from `SUBAGENT_STARTED` to
++ * `SUBAGENT_FINISHED` or `SUBAGENT_ERROR`. The package root exports this
++ * as `runAgentStream`. The caller checks `ctx.input` against
++ * `agent.inputSchema` first. Pass `createSubagentSink()` to keep the
++ * child's interrupt objects and token usage. The finished event carries
++ * `interruptIds` only.
++ */
+ export async function* spawnAgentStream(
+   agent: DefinedAgent,
+   ctx: SubagentRunContext,
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/index.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/index.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/index.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/index.ts	2026-10-19 16:49:18
+@@ -8,6 +8,7 @@
+ import { devtoolsMiddleware } from '@tanstack/ai-event-client'
+ import { undoNullWidening } from '@tanstack/ai-utils'
+ import { streamToText } from '../../stream-to-response.js'
++import { normalizeReasoning } from '../../reasoning'
+ import { resolveDebugOption } from '../../logger/resolve'
+ import { EventType } from '../../types'
+ import {
+@@ -51,8 +52,13 @@
+   toolResultErrorText,
+ } from '../../utilities/tool-result'
+ import { isProviderExecutedToolCall } from '../../utilities/provider-executed'
++import { buildBlockOrder } from '../../utilities/block-order'
++import type { BlockOrderEntry } from '../../utilities/block-order'
+ import { assertMessagesFileSourceSupport } from '../../utilities/content-source'
+ import { sanitizeProviderRequest } from '../../utilities/sanitize-unicode'
++import { planMidConversationChanges } from '../../utilities/mid-conversation'
++import { normalizeSystemPrompts } from '../../system-prompts'
++import { transformMessagesForReplay } from '../../utilities/replay-messages'
+ import { LazyToolManager } from './tools/lazy-tool-manager'
+ import { assertUniqueToolNames } from './tools/unique-tool-names'
+ import type { DefinedAgent } from './agents/define-agent'
+@@ -63,14 +69,14 @@
+   normalizeRouterPick,
+   rebindInterrupts,
+   spawnNamedAgents,
++  stepInput,
+   subagentCallMessages,
+   withChildUsage,
+ } from './agents/spawn'
+ import type {
++  RoutedPlan,
+   SpawnEntry,
+   SubagentSink,
+-  SubagentStep,
+-  SubagentStepsPlan,
+   SubagentsBag,
+ } from './agents/spawn'
+ import { SUBAGENT_PLAN_KEY, readSubagentTurn } from './agents/turn'
+@@ -84,12 +90,17 @@
+   convertSchemaToJsonSchema,
+   isStandardSchema,
+   parseWithStandardSchema,
++  validateWithStandardSchema,
+ } from './tools/schema-converter'
+ import {
+   hashSchemaInput,
+   normalizeApprovalSchema,
+ } from './tools/approval-schema'
+-import { maxIterations as maxIterationsStrategy } from './agent-loop-strategies'
++import {
++  combineStrategies,
++  maxIterations as maxIterationsStrategy,
++  untilFinishReason,
++} from './agent-loop-strategies'
+ import { isCancelRequestedReason } from './cancel'
+ import {
+   applyActivityDeltaToRecords,
+@@ -125,8 +136,11 @@
+   McpInputRequest,
+   ToolResult,
+ } from './tools/tool-calls'
+-import type { ApprovalSchemaConfig } from './tools/tool-definition'
+ import type {
++  ApprovalSchemaConfig,
++  InferToolName,
++} from './tools/tool-definition'
++import type {
+   AnyTextAdapter,
+   StructuredOutputOptions,
+   StructuredOutputResult,
+@@ -143,14 +157,19 @@
+   Interrupt,
+   JSONSchema,
+   LazyToolsConfig,
++  MidConversationChange,
+   ModelMessage,
++  ModelMessageBlock,
++  PromptCacheOptions,
+   ProviderTool,
++  ResolvedPromptCache,
+   RunFinishedEvent,
+   SchemaInput,
+   StreamChunk,
+   StructuredOutputCompleteEvent,
+   StructuredOutputPart,
+   StructuredOutputStream,
++  TanStackMessageMetadata,
+   TextMessageContentEvent,
+   TextOptions,
+   ToolCall,
+@@ -159,6 +178,7 @@
+   ToolCallEndEvent,
+   ToolCallResultEvent,
+   ToolCallStartEvent,
++  ToolChoice,
+   FetchWrapper,
+   ToolInputResponse,
+   UIMessage,
+@@ -187,6 +207,11 @@
+   UnionToIntersection,
+ } from './runtime-context-types'
+ import type { ChatMCPOptions } from './mcp/types'
++import type {
++  AdapterReasoning,
++  ReasoningOption,
++  ReasoningOptionFor,
++} from '../../reasoning'
+ 
+ /** One entry of the per-iteration arrival order (see `turnParts`). */
+ type TurnPart =
+@@ -194,6 +219,33 @@
+   | { type: 'text'; content: string }
+   | { type: 'call'; id: string; providerExecuted: boolean }
+ 
++/**
++ * The order map for one assistant message built from `parts`. Calls that are
++ * not in `toolCalls` are left out, because the message does not carry them.
++ * Calls that the stream did not report go last, their default place.
++ */
++function turnBlockOrder(
++  parts: ReadonlyArray<TurnPart>,
++  toolCalls: ReadonlyArray<ToolCall>,
++): Array<ModelMessageBlock> | undefined {
++  const unplaced = new Set(toolCalls.map((toolCall) => toolCall.id))
++  const entries = parts.flatMap((part): Array<BlockOrderEntry> => {
++    if (part.type === 'thinking') return [{ type: 'thinking' }]
++    if (part.type === 'text') return [{ type: 'text', text: part.content }]
++    return unplaced.delete(part.id) ? [{ type: 'tool-call', id: part.id }] : []
++  })
++  for (const id of unplaced) entries.push({ type: 'tool-call', id })
++  return buildBlockOrder(entries)
++}
++
++/**
++ * The tool result of a call in an answer cut at the output limit. Middleware
++ * `onAfterToolCall` can replace it: the error of such a call has the code
++ * `'max_tokens'`.
++ */
++const TRUNCATED_TOOL_RESULT =
++  'The answer stopped at the output limit, so no tool call in it ran. Send the tool calls again. Do not repeat text you already wrote. If one call has a large input, split the work into smaller calls.'
++
+ // ===========================
+ // Activity Kind
+ // ===========================
+@@ -433,6 +485,12 @@
+         : CheckInterruptRegistry<TInterrupts, TMiddleware>) &
+       CheckCoverage<Extract<TMiddleware, ReadonlyArray<AnyChatMiddleware>>>
+ 
++/** The `name` literals of a `tools` array. */
++type ToolNames<TTools> =
++  TTools extends ReadonlyArray<infer TTool>
++    ? Extract<InferToolName<TTool>, string>
++    : never
++
+ type TextActivityOptionsWithContext<
+   TAdapter extends AnyTextAdapter,
+   TSchema extends SchemaInput | undefined,
+@@ -445,9 +503,11 @@
+   TAgents extends ReadonlyArray<DefinedAgent> = ReadonlyArray<DefinedAgent>,
+ > = Omit<
+   TextActivityOptions<TAdapter, TSchema, TStream, any, TAgents>,
+-  'tools' | 'middleware' | 'context' | 'interrupts'
++  'tools' | 'middleware' | 'context' | 'interrupts' | 'toolChoice'
+ > & {
+   tools?: TTools
++  /** {@link TextActivityOptions.toolChoice}, with the names of `tools` as suggestions. */
++  toolChoice?: ToolChoice<ToolNames<TTools>>
+   interrupts?: TInterrupts & CheckUniqueInterruptDefinitions<TInterrupts>
+   middleware?: ExactMiddlewareOption<TTools, TContext, TInterrupts, TMiddleware>
+ } & RuntimeContextOption<TTools, TMiddleware, TContext>
+@@ -530,13 +590,34 @@
+   metadata?: TextOptions['metadata']
+   /** Model-specific provider options (type comes from adapter) */
+   modelOptions?: TAdapter['~types']['providerOptions']
++  /**
++   * How hard the model thinks: a level (`'low'`, `'high'`, ...) or
++   * `{ level, summary?, budgetTokens? }`. The types allow only the model's own
++   * levels. Not set: the provider default applies. `'off'` turns thinking off.
++   * A level the model does not support at runtime moves to the nearest one.
++   */
++  reasoning?: ReasoningOptionFor<AdapterReasoning<TAdapter>>
+   /** AbortController for cancellation */
+   abortController?: TextOptions['abortController']
+-  /** Strategy for controlling the agent loop */
++  /**
++   * Strategy for controlling the agent loop. Default:
++   * `combineStrategies([maxIterations(5), untilFinishReason(['length'])])`.
++   * A strategy that goes on after a `length` answer makes the model send the
++   * cut tool calls of that answer again.
++   */
+   agentLoopStrategy?: TextOptions['agentLoopStrategy']
+   /** How the server tools of one model turn run. Default `'parallel'`. */
+   toolExecution?: TextOptions['toolExecution']
+   /**
++   * Retry a rate-limited model call after the wait the provider asks for.
++   *
++   * @example
++   * ```ts
++   * chat({ adapter, messages, retry: { maxRetries: 3 } })
++   * ```
++   */
++  retry?: TextOptions['retry']
++  /**
+    * Optional configuration for lazy-tool discovery (tools marked `lazy: true`).
+    * Tunes how much of each lazy tool's description appears in the discovery
+    * catalog. Optional — defaults to `{ includeDescription: 'none' }`.
+@@ -547,6 +628,30 @@
+   /** Thread/conversation ID for AG-UI protocol. Auto-generated if not provided. */
+   threadId?: TextOptions['threadId']
+   /**
++   * How the model uses the tools: `'auto'`, `'none'`, `'required'`, or
++   * `{ type: 'tool', name }`. It applies to every model call of this
++   * `chat()`. A middleware `onConfig` can change it for one call. A call with
++   * no tools sends no tool choice. A provider value in `modelOptions` wins.
++   *
++   * @example
++   * ```ts
++   * chat({ adapter, messages, tools, toolChoice: 'required' })
++   * ```
++   */
++  toolChoice?: ToolChoice
++
++  /**
++   * Automatic prompt caching. Default `'short'`. `'none'` turns it off.
++   * The key defaults to the `threadId` or `conversationId` that you give.
++   *
++   * @example
++   * ```ts
++   * chat({ adapter, messages, threadId, promptCache: 'long' })
++   * chat({ adapter, messages, promptCache: { retention: 'long', key: 'k-1' } })
++   * ```
++   */
++  promptCache?: PromptCacheOptions
++  /**
+    * Wraps the fetch of each model call. It can change the base URL, the
+    * headers, the request, or the response. A middleware `onConfig` can add
+    * a wrapper for one call. It chains inside this one. The adapter must
+@@ -835,6 +940,21 @@
+   return controller.signal
+ }
+ 
++/** Wait `ms`, or less when the signal aborts. It never rejects. */
++function waitOrAbort(ms: number, signal: AbortSignal | undefined) {
++  return new Promise<void>((resolve) => {
++    if (signal?.aborted) return resolve()
++    const done = () => {
++      clearTimeout(timer)
++      signal?.removeEventListener('abort', done)
++      resolve()
++    }
++    // A longer delay overflows `setTimeout` and fires at once.
++    const timer = setTimeout(done, Math.min(ms, 2 ** 31 - 1))
++    signal?.addEventListener('abort', done, { once: true })
++  })
++}
++
+ class TextEngine<
+   TAdapter extends AnyTextAdapter,
+   TContext = unknown,
+@@ -850,6 +970,11 @@
+     InterruptDefinition<any, any, any, any>
+   >
+   private params: TParams
++  /**
++   * The tool choice of the next model call. `params.toolChoice` keeps the
++   * `chat()` option, so a middleware value lasts for one call only.
++   */
++  private callToolChoice: ToolChoice | undefined = undefined
+   /** The composed fetch wrapper of the next model call. */
+   private callWrapFetch: FetchWrapper | undefined = undefined
+   private systemPrompts: Array<SystemPrompt>
+@@ -876,6 +1001,8 @@
+   /** Tool call IDs already counted toward `toolCallCount` (avoids double-count on resume). */
+   private readonly countedToolCallIds = new Set<string>()
+   private lastFinishReason: string | null = null
++  /** The loop decision of a cut answer, from its tool phase (processToolCalls). */
++  private cutAnswerContinues: boolean | undefined
+   private streamStartTime = 0
+   private totalChunkCount = 0
+   private currentMessageId: string | null = null
+@@ -892,10 +1019,21 @@
+    * the order could no longer be tracked (callers fall back to one message).
+    */
+   private turnParts: Array<TurnPart> | null = []
++  /**
++   * The mid-conversation record of the current model call. The first
++   * assistant message that the call produces takes it. A call that produces
++   * none (an error, an abort) saves nothing, and the next call plans again.
++   */
++  private pendingMidConversationChange: MidConversationChange | undefined =
++    undefined
+   private currentThinkingContent = ''
+   private currentThinkingSignature = ''
+   private currentThinkingRedacted = false
+   private eventOptions?: Record<string, unknown> | undefined
++  private currentCallMetadata: TanStackMessageMetadata = {}
++  /** An abort ended the wait of `retryRateLimited`. Its last chunks still go to the caller. */
++  private retryAbandoned = false
++  private structuredCallMetadata: TanStackMessageMetadata = {}
+   private eventToolNames?: Array<string>
+   private finishedEvent: RunFinishedEvent | null = null
+   private readonly streamedToolErrorResults = new Map<string, ToolResult>()
+@@ -1014,10 +1152,20 @@
+       ).map((definition) => [definition.id, definition]),
+     )
+     this.finalStructuredOutput = config.finalStructuredOutput
+-    this.params = config.params
++    this.params = {
++      ...config.params,
++      // `chat()` takes a level or an object. Adapters read one shape.
++      reasoning: normalizeReasoning(
++        config.params.reasoning as ReasoningOption | undefined,
++      ),
++    }
+     this.systemPrompts = config.params.systemPrompts || []
+     this.loopStrategy =
+-      config.params.agentLoopStrategy || maxIterationsStrategy(5)
++      config.params.agentLoopStrategy ||
++      combineStrategies([
++        maxIterationsStrategy(5),
++        untilFinishReason(['length']),
++      ])
+     this.initialMessageCount = config.params.messages.length
+ 
+     // Extract client state (approvals, client tool results) from original messages BEFORE conversion
+@@ -1547,6 +1695,13 @@
+   }
+ 
+   private async beginIteration(): Promise<void> {
++    this.currentCallMetadata = {
++      source: {
++        provider: this.adapter.provider ?? this.adapter.name,
++        api: this.adapter.api ?? this.adapter.kind,
++        model: this.params.model,
++      },
++    }
+     this.currentMessageId = this.createId('msg')
+     this.currentMessageCreatedAt = new Date()
+     this.streamIdentityCaptured = false
+@@ -1571,8 +1726,77 @@
+     })
+   }
+ 
++  /**
++   * Calls the model again after a rate-limit `RUN_ERROR`, as the `retry`
++   * option allows. A call that yielded a chunk after `RUN_STARTED` is not
++   * retried, so no output repeats. `RUN_STARTED` is held until the attempt is
++   * kept, so the public start has the same `runId` as the `RUN_FINISHED` of
++   * the kept attempt. When an abort ends the wait, the held error is yielded.
++   */
++  private async *retryRateLimited(
++    call: () => AsyncIterable<AdapterYieldChunk>,
++  ): AsyncGenerator<AdapterYieldChunk> {
++    const retry = this.params.retry
++    if (!retry) {
++      yield* call()
++      return
++    }
++    const maxWaitMs = retry.maxWaitMs ?? 60_000
++    if (
++      !Number.isInteger(retry.maxRetries) ||
++      retry.maxRetries < 0 ||
++      !(maxWaitMs >= 0)
++    ) {
++      throw new TypeError(
++        'chat() retry: maxRetries must be an integer of 0 or more, and maxWaitMs must be 0 or more.',
++      )
++    }
++    let start: AdapterYieldChunk | undefined
++    for (let attempt = 1; ; attempt++) {
++      let streamed = false
++      let waitMs: number | undefined
++      let rateLimitError: AdapterYieldChunk | undefined
++      for await (const chunk of call()) {
++        if (
++          chunk.type === EventType.RUN_ERROR &&
++          !streamed &&
++          attempt <= retry.maxRetries &&
++          chunk.retryAfterMs !== undefined &&
++          chunk.retryAfterMs <= maxWaitMs
++        ) {
++          // Wait after the loop, so the adapter stream closes first.
++          waitMs = chunk.retryAfterMs
++          rateLimitError = chunk
++          break
++        }
++        if (chunk.type === EventType.RUN_STARTED && !streamed) {
++          start = chunk
++          continue
++        }
++        if (start) yield start
++        start = undefined
++        streamed = true
++        yield chunk
++      }
++      if (waitMs === undefined || !rateLimitError) break
++      this.logger.warn(
++        `activity=chat provider asked to wait, retry ${attempt} of ${retry.maxRetries} in ${waitMs}ms`,
++        { attempt, waitMs, model: this.params.model },
++      )
++      // Also wakes on a middleware `ctx.abort()`, not only the caller's.
++      await waitOrAbort(waitMs, this.toolAbortSignal)
++      if (this.isCancelled()) {
++        this.retryAbandoned = true
++        if (start) yield start
++        yield rateLimitError
++        return
++      }
++    }
++    if (start) yield start
++  }
++
+   private async *streamModelResponse(): AsyncGenerator<StreamChunk> {
+-    const { metadata, modelOptions } = this.params
++    const { metadata, modelOptions, reasoning } = this.params
+     const tools = this.tools
+ 
+     // Convert tool schemas to JSON Schema before passing to adapter
+@@ -1628,25 +1852,61 @@
+     // covered too.
+     assertMessagesFileSourceSupport(this.adapter, this.messages)
+ 
+-    for await (const raw of this.adapter.chatStream({
++    // Providers reject a tool choice on a request with no tools.
++    const toolChoice =
++      toolsWithJsonSchemas.length > 0 ? this.callToolChoice : undefined
++
++    // Clean history for the request. The adapter knows its wire API, so it
++    // does the source-sensitive part of replay. Plan on this same array:
++    // a second replay must keep the length, so `before` indexes still match.
++    const replayMessages = transformMessagesForReplay(
++      this.providerMessages,
++    ).messages
++    // Mid-conversation changes, only for an adapter with a channel that is
++    // on. Every other adapter gets today's request and no new field.
++    const channels = this.adapter.midConversationChannels
++    const midConversation =
++      channels?.tools || channels?.systemPrompts
++        ? planMidConversationChanges({
++            messages: replayMessages,
++            toolNames: tools.map((tool) => tool.name),
++            systemPrompts: normalizeSystemPrompts(this.systemPrompts).map(
++              (prompt) => prompt.content,
++            ),
++          })
++        : undefined
++    this.pendingMidConversationChange = midConversation?.record
++
++    const streamOptions = {
+       model: this.params.model,
+-      ...sanitizeProviderRequest(this.providerMessages, this.systemPrompts),
++      ...sanitizeProviderRequest(replayMessages, this.systemPrompts),
+       tools: toolsWithJsonSchemas,
+       metadata,
+       request: this.effectiveRequest,
+       modelOptions,
++      ...(reasoning ? { reasoning } : {}),
+       logger: this.logger,
+       threadId: this.threadId,
++      promptCache: this.params.promptCache,
++      ...(midConversation
++        ? { midConversationChanges: midConversation.changes }
++        : {}),
+       runId: this.runIdOverride,
+       parentRunId: this.parentRunIdOverride,
+       // Expose provided capabilities (e.g. sandbox) to harness adapters.
+       capabilities: this.middlewareCtx,
+       // Client approval decisions, for harness interactive-approval resolution.
+       approvals: adapterApprovals,
++      ...(toolChoice ? { toolChoice } : {}),
+       ...(this.callWrapFetch ? { wrapFetch: this.callWrapFetch } : {}),
+       ...(combinedSchema ? { outputSchema: combinedSchema } : {}),
+-    })) {
+-      if (this.isCancelled()) {
++    }
++    for await (const adapterChunk of this.retryRateLimited(() =>
++      this.adapter.chatStream(streamOptions),
++    )) {
++      const raw = this.withCallMetadata(adapterChunk, this.currentCallMetadata)
++      // An abandoned retry still sends its start and its rate-limit error.
++      if (this.isCancelled() && !this.retryAbandoned) {
+         break
+       }
+ 
+@@ -1768,6 +2028,13 @@
+             if (this.hasPublicRunStarted) continue
+             this.hasPublicRunStarted = true
+           }
++          // An adapter can fail before it sends `RUN_STARTED`. The public
++          // stream still starts with one.
++          if (spec.type === EventType.RUN_ERROR) {
++            yield* this.emitSyntheticRunStarted(
++              this.createSyntheticFinishedEvent(),
++            )
++          }
+           this.logger.output(`type=${spec.type}`, { chunk: spec })
+           yield spec
+           this.middlewareCtx.chunkIndex++
+@@ -1878,6 +2145,52 @@
+     this.middlewareCtx.activities = this.activities
+   }
+ 
++  /**
++   * Stamp the source, response identity, and stop reason of this model call
++   * on the chunk, and remember them in `metadata` for the assistant messages
++   * that the call produces.
++   */
++  private withCallMetadata(
++    chunk: AdapterYieldChunk,
++    metadata: TanStackMessageMetadata,
++  ) {
++    if ('subagentRunId' in chunk && typeof chunk.subagentRunId === 'string')
++      return chunk
++    // Activity records keep their own metadata. The call metadata is for the
++    // assistant message.
++    if (
++      chunk.type === EventType.ACTIVITY_SNAPSHOT ||
++      chunk.type === EventType.ACTIVITY_DELTA
++    )
++      return chunk
++    const incoming = tanstackMetadata(chunk)
++    if (incoming?.source !== undefined) metadata.source = incoming.source
++    if (incoming?.stopReason !== undefined)
++      metadata.stopReason = incoming.stopReason
++    if (chunk.type === EventType.RUN_FINISHED) {
++      const model = chunk.model ?? incoming?.model
++      const responseId = chunk.responseId ?? incoming?.responseId
++      const finishReason = chunk.finishReason ?? incoming?.finishReason
++      if (model !== undefined) metadata.model = model
++      if (responseId !== undefined) metadata.responseId = responseId
++      if (finishReason) metadata.finishReason = finishReason
++      if (incoming?.responseItems !== undefined)
++        metadata.responseItems = incoming.responseItems
++    }
++    if (chunk.type === EventType.RUN_ERROR) {
++      metadata.stopReason ??= 'error'
++    }
++    const merged = withTanstackMetadata(chunk, {
++      ...metadata,
++      ...(incoming ?? {}),
++      ...(metadata.source !== undefined ? { source: metadata.source } : {}),
++      ...(metadata.stopReason !== undefined
++        ? { stopReason: metadata.stopReason }
++        : {}),
++    })
++    return { ...chunk, metadata: merged.metadata }
++  }
++
+   // ===========================
+   // AG-UI Event Handlers
+   // ===========================
+@@ -2350,6 +2663,83 @@
+ 
+     this.addAssistantToolCallMessage(toolCalls)
+ 
++    // The output limit cut this answer. Each call that the provider did not
++    // run has its error result now (closeTruncatedToolCalls). No call runs.
++    if (this.lastFinishReason === 'length') {
++      const results: Array<ToolResult> = []
++      for (const call of toolCalls) {
++        const stored = this.messages.find(
++          (message) =>
++            message.role === 'tool' && message.toolCallId === call.id,
++        )
++        if (!stored) continue
++        // onAfterToolCall can replace the text. The code tells this error
++        // apart from a failed run.
++        const decision = yield* this.runWhileYielding(
++          this.middlewareRunner.runOnAfterToolCall(this.middlewareCtx, {
++            toolCall: call,
++            tool: this.tools.find((tool) => tool.name === call.function.name),
++            toolName: call.function.name,
++            toolCallId: call.id,
++            ok: false,
++            duration: 0,
++            error: Object.assign(new Error(TRUNCATED_TOOL_RESULT), {
++              code: 'max_tokens',
++            }),
++          }),
++        )
++        results.push({
++          toolCallId: call.id,
++          toolName: call.function.name,
++          result: decision ? decision.result : stored.content,
++          state: 'output-error',
++        })
++      }
++      // This also stores the results, so the loop decision reads them.
++      const resultChunks = this.buildToolResultChunks(
++        results,
++        finishEvent,
++        undefined,
++        true,
++      )
++      // Ask the strategy and middleware now, with the state that
++      // shouldContinue() gives them after this cycle. shouldContinue() then
++      // uses this answer. The RUN_FINISHED that the client sees depends on it.
++      const continues = yield* this.runWhileYielding(
++        this.loopContinues(this.iterationCount + 1),
++      )
++      this.cutAnswerContinues = continues
++      if (continues) {
++        // A client reads it as a tool turn, so it waits for the next call.
++        // The chunks are already public, so the finish reason is in the
++        // metadata.
++        this.deferredToolCallRunFinishedChunks =
++          this.deferredToolCallRunFinishedChunks.map((chunk) =>
++            chunk.type === EventType.RUN_FINISHED
++              ? withTanstackMetadata(chunk, { finishReason: 'tool_calls' })
++              : chunk,
++          )
++        yield* this.flushDeferredToolCallRunFinishedChunks()
++      }
++      for (const chunk of resultChunks) {
++        yield* this.pipeThroughMiddleware(chunk)
++      }
++      // A stopped run ends on the `length` RUN_FINISHED, after the results.
++      // Native combined structured output sends it after its harvest, and
++      // drops it when the harvest fails.
++      if (!continues && this.finalStructuredOutput?.nativeCombined) {
++        this.deferredModelRunFinishedChunks.push(
++          ...this.deferredToolCallRunFinishedChunks,
++        )
++        this.deferredToolCallRunFinishedChunks = []
++      } else if (!continues) {
++        yield* this.flushDeferredToolCallRunFinishedChunks()
++      }
++      this.toolCallManager.clear()
++      this.setToolPhase(continues ? 'continue' : 'stop')
++      return
++    }
++
+     // Handle undiscovered lazy tool calls with self-correcting error messages
+     const undiscoveredLazyResults: Array<ToolResult> = []
+     const executableToolCalls = toolCalls.filter((tc) => {
+@@ -2617,7 +3007,13 @@
+ 
+   private shouldExecuteToolPhase(): boolean {
+     return (
+-      this.lastFinishReason === 'tool_calls' &&
++      (this.lastFinishReason === 'tool_calls' ||
++        (this.lastFinishReason === 'length' &&
++          // Provider-executed calls have their results. With no other call,
++          // the cut answer ends the run like a text answer.
++          this.toolCallManager
++            .getToolCalls()
++            .some((call) => !isProviderExecutedToolCall(call)))) &&
+       this.tools.length > 0 &&
+       this.toolCallManager.hasToolCalls()
+     )
+@@ -2627,7 +3023,8 @@
+    * Split this iteration into assistant ModelMessages that keep the provider's
+    * block order: a new segment starts at every thinking step that follows a
+    * provider-executed tool call (the rule buildAssistantMessages applies to
+-   * UIMessages). Segments after the first get `${id}-segment-${n}` ids.
++   * UIMessages). Segments after the first get `${id}-segment-${n}` ids. A
++   * segment whose own blocks leave the default order gets a `blockOrder` map.
+    * Returns null when no split is needed or the order could not be tracked,
+    * so callers fall back to the single-message shape.
+    */
+@@ -2647,8 +3044,9 @@
+       thinking: NonNullable<ModelMessage['thinking']>
+       text: string
+       callIds: Array<string>
++      parts: Array<TurnPart>
+     }
+-    let current: Segment = { thinking: [], text: '', callIds: [] }
++    let current: Segment = { thinking: [], text: '', callIds: [], parts: [] }
+     const segments: Array<Segment> = [current]
+     let split = false
+     for (const part of parts) {
+@@ -2656,7 +3054,7 @@
+         const thinking = this.accumulatedThinking[part.index]
+         if (!thinking) return null
+         if (current.callIds.some((callId) => providerCallIds.has(callId))) {
+-          current = { thinking: [thinking], text: '', callIds: [] }
++          current = { thinking: [thinking], text: '', callIds: [], parts: [] }
+           segments.push(current)
+           split = true
+         } else {
+@@ -2667,6 +3065,7 @@
+       } else {
+         current.callIds.push(part.id)
+       }
++      current.parts.push(part)
+     }
+     if (!split) return null
+     if (
+@@ -2689,9 +3088,11 @@
+       const segmentCalls = toolCalls.filter((toolCall) =>
+         segment.callIds.includes(toolCall.id),
+       )
++      const blockOrder = turnBlockOrder(segment.parts, segmentCalls)
+       return {
+         role: 'assistant',
+         content: segment.text || null,
++        metadata: { tanstack: { ...this.currentCallMetadata } },
+         ...(segmentCalls.length > 0 && { toolCalls: segmentCalls }),
+         id:
+           id === undefined
+@@ -2701,12 +3102,43 @@
+               : `${id}-segment-${index}`,
+         createdAt,
+         ...(segment.thinking.length > 0 && { thinking: segment.thinking }),
++        ...(blockOrder && { blockOrder }),
+       }
+     })
+   }
+ 
++  /**
++   * `{ blockOrder }` for this iteration kept as one assistant message that
++   * carries `toolCalls`, or `{}` when the order is the default one or was not
++   * tracked. This is the fallback when `buildOrderedAssistantSegments` does
++   * not split, so it is the common client-tool case.
++   */
++  private singleMessageBlockOrder(toolCalls: ReadonlyArray<ToolCall>): {
++    blockOrder?: Array<ModelMessageBlock>
++  } {
++    const parts = this.turnParts
++    if (!parts) return {}
++    const thinking = parts.filter(
++      (part): part is Extract<TurnPart, { type: 'thinking' }> =>
++        part.type === 'thinking',
++    )
++    const text = parts
++      .map((part) => (part.type === 'text' ? part.content : ''))
++      .join('')
++    if (
++      text !== this.accumulatedContent ||
++      thinking.length !== this.accumulatedThinking.length ||
++      thinking.some((part, index) => part.index !== index)
++    ) {
++      return {}
++    }
++    const blockOrder = turnBlockOrder(parts, toolCalls)
++    return blockOrder ? { blockOrder } : {}
++  }
++
+   private addAssistantToolCallMessage(toolCalls: Array<ToolCall>): void {
+     this.finalizeCurrentThinkingStep()
++    const from = this.messages.length
+ 
+     const segments = this.buildOrderedAssistantSegments(
+       toolCalls,
+@@ -2719,18 +3151,51 @@
+         {
+           role: 'assistant' as const,
+           content: this.accumulatedContent || null,
++          metadata: { tanstack: { ...this.currentCallMetadata } },
+           toolCalls,
+           id: this.currentMessageId ?? undefined,
+           createdAt: this.currentMessageCreatedAt ?? undefined,
+           ...(this.accumulatedThinking.length > 0 && {
+             thinking: this.accumulatedThinking,
+           }),
++          ...this.singleMessageBlockOrder(toolCalls),
+         },
+       ]),
+     ]
++    this.closeTruncatedToolCalls(from)
++    this.saveMidConversationChange(from)
+     this.middlewareCtx.messages = this.messages
+   }
+ 
++  /**
++   * Give each call of the assistant messages from index `from` an error result
++   * when the output limit cut their answer. Such a call is not complete, so it
++   * never runs and asks for nothing. A provider-executed call has its result.
++   */
++  private closeTruncatedToolCalls(from: number): void {
++    const cut = this.messages
++      .slice(from)
++      .flatMap((message) =>
++        tanstackMetadata(message)?.finishReason === 'length'
++          ? (message.toolCalls ?? []).filter(
++              (call) => !isProviderExecutedToolCall(call),
++            )
++          : [],
++      )
++    if (cut.length === 0) return
++    this.messages = [
++      ...this.messages,
++      ...cut.map(
++        (call): ModelMessage => ({
++          role: 'tool',
++          toolCallId: call.id,
++          content: TRUNCATED_TOOL_RESULT,
++          error: TRUNCATED_TOOL_RESULT,
++        }),
++      ),
++    ]
++  }
++
+   private addTerminalAssistantMessages(): void {
+     this.finalizeCurrentThinkingStep()
+ 
+@@ -2781,7 +3246,12 @@
+       const existing = messages[existingStructuredIndex]
+       if (existing) {
+         messages[existingStructuredIndex] = {
+-          ...existing,
++          ...withTanstackMetadata(
++            existing,
++            nativeCombined
++              ? this.currentCallMetadata
++              : this.structuredCallMetadata,
++          ),
+           content: raw || existing.content,
+           structuredOutput,
+         }
+@@ -2791,6 +3261,13 @@
+         messages.push({
+           role: 'assistant',
+           content: this.accumulatedContent || raw || null,
++          metadata: {
++            tanstack: {
++              ...(nativeCombined
++                ? this.currentCallMetadata
++                : this.structuredCallMetadata),
++            },
++          },
+           id: structuredId,
+           createdAt:
+             this.currentMessageCreatedAt ??
+@@ -2816,9 +3293,12 @@
+             {
+               role: 'assistant',
+               content: this.accumulatedContent || null,
++              metadata: { tanstack: { ...this.currentCallMetadata } },
+               id,
+               createdAt,
+               ...(thinking ? { thinking } : {}),
++              // This message carries no tool calls, so its map has none.
++              ...this.singleMessageBlockOrder([]),
+             },
+           ]),
+         )
+@@ -2827,6 +3307,7 @@
+         messages.push({
+           role: 'assistant',
+           content: raw || null,
++          metadata: { tanstack: { ...this.structuredCallMetadata } },
+           id: structuredId,
+           createdAt: this.structuredOutputMessageCreatedAt ?? new Date(),
+           structuredOutput,
+@@ -2839,10 +3320,37 @@
+     }
+ 
+     this.messages = messages
++    this.closeTruncatedToolCalls(startedLength)
++    // An in-place update does not grow the array. The assistant message is
++    // already at existingStructuredIndex, so a search from the old length
++    // misses it and leaves the record pending.
++    this.saveMidConversationChange(
++      messages.length === startedLength
++        ? existingStructuredIndex
++        : startedLength,
++    )
+     this.middlewareCtx.messages = this.messages
+   }
+ 
+   /**
++   * Save the pending mid-conversation record on the first assistant message
++   * at index `from` or later. The record is a field of the message, so it
++   * goes wherever the transcript goes: a message store, a restart.
++   */
++  private saveMidConversationChange(from: number): void {
++    const record = this.pendingMidConversationChange
++    if (!record) return
++    const index = this.messages.findIndex(
++      (message, at) => at >= from && message.role === 'assistant',
++    )
++    if (index < 0) return
++    this.pendingMidConversationChange = undefined
++    this.messages = this.messages.map((message, at) =>
++      at === index ? { ...message, midConversationChange: record } : message,
++    )
++  }
++
++  /**
+    * Extract client state (approvals and client tool results) from original messages.
+    * This is called in the constructor BEFORE converting to ModelMessage format,
+    * because the parts array (which contains approval state) is lost during conversion.
+@@ -3066,7 +3574,7 @@
+       const id = `mcp_input_${pendingInput.toolCallId}`
+       interrupts.push({
+         id,
+-        reason: 'mcp_input',
++        reason: pendingInput.reason ?? 'mcp_input',
+         message: `Input required to run ${pendingInput.toolName}`,
+         toolCallId: pendingInput.toolCallId,
+         metadata: {
+@@ -3465,6 +3973,7 @@
+     results: Array<ToolResult>,
+     _finishEvent: RunFinishedEvent,
+     argsMap?: Map<string, string>,
++    replaceExisting = false,
+   ): Array<AdapterYieldChunk> {
+     const chunks: Array<AdapterYieldChunk> = []
+ 
+@@ -3546,17 +4055,19 @@
+         }
+       })
+       const isDeniedResult = result.outcome === 'denied'
+-      const existingToolResultIdx = isDeniedResult
+-        ? this.messages.findIndex(
+-            (message) =>
+-              message.role === 'tool' &&
+-              message.toolCallId === result.toolCallId,
+-          )
+-        : -1
++      const existingToolResultIdx =
++        isDeniedResult || replaceExisting
++          ? this.messages.findIndex(
++              (message) =>
++                message.role === 'tool' &&
++                message.toolCallId === result.toolCallId,
++            )
++          : -1
+       const resultMessageIdx =
+         existingToolResultIdx >= 0 ? existingToolResultIdx : placeholderIdx
+ 
+-      // Only a denied result keeps the old message's fields. A replaced
++      // Only a denied result or `replaceExisting` (the cut calls of an answer
++      // at the output limit) keeps the old message's fields. A replaced
+       // pendingExecution placeholder must not leak into the real result.
+       const existingToolMessage =
+         existingToolResultIdx >= 0
+@@ -3643,8 +4154,47 @@
+ 
+     const pending: Array<ToolCall> = []
+ 
++    // A later user or assistant closes the previous execution batch.
++    // Old orphan calls remain in history for request-local replay cleanup.
++    const activeCallIds = new Set<string>()
++    let assistantId: string | undefined
+     for (const message of this.messages) {
++      if (message.role === 'tool') continue
++      const segmentSuffix =
++        assistantId === undefined || message.id === undefined
++          ? undefined
++          : message.id.slice(assistantId.length)
++      const sameAssistant =
++        message.role === 'assistant' &&
++        assistantId !== undefined &&
++        message.id?.startsWith(assistantId) &&
++        /^-segment-[1-9]\d*$/.test(segmentSuffix ?? '')
++      if (!sameAssistant) {
++        activeCallIds.clear()
++        assistantId = message.role === 'assistant' ? message.id : undefined
++      }
++      const stopReason = tanstackMetadata(message)?.stopReason
++      if (
++        message.role === 'assistant' &&
++        stopReason !== 'error' &&
++        stopReason !== 'aborted'
++      ) {
++        for (const call of message.toolCalls ?? []) activeCallIds.add(call.id)
++      }
++    }
++    const { approvals } = this.collectClientState()
++
++    for (const message of this.messages) {
+       if (message.role === 'assistant' && message.toolCalls) {
++        const metadata = tanstackMetadata(message)
++        // The calls of a failed answer, or of an answer that the output limit
++        // cut, are not complete. They never run.
++        if (
++          metadata?.stopReason === 'error' ||
++          metadata?.stopReason === 'aborted' ||
++          metadata?.finishReason === 'length'
++        )
++          continue
+         for (const toolCall of message.toolCalls) {
+           // Provider-executed tool calls (e.g. Anthropic `web_search`) were
+           // already run by the provider; they carry no client result, so they
+@@ -3653,7 +4203,16 @@
+           if (isProviderExecutedToolCall(toolCall)) {
+             continue
+           }
+-          if (!completedToolIds.has(toolCall.id)) {
++          const explicitlyResumed =
++            approvals.has(toolCall.id) ||
++            approvals.has(`approval_${toolCall.id}`) ||
++            this.resumeClientToolResults.has(toolCall.id) ||
++            this.resumeClientToolErrors.has(toolCall.id) ||
++            this.resumeCancelledToolCallIds.has(toolCall.id)
++          if (
++            !completedToolIds.has(toolCall.id) &&
++            (activeCallIds.has(toolCall.id) || explicitlyResumed)
++          ) {
+             pending.push(toolCall)
+           }
+         }
+@@ -3731,8 +4290,20 @@
+       return true
+     }
+ 
++    // The tool phase of a cut answer asked already.
++    const cutAnswerContinues = this.cutAnswerContinues
++    this.cutAnswerContinues = undefined
++
++    return (
++      (cutAnswerContinues ?? (await this.loopContinues(this.iterationCount))) &&
++      this.toolPhase === 'continue'
++    )
++  }
++
++  /** Ask the loop strategy and middleware `onShouldContinue`. */
++  private async loopContinues(iterationCount: number): Promise<boolean> {
+     const state = {
+-      iterationCount: this.iterationCount,
++      iterationCount,
+       messages: this.messages,
+       finishReason: this.lastFinishReason,
+       toolCallCount: this.toolCallCount,
+@@ -3741,16 +4312,13 @@
+ 
+     // Evaluate strategy and middleware unconditionally (even when the
+     // strategy already says stop) so every onShouldContinue observer still
+-    // sees the final counters; AND all three at the end.
++    // sees the final counters.
+     const strategyContinues = this.loopStrategy(state)
+     const middlewareContinues = await this.middlewareRunner.runOnShouldContinue(
+       this.middlewareCtx,
+       state,
+     )
+-
+-    return (
+-      strategyContinues && middlewareContinues && this.toolPhase === 'continue'
+-    )
++    return strategyContinues && middlewareContinues
+   }
+ 
+   /**
+@@ -3898,11 +4466,15 @@
+ 
+     this.middlewareCtx.phase = 'structuredOutput'
+ 
+-    // Build the structured-output config view. `tools` is intentionally
+-    // excluded from the type because it isn't forwarded to the structured-
+-    // output adapter call — including it here would be misleading API.
++    // Build the structured-output config view. `tools` and `toolChoice` are
++    // intentionally excluded from the type because they aren't forwarded to
++    // the structured-output adapter call — including them would be misleading.
+     const baseConfig = this.buildMiddlewareConfig()
+-    const { tools: _omitTools, ...baseWithoutTools } = baseConfig
++    const {
++      tools: _omitTools,
++      toolChoice: _omitToolChoice,
++      ...baseWithoutTools
++    } = baseConfig
+     let structuredConfig: StructuredOutputMiddlewareConfig = {
+       ...baseWithoutTools,
+       outputSchema: this.finalStructuredOutput.jsonSchema,
+@@ -3945,13 +4517,17 @@
+       chatOptions: {
+         model: this.params.model,
+         ...sanitizeProviderRequest(
+-          this.providerMessages,
++          transformMessagesForReplay(this.providerMessages).messages,
+           postOnConfig.systemPrompts,
+         ),
+         metadata: postOnConfig.metadata,
+         modelOptions: postOnConfig.modelOptions,
++        ...(postOnConfig.reasoning
++          ? { reasoning: postOnConfig.reasoning }
++          : {}),
+         logger: this.logger,
+         threadId: this.threadId,
++        promptCache: this.params.promptCache,
+         runId: this.runIdOverride,
+         parentRunId: this.parentRunIdOverride,
+         ...(this.effectiveRequest ? { request: this.effectiveRequest } : {}),
+@@ -3965,6 +4541,13 @@
+     // attach it as `finalizationError.cause` (the RUN_ERROR wire shape only
+     // carries `message` and `code`, losing stack/cause/provider properties).
+     let fallbackAdapterError: unknown = undefined
++    this.structuredCallMetadata = {
++      source: {
++        provider: this.adapter.provider ?? this.adapter.name,
++        api: this.adapter.api ?? this.adapter.kind,
++        model: structuredCallOptions.chatOptions.model,
++      },
++    }
+     const providerStream = this.adapter.structuredOutputStream
+       ? this.adapter.structuredOutputStream(structuredCallOptions)
+       : fallbackStructuredOutputStream(
+@@ -4038,7 +4621,7 @@
+       }
+ 
+       {
+-        const chunk = raw
++        const chunk = this.withCallMetadata(raw, this.structuredCallMetadata)
+         // Detect adapter-emitted structured-output.start so we don't duplicate
+         if (
+           !startEmitted &&
+@@ -4455,6 +5038,9 @@
+       },
+       metadata: this.params.metadata,
+       modelOptions: this.params.modelOptions,
++      reasoning: this.params.reasoning,
++      toolChoice: this.params.toolChoice,
++      promptCache: this.params.promptCache,
+       wrapFetch: this.params.wrapFetch,
+     }
+   }
+@@ -4927,7 +5513,11 @@
+       ...this.params,
+       metadata: config.metadata,
+       modelOptions: config.modelOptions,
++      reasoning: config.reasoning,
++      promptCache: config.promptCache ?? this.params.promptCache,
+     }
++    // Not stored in params: the next call starts from the chat() option.
++    this.callToolChoice = config.toolChoice ?? this.params.toolChoice
+     // Not stored in params: the next call starts from the chat() option,
+     // which the config already holds.
+     this.callWrapFetch = config.wrapFetch
+@@ -5265,11 +5855,34 @@
+   TStream extends boolean,
+ > = Omit<
+   TextActivityOptions<TAdapter, TSchema, TStream, any, any>,
+-  'middleware'
++  'middleware' | 'promptCache'
+ > & {
+   middleware?: Array<AnyChatMiddleware>
++  promptCache: ResolvedPromptCache
+ }
+ 
++/**
++ * Resolve the `promptCache` option once, before chat() makes up any ids. The
++ * key is the option key, else the caller's threadId or conversationId. A
++ * made-up threadId is never the key: a random key splits OpenAI cache routing.
++ */
++function resolvePromptCache(options: {
++  promptCache?: PromptCacheOptions
++  threadId?: string
++  conversationId?: string
++}): ResolvedPromptCache {
++  const option: Exclude<PromptCacheOptions, string> | undefined =
++    typeof options.promptCache === 'string'
++      ? { retention: options.promptCache }
++      : options.promptCache
++  // `||` on purpose: an empty string is no key.
++  const key = option?.key || options.threadId || options.conversationId
++  return {
++    retention: option?.retention ?? 'short',
++    ...(key ? { key } : {}),
++  }
++}
++
+ function readRuntimeMiddleware(
+   middleware: unknown,
+ ): Array<AnyChatMiddleware> | undefined {
+@@ -5313,6 +5926,7 @@
+   return {
+     ...rest,
+     ...overrides,
++    promptCache: resolvePromptCache(rest),
+     ...(middleware === undefined
+       ? {}
+       : { middleware: readRuntimeMiddleware(middleware) }),
+@@ -5519,16 +6133,6 @@
+     yield* runChatEngine(options, engineRef)
+     return
+   }
+-  // ponytail: a router cannot write input yet. Add it to the router pick if
+-  // someone needs it.
+-  const withInput = bag.agents.find(
+-    (agent: DefinedAgent) => agent.inputSchema !== undefined,
+-  )
+-  if (withInput) {
+-    throw new Error(
+-      `Subagent "${withInput.name}" has an inputSchema. inputSchema needs tool mode: remove subagents.router so the model writes the input.`,
+-    )
+-  }
+   const threadId = options.threadId ?? `thread-${Date.now()}`
+   const runId = options.runId ?? `run-${Date.now()}`
+   const messages = options.messages ?? []
+@@ -5556,11 +6160,12 @@
+     // SUBAGENT_STARTED metadata. Children that finished keep their result.
+     // Suspended children continue.
+     const plan =
+-      savedPlan(turn?.plan, bag.agents, {
+-        threadId,
+-        interruptedRunId: options.parentRunId ?? runId,
+-        interruptIds: options.resume?.map((entry) => entry.interruptId) ?? [],
+-      }) ??
++      (turn &&
++        savedPlan(turn.plan, bag.agents, {
++          threadId,
++          interruptedRunId: options.parentRunId ?? runId,
++          interruptIds: options.resume?.map((entry) => entry.interruptId) ?? [],
++        })) ??
+       normalizeRouterPick(
+         await bag.router({
+           messages: turnMessages,
+@@ -5579,6 +6184,9 @@
+       await subagentPersistence?.abort({ threadId, runId, error })
+       return
+     }
++    // Check every input before a child starts, so a bad input in a later
++    // step fails the turn like a bad pick.
++    const checked = await checkRoutedInputs(plan, bag.agents)
+     const onlyStep = plan.steps.length === 1 ? plan.steps[0] : undefined
+     if (onlyStep?.names.length === 1 && onlyStep.names[0] === 'main') {
+       // Earlier children own answers in this resume. Commit them first.
+@@ -5614,7 +6222,7 @@
+     let failure:
+       | Extract<StreamChunk, { type: EventType.SUBAGENT_ERROR }>
+       | undefined
+-    for (const step of plan.steps) {
++    for (const step of checked.steps) {
+       const entries: Array<SpawnEntry> = []
+       const textByName = new Map<string, string>()
+       for (const name of step.names) {
+@@ -5623,19 +6231,19 @@
+           textByName.set(name, prior.text)
+           continue
+         }
+-        entries.push(
+-          prior?.status === 'suspended'
+-            ? {
+-                name,
+-                resume: {
+-                  subagentRunId: prior.subagentRunId,
+-                  messages: prior.messages,
+-                  entries: prior.resume,
+-                  text: prior.text,
+-                },
+-              }
+-            : { name },
+-        )
++        const input = stepInput(step, name)
++        entries.push({
++          name,
++          ...(input !== undefined && { input }),
++          ...(prior?.status === 'suspended' && {
++            resume: {
++              subagentRunId: prior.subagentRunId,
++              messages: prior.messages,
++              entries: prior.resume,
++              text: prior.text,
++            },
++          }),
++        })
+       }
+       const stepChunks: Array<StreamChunk> = []
+       if (entries.length > 0) {
+@@ -5787,9 +6395,12 @@
+ }
+ 
+ /**
+- * The plan from a resumed turn, or undefined when it is absent. A plan that
+- * names agents this chat does not have is stale: re-routing would strand the
+- * suspended child that owns the answers, so fail the resume instead.
++ * The plan from a resumed turn. The plan comes back from the client, so this
++ * reads its names and order only and checks them like a router pick. A plan
++ * that is absent, or that does not match the agents of this chat, is stale:
++ * a new route would strand the suspended child that owns the answers, so fail
++ * the resume instead. A plan that names an agent with `inputSchema` is stale
++ * too: the input stays on the server, and nothing here keeps it for a resume.
+  */
+ function savedPlan(
+   plan: unknown,
+@@ -5799,13 +6410,25 @@
+     interruptedRunId: string
+     interruptIds: ReadonlyArray<string>
+   },
+-): { steps: ReadonlyArray<SubagentStep> } | undefined {
+-  if (typeof plan !== 'object' || plan === null || !('steps' in plan)) {
+-    return undefined
+-  }
++): RoutedPlan {
+   try {
+-    // The plan comes back from the client. Check it like a router pick.
+-    return normalizeRouterPick(plan as SubagentStepsPlan, agents)
++    if (typeof plan !== 'object' || plan === null || !('steps' in plan)) {
++      throw new Error('The plan is absent.')
++    }
++    // The cast names the shape only. normalizeRouterPick checks it.
++    const saved = plan as RoutedPlan
++    const raw = normalizeRouterPick(
++      { steps: saved.steps.map(({ names, order }) => ({ names, order })) },
++      agents,
++    )
++    for (const name of raw.steps.flatMap((step) => step.names)) {
++      if (agents.some((agent) => agent.name === name && agent.inputSchema)) {
++        throw new Error(
++          `Agent "${name}" got its input from the router. A turn with router inputs cannot resume.`,
++        )
++      }
++    }
++    return raw
+   } catch (error) {
+     throw new InterruptResumeValidationError([
+       {
+@@ -5825,18 +6448,64 @@
+   }
+ }
+ 
+-/** Put the router plan on a direct child's SUBAGENT_STARTED metadata. */
+-function withPlan(
+-  chunk: StreamChunk,
+-  plan: { steps: ReadonlyArray<SubagentStep> },
+-): StreamChunk {
++/**
++ * Check the input of each picked agent that has `inputSchema`, and return the
++ * plan with the checked inputs. Throws when an agent with a schema has no
++ * input, or when an input does not match. Throws for a plain JSON Schema
++ * too: this code cannot check an input against one.
++ */
++async function checkRoutedInputs(
++  plan: RoutedPlan,
++  agents: ReadonlyArray<DefinedAgent>,
++): Promise<RoutedPlan> {
++  const steps: Array<RoutedPlan['steps'][number]> = []
++  for (const step of plan.steps) {
++    const inputs: Record<string, unknown> = {}
++    for (const name of step.names) {
++      const schema = agents.find((agent) => agent.name === name)?.inputSchema
++      if (schema === undefined) continue
++      if (!isStandardSchema(schema)) {
++        throw new Error(
++          `Agent "${name}" has a plain JSON Schema as inputSchema. A router can start it only when inputSchema is a Standard Schema, such as a zod schema.`,
++        )
++      }
++      const input = stepInput(step, name)
++      if (input === undefined) {
++        throw new Error(
++          `Agent "${name}" needs input. Return { name: '${name}', input } from the router.`,
++        )
++      }
++      const result = await validateWithStandardSchema(schema, input)
++      if (!result.success) {
++        const issues = result.issues
++          .map((issue) => [issue.path?.join('.'), issue.message])
++          .map(([path, message]) => (path ? `${path}: ${message}` : message))
++          .join(', ')
++        throw new Error(`Input validation failed for agent ${name}: ${issues}`)
++      }
++      inputs[name] = result.data
++    }
++    steps.push({ ...step, inputs })
++  }
++  return { steps }
++}
++
++/**
++ * Put the router plan on a direct child's SUBAGENT_STARTED metadata: names
++ * and order only. The plan goes to the client, and an input stays here.
++ */
++function withPlan(chunk: StreamChunk, plan: RoutedPlan): StreamChunk {
+   if (
+     chunk.type !== EventType.SUBAGENT_STARTED ||
+     chunk.parentSubagentRunId !== undefined
+   ) {
+     return chunk
+   }
+-  return withTanstackMetadata(chunk, { [SUBAGENT_PLAN_KEY]: plan })
++  const steps = plan.steps.map(({ names, order }) => ({
++    names,
++    ...(order !== undefined && { order }),
++  }))
++  return withTanstackMetadata(chunk, { [SUBAGENT_PLAN_KEY]: { steps } })
+ }
+ 
+ function readRoutedSubagentPersistence(
+@@ -6130,7 +6799,10 @@
+     type: EventType.RUN_FINISHED,
+     runId,
+     threadId,
+-    model,
++    model: result.model ?? model,
++    ...(result.responseId !== undefined
++      ? { responseId: result.responseId }
++      : {}),
+     timestamp: Date.now(),
+     finishReason: 'stop',
+     // Forward adapter-reported token usage so consumers reading
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/messages.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/messages.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/messages.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/messages.ts	2026-10-19 16:49:18
+@@ -8,11 +8,17 @@
+   normalizeToolResult,
+ } from '../../utilities/tool-result'
+ import {
++  mergeMetadata,
+   tanstackMetadata,
+   withTanstackMetadata,
+ } from '../../utilities/merge-metadata'
+ import { isRedactedThinkingId } from '../../utilities/reasoning-encrypted-value'
+ import {
++  buildBlockOrder,
++  orderedAssistantBlocks,
++} from '../../utilities/block-order'
++import type { BlockOrderEntry } from '../../utilities/block-order'
++import {
+   splitSubagentWire,
+   subagentWireText,
+ } from '../../utilities/subagent-wire'
+@@ -24,6 +30,7 @@
+   StructuredOutputPart,
+   TanStackMessageMetadata,
+   TextPart,
++  ThinkingPart,
+   ToolCall,
+   ToolCallPart,
+   SubagentPart,
+@@ -200,9 +207,14 @@
+     if (group.info.parentToolCallId !== undefined) continue
+     const text = subagentWireText(group.messages)
+     if (text === '') continue
++    // A `continues` row was joined into the row before it, so it is no host.
+     const host = top
+       .slice(0, group.hostIndex + 1)
+-      .findLast((message) => message.role === 'assistant')
++      .findLast(
++        (message) =>
++          message.role === 'assistant' &&
++          tanstackMetadata(message)?.continues === undefined,
++      )
+     const hostId = host && 'id' in host ? host.id : undefined
+     blocks.set(hostId, [
+       ...(blocks.get(hostId) ?? []),
+@@ -223,6 +235,8 @@
+       converted.push({ role: 'assistant', content: block })
+       continue
+     }
++    // ponytail: the added text makes a `blockOrder` map on the host invalid,
++    // so readers use the default order for that one message.
+     converted[index] = {
+       ...host,
+       content:
+@@ -255,6 +269,10 @@
+ 
+   const modelMessages: Array<ModelMessage> = []
+   let pendingThinking: NonNullable<ModelMessage['thinking']> = []
++  // The last assistant row and the message it went into, for `continues`.
++  let lastAssistantRow:
++    | { id: string | undefined; message: ModelMessage }
++    | undefined
+   for (const msg of messages) {
+     if ('parts' in msg) {
+       modelMessages.push(...uiMessageToModelMessages(msg))
+@@ -345,7 +363,7 @@
+       const toolCalls = source.toolCalls?.map((toolCall) =>
+         toolCallFromWire(toolCall, toolCallMetadata?.[toolCall.id]),
+       )
+-      modelMessages.push({
++      const row: ModelMessage = {
+         ...source,
+         ...(toolCalls !== undefined ? { toolCalls } : {}),
+         ...(pendingThinking.length > 0
+@@ -353,8 +371,23 @@
+               thinking: [...(source.thinking ?? []), ...pendingThinking],
+             }
+           : {}),
+-      })
++      }
+       pendingThinking = []
++      // A row that exists only for the block order joins the row before it.
++      const continues = tanstackMetadata(msg)?.continues
++      if (
++        lastAssistantRow !== undefined &&
++        modelMessages.at(-1) === lastAssistantRow.message &&
++        continues !== undefined &&
++        continues === lastAssistantRow.id
++      ) {
++        const joined = joinAssistantRows(lastAssistantRow.message, row)
++        modelMessages[modelMessages.length - 1] = joined
++        lastAssistantRow = { id: source.id, message: joined }
++      } else {
++        modelMessages.push(row)
++        lastAssistantRow = { id: source.id, message: row }
++      }
+       continue
+     }
+ 
+@@ -363,6 +396,88 @@
+   return modelMessages
+ }
+ 
++/**
++ * The blocks of an assistant message as order entries: in map order when
++ * the map is valid, else in the default order.
++ */
++function blockOrderEntries(message: ModelMessage): Array<BlockOrderEntry> {
++  const blocks = orderedAssistantBlocks(message)
++  if (blocks) {
++    return blocks.map((block): BlockOrderEntry => {
++      if (block.type === 'thinking') return { type: 'thinking' }
++      if (block.type === 'text') return { type: 'text', text: block.text }
++      return { type: 'tool-call', id: block.toolCall.id }
++    })
++  }
++  return [
++    ...(message.thinking ?? []).map(
++      (): BlockOrderEntry => ({ type: 'thinking' }),
++    ),
++    ...(typeof message.content === 'string'
++      ? [{ type: 'text' as const, text: message.content }]
++      : []),
++    ...(message.toolCalls ?? []).map(
++      (toolCall): BlockOrderEntry => ({ type: 'tool-call', id: toolCall.id }),
++    ),
++  ]
++}
++
++/**
++ * Join an assistant wire row marked `continues` into the message of the
++ * assistant row before it, and extend that message's order map. The message
++ * keeps the first row's id and merges metadata from both rows.
++ */
++function joinAssistantRows(
++  previous: ModelMessage,
++  row: ModelMessage,
++): ModelMessage {
++  const text = [previous.content, row.content]
++    .filter((content) => typeof content === 'string')
++    .join('')
++  const thinking = [...(previous.thinking ?? []), ...(row.thinking ?? [])]
++  const toolCalls = [...(previous.toolCalls ?? []), ...(row.toolCalls ?? [])]
++  const blockOrder = buildBlockOrder([
++    ...blockOrderEntries(previous),
++    ...blockOrderEntries(row),
++  ])
++  // Each row lists only its own ui resources. Keep them all.
++  const rowResources = tanstackMetadata(row)?.uiResources ?? []
++  const metadata = mergeMetadata(previous.metadata, row.metadata)
++  let joinedMetadata =
++    metadata === undefined
++      ? undefined
++      : {
++          ...metadata,
++          ...(metadata.tanstack ? { tanstack: { ...metadata.tanstack } } : {}),
++        }
++  if (joinedMetadata?.tanstack) {
++    delete joinedMetadata.tanstack.continues
++    if (Object.keys(joinedMetadata.tanstack).length === 0)
++      delete joinedMetadata.tanstack
++  }
++  if (joinedMetadata && Object.keys(joinedMetadata).length === 0)
++    joinedMetadata = undefined
++  const merged: ModelMessage = { ...previous }
++  if (joinedMetadata === undefined) delete merged.metadata
++  else merged.metadata = joinedMetadata
++  const base =
++    rowResources.length > 0
++      ? withTanstackMetadata(merged, {
++          uiResources: [
++            ...(tanstackMetadata(previous)?.uiResources ?? []),
++            ...rowResources,
++          ],
++        })
++      : merged
++  return {
++    ...base,
++    ...(text !== '' && { content: text }),
++    ...(toolCalls.length > 0 && { toolCalls }),
++    ...(thinking.length > 0 && { thinking }),
++    ...(blockOrder && { blockOrder }),
++  }
++}
++
+ function restoreModelMessageCreatedAt(message: ModelMessage): ModelMessage {
+   const createdAt =
+     coerceCreatedAt(message.createdAt) ?? createdAtFromMetadata(message)
+@@ -557,11 +672,20 @@
+   const fromParts = uiMessage.parts.filter(isUiResourcePart)
+   const current = uiMessage.metadata ?? {}
+   const previous = tanstackMetadata(uiMessage)
+-  const tanstack: TanStackMessageMetadata = {}
+-  if (previous?.model !== undefined) tanstack.model = previous.model
+-  if (previous?.runId !== undefined) tanstack.runId = previous.runId
+-  if (previous?.run?.id !== undefined) tanstack.run = { id: previous.run.id }
+-  if (previous?.signature !== undefined) tanstack.signature = previous.signature
++  const tanstack: TanStackMessageMetadata = { ...previous }
++  if (tanstack.run) {
++    tanstack.run = { ...tanstack.run }
++    delete tanstack.run.startedAt
++    delete tanstack.run.finishedAt
++  }
++  // These fields describe wire rows. The converters rebuild them from parts.
++  delete tanstack.createdAt
++  delete tanstack.continues
++  delete tanstack.structuredOutput
++  delete tanstack.toolCallMetadata
++  delete tanstack.toolResult
++  delete tanstack.toolResultOutcome
++  delete tanstack.uiResources
+   if (fromParts.length > 0) tanstack.uiResources = fromParts
+   const result = { ...current }
+   if (Object.keys(tanstack).length > 0) result.tanstack = tanstack
+@@ -646,10 +770,12 @@
+      * `TToolCallMetadata` generic. */
+     metadata?: unknown
+   }>
++  /** The blocks of this segment in parts order, for the order map. */
++  order: Array<BlockOrderEntry>
+ }
+ 
+ function createSegment(): AssistantSegment {
+-  return { contentParts: [], toolCalls: [] }
++  return { contentParts: [], toolCalls: [], order: [] }
+ }
+ 
+ function isToolCallIncluded(part: ToolCallPart): boolean {
+@@ -699,6 +825,10 @@
+     const hasContent = content !== null
+     const hasToolCalls = current.toolCalls.length > 0
+     const hasThinking = pendingThinking.length > 0
++    // A map can only point into string content.
++    const blockOrder = Array.isArray(content)
++      ? undefined
++      : buildBlockOrder(current.order)
+ 
+     if (force || hasContent || hasToolCalls || hasThinking) {
+       messageList.push({
+@@ -710,6 +840,7 @@
+         ...(current.structuredOutput && {
+           structuredOutput: current.structuredOutput,
+         }),
++        ...(blockOrder && { blockOrder }),
+       })
+       pendingThinking = []
+     }
+@@ -719,6 +850,10 @@
+   for (const part of uiMessage.parts) {
+     switch (part.type) {
+       case 'text':
++        current.contentParts.push(part)
++        current.order.push({ type: 'text', text: part.content })
++        break
++
+       case 'image':
+       case 'audio':
+       case 'video':
+@@ -737,6 +872,7 @@
+             },
+             ...(part.metadata !== undefined && { metadata: part.metadata }),
+           })
++          current.order.push({ type: 'tool-call', id: part.id })
+         }
+         break
+ 
+@@ -780,6 +916,7 @@
+             ...(part.signature && { signature: part.signature }),
+             ...(part.redacted && { redacted: true }),
+           })
++          current.order.push({ type: 'thinking' })
+         }
+         break
+ 
+@@ -797,6 +934,7 @@
+                 : ''
+           if (serialized !== '') {
+             current.contentParts.push({ type: 'text', content: serialized })
++            current.order.push({ type: 'text', text: serialized })
+             current.structuredOutput = part
+           }
+         }
+@@ -819,10 +957,9 @@
+             : ''
+         if (block !== '') {
+           const prefix = current.contentParts.length > 0 ? '\n\n' : ''
+-          current.contentParts.push({
+-            type: 'text',
+-            content: `${prefix}${block}`,
+-          })
++          const text = `${prefix}${block}`
++          current.contentParts.push({ type: 'text', content: text })
++          current.order.push({ type: 'text', text })
+         }
+         break
+       }
+@@ -891,6 +1028,37 @@
+   return messageList
+ }
+ 
++function thinkingToPart(
++  thinking: NonNullable<ModelMessage['thinking']>[number],
++): ThinkingPart {
++  return {
++    type: 'thinking',
++    content: thinking.content,
++    ...(thinking.signature && { signature: thinking.signature }),
++    ...(thinking.redacted && { redacted: true }),
++  }
++}
++
++function toolCallToPart(toolCall: ToolCall): ToolCallPart {
++  // Model-message arguments are complete, so surface the parsed input.
++  // A malformed arguments string just leaves `input` undefined.
++  let input: unknown
++  try {
++    input = JSON.parse(toolCall.function.arguments)
++  } catch {
++    input = undefined
++  }
++  return {
++    type: 'tool-call',
++    id: toolCall.id,
++    name: toolCall.function.name,
++    arguments: toolCall.function.arguments,
++    state: 'input-complete', // Model messages have complete arguments
++    ...(input !== undefined && { input }),
++    ...(toolCall.metadata !== undefined && { metadata: toolCall.metadata }),
++  }
++}
++
+ /**
+  * Convert a ModelMessage to UIMessage
+  *
+@@ -913,12 +1081,7 @@
+   if (modelMessage.role === 'assistant' && modelMessage.thinking?.length) {
+     for (const thinking of modelMessage.thinking) {
+       if (!thinking.content && !thinking.signature) continue
+-      parts.push({
+-        type: 'thinking',
+-        content: thinking.content,
+-        ...(thinking.signature && { signature: thinking.signature }),
+-        ...(thinking.redacted && { redacted: true }),
+-      })
++      parts.push(thinkingToPart(thinking))
+     }
+   }
+ 
+@@ -984,24 +1147,29 @@
+   // Handle tool calls
+   if (modelMessage.toolCalls && modelMessage.toolCalls.length > 0) {
+     for (const toolCall of modelMessage.toolCalls) {
+-      // Model-message arguments are complete, so surface the parsed input.
+-      // A malformed arguments string just leaves `input` undefined.
+-      let input: unknown
+-      try {
+-        input = JSON.parse(toolCall.function.arguments)
+-      } catch {
+-        input = undefined
+-      }
+-      parts.push({
+-        type: 'tool-call',
+-        id: toolCall.id,
+-        name: toolCall.function.name,
+-        arguments: toolCall.function.arguments,
+-        state: 'input-complete', // Model messages have complete arguments
+-        ...(input !== undefined && { input }),
+-        ...(toolCall.metadata !== undefined && { metadata: toolCall.metadata }),
+-      })
++      parts.push(toolCallToPart(toolCall))
+     }
++  }
++
++  // A valid order map puts the blocks back in the order the model sent them.
++  const ordered =
++    modelMessage.role === 'assistant' && structuredOutput === undefined
++      ? orderedAssistantBlocks(modelMessage)
++      : undefined
++  if (ordered) {
++    parts.splice(
++      0,
++      parts.length,
++      ...ordered.flatMap((block): Array<MessagePart> => {
++        if (block.type === 'text') {
++          return [{ type: 'text', content: block.text }]
++        }
++        if (block.type === 'tool-call') return [toolCallToPart(block.toolCall)]
++        return block.thinking.content || block.thinking.signature
++          ? [thinkingToPart(block.thinking)]
++          : []
++      }),
++    )
+   }
+ 
+   const ui: UIMessage = {
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/middleware/index.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware/index.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/middleware/index.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware/index.ts	2026-10-19 16:49:18
+@@ -72,6 +72,13 @@
+ export type { MetadataStore } from './metadata'
+ 
+ export {
++  LogRecordsCapability,
++  getLogRecords,
++  provideLogRecords,
++} from './log-records'
++export type { LogRecord, LogRecordsWriter } from './log-records'
++
++export {
+   isRunStatus,
+   isTerminalRunStatus,
+   defineRunStore,
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware: log-records.ts
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/middleware/metadata.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware/metadata.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/middleware/metadata.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware/metadata.ts	2026-10-19 16:49:18
+@@ -13,6 +13,29 @@
+   set: (namespace: string, key: string, value: unknown) => Promise<void>
+   /** Delete `(namespace, key)`. Do nothing when it is absent. */
+   delete: (namespace: string, key: string) => Promise<void>
++  /**
++   * Optional. The value with a revision, or `null` when it is absent. Pair it
++   * with `setIf` for compare-and-set writes: implement both or neither.
++   * Every write (also a plain `set`) gives the key a new revision, and a
++   * revision does not come back after a `delete`.
++   */
++  getVersioned?: (
++    namespace: string,
++    key: string,
++  ) => Promise<{ value: unknown; revision: string } | null>
++  /**
++   * Optional. Write only when the current revision is `expectedRevision`
++   * (`null` means the key is absent). Success is `{ ok: true, revision }`.
++   * A different revision returns `{ ok: false, reason: 'conflict' }`.
++   */
++  setIf?: (
++    namespace: string,
++    key: string,
++    value: unknown,
++    expectedRevision: string | null,
++  ) => Promise<
++    { ok: true; revision: string } | { ok: false; reason: 'conflict' }
++  >
+ }
+ 
+ export const MetadataCapability = createCapability<MetadataStore>()('metadata')
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/middleware/types.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware/types.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/middleware/types.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/middleware/types.ts	2026-10-19 16:49:18
+@@ -9,16 +9,19 @@
+   Interrupt,
+   JSONSchema,
+   ModelMessage,
++  ResolvedPromptCache,
+   UIMessage,
+   RunAgentResumeItem,
+   StreamChunk,
+   TokenUsage,
+   Tool,
+   ToolCall,
++  ToolChoice,
+   FetchWrapper,
+ } from '../../../types'
+ import type { SystemPrompt } from '../../../system-prompts'
+ import type { ToolApprovalResolution } from '../../../interrupts'
++import type { ReasoningRequest } from '../../../reasoning'
+ import type {
+   GenericInterruptRequest,
+   InterruptDefinition,
+@@ -347,7 +350,20 @@
+   resumeToolState?: ChatResumeToolState | undefined
+   metadata?: Record<string, unknown> | undefined
+   modelOptions?: Record<string, unknown> | undefined
++  /** How hard the model thinks at this call. A middleware can set or change it. */
++  reasoning?: ReasoningRequest | undefined
+   /**
++   * How the model uses the tools of the next model call. A returned value
++   * applies to that call only. The next call starts again from the `chat()`
++   * option. A call with no tools sends no tool choice.
++   */
++  toolChoice?: ToolChoice | undefined
++  /**
++   * The prompt cache of the next model call. A returned value stays until a
++   * middleware changes it.
++   */
++  promptCache?: ResolvedPromptCache | undefined
++  /**
+    * Wraps the fetch of the next model call. A returned wrapper chains inside
+    * the wrappers before it, so it does not replace them. It applies to that
+    * call only. The next call starts again from the `chat()` option.
+@@ -385,16 +401,17 @@
+ /**
+  * Config passed to onStructuredOutputConfig.
+  *
+- * Mirrors ChatMiddlewareConfig minus `tools` (the final structured-output call
+- * is a single typed-response request, not an agentic loop — tools cannot be
+- * forwarded to it), plus the `outputSchema` being sent to the provider.
++ * Mirrors ChatMiddlewareConfig minus `tools` and `toolChoice` (the final
++ * structured-output call is a single typed-response request, not an agentic
++ * loop — tools cannot be forwarded to it), plus the `outputSchema` being sent
++ * to the provider.
+  * Middleware may transform the schema (e.g., inject $defs, strip
+  * vendor-incompatible keywords) by returning a partial that includes
+  * `outputSchema`.
+  */
+ export interface StructuredOutputMiddlewareConfig extends Omit<
+   ChatMiddlewareConfig,
+-  'tools'
++  'tools' | 'toolChoice'
+ > {
+   /** JSON Schema being sent to the provider for structured output. */
+   outputSchema: JSONSchema
+@@ -815,6 +832,10 @@
+    * Return `{ type: 'replaceResult', result }` to change the result that the
+    * model and the stream see. Middleware run in order. Each one sees the
+    * result of the one before it.
++   *
++   * Also called for a tool call that did not run because the output limit
++   * cut its answer. Then `ok` is false, and `error` is an `Error` with the
++   * code `'max_tokens'`.
+    */
+   onAfterToolCall?: (
+     ctx: ChatMiddlewareContext<TContext>,
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/stream/processor.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/stream/processor.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/stream/processor.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/stream/processor.ts	2026-10-19 16:49:18
+@@ -32,6 +32,7 @@
+ import {
+   mergeMetadata,
+   tanstackMetadata,
++  withTanstackMetadata,
+ } from '../../../utilities/merge-metadata'
+ import { getChunkRunId } from '../../../utilities/chunk-ids'
+ import type { AdapterYieldChunk } from '../../../utilities/adapter-yield-chunk'
+@@ -275,6 +276,9 @@
+   private readonly activeMessageIds: Set<string> = new Set()
+   private readonly toolCallToMessage: Map<string, string> = new Map()
+   private pendingManualMessageId: string | null = null
++  // True while the pending message came from startAssistantMessage(). Text
++  // that names another id still goes into it.
++  private legacyManualMessage = false
+   private pendingThinkingStepId: string | null = null
+   // The stream a run of *_CHUNK events is building. See expandChunk().
+   private openChunk: { family: ChunkFamily; id: string } | null = null
+@@ -290,6 +294,10 @@
+ 
+   // Run tracking (for concurrent run safety)
+   private readonly activeRuns = new Set<string>()
++  // The messages each model call (run) wrote to, so its terminal event tags
++  // only them. Messages written with no known run wait in the unassigned set.
++  private readonly callMessageIds = new Map<string, Set<string>>()
++  private readonly unassignedCallMessageIds = new Set<string>()
+   // Tool calls started since a RUN_STARTED that found no other run active, in
+   // order. A success RUN_FINISHED hands the unanswered ones to the client.
+   private runToolCallIds: Array<string> = []
+@@ -442,6 +450,7 @@
+     this.prepareAssistantMessage()
+     const { messageId: id } = this.ensureAssistantMessage(messageId)
+     this.pendingManualMessageId = id
++    this.legacyManualMessage = true
+     return id
+   }
+ 
+@@ -622,6 +631,19 @@
+     for (const id of this.activeMessageIds) {
+       if (!keptIds.has(id)) this.activeMessageIds.delete(id)
+     }
++    if (
++      this.pendingManualMessageId &&
++      !keptIds.has(this.pendingManualMessageId)
++    ) {
++      this.pendingManualMessageId = null
++      this.legacyManualMessage = false
++    }
++    for (const ids of this.callMessageIds.values()) {
++      for (const id of ids) if (!keptIds.has(id)) ids.delete(id)
++    }
++    for (const id of this.unassignedCallMessageIds) {
++      if (!keptIds.has(id)) this.unassignedCallMessageIds.delete(id)
++    }
+     this.messages = this.messages.slice(0, index + 1)
+     this.emitMessagesChange()
+   }
+@@ -630,6 +652,9 @@
+    * Clear all messages
+    */
+   clearMessages(): void {
++    // Keep the run keys: a late terminal event of a known run then tags none.
++    for (const ids of this.callMessageIds.values()) ids.clear()
++    this.unassignedCallMessageIds.clear()
+     this.messages = []
+     this.messageStates.clear()
+     this.activeMessageIds.clear()
+@@ -637,6 +662,7 @@
+     this.structuredMessageIds.clear()
+     this.structuredOutputUpdateBatches.clear()
+     this.pendingManualMessageId = null
++    this.legacyManualMessage = false
+     this.openChunk = null
+     this.childProcessors.clear()
+     this.childToolCalls.clear()
+@@ -1110,11 +1136,21 @@
+    * Used as fallback for events that don't include a messageId.
+    */
+   private getActiveAssistantMessageId(): string | null {
++    // While a run is active, only a message of that run (or the open
++    // placeholder) takes events that name no message.
++    const belongsToCurrentCall = (id: string) =>
++      this.activeRuns.size === 0 ||
++      [...this.activeRuns].some((runId) =>
++        this.callMessageIds.get(runId)?.has(id),
++      ) ||
++      (this.pendingManualMessageId === id &&
++        !this.messageStates.get(id)?.isComplete &&
++        !this.isDone)
+     // Set iteration is insertion-order; reverse-iterate to search from the end
+     const ids = Array.from(this.activeMessageIds).reverse()
+     for (const id of ids) {
+       const state = this.messageStates.get(id)
+-      if (state && state.role === 'assistant') {
++      if (state && state.role === 'assistant' && belongsToCurrentCall(id)) {
+         return id
+       }
+     }
+@@ -1123,7 +1159,7 @@
+     // assistant. A new user turn calls prepareAssistantMessage(), which
+     // clears messageStates first.
+     for (const [id, state] of [...this.messageStates].reverse()) {
+-      if (state.role === 'assistant') {
++      if (state.role === 'assistant' && belongsToCurrentCall(id)) {
+         return id
+       }
+     }
+@@ -1158,6 +1194,18 @@
+   } {
+     // Try to find state by preferred ID
+     if (preferredId) {
++      // The open placeholder of this call takes the first id the server sends.
++      const pendingId = this.pendingManualMessageId
++      if (
++        pendingId &&
++        pendingId !== preferredId &&
++        !this.legacyManualMessage &&
++        this.messageStates.get(pendingId)?.isComplete === false &&
++        !this.messages.some((message) => message.id === preferredId)
++      ) {
++        this.renameMessage(pendingId, preferredId)
++        this.pendingManualMessageId = preferredId
++      }
+       const state = this.getMessageState(preferredId)
+       if (state) {
+         this.resumeAssistantState(preferredId, state)
+@@ -1166,9 +1214,11 @@
+     }
+ 
+     // Try active assistant message
+-    const activeId = fallbackToActive
+-      ? this.getActiveAssistantMessageId()
+-      : null
++    // An explicit id that is not the active message gets its own message.
++    const activeId =
++      fallbackToActive && preferredId === undefined
++        ? this.getActiveAssistantMessageId()
++        : null
+     if (activeId) {
+       const state = this.getMessageState(activeId)
+       if (state) {
+@@ -1234,6 +1284,21 @@
+    * Rebuilds `createdAt` when `tanstack.createdAt` is an ISO string.
+    */
+   private mergeMessageMetadata(messageId: string, incoming: unknown): void {
++    const runId =
++      tanstackMetadata({
++        metadata:
++          incoming !== null && typeof incoming === 'object'
++            ? { ...incoming }
++            : undefined,
++      })?.runId ??
++      (this.activeRuns.size === 1 ? [...this.activeRuns][0] : undefined)
++    if (runId !== undefined) {
++      const ids = this.callMessageIds.get(runId) ?? new Set<string>()
++      ids.add(messageId)
++      this.callMessageIds.set(runId, ids)
++    } else {
++      this.unassignedCallMessageIds.add(messageId)
++    }
+     if (
+       incoming == null ||
+       typeof incoming !== 'object' ||
+@@ -1556,6 +1621,12 @@
+       this.structuredOutputUpdateBatches.delete(fromId)
+       this.structuredOutputUpdateBatches.set(toId, batch)
+     }
++    // The renamed message stays a member of its model call.
++    for (const ids of this.callMessageIds.values()) {
++      if (ids.delete(fromId)) ids.add(toId)
++    }
++    if (this.unassignedCallMessageIds.delete(fromId))
++      this.unassignedCallMessageIds.add(toId)
+   }
+ 
+   /**
+@@ -1584,6 +1655,7 @@
+     if (this.pendingManualMessageId) {
+       const pendingId = this.pendingManualMessageId
+       this.pendingManualMessageId = null
++      this.legacyManualMessage = false
+ 
+       if (pendingId !== messageId) {
+         this.renameMessage(pendingId, messageId)
+@@ -1882,6 +1954,8 @@
+    * message. Fold leading thinking-only messages into the next real
+    * assistant. Do not fold into a tool-result-only message (`role: 'tool'`
+    * on the wire). `reconcileSnapshotToolCalls` anchors those results.
++   * A `<id>-segment-<n>` row folds into its message, together with the
++   * tool-result rows between them (a tool result ends a wire segment).
+    */
+   private mergeReasoningFanOut(messages: Array<UIMessage>): Array<UIMessage> {
+     const out: Array<UIMessage> = []
+@@ -1921,13 +1995,27 @@
+       } else {
+         flushPending()
+       }
+-      const prev = out.at(-1)
++      // Look back past tool-result rows to the message this segment is of.
++      let parentIndex = out.length - 1
++      while (parentIndex >= 0) {
++        const candidate = out[parentIndex]
++        if (!candidate || !isToolResultOnly(candidate)) break
++        parentIndex--
++      }
++      const parent = out[parentIndex]
+       if (
+-        prev?.role === 'assistant' &&
++        parent?.role === 'assistant' &&
+         next.role === 'assistant' &&
+-        isAssistantSegmentOf(next.id, prev.id)
++        isAssistantSegmentOf(next.id, parent.id)
+       ) {
+-        out[out.length - 1] = { ...prev, parts: [...prev.parts, ...next.parts] }
++        // The parent, the tool results after it, then the segment: row order.
++        const folded = out
++          .slice(parentIndex)
++          .flatMap((message) => message.parts)
++        out.splice(parentIndex, out.length - parentIndex, {
++          ...parent,
++          parts: [...folded, ...next.parts],
++        })
+         continue
+       }
+       out.push(next)
+@@ -2145,7 +2233,11 @@
+       )
+       return
+     }
+-    const { messageId, state } = this.ensureAssistantMessage(chunk.messageId)
++    const preferredId =
++      this.legacyManualMessage && this.pendingManualMessageId
++        ? this.pendingManualMessageId
++        : chunk.messageId
++    const { messageId, state } = this.ensureAssistantMessage(preferredId)
+     this.mergeMessageMetadata(messageId, chunk.metadata)
+ 
+     if (this.structuredMessageIds.has(messageId)) {
+@@ -2256,6 +2348,11 @@
+       targetMessageId ?? undefined,
+       chunk.parentMessageId === undefined,
+     )
++    const tanstack = tanstackMetadata(chunk)
++    this.mergeMessageMetadata(
++      messageId,
++      tanstack === undefined ? undefined : { tanstack },
++    )
+ 
+     // Mark that we've seen tool calls since the last text segment
+     state.hasToolCallsSinceTextStart = true
+@@ -2530,6 +2627,9 @@
+     if (this.activeRuns.size === 0) {
+       this.runToolCallIds = []
+       this.toolCallsSentToClient.clear()
++      // A new run owes its own stream end. A client that only watches never
++      // resets between runs, so without this only its first run would end.
++      this.streamEndEmitted = false
+     }
+     this.activeRuns.add(chunk.runId)
+   }
+@@ -2548,6 +2648,30 @@
+     chunk: Extract<StreamChunk, { type: 'RUN_FINISHED' }>,
+   ): void {
+     const extra = chunk as AdapterYieldChunk
++    // Tag the messages of this model call with its response identity.
++    const incoming = tanstackMetadata(chunk)
++    const model = chunk.model ?? incoming?.model
++    const responseId = chunk.responseId ?? incoming?.responseId
++    const ids =
++      this.callMessageIds.get(chunk.runId) ??
++      (this.activeRuns.has(chunk.runId)
++        ? new Set<string>()
++        : new Set(this.unassignedCallMessageIds))
++    for (const messageId of ids) {
++      this.mergeMessageMetadata(
++        messageId,
++        withTanstackMetadata(chunk, {
++          ...(model !== undefined ? { model } : {}),
++          ...(responseId !== undefined ? { responseId } : {}),
++        }).metadata,
++      )
++    }
++    if (this.pendingManualMessageId && ids.has(this.pendingManualMessageId)) {
++      this.pendingManualMessageId = null
++      this.legacyManualMessage = false
++    }
++    this.callMessageIds.delete(chunk.runId)
++    for (const id of ids) this.unassignedCallMessageIds.delete(id)
+     this.finishReason =
+       extra.finishReason !== undefined
+         ? extra.finishReason
+@@ -2609,6 +2733,9 @@
+       ) {
+         continue
+       }
++      // A call of an answer cut at the output limit never runs, also when
++      // its arguments parse. This is expected, so it logs nothing.
++      if (this.finishReason === 'length') continue
+       // A snapshot can carry a part with arguments but no input. Parse them
+       // strictly, as completeToolCall() does. An empty argument string is a
+       // call with no arguments.
+@@ -2731,13 +2858,46 @@
+     chunk: Extract<StreamChunk, { type: 'RUN_ERROR' }>,
+   ): void {
+     this.hasError = true
+-    const runId = getChunkRunId(chunk)
++    const runId =
++      getChunkRunId(chunk) ??
++      (this.activeRuns.size === 1 ? [...this.activeRuns][0] : undefined)
++    const currentIds =
++      runId !== undefined
++        ? (this.callMessageIds.get(runId) ?? this.unassignedCallMessageIds)
++        : this.unassignedCallMessageIds
+     if (runId) {
+       this.activeRuns.delete(runId)
+     } else {
+       this.activeRuns.clear()
+     }
+-    const { messageId } = this.ensureAssistantMessage()
++    // A known run whose messages were all removed gets no new error row.
++    const discardedCall =
++      runId !== undefined &&
++      this.callMessageIds.has(runId) &&
++      currentIds.size === 0
++    const messageId = discardedCall
++      ? undefined
++      : this.ensureAssistantMessage(
++          [...currentIds].at(-1) ?? generateMessageId(),
++          false,
++        ).messageId
++    // Mark the messages of the failed call, so replay drops them.
++    const ids = new Set(currentIds)
++    if (messageId !== undefined) ids.add(messageId)
++    for (const id of ids) {
++      this.mergeMessageMetadata(
++        id,
++        withTanstackMetadata(chunk, {
++          stopReason: tanstackMetadata(chunk)?.stopReason ?? 'error',
++        }).metadata,
++      )
++    }
++    if (this.pendingManualMessageId && ids.has(this.pendingManualMessageId)) {
++      this.pendingManualMessageId = null
++      this.legacyManualMessage = false
++    }
++    if (runId !== undefined) this.callMessageIds.delete(runId)
++    for (const id of ids) this.unassignedCallMessageIds.delete(id)
+     // Prefer spec field `message`; fall back to deprecated `error.message`.
+     // If neither is set, the chunk still carries debug context (provider
+     // error codes, request ids, etc.) — log it so the failure isn't silent.
+@@ -2749,7 +2909,7 @@
+       )
+     }
+ 
+-    if (this.structuredMessageIds.has(messageId)) {
++    if (messageId !== undefined && this.structuredMessageIds.has(messageId)) {
+       this.flushStructuredOutputUpdate(messageId)
+       this.messages = errorStructuredOutputPart(
+         this.messages,
+@@ -2921,6 +3081,7 @@
+       this.getActiveAssistantMessageId() ?? undefined,
+     )
+     const stepId = state.currentThinkingStepId ?? chunk.entityId
++    this.mergeMessageMetadata(messageId, chunk.metadata)
+     state.thinkingStepSignatures.set(stepId, encryptedValue)
+     const content = state.thinkingSteps.get(stepId) ?? ''
+     if (!state.thinkingSteps.has(stepId)) {
+@@ -2992,7 +3153,9 @@
+     if (chunk.name === 'structured-output.start' && chunk.value) {
+       const v = chunk.value as { messageId?: string }
+       const { messageId: targetId } = this.ensureAssistantMessage(
+-        v.messageId ?? messageId ?? undefined,
++        v.messageId && this.getMessageState(v.messageId)
++          ? v.messageId
++          : (messageId ?? v.messageId),
+       )
+       if (targetId) {
+         this.structuredMessageIds.add(targetId)
+@@ -3015,7 +3178,9 @@
+         messageId?: string
+       }
+       const { messageId: targetId } = this.ensureAssistantMessage(
+-        v.messageId ?? messageId ?? undefined,
++        v.messageId && this.getMessageState(v.messageId)
++          ? v.messageId
++          : (messageId ?? v.messageId),
+       )
+       if (targetId) {
+         this.flushStructuredOutputUpdate(targetId)
+@@ -3545,12 +3710,15 @@
+    */
+   private resetStreamState(): void {
+     this.messageStates.clear()
++    this.callMessageIds.clear()
++    this.unassignedCallMessageIds.clear()
+     this.activeMessageIds.clear()
+     this.activeRuns.clear()
+     this.toolCallToMessage.clear()
+     this.structuredMessageIds.clear()
+     this.structuredOutputUpdateBatches.clear()
+     this.pendingManualMessageId = null
++    this.legacyManualMessage = false
+     this.pendingThinkingStepId = null
+     this.openChunk = null
+     this.finishReason = null
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/tools/tool-calls.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/tools/tool-calls.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/tools/tool-calls.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/tools/tool-calls.ts	2026-10-19 16:49:18
+@@ -508,14 +508,36 @@
+   toolName: string
+   kind: 'form' | 'sampling'
+   request: unknown
++  /**
++   * The interrupt reason. Default: `'mcp_input'`. An empty reason, and a
++   * reason that clients read as another kind of interrupt, use the default.
++   */
++  reason?: string
+ }
+ 
+ interface McpInputRequiredThrow {
+   name: 'MCPInputRequiredError'
+   kind: 'form' | 'sampling'
+   request: unknown
++  reason?: unknown
+ }
+ 
++/** Reasons that clients read as another kind of interrupt. */
++const RESERVED_INTERRUPT_REASONS = new Set([
++  'approval_required',
++  'client_tool_input',
++  'tanstack:client_tool_execution',
++])
++
++/** The reason a thrown input request names, when it can use it. */
++function inputRequestReason(reason: unknown) {
++  return typeof reason === 'string' &&
++    reason !== '' &&
++    !RESERVED_INTERRUPT_REASONS.has(reason)
++    ? reason
++    : undefined
++}
++
+ function isMcpInputRequired(value: unknown): value is McpInputRequiredThrow {
+   if (typeof value !== 'object' || value === null) return false
+   if (!('name' in value) || value.name !== 'MCPInputRequiredError') {
+@@ -810,11 +832,13 @@
+     // Same shape as MCPInputRequiredError. Pause instead of a tool error.
+     if (isMcpInputRequired(error)) {
+       if (!inputRequired) throw error
++      const reason = inputRequestReason(error.reason)
+       inputRequired.push({
+         toolCallId: toolCall.id,
+         toolName,
+         kind: error.kind,
+         request: error.request,
++        ...(reason !== undefined ? { reason } : {}),
+       })
+       return
+     }
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/tools/tool-definition.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/tools/tool-definition.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/chat/tools/tool-definition.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/chat/tools/tool-definition.ts	2026-10-19 16:49:18
+@@ -130,6 +130,7 @@
+   approvalSchema?: TApprovalSchema
+   execution?: 'task'
+   lazy?: boolean
++  replay?: 'safe' | 'never'
+   metadata?: Record<string, unknown>
+   execute?: ToolExecuteFunction<TInput, TOutput, TContext>
+ }
+@@ -223,6 +224,13 @@
+   inputSchema?: TInput
+   outputSchema?: TOutput
+   lazy?: boolean
++  /**
++   * Whether a host may run this tool again after a crash cut the run
++   * between the call and its result. `'safe'` runs it again. Omit the
++   * field, or set `'never'`, when a second run is not safe. The host
++   * writes the model note. `chat()` does not read this field.
++   */
++  replay?: 'safe' | 'never'
+   metadata?: Record<string, unknown>
+   execution?: 'task'
+ } & ApprovalConfig<TNeedsApproval, TApprovalSchema>
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/error-payload.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/error-payload.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/error-payload.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/error-payload.ts	2026-10-19 16:49:18
+@@ -33,6 +33,13 @@
+   return false
+ }
+ 
++/**
++ * The `RUN_ERROR.code` a text adapter sets when the provider says the input
++ * does not fit in the model's context window. Shorten the messages, then call
++ * the model again. The provider's own text stays in `message`.
++ */
++export const CONTEXT_OVERFLOW_CODE = 'context_overflow'
++
+ // HTTP status codes carried as numbers (e.g. `error.status = 429`) are a
+ // common variant on SDK error classes; coerce so the resulting `code` field
+ // is stable as a string for downstream consumers.
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/index.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/index.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/activities/index.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/activities/index.ts	2026-10-19 16:49:18
+@@ -49,6 +49,7 @@
+ export { subagentRoute, type SubagentRouteOptions } from './chat/agents/route'
+ export type {
+   SubagentOrder,
++  SubagentPick,
+   SubagentRouterPick,
+   SubagentRouterPlan,
+   SubagentStep,
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/adapter-internals.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/adapter-internals.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/adapter-internals.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/adapter-internals.ts	2026-10-19 16:49:18
+@@ -3,6 +3,12 @@
+ // logger plumbing without leaking those symbols to end users.
+ 
+ export type { ResolvedCategories } from './logger/internal-logger'
++export {
++  DEFAULT_REASONING_BUDGETS,
++  reasoningBudget,
++  resolveReasoning,
++} from './reasoning'
++export type { ModelReasoningCapability, ResolvedReasoning } from './reasoning'
+ export { InternalLogger } from './logger/internal-logger'
+ export type { Logger } from './logger/types'
+ export { resolveDebugOption } from './logger/resolve'
+@@ -61,3 +67,24 @@
+ export { tanstackMetadata } from './utilities/merge-metadata'
+ export { isSpecTopLevelKey } from './utilities/spec-event-keys'
+ export { REDACTED_THINKING_ID_PREFIX } from './utilities/reasoning-encrypted-value'
++export {
++  planMidConversationChanges,
++  promptHash,
++  splitMidConversationChanges,
++} from './utilities/mid-conversation'
++export {
++  buildBlockOrder,
++  orderedAssistantBlocks,
++} from './utilities/block-order'
++export type {
++  BlockOrderEntry,
++  OrderedAssistantBlock,
++} from './utilities/block-order'
++export {
++  transformMessagesForReplay,
++  hashToolCallId,
++} from './utilities/replay-messages'
++export type {
++  ReplayMessages,
++  ReplayToolIdRule,
++} from './utilities/replay-messages'
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/client.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/client.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/client.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/client.ts	2026-10-19 16:49:18
+@@ -238,6 +238,7 @@
+ } from './activities/chat/agents/route'
+ export type {
+   SubagentOrder,
++  SubagentPick,
+   SubagentRouterPick,
+   SubagentRouterPlan,
+   SubagentStep,
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/index.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/index.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/index.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/index.ts	2026-10-19 16:49:18
+@@ -105,11 +105,20 @@
+ } from './activities/chat/agents/route'
+ export type {
+   SubagentOrder,
++  SubagentPick,
+   SubagentRouterPick,
+   SubagentRouterPlan,
++  SubagentSink,
+   SubagentStep,
+   SubagentStepsPlan,
++  SubagentsBag,
+ } from './activities/chat/agents/spawn'
++// For hosts that run an agent outside a parent chat turn.
++export {
++  spawnAgentStream as runAgentStream,
++  createSubagentId,
++  createSubagentSink,
++} from './activities/chat/agents/spawn'
+ 
+ // Tool definition
+ export {
+@@ -346,11 +355,15 @@
+ // Capability primitives + middleware builder
+ export {
+   createCapability,
++  CapabilityRegistry,
+   defineChatMiddleware,
+   createChatMiddleware,
+   MetadataCapability,
+   getMetadata,
+   provideMetadata,
++  LogRecordsCapability,
++  getLogRecords,
++  provideLogRecords,
+ } from './activities/chat/middleware/index'
+ export type {
+   Capability,
+@@ -361,6 +374,8 @@
+   DefinedChatMiddleware,
+   AnyChatMiddleware,
+   MetadataStore,
++  LogRecord,
++  LogRecordsWriter,
+ } from './activities/chat/middleware/index'
+ // Locks are a distributed-mutex primitive — coordination, not chat state — and
+ // live behind their own subpath: `@tanstack/ai/locks` (see ./locks.ts).
+@@ -420,7 +435,25 @@
+ 
+ // All types
+ export * from './types'
++export { CONTEXT_OVERFLOW_CODE } from './activities/error-payload'
+ 
++// One reasoning option for every provider: `chat({ reasoning })`.
++export {
++  REASONING_LEVELS,
++  clampReasoningLevel,
++  supportedReasoningLevels,
++} from './reasoning'
++export type {
++  AdapterReasoning,
++  ModelReasoning,
++  ReasoningCapability,
++  ReasoningLevel,
++  ReasoningLevels,
++  ReasoningOption,
++  ReasoningOptionFor,
++  ReasoningRequest,
++} from './reasoning'
++
+ // Shared identity/isolation scope for the persistence + memory subsystems
+ export type { Scope } from './scope'
+ 
+@@ -562,6 +595,10 @@
+   getProviderExecutedMetadata,
+   isProviderExecutedToolCall,
+ } from './utilities/provider-executed'
++export { splitMidConversationChanges } from './utilities/mid-conversation'
++export type { MidConversationRequest } from './utilities/mid-conversation'
++export { orderedAssistantBlocks } from './utilities/block-order'
++export type { OrderedAssistantBlock } from './utilities/block-order'
+ 
+ // Adapter extension utilities
+ export { createModel, extendAdapter } from './extend-adapter'
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src: reasoning.ts
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/stream-to-response.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/stream-to-response.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/stream-to-response.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/stream-to-response.ts	2026-10-19 16:49:18
+@@ -76,12 +76,64 @@
+   return result
+ }
+ 
+-function isChatResult(
+-  input: ChatResult | AsyncIterable<StreamChunk>,
+-): input is ChatResult {
+-  return !(Symbol.asyncIterator in input)
++function isAsyncIterable(value: unknown): value is AsyncIterable<StreamChunk> {
++  return (
++    typeof value === 'object' && value !== null && Symbol.asyncIterator in value
++  )
+ }
+ 
++const EVENT_TYPES = new Set<unknown>(Object.values(EventType))
++
++// ponytail: shape check, so a structured output shaped like
++// `{ text: string, chunks: Array<{ type: <EventType> }> }` is sent as a ChatResult.
++function isChatResult(value: unknown): value is ChatResult {
++  return (
++    typeof value === 'object' &&
++    value !== null &&
++    'text' in value &&
++    typeof value.text === 'string' &&
++    'chunks' in value &&
++    Array.isArray(value.chunks) &&
++    value.chunks.every(
++      (chunk: unknown) =>
++        typeof chunk === 'object' &&
++        chunk !== null &&
++        'type' in chunk &&
++        EVENT_TYPES.has(chunk.type),
++    )
++  )
++}
++
++/**
++ * The chunks a client needs to show `object`, the result of
++ * `chat({ outputSchema })`, as a complete structured-output part.
++ */
++function structuredOutputChunks(object: unknown): Array<StreamChunk> {
++  const runId = crypto.randomUUID()
++  const threadId = crypto.randomUUID()
++  const timestamp = Date.now()
++  return [
++    { type: EventType.RUN_STARTED, runId, threadId, timestamp },
++    {
++      type: EventType.CUSTOM,
++      name: 'structured-output.complete',
++      value: {
++        object,
++        raw: JSON.stringify(object),
++        messageId: crypto.randomUUID(),
++      },
++      timestamp,
++    },
++    {
++      type: EventType.RUN_FINISHED,
++      runId,
++      threadId,
++      finishReason: 'stop',
++      timestamp,
++    },
++  ]
++}
++
+ interface RecordedFailure {
+   error: unknown
+ }
+@@ -1584,13 +1636,15 @@
+  * - `done`: `false` when the run is still going. The client asks again with
+  *   `GET ?runId=<id>&offset=<offset>`, served by {@link resumeJsonResponse}.
+  *
+- * Pass a `ChatResult` from `chat({ stream: false })` to send it as is. Pass a
+- * stream to read it here. Without `durability` the stream is read to its end.
++ * Pass a `ChatResult` from `chat({ stream: false })` to send it as is. Pass the
++ * object from `chat({ outputSchema })` to send it as a complete structured
++ * output. A Promise of either is awaited. Pass a stream to read it here.
++ * Without `durability` the stream is read to its end.
+  * With `durability`, a fresh run fills the log, and the reply goes out when the
+  * run ends or when `maxWaitMs` passes, whichever is first. The run keeps going
+  * after an early reply. A request with a resume offset reads the log instead.
+  *
+- * @param input - A `ChatResult`, or a StreamChunk async iterable from chat()
++ * @param input - A `ChatResult`, the object from `chat({ outputSchema })`, or a StreamChunk async iterable from chat()
+  * @param init - Response init. For a stream, also `abortController`, `signal`, `maxWaitMs`, `durability`, and `debug`.
+  * @returns A promise of a JSON Response
+  *
+@@ -1606,6 +1660,16 @@
+  *   return toJsonResponse(result);
+  * }
+  *
++ * // A structured output
++ * export async function POST(request: Request) {
++ *   const person = await chat({
++ *     adapter: openaiText('gpt-5.5'),
++ *     messages: [...],
++ *     outputSchema: PersonSchema,
++ *   });
++ *   return toJsonResponse(person);
++ * }
++ *
+  * // A durable stream that replies at least once a second
+  * export async function POST(request: Request) {
+  *   const stream = chat({ adapter: openaiText('gpt-5.5'), messages: [...] });
+@@ -1625,8 +1689,16 @@
+   stream: AsyncIterable<StreamChunk>,
+   init?: JsonResponseInit<TOffset>,
+ ): Promise<Response>
++export function toJsonResponse(
++  structuredOutput: object,
++  init?: ResponseInit,
++): Promise<Response>
+ export async function toJsonResponse<TOffset extends string = string>(
+-  input: ChatResult | AsyncIterable<StreamChunk>,
++  input:
++    | ChatResult
++    | AsyncIterable<StreamChunk>
++    | PromiseLike<unknown>
++    | object,
+   init?: JsonResponseInit<TOffset>,
+ ) {
+   const {
+@@ -1639,15 +1711,22 @@
+     ...responseInit
+   } = init ?? {}
+   const maxWaitMs = resolveMaxWaitMs(rawMaxWaitMs)
+-  const body = isChatResult(input)
+-    ? { chunks: input.chunks.map(toWireChunk), done: true }
+-    : await collectStreamBody(input, {
++  const value: unknown = await input
++  const body = isAsyncIterable(value)
++    ? await collectStreamBody(value, {
+         abortController,
+         signal,
+         maxWaitMs,
+         durability,
+         debug,
+       })
++    : {
++        chunks: (isChatResult(value)
++          ? value.chunks
++          : structuredOutputChunks(value)
++        ).map(toWireChunk),
++        done: true,
++      }
+   return new Response(JSON.stringify(body), {
+     ...responseInit,
+     headers: mergeResponseHeaders(
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/testing/fake-text.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/testing/fake-text.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/testing/fake-text.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/testing/fake-text.ts	2026-10-19 16:49:18
+@@ -221,7 +221,8 @@
+   }
+ 
+   async *chatStream(options: TextOptions): AsyncIterable<AdapterYieldChunk> {
+-    const signal = options.abortController?.signal
++    // chat() passes the run's signal as `request.signal`.
++    const signal = options.request?.signal ?? options.abortController?.signal
+     const runId = options.runId ?? `fake-run-${this.state.callCount + 1}`
+     const threadId = options.threadId ?? 'fake-thread'
+     const model = this.model
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/types.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/types.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/types.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/types.ts	2026-10-19 16:49:18
+@@ -6,6 +6,7 @@
+ import type { SystemPrompt } from './system-prompts'
+ import type { CapabilityContext } from './activities/chat/middleware/capabilities'
+ import type { InterruptSubmissionError } from './interrupts'
++import type { ReasoningRequest } from './reasoning'
+ // The canonical usage types live in the leaf `@tanstack/ai-event-client`
+ // package (which `@tanstack/ai` already depends on) so there is a single source
+ // of truth without a dependency cycle. They are re-exported below.
+@@ -371,6 +372,59 @@
+   | null
+   | Array<ContentPartForInputModalitiesTypes<TInputModalitiesTypes>>
+ 
++/**
++ * The mid-conversation record that `chat()` saves on the first assistant
++ * message of a model call. It holds tool names and prompt hashes only, so it
++ * does not depend on a provider.
++ */
++export interface MidConversationChange {
++  /** A start point: the names of every tool. */
++  tools?: Array<string>
++  /** Tool names added since the last record. */
++  toolsAdded?: Array<string>
++  /** Short prompt hashes: every prompt on a start point, the added prompts otherwise. */
++  systemPrompts?: Array<string>
++}
++
++/**
++ * What changed in the tools and system prompts between model calls.
++ * `chat()` passes it in `TextOptions.midConversationChanges`.
++ */
++export interface MidConversationChanges {
++  /**
++   * The tool names of the start point, in start order, and how many entries
++   * at the front of `systemPrompts` belong to it.
++   */
++  start: { tools: Array<string>; systemPrompts: number }
++  /**
++   * Each change goes directly before `messages[before]`, or at the end when
++   * `before === messages.length`. `tools` are the added names.
++   * `systemPrompts` is how many of the next entries of `systemPrompts` it adds.
++   */
++  changes: Array<{
++    before: number
++    tools?: Array<string>
++    systemPrompts?: number
++  }>
++}
++
++/** The mid-conversation channels of a model. */
++export interface MidConversationChannels {
++  /** Added tools can go out without a change to the tools of the start point. */
++  tools: boolean
++  /** Added system prompts can go out as a message at their place. */
++  systemPrompts: boolean
++}
++
++/**
++ * One block of an assistant `ModelMessage`, in the order the model sent it.
++ * Each entry points into a field of the message. See `ModelMessage.blockOrder`.
++ */
++export type ModelMessageBlock =
++  | { type: 'thinking'; index: number }
++  | { type: 'text'; length: number }
++  | { type: 'tool-call'; id: string }
++
+ export interface ModelMessage<
+   TContent extends string | null | Array<ContentPart> =
+     | string
+@@ -388,8 +442,22 @@
+    * opaque data. See `ThinkingPart.signature` for the planned rename.
+    */
+   thinking?: Array<{ content: string; signature?: string; redacted?: boolean }>
++  /**
++   * The order of the blocks of an assistant message, when it is not the
++   * default order (all thinking, then the text, then the tool calls). Each
++   * entry points into `thinking`, into `content` (a string, by UTF-16 length),
++   * or into `toolCalls`. The library writes and reads this field. A reader
++   * that finds a map that does not match the message uses the default order.
++   */
++  blockOrder?: Array<ModelMessageBlock>
+   /** Error reported by an AG-UI tool message. */
+   error?: string
++  /**
++   * The tools and system prompts that changed before this assistant message.
++   * `chat()` writes it when the adapter has a mid-conversation channel.
++   * Providers ignore it: adapters read `TextOptions.midConversationChanges`.
++   */
++  midConversationChange?: MidConversationChange
+   /** Optional AG-UI message metadata. TanStack-owned fields live under `tanstack`. */
+   metadata?: Record<string, any>
+   /**
+@@ -617,6 +685,13 @@
+   | UIResourcePart
+   | SubagentPart
+ 
++/** Provider, wire API, and requested model of an assistant message. */
++export interface MessageSource {
++  provider: string
++  api: string
++  model: string
++}
++
+ /**
+  * Shape of `metadata.tanstack` on a message.
+  * `createdAt` is an ISO-8601 string.
+@@ -624,6 +699,20 @@
+ export interface TanStackMessageMetadata {
+   createdAt?: string
+   model?: string
++  source?: MessageSource
++  stopReason?: 'error' | 'aborted'
++  responseId?: string
++  /**
++   * Why the model call of this assistant message ended. A `'length'` message
++   * stopped at the output limit, so its tool calls are not complete.
++   */
++  finishReason?: TanStackRunMetadata['finishReason']
++  /**
++   * The provider's answer items of this assistant message, in order, for a
++   * same-model replay. The OpenAI Responses adapter keeps each output
++   * message item's `id` and `phase` (`commentary` or `final_answer`).
++   */
++  responseItems?: Array<{ id: string; phase?: string }>
+   /** Parent chat run that produced this assistant message. */
+   runId?: string
+   /**
+@@ -654,13 +743,23 @@
+     errorMessage?: string
+   }
+   uiResources?: Array<UIResourcePart>
++  /**
++   * On an assistant wire row that exists only to keep the block order: the
++   * id of the assistant row before it. Our server joins the two rows into
++   * one message with a `blockOrder` map. See `uiMessagesToWire`.
++   */
++  continues?: string
+ }
+ 
+ /**
+  * Shape of `metadata.tanstack` on run events.
+  */
+ export interface TanStackRunMetadata {
++  source?: MessageSource
+   model?: string
++  responseId?: string
++  /** The answer items of this model call. See `TanStackMessageMetadata.responseItems`. */
++  responseItems?: TanStackMessageMetadata['responseItems']
+   finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls' | null
+   /** TokenUsage fields that have no AG-UI `usage[]` equivalent. */
+   usage?: TokenUsageLeftover
+@@ -785,6 +884,22 @@
+      */
+     inputResponse?: ToolInputResponse
+     /**
++     * Set when the host can move this call to the background. Pass it the
++     * work of the call, and race the two promises. It resolves to a short
++     * note for the model when the user moves the call. The work keeps
++     * running, and the host tells the model its result when it ends.
++     * `chat()` does not set it: a host wraps the tool's `execute` to add it.
++     * The note is a string. An object `outputSchema` rejects it. A string
++     * schema, or no schema, accepts it.
++     *
++     * @example
++     * ```ts
++     * const work = runJob(args)
++     * return context?.detach ? Promise.race([work, context.detach(work)]) : work
++     * ```
++     */
++    detach?: (work: Promise<unknown>) => Promise<string>
++    /**
+      * Emit a custom event during tool execution.
+      * Events are streamed to the client in real-time as AG-UI CUSTOM events.
+      *
+@@ -950,6 +1065,14 @@
+   /** If true, this tool is lazy and will only be sent to the LLM after being discovered via the lazy tool discovery mechanism. Works with both chat() (the synthetic discovery tool) and Code Mode (kept out of the system prompt and revealed via discover_tools). */
+   lazy?: boolean
+ 
++  /**
++   * Whether a host may run this tool again after a crash cut the run
++   * between the call and its result. `'safe'` runs it again. Omit the
++   * field, or set `'never'`, when a second run is not safe. The host
++   * writes the model note. `chat()` does not read this field.
++   */
++  replay?: 'safe' | 'never'
++
+   /** Additional metadata for adapters or custom extensions */
+   metadata?: Record<string, any> | undefined
+ }
+@@ -1111,6 +1234,43 @@
+ export type AgentLoopStrategy = (state: AgentLoopState) => boolean
+ 
+ /**
++ * How the model uses the tools of a call.
++ * - `'auto'`: the model decides.
++ * - `'none'`: the model calls no tool.
++ * - `'required'`: the model must call a tool.
++ * - `{ type: 'tool', name }`: the model must call that tool.
++ *
++ * `TName` is the names of the tools of the call, for editor suggestions. Any
++ * other string is also allowed, for example a provider tool or a lazy tool.
++ */
++export type ToolChoice<TName extends string = string> =
++  | 'auto'
++  | 'none'
++  | 'required'
++  // `string & {}` keeps the `TName` literals as suggestions.
++  | { type: 'tool'; name: TName | (string & {}) }
++
++/**
++ * How long the provider keeps the cached start of a request.
++ * `'none'` turns automatic prompt caching off.
++ */
++export type PromptCacheRetention = 'none' | 'short' | 'long'
++
++/**
++ * The `promptCache` option of `chat()`: a retention, or an object with a
++ * retention and a cache key.
++ */
++export type PromptCacheOptions =
++  | PromptCacheRetention
++  | { retention?: PromptCacheRetention; key?: string }
++
++/** What chat() gives the adapter. */
++export interface ResolvedPromptCache {
++  retention: PromptCacheRetention
++  key?: string
++}
++
++/**
+  * Wraps the fetch of a model call. It gets the next fetch and gives back a
+  * new fetch. A wrapper can change the URL, the headers, the request, or the
+  * response.
+@@ -1155,6 +1315,23 @@
+    */
+   toolExecution?: 'parallel' | 'sequential'
+   /**
++   * Retry a model call when the provider error has a wait time (usually a
++   * 429). `chat()` waits for the `retryAfterMs` time of the `RUN_ERROR`, then
++   * calls the model again. It retries only when the wait time is at most
++   * `maxWaitMs` and the call has streamed no output yet. The structured-output
++   * call is not retried. Off by default.
++   */
++  retry?: {
++    /**
++     * Extra model calls after the first, for each model call of the run. `0`
++     * means no retry. The provider SDK does its own retries first, from the
++     * `maxRetries` of the adapter config.
++     */
++    maxRetries: number
++    /** Longest wait time to accept, in milliseconds. Default 60 000. */
++    maxWaitMs?: number
++  }
++  /**
+    * Optional configuration for lazy-tool discovery (tools marked `lazy: true`).
+    * Tunes how much of each lazy tool's description appears in the discovery
+    * catalog. Optional — defaults to `{ includeDescription: 'none' }`.
+@@ -1172,6 +1349,13 @@
+    */
+   metadata?: Record<string, any> | undefined
+   modelOptions?: TProviderOptionsForModel
++  /**
++   * How hard the model thinks, normalized by `chat()`. `undefined`: the user
++   * did not ask, so the adapter sends nothing and the provider default applies.
++   * The adapter clamps the level to the model's levels and writes its own
++   * wire field.
++   */
++  reasoning?: ReasoningRequest
+   request?: Request | RequestInit
+ 
+   /**
+@@ -1240,6 +1424,11 @@
+    */
+   threadId?: string
+   /**
++   * Automatic prompt caching for this request. `chat()` sets it. When it is
++   * absent, the adapter adds no automatic cache fields.
++   */
++  promptCache?: ResolvedPromptCache
++  /**
+    * Run ID for AG-UI protocol run correlation.
+    * When provided, this will be used in RunStartedEvent and RunFinishedEvent.
+    * If not provided, a unique ID will be generated.
+@@ -1251,12 +1440,25 @@
+    */
+   parentRunId?: string
+   /**
++   * How the model uses the tools of this request. `chat()` sets it only when
++   * the request has tools. A provider value in `modelOptions` wins over it.
++   */
++  toolChoice?: ToolChoice
++  /**
+    * Wraps the fetch of this request. The engine composes the `chat()` option
+    * and the middleware wrappers into one function. An adapter that supports
+    * it calls `wrapFetch(baseFetch)` and sends the request with the result.
+    */
+   wrapFetch?: FetchWrapper
+   /**
++   * The tools and system prompts that changed between model calls. The
++   * engine sets it only when `adapter.midConversationChannels` has a channel
++   * that is on. `tools` and `systemPrompts` stay the full current lists, so
++   * an adapter that ignores this field sends the same request as before.
++   * Adapters resolve it with `splitMidConversationChanges`.
++   */
++  midConversationChanges?: MidConversationChanges
++  /**
+    * AG-UI subagent run id when this chat runs as a child of another run.
+    * A child `chat()` passes `ctx.subagentRunId`. Middleware reads it as
+    * `ctx.subagentRunId`. Absent on a top-level run.
+@@ -1292,6 +1494,18 @@
+   approvals?: ReadonlyMap<string, boolean>
+ }
+ 
++/** What `TextAdapter.compact` receives. */
++export interface TextCompactOptions {
++  /** The history to compact. */
++  messages: Array<ModelMessage>
++  model: string
++  signal?: AbortSignal
++  /** Wraps the fetch of the compaction request. */
++  wrapFetch?: FetchWrapper
++  /** The system prompts of the chat call. */
++  systemPrompts?: Array<SystemPrompt>
++}
++
+ // ============================================================================
+ // AG-UI Protocol Event Types
+ // ============================================================================
+@@ -1381,6 +1595,8 @@
+   usage?: Array<SpecTokenUsage> | TokenUsage
+   /** Restored on the client from `metadata.tanstack`. */
+   model?: string
++  /** Provider generation ID. Restored from `metadata.tanstack`. */
++  responseId?: string
+   /** Restored on the client from `metadata.tanstack`. */
+   finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls' | null
+   metadata?: { tanstack?: TanStackRunMetadata } & Record<string, any>
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/utilities/ag-ui-wire.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities/ag-ui-wire.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/utilities/ag-ui-wire.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities/ag-ui-wire.ts	2026-10-19 16:49:18
+@@ -93,7 +93,10 @@
+  * server consumers. Set `includeSnapshotStructuredOutput` to retain complete
+  * structured-output metadata for UI snapshots. Set `includeActivity` to emit
+  * AG-UI `ActivityMessage` rows (MESSAGES_SNAPSHOT only — default omit so
+- * RunAgentInput never carries activity).
++ * RunAgentInput never carries activity). An assistant message whose
++ * parts leave the default block order goes out as several rows in the real
++ * order (see `TanStackMessageMetadata.continues`). A tool result also ends a
++ * row, and its tool row follows that row.
+  */
+ export function uiMessagesToWire(
+   messages: Array<UIMessage | ModelMessage>,
+@@ -225,29 +228,145 @@
+     // buildAssistantMessages applies, so the wire keeps the signed order.
+     // Segments after the first get derived anchor ids; strict AG-UI consumers
+     // still see plain anchors.
++    //
++    // A tool result also ends a segment, the same as in
++    // buildAssistantMessages: the parts after it come from the next model
++    // call. That segment's tool rows go out right after it, and the next
++    // segment becomes its own message on our server.
++    // ponytail: only thinking, text, or a tool call opens that next segment.
++    // Other parts after a tool result (ui-resource, structured output, media)
++    // stay on the ended segment, as today.
++    //
++    // Inside one model call, the message is also split where its parts leave
++    // the default order (all thinking, then text, then tool calls): at
++    // thinking after text or a tool call, and at text after a tool call.
++    // Those rows exist only for the order, so they carry
++    // `metadata.tanstack.continues` with the id of the assistant row before
++    // them. Our server joins them back into one message with a `blockOrder`
++    // map. A provider split keeps today's shape.
+     type Segment = {
+       thinking: Array<Extract<MessagePart, { type: 'thinking' }>>
+       parts: Array<MessagePart>
++      continues: boolean
++      /** A tool result ended this segment. */
++      closed: boolean
+     }
+-    let current: Segment = { thinking: [], parts: [] }
++    const newSegment = (continues: boolean): Segment => ({
++      thinking: [],
++      parts: [],
++      continues,
++      closed: false,
++    })
++    let current = newSegment(false)
+     const segments: Array<Segment> = [current]
+     for (const part of parts) {
++      if (
++        current.closed &&
++        (part.type === 'thinking' ||
++          part.type === 'text' ||
++          part.type === 'tool-call')
++      ) {
++        current = newSegment(false)
++        segments.push(current)
++      }
++      const afterCall = current.parts.some((p) => p.type === 'tool-call')
+       if (part.type === 'thinking') {
+         if (
+           current.parts.some(
+             (p) => p.type === 'tool-call' && isProviderExecutedToolCall(p),
+           )
+         ) {
+-          current = { thinking: [part], parts: [] }
++          current = newSegment(false)
+           segments.push(current)
+-        } else {
+-          current.thinking.push(part)
++        } else if (afterCall || current.parts.some((p) => p.type === 'text')) {
++          current = newSegment(true)
++          segments.push(current)
+         }
++        current.thinking.push(part)
++      } else if (part.type === 'text' && afterCall) {
++        current = newSegment(true)
++        segments.push(current)
++        current.parts.push(part)
+       } else {
+         current.parts.push(part)
++        if (part.type === 'tool-result') current.closed = true
+       }
+     }
+ 
++    const explicitToolResults = new Set(
++      parts.flatMap((part) =>
++        part.type === 'tool-result' ? [part.toolCallId] : [],
++      ),
++    )
++    // The tool rows for `rowParts`, in parts order.
++    const pushToolRows = (rowParts: ReadonlyArray<MessagePart>): void => {
++      for (const part of rowParts) {
++        if (part.type === 'tool-result') {
++          const id = uniqueToolWireId(
++            part.id ?? deriveToolMessageId(part.toolCallId),
++            usedWireIds,
++          )
++          const metadata = rebuiltToolMetadata(
++            part.metadata,
++            part.createdAt,
++            part.id,
++            part.content,
++            true,
++            part.outcome,
++          )
++          wire.push({
++            role: 'tool',
++            id,
++            toolCallId: part.toolCallId,
++            ...(part.name !== undefined && { name: part.name }),
++            content:
++              typeof part.content === 'string'
++                ? part.content
++                : JSON.stringify(part.content),
++            ...(part.error !== undefined && { error: part.error }),
++            ...(metadata !== undefined && { metadata }),
++          })
++        } else if (part.type === 'tool-call') {
++          const approved = part.approval?.approved
++          if (
++            explicitToolResults.has(part.id) ||
++            (part.output === undefined &&
++              (part.state !== 'approval-responded' || approved === undefined))
++          ) {
++            continue
++          }
++          const result =
++            part.output !== undefined
++              ? normalizeToolResult(part.output)
++              : JSON.stringify({
++                  approved,
++                  ...(approved && { pendingExecution: true }),
++                  message: approved
++                    ? 'User approved this action'
++                    : 'User denied this action',
++                })
++          const content =
++            typeof result === 'string' ? result : JSON.stringify(result)
++          wire.push({
++            role: 'tool',
++            id: uniqueToolWireId(deriveToolMessageId(part.id), usedWireIds),
++            toolCallId: part.id,
++            content,
++            metadata: rebuiltToolMetadata(
++              undefined,
++              undefined,
++              undefined,
++              result,
++              false,
++              part.approval?.approved === false ? 'denied' : undefined,
++            ),
++          })
++        }
++      }
++    }
++
++    let previousAnchorId = uiMessage.id
++    let toolParts: Array<MessagePart> = []
+     segments.forEach((segment, index) => {
+       for (const part of segment.thinking) {
+         const reasoning: WireReasoningMessage = {
+@@ -270,89 +389,38 @@
+               ...uiMessage,
+               id: uniqueWireId(`${uiMessage.id}-segment-${index}`, usedWireIds),
+             }
+-      wire.push(
+-        toAnchor(
+-          anchorMessage,
+-          'assistant',
+-          {
+-            ...(text !== '' && { content: text }),
+-            ...(toolCalls && { toolCalls }),
+-          },
+-          segment.parts,
+-          includeSnapshotStructuredOutput,
+-        ),
++      const anchor = toAnchor(
++        anchorMessage,
++        'assistant',
++        {
++          ...(text !== '' && { content: text }),
++          ...(toolCalls && { toolCalls }),
++        },
++        segment.parts,
++        includeSnapshotStructuredOutput,
+       )
+-    })
+-
+-    const explicitToolResults = new Set(
+-      parts.flatMap((part) =>
+-        part.type === 'tool-result' ? [part.toolCallId] : [],
+-      ),
+-    )
+-    for (const part of parts) {
+-      if (part.type === 'tool-result') {
+-        const id = uniqueToolWireId(
+-          part.id ?? deriveToolMessageId(part.toolCallId),
+-          usedWireIds,
+-        )
+-        const metadata = rebuiltToolMetadata(
+-          part.metadata,
+-          part.createdAt,
+-          part.id,
+-          part.content,
+-          true,
+-          part.outcome,
+-        )
+-        wire.push({
+-          role: 'tool',
+-          id,
+-          toolCallId: part.toolCallId,
+-          ...(part.name !== undefined && { name: part.name }),
+-          content:
+-            typeof part.content === 'string'
+-              ? part.content
+-              : JSON.stringify(part.content),
+-          ...(part.error !== undefined && { error: part.error }),
+-          ...(metadata !== undefined && { metadata }),
+-        })
+-      } else if (part.type === 'tool-call') {
+-        const approved = part.approval?.approved
+-        if (
+-          explicitToolResults.has(part.id) ||
+-          (part.output === undefined &&
+-            (part.state !== 'approval-responded' || approved === undefined))
+-        ) {
+-          continue
++      if (segment.continues) {
++        const metadata = anchor.metadata ?? {}
++        anchor.metadata = {
++          ...metadata,
++          tanstack: {
++            ...(isRecord(metadata.tanstack) ? metadata.tanstack : {}),
++            continues: previousAnchorId,
++          },
+         }
+-        const result =
+-          part.output !== undefined
+-            ? normalizeToolResult(part.output)
+-            : JSON.stringify({
+-                approved,
+-                ...(approved && { pendingExecution: true }),
+-                message: approved
+-                  ? 'User approved this action'
+-                  : 'User denied this action',
+-              })
+-        const content =
+-          typeof result === 'string' ? result : JSON.stringify(result)
+-        wire.push({
+-          role: 'tool',
+-          id: uniqueToolWireId(deriveToolMessageId(part.id), usedWireIds),
+-          toolCallId: part.id,
+-          content,
+-          metadata: rebuiltToolMetadata(
+-            undefined,
+-            undefined,
+-            undefined,
+-            result,
+-            false,
+-            part.approval?.approved === false ? 'denied' : undefined,
+-          ),
+-        })
+       }
+-    }
++      wire.push(anchor)
++      previousAnchorId = anchor.id
+ 
++      // A tool row never sits between the rows of one model call: it goes
++      // out after a segment that a tool result ended, or after the last one.
++      toolParts.push(...segment.parts)
++      if (segment.closed || index === segments.length - 1) {
++        pushToolRows(toolParts)
++        toolParts = []
++      }
++    })
++
+     for (const part of parts) {
+       if (part.type === 'subagent') wire.push(...subagentToWire(part, options))
+     }
+@@ -422,15 +490,20 @@
+ ): MetadataRecord | undefined {
+   const base: MetadataRecord = { ...(msg.metadata ?? {}) }
+   const previousTanstack = tanstackMetadata(msg)
+-  const tanstack: TanStackMessageMetadata = {}
+-  if (previousTanstack?.model !== undefined)
+-    tanstack.model = previousTanstack.model
+-  if (previousTanstack?.runId !== undefined)
+-    tanstack.runId = previousTanstack.runId
+-  if (previousTanstack?.run?.id !== undefined)
+-    tanstack.run = { id: previousTanstack.run.id }
+-  if (previousTanstack?.signature !== undefined)
+-    tanstack.signature = previousTanstack.signature
++  const tanstack: TanStackMessageMetadata = { ...previousTanstack }
++  if (tanstack.run) {
++    tanstack.run = { ...tanstack.run }
++    delete tanstack.run.startedAt
++    delete tanstack.run.finishedAt
++  }
++  // Rebuild fields that describe the current wire row from its parts.
++  delete tanstack.createdAt
++  delete tanstack.continues
++  delete tanstack.structuredOutput
++  delete tanstack.toolCallMetadata
++  delete tanstack.toolResult
++  delete tanstack.toolResultOutcome
++  delete tanstack.uiResources
+   const createdAt = coerceCreatedAt(msg.createdAt)
+   if (createdAt !== undefined) tanstack.createdAt = createdAt.toISOString()
+ 
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities: block-order.ts
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities: mid-conversation.ts
+Only in .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities: replay-messages.ts
+diff -ru .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/utilities/sanitize-unicode.ts .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities/sanitize-unicode.ts
+--- .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.68.0/src/utilities/sanitize-unicode.ts	2026-10-19 16:49:15
++++ .trellis/tasks/10-18-interaction-chat/research/tanstack-latest-evidence/ai-0.69.0/src/utilities/sanitize-unicode.ts	2026-10-19 16:49:18
+@@ -1,5 +1,5 @@
+ import type { SystemPrompt } from '../system-prompts'
+-import type { ModelMessage } from '../types'
++import type { ModelMessage, ModelMessageBlock } from '../types'
+ 
+ /** Remove lone UTF-16 surrogates. Keep valid pairs unchanged. */
+ function sanitizeUnicode(text: string): string {
+@@ -25,6 +25,33 @@
+ }
+ 
+ /**
++ * Clean string content that has a block order map. Each text block is
++ * cleaned on its own, so the map lengths still match the content.
++ */
++function sanitizeOrderedContent(
++  content: string,
++  order: Array<ModelMessageBlock>,
++): { content: string; blockOrder: Array<ModelMessageBlock> } {
++  let offset = 0
++  let clean = ''
++  const blockOrder: Array<ModelMessageBlock> = []
++  for (const block of order) {
++    if (block.type !== 'text') {
++      blockOrder.push(block)
++      continue
++    }
++    const text = sanitizeUnicode(content.slice(offset, offset + block.length))
++    offset += block.length
++    clean += text
++    if (text.length > 0) blockOrder.push({ ...block, length: text.length })
++  }
++  return {
++    content: clean + sanitizeUnicode(content.slice(offset)),
++    blockOrder,
++  }
++}
++
++/**
+  * Remove lone surrogates from the text `chat()` sends to a provider. A lone
+  * surrogate is invalid UTF-8 / JSON on the wire, so providers reject the
+  * whole request.
+@@ -36,14 +63,18 @@
+   return {
+     messages: messages.map((message) => ({
+       ...message,
+-      content:
+-        typeof message.content === 'string'
+-          ? sanitizeUnicode(message.content)
+-          : (message.content?.map((part) =>
+-              part.type === 'text'
+-                ? { ...part, content: sanitizeUnicode(part.content) }
+-                : part,
+-            ) ?? null),
++      ...(typeof message.content === 'string'
++        ? message.blockOrder
++          ? sanitizeOrderedContent(message.content, message.blockOrder)
++          : { content: sanitizeUnicode(message.content) }
++        : {
++            content:
++              message.content?.map((part) =>
++                part.type === 'text'
++                  ? { ...part, content: sanitizeUnicode(part.content) }
++                  : part,
++              ) ?? null,
++          }),
+       ...(message.toolCalls && {
+         toolCalls: message.toolCalls.map((toolCall) => ({
+           ...toolCall,

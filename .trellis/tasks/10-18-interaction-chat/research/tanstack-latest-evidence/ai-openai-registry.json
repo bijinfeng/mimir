@@ -1,0 +1,287 @@
+{
+  "name": "@tanstack/ai-openai",
+  "dist-tags": {
+    "latest": "0.30.0"
+  },
+  "versions": {
+    "0.22.8": {
+      "name": "@tanstack/ai-openai",
+      "version": "0.22.8",
+      "keywords": [
+        "ai",
+        "ai-sdk",
+        "typescript",
+        "tanstack",
+        "openai",
+        "gpt",
+        "adapter",
+        "chat",
+        "tool-calling",
+        "structured-outputs",
+        "image-generation",
+        "video-generation",
+        "text-to-speech",
+        "transcription",
+        "realtime"
+      ],
+      "author": "Tanner Linsley",
+      "license": "MIT",
+      "_id": "@tanstack/ai-openai@0.22.8",
+      "maintainers": [
+        {
+          "name": "tannerlinsley",
+          "email": "tannerlinsley@gmail.com"
+        },
+        {
+          "name": "alemtuzlak",
+          "email": "t.zlak97@gmail.com"
+        },
+        {
+          "name": "kevinvandy",
+          "email": "kevinvandy656@gmail.com"
+        }
+      ],
+      "homepage": "https://tanstack.com/ai",
+      "bugs": {
+        "url": "https://github.com/TanStack/ai/issues"
+      },
+      "dist": {
+        "shasum": "5b48f061605d10bdb2a869c32c5ac2a925ab48e7",
+        "tarball": "https://registry.npmjs.org/@tanstack/ai-openai/-/ai-openai-0.22.8.tgz",
+        "fileCount": 163,
+        "integrity": "sha512-nKeFykxjo4Ic1mE9SiVeFDeDzHUFqDwkfJfupQSTdqgNIHzO9mdT9Fr17OdxkROuBcaB/W0xuiJhDu9ukqrorw==",
+        "signatures": [
+          {
+            "sig": "MEUCIEnfBTUD3i7hKNJYvjmsI9951+yz5wcqVv3kOtuk5dPcAiEAwAPRzdswbvVVz4AdbCLcOCirY39ZXfbKPL6buwyqCgY=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEUCIQDkCTsWoy2KB15yR81lDDFCvmuCx12PrQ41FyFkod7GegIgA6uwL/PY8H3KsQxWHjoLhjqI90O8Fj/VVTNDN5eWxhM=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@tanstack%2fai-openai@0.22.8",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 804604
+      },
+      "type": "module",
+      "types": "./dist/esm/index.d.ts",
+      "module": "./dist/esm/index.js",
+      "exports": {
+        ".": {
+          "types": "./dist/esm/index.d.ts",
+          "import": "./dist/esm/index.js"
+        },
+        "./byok": {
+          "types": "./dist/esm/byok.d.ts",
+          "import": "./dist/esm/byok.js"
+        },
+        "./tools": {
+          "types": "./dist/esm/tools/index.d.ts",
+          "import": "./dist/esm/tools/index.js"
+        },
+        "./compatible": {
+          "types": "./dist/esm/compatible/index.d.ts",
+          "import": "./dist/esm/compatible/index.js"
+        }
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/tannerlinsley",
+        "type": "github"
+      },
+      "scripts": {
+        "build": "vite build",
+        "clean": "premove ./build ./dist",
+        "lint:fix": "oxlint src --type-aware --fix",
+        "test:lib": "vitest run",
+        "test:build": "publint --strict",
+        "test:types": "tsc",
+        "test:oxlint": "oxlint src --type-aware",
+        "test:lib:dev": "pnpm test:lib --watch"
+      },
+      "_npmUser": {
+        "name": "GitHub Actions",
+        "email": "npm-oidc-no-reply@github.com",
+        "trustedPublisher": {
+          "id": "github",
+          "oidcConfigId": "oidc:d27c1507-1ce1-4709-b7e9-c7cea75bed14"
+        }
+      },
+      "repository": {
+        "url": "git+https://github.com/TanStack/ai.git",
+        "type": "git",
+        "directory": "packages/ai-openai"
+      },
+      "description": "OpenAI adapter for TanStack AI chat, tools, images, video, speech, transcription, realtime, and structured outputs.",
+      "directories": {},
+      "_nodeVersion": "24.8.0",
+      "dependencies": {
+        "openai": "^6.41.0",
+        "@tanstack/ai-utils": "^0.4.0",
+        "@tanstack/openai-base": "^0.10.12"
+      },
+      "_hasShrinkwrap": false,
+      "devDependencies": {
+        "zod": "^4.2.0",
+        "vite": "^8.2.1",
+        "@tanstack/ai": "0.55.0",
+        "@vitest/coverage-v8": "4.1.10"
+      },
+      "peerDependencies": {
+        "@tanstack/ai": "^0.55.0"
+      },
+      "_npmOperationalInternal": {
+        "tmp": "tmp/ai-openai_0.22.8_1789639293211_0.5929166742618748",
+        "host": "s3://npm-registry-packages-npm-production"
+      }
+    },
+    "0.30.0": {
+      "_id": "@tanstack/ai-openai@0.30.0",
+      "bugs": {
+        "url": "https://github.com/TanStack/ai/issues"
+      },
+      "dist": {
+        "shasum": "ee38c837daf839d25c10533ae03e599678c27bff",
+        "tarball": "https://registry.npmjs.org/@tanstack/ai-openai/-/ai-openai-0.30.0.tgz",
+        "fileCount": 183,
+        "integrity": "sha512-LZPs6jmWh+nlvYdHTS4bOhA+0qGZpYatuEdTkIqF9W+p9C86spDUhoaEsSXimBbd+mL1RTqahUIHrsAwyNSeSA==",
+        "signatures": [
+          {
+            "sig": "MEQCIGiKgwEkJq2WxqWKItRs0cVALBD2OOubvKhtzj7am23gAiBwiKmKPxG0WMMQ54jxEcj+pWavao7m5eiNNnwD/T56gA==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCIFwhjgeoGy8neE4AYfXhxfAnp0nKEhi74KC70P+ALAEYAiEAwNJQx6E6Ov8Idg2s1SKkutnRWRw41Cuyk5Y4BVRtHYA="
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@tanstack%2fai-openai@0.30.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 1027936
+      },
+      "name": "@tanstack/ai-openai",
+      "type": "module",
+      "types": "./dist/esm/index.d.ts",
+      "author": "Tanner Linsley",
+      "module": "./dist/esm/index.js",
+      "exports": {
+        ".": {
+          "types": "./dist/esm/index.d.ts",
+          "import": "./dist/esm/index.js"
+        },
+        "./byok": {
+          "types": "./dist/esm/byok.d.ts",
+          "import": "./dist/esm/byok.js"
+        },
+        "./siwc": {
+          "types": "./dist/esm/siwc.d.ts",
+          "import": "./dist/esm/siwc.js"
+        },
+        "./tools": {
+          "types": "./dist/esm/tools/index.d.ts",
+          "import": "./dist/esm/tools/index.js"
+        },
+        "./compatible": {
+          "types": "./dist/esm/compatible/index.d.ts",
+          "import": "./dist/esm/compatible/index.js"
+        }
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/tannerlinsley",
+        "type": "github"
+      },
+      "license": "MIT",
+      "scripts": {
+        "build": "vite build",
+        "clean": "premove ./build ./dist",
+        "lint:fix": "oxlint src --type-aware --fix",
+        "test:lib": "vitest run",
+        "test:build": "publint --strict",
+        "test:types": "tsc",
+        "test:oxlint": "oxlint src --type-aware",
+        "test:lib:dev": "pnpm test:lib --watch",
+        "test:coverage": "vitest run --coverage --coverage.include='src/**' --coverage.reporter=text-summary --coverage.reporter=json-summary"
+      },
+      "version": "0.30.0",
+      "_npmUser": {
+        "name": "GitHub Actions",
+        "email": "npm-oidc-no-reply@github.com",
+        "trustedPublisher": {
+          "id": "github",
+          "oidcConfigId": "d27c1507-1ce1-4709-b7e9-c7cea75bed14"
+        }
+      },
+      "homepage": "https://tanstack.com/ai",
+      "keywords": [
+        "ai",
+        "ai-sdk",
+        "typescript",
+        "tanstack",
+        "openai",
+        "gpt",
+        "adapter",
+        "chat",
+        "tool-calling",
+        "structured-outputs",
+        "image-generation",
+        "video-generation",
+        "text-to-speech",
+        "transcription",
+        "realtime"
+      ],
+      "repository": {
+        "url": "git+https://github.com/TanStack/ai.git",
+        "type": "git",
+        "directory": "packages/ai-openai"
+      },
+      "description": "OpenAI adapter for TanStack AI chat, tools, images, video, speech, transcription, realtime, and structured outputs.",
+      "directories": {},
+      "maintainers": [
+        {
+          "name": "tannerlinsley",
+          "email": "tannerlinsley@gmail.com"
+        },
+        {
+          "name": "alemtuzlak",
+          "email": "t.zlak97@gmail.com"
+        },
+        {
+          "name": "kevinvandy",
+          "email": "kevinvandy656@gmail.com"
+        }
+      ],
+      "_nodeVersion": "24.8.0",
+      "dependencies": {
+        "openai": "^7.30.0",
+        "@tanstack/ai-utils": "^0.4.2",
+        "@tanstack/openai-base": "^0.14.0"
+      },
+      "_hasShrinkwrap": false,
+      "devDependencies": {
+        "zod": "^4.2.0",
+        "vite": "^8.2.1",
+        "@tanstack/ai": "0.69.0",
+        "@vitest/coverage-v8": "4.1.10"
+      },
+      "peerDependencies": {
+        "@tanstack/ai": "^0.69.0"
+      },
+      "_npmOperationalInternal": {
+        "host": "s3://npm-registry-packages-npm-production",
+        "tmp": "tmp/ai-openai_0.30.0_1791913702757_0.6064381896972413"
+      }
+    }
+  },
+  "published": {
+    "0.22.8": "2026-09-17T10:01:33.386Z",
+    "0.30.0": "2026-10-13T17:48:22.842Z"
+  }
+}

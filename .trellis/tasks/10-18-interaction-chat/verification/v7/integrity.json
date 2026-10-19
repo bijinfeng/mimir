@@ -1,0 +1,11 @@
+{
+  "protected_paths": 380,
+  "changed_protected_paths": [],
+  "standalone_hashes": {
+    "review.html": "1537bb796575dc47c8cc5b5661034b5bfa80e23d4a5995e9ff2a6ef39d67e3ff",
+    "thread.review.html": "f5f7195aaf4639c52e327078a1e86224026da0f32d2455ec00806b427a1be827",
+    "interactions.html": "acbcaf31377a0500ae9402ab07bbd9b495faed30b8c5ddaffe1ba0f804040de6"
+  },
+  "product_implementation": false,
+  "status": "pass"
+}

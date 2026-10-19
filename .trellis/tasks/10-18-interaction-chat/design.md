@@ -1,12 +1,12 @@
-# 对话与生成交互设计（v6规划）
+# 对话与生成交互设计（v7规划）
 
 ## 方向与基准
 
-最新用户要求使用TanStack AI React与自定义组件替代assistant-ui，视觉使用现有Mimir设计，交互对齐冻结v4。该要求替代此前全官方渲染/默认样式及仅底部工具栏例外。v1–v5源码/HTML/hash保持不变。`apps/web/DESIGN.md`、renderer真实tokens与已批准基础组件是视觉依据；assistant-ui固定源码只读提供交互行为证据。AG-UI为数据/运行协议，不是视觉组件库。
+最新用户要求使用TanStack AI React与自定义组件替代assistant-ui，视觉使用现有Mimir设计，交互对齐冻结v4。该要求替代此前全官方渲染/默认样式及仅底部工具栏例外。v1–v6源码/HTML/hash保持不变。`apps/web/DESIGN.md`、renderer真实tokens与已批准基础组件是视觉依据；assistant-ui固定源码只读提供交互行为证据。AG-UI为数据/运行协议，不是视觉组件库。
 
 ## 架构与分工
 
-- 客户端运行层拟采用`@tanstack/ai-react`的useChat与兼容ai-client，固定与服务端ai0.68.0兼容的确切版本。`@tanstack/ai-react@0.30.3` / `@tanstack/ai-client@0.39.2`为当前研究候选；不得使用宽范围误拉ai0.69依赖。最终研究与隔离探针是技术事实依据，见research/tanstack-v5-runtime.md。
+- 客户端运行层拟采用`@tanstack/ai-react`的useChat与兼容ai-client，按用户最新要求采用已核验稳定版：`@tanstack/ai@0.69.0`、`@tanstack/ai-client@0.39.3`、`@tanstack/ai-react@0.30.4`，正式产品适配器一并更新`@tanstack/ai-openai@0.30.0`。这是对旧ai0.68兼容固定策略的明确修订；先在独立v7依赖环境验证，产品实施时联动server/provider/renderer及锁文件，不能将新client直接接旧server视为兼容已证。版本与迁移证据见research/tanstack-latest-upgrade.md；旧行为探针作为历史基线继续保留。
 - 自有UI层负责Thread/Message/Markdown/代码/Reasoning/Tool/Attachment/Media/Action/Composer及状态与键盘；从项目token消费浅深主题，不保留assistant-ui运行依赖或官方CSS。v5改变视觉和渲染所有权；v6另明确修改模型选择及推理等级合同，既有Agent/附件安全守卫不变。
 - AG-UI连接层负责接收RunAgentInput对应SSE、规范事件归约及Mimir事件sidecar。标准state/activity/raw等事件不保证useChat自动归约，必须按真实版本明确处理；事件处理器不能全部依靠unknown cast吞掉。
 - Mimir业务层继续拥有检索范围/模型选择/能力等级、真实会话ID、历史、队列、引用、存笔记及Agent执行/中断桥。迁移不直接套SDK默认queue：默认stop/error可能清队列，与Mimir只返还首项不等价。必须单一业务队列，避免双重派发。实际probe还证明SDK浅存body引用、getQueue不返回body，故发送记录须在任何await前deep-copy并冻结，恢复记录独立于SDK清队列。
@@ -23,7 +23,7 @@
 
 ## HTML交付
 
-`prototype/v6/review.html`保留原71组379来源态+24附件态，current列不变，proposed换自有组件并与v4逐项parity；UI-013/014按v6用户反馈显式修订。新增`interactions.html`是独立的交互规范/验收页，共用v6组件与本地连接，提供分类、搜索、状态/动作、深链、事件序列/状态输出、失败/取消/恢复与版本适用范围。技术数据仅显示在此页或显式原型调试区，正常问答不混入协议细节。
+`prototype/v7/review.html`保留原71组379来源态+24附件态，current列不变，proposed换自有组件并与v4逐项parity；UI-013/014按v6用户反馈显式修订。新增`interactions.html`是独立的交互规范/验收页，共用v7组件与本地连接，提供分类、搜索、状态/动作、深链、事件序列/状态输出、失败/取消/恢复与版本适用范围。技术数据仅显示在此页或显式原型调试区，正常问答不混入协议细节。
 
 详情目录依据`research/agui-v6-interaction-catalog.json`（v5协议证据继承，UI-013/014按最新反馈修订）：core0.0.59为36事件、core1.0.0为31（前者含5个旧THINKING事件）；两版共同/新增字段如取消outcome、工具多媒体、resume.status分别标明。旧THINKING事件不是当前runtime原生处理，必须明确legacy inspector或显式normalizer；不能把列出事件当作已消费。纯数据同步事件可无独立常态UI，但必须有可观察状态演示。TanStack扩展和Mimir业务CUSTOM另列，不混称AGUI标准。附件、复制、导出、重试、动作菜单、滚动、焦点、IME等虽非协议事件仍在parity目录中。
 
@@ -41,7 +41,7 @@
 
 ## 子任务依赖
 
-附件子任务仍planning，技术所有权随TanStack方向迁移。父任务负责TanStack接线、自有组件和主/侧栏宿主；子任务负责真实附件服务、wire与寿命，两者发布/完整验收互相依赖。详情HTML是同一模块的可独立验收产物，不因树位置隐含批准新能力。本具体v6认可前两任务都不start。
+附件子任务仍planning，技术所有权随TanStack方向迁移。父任务负责TanStack接线、自有组件和主/侧栏宿主；子任务负责真实附件服务、wire与寿命，两者发布/完整验收互相依赖。详情HTML是同一模块的可独立验收产物，不因树位置隐含批准新能力。本具体v7认可前两任务都不start。
 
 
 ### v5 续传与准备期补充合同
@@ -55,3 +55,11 @@ RUN_ERROR 可能清空 SDK lastResume；必须同时冻结原始 {threadId, runI
 切换模型是一次原子状态更新：保留仍合法的等级，否则使用已声明默认策略；无可验证默认时使用供应商默认（不发送effort），不自动选中臆测等级。切换期间及能力未就绪不发送过期等级。排队/重试/取回记录携带完整模型身份及等级，不能因当前菜单变化而改写。仅快照值送往服务端，服务端重新核验该用户可用provider/model、用途与等级，不信任客户端能力声明。检索范围与Agent目标不因模型变化而替换；缺少视觉/工具等必要能力显式阻止相关任务，不静默降级。
 
 现行shared请求deepReasoning、services/model角色工厂和流式/非流式assistant选择链需要联合迁移；具体源码证据及能力缺口见research/v6-model-capabilities.md。旧客户端兼容可在transport边界识别旧请求，仅旧请求保留旧角色路由；新请求不得把effort反推成chat/reasoning角色。产品规范在正式实施时与代码同批更新，此轮不更改现行产品规范。
+
+## v7 依赖升级边界
+
+v1–v6源码与HTML保持不变。新隔离环境真实安装最新版并生成锁、版本/许可与执行闭包证据；不假定SDK补丁版本无行为变化。普通流、AGUI1.0、状态/活动归约、发送快照、取消/队列、失败续轮与显式原目标缓存均回归。ai-openai跨多个小版本，需要检查factory/exports、chat/embed/summarize/image/transcription工厂、模型选项及OpenAI SDK行为；产品调用仍收敛到plugins/provider，其他AI包不因同属TanStack而无差别升级。
+
+### 新官方推理API的使用边界
+
+ai0.69.0新增ModelReasoning、supportedReasoningLevels、clampReasoningLevel与chat({reasoning})。正式迁移优先复用经核验的官方模型能力API，能力来源必须匹配所配置供应商、模型及实际适配器；不能把原生OpenAI/Azure模型目录套给任意兼容网关。现有openaiCompatible不自动具备官方推理参数映射，仍需在provider层适配并验证；unknown继续如实呈现。UI切换/服务校验不得依赖静默clamp将无效用户选择当作已支持，需按v6明确默认/继承策略处理。源码与探针证据见最新升级研究。

@@ -1,0 +1,1002 @@
+[
+  {
+    "name": "@tanstack/svelte-ai-devtools@0.1.0",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/svelte-ai-devtools@0.1.0",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/svelte-ai-devtools@0.1.0",
+    "commit": {
+      "sha": "aa635acefb700bdca3fd390af5514bdae8c63209",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/aa635acefb700bdca3fd390af5514bdae8c63209"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc3ZlbHRlLWFpLWRldnRvb2xzQDAuMS4w"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.71",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.71",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.71",
+    "commit": {
+      "sha": "aa635acefb700bdca3fd390af5514bdae8c63209",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/aa635acefb700bdca3fd390af5514bdae8c63209"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjcx"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.70",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.70",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.70",
+    "commit": {
+      "sha": "e02b661da53d7e969afe46972b45231bef7223bf",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/e02b661da53d7e969afe46972b45231bef7223bf"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjcw"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.69",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.69",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.69",
+    "commit": {
+      "sha": "059f8bbc61bf70f40000c63db6ff64b692b823b0",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/059f8bbc61bf70f40000c63db6ff64b692b823b0"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY5"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.68",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.68",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.68",
+    "commit": {
+      "sha": "aade077647556a7ea17d7ddf73bd4e7dc0258301",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/aade077647556a7ea17d7ddf73bd4e7dc0258301"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY4"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.67",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.67",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.67",
+    "commit": {
+      "sha": "55db7d458aeaa660844f60fe19f5e84c568379ce",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/55db7d458aeaa660844f60fe19f5e84c568379ce"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY3"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.66",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.66",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.66",
+    "commit": {
+      "sha": "9ca3706513b94764d11ea63c7541b2cf4f3daa20",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/9ca3706513b94764d11ea63c7541b2cf4f3daa20"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY2"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.65",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.65",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.65",
+    "commit": {
+      "sha": "e3de949575eac8301c0449afa3a91ef450e9580b",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/e3de949575eac8301c0449afa3a91ef450e9580b"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY1"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.64",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.64",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.64",
+    "commit": {
+      "sha": "2bfe77269f9f201d51d7c625be0e19f2f908f6c9",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/2bfe77269f9f201d51d7c625be0e19f2f908f6c9"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY0"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.63",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.63",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.63",
+    "commit": {
+      "sha": "acc6dc8d4f8c93f6ac4dc773ce40f4d7a0becc5a",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/acc6dc8d4f8c93f6ac4dc773ce40f4d7a0becc5a"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjYz"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.62",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.62",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.62",
+    "commit": {
+      "sha": "8a4ee6a25c39bb55deee50d2fbfb353a3dd67ba6",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/8a4ee6a25c39bb55deee50d2fbfb353a3dd67ba6"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjYy"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.61",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.61",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.61",
+    "commit": {
+      "sha": "9d6cbfefd9df95f99d25f10a405e1d46de03f752",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/9d6cbfefd9df95f99d25f10a405e1d46de03f752"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjYx"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.60",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.60",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.60",
+    "commit": {
+      "sha": "0da595fbebc59c111ade81c39b2fff7727b9c522",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/0da595fbebc59c111ade81c39b2fff7727b9c522"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjYw"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.59",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.59",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.59",
+    "commit": {
+      "sha": "922e17eeab377cb531f653a4663353208cbe263e",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/922e17eeab377cb531f653a4663353208cbe263e"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjU5"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.52",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.52",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.52",
+    "commit": {
+      "sha": "def858261cda725d09dc156c3c470c0b0ee32718",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/def858261cda725d09dc156c3c470c0b0ee32718"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjUy"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.50",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.50",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.50",
+    "commit": {
+      "sha": "a3350240580d3be9e0db1f1efb2be0c2e6768082",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/a3350240580d3be9e0db1f1efb2be0c2e6768082"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjUw"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.49",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.49",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.49",
+    "commit": {
+      "sha": "8aabeec5fa4e75575dad7c26e6900d0e66165f91",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/8aabeec5fa4e75575dad7c26e6900d0e66165f91"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ5"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.48",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.48",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.48",
+    "commit": {
+      "sha": "86cf41c5ea994a7086e976f742d12cbf09cfce3e",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/86cf41c5ea994a7086e976f742d12cbf09cfce3e"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ4"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.47",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.47",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.47",
+    "commit": {
+      "sha": "272c40f483bb133f2e792c6a1f3a5342373b7442",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/272c40f483bb133f2e792c6a1f3a5342373b7442"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ3"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.46",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.46",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.46",
+    "commit": {
+      "sha": "11ce2a196f17c09f7ad8d1c88d60eee438392107",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/11ce2a196f17c09f7ad8d1c88d60eee438392107"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ2"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.45",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.45",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.45",
+    "commit": {
+      "sha": "bdadc4b78027609accc6164e122e9145c370e128",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/bdadc4b78027609accc6164e122e9145c370e128"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ1"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.44",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.44",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.44",
+    "commit": {
+      "sha": "fb3134ddf41a9e1766835be171ce9ad5101c8367",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/fb3134ddf41a9e1766835be171ce9ad5101c8367"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ0"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.43",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.43",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.43",
+    "commit": {
+      "sha": "00ae42196ae8e063e7784d85ee80f92e6df45ca1",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/00ae42196ae8e063e7784d85ee80f92e6df45ca1"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQz"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.42",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.42",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.42",
+    "commit": {
+      "sha": "bdca8808b074682a267db5fbdf7369f63b330297",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/bdca8808b074682a267db5fbdf7369f63b330297"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQy"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.41",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.41",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.41",
+    "commit": {
+      "sha": "27d2c548714be0fb62956ab0a6f2897e74579a83",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/27d2c548714be0fb62956ab0a6f2897e74579a83"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQx"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.40",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.40",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.40",
+    "commit": {
+      "sha": "3827ae0f59f761f3b893248bd0d6ff1cfe097e17",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/3827ae0f59f761f3b893248bd0d6ff1cfe097e17"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQw"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.39",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.39",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.39",
+    "commit": {
+      "sha": "61ff2592c888dfa0664c95c762252dff8b116971",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/61ff2592c888dfa0664c95c762252dff8b116971"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM5"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.38",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.38",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.38",
+    "commit": {
+      "sha": "0f18f643bea95397079e1aa3734fbd67ee71eb9f",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/0f18f643bea95397079e1aa3734fbd67ee71eb9f"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM4"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.37",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.37",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.37",
+    "commit": {
+      "sha": "89cb1df54da349cdf001d265ac5546fdbbc11587",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/89cb1df54da349cdf001d265ac5546fdbbc11587"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM3"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.36",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.36",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.36",
+    "commit": {
+      "sha": "144e09006ab3a54189508e2de2516808073ea853",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/144e09006ab3a54189508e2de2516808073ea853"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM2"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.35",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.35",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.35",
+    "commit": {
+      "sha": "ed53773ea88f6b8a4c52547c5c78123dddff9d28",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/ed53773ea88f6b8a4c52547c5c78123dddff9d28"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM1"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.34",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.34",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.34",
+    "commit": {
+      "sha": "6628a394bc0cdc048235a1b86f9ac77e913a1a77",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/6628a394bc0cdc048235a1b86f9ac77e913a1a77"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM0"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.33",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.33",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.33",
+    "commit": {
+      "sha": "d7fe8173a30f95e38ebfa3e6422b56a7406ada08",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/d7fe8173a30f95e38ebfa3e6422b56a7406ada08"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjMz"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.32",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.32",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.32",
+    "commit": {
+      "sha": "dc77d93d2abdf9086be741ee9e1f54e945394497",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/dc77d93d2abdf9086be741ee9e1f54e945394497"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjMy"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.31",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.31",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.31",
+    "commit": {
+      "sha": "70ca58948df19a90e264afb855ef10a9fdeb6e09",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/70ca58948df19a90e264afb855ef10a9fdeb6e09"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjMx"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.30",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.30",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.30",
+    "commit": {
+      "sha": "7205937bc94b7ce20093f9d8de1eaa9df29800c9",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/7205937bc94b7ce20093f9d8de1eaa9df29800c9"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjMw"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.29",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.29",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.29",
+    "commit": {
+      "sha": "af19dcc69dbde2535d4016d64fbefc891198ed71",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/af19dcc69dbde2535d4016d64fbefc891198ed71"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI5"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.28",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.28",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.28",
+    "commit": {
+      "sha": "2d21ac2c2e45ce41dd82d2dcb5309df036fadb45",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/2d21ac2c2e45ce41dd82d2dcb5309df036fadb45"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI4"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.27",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.27",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.27",
+    "commit": {
+      "sha": "3dcc474e2bb1656b7c98afdb2f4671936647bcf0",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/3dcc474e2bb1656b7c98afdb2f4671936647bcf0"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI3"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.26",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.26",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.26",
+    "commit": {
+      "sha": "d02950a0636022e096521f59da605418c9642599",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/d02950a0636022e096521f59da605418c9642599"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI2"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.25",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.25",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.25",
+    "commit": {
+      "sha": "421439225a1ea2c5cb07b0c9de4fe267bb4c8dc3",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/421439225a1ea2c5cb07b0c9de4fe267bb4c8dc3"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI1"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.24",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.24",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.24",
+    "commit": {
+      "sha": "609567bd3bc5202a54b746bbc31fbd3f1339ffc2",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/609567bd3bc5202a54b746bbc31fbd3f1339ffc2"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI0"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.23",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.23",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.23",
+    "commit": {
+      "sha": "6a4796089db8575cffe015b202e77331424871fd",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/6a4796089db8575cffe015b202e77331424871fd"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjIz"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.22",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.22",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.22",
+    "commit": {
+      "sha": "0f625b44a7730fb8c23305a26ab5f06668548f43",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/0f625b44a7730fb8c23305a26ab5f06668548f43"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjIy"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.19",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.19",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.19",
+    "commit": {
+      "sha": "cc77237f4f943552965cf9e20a3fa45b2b684f14",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/cc77237f4f943552965cf9e20a3fa45b2b684f14"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjE5"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.18",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.18",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.18",
+    "commit": {
+      "sha": "87554604457fa549482af0028fa02d9945b91cb8",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/87554604457fa549482af0028fa02d9945b91cb8"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjE4"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.11",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.11",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.11",
+    "commit": {
+      "sha": "3f1b9a7cf984f4049c81081e77fc8f96f750d38b",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/3f1b9a7cf984f4049c81081e77fc8f96f750d38b"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjEx"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.10",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.10",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.10",
+    "commit": {
+      "sha": "81d0ac00f3d6d81030f3020aed92a8f6202ed552",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/81d0ac00f3d6d81030f3020aed92a8f6202ed552"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjEw"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.8",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.8",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.8",
+    "commit": {
+      "sha": "da69d4f7b4cb890bd8bdea592f4128c9bec3e1d5",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/da69d4f7b4cb890bd8bdea592f4128c9bec3e1d5"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjg"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.7",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.7",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.7",
+    "commit": {
+      "sha": "be54017eac60901cd738e2305e1e6d582deeddb0",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/be54017eac60901cd738e2305e1e6d582deeddb0"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjc"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.6",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.6",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.6",
+    "commit": {
+      "sha": "0b70dfdc44433828217a652ac2334a181915d130",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/0b70dfdc44433828217a652ac2334a181915d130"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjY"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.5",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.5",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.5",
+    "commit": {
+      "sha": "4449b1b6c26c74e1143702ab46595b67fce564ba",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/4449b1b6c26c74e1143702ab46595b67fce564ba"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjU"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.4",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.4",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.4",
+    "commit": {
+      "sha": "f783dd41af20af72a6d2209d2886e1513475a368",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/f783dd41af20af72a6d2209d2886e1513475a368"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjQ"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.3",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.3",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.3",
+    "commit": {
+      "sha": "700aa301632312c689f81a3cfd2e4de439341683",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/700aa301632312c689f81a3cfd2e4de439341683"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjM"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.2",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.2",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.2",
+    "commit": {
+      "sha": "cdf6b2f0cfcdd31725c0eb64c5a2d939f8409479",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/cdf6b2f0cfcdd31725c0eb64c5a2d939f8409479"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjI"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.2.0",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.2.0",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.2.0",
+    "commit": {
+      "sha": "d76d9d4f62b2fd7c37780bde0662e6fbbcd10524",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/d76d9d4f62b2fd7c37780bde0662e6fbbcd10524"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4yLjA"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.1.1",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.1.1",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.1.1",
+    "commit": {
+      "sha": "23abe3d695226c21a048b327d0e80ce858c7c33d",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/23abe3d695226c21a048b327d0e80ce858c7c33d"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4xLjE"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.1.0",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.1.0",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.1.0",
+    "commit": {
+      "sha": "69e44d1cc023164011a80343edc1470b0b6f356f",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/69e44d1cc023164011a80343edc1470b0b6f356f"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4xLjA"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.0.3",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.0.3",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.0.3",
+    "commit": {
+      "sha": "a3295cd7806ad3431c2167e4272af5d9c36c0bad",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/a3295cd7806ad3431c2167e4272af5d9c36c0bad"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4wLjM"
+  },
+  {
+    "name": "@tanstack/solid-ai-devtools@0.0.2",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/solid-ai-devtools@0.0.2",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/solid-ai-devtools@0.0.2",
+    "commit": {
+      "sha": "36daf4c0217ff9063d0b975d1a4f060568c26787",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/36daf4c0217ff9063d0b975d1a4f060568c26787"
+    },
+    "node_id": "REF_kwDOP-v7JdoAK3JlZnMvdGFncy9AdGFuc3RhY2svc29saWQtYWktZGV2dG9vbHNAMC4wLjI"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.71",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.71",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.71",
+    "commit": {
+      "sha": "aa635acefb700bdca3fd390af5514bdae8c63209",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/aa635acefb700bdca3fd390af5514bdae8c63209"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjcx"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.70",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.70",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.70",
+    "commit": {
+      "sha": "e02b661da53d7e969afe46972b45231bef7223bf",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/e02b661da53d7e969afe46972b45231bef7223bf"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjcw"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.69",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.69",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.69",
+    "commit": {
+      "sha": "059f8bbc61bf70f40000c63db6ff64b692b823b0",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/059f8bbc61bf70f40000c63db6ff64b692b823b0"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjY5"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.68",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.68",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.68",
+    "commit": {
+      "sha": "aade077647556a7ea17d7ddf73bd4e7dc0258301",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/aade077647556a7ea17d7ddf73bd4e7dc0258301"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjY4"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.67",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.67",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.67",
+    "commit": {
+      "sha": "55db7d458aeaa660844f60fe19f5e84c568379ce",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/55db7d458aeaa660844f60fe19f5e84c568379ce"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjY3"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.66",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.66",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.66",
+    "commit": {
+      "sha": "9ca3706513b94764d11ea63c7541b2cf4f3daa20",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/9ca3706513b94764d11ea63c7541b2cf4f3daa20"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjY2"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.65",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.65",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.65",
+    "commit": {
+      "sha": "e3de949575eac8301c0449afa3a91ef450e9580b",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/e3de949575eac8301c0449afa3a91ef450e9580b"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjY1"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.64",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.64",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.64",
+    "commit": {
+      "sha": "2bfe77269f9f201d51d7c625be0e19f2f908f6c9",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/2bfe77269f9f201d51d7c625be0e19f2f908f6c9"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjY0"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.63",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.63",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.63",
+    "commit": {
+      "sha": "acc6dc8d4f8c93f6ac4dc773ce40f4d7a0becc5a",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/acc6dc8d4f8c93f6ac4dc773ce40f4d7a0becc5a"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjYz"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.62",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.62",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.62",
+    "commit": {
+      "sha": "8a4ee6a25c39bb55deee50d2fbfb353a3dd67ba6",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/8a4ee6a25c39bb55deee50d2fbfb353a3dd67ba6"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjYy"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.61",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.61",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.61",
+    "commit": {
+      "sha": "9d6cbfefd9df95f99d25f10a405e1d46de03f752",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/9d6cbfefd9df95f99d25f10a405e1d46de03f752"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjYx"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.60",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.60",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.60",
+    "commit": {
+      "sha": "0da595fbebc59c111ade81c39b2fff7727b9c522",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/0da595fbebc59c111ade81c39b2fff7727b9c522"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjYw"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.59",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.59",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.59",
+    "commit": {
+      "sha": "922e17eeab377cb531f653a4663353208cbe263e",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/922e17eeab377cb531f653a4663353208cbe263e"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjU5"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.52",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.52",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.52",
+    "commit": {
+      "sha": "def858261cda725d09dc156c3c470c0b0ee32718",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/def858261cda725d09dc156c3c470c0b0ee32718"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjUy"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.50",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.50",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.50",
+    "commit": {
+      "sha": "a3350240580d3be9e0db1f1efb2be0c2e6768082",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/a3350240580d3be9e0db1f1efb2be0c2e6768082"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjUw"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.49",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.49",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.49",
+    "commit": {
+      "sha": "8aabeec5fa4e75575dad7c26e6900d0e66165f91",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/8aabeec5fa4e75575dad7c26e6900d0e66165f91"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQ5"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.48",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.48",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.48",
+    "commit": {
+      "sha": "86cf41c5ea994a7086e976f742d12cbf09cfce3e",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/86cf41c5ea994a7086e976f742d12cbf09cfce3e"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQ4"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.47",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.47",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.47",
+    "commit": {
+      "sha": "272c40f483bb133f2e792c6a1f3a5342373b7442",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/272c40f483bb133f2e792c6a1f3a5342373b7442"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQ3"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.46",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.46",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.46",
+    "commit": {
+      "sha": "11ce2a196f17c09f7ad8d1c88d60eee438392107",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/11ce2a196f17c09f7ad8d1c88d60eee438392107"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQ2"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.45",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.45",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.45",
+    "commit": {
+      "sha": "bdadc4b78027609accc6164e122e9145c370e128",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/bdadc4b78027609accc6164e122e9145c370e128"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQ1"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.44",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.44",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.44",
+    "commit": {
+      "sha": "fb3134ddf41a9e1766835be171ce9ad5101c8367",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/fb3134ddf41a9e1766835be171ce9ad5101c8367"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQ0"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.43",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.43",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.43",
+    "commit": {
+      "sha": "00ae42196ae8e063e7784d85ee80f92e6df45ca1",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/00ae42196ae8e063e7784d85ee80f92e6df45ca1"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQz"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.42",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.42",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.42",
+    "commit": {
+      "sha": "bdca8808b074682a267db5fbdf7369f63b330297",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/bdca8808b074682a267db5fbdf7369f63b330297"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQy"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.41",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.41",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.41",
+    "commit": {
+      "sha": "27d2c548714be0fb62956ab0a6f2897e74579a83",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/27d2c548714be0fb62956ab0a6f2897e74579a83"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQx"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.40",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.40",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.40",
+    "commit": {
+      "sha": "3827ae0f59f761f3b893248bd0d6ff1cfe097e17",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/3827ae0f59f761f3b893248bd0d6ff1cfe097e17"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjQw"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.39",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.39",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.39",
+    "commit": {
+      "sha": "61ff2592c888dfa0664c95c762252dff8b116971",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/61ff2592c888dfa0664c95c762252dff8b116971"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjM5"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.38",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.38",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.38",
+    "commit": {
+      "sha": "0f18f643bea95397079e1aa3734fbd67ee71eb9f",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/0f18f643bea95397079e1aa3734fbd67ee71eb9f"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjM4"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.37",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.37",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.37",
+    "commit": {
+      "sha": "89cb1df54da349cdf001d265ac5546fdbbc11587",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/89cb1df54da349cdf001d265ac5546fdbbc11587"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjM3"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.36",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.36",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.36",
+    "commit": {
+      "sha": "144e09006ab3a54189508e2de2516808073ea853",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/144e09006ab3a54189508e2de2516808073ea853"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjM2"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.35",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.35",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.35",
+    "commit": {
+      "sha": "ed53773ea88f6b8a4c52547c5c78123dddff9d28",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/ed53773ea88f6b8a4c52547c5c78123dddff9d28"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjM1"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.34",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.34",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.34",
+    "commit": {
+      "sha": "6628a394bc0cdc048235a1b86f9ac77e913a1a77",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/6628a394bc0cdc048235a1b86f9ac77e913a1a77"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjM0"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.33",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.33",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.33",
+    "commit": {
+      "sha": "d7fe8173a30f95e38ebfa3e6422b56a7406ada08",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/d7fe8173a30f95e38ebfa3e6422b56a7406ada08"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjMz"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.32",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.32",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.32",
+    "commit": {
+      "sha": "dc77d93d2abdf9086be741ee9e1f54e945394497",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/dc77d93d2abdf9086be741ee9e1f54e945394497"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjMy"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.31",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.31",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.31",
+    "commit": {
+      "sha": "70ca58948df19a90e264afb855ef10a9fdeb6e09",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/70ca58948df19a90e264afb855ef10a9fdeb6e09"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjMx"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.30",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.30",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.30",
+    "commit": {
+      "sha": "7205937bc94b7ce20093f9d8de1eaa9df29800c9",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/7205937bc94b7ce20093f9d8de1eaa9df29800c9"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjMw"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.29",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.29",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.29",
+    "commit": {
+      "sha": "af19dcc69dbde2535d4016d64fbefc891198ed71",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/af19dcc69dbde2535d4016d64fbefc891198ed71"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjI5"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.28",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.28",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.28",
+    "commit": {
+      "sha": "2d21ac2c2e45ce41dd82d2dcb5309df036fadb45",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/2d21ac2c2e45ce41dd82d2dcb5309df036fadb45"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjI4"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.27",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.27",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.27",
+    "commit": {
+      "sha": "3dcc474e2bb1656b7c98afdb2f4671936647bcf0",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/3dcc474e2bb1656b7c98afdb2f4671936647bcf0"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjI3"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.26",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.26",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.26",
+    "commit": {
+      "sha": "d02950a0636022e096521f59da605418c9642599",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/d02950a0636022e096521f59da605418c9642599"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjI2"
+  },
+  {
+    "name": "@tanstack/react-ai-devtools@0.2.25",
+    "zipball_url": "https://api.github.com/repos/TanStack/ai/zipball/refs/tags/@tanstack/react-ai-devtools@0.2.25",
+    "tarball_url": "https://api.github.com/repos/TanStack/ai/tarball/refs/tags/@tanstack/react-ai-devtools@0.2.25",
+    "commit": {
+      "sha": "421439225a1ea2c5cb07b0c9de4fe267bb4c8dc3",
+      "url": "https://api.github.com/repos/TanStack/ai/commits/421439225a1ea2c5cb07b0c9de4fe267bb4c8dc3"
+    },
+    "node_id": "REF_kwDOP-v7JdoALHJlZnMvdGFncy9AdGFuc3RhY2svcmVhY3QtYWktZGV2dG9vbHNAMC4yLjI1"
+  }
+]

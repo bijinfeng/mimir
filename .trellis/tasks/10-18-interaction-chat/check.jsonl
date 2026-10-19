@@ -26,4 +26,5 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/research/agui-v5-interaction-catalog.md", "reason": "AGUI固定两版本全事件、非UI同步和详情页/交互覆盖"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/v6-model-capabilities.md", "reason": "最新供应商模型选择、模型真实推理等级及跨层迁移证据；取代v5只读角色合同"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/agui-v6-interaction-catalog.md", "reason": "v6 UI-013/014明确修订，其余协议与交互目录继承v5"}
-{"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v6.md", "reason": "当前具体v6规划HTML、验证和审批边界"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/tanstack-latest-upgrade.md", "reason": "最新稳定版本/官方API变更、真实依赖兼容及全产品AI使用点迁移清单"}
+{"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v7.md", "reason": "具体v7 SDK升级HTML及验证边界，保留v6交互"}

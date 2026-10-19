@@ -20,3 +20,4 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v5.md", "reason": "当前v5具体HTML交付与验证边界；认可前不实施"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/v5-context-index.md", "reason": "v5全目录紧凑索引，完整JSON/逐源码parity按需读取，避免注入截断"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/v6-model-capabilities.md", "reason": "v6明确provider/model/effort选择及能力守卫，与附件准备、队列和视觉能力校验共同冻结"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/tanstack-latest-upgrade.md", "reason": "v7最新SDK及OpenAI适配器升级、附件/媒体和中断回归边界"}

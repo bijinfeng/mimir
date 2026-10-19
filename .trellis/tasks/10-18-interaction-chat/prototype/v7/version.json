@@ -1,0 +1,42 @@
+{
+  "version": "chat-review-v7",
+  "frozen_on": "2026-10-19",
+  "html": "review.html",
+  "sha256": "1537bb796575dc47c8cc5b5661034b5bfa80e23d4a5995e9ff2a6ef39d67e3ff",
+  "thread_html": "thread.review.html",
+  "thread_html_sha256": "f5f7195aaf4639c52e327078a1e86224026da0f32d2455ec00806b427a1be827",
+  "interactions_html": "interactions.html",
+  "interactions_html_sha256": "acbcaf31377a0500ae9402ab07bbd9b495faed30b8c5ddaffe1ba0f804040de6",
+  "preview_url": "http://127.0.0.1:5189/v7/review.html?mode=proposed#scene=CHAT-012.menu",
+  "interactions_url": "http://127.0.0.1:5189/v7/interactions.html#UI-014",
+  "groups": 72,
+  "source_groups": 71,
+  "source_states": 379,
+  "additional_attachment_states": 24,
+  "total_routes": 403,
+  "catalog_items": 126,
+  "protocol_default_sequences": 58,
+  "protocol_additional_variants": 89,
+  "protocol_checks": 8,
+  "runtime_probe_groups": 5,
+  "runtime": {
+    "ai-react": "0.30.4",
+    "ai-client": "0.39.3",
+    "ai": "0.69.0"
+  },
+  "status": "awaiting_exact_version_approval",
+  "product_implementation_approved": false,
+  "immutable": true,
+  "supersedes": "../v6/version.json",
+  "revision_policy": "冻结后不覆盖；实质修改另存版本并重新审阅。",
+  "behavior_reference": "Frozen v6 UI and interaction contracts; SDK upgrade only",
+  "rendering_direction": "Mimir custom components + real TanStack AI React local ConnectionAdapter",
+  "verification": "../../verification/v7/browser-qa.md",
+  "independent_finish_verdict": "pass for isolated v7 SDK upgrade planning prototype; product implementation pending",
+  "reviewer_role_substitution": "Trellis-check fresh reviewer; no product implementation acceptance",
+  "native_boundaries": "390px embedded simulation, not phone viewport; no real API/model/upload/Agent/IME/Electron acceptance",
+  "revision": "Latest stable SDK upgrade; v6 provider/model capability UX preserved",
+  "provider_probe": {
+    "ai-openai": "0.30.0"
+  }
+}

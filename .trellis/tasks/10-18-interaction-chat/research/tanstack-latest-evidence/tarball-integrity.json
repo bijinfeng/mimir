@@ -1,0 +1,37 @@
+{
+  "checked_at_utc": "2026-10-19T08:52:05.880100+00:00",
+  "results": [
+    {
+      "package": "@tanstack/ai-client",
+      "version": "0.39.3",
+      "tarball": "https://registry.npmjs.org/@tanstack/ai-client/-/ai-client-0.39.3.tgz",
+      "bytes": 519440,
+      "integrity": "sha512-co3F4rh1xhadedk5wfvNV+sja5iueIS/S8+KGZjQ/C6+IA68rfE9iWhe2xNO4hYX4bOvyXnA5XX/d0KOFduZDA==",
+      "matches_registry": true
+    },
+    {
+      "package": "@tanstack/ai-openai",
+      "version": "0.30.0",
+      "tarball": "https://registry.npmjs.org/@tanstack/ai-openai/-/ai-openai-0.30.0.tgz",
+      "bytes": 194453,
+      "integrity": "sha512-LZPs6jmWh+nlvYdHTS4bOhA+0qGZpYatuEdTkIqF9W+p9C86spDUhoaEsSXimBbd+mL1RTqahUIHrsAwyNSeSA==",
+      "matches_registry": true
+    },
+    {
+      "package": "@tanstack/ai-react",
+      "version": "0.30.4",
+      "tarball": "https://registry.npmjs.org/@tanstack/ai-react/-/ai-react-0.30.4.tgz",
+      "bytes": 126813,
+      "integrity": "sha512-z2E+zb1hifsFtUZGHRq6InxjPF3WmjN66JXcCYmbVT5c/HWsdvgN3KrJ49jgsuMXHZYch1zi6Y3REdXGj8c4fQ==",
+      "matches_registry": true
+    },
+    {
+      "package": "@tanstack/ai",
+      "version": "0.69.0",
+      "tarball": "https://registry.npmjs.org/@tanstack/ai/-/ai-0.69.0.tgz",
+      "bytes": 1324548,
+      "integrity": "sha512-Y018M4Cg3LPr1meRoVG/ePDB1mdazL9cPBA7bnm8WJm2LT0cN2LoUEXRimKSZjyYY7G+9BtQeNiKlaLJkbqHKQ==",
+      "matches_registry": true
+    }
+  ]
+}

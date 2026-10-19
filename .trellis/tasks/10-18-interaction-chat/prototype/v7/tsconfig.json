@@ -1,0 +1,66 @@
+{
+  "extends": "../../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [],
+    "paths": {
+      "react": [
+        "../../../../../packages/renderer/node_modules/@types/react/index.d.ts"
+      ],
+      "react/*": [
+        "../../../../../packages/renderer/node_modules/@types/react/*"
+      ],
+      "react-dom/*": [
+        "../../../../../packages/renderer/node_modules/@types/react-dom/*"
+      ],
+      "antd": [
+        "../../../../../apps/web/node_modules/antd"
+      ],
+      "antd-style": [
+        "../../../../../apps/web/node_modules/antd-style"
+      ],
+      "lucide-react": [
+        "../../../../../packages/renderer/node_modules/lucide-react"
+      ],
+      "react-dom": [
+        "../../../../../packages/renderer/node_modules/@types/react-dom/index.d.ts"
+      ],
+      "@tanstack/ai-react": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/@tanstack/ai-react"
+      ],
+      "@tanstack/ai-client": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/@tanstack/ai-client"
+      ],
+      "@tanstack/ai": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/@tanstack/ai"
+      ],
+      "react-markdown": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/react-markdown"
+      ],
+      "remark-gfm": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/remark-gfm"
+      ],
+      "@tanstack/ai-openai": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/@tanstack/ai-openai"
+      ],
+      "@tanstack/ai-openai/compatible": [
+        "/tmp/mimir-chat-tanstack-v7/deps/node_modules/@tanstack/ai-openai/dist/esm/compatible/index.d.ts"
+      ]
+    },
+    "resolveJsonModule": true,
+    "declaration": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "*.tsx",
+    "*.ts",
+    "env.d.ts",
+    "scenes.json"
+  ]
+}

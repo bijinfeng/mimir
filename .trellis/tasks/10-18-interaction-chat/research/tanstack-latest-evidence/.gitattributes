@@ -1,0 +1,2 @@
+# Unified patch context lines intentionally preserve their leading space.
+*.diff whitespace=-blank-at-eol

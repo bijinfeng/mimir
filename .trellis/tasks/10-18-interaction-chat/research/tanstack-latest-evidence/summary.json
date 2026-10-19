@@ -1,0 +1,69 @@
+{
+  "checked_at_utc": "2026-10-19T08:49:53.061686+00:00",
+  "packages": [
+    {
+      "name": "@tanstack/ai-client",
+      "latest": "0.39.3",
+      "published": "2026-10-13T17:48:04.393Z",
+      "gitHead": null,
+      "integrity": "sha512-co3F4rh1xhadedk5wfvNV+sja5iueIS/S8+KGZjQ/C6+IA68rfE9iWhe2xNO4hYX4bOvyXnA5XX/d0KOFduZDA==",
+      "dependencies": {
+        "@tanstack/ai": "^0.69.0",
+        "@tanstack/ai-utils": "^0.4.2",
+        "@tanstack/ai-event-client": "^0.13.1"
+      },
+      "peerDependencies": null
+    },
+    {
+      "name": "@tanstack/ai-openai",
+      "latest": "0.30.0",
+      "published": "2026-10-13T17:48:22.842Z",
+      "gitHead": null,
+      "integrity": "sha512-LZPs6jmWh+nlvYdHTS4bOhA+0qGZpYatuEdTkIqF9W+p9C86spDUhoaEsSXimBbd+mL1RTqahUIHrsAwyNSeSA==",
+      "dependencies": {
+        "openai": "^7.30.0",
+        "@tanstack/ai-utils": "^0.4.2",
+        "@tanstack/openai-base": "^0.14.0"
+      },
+      "peerDependencies": {
+        "@tanstack/ai": "^0.69.0"
+      }
+    },
+    {
+      "name": "@tanstack/ai-react",
+      "latest": "0.30.4",
+      "published": "2026-10-13T17:48:28.230Z",
+      "gitHead": null,
+      "integrity": "sha512-z2E+zb1hifsFtUZGHRq6InxjPF3WmjN66JXcCYmbVT5c/HWsdvgN3KrJ49jgsuMXHZYch1zi6Y3REdXGj8c4fQ==",
+      "dependencies": {
+        "@tanstack/markdown": "^0.0.13",
+        "@tanstack/ai-client": "^0.39.3"
+      },
+      "peerDependencies": {
+        "react": ">=18.0.0",
+        "react-dom": ">=18.0.0",
+        "@tanstack/ai": "^0.69.0",
+        "@types/react": ">=18.0.0",
+        "@mcp-ui/client": "^7"
+      }
+    },
+    {
+      "name": "@tanstack/ai",
+      "latest": "0.69.0",
+      "published": "2026-10-13T17:52:19.096Z",
+      "gitHead": null,
+      "integrity": "sha512-Y018M4Cg3LPr1meRoVG/ePDB1mdazL9cPBA7bnm8WJm2LT0cN2LoUEXRimKSZjyYY7G+9BtQeNiKlaLJkbqHKQ==",
+      "dependencies": {
+        "@ag-ui/core": "1.0.0",
+        "partial-json": "^0.1.7",
+        "fast-json-patch": "^3.1.1",
+        "@tanstack/ai-utils": "^0.4.2",
+        "@standard-schema/spec": "^1.1.0",
+        "@tanstack/ai-event-client": "^0.13.1"
+      },
+      "peerDependencies": {
+        "@opentelemetry/api": ">=1.9.0"
+      }
+    }
+  ]
+}

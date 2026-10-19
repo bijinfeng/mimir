@@ -1,8 +1,8 @@
-# 聊天临时附件能力（v6规划）
+# 聊天临时附件能力（v7规划）
 
 ## 目标与背景
 
-用户于2026-10-19选择「一并规划聊天附件能力（推荐）」。为TanStack AI React与Mimir自有对话组件接通真实标准附件，使选择、准备、发送、历史和恢复可用，不自动导入知识库。本轮只形成方案及父任务prototype/v6的HTML效果稿，父子任务保持planning；认可具体新版后才实施。
+用户于2026-10-19选择「一并规划聊天附件能力（推荐）」。为TanStack AI React与Mimir自有对话组件接通真实标准附件，使选择、准备、发送、历史和恢复可用，不自动导入知识库。本轮只形成方案及父任务prototype/v7的HTML效果稿，父子任务保持planning；认可具体新版后才实施。
 
 v4固定官方源码仅提供附件交互基准；v5依用户最新要求替换为自有组件与TanStack发送接线，仍保留选择、准备、错误移除重选、预览、发送准备/取消及历史行为。已有`/api/documents/files`会创建笔记/文档、目录标签及分块嵌入（`apps/server/src/services/upload.ts:74–96,235–275`），不是临时附件。普通聊天还拒图片、无KB引用不调用模型、历史仅text（`assistant-stream.ts:154–173,200–245,309–343`及`retrieval-preparation.ts:175–211`）；需要完整业务改造。证据集中于[附件研究](../10-18-interaction-chat/research/chat-attachment-planning.md)。
 

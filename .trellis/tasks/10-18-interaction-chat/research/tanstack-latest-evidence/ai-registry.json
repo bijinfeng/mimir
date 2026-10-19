@@ -1,0 +1,358 @@
+{
+  "name": "@tanstack/ai",
+  "dist-tags": {
+    "latest": "0.69.0"
+  },
+  "versions": {
+    "0.68.0": {
+      "name": "@tanstack/ai",
+      "version": "0.68.0",
+      "keywords": [
+        "ai",
+        "ai-sdk",
+        "typescript",
+        "tanstack",
+        "llm",
+        "generative-ai",
+        "chat",
+        "streaming",
+        "tool-calling",
+        "function-calling",
+        "agents",
+        "structured-outputs",
+        "multimodal",
+        "zod",
+        "tanstack-intent"
+      ],
+      "author": "Tanner Linsley",
+      "license": "MIT",
+      "_id": "@tanstack/ai@0.68.0",
+      "maintainers": [
+        {
+          "name": "tannerlinsley",
+          "email": "tannerlinsley@gmail.com"
+        },
+        {
+          "name": "alemtuzlak",
+          "email": "t.zlak97@gmail.com"
+        },
+        {
+          "name": "kevinvandy",
+          "email": "kevinvandy656@gmail.com"
+        }
+      ],
+      "homepage": "https://tanstack.com/ai",
+      "bugs": {
+        "url": "https://github.com/TanStack/ai/issues"
+      },
+      "dist": {
+        "shasum": "d69ad625fdaeca3fce4eeb5bef496afedf0877fb",
+        "tarball": "https://registry.npmjs.org/@tanstack/ai/-/ai-0.68.0.tgz",
+        "fileCount": 584,
+        "integrity": "sha512-l++ORsrL5dAC/nNJ2ZyQiTkDmxNo2Xh0lsS4m0QbWzUVyvmSmFriDemqQmAiko+zMvVeeQ8QlTXUMOLLPfZyEQ==",
+        "signatures": [
+          {
+            "sig": "MEQCIHQdqM8zymPIh68EwlKkS9jtQ7PtyQw/1EICBk6VgFmVAiBcYxJv++aXnThs02NRrO5Z2CVZRQK7cNSIV7po8DODcg==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "sig": "MEYCIQC/IPOMxAzjEgKsVuvlN2eJwdNH+VrBq2/ZjTP/V3l3zwIhAP4opnCOkNs6gSldE7v2IRzxgLoiVw5rtZz8OoqCBbUv",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@tanstack%2fai@0.68.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 5124925
+      },
+      "type": "module",
+      "types": "./dist/esm/index.d.ts",
+      "module": "./dist/esm/index.js",
+      "engines": {
+        "node": ">=18"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/esm/index.d.ts",
+          "import": "./dist/esm/index.js"
+        },
+        "./byok": {
+          "types": "./dist/esm/byok.d.ts",
+          "import": "./dist/esm/byok.js"
+        },
+        "./locks": {
+          "types": "./dist/esm/locks.d.ts",
+          "import": "./dist/esm/locks.js"
+        },
+        "./client": {
+          "types": "./dist/esm/client.d.ts",
+          "import": "./dist/esm/client.js"
+        },
+        "./testing": {
+          "types": "./dist/esm/testing.d.ts",
+          "import": "./dist/esm/testing.js"
+        },
+        "./adapters": {
+          "types": "./dist/esm/activities/index.d.ts",
+          "import": "./dist/esm/activities/index.js"
+        },
+        "./byok/server": {
+          "types": "./dist/esm/byok/server.d.ts",
+          "import": "./dist/esm/byok/server.js"
+        },
+        "./middlewares": {
+          "types": "./dist/esm/middlewares/index.d.ts",
+          "import": "./dist/esm/middlewares/index.js"
+        },
+        "./middlewares/otel": {
+          "types": "./dist/esm/middlewares/otel.d.ts",
+          "import": "./dist/esm/middlewares/otel.js"
+        },
+        "./adapter-internals": {
+          "types": "./dist/esm/adapter-internals.d.ts",
+          "import": "./dist/esm/adapter-internals.js"
+        }
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/tannerlinsley",
+        "type": "github"
+      },
+      "scripts": {
+        "build": "vite build",
+        "clean": "premove ./build ./dist",
+        "lint:fix": "oxlint src --type-aware --fix",
+        "test:lib": "vitest",
+        "test:build": "publint --strict",
+        "test:types": "tsc",
+        "test:oxlint": "oxlint src --type-aware",
+        "test:lib:dev": "pnpm test:lib --watch",
+        "test:coverage": "vitest run --coverage --coverage.include='src/**' --coverage.reporter=text-summary --coverage.reporter=json-summary",
+        "test:coverage:watch": "vitest --coverage --watch"
+      },
+      "_npmUser": {
+        "name": "GitHub Actions",
+        "email": "npm-oidc-no-reply@github.com",
+        "trustedPublisher": {
+          "id": "github",
+          "oidcConfigId": "0ac6b340-6144-4ea7-b170-033181448e65"
+        }
+      },
+      "repository": {
+        "url": "git+https://github.com/TanStack/ai.git",
+        "type": "git",
+        "directory": "packages/ai"
+      },
+      "description": "Type-safe TypeScript AI SDK for streaming chat, tool calling, agents, structured outputs, and multimodal generation.",
+      "directories": {},
+      "sideEffects": false,
+      "_nodeVersion": "24.8.0",
+      "dependencies": {
+        "@ag-ui/core": "1.0.0",
+        "partial-json": "^0.1.7",
+        "fast-json-patch": "^3.1.1",
+        "@tanstack/ai-utils": "^0.4.1",
+        "@standard-schema/spec": "^1.1.0",
+        "@tanstack/ai-event-client": "^0.13.1"
+      },
+      "_hasShrinkwrap": false,
+      "devDependencies": {
+        "zod": "^4.2.0",
+        "arktype": "^2.1.28",
+        "@opentelemetry/api": "^1.9.0",
+        "@vitest/coverage-v8": "4.1.10"
+      },
+      "peerDependencies": {
+        "@opentelemetry/api": ">=1.9.0"
+      },
+      "peerDependenciesMeta": {
+        "@opentelemetry/api": {
+          "optional": true
+        }
+      },
+      "_npmOperationalInternal": {
+        "tmp": "tmp/ai_0.68.0_1791561821103_0.21291973561210886",
+        "host": "s3://npm-registry-packages-npm-production"
+      }
+    },
+    "0.69.0": {
+      "_id": "@tanstack/ai@0.69.0",
+      "bugs": {
+        "url": "https://github.com/TanStack/ai/issues"
+      },
+      "dist": {
+        "shasum": "2c89bce893238f7882d13d7737a17d10c09776a8",
+        "tarball": "https://registry.npmjs.org/@tanstack/ai/-/ai-0.69.0.tgz",
+        "fileCount": 604,
+        "integrity": "sha512-Y018M4Cg3LPr1meRoVG/ePDB1mdazL9cPBA7bnm8WJm2LT0cN2LoUEXRimKSZjyYY7G+9BtQeNiKlaLJkbqHKQ==",
+        "signatures": [
+          {
+            "sig": "MEQCIBxc3Kqkx4RKEO92247x4nkwM2ItHQ2z/gBkPNPUhM6yAiAJyJoBH9Hz75K68lM5tr6N1yt7Y3cuAJ5ZCm/k1d8Qig==",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          },
+          {
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+            "sig": "MEUCIQDli8dSq3mYR5MHuOSXzBFJab/6XSmIv2wHJyfvrXQZcwIgCXv6UXGScA77WkIkc9Vk6glOfOWggUtpJBhP49jkc+c="
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@tanstack%2fai@0.69.0",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 5412745
+      },
+      "name": "@tanstack/ai",
+      "type": "module",
+      "types": "./dist/esm/index.d.ts",
+      "author": "Tanner Linsley",
+      "module": "./dist/esm/index.js",
+      "engines": {
+        "node": ">=18"
+      },
+      "exports": {
+        ".": {
+          "types": "./dist/esm/index.d.ts",
+          "import": "./dist/esm/index.js"
+        },
+        "./byok": {
+          "types": "./dist/esm/byok.d.ts",
+          "import": "./dist/esm/byok.js"
+        },
+        "./locks": {
+          "types": "./dist/esm/locks.d.ts",
+          "import": "./dist/esm/locks.js"
+        },
+        "./client": {
+          "types": "./dist/esm/client.d.ts",
+          "import": "./dist/esm/client.js"
+        },
+        "./testing": {
+          "types": "./dist/esm/testing.d.ts",
+          "import": "./dist/esm/testing.js"
+        },
+        "./adapters": {
+          "types": "./dist/esm/activities/index.d.ts",
+          "import": "./dist/esm/activities/index.js"
+        },
+        "./byok/server": {
+          "types": "./dist/esm/byok/server.d.ts",
+          "import": "./dist/esm/byok/server.js"
+        },
+        "./middlewares": {
+          "types": "./dist/esm/middlewares/index.d.ts",
+          "import": "./dist/esm/middlewares/index.js"
+        },
+        "./middlewares/otel": {
+          "types": "./dist/esm/middlewares/otel.d.ts",
+          "import": "./dist/esm/middlewares/otel.js"
+        },
+        "./adapter-internals": {
+          "types": "./dist/esm/adapter-internals.d.ts",
+          "import": "./dist/esm/adapter-internals.js"
+        }
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/tannerlinsley",
+        "type": "github"
+      },
+      "license": "MIT",
+      "scripts": {
+        "build": "vite build",
+        "clean": "premove ./build ./dist",
+        "lint:fix": "oxlint src --type-aware --fix",
+        "test:lib": "vitest",
+        "test:build": "publint --strict",
+        "test:types": "tsc",
+        "test:oxlint": "oxlint src --type-aware",
+        "test:lib:dev": "pnpm test:lib --watch",
+        "test:coverage": "vitest run --coverage --coverage.include='src/**' --coverage.reporter=text-summary --coverage.reporter=json-summary",
+        "test:coverage:watch": "vitest --coverage --watch"
+      },
+      "version": "0.69.0",
+      "_npmUser": {
+        "name": "GitHub Actions",
+        "email": "npm-oidc-no-reply@github.com",
+        "trustedPublisher": {
+          "id": "github",
+          "oidcConfigId": "0ac6b340-6144-4ea7-b170-033181448e65"
+        }
+      },
+      "homepage": "https://tanstack.com/ai",
+      "keywords": [
+        "ai",
+        "ai-sdk",
+        "typescript",
+        "tanstack",
+        "llm",
+        "generative-ai",
+        "chat",
+        "streaming",
+        "tool-calling",
+        "function-calling",
+        "agents",
+        "structured-outputs",
+        "multimodal",
+        "zod",
+        "tanstack-intent"
+      ],
+      "repository": {
+        "url": "git+https://github.com/TanStack/ai.git",
+        "type": "git",
+        "directory": "packages/ai"
+      },
+      "description": "Type-safe TypeScript AI SDK for streaming chat, tool calling, agents, structured outputs, and multimodal generation.",
+      "directories": {},
+      "maintainers": [
+        {
+          "name": "tannerlinsley",
+          "email": "tannerlinsley@gmail.com"
+        },
+        {
+          "name": "alemtuzlak",
+          "email": "t.zlak97@gmail.com"
+        },
+        {
+          "name": "kevinvandy",
+          "email": "kevinvandy656@gmail.com"
+        }
+      ],
+      "sideEffects": false,
+      "_nodeVersion": "24.8.0",
+      "dependencies": {
+        "@ag-ui/core": "1.0.0",
+        "partial-json": "^0.1.7",
+        "fast-json-patch": "^3.1.1",
+        "@tanstack/ai-utils": "^0.4.2",
+        "@standard-schema/spec": "^1.1.0",
+        "@tanstack/ai-event-client": "^0.13.1"
+      },
+      "_hasShrinkwrap": false,
+      "devDependencies": {
+        "zod": "^4.2.0",
+        "arktype": "^2.1.28",
+        "@opentelemetry/api": "^1.9.0",
+        "@vitest/coverage-v8": "4.1.10"
+      },
+      "peerDependencies": {
+        "@opentelemetry/api": ">=1.9.0"
+      },
+      "peerDependenciesMeta": {
+        "@opentelemetry/api": {
+          "optional": true
+        }
+      },
+      "_npmOperationalInternal": {
+        "host": "s3://npm-registry-packages-npm-production",
+        "tmp": "tmp/ai_0.69.0_1791913938882_0.6477559128010637"
+      }
+    }
+  },
+  "published": {
+    "0.68.0": "2026-10-09T16:03:41.345Z",
+    "0.69.0": "2026-10-13T17:52:19.096Z"
+  }
+}
