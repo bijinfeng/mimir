@@ -1195,3 +1195,39 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 42: 登录与全局故障精修验收
+<!-- trellis-session: v=2 fp=63e371815549ea1a -->
+
+**Date**: 2026-10-20
+**Task**: 登录与全局故障精修验收
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+模块9完成并归档：居中可滚动故障恢复、中文连接提示、跨错误边界重建的重试等待状态；38组真实组件前后截图、83原图和交互Demo存档。此前新对话页精修7b61836保留。
+
+### Main Changes
+
+- 限定提交本模块产品代码、5项行为回归、规范与真实前后HTML
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `b233c3d` | fix(auth): refine login failure and root recovery |
+
+### Testing
+
+- [OK] pnpm check退出0；Renderer588项、Office2709项；既有Storage条件跳过2项保留
+- [OK] 真实测试账号登录成功；原生Electron桥与真实首次注册未验
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 继续模块10 Markdown笔记编辑器；模块10–16尚未完成
