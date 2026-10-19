@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxOutputControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxOutputControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 5998c657d72964fc1baff8a6975f925ef09363ba74aebf02b1030c645e8db562
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useMemo, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import { Download, LoaderCircle, Printer } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>import { renderSlide, type PptxRenderable } from &#x27;../pptx-render.js&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  buildPptxCopy,</pre></li>
+    <li id="L6"><pre>  buildPptxOutput,</pre></li>
+    <li id="L7"><pre>  checkPptxOutput,</pre></li>
+    <li id="L8"><pre>  downloadPptxOutput,</pre></li>
+    <li id="L9"><pre>  pptxOutputIndices,</pre></li>
+    <li id="L10"><pre>  pptxPrintDocument,</pre></li>
+    <li id="L11"><pre>  pptxPrintPageCount,</pre></li>
+    <li id="L12"><pre>  pptxPrintPageSize,</pre></li>
+    <li id="L13"><pre>  pptxPrintPreviewDocument,</pre></li>
+    <li id="L14"><pre>  printPptx,</pre></li>
+    <li id="L15"><pre>  type PptxOutputFormat,</pre></li>
+    <li id="L16"><pre>  type PptxPrintLayout,</pre></li>
+    <li id="L17"><pre>} from &#x27;../pptx-output.js&#x27;</pre></li>
+    <li id="L18"><pre>import {</pre></li>
+    <li id="L19"><pre>  ToolbarButton,</pre></li>
+    <li id="L20"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L21"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L22"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L23"><pre>  ToolbarSelect,</pre></li>
+    <li id="L24"><pre>  ToolbarTextField,</pre></li>
+    <li id="L25"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L26"><pre>import &#x27;./pptx-output-controls.css&#x27;</pre></li>
+    <li id="L27"><pre></pre></li>
+    <li id="L28"><pre>export interface PptxOutputControlsProps {</pre></li>
+    <li id="L29"><pre>  deck: PptxRenderable</pre></li>
+    <li id="L30"><pre>  active: number</pre></li>
+    <li id="L31"><pre>  documentId?: string</pre></li>
+    <li id="L32"><pre>  version?: number</pre></li>
+    <li id="L33"><pre>  defaultName?: string</pre></li>
+    <li id="L34"><pre>  notes?: (index: number) =&gt; string</pre></li>
+    <li id="L35">
+      <pre>
+  /** Native current-session serialization only; must never persist or clear dirty. */</pre>
+    </li>
+    <li id="L36">
+      <pre>  saveCopy?: (options: { signal: AbortSignal }) =&gt; Promise&lt;Uint8Array&gt;</pre>
+    </li>
+    <li id="L37">
+      <pre>
+  /** Editor-owned current document/session/version guard, checked before external effects. */</pre>
+    </li>
+    <li id="L38"><pre>  isCurrent?: () =&gt; boolean</pre></li>
+    <li id="L39"><pre>}</pre></li>
+    <li id="L40">
+      <pre>export function PptxOutputControls(props: PptxOutputControlsProps) {</pre>
+    </li>
+    <li id="L41">
+      <pre>
+  return &lt;OutputEditor key={props.documentId ?? &#x27;current&#x27;} {...props} /&gt;</pre>
+    </li>
+    <li id="L42"><pre>}</pre></li>
+    <li id="L43"><pre>function OutputEditor({</pre></li>
+    <li id="L44"><pre>  deck,</pre></li>
+    <li id="L45"><pre>  active,</pre></li>
+    <li id="L46"><pre>  documentId,</pre></li>
+    <li id="L47"><pre>  version,</pre></li>
+    <li id="L48"><pre>  defaultName = &#x27;presentation.pptx&#x27;,</pre></li>
+    <li id="L49"><pre>  notes,</pre></li>
+    <li id="L50"><pre>  saveCopy,</pre></li>
+    <li id="L51"><pre>  isCurrent,</pre></li>
+    <li id="L52"><pre>}: PptxOutputControlsProps) {</pre></li>
+    <li id="L53">
+      <pre>
+  const [mode, setMode] = useState&lt;&#x27;export&#x27; | &#x27;print&#x27;&gt;(&#x27;export&#x27;)</pre>
+    </li>
+    <li id="L54">
+      <pre>
+  const [format, setFormat] = useState&lt;PptxOutputFormat | &#x27;pptx&#x27;&gt;(saveCopy ? &#x27;pptx&#x27; : &#x27;pdf&#x27;)</pre>
+    </li>
+    <li id="L55"><pre>  const [filename, setFilename] = useState(defaultName)</pre></li>
+    <li id="L56"><pre>  const [scope, setScope] = useState(&#x27;visible&#x27;)</pre></li>
+    <li id="L57"><pre>  const [pages, setPages] = useState(String(active + 1))</pre></li>
+    <li id="L58"><pre>  const [width, setWidth] = useState(&#x27;1920&#x27;)</pre></li>
+    <li id="L59">
+      <pre>  const [layout, setLayout] = useState&lt;PptxPrintLayout&gt;(&#x27;full&#x27;)</pre>
+    </li>
+    <li id="L60">
+      <pre>
+  const [orientation, setOrientation] = useState&lt;&#x27;portrait&#x27; | &#x27;landscape&#x27;&gt;(&#x27;portrait&#x27;)</pre>
+    </li>
+    <li id="L61"><pre>  const [frame, setFrame] = useState(&#x27;none&#x27;)</pre></li>
+    <li id="L62"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L63"><pre>  const [message, setMessage] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L64"><pre>  const [failed, setFailed] = useState(false)</pre></li>
+    <li id="L65"><pre>  const controller = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L66"><pre>  const mounted = useRef(true)</pre></li>
+    <li id="L67"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L68"><pre>    mounted.current = true</pre></li>
+    <li id="L69"><pre>    return () =&gt; {</pre></li>
+    <li id="L70"><pre>      mounted.current = false</pre></li>
+    <li id="L71"><pre>      controller.current?.abort()</pre></li>
+    <li id="L72"><pre>    }</pre></li>
+    <li id="L73"><pre>  }, [])</pre></li>
+    <li id="L74"><pre>  useEffect(</pre></li>
+    <li id="L75"><pre>    () =&gt; () =&gt;</pre></li>
+    <li id="L76"><pre>      controller.current?.abort(</pre></li>
+    <li id="L77">
+      <pre>
+        new DOMException(`Output ${documentId ?? &#x27;current&#x27;}:${version ?? 0} expired`, &#x27;AbortError&#x27;),</pre>
+    </li>
+    <li id="L78"><pre>      ),</pre></li>
+    <li id="L79"><pre>    [documentId, version],</pre></li>
+    <li id="L80"><pre>  )</pre></li>
+    <li id="L81">
+      <pre>  const copy = mode === &#x27;export&#x27; &amp;&amp; format === &#x27;pptx&#x27;</pre>
+    </li>
+    <li id="L82"><pre>  const selection = useMemo(() =&gt; {</pre></li>
+    <li id="L83"><pre>    try {</pre></li>
+    <li id="L84"><pre>      const indices =</pre></li>
+    <li id="L85"><pre>        scope === &#x27;current&#x27;</pre></li>
+    <li id="L86"><pre>          ? [active]</pre></li>
+    <li id="L87"><pre>          : scope === &#x27;custom&#x27;</pre></li>
+    <li id="L88"><pre>            ? pptxOutputIndices(pages, deck.slides().length)</pre></li>
+    <li id="L89"><pre>            : deck</pre></li>
+    <li id="L90"><pre>                .slides()</pre></li>
+    <li id="L91"><pre>                .flatMap((slide, i) =&gt;</pre></li>
+    <li id="L92">
+      <pre>
+                  scope === &#x27;all&#x27; || !/\bshow\s*=\s*[&quot;&#x27;]0[&quot;&#x27;]/.test(slide.bodyPrefix) ? [i] : [],</pre>
+    </li>
+    <li id="L93"><pre>                )</pre></li>
+    <li id="L94">
+      <pre>
+      if (!indices.length || indices.length &gt; 200) throw new Error(&#x27;每次请选择 1–200 页&#x27;)</pre>
+    </li>
+    <li id="L95">
+      <pre>
+      if (indices.some((i) =&gt; !deck.slides()[i])) throw new Error(&#x27;所选幻灯片已不存在，请重新选择&#x27;)</pre>
+    </li>
+    <li id="L96"><pre>      return { indices, error: &#x27;&#x27;, version }</pre></li>
+    <li id="L97"><pre>    } catch (error) {</pre></li>
+    <li id="L98"><pre>      return {</pre></li>
+    <li id="L99"><pre>        indices: [],</pre></li>
+    <li id="L100"><pre>        version,</pre></li>
+    <li id="L101">
+      <pre>        error: error instanceof Error ? error.message : &#x27;请选择有效页码&#x27;,</pre>
+    </li>
+    <li id="L102"><pre>      }</pre></li>
+    <li id="L103"><pre>    }</pre></li>
+    <li id="L104"><pre>  }, [deck, active, scope, pages, version])</pre></li>
+    <li id="L105">
+      <pre>  const printOptions = { layout, orientation, frame: frame === &#x27;frame&#x27; }</pre>
+    </li>
+    <li id="L106"><pre>  const preview = useMemo(() =&gt; {</pre></li>
+    <li id="L107"><pre>    if (mode !== &#x27;print&#x27; || selection.error) return null</pre></li>
+    <li id="L108"><pre>    const perPage =</pre></li>
+    <li id="L109">
+      <pre>
+      layout === &#x27;handout2&#x27; ? 2 : layout === &#x27;handout3&#x27; ? 3 : layout === &#x27;handout6&#x27; ? 6 : 1</pre>
+    </li>
+    <li id="L110"><pre>    const indices = selection.indices.slice(0, perPage)</pre></li>
+    <li id="L111"><pre>    const rendered = indices.map((index) =&gt;</pre></li>
+    <li id="L112"><pre>      renderSlide(deck, index, {</pre></li>
+    <li id="L113"><pre>        fitWidthPx: 640,</pre></li>
+    <li id="L114"><pre>        svgIdPrefix: `print-preview-${version ?? 0}-${index}`,</pre></li>
+    <li id="L115"><pre>      }),</pre></li>
+    <li id="L116"><pre>    )</pre></li>
+    <li id="L117"><pre>    if (rendered.some((page) =&gt; !page)) return null</pre></li>
+    <li id="L118"><pre>    const options = {</pre></li>
+    <li id="L119"><pre>      layout,</pre></li>
+    <li id="L120"><pre>      orientation,</pre></li>
+    <li id="L121"><pre>      frame: frame === &#x27;frame&#x27;,</pre></li>
+    <li id="L122">
+      <pre>      notes: indices.map((index) =&gt; notes?.(index) ?? &#x27;&#x27;),</pre>
+    </li>
+    <li id="L123"><pre>    }</pre></li>
+    <li id="L124">
+      <pre>
+    const size = pptxPrintPageSize(deck.size.cx / 12700, deck.size.cy / 12700, options)</pre>
+    </li>
+    <li id="L125"><pre>    const html = pptxPrintDocument(</pre></li>
+    <li id="L126"><pre>      rendered.filter((page) =&gt; page !== null),</pre></li>
+    <li id="L127"><pre>      deck.size.cx / 12700,</pre></li>
+    <li id="L128"><pre>      deck.size.cy / 12700,</pre></li>
+    <li id="L129"><pre>      options,</pre></li>
+    <li id="L130"><pre>    )</pre></li>
+    <li id="L131"><pre>    return {</pre></li>
+    <li id="L132"><pre>      html: pptxPrintPreviewDocument(html, size.width),</pre></li>
+    <li id="L133"><pre>      height: Math.ceil((size.height / size.width) * 252 + 16),</pre></li>
+    <li id="L134"><pre>    }</pre></li>
+    <li id="L135">
+      <pre>  }, [mode, selection, deck, layout, orientation, frame, notes, version])</pre>
+    </li>
+    <li id="L136"><pre>  const run = async () =&gt; {</pre></li>
+    <li id="L137"><pre>    if (controller.current) return</pre></li>
+    <li id="L138"><pre>    const abort = new AbortController()</pre></li>
+    <li id="L139"><pre>    controller.current = abort</pre></li>
+    <li id="L140"><pre>    setBusy(true)</pre></li>
+    <li id="L141"><pre>    setMessage(&#x27;&#x27;)</pre></li>
+    <li id="L142"><pre>    setFailed(false)</pre></li>
+    <li id="L143"><pre>    const guard = { signal: abort.signal, isCurrent }</pre></li>
+    <li id="L144"><pre>    try {</pre></li>
+    <li id="L145"><pre>      checkPptxOutput(guard)</pre></li>
+    <li id="L146"><pre>      if (copy) {</pre></li>
+    <li id="L147">
+      <pre>
+        if (!saveCopy) throw new Error(&#x27;当前编辑会话不可用，请重新打开文稿&#x27;)</pre>
+    </li>
+    <li id="L148">
+      <pre>        const file = await buildPptxCopy(saveCopy, filename, guard)</pre>
+    </li>
+    <li id="L149"><pre>        checkPptxOutput(guard)</pre></li>
+    <li id="L150"><pre>        downloadPptxOutput(file)</pre></li>
+    <li id="L151">
+      <pre>        setMessage(&#x27;已下载当前 PPTX 副本，原文稿的保存状态不变&#x27;)</pre>
+    </li>
+    <li id="L152"><pre>      } else {</pre></li>
+    <li id="L153"><pre>        if (selection.error) throw new Error(selection.error)</pre></li>
+    <li id="L154"><pre>        const indices = [...selection.indices]</pre></li>
+    <li id="L155"><pre>        if (mode === &#x27;print&#x27;) {</pre></li>
+    <li id="L156">
+      <pre>
+          const snapshotNotes = indices.map((index) =&gt; notes?.(index) ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L157">
+      <pre>
+          await printPptx(deck, indices, { ...printOptions, notes: snapshotNotes, ...guard })</pre>
+    </li>
+    <li id="L158"><pre>          checkPptxOutput(guard)</pre></li>
+    <li id="L159"><pre>          setMessage(&#x27;已打开系统打印窗口&#x27;)</pre></li>
+    <li id="L160"><pre>        } else {</pre></li>
+    <li id="L161"><pre>          const file = await buildPptxOutput(deck, {</pre></li>
+    <li id="L162"><pre>            format: format as PptxOutputFormat,</pre></li>
+    <li id="L163"><pre>            indices,</pre></li>
+    <li id="L164"><pre>            width: Number(width),</pre></li>
+    <li id="L165"><pre>            ...guard,</pre></li>
+    <li id="L166"><pre>          })</pre></li>
+    <li id="L167"><pre>          checkPptxOutput(guard)</pre></li>
+    <li id="L168"><pre>          downloadPptxOutput(file)</pre></li>
+    <li id="L169"><pre>          setMessage(&#x27;已生成下载文件&#x27;)</pre></li>
+    <li id="L170"><pre>        }</pre></li>
+    <li id="L171"><pre>      }</pre></li>
+    <li id="L172"><pre>    } catch (cause) {</pre></li>
+    <li id="L173"><pre>      if (!mounted.current) return</pre></li>
+    <li id="L174"><pre>      setFailed(!abort.signal.aborted)</pre></li>
+    <li id="L175"><pre>      setMessage(</pre></li>
+    <li id="L176"><pre>        abort.signal.aborted</pre></li>
+    <li id="L177"><pre>          ? &#x27;输出已取消，请按当前文稿重新操作&#x27;</pre></li>
+    <li id="L178"><pre>          : cause instanceof Error</pre></li>
+    <li id="L179"><pre>            ? cause.message</pre></li>
+    <li id="L180"><pre>            : &#x27;输出失败，请重试&#x27;,</pre></li>
+    <li id="L181"><pre>      )</pre></li>
+    <li id="L182"><pre>    } finally {</pre></li>
+    <li id="L183"><pre>      if (controller.current === abort) controller.current = null</pre></li>
+    <li id="L184"><pre>      if (mounted.current) setBusy(false)</pre></li>
+    <li id="L185"><pre>    }</pre></li>
+    <li id="L186"><pre>  }</pre></li>
+    <li id="L187">
+      <pre>
+  const action = mode === &#x27;print&#x27; ? &#x27;打开打印窗口&#x27; : copy ? &#x27;下载 PPTX 副本&#x27; : &#x27;导出文件&#x27;</pre>
+    </li>
+    <li id="L188"><pre>  return (</pre></li>
+    <li id="L189">
+      <pre>    &lt;div className=&quot;mimir-pptx-output&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L190"><pre>      &lt;div className=&quot;mimir-pptx-output__body&quot;&gt;</pre></li>
+    <li id="L191">
+      <pre>
+        &lt;fieldset className=&quot;mimir-pptx-output__fields&quot; disabled={busy}&gt;</pre>
+    </li>
+    <li id="L192"><pre>          &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L193"><pre>            &lt;ToolbarMenuFields label=&quot;输出设置&quot;&gt;</pre></li>
+    <li id="L194"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L195"><pre>                disabled={busy}</pre></li>
+    <li id="L196"><pre>                label=&quot;输出操作&quot;</pre></li>
+    <li id="L197"><pre>                value={mode}</pre></li>
+    <li id="L198"><pre>                options={[</pre></li>
+    <li id="L199">
+      <pre>                  { value: &#x27;export&#x27;, label: &#x27;导出文件&#x27; },</pre>
+    </li>
+    <li id="L200">
+      <pre>                  { value: &#x27;print&#x27;, label: &#x27;打印&#x27; },</pre>
+    </li>
+    <li id="L201"><pre>                ]}</pre></li>
+    <li id="L202"><pre>                onChange={setMode}</pre></li>
+    <li id="L203"><pre>              /&gt;</pre></li>
+    <li id="L204"><pre>              {mode === &#x27;export&#x27; &amp;&amp; (</pre></li>
+    <li id="L205"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L206"><pre>                  disabled={busy}</pre></li>
+    <li id="L207"><pre>                  label=&quot;文件格式&quot;</pre></li>
+    <li id="L208"><pre>                  value={format}</pre></li>
+    <li id="L209"><pre>                  options={[</pre></li>
+    <li id="L210">
+      <pre>
+                    ...(saveCopy ? [{ value: &#x27;pptx&#x27;, label: &#x27;PPTX 演示文稿副本&#x27; }] : []),</pre>
+    </li>
+    <li id="L211">
+      <pre>                    { value: &#x27;pdf&#x27;, label: &#x27;PDF 文档&#x27; },</pre>
+    </li>
+    <li id="L212">
+      <pre>                    { value: &#x27;png&#x27;, label: &#x27;PNG 图片&#x27; },</pre>
+    </li>
+    <li id="L213">
+      <pre>                    { value: &#x27;svg&#x27;, label: &#x27;SVG 矢量图&#x27; },</pre>
+    </li>
+    <li id="L214"><pre>                  ]}</pre></li>
+    <li id="L215">
+      <pre>
+                  onChange={(value) =&gt; setFormat(value as PptxOutputFormat | &#x27;pptx&#x27;)}</pre>
+    </li>
+    <li id="L216"><pre>                /&gt;</pre></li>
+    <li id="L217"><pre>              )}</pre></li>
+    <li id="L218"><pre>              {copy ? (</pre></li>
+    <li id="L219"><pre>                &lt;&gt;</pre></li>
+    <li id="L220">
+      <pre>
+                  &lt;ToolbarTextField label=&quot;副本文件名&quot; value={filename} onChange={setFilename} /&gt;</pre>
+    </li>
+    <li id="L221"><pre>                  &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L222">
+      <pre>
+                    下载整份文稿的当前副本，包含未保存修改、已应用的备注和原生媒体。原文稿仍需按原流程保存。</pre>
+    </li>
+    <li id="L223"><pre>                  &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L224"><pre>                &lt;/&gt;</pre></li>
+    <li id="L225"><pre>              ) : (</pre></li>
+    <li id="L226"><pre>                &lt;&gt;</pre></li>
+    <li id="L227"><pre>                  &lt;ToolbarSelect</pre></li>
+    <li id="L228"><pre>                    disabled={busy}</pre></li>
+    <li id="L229"><pre>                    label=&quot;输出页面&quot;</pre></li>
+    <li id="L230"><pre>                    value={scope}</pre></li>
+    <li id="L231"><pre>                    options={[</pre></li>
+    <li id="L232">
+      <pre>
+                      { value: &#x27;visible&#x27;, label: &#x27;全部可见幻灯片&#x27; },</pre>
+    </li>
+    <li id="L233">
+      <pre>
+                      { value: &#x27;all&#x27;, label: &#x27;全部（含隐藏页）&#x27; },</pre>
+    </li>
+    <li id="L234">
+      <pre>
+                      { value: &#x27;current&#x27;, label: `当前第 ${active + 1} 页` },</pre>
+    </li>
+    <li id="L235">
+      <pre>                      { value: &#x27;custom&#x27;, label: &#x27;指定页码&#x27; },</pre>
+    </li>
+    <li id="L236"><pre>                    ]}</pre></li>
+    <li id="L237"><pre>                    onChange={setScope}</pre></li>
+    <li id="L238"><pre>                  /&gt;</pre></li>
+    <li id="L239"><pre>                  {scope === &#x27;custom&#x27; &amp;&amp; (</pre></li>
+    <li id="L240"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L241"><pre>                      label=&quot;页码范围&quot;</pre></li>
+    <li id="L242"><pre>                      value={pages}</pre></li>
+    <li id="L243"><pre>                      placeholder=&quot;1-3,5&quot;</pre></li>
+    <li id="L244"><pre>                      onChange={setPages}</pre></li>
+    <li id="L245"><pre>                    /&gt;</pre></li>
+    <li id="L246"><pre>                  )}</pre></li>
+    <li id="L247"><pre>                  {selection.error ? (</pre></li>
+    <li id="L248">
+      <pre>
+                    &lt;span role=&quot;alert&quot; className=&quot;mimir-pptx-output__error&quot;&gt;</pre>
+    </li>
+    <li id="L249"><pre>                      {selection.error}</pre></li>
+    <li id="L250"><pre>                    &lt;/span&gt;</pre></li>
+    <li id="L251"><pre>                  ) : (</pre></li>
+    <li id="L252"><pre>                    &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L253"><pre>                      {selection.indices.length} 张幻灯片</pre></li>
+    <li id="L254"><pre>                      {mode === &#x27;print&#x27;</pre></li>
+    <li id="L255">
+      <pre>
+                        ? ` · ${pptxPrintPageCount(selection.indices.length, layout)} 张纸`</pre>
+    </li>
+    <li id="L256"><pre>                        : &#x27;&#x27;}</pre></li>
+    <li id="L257"><pre>                    &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L258"><pre>                  )}</pre></li>
+    <li id="L259"><pre>                &lt;/&gt;</pre></li>
+    <li id="L260"><pre>              )}</pre></li>
+    <li id="L261">
+      <pre>
+              {mode === &#x27;export&#x27; &amp;&amp; !copy &amp;&amp; format !== &#x27;svg&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L262"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L263"><pre>                  disabled={busy}</pre></li>
+    <li id="L264"><pre>                  label=&quot;图片宽度&quot;</pre></li>
+    <li id="L265"><pre>                  value={width}</pre></li>
+    <li id="L266"><pre>                  options={[</pre></li>
+    <li id="L267">
+      <pre>                    { value: &#x27;1280&#x27;, label: &#x27;1280 px&#x27; },</pre>
+    </li>
+    <li id="L268">
+      <pre>                    { value: &#x27;1920&#x27;, label: &#x27;1920 px&#x27; },</pre>
+    </li>
+    <li id="L269">
+      <pre>                    { value: &#x27;2560&#x27;, label: &#x27;2560 px&#x27; },</pre>
+    </li>
+    <li id="L270"><pre>                  ]}</pre></li>
+    <li id="L271"><pre>                  onChange={setWidth}</pre></li>
+    <li id="L272"><pre>                /&gt;</pre></li>
+    <li id="L273"><pre>              )}</pre></li>
+    <li id="L274">
+      <pre>              {mode === &#x27;export&#x27; &amp;&amp; !copy &amp;&amp; (</pre>
+    </li>
+    <li id="L275"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L276"><pre>                  包含未保存修改。多张图片打包为 ZIP；PDF</pre></li>
+    <li id="L277">
+      <pre>                  为静态图片，文字不可选择。媒体和动画仅输出静态画面。</pre>
+    </li>
+    <li id="L278"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L279"><pre>              )}</pre></li>
+    <li id="L280"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L281"><pre>            {mode === &#x27;print&#x27; &amp;&amp; (</pre></li>
+    <li id="L282"><pre>              &lt;ToolbarMenuFields label=&quot;打印版式&quot;&gt;</pre></li>
+    <li id="L283"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L284"><pre>                  disabled={busy}</pre></li>
+    <li id="L285"><pre>                  label=&quot;每页内容&quot;</pre></li>
+    <li id="L286"><pre>                  value={layout}</pre></li>
+    <li id="L287"><pre>                  options={[</pre></li>
+    <li id="L288">
+      <pre>                    { value: &#x27;full&#x27;, label: &#x27;完整幻灯片&#x27; },</pre>
+    </li>
+    <li id="L289">
+      <pre>                    { value: &#x27;notes&#x27;, label: &#x27;备注页&#x27; },</pre>
+    </li>
+    <li id="L290">
+      <pre>
+                    { value: &#x27;handout2&#x27;, label: &#x27;讲义 · 每页 2 张&#x27; },</pre>
+    </li>
+    <li id="L291">
+      <pre>
+                    { value: &#x27;handout3&#x27;, label: &#x27;讲义 · 每页 3 张（带横线）&#x27; },</pre>
+    </li>
+    <li id="L292">
+      <pre>
+                    { value: &#x27;handout6&#x27;, label: &#x27;讲义 · 每页 6 张&#x27; },</pre>
+    </li>
+    <li id="L293"><pre>                  ]}</pre></li>
+    <li id="L294"><pre>                  onChange={setLayout}</pre></li>
+    <li id="L295"><pre>                /&gt;</pre></li>
+    <li id="L296"><pre>                {layout !== &#x27;full&#x27; ? (</pre></li>
+    <li id="L297"><pre>                  &lt;ToolbarSelect</pre></li>
+    <li id="L298"><pre>                    disabled={busy}</pre></li>
+    <li id="L299"><pre>                    label=&quot;A4 纸张方向&quot;</pre></li>
+    <li id="L300"><pre>                    value={orientation}</pre></li>
+    <li id="L301"><pre>                    options={[</pre></li>
+    <li id="L302">
+      <pre>                      { value: &#x27;portrait&#x27;, label: &#x27;纵向&#x27; },</pre>
+    </li>
+    <li id="L303">
+      <pre>                      { value: &#x27;landscape&#x27;, label: &#x27;横向&#x27; },</pre>
+    </li>
+    <li id="L304"><pre>                    ]}</pre></li>
+    <li id="L305"><pre>                    onChange={setOrientation}</pre></li>
+    <li id="L306"><pre>                  /&gt;</pre></li>
+    <li id="L307"><pre>                ) : (</pre></li>
+    <li id="L308"><pre>                  &lt;ToolbarSelect</pre></li>
+    <li id="L309"><pre>                    disabled={busy}</pre></li>
+    <li id="L310"><pre>                    label=&quot;幻灯片边框&quot;</pre></li>
+    <li id="L311"><pre>                    value={frame}</pre></li>
+    <li id="L312"><pre>                    options={[</pre></li>
+    <li id="L313">
+      <pre>                      { value: &#x27;none&#x27;, label: &#x27;无边框&#x27; },</pre>
+    </li>
+    <li id="L314">
+      <pre>                      { value: &#x27;frame&#x27;, label: &#x27;细边框&#x27; },</pre>
+    </li>
+    <li id="L315"><pre>                    ]}</pre></li>
+    <li id="L316"><pre>                    onChange={setFrame}</pre></li>
+    <li id="L317"><pre>                  /&gt;</pre></li>
+    <li id="L318"><pre>                )}</pre></li>
+    <li id="L319"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L320">
+      <pre>                  使用当前画布和已应用的备注。系统打印窗口中可选择打印机或另存</pre>
+    </li>
+    <li id="L321"><pre>                  PDF，媒体与动画为静态画面。</pre></li>
+    <li id="L322"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L323"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L324"><pre>            )}</pre></li>
+    <li id="L325"><pre>            {preview &amp;&amp; (</pre></li>
+    <li id="L326">
+      <pre>              &lt;ToolbarMenuFields label=&quot;首页打印预览&quot;&gt;</pre>
+    </li>
+    <li id="L327"><pre>                &lt;iframe</pre></li>
+    <li id="L328"><pre>                  className=&quot;mimir-pptx-output__preview&quot;</pre></li>
+    <li id="L329"><pre>                  title=&quot;首页打印预览&quot;</pre></li>
+    <li id="L330"><pre>                  sandbox=&quot;&quot;</pre></li>
+    <li id="L331"><pre>                  srcDoc={preview.html}</pre></li>
+    <li id="L332"><pre>                  style={{ height: preview.height }}</pre></li>
+    <li id="L333"><pre>                /&gt;</pre></li>
+    <li id="L334"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L335"><pre>            )}</pre></li>
+    <li id="L336"><pre>          &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L337"><pre>        &lt;/fieldset&gt;</pre></li>
+    <li id="L338"><pre>        {message &amp;&amp; (</pre></li>
+    <li id="L339"><pre>          &lt;p</pre></li>
+    <li id="L340"><pre>            role={failed ? &#x27;alert&#x27; : &#x27;status&#x27;}</pre></li>
+    <li id="L341">
+      <pre>            className={failed ? &#x27;mimir-pptx-output__error&#x27; : undefined}</pre>
+    </li>
+    <li id="L342"><pre>          &gt;</pre></li>
+    <li id="L343"><pre>            {message}</pre></li>
+    <li id="L344"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L345"><pre>        )}</pre></li>
+    <li id="L346"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L347"><pre>      &lt;div className=&quot;mimir-pptx-output__footer&quot;&gt;</pre></li>
+    <li id="L348"><pre>        {busy &amp;&amp; (</pre></li>
+    <li id="L349">
+      <pre>
+          &lt;ToolbarButton label=&quot;取消输出&quot; onClick={() =&gt; controller.current?.abort()}&gt;</pre>
+    </li>
+    <li id="L350"><pre>            取消输出</pre></li>
+    <li id="L351"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L352"><pre>        )}</pre></li>
+    <li id="L353"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L354"><pre>          primary</pre></li>
+    <li id="L355"><pre>          label={busy ? &#x27;正在准备输出…&#x27; : action}</pre></li>
+    <li id="L356"><pre>          disabled={busy || (!copy &amp;&amp; !!selection.error)}</pre></li>
+    <li id="L357">
+      <pre>
+          disabledReason={busy ? &#x27;正在准备输出，可取消后重试&#x27; : selection.error}</pre>
+    </li>
+    <li id="L358"><pre>          onClick={() =&gt; void run()}</pre></li>
+    <li id="L359"><pre>        &gt;</pre></li>
+    <li id="L360"><pre>          {busy ? (</pre></li>
+    <li id="L361">
+      <pre>            &lt;LoaderCircle size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L362"><pre>          ) : mode === &#x27;print&#x27; ? (</pre></li>
+    <li id="L363">
+      <pre>            &lt;Printer size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L364"><pre>          ) : (</pre></li>
+    <li id="L365">
+      <pre>            &lt;Download size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L366"><pre>          )}</pre></li>
+    <li id="L367"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L368"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L369"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L370"><pre>  )</pre></li>
+    <li id="L371"><pre>}</pre></li>
+  </ol>
+</html>

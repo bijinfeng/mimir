@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxSelectionControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxSelectionControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 c006d5741731e6ce18ad7897301b7d2f058947154b4081286397e4b0fa20725a
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import {</pre></li>
+    <li id="L2"><pre>  useEffect,</pre></li>
+    <li id="L3"><pre>  useLayoutEffect,</pre></li>
+    <li id="L4"><pre>  useRef,</pre></li>
+    <li id="L5"><pre>  useState,</pre></li>
+    <li id="L6"><pre>  type MouseEvent,</pre></li>
+    <li id="L7"><pre>  type KeyboardEvent,</pre></li>
+    <li id="L8"><pre>} from &#x27;react&#x27;</pre></li>
+    <li id="L9"><pre>import { Check, Layers, RotateCcw } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L10">
+      <pre>
+import { PPTX_PARAGRAPH_IMAGE_MAX_BYTES, type PptxManualFill } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L11">
+      <pre>
+import type { SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L12">
+      <pre>
+import { elementCNvPrId } from &#x27;../../vendor/packages/pptx-engine/src/identity.js&#x27;</pre>
+    </li>
+    <li id="L13"><pre>import {</pre></li>
+    <li id="L14"><pre>  ToolbarButton,</pre></li>
+    <li id="L15"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L16"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L17"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L18"><pre>  ToolbarSelect,</pre></li>
+    <li id="L19"><pre>  ToolbarTextField,</pre></li>
+    <li id="L20"><pre>  ToolbarToggleGroup,</pre></li>
+    <li id="L21"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L22"><pre>import {</pre></li>
+    <li id="L23"><pre>  pptxMixedValue,</pre></li>
+    <li id="L24"><pre>  pptxSelectionContexts,</pre></li>
+    <li id="L25"><pre>  pptxResolveSelection,</pre></li>
+    <li id="L26"><pre>  pptxNormalizeSelection,</pre></li>
+    <li id="L27"><pre>  pptxExpandSelection,</pre></li>
+    <li id="L28"><pre>  pptxSelectionText,</pre></li>
+    <li id="L29"><pre>  pptxSelectionFormatOps,</pre></li>
+    <li id="L30"><pre>  type PptxSelectionDraft,</pre></li>
+    <li id="L31"><pre>} from &#x27;./pptx-selection.js&#x27;</pre></li>
+    <li id="L32">
+      <pre>import { pptxElementStroke } from &#x27;./PptxOutlineControls.js&#x27;</pre>
+    </li>
+    <li id="L33">
+      <pre>import { PptxGroupTextControls } from &#x27;./PptxGroupTextControls.js&#x27;</pre>
+    </li>
+    <li id="L34"><pre>import {</pre></li>
+    <li id="L35"><pre>  PptxSelectionParagraphFields,</pre></li>
+    <li id="L36"><pre>  PptxSelectionOutlineFields,</pre></li>
+    <li id="L37"><pre>} from &#x27;./PptxSelectionFormatFields.js&#x27;</pre></li>
+    <li id="L38"><pre>import {</pre></li>
+    <li id="L39"><pre>  PptxSelectionAppearanceFields,</pre></li>
+    <li id="L40"><pre>  type PptxSelectionImageFillDraft,</pre></li>
+    <li id="L41"><pre>} from &#x27;./PptxSelectionAppearanceFields.js&#x27;</pre></li>
+    <li id="L42">
+      <pre>import { PPTX_FILL_TEXTURES } from &#x27;./pptx-fill-presets.js&#x27;</pre>
+    </li>
+    <li id="L43">
+      <pre>import { PPTX_SHAPE_STYLES } from &#x27;./pptx-shape-presets.js&#x27;</pre>
+    </li>
+    <li id="L44">
+      <pre>import { pptxSupportsShapeFill } from &#x27;../pptx-element-capabilities.js&#x27;</pre>
+    </li>
+    <li id="L45"><pre>import &#x27;./pptx-selection-controls.css&#x27;</pre></li>
+    <li id="L46"><pre></pre></li>
+    <li id="L47"><pre>export interface PptxSelectionControlsProps {</pre></li>
+    <li id="L48"><pre>  elements: readonly SlideElement[]</pre></li>
+    <li id="L49"><pre>  selectedRefs: readonly string[]</pre></li>
+    <li id="L50"><pre>  onSelectionChange: (refs: string[]) =&gt; void</pre></li>
+    <li id="L51"><pre>  slide: number</pre></li>
+    <li id="L52"><pre>  version: number</pre></li>
+    <li id="L53"><pre>  sourceKey?: string</pre></li>
+    <li id="L54">
+      <pre>  applyOps: (ops: Record&lt;string, unknown&gt;[]) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L55"><pre>  applyFill?: (input: PptxManualFill) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L56"><pre>  disabled?: boolean</pre></li>
+    <li id="L57"><pre>}</pre></li>
+    <li id="L58"><pre>const TYPES: Record&lt;string, string&gt; = {</pre></li>
+    <li id="L59"><pre>  text: &#x27;文字&#x27;,</pre></li>
+    <li id="L60"><pre>  shape: &#x27;形状&#x27;,</pre></li>
+    <li id="L61"><pre>  picture: &#x27;图片&#x27;,</pre></li>
+    <li id="L62"><pre>  group: &#x27;组合&#x27;,</pre></li>
+    <li id="L63"><pre>  table: &#x27;表格&#x27;,</pre></li>
+    <li id="L64"><pre>  chart: &#x27;图表&#x27;,</pre></li>
+    <li id="L65"><pre>  passthrough: &#x27;原件对象&#x27;,</pre></li>
+    <li id="L66"><pre>}</pre></li>
+    <li id="L67"><pre>function typeLabel(element: SlideElement) {</pre></li>
+    <li id="L68">
+      <pre>  if (element.type === &#x27;picture&#x27; &amp;&amp; element.media)</pre>
+    </li>
+    <li id="L69">
+      <pre>
+    return element.media.kind === &#x27;audio&#x27; ? &#x27;音频&#x27; : &#x27;视频&#x27;</pre>
+    </li>
+    <li id="L70"><pre>  return TYPES[element.type] ?? &#x27;对象&#x27;</pre></li>
+    <li id="L71"><pre>}</pre></li>
+    <li id="L72"><pre>function name(element: SlideElement, index: number) {</pre></li>
+    <li id="L73"><pre>  const text =</pre></li>
+    <li id="L74">
+      <pre>    element.type === &#x27;text&#x27; || element.type === &#x27;shape&#x27;</pre>
+    </li>
+    <li id="L75">
+      <pre>
+      ? element.text?.paragraphs.map((p) =&gt; p.runs.map((r) =&gt; r.text).join(&#x27;&#x27;)).join(&#x27; &#x27;)</pre>
+    </li>
+    <li id="L76"><pre>      : &#x27;&#x27;</pre></li>
+    <li id="L77">
+      <pre>  return element.name || text?.slice(0, 60) || `${typeLabel(element)} ${index + 1}`</pre>
+    </li>
+    <li id="L78"><pre>}</pre></li>
+    <li id="L79">
+      <pre>export function PptxSelectionControls(props: PptxSelectionControlsProps) {</pre>
+    </li>
+    <li id="L80">
+      <pre>
+  return &lt;SelectionScope key={JSON.stringify([props.sourceKey, props.slide])} {...props} /&gt;</pre>
+    </li>
+    <li id="L81"><pre>}</pre></li>
+    <li id="L82"><pre>function SelectionScope(props: PptxSelectionControlsProps) {</pre></li>
+    <li id="L83">
+      <pre>
+  const [tab, setTab] = useState&lt;&#x27;common&#x27; | &#x27;paragraph&#x27; | &#x27;list&#x27; | &#x27;outline&#x27; | &#x27;appearance&#x27;&gt;(</pre>
+    </li>
+    <li id="L84"><pre>    &#x27;common&#x27;,</pre></li>
+    <li id="L85"><pre>  )</pre></li>
+    <li id="L86"><pre>  const anchor = useRef&lt;string | null&gt;(null)</pre></li>
+    <li id="L87"><pre>  const focusRow = useRef&lt;string | null&gt;(null)</pre></li>
+    <li id="L88">
+      <pre>  const binding = JSON.stringify([props.version, props.selectedRefs])</pre>
+    </li>
+    <li id="L89">
+      <pre>  const selected = pptxResolveSelection(props.elements, props.selectedRefs)</pre>
+    </li>
+    <li id="L90">
+      <pre>
+  const member = selected.length === 1 &amp;&amp; selected[0]?.depth === 1 ? selected[0] : null</pre>
+    </li>
+    <li id="L91"><pre>  const text = member ? pptxSelectionText(member) : null</pre></li>
+    <li id="L92"><pre>  const memberRef = props.selectedRefs[0] ?? member?.ref</pre></li>
+    <li id="L93">
+      <pre>
+  const parent = member?.group ? pptxResolveSelection(props.elements, [member.group])[0] : null</pre>
+    </li>
+    <li id="L94">
+      <pre>
+  const groupRef = parent ? (elementCNvPrId(parent.element) ?? parent.ref) : member?.group</pre>
+    </li>
+    <li id="L95"><pre>  return (</pre></li>
+    <li id="L96">
+      <pre>    &lt;div className=&quot;mimir-pptx-selection-controls__scope&quot;&gt;</pre>
+    </li>
+    <li id="L97"><pre>      {groupRef &amp;&amp; memberRef &amp;&amp; text &amp;&amp; (</pre></li>
+    <li id="L98"><pre>        &lt;PptxGroupTextControls</pre></li>
+    <li id="L99"><pre>          key={memberRef}</pre></li>
+    <li id="L100"><pre>          element={text}</pre></li>
+    <li id="L101"><pre>          group={groupRef}</pre></li>
+    <li id="L102"><pre>          target={{ slide: props.slide, el: memberRef }}</pre></li>
+    <li id="L103"><pre>          version={props.version}</pre></li>
+    <li id="L104"><pre>          applyOps={props.applyOps}</pre></li>
+    <li id="L105"><pre>          disabled={props.disabled}</pre></li>
+    <li id="L106"><pre>        /&gt;</pre></li>
+    <li id="L107"><pre>      )}</pre></li>
+    <li id="L108"><pre>      &lt;SelectionEditor</pre></li>
+    <li id="L109"><pre>        key={binding}</pre></li>
+    <li id="L110"><pre>        {...props}</pre></li>
+    <li id="L111"><pre>        tab={tab}</pre></li>
+    <li id="L112"><pre>        onTabChange={setTab}</pre></li>
+    <li id="L113"><pre>        readAnchor={() =&gt; anchor.current}</pre></li>
+    <li id="L114"><pre>        onAnchorChange={(ref) =&gt; {</pre></li>
+    <li id="L115"><pre>          anchor.current = ref</pre></li>
+    <li id="L116"><pre>        }}</pre></li>
+    <li id="L117"><pre>        readFocusRow={() =&gt; focusRow.current}</pre></li>
+    <li id="L118"><pre>        onFocusRowChange={(ref) =&gt; {</pre></li>
+    <li id="L119"><pre>          focusRow.current = ref</pre></li>
+    <li id="L120"><pre>        }}</pre></li>
+    <li id="L121"><pre>      /&gt;</pre></li>
+    <li id="L122"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L123"><pre>  )</pre></li>
+    <li id="L124"><pre>}</pre></li>
+    <li id="L125"><pre>function SelectionEditor({</pre></li>
+    <li id="L126"><pre>  elements,</pre></li>
+    <li id="L127"><pre>  selectedRefs,</pre></li>
+    <li id="L128"><pre>  onSelectionChange,</pre></li>
+    <li id="L129"><pre>  slide,</pre></li>
+    <li id="L130"><pre>  applyOps,</pre></li>
+    <li id="L131"><pre>  applyFill,</pre></li>
+    <li id="L132"><pre>  disabled = false,</pre></li>
+    <li id="L133"><pre>  readAnchor,</pre></li>
+    <li id="L134"><pre>  onAnchorChange,</pre></li>
+    <li id="L135"><pre>  readFocusRow,</pre></li>
+    <li id="L136"><pre>  onFocusRowChange,</pre></li>
+    <li id="L137"><pre>  tab,</pre></li>
+    <li id="L138"><pre>  onTabChange,</pre></li>
+    <li id="L139"><pre>}: PptxSelectionControlsProps &amp; {</pre></li>
+    <li id="L140"><pre>  readAnchor: () =&gt; string | null</pre></li>
+    <li id="L141"><pre>  onAnchorChange: (ref: string) =&gt; void</pre></li>
+    <li id="L142"><pre>  readFocusRow: () =&gt; string | null</pre></li>
+    <li id="L143"><pre>  onFocusRowChange: (ref: string | null) =&gt; void</pre></li>
+    <li id="L144">
+      <pre>
+  tab: &#x27;common&#x27; | &#x27;paragraph&#x27; | &#x27;list&#x27; | &#x27;outline&#x27; | &#x27;appearance&#x27;</pre>
+    </li>
+    <li id="L145">
+      <pre>
+  onTabChange: (tab: &#x27;common&#x27; | &#x27;paragraph&#x27; | &#x27;list&#x27; | &#x27;outline&#x27; | &#x27;appearance&#x27;) =&gt; void</pre>
+    </li>
+    <li id="L146"><pre>}) {</pre></li>
+    <li id="L147"><pre>  const container = useRef&lt;HTMLFieldSetElement&gt;(null)</pre></li>
+    <li id="L148"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L149">
+      <pre>    if (readFocusRow() &amp;&amp; document.activeElement === document.body) {</pre>
+    </li>
+    <li id="L150">
+      <pre>      const focus = pptxResolveSelection(elements, [readFocusRow()!])[0]</pre>
+    </li>
+    <li id="L151"><pre>      const row = [</pre></li>
+    <li id="L152">
+      <pre>
+        ...(container.current?.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;[role=&quot;option&quot;]&#x27;) ?? []),</pre>
+    </li>
+    <li id="L153"><pre>      ].find((item) =&gt; item.dataset.ref === focus?.ref)</pre></li>
+    <li id="L154"><pre>      row?.focus()</pre></li>
+    <li id="L155"><pre>    }</pre></li>
+    <li id="L156"><pre>  }, [elements, readFocusRow])</pre></li>
+    <li id="L157"><pre>  const rows = pptxSelectionContexts(elements)</pre></li>
+    <li id="L158"><pre>  const selected = pptxResolveSelection(elements, selectedRefs)</pre></li>
+    <li id="L159"><pre>  const selectedIds = new Set(selected.map((item) =&gt; item.ref))</pre></li>
+    <li id="L160"><pre>  const targets = pptxExpandSelection(elements, selectedRefs)</pre></li>
+    <li id="L161"><pre>  const textTargets = targets.flatMap((item) =&gt; {</pre></li>
+    <li id="L162"><pre>    const text = pptxSelectionText(item)</pre></li>
+    <li id="L163"><pre>    return text ? [text] : []</pre></li>
+    <li id="L164"><pre>  })</pre></li>
+    <li id="L165">
+      <pre>
+  const runs = textTargets.flatMap((item) =&gt; item.text!.paragraphs.flatMap((p) =&gt; p.runs))</pre>
+    </li>
+    <li id="L166">
+      <pre>  const paragraphs = textTargets.flatMap((item) =&gt; item.text!.paragraphs)</pre>
+    </li>
+    <li id="L167"><pre>  const shapeTargets = targets.filter(</pre></li>
+    <li id="L168">
+      <pre>
+    ({ element }) =&gt; element.type === &#x27;text&#x27; || element.type === &#x27;shape&#x27;,</pre>
+    </li>
+    <li id="L169"><pre>  )</pre></li>
+    <li id="L170">
+      <pre>
+  const fillTargets = shapeTargets.filter(({ element }) =&gt; pptxSupportsShapeFill(element))</pre>
+    </li>
+    <li id="L171"><pre>  const lineTargets = targets.filter(({ element }) =&gt;</pre></li>
+    <li id="L172">
+      <pre>
+    [&#x27;text&#x27;, &#x27;shape&#x27;, &#x27;picture&#x27;].includes(element.type),</pre>
+    </li>
+    <li id="L173"><pre>  )</pre></li>
+    <li id="L174"><pre>  const [draft, setDraft] = useState&lt;PptxSelectionDraft&gt;({})</pre></li>
+    <li id="L175">
+      <pre>
+  const [imageFill, setImageFill] = useState&lt;PptxSelectionImageFillDraft | null&gt;(null)</pre>
+    </li>
+    <li id="L176"><pre>  const [size, setSize] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L177"><pre>  const [width, setWidth] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L178"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L179"><pre>  const [readingImage, setReadingImage] = useState(false)</pre></li>
+    <li id="L180"><pre>  const [imageName, setImageName] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L181"><pre>  const imageReader = useRef&lt;FileReader | null&gt;(null)</pre></li>
+    <li id="L182"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L183"><pre>  const [status, setStatus] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L184"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L185"><pre>  useEffect(</pre></li>
+    <li id="L186"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L187"><pre>      pending.current?.abort()</pre></li>
+    <li id="L188"><pre>      const reader = imageReader.current</pre></li>
+    <li id="L189"><pre>      imageReader.current = null</pre></li>
+    <li id="L190"><pre>      reader?.abort()</pre></li>
+    <li id="L191"><pre>    },</pre></li>
+    <li id="L192"><pre>    [],</pre></li>
+    <li id="L193"><pre>  )</pre></li>
+    <li id="L194"><pre>  const locked = disabled || busy || readingImage</pre></li>
+    <li id="L195"><pre>  const formatDirty =</pre></li>
+    <li id="L196"><pre>    Object.entries(draft).some(([key, value]) =&gt;</pre></li>
+    <li id="L197">
+      <pre>
+      (key === &#x27;paragraph&#x27; || key === &#x27;outline&#x27;) &amp;&amp; value &amp;&amp; typeof value === &#x27;object&#x27;</pre>
+    </li>
+    <li id="L198">
+      <pre>        ? Object.values(value).some((entry) =&gt; entry !== undefined)</pre>
+    </li>
+    <li id="L199"><pre>        : value !== undefined,</pre></li>
+    <li id="L200"><pre>    ) ||</pre></li>
+    <li id="L201"><pre>    size !== null ||</pre></li>
+    <li id="L202"><pre>    width !== null</pre></li>
+    <li id="L203"><pre>  const dirty = formatDirty || imageFill !== null</pre></li>
+    <li id="L204"><pre>  const change = (patch: PptxSelectionDraft) =&gt; {</pre></li>
+    <li id="L205"><pre>    setDraft((current) =&gt; ({ ...current, ...patch }))</pre></li>
+    <li id="L206"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L207"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L208"><pre>  }</pre></li>
+    <li id="L209"><pre>  const pickBulletImage = (file?: File) =&gt; {</pre></li>
+    <li id="L210"><pre>    if (!file || locked) return</pre></li>
+    <li id="L211">
+      <pre>
+    change({ paragraph: { ...draft.paragraph, bullet: &#x27;blip&#x27;, bulletImage: undefined } })</pre>
+    </li>
+    <li id="L212"><pre>    setImageName(&#x27;&#x27;)</pre></li>
+    <li id="L213"><pre>    if (</pre></li>
+    <li id="L214">
+      <pre>      ![&#x27;image/png&#x27;, &#x27;image/jpeg&#x27;].includes(file.type) ||</pre>
+    </li>
+    <li id="L215"><pre>      !file.size ||</pre></li>
+    <li id="L216"><pre>      file.size &gt; PPTX_PARAGRAPH_IMAGE_MAX_BYTES</pre></li>
+    <li id="L217"><pre>    ) {</pre></li>
+    <li id="L218"><pre>      setError(&#x27;请选择512 KiB以内的PNG或JPEG图片&#x27;)</pre></li>
+    <li id="L219"><pre>      return</pre></li>
+    <li id="L220"><pre>    }</pre></li>
+    <li id="L221"><pre>    const reader = new FileReader()</pre></li>
+    <li id="L222"><pre>    imageReader.current = reader</pre></li>
+    <li id="L223"><pre>    setReadingImage(true)</pre></li>
+    <li id="L224"><pre>    const failed = () =&gt; {</pre></li>
+    <li id="L225"><pre>      if (imageReader.current !== reader) return</pre></li>
+    <li id="L226"><pre>      imageReader.current = null</pre></li>
+    <li id="L227"><pre>      setReadingImage(false)</pre></li>
+    <li id="L228"><pre>      setError(&#x27;图片读取失败，请重新选择PNG或JPEG&#x27;)</pre></li>
+    <li id="L229"><pre>    }</pre></li>
+    <li id="L230">
+      <pre>    reader.addEventListener(&#x27;error&#x27;, failed, { once: true })</pre>
+    </li>
+    <li id="L231">
+      <pre>    reader.addEventListener(&#x27;abort&#x27;, failed, { once: true })</pre>
+    </li>
+    <li id="L232"><pre>    reader.addEventListener(</pre></li>
+    <li id="L233"><pre>      &#x27;load&#x27;,</pre></li>
+    <li id="L234"><pre>      () =&gt; {</pre></li>
+    <li id="L235"><pre>        if (imageReader.current !== reader) return</pre></li>
+    <li id="L236"><pre>        imageReader.current = null</pre></li>
+    <li id="L237"><pre>        setReadingImage(false)</pre></li>
+    <li id="L238">
+      <pre>        const base64 = String(reader.result).split(&#x27;,&#x27;)[1]</pre>
+    </li>
+    <li id="L239"><pre>        if (!base64) {</pre></li>
+    <li id="L240"><pre>          setError(&#x27;图片读取失败，请重新选择PNG或JPEG&#x27;)</pre></li>
+    <li id="L241"><pre>          return</pre></li>
+    <li id="L242"><pre>        }</pre></li>
+    <li id="L243"><pre>        change({</pre></li>
+    <li id="L244"><pre>          paragraph: {</pre></li>
+    <li id="L245"><pre>            ...draft.paragraph,</pre></li>
+    <li id="L246"><pre>            bullet: &#x27;blip&#x27;,</pre></li>
+    <li id="L247"><pre>            bulletChar: undefined,</pre></li>
+    <li id="L248"><pre>            bulletFont: undefined,</pre></li>
+    <li id="L249"><pre>            numType: undefined,</pre></li>
+    <li id="L250"><pre>            startAt: undefined,</pre></li>
+    <li id="L251">
+      <pre>
+            bulletImage: { ext: file.type === &#x27;image/png&#x27; ? &#x27;png&#x27; : &#x27;jpg&#x27;, base64 },</pre>
+    </li>
+    <li id="L252"><pre>          },</pre></li>
+    <li id="L253"><pre>        })</pre></li>
+    <li id="L254"><pre>        setImageName(file.name)</pre></li>
+    <li id="L255"><pre>      },</pre></li>
+    <li id="L256"><pre>      { once: true },</pre></li>
+    <li id="L257"><pre>    )</pre></li>
+    <li id="L258"><pre>    try {</pre></li>
+    <li id="L259"><pre>      reader.readAsDataURL(file)</pre></li>
+    <li id="L260"><pre>    } catch {</pre></li>
+    <li id="L261"><pre>      failed()</pre></li>
+    <li id="L262"><pre>    }</pre></li>
+    <li id="L263"><pre>  }</pre></li>
+    <li id="L264">
+      <pre>
+  const choose = (ref: string, event: Pick&lt;MouseEvent, &#x27;ctrlKey&#x27; | &#x27;metaKey&#x27; | &#x27;shiftKey&#x27;&gt;) =&gt; {</pre>
+    </li>
+    <li id="L265"><pre>    if (locked) return</pre></li>
+    <li id="L266"><pre>    let refs: string[]</pre></li>
+    <li id="L267"><pre>    const anchorRef = readAnchor()</pre></li>
+    <li id="L268">
+      <pre>
+    const anchor = anchorRef ? pptxResolveSelection(elements, [anchorRef])[0] : null</pre>
+    </li>
+    <li id="L269">
+      <pre>    const start = rows.findIndex((row) =&gt; row.ref === anchor?.ref)</pre>
+    </li>
+    <li id="L270"><pre>    const end = rows.findIndex((row) =&gt; row.ref === ref)</pre></li>
+    <li id="L271"><pre>    if (event.shiftKey &amp;&amp; start &gt;= 0) {</pre></li>
+    <li id="L272"><pre>      const range = rows</pre></li>
+    <li id="L273"><pre>        .slice(Math.min(start, end), Math.max(start, end) + 1)</pre></li>
+    <li id="L274"><pre>        .filter((row) =&gt; row.depth &lt;= 1)</pre></li>
+    <li id="L275"><pre>        .map((row) =&gt; row.ref)</pre></li>
+    <li id="L276">
+      <pre>      refs = event.ctrlKey || event.metaKey ? [...selectedRefs, ...range] : range</pre>
+    </li>
+    <li id="L277"><pre>    } else if (event.ctrlKey || event.metaKey)</pre></li>
+    <li id="L278"><pre>      refs = selectedIds.has(ref)</pre></li>
+    <li id="L279"><pre>        ? selectedRefs.filter(</pre></li>
+    <li id="L280">
+      <pre>
+            (old) =&gt; !pptxResolveSelection(elements, [old]).some((row) =&gt; row.ref === ref),</pre>
+    </li>
+    <li id="L281"><pre>          )</pre></li>
+    <li id="L282"><pre>        : [...selectedRefs, ref]</pre></li>
+    <li id="L283"><pre>    else refs = [ref]</pre></li>
+    <li id="L284"><pre>    onAnchorChange(ref)</pre></li>
+    <li id="L285"><pre>    onSelectionChange(pptxNormalizeSelection(elements, refs))</pre></li>
+    <li id="L286"><pre>  }</pre></li>
+    <li id="L287">
+      <pre>  const navigate = (event: KeyboardEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L288"><pre>    if (locked) return</pre></li>
+    <li id="L289"><pre>    const buttons = [</pre></li>
+    <li id="L290">
+      <pre>
+      ...event.currentTarget.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;[role=&quot;option&quot;]:not(:disabled)&#x27;),</pre>
+    </li>
+    <li id="L291"><pre>    ]</pre></li>
+    <li id="L292">
+      <pre>    const index = buttons.indexOf(event.target as HTMLButtonElement)</pre>
+    </li>
+    <li id="L293">
+      <pre>
+    if ((event.ctrlKey || event.metaKey) &amp;&amp; event.key.toLowerCase() === &#x27;a&#x27;) {</pre>
+    </li>
+    <li id="L294"><pre>      event.preventDefault()</pre></li>
+    <li id="L295">
+      <pre>
+      onSelectionChange(rows.filter((row) =&gt; row.depth === 0).map((row) =&gt; row.ref))</pre>
+    </li>
+    <li id="L296"><pre>      return</pre></li>
+    <li id="L297"><pre>    }</pre></li>
+    <li id="L298">
+      <pre>
+    if (![&#x27;ArrowDown&#x27;, &#x27;ArrowUp&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) return</pre>
+    </li>
+    <li id="L299"><pre>    event.preventDefault()</pre></li>
+    <li id="L300"><pre>    const next =</pre></li>
+    <li id="L301"><pre>      event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L302"><pre>        ? 0</pre></li>
+    <li id="L303"><pre>        : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L304"><pre>          ? buttons.length - 1</pre></li>
+    <li id="L305">
+      <pre>
+          : Math.min(buttons.length - 1, Math.max(0, index + (event.key === &#x27;ArrowDown&#x27; ? 1 : -1)))</pre>
+    </li>
+    <li id="L306"><pre>    const button = buttons[next]</pre></li>
+    <li id="L307"><pre>    button?.focus()</pre></li>
+    <li id="L308">
+      <pre>
+    if (event.shiftKey &amp;&amp; button?.dataset.ref) choose(button.dataset.ref, event)</pre>
+    </li>
+    <li id="L309"><pre>  }</pre></li>
+    <li id="L310"><pre>  const reset = () =&gt; {</pre></li>
+    <li id="L311"><pre>    setDraft({})</pre></li>
+    <li id="L312"><pre>    setImageFill(null)</pre></li>
+    <li id="L313"><pre>    setImageName(&#x27;&#x27;)</pre></li>
+    <li id="L314"><pre>    setSize(null)</pre></li>
+    <li id="L315"><pre>    setWidth(null)</pre></li>
+    <li id="L316"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L317"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L318"><pre>  }</pre></li>
+    <li id="L319"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L320"><pre>    if (locked || pending.current || !dirty) return</pre></li>
+    <li id="L321"><pre>    let ops: Record&lt;string, unknown&gt;[] = []</pre></li>
+    <li id="L322"><pre>    try {</pre></li>
+    <li id="L323">
+      <pre>
+      if (size !== null &amp;&amp; !size.trim()) throw new Error(&#x27;请输入字号&#x27;)</pre>
+    </li>
+    <li id="L324">
+      <pre>
+      if (width !== null &amp;&amp; !width.trim()) throw new Error(&#x27;请输入轮廓宽度&#x27;)</pre>
+    </li>
+    <li id="L325"><pre>      if (imageFill) {</pre></li>
+    <li id="L326">
+      <pre>        if (formatDirty) throw new Error(&#x27;请先应用或重置其他格式草稿&#x27;)</pre>
+    </li>
+    <li id="L327">
+      <pre>        if (!applyFill) throw new Error(&#x27;当前未连接手动填充宿主&#x27;)</pre>
+    </li>
+    <li id="L328"><pre>        if (!fillTargets.length || fillTargets.length &gt; 200)</pre></li>
+    <li id="L329"><pre>          throw new Error(&#x27;请选择1–200个可填充对象&#x27;)</pre></li>
+    <li id="L330"><pre>      } else</pre></li>
+    <li id="L331">
+      <pre>        ops = pptxSelectionFormatOps(elements, selectedRefs, slide, {</pre>
+    </li>
+    <li id="L332"><pre>          ...draft,</pre></li>
+    <li id="L333"><pre>          ...(size === null ? {} : { fontSizePt: Number(size) }),</pre></li>
+    <li id="L334">
+      <pre>          ...(width === null ? {} : { strokeWidthPt: Number(width) }),</pre>
+    </li>
+    <li id="L335"><pre>        })</pre></li>
+    <li id="L336">
+      <pre>
+      if (!imageFill &amp;&amp; !ops.length) throw new Error(&#x27;所选对象不支持本次格式，请调整选择&#x27;)</pre>
+    </li>
+    <li id="L337"><pre>    } catch (cause) {</pre></li>
+    <li id="L338">
+      <pre>      setError(cause instanceof Error ? cause.message : &#x27;请检查格式&#x27;)</pre>
+    </li>
+    <li id="L339"><pre>      return</pre></li>
+    <li id="L340"><pre>    }</pre></li>
+    <li id="L341"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L342"><pre>    pending.current = controller</pre></li>
+    <li id="L343"><pre>    setBusy(true)</pre></li>
+    <li id="L344"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L345"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L346"><pre>    try {</pre></li>
+    <li id="L347"><pre>      let ok: boolean</pre></li>
+    <li id="L348"><pre>      if (imageFill) {</pre></li>
+    <li id="L349">
+      <pre>
+        let fillSource: Extract&lt;PptxManualFill, { kind: &#x27;selection&#x27; }&gt;[&#x27;source&#x27;] = {</pre>
+    </li>
+    <li id="L350"><pre>          kind: &#x27;current&#x27;,</pre></li>
+    <li id="L351"><pre>        }</pre></li>
+    <li id="L352"><pre>        if (imageFill.kind === &#x27;texture&#x27;) {</pre></li>
+    <li id="L353">
+      <pre>
+          const texture = PPTX_FILL_TEXTURES.find((item) =&gt; item.id === imageFill.texture)!</pre>
+    </li>
+    <li id="L354">
+      <pre>          const response = await fetch(texture.url, { signal: controller.signal })</pre>
+    </li>
+    <li id="L355">
+      <pre>          if (!response.ok) throw new Error(&#x27;纹理载入失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L356">
+      <pre>          const bytes = new Uint8Array(await response.arrayBuffer())</pre>
+    </li>
+    <li id="L357">
+      <pre>
+          if (!bytes.length || bytes.length &gt; 1024 * 1024) throw new Error(&#x27;纹理资源无效&#x27;)</pre>
+    </li>
+    <li id="L358"><pre>          let binary = &#x27;&#x27;</pre></li>
+    <li id="L359">
+      <pre>          for (const byte of bytes) binary += String.fromCharCode(byte)</pre>
+    </li>
+    <li id="L360">
+      <pre>
+          fillSource = { kind: &#x27;texture&#x27;, id: imageFill.texture, png: btoa(binary) }</pre>
+    </li>
+    <li id="L361"><pre>        }</pre></li>
+    <li id="L362"><pre>        if (controller.signal.aborted) return</pre></li>
+    <li id="L363"><pre>        ok = await applyFill!({</pre></li>
+    <li id="L364"><pre>          kind: &#x27;selection&#x27;,</pre></li>
+    <li id="L365"><pre>          slide,</pre></li>
+    <li id="L366"><pre>          targets: fillTargets.map((context) =&gt; ({</pre></li>
+    <li id="L367"><pre>            elementId: context.ref,</pre></li>
+    <li id="L368"><pre>            ...(context.group ? { group: context.group } : {}),</pre></li>
+    <li id="L369"><pre>          })),</pre></li>
+    <li id="L370"><pre>          source: fillSource,</pre></li>
+    <li id="L371"><pre>          tile: imageFill.tile,</pre></li>
+    <li id="L372"><pre>        })</pre></li>
+    <li id="L373"><pre>      } else ok = await applyOps(ops)</pre></li>
+    <li id="L374"><pre>      if (controller.signal.aborted) return</pre></li>
+    <li id="L375"><pre>      if (ok) {</pre></li>
+    <li id="L376"><pre>        reset()</pre></li>
+    <li id="L377">
+      <pre>
+        setStatus(imageFill ? &#x27;已应用所选对象填充&#x27; : &#x27;已应用所选对象格式&#x27;)</pre>
+    </li>
+    <li id="L378"><pre>      } else setError(&#x27;修改未应用，已保留草稿，请重试&#x27;)</pre></li>
+    <li id="L379"><pre>    } catch (cause) {</pre></li>
+    <li id="L380"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L381"><pre>        setError(</pre></li>
+    <li id="L382"><pre>          cause instanceof Error</pre></li>
+    <li id="L383"><pre>            ? `${cause.message}；已保留草稿`</pre></li>
+    <li id="L384"><pre>            : &#x27;修改未应用，已保留草稿，请重试&#x27;,</pre></li>
+    <li id="L385"><pre>        )</pre></li>
+    <li id="L386"><pre>    } finally {</pre></li>
+    <li id="L387"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L388"><pre>        pending.current = null</pre></li>
+    <li id="L389"><pre>        setBusy(false)</pre></li>
+    <li id="L390"><pre>      }</pre></li>
+    <li id="L391"><pre>    }</pre></li>
+    <li id="L392"><pre>  }</pre></li>
+    <li id="L393">
+      <pre>
+  const boolValue = (field: &#x27;bold&#x27; | &#x27;italic&#x27; | &#x27;underline&#x27;) =&gt;</pre>
+    </li>
+    <li id="L394">
+      <pre>    draft[field] ?? pptxMixedValue(runs.map((run) =&gt; !!run[field]))</pre>
+    </li>
+    <li id="L395">
+      <pre>  const currentSize = pptxMixedValue(runs.map((run) =&gt; run.fontSize))</pre>
+    </li>
+    <li id="L396">
+      <pre>  const currentColor = pptxMixedValue(runs.map((run) =&gt; run.color))</pre>
+    </li>
+    <li id="L397"><pre>  const currentFill = pptxMixedValue(</pre></li>
+    <li id="L398"><pre>    fillTargets.map(({ element }) =&gt;</pre></li>
+    <li id="L399">
+      <pre>
+      (element.type === &#x27;text&#x27; || element.type === &#x27;shape&#x27;) &amp;&amp; element.fill?.type === &#x27;solid&#x27;</pre>
+    </li>
+    <li id="L400"><pre>        ? element.fill.color</pre></li>
+    <li id="L401">
+      <pre>        : element.type === &#x27;text&#x27; || element.type === &#x27;shape&#x27;</pre>
+    </li>
+    <li id="L402"><pre>          ? element.fill?.type === &#x27;none&#x27;</pre></li>
+    <li id="L403"><pre>            ? &#x27;none&#x27;</pre></li>
+    <li id="L404"><pre>            : undefined</pre></li>
+    <li id="L405"><pre>          : undefined,</pre></li>
+    <li id="L406"><pre>    ),</pre></li>
+    <li id="L407"><pre>  )</pre></li>
+    <li id="L408"><pre>  const currentStroke = pptxMixedValue(</pre></li>
+    <li id="L409"><pre>    lineTargets.map(({ element }) =&gt; {</pre></li>
+    <li id="L410"><pre>      const stroke = pptxElementStroke(element)</pre></li>
+    <li id="L411">
+      <pre>
+      return stroke?.fill.type === &#x27;solid&#x27; ? stroke.fill.color : undefined</pre>
+    </li>
+    <li id="L412"><pre>    }),</pre></li>
+    <li id="L413"><pre>  )</pre></li>
+    <li id="L414"><pre>  const currentWidth = pptxMixedValue(</pre></li>
+    <li id="L415"><pre>    lineTargets.map(({ element }) =&gt; {</pre></li>
+    <li id="L416"><pre>      const stroke = pptxElementStroke(element)</pre></li>
+    <li id="L417"><pre>      return stroke ? stroke.width / 12700 : undefined</pre></li>
+    <li id="L418"><pre>    }),</pre></li>
+    <li id="L419"><pre>  )</pre></li>
+    <li id="L420">
+      <pre>
+  const selectedStyle = PPTX_SHAPE_STYLES.find((style) =&gt; style.key === draft.shapeStyle)</pre>
+    </li>
+    <li id="L421"><pre>  const outlineElements = lineTargets.map(({ element }) =&gt; {</pre></li>
+    <li id="L422">
+      <pre>
+    if (!selectedStyle || (element.type !== &#x27;shape&#x27; &amp;&amp; element.type !== &#x27;text&#x27;)) return element</pre>
+    </li>
+    <li id="L423"><pre>    return {</pre></li>
+    <li id="L424"><pre>      ...element,</pre></li>
+    <li id="L425"><pre>      stroke: {</pre></li>
+    <li id="L426"><pre>        ...element.stroke,</pre></li>
+    <li id="L427"><pre>        width: element.stroke?.width || 12700,</pre></li>
+    <li id="L428">
+      <pre>        fill: { type: &#x27;solid&#x27; as const, color: selectedStyle.stroke },</pre>
+    </li>
+    <li id="L429"><pre>        dash: selectedStyle.dash,</pre></li>
+    <li id="L430"><pre>      },</pre></li>
+    <li id="L431"><pre>    }</pre></li>
+    <li id="L432"><pre>  })</pre></li>
+    <li id="L433"><pre>  return (</pre></li>
+    <li id="L434"><pre>    &lt;fieldset</pre></li>
+    <li id="L435"><pre>      className=&quot;mimir-pptx-selection-controls&quot;</pre></li>
+    <li id="L436"><pre>      ref={container}</pre></li>
+    <li id="L437"><pre>      onFocusCapture={(event) =&gt; {</pre></li>
+    <li id="L438"><pre>        onFocusRowChange(</pre></li>
+    <li id="L439">
+      <pre>
+          (event.target as HTMLElement).closest&lt;HTMLElement&gt;(&#x27;[role=&quot;option&quot;]&#x27;)?.dataset.ref ??</pre>
+    </li>
+    <li id="L440"><pre>            null,</pre></li>
+    <li id="L441"><pre>        )</pre></li>
+    <li id="L442"><pre>      }}</pre></li>
+    <li id="L443"><pre>      onBlurCapture={(event) =&gt; {</pre></li>
+    <li id="L444">
+      <pre>
+        if (event.relatedTarget &amp;&amp; !event.currentTarget.contains(event.relatedTarget as Node))</pre>
+    </li>
+    <li id="L445"><pre>          onFocusRowChange(null)</pre></li>
+    <li id="L446"><pre>      }}</pre></li>
+    <li id="L447"><pre>      disabled={locked}</pre></li>
+    <li id="L448"><pre>      aria-busy={busy}</pre></li>
+    <li id="L449"><pre>    &gt;</pre></li>
+    <li id="L450">
+      <pre>      &lt;div className=&quot;mimir-pptx-selection-controls__content&quot;&gt;</pre>
+    </li>
+    <li id="L451">
+      <pre>
+        &lt;section className=&quot;mimir-pptx-selection-controls__objects&quot; aria-label=&quot;本页对象&quot;&gt;</pre>
+    </li>
+    <li id="L452">
+      <pre>          &lt;div className=&quot;mimir-pptx-selection-controls__heading&quot;&gt;</pre>
+    </li>
+    <li id="L453"><pre>            &lt;strong&gt;本页对象&lt;/strong&gt;</pre></li>
+    <li id="L454"><pre>            &lt;span&gt;已选 {selected.length} 个&lt;/span&gt;</pre></li>
+    <li id="L455"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L456">
+      <pre>
+          &lt;ToolbarMenuNote&gt;Ctrl / ⌘ 加选，Shift 连选。组合格式作用于直接成员。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L457"><pre>          &lt;div</pre></li>
+    <li id="L458">
+      <pre>            className=&quot;mimir-pptx-selection-controls__list&quot;</pre>
+    </li>
+    <li id="L459"><pre>            role=&quot;listbox&quot;</pre></li>
+    <li id="L460"><pre>            aria-label=&quot;选择幻灯片对象&quot;</pre></li>
+    <li id="L461"><pre>            aria-multiselectable=&quot;true&quot;</pre></li>
+    <li id="L462"><pre>            onKeyDown={navigate}</pre></li>
+    <li id="L463"><pre>          &gt;</pre></li>
+    <li id="L464"><pre>            {rows.map((row, index) =&gt; (</pre></li>
+    <li id="L465"><pre>              &lt;button</pre></li>
+    <li id="L466"><pre>                key={row.ref}</pre></li>
+    <li id="L467"><pre>                type=&quot;button&quot;</pre></li>
+    <li id="L468"><pre>                role=&quot;option&quot;</pre></li>
+    <li id="L469"><pre>                aria-selected={selectedIds.has(row.ref)}</pre></li>
+    <li id="L470"><pre>                data-ref={row.ref}</pre></li>
+    <li id="L471"><pre>                disabled={locked || row.depth &gt; 1}</pre></li>
+    <li id="L472">
+      <pre>
+                title={row.depth &gt; 1 ? &#x27;更深层组合暂不支持编辑&#x27; : name(row.element, index)}</pre>
+    </li>
+    <li id="L473"><pre>                onClick={(event) =&gt; choose(row.ref, event)}</pre></li>
+    <li id="L474">
+      <pre>                className=&quot;mimir-pptx-selection-controls__row&quot;</pre>
+    </li>
+    <li id="L475">
+      <pre>                style={{ paddingInlineStart: 8 + Math.min(row.depth, 2) * 14 }}</pre>
+    </li>
+    <li id="L476"><pre>              &gt;</pre></li>
+    <li id="L477">
+      <pre>
+                &lt;span className=&quot;mimir-pptx-selection-controls__check&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L478"><pre>                  {selectedIds.has(row.ref) ? (</pre></li>
+    <li id="L479"><pre>                    &lt;Check size={12} /&gt;</pre></li>
+    <li id="L480"><pre>                  ) : row.element.type === &#x27;group&#x27; ? (</pre></li>
+    <li id="L481"><pre>                    &lt;Layers size={12} /&gt;</pre></li>
+    <li id="L482"><pre>                  ) : null}</pre></li>
+    <li id="L483"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L484">
+      <pre>
+                &lt;span className=&quot;mimir-pptx-selection-controls__name&quot;&gt;</pre>
+    </li>
+    <li id="L485"><pre>                  {name(row.element, index)}</pre></li>
+    <li id="L486"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L487">
+      <pre>
+                &lt;span className=&quot;mimir-pptx-selection-controls__type&quot;&gt;</pre>
+    </li>
+    <li id="L488"><pre>                  {typeLabel(row.element)}</pre></li>
+    <li id="L489"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L490"><pre>              &lt;/button&gt;</pre></li>
+    <li id="L491"><pre>            ))}</pre></li>
+    <li id="L492">
+      <pre>
+            {!rows.length &amp;&amp; &lt;ToolbarMenuNote&gt;本页没有对象&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L493"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L494">
+      <pre>
+          &lt;div className=&quot;mimir-pptx-selection-controls__selection-actions&quot;&gt;</pre>
+    </li>
+    <li id="L495"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L496"><pre>              label=&quot;选择全部顶层对象&quot;</pre></li>
+    <li id="L497"><pre>              disabled={locked || !rows.length}</pre></li>
+    <li id="L498"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L499">
+      <pre>
+                onSelectionChange(rows.filter((row) =&gt; row.depth === 0).map((row) =&gt; row.ref))</pre>
+    </li>
+    <li id="L500"><pre>              }</pre></li>
+    <li id="L501"><pre>            &gt;</pre></li>
+    <li id="L502"><pre>              全选</pre></li>
+    <li id="L503"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L504"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L505"><pre>              label=&quot;清除对象选择&quot;</pre></li>
+    <li id="L506"><pre>              disabled={locked || !selected.length}</pre></li>
+    <li id="L507"><pre>              onClick={() =&gt; onSelectionChange([])}</pre></li>
+    <li id="L508"><pre>            &gt;</pre></li>
+    <li id="L509"><pre>              清除</pre></li>
+    <li id="L510"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L511"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L512"><pre>        &lt;/section&gt;</pre></li>
+    <li id="L513"><pre>        {!selected.length ? (</pre></li>
+    <li id="L514">
+      <pre>
+          &lt;ToolbarMenuNote&gt;从画布或上方列表选择对象，再调整格式。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L515"><pre>        ) : (</pre></li>
+    <li id="L516"><pre>          &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L517">
+      <pre>            &lt;div className=&quot;mimir-pptx-selection-controls__tabs&quot;&gt;</pre>
+    </li>
+    <li id="L518"><pre>              &lt;ToolbarToggleGroup</pre></li>
+    <li id="L519"><pre>                label=&quot;批量格式分类&quot;</pre></li>
+    <li id="L520"><pre>                value={tab}</pre></li>
+    <li id="L521"><pre>                options={[</pre></li>
+    <li id="L522">
+      <pre>
+                  { value: &#x27;common&#x27;, label: &#x27;常用&#x27;, disabled: locked || !!imageFill },</pre>
+    </li>
+    <li id="L523">
+      <pre>
+                  { value: &#x27;paragraph&#x27;, label: &#x27;段落&#x27;, disabled: locked || !!imageFill },</pre>
+    </li>
+    <li id="L524">
+      <pre>
+                  { value: &#x27;list&#x27;, label: &#x27;列表&#x27;, disabled: locked || !!imageFill },</pre>
+    </li>
+    <li id="L525">
+      <pre>
+                  { value: &#x27;outline&#x27;, label: &#x27;轮廓&#x27;, disabled: locked || !!imageFill },</pre>
+    </li>
+    <li id="L526">
+      <pre>
+                  { value: &#x27;appearance&#x27;, label: &#x27;外观&#x27;, disabled: locked },</pre>
+    </li>
+    <li id="L527"><pre>                ]}</pre></li>
+    <li id="L528"><pre>                onChange={onTabChange}</pre></li>
+    <li id="L529"><pre>              /&gt;</pre></li>
+    <li id="L530"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L531"><pre>            {tab === &#x27;appearance&#x27; &amp;&amp; (</pre></li>
+    <li id="L532"><pre>              &lt;PptxSelectionAppearanceFields</pre></li>
+    <li id="L533">
+      <pre>                elements={fillTargets.map((context) =&gt; context.element)}</pre>
+    </li>
+    <li id="L534">
+      <pre>                styleElements={shapeTargets.map((context) =&gt; context.element)}</pre>
+    </li>
+    <li id="L535"><pre>                draft={</pre></li>
+    <li id="L536"><pre>                  draft.fillFormat ??</pre></li>
+    <li id="L537"><pre>                  (draft.fill !== undefined</pre></li>
+    <li id="L538"><pre>                    ? {</pre></li>
+    <li id="L539">
+      <pre>
+                        mode: draft.fill === &#x27;none&#x27; ? &#x27;none&#x27; : &#x27;solid&#x27;,</pre>
+    </li>
+    <li id="L540">
+      <pre>
+                        color: draft.fill === &#x27;none&#x27; ? undefined : draft.fill,</pre>
+    </li>
+    <li id="L541"><pre>                      }</pre></li>
+    <li id="L542"><pre>                    : selectedStyle</pre></li>
+    <li id="L543">
+      <pre>                      ? { mode: &#x27;solid&#x27;, color: selectedStyle.fill }</pre>
+    </li>
+    <li id="L544"><pre>                      : {})</pre></li>
+    <li id="L545"><pre>                }</pre></li>
+    <li id="L546"><pre>                styleKey={draft.shapeStyle}</pre></li>
+    <li id="L547">
+      <pre>
+                onChange={(fillFormat) =&gt; change({ fillFormat, fill: undefined })}</pre>
+    </li>
+    <li id="L548"><pre>                onStylePick={(shapeStyle) =&gt;</pre></li>
+    <li id="L549"><pre>                  change({</pre></li>
+    <li id="L550"><pre>                    shapeStyle,</pre></li>
+    <li id="L551"><pre>                    fillFormat: undefined,</pre></li>
+    <li id="L552"><pre>                    fill: undefined,</pre></li>
+    <li id="L553"><pre>                    strokeColor: undefined,</pre></li>
+    <li id="L554"><pre>                    outline: {</pre></li>
+    <li id="L555"><pre>                      ...draft.outline,</pre></li>
+    <li id="L556"><pre>                      color: undefined,</pre></li>
+    <li id="L557"><pre>                      dash: undefined,</pre></li>
+    <li id="L558"><pre>                      enabled: undefined,</pre></li>
+    <li id="L559"><pre>                    },</pre></li>
+    <li id="L560"><pre>                  })</pre></li>
+    <li id="L561"><pre>                }</pre></li>
+    <li id="L562"><pre>                imageDraft={imageFill}</pre></li>
+    <li id="L563"><pre>                onImageChange={(next) =&gt; {</pre></li>
+    <li id="L564"><pre>                  setImageFill(next)</pre></li>
+    <li id="L565"><pre>                  setError(&#x27;&#x27;)</pre></li>
+    <li id="L566"><pre>                  setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L567"><pre>                }}</pre></li>
+    <li id="L568"><pre>                imageAvailable={!!applyFill}</pre></li>
+    <li id="L569"><pre>                imageLocked={formatDirty}</pre></li>
+    <li id="L570"><pre>                disabled={locked || !shapeTargets.length}</pre></li>
+    <li id="L571"><pre>              /&gt;</pre></li>
+    <li id="L572"><pre>            )}</pre></li>
+    <li id="L573"><pre>            {tab === &#x27;common&#x27; &amp;&amp; (</pre></li>
+    <li id="L574"><pre>              &lt;&gt;</pre></li>
+    <li id="L575">
+      <pre>
+                &lt;ToolbarMenuFields label={`文字与段落 · ${textTargets.length} 个对象`}&gt;</pre>
+    </li>
+    <li id="L576"><pre>                  {!textTargets.length &amp;&amp; (</pre></li>
+    <li id="L577">
+      <pre>
+                    &lt;ToolbarMenuNote&gt;请选择含文字的形状或文本框&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L578"><pre>                  )}</pre></li>
+    <li id="L579">
+      <pre>
+                  &lt;div className=&quot;mimir-pptx-selection-controls__booleans&quot;&gt;</pre>
+    </li>
+    <li id="L580">
+      <pre>
+                    {([&#x27;bold&#x27;, &#x27;italic&#x27;, &#x27;underline&#x27;] as const).map((field) =&gt; (</pre>
+    </li>
+    <li id="L581">
+      <pre>
+                      &lt;div key={field} className=&quot;mimir-pptx-selection-controls__boolean&quot;&gt;</pre>
+    </li>
+    <li id="L582">
+      <pre>
+                        &lt;span&gt;{{ bold: &#x27;加粗&#x27;, italic: &#x27;倾斜&#x27;, underline: &#x27;下划线&#x27; }[field]}&lt;/span&gt;</pre>
+    </li>
+    <li id="L583"><pre>                        &lt;ToolbarSelect</pre></li>
+    <li id="L584"><pre>                          key={field}</pre></li>
+    <li id="L585"><pre>                          label={</pre></li>
+    <li id="L586">
+      <pre>
+                            { bold: &#x27;批量加粗&#x27;, italic: &#x27;批量倾斜&#x27;, underline: &#x27;批量下划线&#x27; }[field]</pre>
+    </li>
+    <li id="L587"><pre>                          }</pre></li>
+    <li id="L588"><pre>                          disabled={locked || !textTargets.length}</pre></li>
+    <li id="L589">
+      <pre>
+                          value={boolValue(field) === null ? null : boolValue(field) ? &#x27;yes&#x27; : &#x27;no&#x27;}</pre>
+    </li>
+    <li id="L590"><pre>                          emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L591"><pre>                          options={[</pre></li>
+    <li id="L592">
+      <pre>                            { value: &#x27;yes&#x27;, label: &#x27;开启&#x27; },</pre>
+    </li>
+    <li id="L593">
+      <pre>                            { value: &#x27;no&#x27;, label: &#x27;关闭&#x27; },</pre>
+    </li>
+    <li id="L594"><pre>                          ]}</pre></li>
+    <li id="L595">
+      <pre>
+                          onChange={(value) =&gt; change({ [field]: value === &#x27;yes&#x27; })}</pre>
+    </li>
+    <li id="L596"><pre>                        /&gt;</pre></li>
+    <li id="L597"><pre>                      &lt;/div&gt;</pre></li>
+    <li id="L598"><pre>                    ))}</pre></li>
+    <li id="L599"><pre>                  &lt;/div&gt;</pre></li>
+    <li id="L600"><pre>                  &lt;fieldset</pre></li>
+    <li id="L601"><pre>                    disabled={locked || !textTargets.length}</pre></li>
+    <li id="L602">
+      <pre>
+                    className=&quot;mimir-pptx-selection-controls__fields mimir-pptx-selection-controls__fields--pair&quot;</pre>
+    </li>
+    <li id="L603"><pre>                  &gt;</pre></li>
+    <li id="L604"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L605"><pre>                      label=&quot;批量字号（pt）&quot;</pre></li>
+    <li id="L606">
+      <pre>
+                      value={size ?? (currentSize == null ? &#x27;&#x27; : String(currentSize))}</pre>
+    </li>
+    <li id="L607">
+      <pre>
+                      placeholder={currentSize === null ? &#x27;混合&#x27; : &#x27;继承&#x27;}</pre>
+    </li>
+    <li id="L608"><pre>                      onChange={(value) =&gt; {</pre></li>
+    <li id="L609"><pre>                        setSize(value)</pre></li>
+    <li id="L610"><pre>                        setError(&#x27;&#x27;)</pre></li>
+    <li id="L611"><pre>                      }}</pre></li>
+    <li id="L612"><pre>                    /&gt;</pre></li>
+    <li id="L613"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L614"><pre>                      label=&quot;批量文字颜色&quot;</pre></li>
+    <li id="L615">
+      <pre>                      value={draft.color ?? currentColor ?? &#x27;&#x27;}</pre>
+    </li>
+    <li id="L616"><pre>                      placeholder=&quot;混合或继承&quot;</pre></li>
+    <li id="L617"><pre>                      onChange={(color) =&gt; change({ color })}</pre></li>
+    <li id="L618"><pre>                    /&gt;</pre></li>
+    <li id="L619"><pre>                  &lt;/fieldset&gt;</pre></li>
+    <li id="L620"><pre>                  &lt;ToolbarSelect</pre></li>
+    <li id="L621"><pre>                    label=&quot;批量段落对齐&quot;</pre></li>
+    <li id="L622"><pre>                    disabled={locked || !textTargets.length}</pre></li>
+    <li id="L623"><pre>                    value={</pre></li>
+    <li id="L624">
+      <pre>
+                      (draft.paragraph?.align as PptxSelectionDraft[&#x27;align&#x27;]) ??</pre>
+    </li>
+    <li id="L625"><pre>                      draft.align ??</pre></li>
+    <li id="L626">
+      <pre>
+                      pptxMixedValue(paragraphs.map((p) =&gt; p.align ?? &#x27;left&#x27;))</pre>
+    </li>
+    <li id="L627"><pre>                    }</pre></li>
+    <li id="L628"><pre>                    emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L629"><pre>                    options={[</pre></li>
+    <li id="L630">
+      <pre>                      { value: &#x27;left&#x27;, label: &#x27;左对齐&#x27; },</pre>
+    </li>
+    <li id="L631">
+      <pre>                      { value: &#x27;center&#x27;, label: &#x27;居中&#x27; },</pre>
+    </li>
+    <li id="L632">
+      <pre>                      { value: &#x27;right&#x27;, label: &#x27;右对齐&#x27; },</pre>
+    </li>
+    <li id="L633">
+      <pre>                      { value: &#x27;justify&#x27;, label: &#x27;两端对齐&#x27; },</pre>
+    </li>
+    <li id="L634"><pre>                    ]}</pre></li>
+    <li id="L635">
+      <pre>
+                    onChange={(align) =&gt; change({ paragraph: { ...draft.paragraph, align } })}</pre>
+    </li>
+    <li id="L636"><pre>                  /&gt;</pre></li>
+    <li id="L637"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L638">
+      <pre>
+                &lt;ToolbarMenuFields label={`填充 · ${fillTargets.length} 个对象`}&gt;</pre>
+    </li>
+    <li id="L639">
+      <pre>
+                  {draft.fillFormat &amp;&amp; draft.fillFormat.mode !== &#x27;solid&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L640"><pre>                    &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L641">
+      <pre>
+                      已暂存{draft.fillFormat.mode === &#x27;none&#x27; ? &#x27;无填充&#x27; : &#x27;渐变填充&#x27;}</pre>
+    </li>
+    <li id="L642"><pre>                      ；可在外观中继续调整。</pre></li>
+    <li id="L643"><pre>                    &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L644"><pre>                  )}</pre></li>
+    <li id="L645"><pre>                  &lt;fieldset</pre></li>
+    <li id="L646"><pre>                    disabled={locked || !fillTargets.length}</pre></li>
+    <li id="L647">
+      <pre>                    className=&quot;mimir-pptx-selection-controls__fields&quot;</pre>
+    </li>
+    <li id="L648"><pre>                  &gt;</pre></li>
+    <li id="L649"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L650"><pre>                      label=&quot;批量填充颜色&quot;</pre></li>
+    <li id="L651"><pre>                      value={</pre></li>
+    <li id="L652"><pre>                        draft.fill ??</pre></li>
+    <li id="L653">
+      <pre>
+                        (draft.fillFormat?.mode === &#x27;solid&#x27; ? draft.fillFormat.color : undefined) ??</pre>
+    </li>
+    <li id="L654"><pre>                        selectedStyle?.fill ??</pre></li>
+    <li id="L655"><pre>                        currentFill ??</pre></li>
+    <li id="L656"><pre>                        &#x27;&#x27;</pre></li>
+    <li id="L657"><pre>                      }</pre></li>
+    <li id="L658"><pre>                      placeholder=&quot;混合或原件填充&quot;</pre></li>
+    <li id="L659">
+      <pre>
+                      onChange={(fill) =&gt; change({ fill, fillFormat: undefined })}</pre>
+    </li>
+    <li id="L660"><pre>                    /&gt;</pre></li>
+    <li id="L661"><pre>                    &lt;ToolbarButton</pre></li>
+    <li id="L662"><pre>                      label=&quot;批量无填充&quot;</pre></li>
+    <li id="L663"><pre>                      active={draft.fill === &#x27;none&#x27;}</pre></li>
+    <li id="L664"><pre>                      disabled={locked || !fillTargets.length}</pre></li>
+    <li id="L665">
+      <pre>
+                      onClick={() =&gt; change({ fill: &#x27;none&#x27;, fillFormat: undefined })}</pre>
+    </li>
+    <li id="L666"><pre>                    &gt;</pre></li>
+    <li id="L667"><pre>                      无填充</pre></li>
+    <li id="L668"><pre>                    &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L669"><pre>                  &lt;/fieldset&gt;</pre></li>
+    <li id="L670"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L671"><pre>              &lt;/&gt;</pre></li>
+    <li id="L672"><pre>            )}</pre></li>
+    <li id="L673">
+      <pre>
+            {(tab === &#x27;paragraph&#x27; || tab === &#x27;list&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L674"><pre>              &lt;&gt;</pre></li>
+    <li id="L675"><pre>                {!textTargets.length &amp;&amp; (</pre></li>
+    <li id="L676">
+      <pre>
+                  &lt;ToolbarMenuNote&gt;请选择含文字的形状或文本框&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L677"><pre>                )}</pre></li>
+    <li id="L678"><pre>                &lt;PptxSelectionParagraphFields</pre></li>
+    <li id="L679"><pre>                  paragraphs={paragraphs}</pre></li>
+    <li id="L680"><pre>                  draft={draft.paragraph ?? {}}</pre></li>
+    <li id="L681"><pre>                  onChange={(patch) =&gt;</pre></li>
+    <li id="L682"><pre>                    change({</pre></li>
+    <li id="L683"><pre>                      paragraph: Object.fromEntries(</pre></li>
+    <li id="L684">
+      <pre>                        Object.entries({ ...draft.paragraph, ...patch }).filter(</pre>
+    </li>
+    <li id="L685"><pre>                          ([, value]) =&gt; value !== undefined,</pre></li>
+    <li id="L686"><pre>                        ),</pre></li>
+    <li id="L687"><pre>                      ),</pre></li>
+    <li id="L688"><pre>                    })</pre></li>
+    <li id="L689"><pre>                  }</pre></li>
+    <li id="L690"><pre>                  imageName={imageName}</pre></li>
+    <li id="L691"><pre>                  onPickImage={pickBulletImage}</pre></li>
+    <li id="L692"><pre>                  disabled={locked || !textTargets.length}</pre></li>
+    <li id="L693"><pre>                  lists={tab === &#x27;list&#x27;}</pre></li>
+    <li id="L694"><pre>                /&gt;</pre></li>
+    <li id="L695"><pre>              &lt;/&gt;</pre></li>
+    <li id="L696"><pre>            )}</pre></li>
+    <li id="L697">
+      <pre>
+            {(tab === &#x27;common&#x27; || tab === &#x27;outline&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L698"><pre>              &lt;&gt;</pre></li>
+    <li id="L699">
+      <pre>
+                &lt;ToolbarMenuFields label={`轮廓 · ${lineTargets.length} 个对象`}&gt;</pre>
+    </li>
+    <li id="L700"><pre>                  &lt;fieldset</pre></li>
+    <li id="L701"><pre>                    disabled={locked || !lineTargets.length}</pre></li>
+    <li id="L702">
+      <pre>                    className=&quot;mimir-pptx-selection-controls__fields&quot;</pre>
+    </li>
+    <li id="L703"><pre>                  &gt;</pre></li>
+    <li id="L704"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L705"><pre>                      label=&quot;批量轮廓颜色&quot;</pre></li>
+    <li id="L706">
+      <pre>
+                      value={draft.strokeColor ?? selectedStyle?.stroke ?? currentStroke ?? &#x27;&#x27;}</pre>
+    </li>
+    <li id="L707"><pre>                      placeholder=&quot;混合或原件轮廓&quot;</pre></li>
+    <li id="L708">
+      <pre>                      onChange={(strokeColor) =&gt; change({ strokeColor })}</pre>
+    </li>
+    <li id="L709"><pre>                    /&gt;</pre></li>
+    <li id="L710"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L711"><pre>                      label=&quot;批量轮廓宽度（pt）&quot;</pre></li>
+    <li id="L712">
+      <pre>
+                      value={width ?? (currentWidth == null ? &#x27;&#x27; : String(currentWidth))}</pre>
+    </li>
+    <li id="L713"><pre>                      placeholder=&quot;混合或无轮廓&quot;</pre></li>
+    <li id="L714"><pre>                      onChange={(value) =&gt; {</pre></li>
+    <li id="L715"><pre>                        setWidth(value)</pre></li>
+    <li id="L716"><pre>                        setError(&#x27;&#x27;)</pre></li>
+    <li id="L717"><pre>                      }}</pre></li>
+    <li id="L718"><pre>                    /&gt;</pre></li>
+    <li id="L719"><pre>                  &lt;/fieldset&gt;</pre></li>
+    <li id="L720"><pre>                  &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L721">
+      <pre>                    仅应用已调整的字段，保留各对象原有线型、端点和箭头。</pre>
+    </li>
+    <li id="L722"><pre>                  &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L723"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L724"><pre>                {tab === &#x27;outline&#x27; &amp;&amp; (</pre></li>
+    <li id="L725"><pre>                  &lt;PptxSelectionOutlineFields</pre></li>
+    <li id="L726"><pre>                    elements={outlineElements}</pre></li>
+    <li id="L727"><pre>                    draft={draft.outline ?? {}}</pre></li>
+    <li id="L728">
+      <pre>
+                    onChange={(patch) =&gt; change({ outline: { ...draft.outline, ...patch } })}</pre>
+    </li>
+    <li id="L729"><pre>                    disabled={locked || !lineTargets.length}</pre></li>
+    <li id="L730"><pre>                  /&gt;</pre></li>
+    <li id="L731"><pre>                )}</pre></li>
+    <li id="L732"><pre>              &lt;/&gt;</pre></li>
+    <li id="L733"><pre>            )}</pre></li>
+    <li id="L734"><pre>          &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L735"><pre>        )}</pre></li>
+    <li id="L736"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L737">
+      <pre>      &lt;div className=&quot;mimir-pptx-selection-controls__actions&quot;&gt;</pre>
+    </li>
+    <li id="L738">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L739">
+      <pre>        {status &amp;&amp; &lt;ToolbarMenuNote&gt;{status}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L740">
+      <pre>
+        {readingImage &amp;&amp; &lt;ToolbarMenuNote&gt;正在读取图片…&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L741"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L742"><pre>          label={</pre></li>
+    <li id="L743"><pre>            imageFill</pre></li>
+    <li id="L744"><pre>              ? busy</pre></li>
+    <li id="L745"><pre>                ? &#x27;正在应用对象填充&#x27;</pre></li>
+    <li id="L746"><pre>                : &#x27;应用对象填充&#x27;</pre></li>
+    <li id="L747"><pre>              : busy</pre></li>
+    <li id="L748"><pre>                ? &#x27;正在应用对象格式&#x27;</pre></li>
+    <li id="L749"><pre>                : &#x27;应用对象格式&#x27;</pre></li>
+    <li id="L750"><pre>          }</pre></li>
+    <li id="L751"><pre>          primary</pre></li>
+    <li id="L752"><pre>          disabled={locked || !dirty || !targets.length}</pre></li>
+    <li id="L753"><pre>          disabledReason={</pre></li>
+    <li id="L754">
+      <pre>
+            locked ? &#x27;正在处理修改&#x27; : !targets.length ? &#x27;请先选择可编辑对象&#x27; : &#x27;请先调整格式&#x27;</pre>
+    </li>
+    <li id="L755"><pre>          }</pre></li>
+    <li id="L756"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L757"><pre>        &gt;</pre></li>
+    <li id="L758"><pre>          &lt;Check size={14} /&gt;</pre></li>
+    <li id="L759"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L760">
+      <pre>
+        &lt;ToolbarButton label=&quot;重置对象格式草稿&quot; disabled={locked || !dirty} onClick={reset}&gt;</pre>
+    </li>
+    <li id="L761"><pre>          &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L762"><pre>          重置</pre></li>
+    <li id="L763"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L764"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L765"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L766"><pre>  )</pre></li>
+    <li id="L767"><pre>}</pre></li>
+  </ol>
+</html>

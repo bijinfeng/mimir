@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxAdvancedControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxAdvancedControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 a592dccded68d65e31f2d431fdd27d8ec1bdda188faa8c338bed94021b1d99b3
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useId, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { Play, Square, Layers } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import type { PptxManualAnimation } from &#x27;../../../shared/src/pptx-animation.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>import { PptxAnimationGallery } from &#x27;./PptxAnimationGallery.js&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>
+import { pptxAnimationOps, PPTX_ANIMATION_LABELS } from &#x27;./pptx-animation-tools.js&#x27;</pre>
+    </li>
+    <li id="L6">
+      <pre>
+import type { PptxAnimationPreviewRequest } from &#x27;./PptxAnimationPreview.js&#x27;</pre>
+    </li>
+    <li id="L7"><pre>import type { PptxManualAsset } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L8">
+      <pre>
+import type { ChartElement, Slide } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L9"><pre>import {</pre></li>
+    <li id="L10"><pre>  ANIM_EFFECTS,</pre></li>
+    <li id="L11"><pre>  ANIM_TRIGGERS,</pre></li>
+    <li id="L12"><pre>  getSlideAnimations,</pre></li>
+    <li id="L13"><pre>  type AnimEffectKind,</pre></li>
+    <li id="L14">
+      <pre>} from &#x27;../../vendor/packages/pptx-engine/src/animation.js&#x27;</pre>
+    </li>
+    <li id="L15"><pre>import {</pre></li>
+    <li id="L16"><pre>  TRANSITION_KINDS,</pre></li>
+    <li id="L17"><pre>  readSlideAdvanceTimeXml,</pre></li>
+    <li id="L18"><pre>  readSlideTransitionXml,</pre></li>
+    <li id="L19">
+      <pre>} from &#x27;../../vendor/packages/pptx-engine/src/generate.js&#x27;</pre>
+    </li>
+    <li id="L20"><pre>import {</pre></li>
+    <li id="L21"><pre>  ToolbarButton,</pre></li>
+    <li id="L22"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L23"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L24"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L25"><pre>  ToolbarSelect,</pre></li>
+    <li id="L26"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L27"><pre>  ToolbarTextField,</pre></li>
+    <li id="L28"><pre>  ToolbarTabs,</pre></li>
+    <li id="L29"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L30"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L31"><pre></pre></li>
+    <li id="L32">
+      <pre>import { PptxControlPanel } from &#x27;./PptxObjectControls.js&#x27;</pre>
+    </li>
+    <li id="L33"><pre>import {</pre></li>
+    <li id="L34"><pre>  PptxChartAppearance,</pre></li>
+    <li id="L35"><pre>  pptxChartEditKind,</pre></li>
+    <li id="L36"><pre>  type PptxChartAppearancePatch,</pre></li>
+    <li id="L37"><pre>} from &#x27;./PptxChartAppearance.js&#x27;</pre></li>
+    <li id="L38">
+      <pre>import { pptxChartPalettePoints } from &#x27;./pptx-chart-colors.js&#x27;</pre>
+    </li>
+    <li id="L39"><pre></pre></li>
+    <li id="L40"><pre>import { PPTX_CHART_KINDS } from &#x27;./pptx-chart-kinds.js&#x27;</pre></li>
+    <li id="L41"><pre></pre></li>
+    <li id="L42">
+      <pre>type Apply = (op: Record&lt;string, unknown&gt;) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L43"><pre>type Target = { slide: number; el: string }</pre></li>
+    <li id="L44"><pre>const KINDS = PPTX_CHART_KINDS.map((item) =&gt; item.value)</pre></li>
+    <li id="L45">
+      <pre>const KIND_LABELS: Record&lt;string, string&gt; = Object.fromEntries(</pre>
+    </li>
+    <li id="L46"><pre>  PPTX_CHART_KINDS.map((item) =&gt; [item.value, item.label]),</pre></li>
+    <li id="L47"><pre>)</pre></li>
+    <li id="L48"><pre></pre></li>
+    <li id="L49">
+      <pre>
+/** Keeps all existing series; data is sent only when the user actually changes it. */</pre>
+    </li>
+    <li id="L50"><pre>export function ChartEditControls({</pre></li>
+    <li id="L51"><pre>  chart,</pre></li>
+    <li id="L52"><pre>  target,</pre></li>
+    <li id="L53"><pre>  apply,</pre></li>
+    <li id="L54"><pre>}: {</pre></li>
+    <li id="L55"><pre>  chart: ChartElement</pre></li>
+    <li id="L56"><pre>  target: Target</pre></li>
+    <li id="L57"><pre>  apply: Apply</pre></li>
+    <li id="L58"><pre>}) {</pre></li>
+    <li id="L59">
+      <pre>  const [title, setTitle] = useState(chart.chart.title ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L60"><pre>  const [kind, setKind] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L61">
+      <pre>
+  const [categories, setCategories] = useState(chart.chart.categories.join(&#x27;\n&#x27;))</pre>
+    </li>
+    <li id="L62"><pre>  const [series, setSeries] = useState(() =&gt;</pre></li>
+    <li id="L63"><pre>    chart.chart.series.map((item) =&gt; ({</pre></li>
+    <li id="L64"><pre>      key: crypto.randomUUID(),</pre></li>
+    <li id="L65"><pre>      name: item.name ?? &#x27;&#x27;,</pre></li>
+    <li id="L66">
+      <pre>
+      values: item.values.map((value) =&gt; value ?? &#x27;&#x27;).join(&#x27;\n&#x27;),</pre>
+    </li>
+    <li id="L67"><pre>    })),</pre></li>
+    <li id="L68"><pre>  )</pre></li>
+    <li id="L69"><pre>  const [dataEdited, setDataEdited] = useState(false)</pre></li>
+    <li id="L70"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L71">
+      <pre>  const [legend, setLegend] = useState(chart.chart.legendPos ?? &#x27;none&#x27;)</pre>
+    </li>
+    <li id="L72"><pre>  const [labels, setLabels] = useState&lt;boolean | null&gt;(null)</pre></li>
+    <li id="L73">
+      <pre>  const [appearance, setAppearance] = useState&lt;PptxChartAppearancePatch&gt;({})</pre>
+    </li>
+    <li id="L74">
+      <pre>
+  const [section, setSection] = useState&lt;&#x27;style&#x27; | &#x27;colors&#x27; | &#x27;data&#x27;&gt;(&#x27;style&#x27;)</pre>
+    </li>
+    <li id="L75"><pre>  const [dataSeries, setDataSeries] = useState(0)</pre></li>
+    <li id="L76"><pre>  const panelId = useId()</pre></li>
+    <li id="L77"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L78"><pre>  const parsedCategories = categories.split(/\r?\n/)</pre></li>
+    <li id="L79"><pre>  const parsedSeries = series.map((item) =&gt; ({</pre></li>
+    <li id="L80"><pre>    name: item.name,</pre></li>
+    <li id="L81">
+      <pre>
+    values: item.values.split(/\r?\n/).map((value) =&gt; (value.trim() === &#x27;&#x27; ? NaN : Number(value))),</pre>
+    </li>
+    <li id="L82"><pre>  }))</pre></li>
+    <li id="L83"><pre>  const reason =</pre></li>
+    <li id="L84"><pre>    dataEdited &amp;&amp;</pre></li>
+    <li id="L85"><pre>    (parsedCategories.length &gt; 200 ||</pre></li>
+    <li id="L86"><pre>      parsedSeries.length &gt; 20 ||</pre></li>
+    <li id="L87"><pre>      parsedSeries.length === 0 ||</pre></li>
+    <li id="L88"><pre>      parsedCategories.some((item) =&gt; !item.trim()) ||</pre></li>
+    <li id="L89"><pre>      parsedSeries.some(</pre></li>
+    <li id="L90"><pre>        (item) =&gt;</pre></li>
+    <li id="L91"><pre>          !item.name.trim() ||</pre></li>
+    <li id="L92"><pre>          item.values.length !== parsedCategories.length ||</pre></li>
+    <li id="L93"><pre>          item.values.some((value) =&gt; !Number.isFinite(value)),</pre></li>
+    <li id="L94"><pre>      ))</pre></li>
+    <li id="L95">
+      <pre>      ? &#x27;每个系列须有名称，数值数量须与类别一致，且每行都是有效数字&#x27;</pre>
+    </li>
+    <li id="L96"><pre>      : undefined</pre></li>
+    <li id="L97"><pre>  const currentKind = kind || pptxChartEditKind(chart.chart)</pre></li>
+    <li id="L98"><pre>  const {</pre></li>
+    <li id="L99"><pre>    barDir,</pre></li>
+    <li id="L100"><pre>    gapWidthPct,</pre></li>
+    <li id="L101"><pre>    holeSizePct,</pre></li>
+    <li id="L102"><pre>    gridlines,</pre></li>
+    <li id="L103"><pre>    catAxisTitle,</pre></li>
+    <li id="L104"><pre>    valAxisTitle,</pre></li>
+    <li id="L105"><pre>    pointColorScheme,</pre></li>
+    <li id="L106"><pre>    ...colors</pre></li>
+    <li id="L107"><pre>  } = appearance</pre></li>
+    <li id="L108"><pre>  const patch = {</pre></li>
+    <li id="L109"><pre>    ...colors,</pre></li>
+    <li id="L110"><pre>    pointColors: pptxChartPalettePoints(</pre></li>
+    <li id="L111"><pre>      chart.chart,</pre></li>
+    <li id="L112"><pre>      currentKind,</pre></li>
+    <li id="L113"><pre>      pointColorScheme,</pre></li>
+    <li id="L114"><pre>      colors.pointColors,</pre></li>
+    <li id="L115">
+      <pre>      dataEdited ? parsedSeries.map((item) =&gt; item.values.length) : undefined,</pre>
+    </li>
+    <li id="L116"><pre>    ),</pre></li>
+    <li id="L117">
+      <pre>    ...(currentKind.startsWith(&#x27;bar&#x27;) ? { barDir } : {}),</pre>
+    </li>
+    <li id="L118">
+      <pre>
+    ...(currentKind.startsWith(&#x27;bar&#x27;) || currentKind === &#x27;comboBarLine&#x27; ? { gapWidthPct } : {}),</pre>
+    </li>
+    <li id="L119">
+      <pre>    ...(currentKind === &#x27;doughnut&#x27; ? { holeSizePct } : {}),</pre>
+    </li>
+    <li id="L120">
+      <pre>
+    ...(![&#x27;pie&#x27;, &#x27;pie3D&#x27;, &#x27;doughnut&#x27;].includes(currentKind)</pre>
+    </li>
+    <li id="L121"><pre>      ? { gridlines, catAxisTitle, valAxisTitle }</pre></li>
+    <li id="L122"><pre>      : {}),</pre></li>
+    <li id="L123">
+      <pre>    ...(title !== (chart.chart.title ?? &#x27;&#x27;) ? { title } : {}),</pre>
+    </li>
+    <li id="L124"><pre>    ...(kind ? { kind } : {}),</pre></li>
+    <li id="L125">
+      <pre>    ...(dataEdited ? { categories: parsedCategories, series: parsedSeries } : {}),</pre>
+    </li>
+    <li id="L126">
+      <pre>
+    ...(legend !== (chart.chart.legendPos ?? &#x27;none&#x27;) ? { legendPos: legend } : {}),</pre>
+    </li>
+    <li id="L127"><pre>    ...(labels !== null ? { dataLabels: labels } : {}),</pre></li>
+    <li id="L128"><pre>  }</pre></li>
+    <li id="L129">
+      <pre>  const changed = Object.values(patch).some((value) =&gt; value !== undefined)</pre>
+    </li>
+    <li id="L130"><pre>  const submit = (next: Record&lt;string, unknown&gt;) =&gt; {</pre></li>
+    <li id="L131"><pre>    if (pending.current) return</pre></li>
+    <li id="L132"><pre>    const imported = chart.descr !== &#x27;aislides-chart&#x27;</pre></li>
+    <li id="L133">
+      <pre>
+    if (imported &amp;&amp; !window.confirm(&#x27;将此导入图表转换为可编辑图表？特殊图表格式可能简化。&#x27;)) return</pre>
+    </li>
+    <li id="L134"><pre>    pending.current = true</pre></li>
+    <li id="L135"><pre>    setBusy(true)</pre></li>
+    <li id="L136"><pre>    void apply({</pre></li>
+    <li id="L137"><pre>      target,</pre></li>
+    <li id="L138"><pre>      patch: next,</pre></li>
+    <li id="L139"><pre>      ...(dataEdited ? { dataSource: &#x27;user&#x27; } : {}),</pre></li>
+    <li id="L140"><pre>      ...(imported ? { confirmImport: true } : {}),</pre></li>
+    <li id="L141"><pre>    }).finally(() =&gt; {</pre></li>
+    <li id="L142"><pre>      pending.current = false</pre></li>
+    <li id="L143"><pre>      setBusy(false)</pre></li>
+    <li id="L144"><pre>    })</pre></li>
+    <li id="L145"><pre>  }</pre></li>
+    <li id="L146"><pre>  return (</pre></li>
+    <li id="L147">
+      <pre>
+    &lt;fieldset disabled={busy} className=&quot;mimir-pptx-chart-editor&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L148"><pre>      &lt;div</pre></li>
+    <li id="L149"><pre>        className=&quot;mimir-pptx-chart-tabs&quot;</pre></li>
+    <li id="L150"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L151"><pre>          const tabs = Array.from(</pre></li>
+    <li id="L152">
+      <pre>
+            event.currentTarget.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;[role=&quot;tab&quot;]&#x27;),</pre>
+    </li>
+    <li id="L153"><pre>          )</pre></li>
+    <li id="L154">
+      <pre>          const index = tabs.indexOf(event.target as HTMLButtonElement)</pre>
+    </li>
+    <li id="L155">
+      <pre>
+          if (index &lt; 0 || ![&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) return</pre>
+    </li>
+    <li id="L156"><pre>          event.preventDefault()</pre></li>
+    <li id="L157"><pre>          const next =</pre></li>
+    <li id="L158"><pre>            event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L159"><pre>              ? 0</pre></li>
+    <li id="L160"><pre>              : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L161"><pre>                ? tabs.length - 1</pre></li>
+    <li id="L162">
+      <pre>
+                : (index + (event.key === &#x27;ArrowRight&#x27; ? 1 : -1) + tabs.length) % tabs.length</pre>
+    </li>
+    <li id="L163"><pre>          tabs[next]?.click()</pre></li>
+    <li id="L164"><pre>          tabs[next]?.focus()</pre></li>
+    <li id="L165"><pre>        }}</pre></li>
+    <li id="L166"><pre>      &gt;</pre></li>
+    <li id="L167"><pre>        &lt;ToolbarTabs</pre></li>
+    <li id="L168"><pre>          label=&quot;图表编辑分类&quot;</pre></li>
+    <li id="L169"><pre>          value={section}</pre></li>
+    <li id="L170"><pre>          items={[</pre></li>
+    <li id="L171"><pre>            { value: &#x27;style&#x27;, label: &#x27;样式&#x27; },</pre></li>
+    <li id="L172">
+      <pre>            { value: &#x27;colors&#x27;, label: &#x27;配色&#x27; },</pre>
+    </li>
+    <li id="L173"><pre>            { value: &#x27;data&#x27;, label: &#x27;数据&#x27; },</pre></li>
+    <li id="L174"><pre>          ]}</pre></li>
+    <li id="L175"><pre>          onChange={setSection}</pre></li>
+    <li id="L176"><pre>        /&gt;</pre></li>
+    <li id="L177"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L178"><pre>      &lt;div</pre></li>
+    <li id="L179"><pre>        className=&quot;mimir-pptx-chart-editor__content&quot;</pre></li>
+    <li id="L180"><pre>        role=&quot;tabpanel&quot;</pre></li>
+    <li id="L181">
+      <pre>
+        aria-label={{ style: &#x27;图表样式&#x27;, colors: &#x27;图表配色&#x27;, data: &#x27;图表数据&#x27; }[section]}</pre>
+    </li>
+    <li id="L182"><pre>        id={panelId}</pre></li>
+    <li id="L183"><pre>      &gt;</pre></li>
+    <li id="L184"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L185"><pre>          {section === &#x27;style&#x27; &amp;&amp; (</pre></li>
+    <li id="L186"><pre>            &lt;&gt;</pre></li>
+    <li id="L187">
+      <pre>              &lt;ToolbarMenuFields label=&quot;编辑选中图表&quot;&gt;</pre>
+    </li>
+    <li id="L188">
+      <pre>
+                &lt;ToolbarTextField label=&quot;图表标题&quot; value={title} onChange={setTitle} /&gt;</pre>
+    </li>
+    <li id="L189"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L190"><pre>                  label=&quot;更改图表类型&quot;</pre></li>
+    <li id="L191"><pre>                  disabled={busy}</pre></li>
+    <li id="L192"><pre>                  value={currentKind}</pre></li>
+    <li id="L193">
+      <pre>
+                  options={KINDS.map((value) =&gt; ({ value, label: KIND_LABELS[value]! }))}</pre>
+    </li>
+    <li id="L194"><pre>                  onChange={setKind}</pre></li>
+    <li id="L195"><pre>                /&gt;</pre></li>
+    <li id="L196"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L197"><pre>                  label=&quot;图例位置&quot;</pre></li>
+    <li id="L198"><pre>                  disabled={busy}</pre></li>
+    <li id="L199"><pre>                  value={legend}</pre></li>
+    <li id="L200"><pre>                  options={[</pre></li>
+    <li id="L201">
+      <pre>                    { value: &#x27;none&#x27;, label: &#x27;无图例&#x27; },</pre>
+    </li>
+    <li id="L202">
+      <pre>                    { value: &#x27;b&#x27;, label: &#x27;底部&#x27; },</pre>
+    </li>
+    <li id="L203">
+      <pre>                    { value: &#x27;t&#x27;, label: &#x27;顶部&#x27; },</pre>
+    </li>
+    <li id="L204">
+      <pre>                    { value: &#x27;l&#x27;, label: &#x27;左侧&#x27; },</pre>
+    </li>
+    <li id="L205">
+      <pre>                    { value: &#x27;r&#x27;, label: &#x27;右侧&#x27; },</pre>
+    </li>
+    <li id="L206">
+      <pre>
+                    ...(legend === &#x27;tr&#x27; ? [{ value: &#x27;tr&#x27;, label: &#x27;右上（当前）&#x27; }] : []),</pre>
+    </li>
+    <li id="L207"><pre>                  ]}</pre></li>
+    <li id="L208"><pre>                  onChange={setLegend}</pre></li>
+    <li id="L209"><pre>                /&gt;</pre></li>
+    <li id="L210"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L211"><pre>                  label=&quot;数据标签&quot;</pre></li>
+    <li id="L212"><pre>                  disabled={busy}</pre></li>
+    <li id="L213">
+      <pre>                  value={labels === null ? &#x27;keep&#x27; : String(labels)}</pre>
+    </li>
+    <li id="L214"><pre>                  options={[</pre></li>
+    <li id="L215"><pre>                    {</pre></li>
+    <li id="L216"><pre>                      value: &#x27;keep&#x27;,</pre></li>
+    <li id="L217">
+      <pre>
+                      label: `保留当前（${chart.chart.dataLabels ? &#x27;显示数值&#x27; : &#x27;隐藏数值&#x27;}）`,</pre>
+    </li>
+    <li id="L218"><pre>                    },</pre></li>
+    <li id="L219">
+      <pre>                    { value: &#x27;true&#x27;, label: &#x27;显示数值&#x27; },</pre>
+    </li>
+    <li id="L220">
+      <pre>                    { value: &#x27;false&#x27;, label: &#x27;隐藏数值&#x27; },</pre>
+    </li>
+    <li id="L221"><pre>                  ]}</pre></li>
+    <li id="L222">
+      <pre>
+                  onChange={(value) =&gt; setLabels(value === &#x27;keep&#x27; ? null : value === &#x27;true&#x27;)}</pre>
+    </li>
+    <li id="L223"><pre>                /&gt;</pre></li>
+    <li id="L224"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L225"><pre>            &lt;/&gt;</pre></li>
+    <li id="L226"><pre>          )}</pre></li>
+    <li id="L227"><pre>          {section !== &#x27;data&#x27; &amp;&amp; (</pre></li>
+    <li id="L228"><pre>            &lt;PptxChartAppearance</pre></li>
+    <li id="L229"><pre>              disabled={busy}</pre></li>
+    <li id="L230"><pre>              chart={chart.chart}</pre></li>
+    <li id="L231"><pre>              kind={kind}</pre></li>
+    <li id="L232"><pre>              section={section}</pre></li>
+    <li id="L233"><pre>              patch={appearance}</pre></li>
+    <li id="L234"><pre>              setPatch={setAppearance}</pre></li>
+    <li id="L235"><pre>              preset={(legendPos, dataLabels, style) =&gt; {</pre></li>
+    <li id="L236"><pre>                setLegend(legendPos)</pre></li>
+    <li id="L237"><pre>                setLabels(dataLabels)</pre></li>
+    <li id="L238">
+      <pre>                setAppearance((current) =&gt; ({ ...current, ...style }))</pre>
+    </li>
+    <li id="L239"><pre>              }}</pre></li>
+    <li id="L240"><pre>            /&gt;</pre></li>
+    <li id="L241"><pre>          )}</pre></li>
+    <li id="L242"><pre>          {section === &#x27;data&#x27; &amp;&amp; (</pre></li>
+    <li id="L243"><pre>            &lt;ToolbarMenuFields label=&quot;图表数据&quot;&gt;</pre></li>
+    <li id="L244"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L245"><pre>                label=&quot;切换图表行列&quot;</pre></li>
+    <li id="L246"><pre>                disabled={busy || changed}</pre></li>
+    <li id="L247">
+      <pre>
+                disabledReason={changed ? &#x27;先应用或放弃当前修改，再切换行列&#x27; : undefined}</pre>
+    </li>
+    <li id="L248"><pre>                onClick={() =&gt; submit({ switchRowCol: true })}</pre></li>
+    <li id="L249"><pre>              &gt;</pre></li>
+    <li id="L250"><pre>                切换行列</pre></li>
+    <li id="L251"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L252"><pre>              &lt;ToolbarTextArea</pre></li>
+    <li id="L253"><pre>                label=&quot;类别（每行一项）&quot;</pre></li>
+    <li id="L254"><pre>                value={categories}</pre></li>
+    <li id="L255"><pre>                rows={3}</pre></li>
+    <li id="L256"><pre>                onChange={(value) =&gt; {</pre></li>
+    <li id="L257"><pre>                  setCategories(value)</pre></li>
+    <li id="L258"><pre>                  setDataEdited(true)</pre></li>
+    <li id="L259"><pre>                }}</pre></li>
+    <li id="L260"><pre>              /&gt;</pre></li>
+    <li id="L261"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L262"><pre>                label=&quot;要编辑的系列&quot;</pre></li>
+    <li id="L263"><pre>                disabled={busy}</pre></li>
+    <li id="L264"><pre>                value={String(dataSeries)}</pre></li>
+    <li id="L265"><pre>                options={series.map((item, index) =&gt; ({</pre></li>
+    <li id="L266"><pre>                  value: String(index),</pre></li>
+    <li id="L267"><pre>                  label: item.name || `系列${index + 1}`,</pre></li>
+    <li id="L268"><pre>                }))}</pre></li>
+    <li id="L269">
+      <pre>                onChange={(value) =&gt; setDataSeries(Number(value))}</pre>
+    </li>
+    <li id="L270"><pre>              /&gt;</pre></li>
+    <li id="L271"><pre>              {series.map(</pre></li>
+    <li id="L272"><pre>                (item, index) =&gt;</pre></li>
+    <li id="L273"><pre>                  dataSeries === index &amp;&amp; (</pre></li>
+    <li id="L274">
+      <pre>
+                    &lt;ToolbarMenuFields key={item.key} label={`系列 ${index + 1}`}&gt;</pre>
+    </li>
+    <li id="L275"><pre>                      &lt;ToolbarTextField</pre></li>
+    <li id="L276"><pre>                        label={`系列 ${index + 1} 名称`}</pre></li>
+    <li id="L277"><pre>                        value={item.name}</pre></li>
+    <li id="L278"><pre>                        onChange={(value) =&gt; {</pre></li>
+    <li id="L279"><pre>                          setSeries((items) =&gt;</pre></li>
+    <li id="L280"><pre>                            items.map((entry, at) =&gt;</pre></li>
+    <li id="L281">
+      <pre>                              at === index ? { ...entry, name: value } : entry,</pre>
+    </li>
+    <li id="L282"><pre>                            ),</pre></li>
+    <li id="L283"><pre>                          )</pre></li>
+    <li id="L284"><pre>                          setDataEdited(true)</pre></li>
+    <li id="L285"><pre>                        }}</pre></li>
+    <li id="L286"><pre>                      /&gt;</pre></li>
+    <li id="L287"><pre>                      &lt;ToolbarTextArea</pre></li>
+    <li id="L288">
+      <pre>                        label={`系列 ${index + 1} 数值（每行一项）`}</pre>
+    </li>
+    <li id="L289"><pre>                        value={item.values}</pre></li>
+    <li id="L290"><pre>                        rows={3}</pre></li>
+    <li id="L291"><pre>                        onChange={(value) =&gt; {</pre></li>
+    <li id="L292"><pre>                          setSeries((items) =&gt;</pre></li>
+    <li id="L293"><pre>                            items.map((entry, at) =&gt;</pre></li>
+    <li id="L294">
+      <pre>                              at === index ? { ...entry, values: value } : entry,</pre>
+    </li>
+    <li id="L295"><pre>                            ),</pre></li>
+    <li id="L296"><pre>                          )</pre></li>
+    <li id="L297"><pre>                          setDataEdited(true)</pre></li>
+    <li id="L298"><pre>                        }}</pre></li>
+    <li id="L299"><pre>                      /&gt;</pre></li>
+    <li id="L300"><pre>                      &lt;ToolbarButton</pre></li>
+    <li id="L301"><pre>                        label={`删除系列 ${index + 1}`}</pre></li>
+    <li id="L302"><pre>                        disabled={series.length &lt;= 1}</pre></li>
+    <li id="L303">
+      <pre>                        disabledReason=&quot;至少保留一个系列&quot;</pre>
+    </li>
+    <li id="L304"><pre>                        onClick={() =&gt; {</pre></li>
+    <li id="L305">
+      <pre>
+                          setSeries((items) =&gt; items.filter((_, at) =&gt; at !== index))</pre>
+    </li>
+    <li id="L306"><pre>                          setDataSeries(Math.max(0, index - 1))</pre></li>
+    <li id="L307"><pre>                          setDataEdited(true)</pre></li>
+    <li id="L308"><pre>                        }}</pre></li>
+    <li id="L309"><pre>                      &gt;</pre></li>
+    <li id="L310"><pre>                        删除系列</pre></li>
+    <li id="L311"><pre>                      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L312"><pre>                    &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L313"><pre>                  ),</pre></li>
+    <li id="L314"><pre>              )}</pre></li>
+    <li id="L315"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L316"><pre>                label=&quot;添加图表系列&quot;</pre></li>
+    <li id="L317"><pre>                disabled={series.length &gt;= 20}</pre></li>
+    <li id="L318"><pre>                disabledReason=&quot;最多20个系列&quot;</pre></li>
+    <li id="L319"><pre>                onClick={() =&gt; {</pre></li>
+    <li id="L320"><pre>                  setDataSeries(series.length)</pre></li>
+    <li id="L321"><pre>                  setSeries((items) =&gt; [</pre></li>
+    <li id="L322"><pre>                    ...items,</pre></li>
+    <li id="L323"><pre>                    {</pre></li>
+    <li id="L324"><pre>                      key: crypto.randomUUID(),</pre></li>
+    <li id="L325"><pre>                      name: `系列${items.length + 1}`,</pre></li>
+    <li id="L326">
+      <pre>
+                      values: parsedCategories.map(() =&gt; 0).join(&#x27;\n&#x27;),</pre>
+    </li>
+    <li id="L327"><pre>                    },</pre></li>
+    <li id="L328"><pre>                  ])</pre></li>
+    <li id="L329"><pre>                  setDataEdited(true)</pre></li>
+    <li id="L330"><pre>                }}</pre></li>
+    <li id="L331"><pre>              &gt;</pre></li>
+    <li id="L332"><pre>                添加系列</pre></li>
+    <li id="L333"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L334"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L335"><pre>          )}</pre></li>
+    <li id="L336"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L337"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L338">
+      <pre>      &lt;div className=&quot;mimir-pptx-chart-editor__actions&quot;&gt;</pre>
+    </li>
+    <li id="L339"><pre>        {chart.descr !== &#x27;aislides-chart&#x27; &amp;&amp; (</pre></li>
+    <li id="L340"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L341">
+      <pre>            首次编辑将转换导入图表，特殊格式可能简化。应用时需要确认。</pre>
+    </li>
+    <li id="L342"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L343"><pre>        )}</pre></li>
+    <li id="L344"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L345"><pre>          primary</pre></li>
+    <li id="L346"><pre>          label=&quot;应用图表修改&quot;</pre></li>
+    <li id="L347"><pre>          disabled={!changed || busy || Boolean(reason)}</pre></li>
+    <li id="L348">
+      <pre>
+          disabledReason={busy ? &#x27;正在修改图表&#x27; : (reason ?? &#x27;图表没有变化&#x27;)}</pre>
+    </li>
+    <li id="L349"><pre>          onClick={() =&gt; submit(patch)}</pre></li>
+    <li id="L350"><pre>        /&gt;</pre></li>
+    <li id="L351"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L352"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L353"><pre>  )</pre></li>
+    <li id="L354"><pre>}</pre></li>
+    <li id="L355"><pre></pre></li>
+    <li id="L356">
+      <pre>const EFFECT_LABELS: Record&lt;string, string&gt; = PPTX_ANIMATION_LABELS</pre>
+    </li>
+    <li id="L357">
+      <pre>
+export type PptxPlaybackSection = &#x27;effects&#x27; | &#x27;timeline&#x27; | &#x27;transition&#x27; | &#x27;notes&#x27;</pre>
+    </li>
+    <li id="L358">
+      <pre>
+const TRIGGER_LABELS = { onClick: &#x27;单击时&#x27;, withPrev: &#x27;与上一动画同时&#x27;, afterPrev: &#x27;上一动画之后&#x27; }</pre>
+    </li>
+    <li id="L359"><pre>export function SlidePlaybackControls({</pre></li>
+    <li id="L360"><pre>  slide,</pre></li>
+    <li id="L361"><pre>  index,</pre></li>
+    <li id="L362"><pre>  notes,</pre></li>
+    <li id="L363"><pre>  target,</pre></li>
+    <li id="L364"><pre>  apply,</pre></li>
+    <li id="L365"><pre>  editTiming,</pre></li>
+    <li id="L366"><pre>  editStyle,</pre></li>
+    <li id="L367"><pre>  applyBatch,</pre></li>
+    <li id="L368"><pre>  applyAnimation,</pre></li>
+    <li id="L369"><pre>  slideCount = 1,</pre></li>
+    <li id="L370"><pre>  onPreview,</pre></li>
+    <li id="L371"><pre>  previewing = false,</pre></li>
+    <li id="L372"><pre>  initialSection = &#x27;effects&#x27;,</pre></li>
+    <li id="L373"><pre>  onSectionChange,</pre></li>
+    <li id="L374"><pre>}: {</pre></li>
+    <li id="L375"><pre>  slide: Slide</pre></li>
+    <li id="L376"><pre>  index: number</pre></li>
+    <li id="L377"><pre>  notes: string</pre></li>
+    <li id="L378"><pre>  target: Target | null</pre></li>
+    <li id="L379"><pre>  apply: Apply</pre></li>
+    <li id="L380">
+      <pre>  applyBatch?: (ops: Record&lt;string, unknown&gt;[]) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L381">
+      <pre>
+  applyAnimation?: (input: PptxManualAnimation, signal: AbortSignal) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L382"><pre>  slideCount?: number</pre></li>
+    <li id="L383">
+      <pre>  onPreview?: (request: PptxAnimationPreviewRequest | null) =&gt; void</pre>
+    </li>
+    <li id="L384"><pre>  previewing?: boolean</pre></li>
+    <li id="L385"><pre>  initialSection?: PptxPlaybackSection</pre></li>
+    <li id="L386"><pre>  onSectionChange?: (value: PptxPlaybackSection) =&gt; void</pre></li>
+    <li id="L387">
+      <pre>  editTiming?: (patch: Record&lt;string, unknown&gt;) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L388">
+      <pre>
+  editStyle?: (input: Extract&lt;PptxManualAsset, { kind: &#x27;animation_style&#x27; }&gt;) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L389"><pre>}) {</pre></li>
+    <li id="L390"><pre>  const [draft, setDraft] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L391">
+      <pre>  const [section, setSection] = useState&lt;PptxPlaybackSection&gt;(initialSection)</pre>
+    </li>
+    <li id="L392"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L393"><pre>  const [cancellable, setCancellable] = useState(false)</pre></li>
+    <li id="L394"><pre>  const operation = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L395"><pre>  const previewNonce = useRef(0)</pre></li>
+    <li id="L396"><pre>  useEffect(() =&gt; () =&gt; operation.current?.abort(), [])</pre></li>
+    <li id="L397"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L398"><pre>  const revision = useRef(0)</pre></li>
+    <li id="L399"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L400"><pre>  const animationOccurrences = new Map&lt;string, number&gt;()</pre></li>
+    <li id="L401"><pre>  const animations = getSlideAnimations(slide)</pre></li>
+    <li id="L402"><pre>  const timeline = animations.map((item) =&gt; {</pre></li>
+    <li id="L403"><pre>    const signature = [</pre></li>
+    <li id="L404"><pre>      item.spid,</pre></li>
+    <li id="L405"><pre>      item.effect,</pre></li>
+    <li id="L406"><pre>      item.trigger,</pre></li>
+    <li id="L407"><pre>      item.durationMs,</pre></li>
+    <li id="L408"><pre>      item.delayMs,</pre></li>
+    <li id="L409"><pre>      item.paragraph,</pre></li>
+    <li id="L410"><pre>    ].join(&#x27;:&#x27;)</pre></li>
+    <li id="L411"><pre>    const occurrence = animationOccurrences.get(signature) ?? 0</pre></li>
+    <li id="L412"><pre>    animationOccurrences.set(signature, occurrence + 1)</pre></li>
+    <li id="L413"><pre>    return { item, key: `${signature}:${occurrence}` }</pre></li>
+    <li id="L414"><pre>  })</pre></li>
+    <li id="L415"><pre>  const advance = readSlideAdvanceTimeXml(slide.bodySuffix)</pre></li>
+    <li id="L416">
+      <pre>  const currentTransition = readSlideTransitionXml(slide.bodySuffix)</pre>
+    </li>
+    <li id="L417"><pre>  const submit = async (op: Record&lt;string, unknown&gt;) =&gt; {</pre></li>
+    <li id="L418"><pre>    if (pending.current) return false</pre></li>
+    <li id="L419"><pre>    pending.current = true</pre></li>
+    <li id="L420"><pre>    setBusy(true)</pre></li>
+    <li id="L421"><pre>    try {</pre></li>
+    <li id="L422"><pre>      return await apply(op)</pre></li>
+    <li id="L423"><pre>    } finally {</pre></li>
+    <li id="L424"><pre>      pending.current = false</pre></li>
+    <li id="L425"><pre>      setBusy(false)</pre></li>
+    <li id="L426"><pre>    }</pre></li>
+    <li id="L427"><pre>  }</pre></li>
+    <li id="L428">
+      <pre>  const submitTiming = async (patch: Record&lt;string, unknown&gt;) =&gt; {</pre>
+    </li>
+    <li id="L429"><pre>    if (!editTiming || pending.current) return false</pre></li>
+    <li id="L430"><pre>    pending.current = true</pre></li>
+    <li id="L431"><pre>    setBusy(true)</pre></li>
+    <li id="L432"><pre>    try {</pre></li>
+    <li id="L433"><pre>      return await editTiming(patch)</pre></li>
+    <li id="L434"><pre>    } finally {</pre></li>
+    <li id="L435"><pre>      pending.current = false</pre></li>
+    <li id="L436"><pre>      setBusy(false)</pre></li>
+    <li id="L437"><pre>    }</pre></li>
+    <li id="L438"><pre>  }</pre></li>
+    <li id="L439">
+      <pre>
+  const submitStyle = async (input: Extract&lt;PptxManualAsset, { kind: &#x27;animation_style&#x27; }&gt;) =&gt; {</pre>
+    </li>
+    <li id="L440"><pre>    if (!editStyle || pending.current) return false</pre></li>
+    <li id="L441"><pre>    pending.current = true</pre></li>
+    <li id="L442"><pre>    setBusy(true)</pre></li>
+    <li id="L443"><pre>    onPreview?.(null)</pre></li>
+    <li id="L444"><pre>    try {</pre></li>
+    <li id="L445"><pre>      return await editStyle(input)</pre></li>
+    <li id="L446"><pre>    } finally {</pre></li>
+    <li id="L447"><pre>      pending.current = false</pre></li>
+    <li id="L448"><pre>      setBusy(false)</pre></li>
+    <li id="L449"><pre>    }</pre></li>
+    <li id="L450"><pre>  }</pre></li>
+    <li id="L451"><pre>  const submitManual = async (input: PptxManualAnimation) =&gt; {</pre></li>
+    <li id="L452"><pre>    if (pending.current) return false</pre></li>
+    <li id="L453"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L454"><pre>    operation.current = controller</pre></li>
+    <li id="L455"><pre>    pending.current = true</pre></li>
+    <li id="L456"><pre>    setBusy(true)</pre></li>
+    <li id="L457"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L458"><pre>    setCancellable(true)</pre></li>
+    <li id="L459"><pre>    onPreview?.(null)</pre></li>
+    <li id="L460"><pre>    try {</pre></li>
+    <li id="L461">
+      <pre>      if (applyAnimation) return await applyAnimation(input, controller.signal)</pre>
+    </li>
+    <li id="L462"><pre>      const ops =</pre></li>
+    <li id="L463"><pre>        input.kind === &#x27;transition-all&#x27;</pre></li>
+    <li id="L464">
+      <pre>          ? Array.from({ length: slideCount }, (_, slideIndex) =&gt; ({</pre>
+    </li>
+    <li id="L465"><pre>              op: &#x27;setTransition&#x27;,</pre></li>
+    <li id="L466"><pre>              target: { slide: slideIndex },</pre></li>
+    <li id="L467"><pre>              kind: currentTransition,</pre></li>
+    <li id="L468"><pre>            }))</pre></li>
+    <li id="L469"><pre>          : pptxAnimationOps(</pre></li>
+    <li id="L470"><pre>              slide,</pre></li>
+    <li id="L471"><pre>              { slide: input.slide, el: input.elementId },</pre></li>
+    <li id="L472">
+      <pre>
+              input.operation === &#x27;remove&#x27; ? &#x27;none&#x27; : { ...input, effect: input.effect! },</pre>
+    </li>
+    <li id="L473"><pre>              input.operation !== &#x27;add&#x27;,</pre></li>
+    <li id="L474"><pre>            )</pre></li>
+    <li id="L475"><pre>      if (applyBatch) return await applyBatch(ops)</pre></li>
+    <li id="L476"><pre>      if (ops.length === 1) return await apply(ops[0]!)</pre></li>
+    <li id="L477">
+      <pre>      throw new Error(&#x27;批量动画宿主不可用，请刷新后重试&#x27;)</pre>
+    </li>
+    <li id="L478"><pre>    } catch (cause) {</pre></li>
+    <li id="L479"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L480">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;动画操作失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L481"><pre>      return false</pre></li>
+    <li id="L482"><pre>    } finally {</pre></li>
+    <li id="L483"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L484"><pre>        pending.current = false</pre></li>
+    <li id="L485"><pre>        setBusy(false)</pre></li>
+    <li id="L486"><pre>        setCancellable(false)</pre></li>
+    <li id="L487"><pre>      }</pre></li>
+    <li id="L488">
+      <pre>      if (operation.current === controller) operation.current = null</pre>
+    </li>
+    <li id="L489"><pre>    }</pre></li>
+    <li id="L490"><pre>  }</pre></li>
+    <li id="L491"><pre>  return (</pre></li>
+    <li id="L492">
+      <pre>    &lt;div className=&quot;mimir-pptx-animation&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L493">
+      <pre>      &lt;div className=&quot;mimir-pptx-animation__header&quot;&gt;</pre>
+    </li>
+    <li id="L494"><pre>        &lt;ToolbarTabs&lt;PptxPlaybackSection&gt;</pre></li>
+    <li id="L495"><pre>          label=&quot;放映工具分类&quot;</pre></li>
+    <li id="L496"><pre>          value={section}</pre></li>
+    <li id="L497"><pre>          items={[</pre></li>
+    <li id="L498">
+      <pre>            { value: &#x27;effects&#x27;, label: &#x27;效果&#x27; },</pre>
+    </li>
+    <li id="L499">
+      <pre>            { value: &#x27;timeline&#x27;, label: &#x27;时间线&#x27; },</pre>
+    </li>
+    <li id="L500">
+      <pre>            { value: &#x27;transition&#x27;, label: &#x27;切换&#x27; },</pre>
+    </li>
+    <li id="L501"><pre>            { value: &#x27;notes&#x27;, label: &#x27;备注&#x27; },</pre></li>
+    <li id="L502"><pre>          ]}</pre></li>
+    <li id="L503"><pre>          onChange={(value) =&gt; {</pre></li>
+    <li id="L504"><pre>            onPreview?.(null)</pre></li>
+    <li id="L505"><pre>            setSection(value)</pre></li>
+    <li id="L506"><pre>            onSectionChange?.(value)</pre></li>
+    <li id="L507"><pre>          }}</pre></li>
+    <li id="L508"><pre>        /&gt;</pre></li>
+    <li id="L509"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L510">
+      <pre>
+          {animations.length ? `共 ${animations.length} 个动画` : &#x27;本页没有动画&#x27;}</pre>
+    </li>
+    <li id="L511"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L512"><pre>        {onPreview &amp;&amp; (</pre></li>
+    <li id="L513"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L514">
+      <pre>
+            label={previewing ? &#x27;停止动画预览&#x27; : &#x27;预览本页动画&#x27;}</pre>
+    </li>
+    <li id="L515"><pre>            disabled={busy || animations.length === 0}</pre></li>
+    <li id="L516">
+      <pre>
+            disabledReason={busy ? &#x27;正在修改动画&#x27; : &#x27;本页没有动画&#x27;}</pre>
+    </li>
+    <li id="L517">
+      <pre>
+            onClick={() =&gt; onPreview(previewing ? null : { token: ++previewNonce.current })}</pre>
+    </li>
+    <li id="L518"><pre>          &gt;</pre></li>
+    <li id="L519">
+      <pre>            {previewing ? &lt;Square size={16} /&gt; : &lt;Play size={16} /&gt;}</pre>
+    </li>
+    <li id="L520">
+      <pre>
+            &lt;span&gt;{previewing ? &#x27;停止预览&#x27; : &#x27;预览本页&#x27;}&lt;/span&gt;</pre>
+    </li>
+    <li id="L521"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L522"><pre>        )}</pre></li>
+    <li id="L523"><pre>        {cancellable &amp;&amp; (</pre></li>
+    <li id="L524"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L525"><pre>            label=&quot;取消动画操作&quot;</pre></li>
+    <li id="L526"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L527"><pre>              operation.current?.abort()</pre></li>
+    <li id="L528"><pre>              operation.current = null</pre></li>
+    <li id="L529"><pre>              pending.current = false</pre></li>
+    <li id="L530"><pre>              setBusy(false)</pre></li>
+    <li id="L531"><pre>              setCancellable(false)</pre></li>
+    <li id="L532"><pre>              setError(&#x27;已取消，文稿保持原状&#x27;)</pre></li>
+    <li id="L533"><pre>            }}</pre></li>
+    <li id="L534"><pre>          &gt;</pre></li>
+    <li id="L535"><pre>            &lt;Square size={16} /&gt;</pre></li>
+    <li id="L536"><pre>            &lt;span&gt;取消&lt;/span&gt;</pre></li>
+    <li id="L537"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L538"><pre>        )}</pre></li>
+    <li id="L539"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L540">
+      <pre>
+          &lt;p className=&quot;mimir-pptx-animation__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L541"><pre>            {error}</pre></li>
+    <li id="L542"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L543"><pre>        )}</pre></li>
+    <li id="L544"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L545"><pre>      &lt;div className=&quot;mimir-pptx-animation__body&quot;&gt;</pre></li>
+    <li id="L546"><pre>        {section === &#x27;effects&#x27; &amp;&amp; (</pre></li>
+    <li id="L547"><pre>          &lt;PptxAnimationGallery</pre></li>
+    <li id="L548"><pre>            key={target?.el ?? &#x27;none&#x27;}</pre></li>
+    <li id="L549"><pre>            slide={slide}</pre></li>
+    <li id="L550"><pre>            target={target}</pre></li>
+    <li id="L551"><pre>            busy={busy}</pre></li>
+    <li id="L552"><pre>            run={submitManual}</pre></li>
+    <li id="L553"><pre>            onPreview={onPreview}</pre></li>
+    <li id="L554"><pre>          /&gt;</pre></li>
+    <li id="L555"><pre>        )}</pre></li>
+    <li id="L556"><pre>        {section === &#x27;notes&#x27; &amp;&amp; (</pre></li>
+    <li id="L557"><pre>          &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L558"><pre>            &lt;ToolbarMenuFields label=&quot;本页讲稿&quot;&gt;</pre></li>
+    <li id="L559"><pre>              &lt;ToolbarTextArea</pre></li>
+    <li id="L560"><pre>                label=&quot;演讲者备注&quot;</pre></li>
+    <li id="L561"><pre>                rows={4}</pre></li>
+    <li id="L562"><pre>                value={draft ?? notes}</pre></li>
+    <li id="L563"><pre>                onChange={(value) =&gt; {</pre></li>
+    <li id="L564"><pre>                  revision.current++</pre></li>
+    <li id="L565"><pre>                  setDraft(value)</pre></li>
+    <li id="L566"><pre>                }}</pre></li>
+    <li id="L567"><pre>              /&gt;</pre></li>
+    <li id="L568"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L569"><pre>                label=&quot;应用演讲者备注&quot;</pre></li>
+    <li id="L570">
+      <pre>                disabled={busy || draft === null || draft === notes}</pre>
+    </li>
+    <li id="L571">
+      <pre>
+                disabledReason={busy ? &#x27;正在修改幻灯片&#x27; : &#x27;备注没有变化&#x27;}</pre>
+    </li>
+    <li id="L572"><pre>                onClick={() =&gt; {</pre></li>
+    <li id="L573"><pre>                  const submitted = revision.current</pre></li>
+    <li id="L574"><pre>                  void submit({</pre></li>
+    <li id="L575"><pre>                    op: &#x27;setNotes&#x27;,</pre></li>
+    <li id="L576"><pre>                    target: { slide: index },</pre></li>
+    <li id="L577"><pre>                    text: draft ?? notes,</pre></li>
+    <li id="L578"><pre>                  }).then((ok) =&gt; {</pre></li>
+    <li id="L579">
+      <pre>
+                    if (ok &amp;&amp; submitted === revision.current) setDraft(null)</pre>
+    </li>
+    <li id="L580"><pre>                  })</pre></li>
+    <li id="L581"><pre>                }}</pre></li>
+    <li id="L582"><pre>              &gt;</pre></li>
+    <li id="L583"><pre>                应用备注</pre></li>
+    <li id="L584"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L585"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L586"><pre>          &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L587"><pre>        )}</pre></li>
+    <li id="L588"><pre>        {section === &#x27;transition&#x27; &amp;&amp; (</pre></li>
+    <li id="L589"><pre>          &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L590"><pre>            &lt;ToolbarMenuFields label=&quot;切换与换页&quot;&gt;</pre></li>
+    <li id="L591"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L592"><pre>                label=&quot;本页切换效果&quot;</pre></li>
+    <li id="L593"><pre>                value={currentTransition}</pre></li>
+    <li id="L594"><pre>                options={TRANSITION_KINDS.map((value) =&gt; ({</pre></li>
+    <li id="L595"><pre>                  value,</pre></li>
+    <li id="L596"><pre>                  label: {</pre></li>
+    <li id="L597"><pre>                    none: &#x27;无切换&#x27;,</pre></li>
+    <li id="L598"><pre>                    morph: &#x27;平滑&#x27;,</pre></li>
+    <li id="L599"><pre>                    fade: &#x27;淡入&#x27;,</pre></li>
+    <li id="L600"><pre>                    push: &#x27;推进&#x27;,</pre></li>
+    <li id="L601"><pre>                    wipe: &#x27;擦除&#x27;,</pre></li>
+    <li id="L602"><pre>                    split: &#x27;劈裂&#x27;,</pre></li>
+    <li id="L603"><pre>                    circle: &#x27;圆形&#x27;,</pre></li>
+    <li id="L604"><pre>                    cover: &#x27;覆盖&#x27;,</pre></li>
+    <li id="L605"><pre>                    pull: &#x27;揭开&#x27;,</pre></li>
+    <li id="L606"><pre>                    dissolve: &#x27;溶解&#x27;,</pre></li>
+    <li id="L607"><pre>                    zoom: &#x27;缩放&#x27;,</pre></li>
+    <li id="L608"><pre>                    random: &#x27;随机&#x27;,</pre></li>
+    <li id="L609"><pre>                  }[value],</pre></li>
+    <li id="L610"><pre>                }))}</pre></li>
+    <li id="L611"><pre>                disabled={busy}</pre></li>
+    <li id="L612"><pre>                onChange={(kind) =&gt;</pre></li>
+    <li id="L613">
+      <pre>
+                  void submit({ op: &#x27;setTransition&#x27;, target: { slide: index }, kind })</pre>
+    </li>
+    <li id="L614"><pre>                }</pre></li>
+    <li id="L615"><pre>              /&gt;</pre></li>
+    <li id="L616"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L617">
+      <pre>
+                {advance === null ? &#x27;当前手动换页&#x27; : `当前 ${advance / 1000} 秒后自动换页`}</pre>
+    </li>
+    <li id="L618"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L619"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L620"><pre>                label=&quot;自动换页秒数&quot;</pre></li>
+    <li id="L621"><pre>                value={(advance ?? 5000) / 1000}</pre></li>
+    <li id="L622"><pre>                min={0}</pre></li>
+    <li id="L623"><pre>                max={3600}</pre></li>
+    <li id="L624"><pre>                step={1}</pre></li>
+    <li id="L625"><pre>                disabled={busy}</pre></li>
+    <li id="L626"><pre>                onCommit={(seconds) =&gt;</pre></li>
+    <li id="L627"><pre>                  void submit({</pre></li>
+    <li id="L628"><pre>                    op: &#x27;setAdvanceTime&#x27;,</pre></li>
+    <li id="L629"><pre>                    target: { slide: index },</pre></li>
+    <li id="L630"><pre>                    ms: Math.round(seconds * 1000),</pre></li>
+    <li id="L631"><pre>                  })</pre></li>
+    <li id="L632"><pre>                }</pre></li>
+    <li id="L633"><pre>              /&gt;</pre></li>
+    <li id="L634"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L635"><pre>                label=&quot;关闭自动换页&quot;</pre></li>
+    <li id="L636"><pre>                disabled={busy || advance === null}</pre></li>
+    <li id="L637"><pre>                onClick={() =&gt;</pre></li>
+    <li id="L638">
+      <pre>
+                  void submit({ op: &#x27;setAdvanceTime&#x27;, target: { slide: index }, ms: null })</pre>
+    </li>
+    <li id="L639"><pre>                }</pre></li>
+    <li id="L640"><pre>              &gt;</pre></li>
+    <li id="L641"><pre>                手动换页</pre></li>
+    <li id="L642"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L643"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L644"><pre>          &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L645"><pre>        )}</pre></li>
+    <li id="L646"><pre>        {section === &#x27;timeline&#x27; &amp;&amp; (</pre></li>
+    <li id="L647"><pre>          &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L648"><pre>            &lt;ToolbarMenuFields label=&quot;本页动画&quot;&gt;</pre></li>
+    <li id="L649"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L650">
+      <pre>
+                {animations.length ? `共 ${animations.length} 个动画` : &#x27;本页没有动画&#x27;}</pre>
+    </li>
+    <li id="L651"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L652"><pre>              {timeline.map(({ item, key }, seq) =&gt; (</pre></li>
+    <li id="L653">
+      <pre>                &lt;ToolbarMenuFields key={key} label={`动画 ${seq + 1}`}&gt;</pre>
+    </li>
+    <li id="L654"><pre>                  &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L655">
+      <pre>
+                    {EFFECT_LABELS[item.effect] ?? item.effect} · {TRIGGER_LABELS[item.trigger]} ·{&#x27; &#x27;}</pre>
+    </li>
+    <li id="L656"><pre>                    {item.durationMs}ms · 延迟 {item.delayMs}ms</pre></li>
+    <li id="L657">
+      <pre>                    {item.presetXml ? &#x27; · 保留原始效果&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L658"><pre>                  &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L659"><pre>                  {editTiming &amp;&amp; (</pre></li>
+    <li id="L660"><pre>                    &lt;&gt;</pre></li>
+    <li id="L661"><pre>                      &lt;ToolbarSelect</pre></li>
+    <li id="L662"><pre>                        label={`动画 ${seq + 1} 开始方式`}</pre></li>
+    <li id="L663"><pre>                        value={item.trigger}</pre></li>
+    <li id="L664"><pre>                        disabled={busy}</pre></li>
+    <li id="L665">
+      <pre>                        options={ANIM_TRIGGERS.map((value) =&gt; ({</pre>
+    </li>
+    <li id="L666"><pre>                          value,</pre></li>
+    <li id="L667"><pre>                          label: TRIGGER_LABELS[value],</pre></li>
+    <li id="L668"><pre>                        }))}</pre></li>
+    <li id="L669"><pre>                        onChange={(value) =&gt;</pre></li>
+    <li id="L670">
+      <pre>
+                          void submitTiming({ target: { slide: index }, seq, trigger: value })</pre>
+    </li>
+    <li id="L671"><pre>                        }</pre></li>
+    <li id="L672"><pre>                      /&gt;</pre></li>
+    <li id="L673"><pre>                      &lt;ToolbarNumberField</pre></li>
+    <li id="L674"><pre>                        label={`动画 ${seq + 1} 持续毫秒`}</pre></li>
+    <li id="L675"><pre>                        value={item.durationMs}</pre></li>
+    <li id="L676"><pre>                        min={0}</pre></li>
+    <li id="L677"><pre>                        max={60000}</pre></li>
+    <li id="L678"><pre>                        step={100}</pre></li>
+    <li id="L679"><pre>                        disabled={busy}</pre></li>
+    <li id="L680"><pre>                        onCommit={(durationMs) =&gt;</pre></li>
+    <li id="L681">
+      <pre>
+                          void submitTiming({ target: { slide: index }, seq, durationMs })</pre>
+    </li>
+    <li id="L682"><pre>                        }</pre></li>
+    <li id="L683"><pre>                      /&gt;</pre></li>
+    <li id="L684"><pre>                      &lt;ToolbarNumberField</pre></li>
+    <li id="L685"><pre>                        label={`动画 ${seq + 1} 延迟毫秒`}</pre></li>
+    <li id="L686"><pre>                        value={item.delayMs}</pre></li>
+    <li id="L687"><pre>                        min={0}</pre></li>
+    <li id="L688"><pre>                        max={60000}</pre></li>
+    <li id="L689"><pre>                        step={100}</pre></li>
+    <li id="L690"><pre>                        disabled={busy}</pre></li>
+    <li id="L691"><pre>                        onCommit={(delayMs) =&gt;</pre></li>
+    <li id="L692">
+      <pre>
+                          void submitTiming({ target: { slide: index }, seq, delayMs })</pre>
+    </li>
+    <li id="L693"><pre>                        }</pre></li>
+    <li id="L694"><pre>                      /&gt;</pre></li>
+    <li id="L695"><pre>                    &lt;/&gt;</pre></li>
+    <li id="L696"><pre>                  )}</pre></li>
+    <li id="L697"><pre>                  {editStyle &amp;&amp; (</pre></li>
+    <li id="L698"><pre>                    &lt;&gt;</pre></li>
+    <li id="L699"><pre>                      &lt;ToolbarSelect</pre></li>
+    <li id="L700"><pre>                        label={`动画 ${seq + 1} 效果`}</pre></li>
+    <li id="L701"><pre>                        disabled={busy}</pre></li>
+    <li id="L702"><pre>                        value={item.effect}</pre></li>
+    <li id="L703"><pre>                        options={ANIM_EFFECTS.map((value) =&gt; ({</pre></li>
+    <li id="L704"><pre>                          value,</pre></li>
+    <li id="L705"><pre>                          label: EFFECT_LABELS[value] ?? value,</pre></li>
+    <li id="L706"><pre>                        }))}</pre></li>
+    <li id="L707"><pre>                        onChange={(value) =&gt;</pre></li>
+    <li id="L708"><pre>                          void submitStyle({</pre></li>
+    <li id="L709"><pre>                            kind: &#x27;animation_style&#x27;,</pre></li>
+    <li id="L710"><pre>                            slide: index,</pre></li>
+    <li id="L711"><pre>                            seq,</pre></li>
+    <li id="L712"><pre>                            effect: value as AnimEffectKind,</pre></li>
+    <li id="L713"><pre>                          })</pre></li>
+    <li id="L714"><pre>                        }</pre></li>
+    <li id="L715"><pre>                      /&gt;</pre></li>
+    <li id="L716">
+      <pre>
+                      {[&#x27;flyIn&#x27;, &#x27;flyOut&#x27;, &#x27;wipe&#x27;, &#x27;wipeOut&#x27;].includes(item.effect) &amp;&amp; (</pre>
+    </li>
+    <li id="L717"><pre>                        &lt;ToolbarSelect</pre></li>
+    <li id="L718"><pre>                          label={`动画 ${seq + 1} 方向`}</pre></li>
+    <li id="L719"><pre>                          disabled={busy}</pre></li>
+    <li id="L720">
+      <pre>                          value={item.direction ?? &#x27;bottom&#x27;}</pre>
+    </li>
+    <li id="L721"><pre>                          options={[</pre></li>
+    <li id="L722">
+      <pre>                            { value: &#x27;top&#x27;, label: &#x27;从上方&#x27; },</pre>
+    </li>
+    <li id="L723">
+      <pre>
+                            { value: &#x27;bottom&#x27;, label: &#x27;从下方&#x27; },</pre>
+    </li>
+    <li id="L724">
+      <pre>                            { value: &#x27;left&#x27;, label: &#x27;从左侧&#x27; },</pre>
+    </li>
+    <li id="L725">
+      <pre>
+                            { value: &#x27;right&#x27;, label: &#x27;从右侧&#x27; },</pre>
+    </li>
+    <li id="L726"><pre>                          ]}</pre></li>
+    <li id="L727"><pre>                          onChange={(value) =&gt;</pre></li>
+    <li id="L728"><pre>                            void submitStyle({</pre></li>
+    <li id="L729"><pre>                              kind: &#x27;animation_style&#x27;,</pre></li>
+    <li id="L730"><pre>                              slide: index,</pre></li>
+    <li id="L731"><pre>                              seq,</pre></li>
+    <li id="L732">
+      <pre>
+                              direction: value as &#x27;top&#x27; | &#x27;bottom&#x27; | &#x27;left&#x27; | &#x27;right&#x27;,</pre>
+    </li>
+    <li id="L733"><pre>                            })</pre></li>
+    <li id="L734"><pre>                          }</pre></li>
+    <li id="L735"><pre>                        /&gt;</pre></li>
+    <li id="L736"><pre>                      )}</pre></li>
+    <li id="L737">
+      <pre>                      {!item.effect.startsWith(&#x27;media&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L738"><pre>                        &lt;ToolbarNumberField</pre></li>
+    <li id="L739">
+      <pre>                          label={`动画 ${seq + 1} 目标段落（0为整个对象）`}</pre>
+    </li>
+    <li id="L740">
+      <pre>
+                          value={item.paragraph === undefined ? 0 : item.paragraph + 1}</pre>
+    </li>
+    <li id="L741"><pre>                          min={0}</pre></li>
+    <li id="L742"><pre>                          max={1000}</pre></li>
+    <li id="L743"><pre>                          onCommit={(value) =&gt;</pre></li>
+    <li id="L744"><pre>                            void submitStyle({</pre></li>
+    <li id="L745"><pre>                              kind: &#x27;animation_style&#x27;,</pre></li>
+    <li id="L746"><pre>                              slide: index,</pre></li>
+    <li id="L747"><pre>                              seq,</pre></li>
+    <li id="L748">
+      <pre>                              paragraph: value === 0 ? null : value - 1,</pre>
+    </li>
+    <li id="L749"><pre>                            })</pre></li>
+    <li id="L750"><pre>                          }</pre></li>
+    <li id="L751"><pre>                        /&gt;</pre></li>
+    <li id="L752"><pre>                      )}</pre></li>
+    <li id="L753">
+      <pre>                      {item.effect === &#x27;motionPath&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L754"><pre>                        &lt;MotionPathControl</pre></li>
+    <li id="L755"><pre>                          seq={seq}</pre></li>
+    <li id="L756">
+      <pre>                          value={item.motionPath ?? &#x27;M 0 0 L 0.25 0&#x27;}</pre>
+    </li>
+    <li id="L757"><pre>                          apply={(path) =&gt;</pre></li>
+    <li id="L758"><pre>                            editStyle({</pre></li>
+    <li id="L759"><pre>                              kind: &#x27;animation_style&#x27;,</pre></li>
+    <li id="L760"><pre>                              slide: index,</pre></li>
+    <li id="L761"><pre>                              seq,</pre></li>
+    <li id="L762"><pre>                              motionPath: path,</pre></li>
+    <li id="L763"><pre>                            })</pre></li>
+    <li id="L764"><pre>                          }</pre></li>
+    <li id="L765"><pre>                        /&gt;</pre></li>
+    <li id="L766"><pre>                      )}</pre></li>
+    <li id="L767"><pre>                    &lt;/&gt;</pre></li>
+    <li id="L768"><pre>                  )}</pre></li>
+    <li id="L769"><pre>                  &lt;ToolbarButton</pre></li>
+    <li id="L770"><pre>                    label={`上移动画 ${seq + 1}`}</pre></li>
+    <li id="L771"><pre>                    disabled={busy || seq === 0}</pre></li>
+    <li id="L772"><pre>                    onClick={() =&gt;</pre></li>
+    <li id="L773"><pre>                      void submit({</pre></li>
+    <li id="L774"><pre>                        op: &#x27;reorderAnimation&#x27;,</pre></li>
+    <li id="L775"><pre>                        target: { slide: index },</pre></li>
+    <li id="L776"><pre>                        seq,</pre></li>
+    <li id="L777"><pre>                        to: seq - 1,</pre></li>
+    <li id="L778"><pre>                      })</pre></li>
+    <li id="L779"><pre>                    }</pre></li>
+    <li id="L780"><pre>                  &gt;</pre></li>
+    <li id="L781"><pre>                    上移</pre></li>
+    <li id="L782"><pre>                  &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L783"><pre>                  &lt;ToolbarButton</pre></li>
+    <li id="L784"><pre>                    label={`下移动画 ${seq + 1}`}</pre></li>
+    <li id="L785">
+      <pre>                    disabled={busy || seq === animations.length - 1}</pre>
+    </li>
+    <li id="L786"><pre>                    onClick={() =&gt;</pre></li>
+    <li id="L787"><pre>                      void submit({</pre></li>
+    <li id="L788"><pre>                        op: &#x27;reorderAnimation&#x27;,</pre></li>
+    <li id="L789"><pre>                        target: { slide: index },</pre></li>
+    <li id="L790"><pre>                        seq,</pre></li>
+    <li id="L791"><pre>                        to: seq + 1,</pre></li>
+    <li id="L792"><pre>                      })</pre></li>
+    <li id="L793"><pre>                    }</pre></li>
+    <li id="L794"><pre>                  &gt;</pre></li>
+    <li id="L795"><pre>                    下移</pre></li>
+    <li id="L796"><pre>                  &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L797"><pre>                  &lt;ToolbarButton</pre></li>
+    <li id="L798"><pre>                    label={`删除动画 ${seq + 1}`}</pre></li>
+    <li id="L799"><pre>                    disabled={busy}</pre></li>
+    <li id="L800"><pre>                    onClick={() =&gt;</pre></li>
+    <li id="L801">
+      <pre>
+                      void submit({ op: &#x27;removeAnimation&#x27;, target: { slide: index }, seq })</pre>
+    </li>
+    <li id="L802"><pre>                    }</pre></li>
+    <li id="L803"><pre>                  &gt;</pre></li>
+    <li id="L804"><pre>                    删除动画</pre></li>
+    <li id="L805"><pre>                  &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L806"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L807"><pre>              ))}</pre></li>
+    <li id="L808"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L809">
+      <pre>                动画顺序和时间保存在文件中，可在 PowerPoint 放映时播放。</pre>
+    </li>
+    <li id="L810"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L811"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L812"><pre>          &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L813"><pre>        )}</pre></li>
+    <li id="L814"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L815"><pre>      {section === &#x27;transition&#x27; &amp;&amp; (</pre></li>
+    <li id="L816">
+      <pre>        &lt;div className=&quot;mimir-pptx-animation__footer&quot;&gt;</pre>
+    </li>
+    <li id="L817"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L818"><pre>            label=&quot;将本页切换应用到全部幻灯片&quot;</pre></li>
+    <li id="L819"><pre>            primary</pre></li>
+    <li id="L820"><pre>            disabled={busy || slideCount &lt; 2}</pre></li>
+    <li id="L821">
+      <pre>
+            disabledReason={busy ? &#x27;正在应用切换&#x27; : &#x27;文稿只有一页&#x27;}</pre>
+    </li>
+    <li id="L822">
+      <pre>
+            onClick={() =&gt; void submitManual({ kind: &#x27;transition-all&#x27;, slide: index })}</pre>
+    </li>
+    <li id="L823"><pre>          &gt;</pre></li>
+    <li id="L824"><pre>            &lt;Layers size={16} /&gt;</pre></li>
+    <li id="L825"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L826"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L827"><pre>      )}</pre></li>
+    <li id="L828"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L829"><pre>  )</pre></li>
+    <li id="L830"><pre>}</pre></li>
+    <li id="L831"><pre></pre></li>
+    <li id="L832"><pre>function MotionPathControl({</pre></li>
+    <li id="L833"><pre>  seq,</pre></li>
+    <li id="L834"><pre>  value,</pre></li>
+    <li id="L835"><pre>  apply,</pre></li>
+    <li id="L836"><pre>}: {</pre></li>
+    <li id="L837"><pre>  seq: number</pre></li>
+    <li id="L838"><pre>  value: string</pre></li>
+    <li id="L839"><pre>  apply: (value: string) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L840"><pre>}) {</pre></li>
+    <li id="L841"><pre>  const [draft, setDraft] = useState(value)</pre></li>
+    <li id="L842"><pre>  return (</pre></li>
+    <li id="L843"><pre>    &lt;&gt;</pre></li>
+    <li id="L844">
+      <pre>
+      &lt;ToolbarTextField label={`动画 ${seq + 1} 运动路径`} value={draft} onChange={setDraft} /&gt;</pre>
+    </li>
+    <li id="L845"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L846"><pre>        label={`应用动画 ${seq + 1} 运动路径`}</pre></li>
+    <li id="L847"><pre>        disabled={draft === value}</pre></li>
+    <li id="L848"><pre>        onClick={() =&gt; void apply(draft)}</pre></li>
+    <li id="L849"><pre>      &gt;{`应用动画 ${seq + 1} 运动路径`}&lt;/ToolbarButton&gt;</pre></li>
+    <li id="L850"><pre>    &lt;/&gt;</pre></li>
+    <li id="L851"><pre>  )</pre></li>
+    <li id="L852"><pre>}</pre></li>
+  </ol>
+</html>

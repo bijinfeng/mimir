@@ -48,6 +48,47 @@
   > .me-property-group__title {
   display: none;
 }
+.mimir-pptx-inspector__body:is(
+  [data-panel='公式'],
+  [data-panel='图示'],
+  [data-panel='导入幻灯片']
+) {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-control-panel--actions {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-width: 100%;
+}
+.mimir-pptx-control-panel__body {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-pptx-control-panel__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-pptx-control-panel__footer > .me-tb {
+  width: 100%;
+}
+.mimir-pptx-control-panel__footer > [role='status'] {
+  width: 100%;
+  margin: 0;
+  color: var(--me-text-weak);
+}
 .mimir-pptx-tool-popover {
   max-width: 100%;
   overflow-x: hidden;

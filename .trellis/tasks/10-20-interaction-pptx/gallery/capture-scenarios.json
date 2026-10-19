@@ -1,0 +1,162 @@
+[
+  {
+    "key": "formula-short",
+    "title": "公式 · 短高窄屏",
+    "theme": "light",
+    "viewport": [
+      390,
+      400
+    ],
+    "editorSize": [
+      390,
+      400
+    ],
+    "fixture": "rich",
+    "steps": "插入 → 公式 → 插入公式。默认质能方程；不滚动。",
+    "selectedFile": null,
+    "before": "captures/before-formula-short.png",
+    "after": "captures/after-formula-short.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "diagram-short",
+    "title": "图示 · 短高窄屏",
+    "theme": "light",
+    "viewport": [
+      390,
+      400
+    ],
+    "editorSize": [
+      390,
+      400
+    ],
+    "fixture": "rich",
+    "steps": "插入 → 图示 → 插入图示。默认流程与三节点；不滚动。",
+    "selectedFile": null,
+    "before": "captures/before-diagram-short.png",
+    "after": "captures/after-diagram-short.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "formula-wide",
+    "title": "公式 · 宽编辑区",
+    "theme": "light",
+    "viewport": [
+      1100,
+      760
+    ],
+    "editorSize": [
+      1100,
+      760
+    ],
+    "fixture": "rich",
+    "steps": "插入 → 公式 → 插入公式。默认质能方程；不滚动。",
+    "selectedFile": null,
+    "before": "captures/before-formula-wide.png",
+    "after": "captures/after-formula-wide.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "diagram-wide",
+    "title": "图示 · 宽编辑区",
+    "theme": "light",
+    "viewport": [
+      1100,
+      760
+    ],
+    "editorSize": [
+      1100,
+      760
+    ],
+    "fixture": "rich",
+    "steps": "插入 → 图示 → 插入图示。默认流程与三节点；不滚动。",
+    "selectedFile": null,
+    "before": "captures/before-diagram-wide.png",
+    "after": "captures/after-diagram-wide.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "diagram-medium",
+    "title": "图示 · 690栏",
+    "theme": "light",
+    "viewport": [
+      690,
+      600
+    ],
+    "editorSize": [
+      690,
+      600
+    ],
+    "fixture": "rich",
+    "steps": "插入 → 图示 → 插入图示。默认流程与三节点；不滚动。",
+    "selectedFile": null,
+    "before": "captures/before-diagram-medium.png",
+    "after": "captures/after-diagram-medium.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "import-dark-short",
+    "title": "导入 · 深色短高窄屏",
+    "theme": "dark",
+    "viewport": [
+      390,
+      400
+    ],
+    "editorSize": [
+      390,
+      400
+    ],
+    "fixture": "rich",
+    "steps": "幻灯片 → 导入。尚未选择源文件。基线具名折叠菜单保持原生打开状态；不手动遮盖或滚动。",
+    "selectedFile": null,
+    "before": "captures/before-import-dark-short.png",
+    "after": "captures/after-import-dark-short.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "import-preview-dark-short",
+    "title": "导入预览 · 深色短高窄屏",
+    "theme": "dark",
+    "viewport": [
+      390,
+      400
+    ],
+    "editorSize": [
+      390,
+      400
+    ],
+    "fixture": "rich",
+    "steps": "幻灯片 → 导入，原生文件选择title-layout.pptx。基线具名折叠菜单保持原生打开状态。",
+    "selectedFile": "title-layout.pptx",
+    "before": "captures/before-import-preview-dark-short.png",
+    "after": "captures/after-import-preview-dark-short.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  },
+  {
+    "key": "import-dark-medium",
+    "title": "导入 · 深色690栏",
+    "theme": "dark",
+    "viewport": [
+      690,
+      600
+    ],
+    "editorSize": [
+      690,
+      600
+    ],
+    "fixture": "rich",
+    "steps": "幻灯片 → 导入。尚未选择源文件；不滚动。",
+    "selectedFile": null,
+    "before": "captures/before-import-dark-medium.png",
+    "after": "captures/after-import-dark-medium.png",
+    "baseline": "3b5d912",
+    "sameContentThemeSizeRequired": true
+  }
+]

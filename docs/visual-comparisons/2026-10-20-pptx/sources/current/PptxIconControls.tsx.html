@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxIconControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxIconControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 1f6b393aad614ff31e5b4874f7380fdc3ad633bfb7827a72d5de2c42dc3bdeea
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useRef, useState, type KeyboardEvent } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { Button } from &#x27;antd&#x27;</pre></li>
+    <li id="L3"><pre>import { rasterizePptxSvg } from &#x27;../pptx-output.js&#x27;</pre></li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarButton,</pre></li>
+    <li id="L6"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L8"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L9"><pre>  ToolbarSelect,</pre></li>
+    <li id="L10"><pre>  ToolbarTextField,</pre></li>
+    <li id="L11"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L12"><pre>import type { PptxUpload } from &#x27;./PptxAssetControls.js&#x27;</pre></li>
+    <li id="L13"><pre>import {</pre></li>
+    <li id="L14"><pre>  filterPptxIcons,</pre></li>
+    <li id="L15"><pre>  PPTX_ICON_COLORS,</pre></li>
+    <li id="L16"><pre>  PPTX_ICON_GROUPS,</pre></li>
+    <li id="L17"><pre>  PPTX_ICONS,</pre></li>
+    <li id="L18"><pre>  pptxIconSvg,</pre></li>
+    <li id="L19"><pre>  type PptxIconDefinition,</pre></li>
+    <li id="L20"><pre>} from &#x27;./pptx-icons.js&#x27;</pre></li>
+    <li id="L21"><pre>import &#x27;./pptx-icon-controls.css&#x27;</pre></li>
+    <li id="L22"><pre></pre></li>
+    <li id="L23"><pre>function IconPreview({</pre></li>
+    <li id="L24"><pre>  icon,</pre></li>
+    <li id="L25"><pre>  color = &#x27;currentColor&#x27;,</pre></li>
+    <li id="L26"><pre>  size = 24,</pre></li>
+    <li id="L27"><pre>}: {</pre></li>
+    <li id="L28"><pre>  icon: PptxIconDefinition</pre></li>
+    <li id="L29"><pre>  color?: string</pre></li>
+    <li id="L30"><pre>  size?: number</pre></li>
+    <li id="L31"><pre>}) {</pre></li>
+    <li id="L32"><pre>  return (</pre></li>
+    <li id="L33"><pre>    &lt;svg</pre></li>
+    <li id="L34"><pre>      width={size}</pre></li>
+    <li id="L35"><pre>      height={size}</pre></li>
+    <li id="L36"><pre>      viewBox=&quot;0 0 24 24&quot;</pre></li>
+    <li id="L37"><pre>      fill=&quot;none&quot;</pre></li>
+    <li id="L38"><pre>      stroke={color}</pre></li>
+    <li id="L39"><pre>      strokeWidth=&quot;1.5&quot;</pre></li>
+    <li id="L40"><pre>      strokeLinecap=&quot;round&quot;</pre></li>
+    <li id="L41"><pre>      strokeLinejoin=&quot;round&quot;</pre></li>
+    <li id="L42"><pre>      aria-hidden=&quot;true&quot;</pre></li>
+    <li id="L43"><pre>      dangerouslySetInnerHTML={{ __html: icon.body }}</pre></li>
+    <li id="L44"><pre>    /&gt;</pre></li>
+    <li id="L45"><pre>  )</pre></li>
+    <li id="L46"><pre>}</pre></li>
+    <li id="L47"><pre></pre></li>
+    <li id="L48"><pre>export interface PptxIconControlsProps {</pre></li>
+    <li id="L49"><pre>  slide: number</pre></li>
+    <li id="L50"><pre>  upload: PptxUpload</pre></li>
+    <li id="L51"><pre>  /** Identity of the document and persistent slide path. */</pre></li>
+    <li id="L52"><pre>  sourceKey?: string</pre></li>
+    <li id="L53"><pre>  version?: number</pre></li>
+    <li id="L54"><pre>  disabled?: boolean</pre></li>
+    <li id="L55"><pre>  onCancel?: () =&gt; void</pre></li>
+    <li id="L56"><pre>}</pre></li>
+    <li id="L57"><pre></pre></li>
+    <li id="L58">
+      <pre>
+/** Drafts only write on the footer action. The host also guards the upload version. */</pre>
+    </li>
+    <li id="L59"><pre>export function PptxIconControls({</pre></li>
+    <li id="L60"><pre>  slide,</pre></li>
+    <li id="L61"><pre>  upload,</pre></li>
+    <li id="L62"><pre>  sourceKey = &#x27;&#x27;,</pre></li>
+    <li id="L63"><pre>  version = 0,</pre></li>
+    <li id="L64"><pre>  disabled = false,</pre></li>
+    <li id="L65"><pre>  onCancel,</pre></li>
+    <li id="L66"><pre>}: PptxIconControlsProps) {</pre></li>
+    <li id="L67"><pre>  const identity = JSON.stringify([sourceKey, slide, version])</pre></li>
+    <li id="L68"><pre>  const current = useRef(identity)</pre></li>
+    <li id="L69">
+      <pre>
+  const [draft, setDraft] = useState({ identity, selected: &#x27;star&#x27;, color: &#x27;#404040&#x27;, size: 72 })</pre>
+    </li>
+    <li id="L70"><pre>  if (draft.identity !== identity)</pre></li>
+    <li id="L71">
+      <pre>
+    setDraft({ identity, selected: &#x27;star&#x27;, color: &#x27;#404040&#x27;, size: 72 })</pre>
+    </li>
+    <li id="L72"><pre>  const [query, setQuery] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L73"><pre>  const [category, setCategory] = useState(&#x27;all&#x27;)</pre></li>
+    <li id="L74"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L75"><pre>  const pending = useRef&lt;symbol | null&gt;(null)</pre></li>
+    <li id="L76"><pre>  const rasterizing = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L77"><pre>  const mounted = useRef(true)</pre></li>
+    <li id="L78">
+      <pre>  const [feedback, setFeedback] = useState({ identity, message: &#x27;&#x27; })</pre>
+    </li>
+    <li id="L79"><pre>  const gallery = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L80"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L81"><pre>    mounted.current = true</pre></li>
+    <li id="L82"><pre>    return () =&gt; {</pre></li>
+    <li id="L83"><pre>      mounted.current = false</pre></li>
+    <li id="L84"><pre>      pending.current = null</pre></li>
+    <li id="L85"><pre>      rasterizing.current?.abort()</pre></li>
+    <li id="L86"><pre>    }</pre></li>
+    <li id="L87"><pre>  }, [])</pre></li>
+    <li id="L88"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L89"><pre>    current.current = identity</pre></li>
+    <li id="L90"><pre>    return () =&gt; rasterizing.current?.abort()</pre></li>
+    <li id="L91"><pre>  }, [identity])</pre></li>
+    <li id="L92">
+      <pre>
+  const selected = PPTX_ICONS.find((icon) =&gt; icon.id === draft.selected) ?? PPTX_ICONS[0]!</pre>
+    </li>
+    <li id="L93"><pre>  const visible = filterPptxIcons(query, category)</pre></li>
+    <li id="L94">
+      <pre>
+  const tabStop = visible.some((icon) =&gt; icon.id === selected.id) ? selected.id : visible[0]?.id</pre>
+    </li>
+    <li id="L95"><pre>  const locked = disabled || busy</pre></li>
+    <li id="L96"><pre>  const pick = (id: string) =&gt; {</pre></li>
+    <li id="L97"><pre>    setDraft({ ...draft, selected: id })</pre></li>
+    <li id="L98"><pre>    setFeedback({ identity, message: &#x27;&#x27; })</pre></li>
+    <li id="L99"><pre>  }</pre></li>
+    <li id="L100"><pre>  const navigate = (event: KeyboardEvent, index: number) =&gt; {</pre></li>
+    <li id="L101">
+      <pre>
+    const delta = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -4, ArrowDown: 4 }[event.key]</pre>
+    </li>
+    <li id="L102">
+      <pre>
+    if (delta === undefined &amp;&amp; event.key !== &#x27;Home&#x27; &amp;&amp; event.key !== &#x27;End&#x27;) return</pre>
+    </li>
+    <li id="L103"><pre>    event.preventDefault()</pre></li>
+    <li id="L104"><pre>    event.stopPropagation()</pre></li>
+    <li id="L105"><pre>    const next =</pre></li>
+    <li id="L106"><pre>      event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L107"><pre>        ? 0</pre></li>
+    <li id="L108"><pre>        : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L109"><pre>          ? visible.length - 1</pre></li>
+    <li id="L110">
+      <pre>          : Math.max(0, Math.min(visible.length - 1, index + (delta ?? 0)))</pre>
+    </li>
+    <li id="L111"><pre>    const icon = visible[next]</pre></li>
+    <li id="L112"><pre>    if (!icon || locked) return</pre></li>
+    <li id="L113"><pre>    pick(icon.id)</pre></li>
+    <li id="L114">
+      <pre>
+    gallery.current?.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;[role=&quot;radio&quot;]&#x27;)[next]?.focus()</pre>
+    </li>
+    <li id="L115"><pre>  }</pre></li>
+    <li id="L116"><pre>  const insert = async () =&gt; {</pre></li>
+    <li id="L117"><pre>    if (pending.current || disabled) return</pre></li>
+    <li id="L118"><pre>    const token = Symbol(&#x27;icon&#x27;)</pre></li>
+    <li id="L119"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L120"><pre>    rasterizing.current = controller</pre></li>
+    <li id="L121"><pre>    pending.current = token</pre></li>
+    <li id="L122"><pre>    setBusy(true)</pre></li>
+    <li id="L123"><pre>    setFeedback({ identity, message: &#x27;&#x27; })</pre></li>
+    <li id="L124">
+      <pre>
+    const valid = () =&gt; mounted.current &amp;&amp; pending.current === token &amp;&amp; current.current === identity</pre>
+    </li>
+    <li id="L125"><pre>    try {</pre></li>
+    <li id="L126"><pre>      const bytes = await rasterizePptxSvg(</pre></li>
+    <li id="L127"><pre>        pptxIconSvg(selected, draft.color),</pre></li>
+    <li id="L128"><pre>        512,</pre></li>
+    <li id="L129"><pre>        512,</pre></li>
+    <li id="L130"><pre>        controller.signal,</pre></li>
+    <li id="L131"><pre>      )</pre></li>
+    <li id="L132">
+      <pre>      // Rasterization may finish after the user changes document, page or version.</pre>
+    </li>
+    <li id="L133"><pre>      if (!valid()) return</pre></li>
+    <li id="L134"><pre>      const ok = await upload(</pre></li>
+    <li id="L135">
+      <pre>        { kind: &#x27;picture&#x27;, slide, widthPt: draft.size, keepCrop: false },</pre>
+    </li>
+    <li id="L136">
+      <pre>
+        new File([bytes], `${selected.label}.png`, { type: &#x27;image/png&#x27; }),</pre>
+    </li>
+    <li id="L137"><pre>      )</pre></li>
+    <li id="L138"><pre>      if (valid())</pre></li>
+    <li id="L139"><pre>        setFeedback({</pre></li>
+    <li id="L140"><pre>          identity,</pre></li>
+    <li id="L141">
+      <pre>
+          message: ok ? &#x27;已插入图标&#x27; : &#x27;图标未插入，已保留所选图标。请重试。&#x27;,</pre>
+    </li>
+    <li id="L142"><pre>        })</pre></li>
+    <li id="L143"><pre>    } catch (cause) {</pre></li>
+    <li id="L144"><pre>      if (valid())</pre></li>
+    <li id="L145"><pre>        setFeedback({</pre></li>
+    <li id="L146"><pre>          identity,</pre></li>
+    <li id="L147">
+      <pre>
+          message: cause instanceof Error ? cause.message : &#x27;图标生成失败，请重试&#x27;,</pre>
+    </li>
+    <li id="L148"><pre>        })</pre></li>
+    <li id="L149"><pre>    } finally {</pre></li>
+    <li id="L150"><pre>      if (pending.current === token) {</pre></li>
+    <li id="L151"><pre>        pending.current = null</pre></li>
+    <li id="L152"><pre>        if (mounted.current) setBusy(false)</pre></li>
+    <li id="L153"><pre>      }</pre></li>
+    <li id="L154"><pre>    }</pre></li>
+    <li id="L155"><pre>  }</pre></li>
+    <li id="L156"><pre>  return (</pre></li>
+    <li id="L157"><pre>    &lt;fieldset</pre></li>
+    <li id="L158"><pre>      className=&quot;mimir-pptx-icons&quot;</pre></li>
+    <li id="L159"><pre>      disabled={locked}</pre></li>
+    <li id="L160"><pre>      aria-busy={busy}</pre></li>
+    <li id="L161"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L162">
+      <pre>
+        if (event.key === &#x27;Escape&#x27; &amp;&amp; query &amp;&amp; !event.defaultPrevented) {</pre>
+    </li>
+    <li id="L163"><pre>          event.preventDefault()</pre></li>
+    <li id="L164"><pre>          event.stopPropagation()</pre></li>
+    <li id="L165"><pre>          setQuery(&#x27;&#x27;)</pre></li>
+    <li id="L166"><pre>        }</pre></li>
+    <li id="L167"><pre>      }}</pre></li>
+    <li id="L168"><pre>    &gt;</pre></li>
+    <li id="L169"><pre>      &lt;div className=&quot;mimir-pptx-icons__filters&quot;&gt;</pre></li>
+    <li id="L170"><pre>        &lt;ToolbarTextField</pre></li>
+    <li id="L171"><pre>          label=&quot;搜索图标&quot;</pre></li>
+    <li id="L172"><pre>          placeholder=&quot;名称或英文关键词&quot;</pre></li>
+    <li id="L173"><pre>          value={query}</pre></li>
+    <li id="L174"><pre>          onChange={setQuery}</pre></li>
+    <li id="L175"><pre>        /&gt;</pre></li>
+    <li id="L176"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L177"><pre>          label=&quot;图标分类&quot;</pre></li>
+    <li id="L178"><pre>          value={category}</pre></li>
+    <li id="L179"><pre>          disabled={locked}</pre></li>
+    <li id="L180"><pre>          onChange={setCategory}</pre></li>
+    <li id="L181"><pre>          options={[</pre></li>
+    <li id="L182">
+      <pre>            { value: &#x27;all&#x27;, label: `全部图标（${PPTX_ICONS.length}）` },</pre>
+    </li>
+    <li id="L183"><pre>            ...PPTX_ICON_GROUPS.map((group) =&gt; ({</pre></li>
+    <li id="L184"><pre>              value: group.id,</pre></li>
+    <li id="L185">
+      <pre>
+              label: `${group.label}（${PPTX_ICONS.filter((icon) =&gt; icon.group === group.id).length}）`,</pre>
+    </li>
+    <li id="L186"><pre>            })),</pre></li>
+    <li id="L187"><pre>          ]}</pre></li>
+    <li id="L188"><pre>        /&gt;</pre></li>
+    <li id="L189"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L190"><pre>      &lt;div className=&quot;mimir-pptx-icons__body&quot;&gt;</pre></li>
+    <li id="L191">
+      <pre>
+        &lt;div ref={gallery} role=&quot;radiogroup&quot; aria-label=&quot;图标图库&quot;&gt;</pre>
+    </li>
+    <li id="L192"><pre>          {PPTX_ICON_GROUPS.map((group) =&gt; {</pre></li>
+    <li id="L193">
+      <pre>            const items = visible.filter((icon) =&gt; icon.group === group.id)</pre>
+    </li>
+    <li id="L194"><pre>            return items.length ? (</pre></li>
+    <li id="L195">
+      <pre>
+              &lt;section key={group.id} className=&quot;mimir-pptx-icons__group&quot; aria-label={group.label}&gt;</pre>
+    </li>
+    <li id="L196"><pre>                &lt;h3&gt;{group.label}&lt;/h3&gt;</pre></li>
+    <li id="L197">
+      <pre>                &lt;div className=&quot;mimir-pptx-icons__grid&quot;&gt;</pre>
+    </li>
+    <li id="L198"><pre>                  {items.map((icon) =&gt; (</pre></li>
+    <li id="L199"><pre>                    &lt;Button</pre></li>
+    <li id="L200"><pre>                      key={icon.id}</pre></li>
+    <li id="L201"><pre>                      role=&quot;radio&quot;</pre></li>
+    <li id="L202"><pre>                      aria-label={icon.label}</pre></li>
+    <li id="L203"><pre>                      aria-checked={selected.id === icon.id}</pre></li>
+    <li id="L204"><pre>                      className=&quot;mimir-pptx-icons__cell&quot;</pre></li>
+    <li id="L205">
+      <pre>
+                      color={selected.id === icon.id ? &#x27;primary&#x27; : &#x27;default&#x27;}</pre>
+    </li>
+    <li id="L206"><pre>                      variant=&quot;outlined&quot;</pre></li>
+    <li id="L207"><pre>                      disabled={locked}</pre></li>
+    <li id="L208"><pre>                      tabIndex={tabStop === icon.id ? 0 : -1}</pre></li>
+    <li id="L209"><pre>                      title={icon.label}</pre></li>
+    <li id="L210"><pre>                      onClick={() =&gt; pick(icon.id)}</pre></li>
+    <li id="L211">
+      <pre>
+                      onKeyDown={(event) =&gt; navigate(event, visible.indexOf(icon))}</pre>
+    </li>
+    <li id="L212"><pre>                    &gt;</pre></li>
+    <li id="L213">
+      <pre>
+                      &lt;span className=&quot;mimir-pptx-icons__cell-content&quot;&gt;</pre>
+    </li>
+    <li id="L214"><pre>                        &lt;IconPreview icon={icon} /&gt;</pre></li>
+    <li id="L215"><pre>                        &lt;span&gt;{icon.label}&lt;/span&gt;</pre></li>
+    <li id="L216"><pre>                      &lt;/span&gt;</pre></li>
+    <li id="L217"><pre>                    &lt;/Button&gt;</pre></li>
+    <li id="L218"><pre>                  ))}</pre></li>
+    <li id="L219"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L220"><pre>              &lt;/section&gt;</pre></li>
+    <li id="L221"><pre>            ) : null</pre></li>
+    <li id="L222"><pre>          })}</pre></li>
+    <li id="L223"><pre>          {!visible.length &amp;&amp; (</pre></li>
+    <li id="L224">
+      <pre>
+            &lt;div className=&quot;mimir-pptx-icons__empty&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L225"><pre>              没有匹配的图标，请尝试其他关键词。</pre></li>
+    <li id="L226"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L227"><pre>          )}</pre></li>
+    <li id="L228"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L229"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L230"><pre>      &lt;div className=&quot;mimir-pptx-icons__actions&quot;&gt;</pre></li>
+    <li id="L231"><pre>        &lt;div className=&quot;mimir-pptx-icons__chosen&quot;&gt;</pre></li>
+    <li id="L232">
+      <pre>          &lt;IconPreview icon={selected} color={draft.color} size={36} /&gt;</pre>
+    </li>
+    <li id="L233"><pre>          &lt;span&gt;</pre></li>
+    <li id="L234"><pre>            已选：{selected.label}</pre></li>
+    <li id="L235"><pre>            &lt;small&gt;</pre></li>
+    <li id="L236"><pre>              透明背景 · {draft.size} × {draft.size} 磅</pre></li>
+    <li id="L237"><pre>            &lt;/small&gt;</pre></li>
+    <li id="L238"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L239"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L240">
+      <pre>        &lt;div className=&quot;mimir-pptx-icons__settings&quot;&gt;</pre>
+    </li>
+    <li id="L241"><pre>          &lt;ToolbarColorPicker</pre></li>
+    <li id="L242"><pre>            label=&quot;图标颜色&quot;</pre></li>
+    <li id="L243"><pre>            value={draft.color}</pre></li>
+    <li id="L244"><pre>            disabled={locked}</pre></li>
+    <li id="L245">
+      <pre>
+            options={PPTX_ICON_COLORS.map((value) =&gt; ({ value, label: value, swatch: value }))}</pre>
+    </li>
+    <li id="L246"><pre>            onPick={(color) =&gt; setDraft({ ...draft, color })}</pre></li>
+    <li id="L247"><pre>          /&gt;</pre></li>
+    <li id="L248"><pre>          &lt;ToolbarNumberField</pre></li>
+    <li id="L249"><pre>            label=&quot;图标宽度（磅）&quot;</pre></li>
+    <li id="L250"><pre>            value={draft.size}</pre></li>
+    <li id="L251"><pre>            min={6}</pre></li>
+    <li id="L252"><pre>            max={720}</pre></li>
+    <li id="L253"><pre>            disabled={locked}</pre></li>
+    <li id="L254"><pre>            onCommit={(size) =&gt; setDraft({ ...draft, size })}</pre></li>
+    <li id="L255"><pre>          /&gt;</pre></li>
+    <li id="L256"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L257">
+      <pre>
+        &lt;ToolbarMenuNote&gt;插入为透明 PNG，可用图片工具调整。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L258">
+      <pre>        &lt;div className=&quot;mimir-pptx-icons__buttons&quot;&gt;</pre>
+    </li>
+    <li id="L259"><pre>          {onCancel &amp;&amp; (</pre></li>
+    <li id="L260">
+      <pre>
+            &lt;ToolbarButton label=&quot;取消插入图标&quot; disabled={busy} onClick={onCancel}&gt;</pre>
+    </li>
+    <li id="L261"><pre>              取消</pre></li>
+    <li id="L262"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L263"><pre>          )}</pre></li>
+    <li id="L264"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L265"><pre>            primary</pre></li>
+    <li id="L266"><pre>            label=&quot;插入所选图标&quot;</pre></li>
+    <li id="L267"><pre>            disabled={locked}</pre></li>
+    <li id="L268">
+      <pre>
+            disabledReason={busy ? &#x27;正在生成并插入图标&#x27; : &#x27;请等待当前操作完成&#x27;}</pre>
+    </li>
+    <li id="L269"><pre>            onClick={() =&gt; void insert()}</pre></li>
+    <li id="L270"><pre>          /&gt;</pre></li>
+    <li id="L271"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L272">
+      <pre>
+        &lt;div className=&quot;mimir-pptx-icons__status&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;</pre>
+    </li>
+    <li id="L273">
+      <pre>
+          {busy ? &#x27;正在生成并插入图标…&#x27; : feedback.identity === identity ? feedback.message : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L274"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L275"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L276"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L277"><pre>  )</pre></li>
+    <li id="L278"><pre>}</pre></li>
+  </ol>
+</html>

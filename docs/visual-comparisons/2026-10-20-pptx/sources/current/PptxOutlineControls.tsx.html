@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxOutlineControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxOutlineControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 59b09f6058f282b944f399ee3d32232cd731ae09c6a185ddae85fc5b71873bcc
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { Check, RotateCcw } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import type { SlideElement, Stroke } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarButton,</pre></li>
+    <li id="L6"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L8"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L9"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L10"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L11"><pre>  ToolbarSelect,</pre></li>
+    <li id="L12"><pre>  ToolbarTextField,</pre></li>
+    <li id="L13"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L14">
+      <pre>import type { PptxApply, PptxTarget } from &#x27;./PptxControlPanel.js&#x27;</pre>
+    </li>
+    <li id="L15">
+      <pre>
+import { pptxElementStroke, pptxOutlineOp, type PptxOutlineDraft } from &#x27;./pptx-outline.js&#x27;</pre>
+    </li>
+    <li id="L16">
+      <pre>
+export { pptxElementStroke, pptxOutlineOp, type PptxOutlineDraft } from &#x27;./pptx-outline.js&#x27;</pre>
+    </li>
+    <li id="L17"><pre>import &#x27;./pptx-outline-controls.css&#x27;</pre></li>
+    <li id="L18"><pre></pre></li>
+    <li id="L19"><pre>const PT = 12700</pre></li>
+    <li id="L20"><pre>export const PPTX_OUTLINE_DASHES = [</pre></li>
+    <li id="L21"><pre>  [&#x27;solid&#x27;, &#x27;实线&#x27;],</pre></li>
+    <li id="L22"><pre>  [&#x27;dash&#x27;, &#x27;短划线&#x27;],</pre></li>
+    <li id="L23"><pre>  [&#x27;sysDot&#x27;, &#x27;点线&#x27;],</pre></li>
+    <li id="L24"><pre>  [&#x27;dashDot&#x27;, &#x27;点划线&#x27;],</pre></li>
+    <li id="L25"><pre>  [&#x27;lgDash&#x27;, &#x27;长划线&#x27;],</pre></li>
+    <li id="L26"><pre>  [&#x27;lgDashDot&#x27;, &#x27;长点划线&#x27;],</pre></li>
+    <li id="L27"><pre>  [&#x27;lgDashDotDot&#x27;, &#x27;长双点划线&#x27;],</pre></li>
+    <li id="L28"><pre>  [&#x27;sysDash&#x27;, &#x27;系统短划线&#x27;],</pre></li>
+    <li id="L29"><pre>  [&#x27;sysDashDot&#x27;, &#x27;系统点划线&#x27;],</pre></li>
+    <li id="L30"><pre>  [&#x27;sysDashDotDot&#x27;, &#x27;系统双点划线&#x27;],</pre></li>
+    <li id="L31"><pre>  [&#x27;dot&#x27;, &#x27;圆点线&#x27;],</pre></li>
+    <li id="L32"><pre>].map(([value, label]) =&gt; ({ value: value!, label: label! }))</pre></li>
+    <li id="L33"><pre>const COLORS = [</pre></li>
+    <li id="L34"><pre>  [&#x27;#000000&#x27;, &#x27;黑色&#x27;],</pre></li>
+    <li id="L35"><pre>  [&#x27;#FFFFFF&#x27;, &#x27;白色&#x27;],</pre></li>
+    <li id="L36"><pre>  [&#x27;#C00000&#x27;, &#x27;红色&#x27;],</pre></li>
+    <li id="L37"><pre>  [&#x27;#ED7D31&#x27;, &#x27;橙色&#x27;],</pre></li>
+    <li id="L38"><pre>  [&#x27;#FFC000&#x27;, &#x27;金色&#x27;],</pre></li>
+    <li id="L39"><pre>  [&#x27;#70AD47&#x27;, &#x27;绿色&#x27;],</pre></li>
+    <li id="L40"><pre>  [&#x27;#4472C4&#x27;, &#x27;蓝色&#x27;],</pre></li>
+    <li id="L41"><pre>  [&#x27;#7030A0&#x27;, &#x27;紫色&#x27;],</pre></li>
+    <li id="L42">
+      <pre>
+].map(([color, label]) =&gt; ({ value: color!, swatch: color!, label: `轮廓${label!}` }))</pre>
+    </li>
+    <li id="L43"><pre>export interface PptxOutlineControlsProps {</pre></li>
+    <li id="L44"><pre>  element: SlideElement</pre></li>
+    <li id="L45"><pre>  target: PptxTarget</pre></li>
+    <li id="L46"><pre>  apply: PptxApply</pre></li>
+    <li id="L47"><pre>  version: number</pre></li>
+    <li id="L48"><pre>}</pre></li>
+    <li id="L49">
+      <pre>export function PptxOutlineControls(props: PptxOutlineControlsProps) {</pre>
+    </li>
+    <li id="L50"><pre>  const stroke = pptxElementStroke(props.element)</pre></li>
+    <li id="L51">
+      <pre>
+  const source = JSON.stringify([props.target.slide, props.target.el, props.version, stroke])</pre>
+    </li>
+    <li id="L52">
+      <pre>  return &lt;OutlineEditor key={source} {...props} stroke={stroke} /&gt;</pre>
+    </li>
+    <li id="L53"><pre>}</pre></li>
+    <li id="L54"><pre>function OutlineEditor({</pre></li>
+    <li id="L55"><pre>  element,</pre></li>
+    <li id="L56"><pre>  target,</pre></li>
+    <li id="L57"><pre>  apply,</pre></li>
+    <li id="L58"><pre>  stroke,</pre></li>
+    <li id="L59"><pre>}: PptxOutlineControlsProps &amp; { stroke?: Stroke }) {</pre></li>
+    <li id="L60"><pre>  const [draft, setDraft] = useState&lt;PptxOutlineDraft&gt;({})</pre></li>
+    <li id="L61"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L62"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L63"><pre>  const [status, setStatus] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L64"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L65"><pre>  useEffect(() =&gt; () =&gt; pending.current?.abort(), [])</pre></li>
+    <li id="L66"><pre>  const supported =</pre></li>
+    <li id="L67">
+      <pre>
+    element.type === &#x27;shape&#x27; || element.type === &#x27;text&#x27; || element.type === &#x27;picture&#x27;</pre>
+    </li>
+    <li id="L68">
+      <pre>
+  const enabled = draft.enabled ?? !!(stroke &amp;&amp; stroke.fill.type !== &#x27;none&#x27;)</pre>
+    </li>
+    <li id="L69"><pre>  const locked = busy || !supported</pre></li>
+    <li id="L70"><pre>  const dirty = Object.keys(draft).length &gt; 0</pre></li>
+    <li id="L71"><pre>  const change = (patch: PptxOutlineDraft) =&gt; {</pre></li>
+    <li id="L72"><pre>    setDraft((current) =&gt; ({ ...current, ...patch }))</pre></li>
+    <li id="L73"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L74"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L75"><pre>  }</pre></li>
+    <li id="L76"><pre>  const reset = () =&gt; {</pre></li>
+    <li id="L77"><pre>    setDraft({})</pre></li>
+    <li id="L78"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L79"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L80"><pre>  }</pre></li>
+    <li id="L81"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L82"><pre>    if (pending.current || locked || !dirty) return</pre></li>
+    <li id="L83"><pre>    let op: Record&lt;string, unknown&gt;</pre></li>
+    <li id="L84"><pre>    try {</pre></li>
+    <li id="L85"><pre>      op = pptxOutlineOp(target, stroke, draft)</pre></li>
+    <li id="L86"><pre>    } catch (cause) {</pre></li>
+    <li id="L87">
+      <pre>      setError(cause instanceof Error ? cause.message : &#x27;请检查轮廓设置&#x27;)</pre>
+    </li>
+    <li id="L88"><pre>      return</pre></li>
+    <li id="L89"><pre>    }</pre></li>
+    <li id="L90"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L91"><pre>    pending.current = controller</pre></li>
+    <li id="L92"><pre>    setBusy(true)</pre></li>
+    <li id="L93"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L94"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L95"><pre>    try {</pre></li>
+    <li id="L96"><pre>      const ok = await apply(op)</pre></li>
+    <li id="L97"><pre>      if (controller.signal.aborted) return</pre></li>
+    <li id="L98"><pre>      if (ok) {</pre></li>
+    <li id="L99"><pre>        setDraft({})</pre></li>
+    <li id="L100"><pre>        setStatus(&#x27;已应用轮廓&#x27;)</pre></li>
+    <li id="L101"><pre>      } else setError(&#x27;修改未应用，已保留草稿，请重试&#x27;)</pre></li>
+    <li id="L102"><pre>    } catch {</pre></li>
+    <li id="L103">
+      <pre>
+      if (!controller.signal.aborted) setError(&#x27;修改未应用，已保留草稿，请重试&#x27;)</pre>
+    </li>
+    <li id="L104"><pre>    } finally {</pre></li>
+    <li id="L105"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L106"><pre>        pending.current = null</pre></li>
+    <li id="L107"><pre>        setBusy(false)</pre></li>
+    <li id="L108"><pre>      }</pre></li>
+    <li id="L109"><pre>    }</pre></li>
+    <li id="L110"><pre>  }</pre></li>
+    <li id="L111">
+      <pre>
+  const currentColor = draft.color ?? (stroke?.fill.type === &#x27;solid&#x27; ? stroke.fill.color : null)</pre>
+    </li>
+    <li id="L112"><pre>  const dash = draft.dash ?? stroke?.dash ?? &#x27;solid&#x27;</pre></li>
+    <li id="L113">
+      <pre>
+  const dashOptions = PPTX_OUTLINE_DASHES.some((option) =&gt; option.value === dash)</pre>
+    </li>
+    <li id="L114"><pre>    ? PPTX_OUTLINE_DASHES</pre></li>
+    <li id="L115">
+      <pre>    : [...PPTX_OUTLINE_DASHES, { value: dash, label: `原件线型（${dash}）` }]</pre>
+    </li>
+    <li id="L116"><pre>  return (</pre></li>
+    <li id="L117">
+      <pre>
+    &lt;fieldset className=&quot;mimir-pptx-outline-controls&quot; disabled={locked} aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L118">
+      <pre>      &lt;div className=&quot;mimir-pptx-outline-controls__content&quot;&gt;</pre>
+    </li>
+    <li id="L119"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L120"><pre>          {supported</pre></li>
+    <li id="L121">
+      <pre>
+            ? `当前轮廓：${stroke &amp;&amp; stroke.fill.type !== &#x27;none&#x27; ? `${Number((stroke.width / PT).toFixed(3))}pt · ${PPTX_OUTLINE_DASHES.find((item) =&gt; item.value === (stroke.dash ?? &#x27;solid&#x27;))?.label ?? &#x27;原件线型&#x27;}${stroke.fill.type === &#x27;gradient&#x27; ? &#x27; · 渐变&#x27; : &#x27;&#x27;}` : &#x27;无轮廓&#x27;}`</pre>
+    </li>
+    <li id="L122"><pre>            : &#x27;请选择文字、形状或图片&#x27;}</pre></li>
+    <li id="L123"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L124"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L125"><pre>          &lt;ToolbarMenuFields label=&quot;轮廓&quot;&gt;</pre></li>
+    <li id="L126"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L127"><pre>              label=&quot;轮廓显示&quot;</pre></li>
+    <li id="L128">
+      <pre>              value={enabled ? &#x27;line&#x27; : &#x27;none&#x27;}</pre>
+    </li>
+    <li id="L129"><pre>              disabled={locked}</pre></li>
+    <li id="L130"><pre>              options={[</pre></li>
+    <li id="L131">
+      <pre>                { value: &#x27;line&#x27;, label: &#x27;显示轮廓&#x27; },</pre>
+    </li>
+    <li id="L132">
+      <pre>                { value: &#x27;none&#x27;, label: &#x27;无轮廓&#x27; },</pre>
+    </li>
+    <li id="L133"><pre>              ]}</pre></li>
+    <li id="L134">
+      <pre>
+              onChange={(value) =&gt; change({ enabled: value === &#x27;line&#x27; })}</pre>
+    </li>
+    <li id="L135"><pre>            /&gt;</pre></li>
+    <li id="L136"><pre>            {enabled &amp;&amp; (</pre></li>
+    <li id="L137"><pre>              &lt;&gt;</pre></li>
+    <li id="L138"><pre>                &lt;ToolbarColorPicker</pre></li>
+    <li id="L139"><pre>                  label=&quot;轮廓颜色&quot;</pre></li>
+    <li id="L140"><pre>                  inline</pre></li>
+    <li id="L141"><pre>                  value={currentColor}</pre></li>
+    <li id="L142"><pre>                  options={</pre></li>
+    <li id="L143"><pre>                    currentColor &amp;&amp;</pre></li>
+    <li id="L144"><pre>                    !COLORS.some(</pre></li>
+    <li id="L145">
+      <pre>
+                      (item) =&gt; item.value.toLowerCase() === currentColor.toLowerCase(),</pre>
+    </li>
+    <li id="L146"><pre>                    ) &amp;&amp;</pre></li>
+    <li id="L147">
+      <pre>                    /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(currentColor)</pre>
+    </li>
+    <li id="L148"><pre>                      ? [</pre></li>
+    <li id="L149"><pre>                          ...COLORS,</pre></li>
+    <li id="L150">
+      <pre>
+                          { value: currentColor, swatch: currentColor, label: &#x27;轮廓当前颜色&#x27; },</pre>
+    </li>
+    <li id="L151"><pre>                        ]</pre></li>
+    <li id="L152"><pre>                      : COLORS</pre></li>
+    <li id="L153"><pre>                  }</pre></li>
+    <li id="L154"><pre>                  disabled={locked}</pre></li>
+    <li id="L155"><pre>                  onPick={(color) =&gt; change({ color })}</pre></li>
+    <li id="L156"><pre>                /&gt;</pre></li>
+    <li id="L157"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L158"><pre>                  label=&quot;轮廓色值&quot;</pre></li>
+    <li id="L159"><pre>                  value={currentColor ?? &#x27;&#x27;}</pre></li>
+    <li id="L160">
+      <pre>
+                  placeholder={stroke?.fill.type === &#x27;gradient&#x27; ? &#x27;原件渐变&#x27; : &#x27;#RRGGBB&#x27;}</pre>
+    </li>
+    <li id="L161"><pre>                  onChange={(color) =&gt; change({ color })}</pre></li>
+    <li id="L162"><pre>                /&gt;</pre></li>
+    <li id="L163"><pre>                &lt;ToolbarNumberField</pre></li>
+    <li id="L164"><pre>                  label=&quot;轮廓宽度（pt）&quot;</pre></li>
+    <li id="L165">
+      <pre>                  value={draft.widthPt ?? (stroke?.width ?? PT) / PT}</pre>
+    </li>
+    <li id="L166"><pre>                  min={0.01}</pre></li>
+    <li id="L167"><pre>                  max={1584}</pre></li>
+    <li id="L168"><pre>                  step={0.25}</pre></li>
+    <li id="L169"><pre>                  suffix=&quot;pt&quot;</pre></li>
+    <li id="L170"><pre>                  disabled={locked}</pre></li>
+    <li id="L171"><pre>                  onCommit={(widthPt) =&gt; change({ widthPt })}</pre></li>
+    <li id="L172"><pre>                /&gt;</pre></li>
+    <li id="L173"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L174"><pre>                  label=&quot;轮廓线型&quot;</pre></li>
+    <li id="L175"><pre>                  value={dash}</pre></li>
+    <li id="L176"><pre>                  options={dashOptions}</pre></li>
+    <li id="L177"><pre>                  disabled={locked}</pre></li>
+    <li id="L178"><pre>                  onChange={(value) =&gt; change({ dash: value })}</pre></li>
+    <li id="L179"><pre>                /&gt;</pre></li>
+    <li id="L180"><pre>              &lt;/&gt;</pre></li>
+    <li id="L181"><pre>            )}</pre></li>
+    <li id="L182"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L183"><pre>          {enabled &amp;&amp; (</pre></li>
+    <li id="L184"><pre>            &lt;ToolbarMenuFields label=&quot;线条细节&quot;&gt;</pre></li>
+    <li id="L185"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L186"><pre>                label=&quot;端点样式&quot;</pre></li>
+    <li id="L187">
+      <pre>                value={draft.cap ?? stroke?.cap ?? &#x27;flat&#x27;}</pre>
+    </li>
+    <li id="L188"><pre>                disabled={locked}</pre></li>
+    <li id="L189"><pre>                options={[</pre></li>
+    <li id="L190">
+      <pre>                  { value: &#x27;flat&#x27;, label: &#x27;平头&#x27; },</pre>
+    </li>
+    <li id="L191">
+      <pre>                  { value: &#x27;round&#x27;, label: &#x27;圆头&#x27; },</pre>
+    </li>
+    <li id="L192">
+      <pre>                  { value: &#x27;square&#x27;, label: &#x27;方头&#x27; },</pre>
+    </li>
+    <li id="L193"><pre>                ]}</pre></li>
+    <li id="L194"><pre>                onChange={(cap) =&gt; change({ cap })}</pre></li>
+    <li id="L195"><pre>              /&gt;</pre></li>
+    <li id="L196"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L197"><pre>                label=&quot;连接样式&quot;</pre></li>
+    <li id="L198">
+      <pre>                value={draft.join ?? stroke?.join ?? &#x27;miter&#x27;}</pre>
+    </li>
+    <li id="L199"><pre>                disabled={locked}</pre></li>
+    <li id="L200"><pre>                options={[</pre></li>
+    <li id="L201">
+      <pre>                  { value: &#x27;miter&#x27;, label: &#x27;尖角&#x27; },</pre>
+    </li>
+    <li id="L202">
+      <pre>                  { value: &#x27;round&#x27;, label: &#x27;圆角&#x27; },</pre>
+    </li>
+    <li id="L203">
+      <pre>                  { value: &#x27;bevel&#x27;, label: &#x27;斜角&#x27; },</pre>
+    </li>
+    <li id="L204"><pre>                ]}</pre></li>
+    <li id="L205"><pre>                onChange={(join) =&gt; change({ join })}</pre></li>
+    <li id="L206"><pre>              /&gt;</pre></li>
+    <li id="L207"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L208"><pre>                label=&quot;复合线条&quot;</pre></li>
+    <li id="L209">
+      <pre>                value={draft.compound ?? stroke?.compound ?? &#x27;sng&#x27;}</pre>
+    </li>
+    <li id="L210"><pre>                disabled={locked}</pre></li>
+    <li id="L211"><pre>                options={[</pre></li>
+    <li id="L212">
+      <pre>                  { value: &#x27;sng&#x27;, label: &#x27;单线&#x27; },</pre>
+    </li>
+    <li id="L213">
+      <pre>                  { value: &#x27;dbl&#x27;, label: &#x27;双线&#x27; },</pre>
+    </li>
+    <li id="L214">
+      <pre>                  { value: &#x27;thickThin&#x27;, label: &#x27;粗细双线&#x27; },</pre>
+    </li>
+    <li id="L215">
+      <pre>                  { value: &#x27;thinThick&#x27;, label: &#x27;细粗双线&#x27; },</pre>
+    </li>
+    <li id="L216">
+      <pre>                  { value: &#x27;tri&#x27;, label: &#x27;三线&#x27; },</pre>
+    </li>
+    <li id="L217"><pre>                ]}</pre></li>
+    <li id="L218"><pre>                onChange={(compound) =&gt; change({ compound })}</pre></li>
+    <li id="L219"><pre>              /&gt;</pre></li>
+    <li id="L220"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L221"><pre>          )}</pre></li>
+    <li id="L222"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L223"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L224">
+      <pre>      &lt;div className=&quot;mimir-pptx-outline-controls__actions&quot;&gt;</pre>
+    </li>
+    <li id="L225">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L226">
+      <pre>        {status &amp;&amp; &lt;ToolbarMenuNote&gt;{status}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L227"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L228">
+      <pre>          label={busy ? &#x27;正在应用轮廓&#x27; : &#x27;应用轮廓&#x27;}</pre>
+    </li>
+    <li id="L229"><pre>          primary</pre></li>
+    <li id="L230"><pre>          disabled={locked || !dirty}</pre></li>
+    <li id="L231"><pre>          disabledReason={</pre></li>
+    <li id="L232">
+      <pre>
+            busy ? &#x27;正在应用修改&#x27; : !supported ? &#x27;请选择文字、形状或图片&#x27; : &#x27;请先调整轮廓设置&#x27;</pre>
+    </li>
+    <li id="L233"><pre>          }</pre></li>
+    <li id="L234"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L235"><pre>        &gt;</pre></li>
+    <li id="L236"><pre>          &lt;Check size={14} /&gt;</pre></li>
+    <li id="L237"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L238">
+      <pre>
+        &lt;ToolbarButton label=&quot;重置轮廓草稿&quot; disabled={locked || !dirty} onClick={reset}&gt;</pre>
+    </li>
+    <li id="L239"><pre>          &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L240"><pre>          重置</pre></li>
+    <li id="L241"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L242"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L243"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L244"><pre>  )</pre></li>
+    <li id="L245"><pre>}</pre></li>
+  </ol>
+</html>

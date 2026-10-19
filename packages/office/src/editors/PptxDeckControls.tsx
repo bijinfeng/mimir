@@ -89,7 +89,7 @@ export function PptxPageControls({
             value: String(item.index),
             label: `${item.name}${item.type ? ` · ${item.type}` : ''}`,
           }))}
-          disabled={!metadata.layouts.length}
+          disabled={busy || !metadata.layouts.length}
           onChange={setLayout}
         />
         <ToolbarButton
@@ -445,6 +445,7 @@ export function PptxHeaderFooterControls({ slide, apply }: { slide: Slide; apply
         <ToolbarTextField label="页脚日期" value={date} onChange={setDate} />
         <ToolbarSelect
           label="自动日期"
+          disabled={busy}
           value={String(auto)}
           options={[
             { value: 'false', label: '使用输入日期' },
@@ -454,6 +455,7 @@ export function PptxHeaderFooterControls({ slide, apply }: { slide: Slide; apply
         />
         <ToolbarSelect
           label="显示幻灯片页码"
+          disabled={busy}
           value={String(number)}
           options={[
             { value: 'false', label: '不显示' },
@@ -534,6 +536,7 @@ export function PptxReviewControls({
           <>
             <ToolbarSelect
               label="选择分节"
+              disabled={busy}
               value={sectionId}
               options={metadata.sections.map((item) => ({
                 value: item.id,

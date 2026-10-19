@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxScreenRecordControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxScreenRecordControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 9f6eb27d574d8bcd8e9781c06958dcae5ec765a2391f5168b3381cdab58a3152
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import {</pre></li>
+    <li id="L3"><pre>  createPptxScreenRecording,</pre></li>
+    <li id="L4"><pre>  screenRecordingUnavailable,</pre></li>
+    <li id="L5"><pre>  type PptxRecordingPhase,</pre></li>
+    <li id="L6"><pre>} from &#x27;../pptx-screen-recording.js&#x27;</pre></li>
+    <li id="L7">
+      <pre>
+import { ToolbarButton, ToolbarMenuFields, ToolbarMenuNote } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L8"><pre>import { PptxControlPanel } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L9"><pre>import type { PptxUpload } from &#x27;./PptxAssetControls.js&#x27;</pre></li>
+    <li id="L10"><pre></pre></li>
+    <li id="L11">
+      <pre>
+export function PptxScreenRecordControls({ slide, upload }: { slide: number; upload: PptxUpload }) {</pre>
+    </li>
+    <li id="L12">
+      <pre>  const [phase, setPhase] = useState&lt;PptxRecordingPhase&gt;(&#x27;idle&#x27;)</pre>
+    </li>
+    <li id="L13"><pre>  const [seconds, setSeconds] = useState(0)</pre></li>
+    <li id="L14"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L15">
+      <pre>
+  const [recorded, setRecorded] = useState&lt;{ file: File; url: string } | null&gt;(null)</pre>
+    </li>
+    <li id="L16"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L17">
+      <pre>
+  const recording = useRef&lt;ReturnType&lt;typeof createPptxScreenRecording&gt; | null&gt;(null)</pre>
+    </li>
+    <li id="L18"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L19"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L20"><pre>    const controller = createPptxScreenRecording({</pre></li>
+    <li id="L21"><pre>      phase: setPhase,</pre></li>
+    <li id="L22"><pre>      seconds: setSeconds,</pre></li>
+    <li id="L23"><pre>      error: setError,</pre></li>
+    <li id="L24">
+      <pre>      complete: (file) =&gt; setRecorded({ file, url: URL.createObjectURL(file) }),</pre>
+    </li>
+    <li id="L25"><pre>    })</pre></li>
+    <li id="L26"><pre>    recording.current = controller</pre></li>
+    <li id="L27"><pre>    return () =&gt; {</pre></li>
+    <li id="L28"><pre>      controller.dispose()</pre></li>
+    <li id="L29"><pre>      recording.current = null</pre></li>
+    <li id="L30"><pre>    }</pre></li>
+    <li id="L31"><pre>  }, [])</pre></li>
+    <li id="L32"><pre>  useEffect(</pre></li>
+    <li id="L33"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L34"><pre>      if (recorded) URL.revokeObjectURL(recorded.url)</pre></li>
+    <li id="L35"><pre>    },</pre></li>
+    <li id="L36"><pre>    [recorded],</pre></li>
+    <li id="L37"><pre>  )</pre></li>
+    <li id="L38"><pre>  const unavailable = screenRecordingUnavailable()</pre></li>
+    <li id="L39"><pre>  return (</pre></li>
+    <li id="L40"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L41"><pre>      &lt;ToolbarMenuFields label=&quot;录制屏幕&quot;&gt;</pre></li>
+    <li id="L42"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L43">
+      <pre>
+          选择一个窗口、标签页或屏幕，录制静音视频。停止后可先预览，再插入当前幻灯片。</pre>
+    </li>
+    <li id="L44"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L45">
+      <pre>
+        &lt;p className=&quot;mimir-pptx-recording-status&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;</pre>
+    </li>
+    <li id="L46"><pre>          {phase === &#x27;requesting&#x27;</pre></li>
+    <li id="L47"><pre>            ? &#x27;请在系统窗口选择共享内容…&#x27;</pre></li>
+    <li id="L48"><pre>            : phase === &#x27;recording&#x27;</pre></li>
+    <li id="L49">
+      <pre>
+              ? `正在录制 · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, &#x27;0&#x27;)}`</pre>
+    </li>
+    <li id="L50"><pre>              : phase === &#x27;stopping&#x27;</pre></li>
+    <li id="L51"><pre>                ? &#x27;正在生成预览…&#x27;</pre></li>
+    <li id="L52"><pre>                : recorded</pre></li>
+    <li id="L53"><pre>                  ? &#x27;录制完成，尚未插入&#x27;</pre></li>
+    <li id="L54"><pre>                  : &#x27;准备录制&#x27;}</pre></li>
+    <li id="L55"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L56">
+      <pre>        {phase === &#x27;idle&#x27; &amp;&amp; !recorded &amp;&amp; (</pre>
+    </li>
+    <li id="L57"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L58"><pre>            primary</pre></li>
+    <li id="L59"><pre>            label=&quot;选择屏幕并开始&quot;</pre></li>
+    <li id="L60"><pre>            disabled={!!unavailable}</pre></li>
+    <li id="L61"><pre>            disabledReason={unavailable}</pre></li>
+    <li id="L62"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L63"><pre>              setError(&#x27;&#x27;)</pre></li>
+    <li id="L64"><pre>              void recording.current?.start()</pre></li>
+    <li id="L65"><pre>            }}</pre></li>
+    <li id="L66"><pre>          /&gt;</pre></li>
+    <li id="L67"><pre>        )}</pre></li>
+    <li id="L68"><pre>        {phase === &#x27;recording&#x27; &amp;&amp; (</pre></li>
+    <li id="L69">
+      <pre>
+          &lt;ToolbarButton primary label=&quot;停止屏幕录制&quot; onClick={() =&gt; recording.current?.stop()} /&gt;</pre>
+    </li>
+    <li id="L70"><pre>        )}</pre></li>
+    <li id="L71"><pre>        {recorded &amp;&amp; (</pre></li>
+    <li id="L72"><pre>          &lt;&gt;</pre></li>
+    <li id="L73"><pre>            &lt;video</pre></li>
+    <li id="L74"><pre>              className=&quot;mimir-pptx-media-preview&quot;</pre></li>
+    <li id="L75"><pre>              src={recorded.url}</pre></li>
+    <li id="L76"><pre>              controls</pre></li>
+    <li id="L77"><pre>              preload=&quot;metadata&quot;</pre></li>
+    <li id="L78"><pre>              aria-label=&quot;录屏预览&quot;</pre></li>
+    <li id="L79"><pre>            /&gt;</pre></li>
+    <li id="L80"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L81">
+      <pre>              {(recorded.file.size / 1024 / 1024).toFixed(1)} MiB · 静音WebM</pre>
+    </li>
+    <li id="L82"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L83"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L84"><pre>              label=&quot;放弃当前录屏&quot;</pre></li>
+    <li id="L85"><pre>              onClick={() =&gt; {</pre></li>
+    <li id="L86"><pre>                setRecorded(null)</pre></li>
+    <li id="L87"><pre>                setError(&#x27;&#x27;)</pre></li>
+    <li id="L88"><pre>              }}</pre></li>
+    <li id="L89"><pre>            &gt;</pre></li>
+    <li id="L90"><pre>              放弃并重新录制</pre></li>
+    <li id="L91"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L92"><pre>          &lt;/&gt;</pre></li>
+    <li id="L93"><pre>        )}</pre></li>
+    <li id="L94">
+      <pre>
+        {(error || unavailable) &amp;&amp; &lt;ToolbarMenuNote&gt;{error || unavailable}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L95"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L96">
+      <pre>          最长10分钟，不超过32 MiB。关闭面板会停止采集并释放本地预览。</pre>
+    </li>
+    <li id="L97"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L98"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L99"><pre>      {recorded &amp;&amp; (</pre></li>
+    <li id="L100"><pre>        &lt;div className=&quot;mimir-pptx-model-actions&quot;&gt;</pre></li>
+    <li id="L101"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L102"><pre>            primary</pre></li>
+    <li id="L103"><pre>            label=&quot;将录屏插入幻灯片&quot;</pre></li>
+    <li id="L104"><pre>            disabled={busy}</pre></li>
+    <li id="L105"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L106"><pre>              if (pending.current) return</pre></li>
+    <li id="L107"><pre>              pending.current = true</pre></li>
+    <li id="L108"><pre>              setBusy(true)</pre></li>
+    <li id="L109"><pre>              setError(&#x27;&#x27;)</pre></li>
+    <li id="L110">
+      <pre>
+              void upload({ kind: &#x27;media&#x27;, slide, mediaKind: &#x27;video&#x27; }, recorded.file)</pre>
+    </li>
+    <li id="L111"><pre>                .catch((cause) =&gt;</pre></li>
+    <li id="L112">
+      <pre>
+                  setError(cause instanceof Error ? cause.message : &#x27;插入失败，可保留预览后重试&#x27;),</pre>
+    </li>
+    <li id="L113"><pre>                )</pre></li>
+    <li id="L114"><pre>                .finally(() =&gt; {</pre></li>
+    <li id="L115"><pre>                  pending.current = false</pre></li>
+    <li id="L116"><pre>                  setBusy(false)</pre></li>
+    <li id="L117"><pre>                })</pre></li>
+    <li id="L118"><pre>            }}</pre></li>
+    <li id="L119"><pre>          /&gt;</pre></li>
+    <li id="L120"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L121"><pre>      )}</pre></li>
+    <li id="L122"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L123"><pre>  )</pre></li>
+    <li id="L124"><pre>}</pre></li>
+  </ol>
+</html>

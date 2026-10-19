@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxChartAppearance.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxChartAppearance.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 a935892854f762c2a348a0cd0743126067d7dfeab0d3acdbc9b07570d677b710
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useState, type Dispatch, type SetStateAction } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>
+import type { ChartModel } from &#x27;../../vendor/packages/pptx-engine/src/chart.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  ToolbarButton,</pre></li>
+    <li id="L5"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L8"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L9"><pre>  ToolbarSelect,</pre></li>
+    <li id="L10"><pre>  ToolbarTextField,</pre></li>
+    <li id="L11"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L12"><pre>import {</pre></li>
+    <li id="L13"><pre>  pptxChartColorSchemes,</pre></li>
+    <li id="L14"><pre>  pptxChartPointColor,</pre></li>
+    <li id="L15"><pre>  pptxChartSeriesColors,</pre></li>
+    <li id="L16"><pre>} from &#x27;./pptx-chart-colors.js&#x27;</pre></li>
+    <li id="L17"><pre></pre></li>
+    <li id="L18"><pre>export interface PptxChartAppearancePatch {</pre></li>
+    <li id="L19"><pre>  barDir?: &#x27;col&#x27; | &#x27;bar&#x27;</pre></li>
+    <li id="L20"><pre>  gridlines?: boolean</pre></li>
+    <li id="L21"><pre>  catAxisTitle?: string</pre></li>
+    <li id="L22"><pre>  valAxisTitle?: string</pre></li>
+    <li id="L23"><pre>  gapWidthPct?: number</pre></li>
+    <li id="L24"><pre>  holeSizePct?: number</pre></li>
+    <li id="L25"><pre>  colorScheme?: string[]</pre></li>
+    <li id="L26">
+      <pre>
+  /** Local palette intent; submitted as native pointColors only for pie defaults. */</pre>
+    </li>
+    <li id="L27"><pre>  pointColorScheme?: string[]</pre></li>
+    <li id="L28">
+      <pre>  pointColors?: Record&lt;string, Record&lt;string, string | null&gt;&gt;</pre>
+    </li>
+    <li id="L29"><pre>}</pre></li>
+    <li id="L30">
+      <pre>
+/** Parser render kinds intentionally collapse variants; restore editable kind for current values. */</pre>
+    </li>
+    <li id="L31"><pre>export function pptxChartEditKind(chart: ChartModel): string {</pre></li>
+    <li id="L32">
+      <pre>
+  if (chart.kind === &#x27;pie&#x27;) return chart.holePct ? &#x27;doughnut&#x27; : chart.pseudo3D ? &#x27;pie3D&#x27; : &#x27;pie&#x27;</pre>
+    </li>
+    <li id="L33"><pre>  if (chart.kind === &#x27;bar&#x27;) {</pre></li>
+    <li id="L34">
+      <pre>
+    if (chart.series.some((series) =&gt; series.plotKind === &#x27;line&#x27;)) return &#x27;comboBarLine&#x27;</pre>
+    </li>
+    <li id="L35"><pre>    if (chart.pseudo3D) return &#x27;bar3D&#x27;</pre></li>
+    <li id="L36">
+      <pre>    if (chart.grouping === &#x27;stacked&#x27;) return &#x27;barStacked&#x27;</pre>
+    </li>
+    <li id="L37">
+      <pre>
+    if (chart.grouping === &#x27;percentStacked&#x27;) return &#x27;barPercentStacked&#x27;</pre>
+    </li>
+    <li id="L38"><pre>  }</pre></li>
+    <li id="L39"><pre>  return chart.kind</pre></li>
+    <li id="L40"><pre>}</pre></li>
+    <li id="L41">
+      <pre>
+// Fixed GenOffice Ribbon presets: these are real editChart parameters, not theme IDs.</pre>
+    </li>
+    <li id="L42"><pre>const PRESETS = [</pre></li>
+    <li id="L43"><pre>  [&#x27;经典&#x27;, &#x27;b&#x27;, false, false, 150],</pre></li>
+    <li id="L44"><pre>  [&#x27;网格&#x27;, &#x27;b&#x27;, false, true, 150],</pre></li>
+    <li id="L45"><pre>  [&#x27;数值标签&#x27;, &#x27;b&#x27;, true, false, 150],</pre></li>
+    <li id="L46"><pre>  [&#x27;详细&#x27;, &#x27;b&#x27;, true, true, 150],</pre></li>
+    <li id="L47"><pre>  [&#x27;简洁&#x27;, &#x27;none&#x27;, false, false, 150],</pre></li>
+    <li id="L48"><pre>  [&#x27;简洁标签&#x27;, &#x27;none&#x27;, true, false, 150],</pre></li>
+    <li id="L49"><pre>  [&#x27;宽柱&#x27;, &#x27;b&#x27;, false, true, 50],</pre></li>
+    <li id="L50"><pre>  [&#x27;细柱&#x27;, &#x27;b&#x27;, false, true, 300],</pre></li>
+    <li id="L51"><pre>  [&#x27;顶部图例&#x27;, &#x27;t&#x27;, false, true, 150],</pre></li>
+    <li id="L52"><pre>  [&#x27;右侧图例&#x27;, &#x27;r&#x27;, false, true, 150],</pre></li>
+    <li id="L53"><pre>] as const</pre></li>
+    <li id="L54"><pre>export function PptxChartAppearance({</pre></li>
+    <li id="L55"><pre>  chart,</pre></li>
+    <li id="L56"><pre>  kind,</pre></li>
+    <li id="L57"><pre>  section,</pre></li>
+    <li id="L58"><pre>  patch,</pre></li>
+    <li id="L59"><pre>  setPatch,</pre></li>
+    <li id="L60"><pre>  preset,</pre></li>
+    <li id="L61"><pre>  disabled = false,</pre></li>
+    <li id="L62"><pre>}: {</pre></li>
+    <li id="L63"><pre>  disabled?: boolean</pre></li>
+    <li id="L64"><pre>  chart: ChartModel</pre></li>
+    <li id="L65"><pre>  kind: string</pre></li>
+    <li id="L66"><pre>  section: &#x27;style&#x27; | &#x27;colors&#x27;</pre></li>
+    <li id="L67"><pre>  patch: PptxChartAppearancePatch</pre></li>
+    <li id="L68">
+      <pre>  setPatch: Dispatch&lt;SetStateAction&lt;PptxChartAppearancePatch&gt;&gt;</pre>
+    </li>
+    <li id="L69"><pre>  preset: (</pre></li>
+    <li id="L70">
+      <pre>    legend: &#x27;b&#x27; | &#x27;t&#x27; | &#x27;r&#x27; | &#x27;none&#x27;,</pre>
+    </li>
+    <li id="L71"><pre>    labels: boolean,</pre></li>
+    <li id="L72"><pre>    patch: PptxChartAppearancePatch,</pre></li>
+    <li id="L73"><pre>  ) =&gt; void</pre></li>
+    <li id="L74"><pre>}) {</pre></li>
+    <li id="L75"><pre>  const [pointSeries, setPointSeries] = useState(0),</pre></li>
+    <li id="L76"><pre>    [point, setPoint] = useState(0),</pre></li>
+    <li id="L77"><pre>    [colorSeries, setColorSeries] = useState(0)</pre></li>
+    <li id="L78">
+      <pre>
+  const [seriesKeys] = useState(() =&gt; chart.series.map(() =&gt; crypto.randomUUID()))</pre>
+    </li>
+    <li id="L79"><pre>  const currentKind = kind || pptxChartEditKind(chart)</pre></li>
+    <li id="L80"><pre>  const bar = currentKind.startsWith(&#x27;bar&#x27;),</pre></li>
+    <li id="L81">
+      <pre>
+    pie = [&#x27;pie&#x27;, &#x27;pie3D&#x27;, &#x27;doughnut&#x27;].includes(currentKind)</pre>
+    </li>
+    <li id="L82"><pre>  const hasBars = bar || currentKind === &#x27;comboBarLine&#x27;</pre></li>
+    <li id="L83"><pre>  const axes = !pie</pre></li>
+    <li id="L84"><pre>  const schemes = pptxChartColorSchemes(chart)</pre></li>
+    <li id="L85"><pre>  const palette = pptxChartSeriesColors(chart, patch.colorScheme)</pre></li>
+    <li id="L86"><pre>  const originalPalette = pptxChartSeriesColors(chart)</pre></li>
+    <li id="L87"><pre>  const update = (next: PptxChartAppearancePatch) =&gt;</pre></li>
+    <li id="L88"><pre>    setPatch((current) =&gt; ({ ...current, ...next }))</pre></li>
+    <li id="L89">
+      <pre>  const pointOverride = patch.pointColors?.[String(pointSeries)]?.[String(point)]</pre>
+    </li>
+    <li id="L90"><pre>  const hasPointOverride =</pre></li>
+    <li id="L91"><pre>    (pointOverride === undefined</pre></li>
+    <li id="L92"><pre>      ? chart.series[pointSeries]?.pointColors?.[point]</pre></li>
+    <li id="L93"><pre>      : pointOverride) != null</pre></li>
+    <li id="L94"><pre>  const pointColor = pptxChartPointColor(</pre></li>
+    <li id="L95"><pre>    chart,</pre></li>
+    <li id="L96"><pre>    pointSeries,</pre></li>
+    <li id="L97"><pre>    point,</pre></li>
+    <li id="L98"><pre>    patch.colorScheme,</pre></li>
+    <li id="L99"><pre>    pointOverride,</pre></li>
+    <li id="L100"><pre>    patch.pointColorScheme,</pre></li>
+    <li id="L101"><pre>    currentKind,</pre></li>
+    <li id="L102"><pre>  )</pre></li>
+    <li id="L103"><pre>  const colorOptions = [</pre></li>
+    <li id="L104"><pre>    ...new Set([</pre></li>
+    <li id="L105"><pre>      ...schemes[0]!.colors,</pre></li>
+    <li id="L106"><pre>      ...schemes</pre></li>
+    <li id="L107">
+      <pre>
+        .filter((scheme) =&gt; [&#x27;blue&#x27;, &#x27;warm&#x27;, &#x27;cool&#x27;, &#x27;mono&#x27;].includes(scheme.key))</pre>
+    </li>
+    <li id="L108"><pre>        .flatMap((scheme) =&gt; scheme.colors),</pre></li>
+    <li id="L109"><pre>      ...palette,</pre></li>
+    <li id="L110"><pre>      pointColor,</pre></li>
+    <li id="L111"><pre>    ]),</pre></li>
+    <li id="L112"><pre>  ].map((value) =&gt; ({ value, label: value, swatch: value }))</pre></li>
+    <li id="L113"><pre>  const colorPoint = (color: string | null) =&gt;</pre></li>
+    <li id="L114"><pre>    setPatch((current) =&gt; ({</pre></li>
+    <li id="L115"><pre>      ...current,</pre></li>
+    <li id="L116"><pre>      pointColors: {</pre></li>
+    <li id="L117"><pre>        ...current.pointColors,</pre></li>
+    <li id="L118">
+      <pre>        [pointSeries]: { ...current.pointColors?.[pointSeries], [point]: color },</pre>
+    </li>
+    <li id="L119"><pre>      },</pre></li>
+    <li id="L120"><pre>    }))</pre></li>
+    <li id="L121">
+      <pre>
+  const presets = PRESETS.filter((p) =&gt; hasBars || ![&#x27;宽柱&#x27;, &#x27;细柱&#x27;].includes(p[0]))</pre>
+    </li>
+    <li id="L122">
+      <pre>  const activeScheme = pie ? patch.pointColorScheme : patch.colorScheme</pre>
+    </li>
+    <li id="L123"><pre>  const matchesPalette = (colors?: string[]) =&gt;</pre></li>
+    <li id="L124"><pre>    colors?.length === activeScheme?.length &amp;&amp;</pre></li>
+    <li id="L125">
+      <pre>    colors?.every((color, index) =&gt; color === activeScheme?.[index])</pre>
+    </li>
+    <li id="L126"><pre>  const selectedPalette = !activeScheme</pre></li>
+    <li id="L127"><pre>    ? &#x27;&#x27;</pre></li>
+    <li id="L128">
+      <pre>
+    : (schemes.find((item) =&gt; matchesPalette(item.colors))?.key ?? &#x27;custom&#x27;)</pre>
+    </li>
+    <li id="L129"><pre>  return (</pre></li>
+    <li id="L130"><pre>    &lt;&gt;</pre></li>
+    <li id="L131"><pre>      {section === &#x27;style&#x27; &amp;&amp; (</pre></li>
+    <li id="L132"><pre>        &lt;ToolbarMenuFields label=&quot;图表样式&quot;&gt;</pre></li>
+    <li id="L133"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L134"><pre>            label=&quot;图表样式预设&quot;</pre></li>
+    <li id="L135"><pre>            disabled={disabled}</pre></li>
+    <li id="L136"><pre>            value=&quot;&quot;</pre></li>
+    <li id="L137"><pre>            options={[</pre></li>
+    <li id="L138">
+      <pre>              { value: &#x27;&#x27;, label: &#x27;选择样式…&#x27; },</pre>
+    </li>
+    <li id="L139">
+      <pre>
+              ...presets.map((p, index) =&gt; ({ value: String(index), label: p[0] })),</pre>
+    </li>
+    <li id="L140"><pre>            ]}</pre></li>
+    <li id="L141"><pre>            onChange={(value) =&gt; {</pre></li>
+    <li id="L142"><pre>              const selected = presets[Number(value)]</pre></li>
+    <li id="L143"><pre>              if (selected)</pre></li>
+    <li id="L144"><pre>                preset(selected[1], selected[2], {</pre></li>
+    <li id="L145"><pre>                  ...(axes ? { gridlines: selected[3] } : {}),</pre></li>
+    <li id="L146">
+      <pre>                  ...(hasBars ? { gapWidthPct: selected[4] } : {}),</pre>
+    </li>
+    <li id="L147"><pre>                })</pre></li>
+    <li id="L148"><pre>            }}</pre></li>
+    <li id="L149"><pre>          /&gt;</pre></li>
+    <li id="L150"><pre>          {axes &amp;&amp; (</pre></li>
+    <li id="L151"><pre>            &lt;&gt;</pre></li>
+    <li id="L152"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L153"><pre>                label=&quot;图表网格线&quot;</pre></li>
+    <li id="L154"><pre>                disabled={disabled}</pre></li>
+    <li id="L155"><pre>                value={String(</pre></li>
+    <li id="L156">
+      <pre>
+                  patch.gridlines ?? !!(chart.valAxis?.gridColor || chart.valAxis?.gridColorAuto),</pre>
+    </li>
+    <li id="L157"><pre>                )}</pre></li>
+    <li id="L158"><pre>                options={[</pre></li>
+    <li id="L159">
+      <pre>                  { value: &#x27;true&#x27;, label: &#x27;显示&#x27; },</pre>
+    </li>
+    <li id="L160">
+      <pre>                  { value: &#x27;false&#x27;, label: &#x27;隐藏&#x27; },</pre>
+    </li>
+    <li id="L161"><pre>                ]}</pre></li>
+    <li id="L162">
+      <pre>
+                onChange={(value) =&gt; update({ gridlines: value === &#x27;true&#x27; })}</pre>
+    </li>
+    <li id="L163"><pre>              /&gt;</pre></li>
+    <li id="L164"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L165"><pre>                label=&quot;类别轴标题&quot;</pre></li>
+    <li id="L166">
+      <pre>                value={patch.catAxisTitle ?? chart.catAxis?.title ?? &#x27;&#x27;}</pre>
+    </li>
+    <li id="L167">
+      <pre>                onChange={(value) =&gt; update({ catAxisTitle: value })}</pre>
+    </li>
+    <li id="L168"><pre>              /&gt;</pre></li>
+    <li id="L169"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L170"><pre>                label=&quot;数值轴标题&quot;</pre></li>
+    <li id="L171">
+      <pre>                value={patch.valAxisTitle ?? chart.valAxis?.title ?? &#x27;&#x27;}</pre>
+    </li>
+    <li id="L172">
+      <pre>                onChange={(value) =&gt; update({ valAxisTitle: value })}</pre>
+    </li>
+    <li id="L173"><pre>              /&gt;</pre></li>
+    <li id="L174"><pre>            &lt;/&gt;</pre></li>
+    <li id="L175"><pre>          )}</pre></li>
+    <li id="L176"><pre>          {hasBars &amp;&amp; (</pre></li>
+    <li id="L177"><pre>            &lt;&gt;</pre></li>
+    <li id="L178"><pre>              {bar &amp;&amp; (</pre></li>
+    <li id="L179"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L180"><pre>                  label=&quot;柱形方向&quot;</pre></li>
+    <li id="L181"><pre>                  disabled={disabled}</pre></li>
+    <li id="L182">
+      <pre>                  value={patch.barDir ?? chart.barDir ?? &#x27;col&#x27;}</pre>
+    </li>
+    <li id="L183"><pre>                  options={[</pre></li>
+    <li id="L184">
+      <pre>                    { value: &#x27;col&#x27;, label: &#x27;竖向柱形&#x27; },</pre>
+    </li>
+    <li id="L185">
+      <pre>                    { value: &#x27;bar&#x27;, label: &#x27;横向条形&#x27; },</pre>
+    </li>
+    <li id="L186"><pre>                  ]}</pre></li>
+    <li id="L187">
+      <pre>
+                  onChange={(value) =&gt; update({ barDir: value as &#x27;col&#x27; | &#x27;bar&#x27; })}</pre>
+    </li>
+    <li id="L188"><pre>                /&gt;</pre></li>
+    <li id="L189"><pre>              )}</pre></li>
+    <li id="L190"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L191"><pre>                label=&quot;柱形间距（%）&quot;</pre></li>
+    <li id="L192"><pre>                min={0}</pre></li>
+    <li id="L193"><pre>                max={500}</pre></li>
+    <li id="L194">
+      <pre>                value={patch.gapWidthPct ?? chart.gapWidthPct ?? 150}</pre>
+    </li>
+    <li id="L195">
+      <pre>                onCommit={(value) =&gt; update({ gapWidthPct: value })}</pre>
+    </li>
+    <li id="L196"><pre>              /&gt;</pre></li>
+    <li id="L197"><pre>            &lt;/&gt;</pre></li>
+    <li id="L198"><pre>          )}</pre></li>
+    <li id="L199"><pre>          {currentKind === &#x27;doughnut&#x27; &amp;&amp; (</pre></li>
+    <li id="L200"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L201"><pre>              label=&quot;圆环孔径（%）&quot;</pre></li>
+    <li id="L202"><pre>              min={10}</pre></li>
+    <li id="L203"><pre>              max={90}</pre></li>
+    <li id="L204"><pre>              value={patch.holeSizePct ?? chart.holePct ?? 50}</pre></li>
+    <li id="L205">
+      <pre>              onCommit={(value) =&gt; update({ holeSizePct: value })}</pre>
+    </li>
+    <li id="L206"><pre>            /&gt;</pre></li>
+    <li id="L207"><pre>          )}</pre></li>
+    <li id="L208"><pre>        &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L209"><pre>      )}</pre></li>
+    <li id="L210"><pre>      {section === &#x27;colors&#x27; &amp;&amp; (</pre></li>
+    <li id="L211"><pre>        &lt;ToolbarMenuFields label=&quot;图表配色&quot;&gt;</pre></li>
+    <li id="L212"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L213"><pre>            label=&quot;图表配色方案&quot;</pre></li>
+    <li id="L214"><pre>            disabled={disabled}</pre></li>
+    <li id="L215"><pre>            value={selectedPalette}</pre></li>
+    <li id="L216"><pre>            options={[</pre></li>
+    <li id="L217">
+      <pre>              { value: &#x27;&#x27;, label: &#x27;保留当前配色&#x27; },</pre>
+    </li>
+    <li id="L218">
+      <pre>              ...schemes.map((item) =&gt; ({ value: item.key, label: item.name })),</pre>
+    </li>
+    <li id="L219">
+      <pre>
+              ...(selectedPalette === &#x27;custom&#x27; ? [{ value: &#x27;custom&#x27;, label: &#x27;自定义配色&#x27; }] : []),</pre>
+    </li>
+    <li id="L220"><pre>            ]}</pre></li>
+    <li id="L221"><pre>            onChange={(value) =&gt; {</pre></li>
+    <li id="L222"><pre>              if (value === &#x27;&#x27;) {</pre></li>
+    <li id="L223">
+      <pre>                update({ colorScheme: undefined, pointColorScheme: undefined })</pre>
+    </li>
+    <li id="L224"><pre>                return</pre></li>
+    <li id="L225"><pre>              }</pre></li>
+    <li id="L226">
+      <pre>              const colors = schemes.find((item) =&gt; item.key === value)?.colors</pre>
+    </li>
+    <li id="L227">
+      <pre>
+              if (colors?.length) update({ colorScheme: colors, pointColorScheme: colors })</pre>
+    </li>
+    <li id="L228"><pre>            }}</pre></li>
+    <li id="L229"><pre>          /&gt;</pre></li>
+    <li id="L230">
+      <pre>
+          &lt;div className=&quot;mimir-pptx-chart-palette&quot; aria-label=&quot;当前图表系列配色&quot;&gt;</pre>
+    </li>
+    <li id="L231"><pre>            {(pie</pre></li>
+    <li id="L232">
+      <pre>
+              ? (patch.pointColorScheme ?? chart.themePalette ?? schemes[0]!.colors)</pre>
+    </li>
+    <li id="L233"><pre>              : palette</pre></li>
+    <li id="L234"><pre>            ).map((color, index) =&gt; (</pre></li>
+    <li id="L235"><pre>              &lt;span</pre></li>
+    <li id="L236"><pre>                key={seriesKeys[index] ?? String(index)}</pre></li>
+    <li id="L237"><pre>                style={{ backgroundColor: color }}</pre></li>
+    <li id="L238">
+      <pre>
+                title={`${pie ? &#x27;方案色&#x27; : &#x27;系列&#x27;}${index + 1}：${color}`}</pre>
+    </li>
+    <li id="L239"><pre>              /&gt;</pre></li>
+    <li id="L240"><pre>            ))}</pre></li>
+    <li id="L241"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L242"><pre>          {!pie &amp;&amp; (</pre></li>
+    <li id="L243"><pre>            &lt;&gt;</pre></li>
+    <li id="L244"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L245"><pre>                label=&quot;要配色的系列&quot;</pre></li>
+    <li id="L246"><pre>                disabled={disabled}</pre></li>
+    <li id="L247"><pre>                value={String(colorSeries)}</pre></li>
+    <li id="L248"><pre>                options={chart.series.map((series, index) =&gt; ({</pre></li>
+    <li id="L249"><pre>                  value: String(index),</pre></li>
+    <li id="L250"><pre>                  label: series.name || `系列${index + 1}`,</pre></li>
+    <li id="L251"><pre>                }))}</pre></li>
+    <li id="L252">
+      <pre>                onChange={(value) =&gt; setColorSeries(Number(value))}</pre>
+    </li>
+    <li id="L253"><pre>              /&gt;</pre></li>
+    <li id="L254"><pre>              &lt;ToolbarColorPicker</pre></li>
+    <li id="L255"><pre>                label=&quot;所选系列颜色&quot;</pre></li>
+    <li id="L256"><pre>                value={palette[colorSeries] ?? null}</pre></li>
+    <li id="L257"><pre>                options={colorOptions}</pre></li>
+    <li id="L258"><pre>                allowCustomRgb</pre></li>
+    <li id="L259"><pre>                icon={&lt;span&gt;系列颜色&lt;/span&gt;}</pre></li>
+    <li id="L260"><pre>                onPick={(color) =&gt; {</pre></li>
+    <li id="L261"><pre>                  const colors = [...palette]</pre></li>
+    <li id="L262"><pre>                  colors[colorSeries] = color</pre></li>
+    <li id="L263"><pre>                  update({ colorScheme: colors })</pre></li>
+    <li id="L264"><pre>                }}</pre></li>
+    <li id="L265"><pre>              /&gt;</pre></li>
+    <li id="L266">
+      <pre>
+              &lt;ToolbarMenuNote&gt;当前系列：{palette[colorSeries] ?? &#x27;无系列&#x27;}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L267"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L268"><pre>                label=&quot;恢复所选系列颜色&quot;</pre></li>
+    <li id="L269">
+      <pre>                disabled={palette[colorSeries] === originalPalette[colorSeries]}</pre>
+    </li>
+    <li id="L270"><pre>                disabledReason=&quot;所选系列已使用原颜色&quot;</pre></li>
+    <li id="L271"><pre>                onClick={() =&gt; {</pre></li>
+    <li id="L272"><pre>                  const colors = [...palette]</pre></li>
+    <li id="L273">
+      <pre>                  colors[colorSeries] = originalPalette[colorSeries]!</pre>
+    </li>
+    <li id="L274"><pre>                  update({</pre></li>
+    <li id="L275">
+      <pre>
+                    colorScheme: colors.every((color, index) =&gt; color === originalPalette[index])</pre>
+    </li>
+    <li id="L276"><pre>                      ? undefined</pre></li>
+    <li id="L277"><pre>                      : colors,</pre></li>
+    <li id="L278"><pre>                  })</pre></li>
+    <li id="L279"><pre>                }}</pre></li>
+    <li id="L280"><pre>              &gt;</pre></li>
+    <li id="L281"><pre>                恢复此系列原颜色</pre></li>
+    <li id="L282"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L283"><pre>            &lt;/&gt;</pre></li>
+    <li id="L284"><pre>          )}</pre></li>
+    <li id="L285"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L286"><pre>            {pie</pre></li>
+    <li id="L287">
+      <pre>
+              ? &#x27;方案应用于未单独着色的数据点，保留单独颜色。保存后方案色成为显式点色，再次配色时会保留。&#x27;</pre>
+    </li>
+    <li id="L288">
+      <pre>
+              : &#x27;数据点的显式颜色优先于系列配色，修改系列不会清除数据点颜色。&#x27;}</pre>
+    </li>
+    <li id="L289"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L290"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L291"><pre>            label=&quot;数据点所属系列&quot;</pre></li>
+    <li id="L292"><pre>            disabled={disabled}</pre></li>
+    <li id="L293"><pre>            value={String(pointSeries)}</pre></li>
+    <li id="L294"><pre>            options={chart.series.map((series, index) =&gt; ({</pre></li>
+    <li id="L295"><pre>              value: String(index),</pre></li>
+    <li id="L296"><pre>              label: series.name || `系列${index + 1}`,</pre></li>
+    <li id="L297"><pre>            }))}</pre></li>
+    <li id="L298"><pre>            onChange={(value) =&gt; setPointSeries(Number(value))}</pre></li>
+    <li id="L299"><pre>          /&gt;</pre></li>
+    <li id="L300"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L301"><pre>            label=&quot;数据点类别&quot;</pre></li>
+    <li id="L302"><pre>            disabled={disabled}</pre></li>
+    <li id="L303"><pre>            value={String(point)}</pre></li>
+    <li id="L304">
+      <pre>            options={chart.categories.map((category, index) =&gt; ({</pre>
+    </li>
+    <li id="L305"><pre>              value: String(index),</pre></li>
+    <li id="L306"><pre>              label: category || `类别${index + 1}`,</pre></li>
+    <li id="L307"><pre>            }))}</pre></li>
+    <li id="L308"><pre>            onChange={(value) =&gt; setPoint(Number(value))}</pre></li>
+    <li id="L309"><pre>          /&gt;</pre></li>
+    <li id="L310"><pre>          &lt;ToolbarColorPicker</pre></li>
+    <li id="L311"><pre>            label=&quot;数据点颜色&quot;</pre></li>
+    <li id="L312"><pre>            value={pointColor}</pre></li>
+    <li id="L313"><pre>            options={colorOptions}</pre></li>
+    <li id="L314"><pre>            allowCustomRgb</pre></li>
+    <li id="L315"><pre>            icon={&lt;span&gt;数据点&lt;/span&gt;}</pre></li>
+    <li id="L316"><pre>            onPick={colorPoint}</pre></li>
+    <li id="L317"><pre>          /&gt;</pre></li>
+    <li id="L318">
+      <pre>          &lt;ToolbarMenuNote&gt;当前数据点：{pointColor}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L319"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L320"><pre>            label=&quot;重置数据点颜色&quot;</pre></li>
+    <li id="L321"><pre>            disabled={!hasPointOverride}</pre></li>
+    <li id="L322"><pre>            disabledReason=&quot;此数据点已使用自动颜色&quot;</pre></li>
+    <li id="L323"><pre>            onClick={() =&gt; colorPoint(null)}</pre></li>
+    <li id="L324"><pre>          &gt;</pre></li>
+    <li id="L325"><pre>            {pie</pre></li>
+    <li id="L326"><pre>              ? patch.pointColorScheme</pre></li>
+    <li id="L327"><pre>                ? &#x27;使用当前方案颜色&#x27;</pre></li>
+    <li id="L328"><pre>                : &#x27;恢复此数据点自动颜色&#x27;</pre></li>
+    <li id="L329"><pre>              : &#x27;使用系列颜色&#x27;}</pre></li>
+    <li id="L330"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L331"><pre>        &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L332"><pre>      )}</pre></li>
+    <li id="L333"><pre>    &lt;/&gt;</pre></li>
+    <li id="L334"><pre>  )</pre></li>
+    <li id="L335"><pre>}</pre></li>
+  </ol>
+</html>

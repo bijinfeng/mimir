@@ -164,6 +164,7 @@ export function PptxImportControls({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const token = useRef(0)
+  const pending = useRef(false)
   useEffect(
     () => () => {
       token.current++
@@ -177,7 +178,34 @@ export function PptxImportControls({
           ?.svg
       : ''
   return (
-    <PptxControlPanel busy={busy}>
+    <PptxControlPanel
+      busy={busy}
+      actions={
+        <ToolbarButton
+          primary
+          label="导入幻灯片"
+          disabled={!source || !indices}
+          disabledReason="请选择源文件并填写有效页码，例如1-3,5"
+          onClick={() => {
+            if (!source || !indices || pending.current) return
+            pending.current = true
+            setBusy(true)
+            void upload(
+              {
+                kind: 'import_slides',
+                afterIndex,
+                slideIndices: indices,
+                keepSourceFormatting: style === 'source',
+              },
+              source.file,
+            ).finally(() => {
+              pending.current = false
+              setBusy(false)
+            })
+          }}
+        />
+      }
+    >
       <ToolbarMenuFields label="源演示文稿">
         <ToolbarFileButton
           label="选择源PPTX文件"
@@ -229,6 +257,7 @@ export function PptxImportControls({
         )}
         <ToolbarSelect
           label="导入格式"
+          disabled={busy}
           value={style}
           options={[
             { value: 'destination', label: '使用目标主题' },
@@ -242,25 +271,6 @@ export function PptxImportControls({
         </ToolbarMenuNote>
         {error && <ToolbarMenuNote>{error}</ToolbarMenuNote>}
       </ToolbarMenuFields>
-      <ToolbarButton
-        primary
-        label="导入幻灯片"
-        disabled={!source || !indices}
-        disabledReason="请选择源文件并填写有效页码，例如1-3,5"
-        onClick={() => {
-          if (!source || !indices) return
-          setBusy(true)
-          void upload(
-            {
-              kind: 'import_slides',
-              afterIndex,
-              slideIndices: indices,
-              keepSourceFormatting: style === 'source',
-            },
-            source.file,
-          ).finally(() => setBusy(false))
-        }}
-      />
     </PptxControlPanel>
   )
 }

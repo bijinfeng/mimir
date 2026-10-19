@@ -1,0 +1,23 @@
+[
+  {
+    "variant": "before",
+    "status": 200,
+    "nativeBytes": 42952,
+    "version": 1,
+    "nativeContentFound": true,
+    "scope": "isolated exact product native host; fixture identity substitution; no IO persist"
+  },
+  {
+    "variant": "after",
+    "status": 200,
+    "nativeBytes": 42954,
+    "version": 1,
+    "nativeContentFound": true,
+    "scope": "isolated exact product native host; fixture identity substitution; no IO persist"
+  },
+  {
+    "path": "nonfixture identity",
+    "status": 400,
+    "error": "仅允许本页固定工作簿身份"
+  }
+]

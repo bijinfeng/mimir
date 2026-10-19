@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxSelectionFormatFields.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxSelectionFormatFields.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 3c0b8bf1b6c95bffc7de454ea887fade236eed0b8d1a9e6eadf8798991e55543
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { PPTX_PARAGRAPH_NUMBER_TYPES } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { useRef } from &#x27;react&#x27;</pre></li>
+    <li id="L3"><pre>import { ImagePlus } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L4">
+      <pre>
+import type { Paragraph, SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L7"><pre>  ToolbarButton,</pre></li>
+    <li id="L8"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L9"><pre>  ToolbarSelect,</pre></li>
+    <li id="L10"><pre>  ToolbarTextField,</pre></li>
+    <li id="L11"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L12"><pre>import { pptxMixedValue } from &#x27;./pptx-selection.js&#x27;</pre></li>
+    <li id="L13"><pre>import {</pre></li>
+    <li id="L14"><pre>  PPTX_OUTLINE_DASHES,</pre></li>
+    <li id="L15"><pre>  pptxElementStroke,</pre></li>
+    <li id="L16"><pre>  type PptxOutlineDraft,</pre></li>
+    <li id="L17"><pre>} from &#x27;./PptxOutlineControls.js&#x27;</pre></li>
+    <li id="L18"><pre></pre></li>
+    <li id="L19"><pre>const NUMBER_LABELS = [</pre></li>
+    <li id="L20"><pre>  &#x27;1. 2. 3.&#x27;,</pre></li>
+    <li id="L21"><pre>  &#x27;1) 2) 3)&#x27;,</pre></li>
+    <li id="L22"><pre>  &#x27;I. II. III.&#x27;,</pre></li>
+    <li id="L23"><pre>  &#x27;A. B. C.&#x27;,</pre></li>
+    <li id="L24"><pre>  &#x27;a) b) c)&#x27;,</pre></li>
+    <li id="L25"><pre>  &#x27;a. b. c.&#x27;,</pre></li>
+    <li id="L26"><pre>  &#x27;i. ii. iii.&#x27;,</pre></li>
+    <li id="L27"><pre>  &#x27;① ② ③&#x27;,</pre></li>
+    <li id="L28"><pre>  &#x27;一、二、三、&#x27;,</pre></li>
+    <li id="L29"><pre>]</pre></li>
+    <li id="L30"><pre>const BULLETS = [</pre></li>
+    <li id="L31">
+      <pre>  { value: &#x27;•|Arial&#x27;, label: &#x27;实心圆 · Arial&#x27; },</pre>
+    </li>
+    <li id="L32">
+      <pre>  { value: &#x27;o|Courier New&#x27;, label: &#x27;空心圆 · Courier New&#x27; },</pre>
+    </li>
+    <li id="L33">
+      <pre>  { value: &#x27;§|Wingdings&#x27;, label: &#x27;实心方块 · Wingdings&#x27; },</pre>
+    </li>
+    <li id="L34">
+      <pre>  { value: &#x27;q|Wingdings&#x27;, label: &#x27;空心方块 · Wingdings&#x27; },</pre>
+    </li>
+    <li id="L35">
+      <pre>  { value: &#x27;v|Wingdings&#x27;, label: &#x27;菱形 · Wingdings&#x27; },</pre>
+    </li>
+    <li id="L36">
+      <pre>  { value: &#x27;Ø|Wingdings&#x27;, label: &#x27;箭头 · Wingdings&#x27; },</pre>
+    </li>
+    <li id="L37">
+      <pre>  { value: &#x27;ü|Wingdings&#x27;, label: &#x27;勾选 · Wingdings&#x27; },</pre>
+    </li>
+    <li id="L38"><pre>]</pre></li>
+    <li id="L39">
+      <pre>
+const pair = &#x27;mimir-pptx-selection-controls__fields mimir-pptx-selection-controls__fields--equal&#x27;</pre>
+    </li>
+    <li id="L40"><pre></pre></li>
+    <li id="L41"><pre>export function PptxSelectionParagraphFields({</pre></li>
+    <li id="L42"><pre>  paragraphs,</pre></li>
+    <li id="L43"><pre>  draft,</pre></li>
+    <li id="L44"><pre>  onChange,</pre></li>
+    <li id="L45"><pre>  disabled,</pre></li>
+    <li id="L46"><pre>  lists,</pre></li>
+    <li id="L47"><pre>  imageName,</pre></li>
+    <li id="L48"><pre>  onPickImage,</pre></li>
+    <li id="L49"><pre>}: {</pre></li>
+    <li id="L50"><pre>  paragraphs: readonly Paragraph[]</pre></li>
+    <li id="L51"><pre>  draft: Record&lt;string, unknown&gt;</pre></li>
+    <li id="L52"><pre>  onChange: (patch: Record&lt;string, unknown&gt;) =&gt; void</pre></li>
+    <li id="L53"><pre>  disabled: boolean</pre></li>
+    <li id="L54"><pre>  lists: boolean</pre></li>
+    <li id="L55"><pre>  imageName: string</pre></li>
+    <li id="L56"><pre>  onPickImage: (file?: File) =&gt; void</pre></li>
+    <li id="L57"><pre>}) {</pre></li>
+    <li id="L58"><pre>  const imageInput = useRef&lt;HTMLInputElement&gt;(null)</pre></li>
+    <li id="L59">
+      <pre>
+  const current = &lt;T,&gt;(read: (paragraph: Paragraph) =&gt; T) =&gt; pptxMixedValue(paragraphs.map(read))</pre>
+    </li>
+    <li id="L60">
+      <pre>
+  const text = (field: string, read: (paragraph: Paragraph) =&gt; string | number | undefined) =&gt; {</pre>
+    </li>
+    <li id="L61"><pre>    const value = current(read)</pre></li>
+    <li id="L62"><pre>    return {</pre></li>
+    <li id="L63"><pre>      value: String(draft[field] ?? value ?? &#x27;&#x27;),</pre></li>
+    <li id="L64">
+      <pre>      placeholder: value === null ? &#x27;混合&#x27; : &#x27;继承&#x27;,</pre>
+    </li>
+    <li id="L65"><pre>    }</pre></li>
+    <li id="L66"><pre>  }</pre></li>
+    <li id="L67">
+      <pre>
+  const change = (field: string) =&gt; (value: string) =&gt; onChange({ [field]: value })</pre>
+    </li>
+    <li id="L68"><pre>  const direction = current((p) =&gt; p.rtl)</pre></li>
+    <li id="L69">
+      <pre>
+  const bullet = (draft.bullet as string | undefined) ?? current((p) =&gt; p.bullet?.type ?? &#x27;none&#x27;)</pre>
+    </li>
+    <li id="L70">
+      <pre>
+  const scheme = (draft.numType as string | undefined) ?? current((p) =&gt; p.bullet?.numType)</pre>
+    </li>
+    <li id="L71">
+      <pre>  const schemes: { value: string; label: string; disabled?: boolean }[] =</pre>
+    </li>
+    <li id="L72">
+      <pre>
+    PPTX_PARAGRAPH_NUMBER_TYPES.map((value, i) =&gt; ({ value, label: NUMBER_LABELS[i]! }))</pre>
+    </li>
+    <li id="L73">
+      <pre>  if (scheme &amp;&amp; !schemes.some((option) =&gt; option.value === scheme))</pre>
+    </li>
+    <li id="L74">
+      <pre>    schemes.push({ value: scheme, label: `原件编号（${scheme}）`, disabled: true })</pre>
+    </li>
+    <li id="L75"><pre>  const currentGlyph = current((p) =&gt;</pre></li>
+    <li id="L76">
+      <pre>
+    p.bullet?.type === &#x27;char&#x27; ? `${p.bullet.char ?? &#x27;•&#x27;}|${p.bullet.font ?? &#x27;Arial&#x27;}` : undefined,</pre>
+    </li>
+    <li id="L77"><pre>  )</pre></li>
+    <li id="L78"><pre>  const pickedGlyph =</pre></li>
+    <li id="L79"><pre>    draft.bulletChar !== undefined</pre></li>
+    <li id="L80">
+      <pre>      ? `${draft.bulletChar}|${draft.bulletFont ?? &#x27;Arial&#x27;}`</pre>
+    </li>
+    <li id="L81"><pre>      : currentGlyph</pre></li>
+    <li id="L82"><pre>  const glyphs =</pre></li>
+    <li id="L83">
+      <pre>
+    pickedGlyph &amp;&amp; !BULLETS.some((option) =&gt; option.value === pickedGlyph)</pre>
+    </li>
+    <li id="L84">
+      <pre>      ? [...BULLETS, { value: pickedGlyph, label: &#x27;原件自定义符号&#x27; }]</pre>
+    </li>
+    <li id="L85"><pre>      : BULLETS</pre></li>
+    <li id="L86"><pre>  return (</pre></li>
+    <li id="L87">
+      <pre>
+    &lt;fieldset className=&quot;mimir-pptx-selection-controls__fields&quot; disabled={disabled}&gt;</pre>
+    </li>
+    <li id="L88"><pre>      {!lists ? (</pre></li>
+    <li id="L89"><pre>        &lt;&gt;</pre></li>
+    <li id="L90">
+      <pre>          &lt;ToolbarMenuFields label={`段落 · ${paragraphs.length} 段`}&gt;</pre>
+    </li>
+    <li id="L91"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L92"><pre>              label=&quot;批量段落对齐&quot;</pre></li>
+    <li id="L93"><pre>              disabled={disabled}</pre></li>
+    <li id="L94">
+      <pre>
+              value={(draft.align as string | undefined) ?? current((p) =&gt; p.align ?? &#x27;left&#x27;)}</pre>
+    </li>
+    <li id="L95"><pre>              emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L96"><pre>              options={[</pre></li>
+    <li id="L97">
+      <pre>                { value: &#x27;left&#x27;, label: &#x27;左对齐&#x27; },</pre>
+    </li>
+    <li id="L98">
+      <pre>                { value: &#x27;center&#x27;, label: &#x27;居中&#x27; },</pre>
+    </li>
+    <li id="L99">
+      <pre>                { value: &#x27;right&#x27;, label: &#x27;右对齐&#x27; },</pre>
+    </li>
+    <li id="L100">
+      <pre>                { value: &#x27;justify&#x27;, label: &#x27;两端对齐&#x27; },</pre>
+    </li>
+    <li id="L101"><pre>              ]}</pre></li>
+    <li id="L102"><pre>              onChange={(align) =&gt; onChange({ align })}</pre></li>
+    <li id="L103"><pre>            /&gt;</pre></li>
+    <li id="L104"><pre>            &lt;div className={pair}&gt;</pre></li>
+    <li id="L105"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L106"><pre>                label=&quot;批量文字方向&quot;</pre></li>
+    <li id="L107"><pre>                disabled={disabled}</pre></li>
+    <li id="L108"><pre>                value={</pre></li>
+    <li id="L109"><pre>                  typeof draft.rtl === &#x27;boolean&#x27;</pre></li>
+    <li id="L110"><pre>                    ? draft.rtl</pre></li>
+    <li id="L111"><pre>                      ? &#x27;rtl&#x27;</pre></li>
+    <li id="L112"><pre>                      : &#x27;ltr&#x27;</pre></li>
+    <li id="L113"><pre>                    : direction === null</pre></li>
+    <li id="L114"><pre>                      ? null</pre></li>
+    <li id="L115"><pre>                      : direction === undefined</pre></li>
+    <li id="L116"><pre>                        ? &#x27;inherit&#x27;</pre></li>
+    <li id="L117"><pre>                        : direction</pre></li>
+    <li id="L118"><pre>                          ? &#x27;rtl&#x27;</pre></li>
+    <li id="L119"><pre>                          : &#x27;ltr&#x27;</pre></li>
+    <li id="L120"><pre>                }</pre></li>
+    <li id="L121"><pre>                emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L122"><pre>                options={[</pre></li>
+    <li id="L123">
+      <pre>
+                  { value: &#x27;inherit&#x27;, label: &#x27;继承&#x27;, disabled: true },</pre>
+    </li>
+    <li id="L124">
+      <pre>                  { value: &#x27;ltr&#x27;, label: &#x27;从左向右&#x27; },</pre>
+    </li>
+    <li id="L125">
+      <pre>                  { value: &#x27;rtl&#x27;, label: &#x27;从右向左&#x27; },</pre>
+    </li>
+    <li id="L126"><pre>                ]}</pre></li>
+    <li id="L127">
+      <pre>
+                onChange={(value) =&gt; onChange({ rtl: value === &#x27;rtl&#x27; })}</pre>
+    </li>
+    <li id="L128"><pre>              /&gt;</pre></li>
+    <li id="L129"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L130"><pre>                label=&quot;批量行距（%）&quot;</pre></li>
+    <li id="L131"><pre>                {...text(&#x27;lineSpacingPct&#x27;, (p) =&gt;</pre></li>
+    <li id="L132">
+      <pre>
+                  p.lineExact !== undefined ? `${p.lineExact} pt（固定）` : p.lineHeight,</pre>
+    </li>
+    <li id="L133"><pre>                )}</pre></li>
+    <li id="L134"><pre>                onChange={change(&#x27;lineSpacingPct&#x27;)}</pre></li>
+    <li id="L135"><pre>              /&gt;</pre></li>
+    <li id="L136"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L137"><pre>                label=&quot;批量段前（pt）&quot;</pre></li>
+    <li id="L138"><pre>                {...text(&#x27;spaceBeforePt&#x27;, (p) =&gt;</pre></li>
+    <li id="L139">
+      <pre>
+                  p.spaceBeforePct !== undefined ? `${p.spaceBeforePct}%` : p.spaceBefore,</pre>
+    </li>
+    <li id="L140"><pre>                )}</pre></li>
+    <li id="L141"><pre>                onChange={change(&#x27;spaceBeforePt&#x27;)}</pre></li>
+    <li id="L142"><pre>              /&gt;</pre></li>
+    <li id="L143"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L144"><pre>                label=&quot;批量段后（pt）&quot;</pre></li>
+    <li id="L145"><pre>                {...text(&#x27;spaceAfterPt&#x27;, (p) =&gt;</pre></li>
+    <li id="L146">
+      <pre>
+                  p.spaceAfterPct !== undefined ? `${p.spaceAfterPct}%` : p.spaceAfter,</pre>
+    </li>
+    <li id="L147"><pre>                )}</pre></li>
+    <li id="L148"><pre>                onChange={change(&#x27;spaceAfterPt&#x27;)}</pre></li>
+    <li id="L149"><pre>              /&gt;</pre></li>
+    <li id="L150"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L151"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L152">
+      <pre>
+              行距 0–13200%，段前/段后 0–1584pt。修改数值会替换原件的固定行距或百分比间距。</pre>
+    </li>
+    <li id="L153"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L154"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L155"><pre>          &lt;ToolbarMenuFields label=&quot;段落级别&quot;&gt;</pre></li>
+    <li id="L156"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L157">
+      <pre>
+              当前级别：{current((p) =&gt; (p.level ?? 0) + 1) ?? &#x27;混合&#x27;}（1–9）</pre>
+    </li>
+    <li id="L158"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L159"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L160"><pre>              label=&quot;批量级别调整&quot;</pre></li>
+    <li id="L161"><pre>              disabled={disabled}</pre></li>
+    <li id="L162"><pre>              value={</pre></li>
+    <li id="L163"><pre>                draft.indentDelta === 1</pre></li>
+    <li id="L164"><pre>                  ? &#x27;increase&#x27;</pre></li>
+    <li id="L165"><pre>                  : draft.indentDelta === -1</pre></li>
+    <li id="L166"><pre>                    ? &#x27;decrease&#x27;</pre></li>
+    <li id="L167"><pre>                    : &#x27;keep&#x27;</pre></li>
+    <li id="L168"><pre>              }</pre></li>
+    <li id="L169"><pre>              options={[</pre></li>
+    <li id="L170">
+      <pre>                { value: &#x27;keep&#x27;, label: &#x27;保持当前&#x27; },</pre>
+    </li>
+    <li id="L171">
+      <pre>                { value: &#x27;increase&#x27;, label: &#x27;增加一级&#x27; },</pre>
+    </li>
+    <li id="L172">
+      <pre>                { value: &#x27;decrease&#x27;, label: &#x27;减少一级&#x27; },</pre>
+    </li>
+    <li id="L173"><pre>              ]}</pre></li>
+    <li id="L174"><pre>              onChange={(value) =&gt;</pre></li>
+    <li id="L175"><pre>                onChange({</pre></li>
+    <li id="L176">
+      <pre>
+                  indentDelta: value === &#x27;keep&#x27; ? undefined : value === &#x27;increase&#x27; ? 1 : -1,</pre>
+    </li>
+    <li id="L177"><pre>                })</pre></li>
+    <li id="L178"><pre>              }</pre></li>
+    <li id="L179"><pre>            /&gt;</pre></li>
+    <li id="L180"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L181"><pre>        &lt;/&gt;</pre></li>
+    <li id="L182"><pre>      ) : (</pre></li>
+    <li id="L183"><pre>        &lt;&gt;</pre></li>
+    <li id="L184"><pre>          &lt;ToolbarMenuFields label=&quot;符号与编号&quot;&gt;</pre></li>
+    <li id="L185"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L186"><pre>              label=&quot;批量列表类型&quot;</pre></li>
+    <li id="L187"><pre>              disabled={disabled}</pre></li>
+    <li id="L188"><pre>              value={bullet ?? null}</pre></li>
+    <li id="L189"><pre>              emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L190"><pre>              options={[</pre></li>
+    <li id="L191">
+      <pre>                { value: &#x27;none&#x27;, label: &#x27;无符号或编号&#x27; },</pre>
+    </li>
+    <li id="L192">
+      <pre>                { value: &#x27;char&#x27;, label: &#x27;字符符号&#x27; },</pre>
+    </li>
+    <li id="L193">
+      <pre>                { value: &#x27;number&#x27;, label: &#x27;自动编号&#x27; },</pre>
+    </li>
+    <li id="L194">
+      <pre>                { value: &#x27;blip&#x27;, label: &#x27;图片符号&#x27; },</pre>
+    </li>
+    <li id="L195"><pre>              ]}</pre></li>
+    <li id="L196"><pre>              onChange={(value) =&gt;</pre></li>
+    <li id="L197"><pre>                onChange({</pre></li>
+    <li id="L198"><pre>                  bullet: value,</pre></li>
+    <li id="L199"><pre>                  bulletImage: undefined,</pre></li>
+    <li id="L200"><pre>                  bulletChar: undefined,</pre></li>
+    <li id="L201"><pre>                  bulletFont: undefined,</pre></li>
+    <li id="L202"><pre>                  numType: undefined,</pre></li>
+    <li id="L203"><pre>                  startAt: undefined,</pre></li>
+    <li id="L204"><pre>                })</pre></li>
+    <li id="L205"><pre>              }</pre></li>
+    <li id="L206"><pre>            /&gt;</pre></li>
+    <li id="L207">
+      <pre>            {(bullet === &#x27;char&#x27; || bullet === null) &amp;&amp; (</pre>
+    </li>
+    <li id="L208"><pre>              &lt;&gt;</pre></li>
+    <li id="L209"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L210"><pre>                  label=&quot;批量符号预设&quot;</pre></li>
+    <li id="L211"><pre>                  disabled={disabled}</pre></li>
+    <li id="L212"><pre>                  value={pickedGlyph ?? null}</pre></li>
+    <li id="L213">
+      <pre>
+                  emptyLabel={currentGlyph === null ? &#x27;混合&#x27; : &#x27;选择符号&#x27;}</pre>
+    </li>
+    <li id="L214"><pre>                  options={glyphs}</pre></li>
+    <li id="L215"><pre>                  onChange={(value) =&gt; {</pre></li>
+    <li id="L216">
+      <pre>                    const [bulletChar, bulletFont] = value.split(&#x27;|&#x27;)</pre>
+    </li>
+    <li id="L217">
+      <pre>                    onChange({ bullet: &#x27;char&#x27;, bulletChar, bulletFont })</pre>
+    </li>
+    <li id="L218"><pre>                  }}</pre></li>
+    <li id="L219"><pre>                /&gt;</pre></li>
+    <li id="L220"><pre>                &lt;div className={pair}&gt;</pre></li>
+    <li id="L221"><pre>                  &lt;ToolbarTextField</pre></li>
+    <li id="L222"><pre>                    label=&quot;批量符号字符&quot;</pre></li>
+    <li id="L223"><pre>                    {...text(&#x27;bulletChar&#x27;, (p) =&gt;</pre></li>
+    <li id="L224">
+      <pre>
+                      p.bullet?.type === &#x27;char&#x27; ? p.bullet.char : undefined,</pre>
+    </li>
+    <li id="L225"><pre>                    )}</pre></li>
+    <li id="L226">
+      <pre>
+                    onChange={(value) =&gt; onChange({ bullet: &#x27;char&#x27;, bulletChar: value })}</pre>
+    </li>
+    <li id="L227"><pre>                  /&gt;</pre></li>
+    <li id="L228"><pre>                  &lt;ToolbarTextField</pre></li>
+    <li id="L229"><pre>                    label=&quot;批量符号字体&quot;</pre></li>
+    <li id="L230">
+      <pre>                    {...text(&#x27;bulletFont&#x27;, (p) =&gt; p.bullet?.font)}</pre>
+    </li>
+    <li id="L231"><pre>                    onChange={change(&#x27;bulletFont&#x27;)}</pre></li>
+    <li id="L232"><pre>                  /&gt;</pre></li>
+    <li id="L233"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L234"><pre>              &lt;/&gt;</pre></li>
+    <li id="L235"><pre>            )}</pre></li>
+    <li id="L236">
+      <pre>            {(bullet === &#x27;number&#x27; || bullet === null) &amp;&amp; (</pre>
+    </li>
+    <li id="L237"><pre>              &lt;div className={pair}&gt;</pre></li>
+    <li id="L238"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L239"><pre>                  label=&quot;批量编号格式&quot;</pre></li>
+    <li id="L240"><pre>                  disabled={disabled}</pre></li>
+    <li id="L241"><pre>                  value={scheme ?? null}</pre></li>
+    <li id="L242">
+      <pre>
+                  emptyLabel={scheme === null ? &#x27;混合&#x27; : &#x27;选择格式&#x27;}</pre>
+    </li>
+    <li id="L243"><pre>                  options={schemes}</pre></li>
+    <li id="L244">
+      <pre>
+                  onChange={(numType) =&gt; onChange({ bullet: &#x27;number&#x27;, numType })}</pre>
+    </li>
+    <li id="L245"><pre>                /&gt;</pre></li>
+    <li id="L246"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L247"><pre>                  label=&quot;批量起始编号&quot;</pre></li>
+    <li id="L248">
+      <pre>                  {...text(&#x27;startAt&#x27;, (p) =&gt; p.bullet?.startAt)}</pre>
+    </li>
+    <li id="L249"><pre>                  onChange={change(&#x27;startAt&#x27;)}</pre></li>
+    <li id="L250"><pre>                /&gt;</pre></li>
+    <li id="L251"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L252"><pre>            )}</pre></li>
+    <li id="L253"><pre>            &lt;input</pre></li>
+    <li id="L254"><pre>              ref={imageInput}</pre></li>
+    <li id="L255"><pre>              hidden</pre></li>
+    <li id="L256"><pre>              type=&quot;file&quot;</pre></li>
+    <li id="L257"><pre>              accept=&quot;image/png,image/jpeg&quot;</pre></li>
+    <li id="L258"><pre>              aria-label=&quot;批量图片项目符号文件&quot;</pre></li>
+    <li id="L259"><pre>              disabled={disabled}</pre></li>
+    <li id="L260"><pre>              onChange={(event) =&gt; {</pre></li>
+    <li id="L261"><pre>                onPickImage(event.currentTarget.files?.[0])</pre></li>
+    <li id="L262"><pre>                event.currentTarget.value = &#x27;&#x27;</pre></li>
+    <li id="L263"><pre>              }}</pre></li>
+    <li id="L264"><pre>            /&gt;</pre></li>
+    <li id="L265"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L266"><pre>              label=&quot;选择批量图片项目符号&quot;</pre></li>
+    <li id="L267"><pre>              disabled={disabled}</pre></li>
+    <li id="L268"><pre>              onClick={() =&gt; imageInput.current?.click()}</pre></li>
+    <li id="L269"><pre>            &gt;</pre></li>
+    <li id="L270"><pre>              &lt;ImagePlus size={15} /&gt;</pre></li>
+    <li id="L271">
+      <pre>
+              {bullet === &#x27;blip&#x27; ? &#x27;替换图片符号&#x27; : &#x27;使用图片符号&#x27;}</pre>
+    </li>
+    <li id="L272"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L273"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L274"><pre>              {draft.bulletImage &amp;&amp; imageName</pre></li>
+    <li id="L275"><pre>                ? `待应用：${imageName}`</pre></li>
+    <li id="L276"><pre>                : draft.bullet === &#x27;blip&#x27;</pre></li>
+    <li id="L277">
+      <pre>                  ? &#x27;请选择PNG或JPEG图片，再应用到全部所选文本。&#x27;</pre>
+    </li>
+    <li id="L278"><pre>                  : bullet === &#x27;blip&#x27;</pre></li>
+    <li id="L279">
+      <pre>
+                    ? `当前图片${current((p) =&gt; p.bullet?.mediaRef) === null ? &#x27;混合&#x27; : &#x27;相同&#x27;}；未替换时保留各对象原图片。`</pre>
+    </li>
+    <li id="L280">
+      <pre>
+                    : &#x27;PNG或JPEG，最多512 KiB；选图后点击“应用对象格式”。&#x27;}</pre>
+    </li>
+    <li id="L281"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L282"><pre>            {bullet === &#x27;none&#x27; &amp;&amp; (</pre></li>
+    <li id="L283"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L284">
+      <pre>                选择符号或编号后可调整细节；移除列表同时收回原有悬挂缩进。</pre>
+    </li>
+    <li id="L285"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L286"><pre>            )}</pre></li>
+    <li id="L287"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L288"><pre>          {bullet !== &#x27;none&#x27; &amp;&amp; (</pre></li>
+    <li id="L289"><pre>            &lt;ToolbarMenuFields label=&quot;列表细节&quot;&gt;</pre></li>
+    <li id="L290"><pre>              &lt;div className={pair}&gt;</pre></li>
+    <li id="L291"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L292"><pre>                  label=&quot;批量符号大小（%）&quot;</pre></li>
+    <li id="L293"><pre>                  {...text(&#x27;bulletSizePct&#x27;, (p) =&gt;</pre></li>
+    <li id="L294"><pre>                    p.bullet?.sizePt !== undefined</pre></li>
+    <li id="L295"><pre>                      ? `${p.bullet.sizePt} pt（固定）`</pre></li>
+    <li id="L296"><pre>                      : p.bullet?.sizePct,</pre></li>
+    <li id="L297"><pre>                  )}</pre></li>
+    <li id="L298"><pre>                  onChange={change(&#x27;bulletSizePct&#x27;)}</pre></li>
+    <li id="L299"><pre>                /&gt;</pre></li>
+    <li id="L300"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L301"><pre>                  label=&quot;批量悬挂缩进（pt）&quot;</pre></li>
+    <li id="L302"><pre>                  {...text(&#x27;bulletHangPt&#x27;, (p) =&gt;</pre></li>
+    <li id="L303">
+      <pre>
+                    p.indent !== undefined &amp;&amp; p.indent &lt;= 0 ? -p.indent / 12700 : undefined,</pre>
+    </li>
+    <li id="L304"><pre>                  )}</pre></li>
+    <li id="L305"><pre>                  onChange={change(&#x27;bulletHangPt&#x27;)}</pre></li>
+    <li id="L306"><pre>                /&gt;</pre></li>
+    <li id="L307"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L308"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L309"><pre>                label=&quot;批量符号颜色&quot;</pre></li>
+    <li id="L310">
+      <pre>                {...text(&#x27;bulletColor&#x27;, (p) =&gt; p.bullet?.color)}</pre>
+    </li>
+    <li id="L311"><pre>                onChange={change(&#x27;bulletColor&#x27;)}</pre></li>
+    <li id="L312"><pre>              /&gt;</pre></li>
+    <li id="L313"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L314"><pre>                大小 25–400%，悬挂 0–4032pt，编号</pre></li>
+    <li id="L315">
+      <pre>                1–32767。未选择新类型时，细节只修改已有的符号/编号。</pre>
+    </li>
+    <li id="L316"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L317"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L318"><pre>          )}</pre></li>
+    <li id="L319"><pre>        &lt;/&gt;</pre></li>
+    <li id="L320"><pre>      )}</pre></li>
+    <li id="L321"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L322"><pre>  )</pre></li>
+    <li id="L323"><pre>}</pre></li>
+    <li id="L324"><pre></pre></li>
+    <li id="L325"><pre>export function PptxSelectionOutlineFields({</pre></li>
+    <li id="L326"><pre>  elements,</pre></li>
+    <li id="L327"><pre>  draft,</pre></li>
+    <li id="L328"><pre>  onChange,</pre></li>
+    <li id="L329"><pre>  disabled,</pre></li>
+    <li id="L330"><pre>}: {</pre></li>
+    <li id="L331"><pre>  elements: readonly SlideElement[]</pre></li>
+    <li id="L332"><pre>  draft: PptxOutlineDraft</pre></li>
+    <li id="L333"><pre>  onChange: (patch: PptxOutlineDraft) =&gt; void</pre></li>
+    <li id="L334"><pre>  disabled: boolean</pre></li>
+    <li id="L335"><pre>}) {</pre></li>
+    <li id="L336"><pre>  const strokes = elements.map(pptxElementStroke)</pre></li>
+    <li id="L337">
+      <pre>
+  const dash = draft.dash ?? pptxMixedValue(strokes.map((s) =&gt; s?.dash ?? &#x27;solid&#x27;))</pre>
+    </li>
+    <li id="L338"><pre>  const dashOptions =</pre></li>
+    <li id="L339">
+      <pre>    dash &amp;&amp; !PPTX_OUTLINE_DASHES.some((option) =&gt; option.value === dash)</pre>
+    </li>
+    <li id="L340">
+      <pre>
+      ? [...PPTX_OUTLINE_DASHES, { value: dash, label: `原件线型（${dash}）`, disabled: true }]</pre>
+    </li>
+    <li id="L341"><pre>      : PPTX_OUTLINE_DASHES</pre></li>
+    <li id="L342">
+      <pre>
+  const enabled = draft.enabled ?? pptxMixedValue(strokes.map((s) =&gt; !!s &amp;&amp; s.fill.type !== &#x27;none&#x27;))</pre>
+    </li>
+    <li id="L343"><pre>  return (</pre></li>
+    <li id="L344"><pre>    &lt;ToolbarMenuFields label=&quot;轮廓细节&quot;&gt;</pre></li>
+    <li id="L345"><pre>      &lt;div className={pair}&gt;</pre></li>
+    <li id="L346"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L347"><pre>          label=&quot;批量轮廓显示&quot;</pre></li>
+    <li id="L348"><pre>          disabled={disabled}</pre></li>
+    <li id="L349">
+      <pre>
+          value={enabled === null ? null : enabled ? &#x27;line&#x27; : &#x27;none&#x27;}</pre>
+    </li>
+    <li id="L350"><pre>          emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L351"><pre>          options={[</pre></li>
+    <li id="L352">
+      <pre>            { value: &#x27;line&#x27;, label: &#x27;显示轮廓&#x27; },</pre>
+    </li>
+    <li id="L353">
+      <pre>            { value: &#x27;none&#x27;, label: &#x27;无轮廓&#x27; },</pre>
+    </li>
+    <li id="L354"><pre>          ]}</pre></li>
+    <li id="L355">
+      <pre>
+          onChange={(value) =&gt; onChange({ enabled: value === &#x27;line&#x27; })}</pre>
+    </li>
+    <li id="L356"><pre>        /&gt;</pre></li>
+    <li id="L357"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L358"><pre>          label=&quot;批量轮廓线型&quot;</pre></li>
+    <li id="L359"><pre>          disabled={disabled || enabled === false}</pre></li>
+    <li id="L360"><pre>          value={dash}</pre></li>
+    <li id="L361"><pre>          emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L362"><pre>          options={dashOptions}</pre></li>
+    <li id="L363"><pre>          onChange={(value) =&gt; onChange({ dash: value })}</pre></li>
+    <li id="L364"><pre>        /&gt;</pre></li>
+    <li id="L365"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L366"><pre>          label=&quot;批量端点样式&quot;</pre></li>
+    <li id="L367"><pre>          disabled={disabled || enabled === false}</pre></li>
+    <li id="L368">
+      <pre>
+          value={draft.cap ?? pptxMixedValue(strokes.map((s) =&gt; s?.cap ?? &#x27;flat&#x27;))}</pre>
+    </li>
+    <li id="L369"><pre>          emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L370"><pre>          options={[</pre></li>
+    <li id="L371"><pre>            { value: &#x27;flat&#x27;, label: &#x27;平头&#x27; },</pre></li>
+    <li id="L372"><pre>            { value: &#x27;round&#x27;, label: &#x27;圆头&#x27; },</pre></li>
+    <li id="L373">
+      <pre>            { value: &#x27;square&#x27;, label: &#x27;方头&#x27; },</pre>
+    </li>
+    <li id="L374"><pre>          ]}</pre></li>
+    <li id="L375"><pre>          onChange={(cap) =&gt; onChange({ cap })}</pre></li>
+    <li id="L376"><pre>        /&gt;</pre></li>
+    <li id="L377"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L378"><pre>          label=&quot;批量连接样式&quot;</pre></li>
+    <li id="L379"><pre>          disabled={disabled || enabled === false}</pre></li>
+    <li id="L380">
+      <pre>
+          value={draft.join ?? pptxMixedValue(strokes.map((s) =&gt; s?.join ?? &#x27;miter&#x27;))}</pre>
+    </li>
+    <li id="L381"><pre>          emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L382"><pre>          options={[</pre></li>
+    <li id="L383"><pre>            { value: &#x27;miter&#x27;, label: &#x27;尖角&#x27; },</pre></li>
+    <li id="L384"><pre>            { value: &#x27;round&#x27;, label: &#x27;圆角&#x27; },</pre></li>
+    <li id="L385"><pre>            { value: &#x27;bevel&#x27;, label: &#x27;斜角&#x27; },</pre></li>
+    <li id="L386"><pre>          ]}</pre></li>
+    <li id="L387"><pre>          onChange={(join) =&gt; onChange({ join })}</pre></li>
+    <li id="L388"><pre>        /&gt;</pre></li>
+    <li id="L389"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L390"><pre>      &lt;ToolbarSelect</pre></li>
+    <li id="L391"><pre>        label=&quot;批量复合线条&quot;</pre></li>
+    <li id="L392"><pre>        disabled={disabled || enabled === false}</pre></li>
+    <li id="L393">
+      <pre>
+        value={draft.compound ?? pptxMixedValue(strokes.map((s) =&gt; s?.compound ?? &#x27;sng&#x27;))}</pre>
+    </li>
+    <li id="L394"><pre>        emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L395"><pre>        options={[</pre></li>
+    <li id="L396"><pre>          { value: &#x27;sng&#x27;, label: &#x27;单线&#x27; },</pre></li>
+    <li id="L397"><pre>          { value: &#x27;dbl&#x27;, label: &#x27;双线&#x27; },</pre></li>
+    <li id="L398">
+      <pre>          { value: &#x27;thickThin&#x27;, label: &#x27;粗细双线&#x27; },</pre>
+    </li>
+    <li id="L399">
+      <pre>          { value: &#x27;thinThick&#x27;, label: &#x27;细粗双线&#x27; },</pre>
+    </li>
+    <li id="L400"><pre>          { value: &#x27;tri&#x27;, label: &#x27;三线&#x27; },</pre></li>
+    <li id="L401"><pre>        ]}</pre></li>
+    <li id="L402"><pre>        onChange={(compound) =&gt; onChange({ compound })}</pre></li>
+    <li id="L403"><pre>      /&gt;</pre></li>
+    <li id="L404">
+      <pre>
+      &lt;ToolbarMenuNote&gt;仅应用已调整的字段，保留各对象原有箭头和其他线条属性。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L405"><pre>    &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L406"><pre>  )</pre></li>
+    <li id="L407"><pre>}</pre></li>
+  </ol>
+</html>

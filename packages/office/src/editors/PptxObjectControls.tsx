@@ -801,6 +801,7 @@ export function PptxEffectsControls({
         </ToolbarMenuNote>
         <ToolbarSelect
           label="阴影"
+          disabled={busy}
           value={element.shadow ? (element.shadow.inner ? 'inner' : 'outer') : 'none'}
           options={options([
             ['none', '无阴影'],
@@ -861,6 +862,7 @@ export function PptxEffectsControls({
         />
         <ToolbarSelect
           label="倒影"
+          disabled={busy}
           value={element.reflection ? 'true' : 'false'}
           options={options([
             ['false', '无倒影'],
@@ -907,6 +909,7 @@ export function PptxLinkControls({
         <ToolbarMenuNote>点击编辑画布只选择对象。放映时可点击对象打开链接或跳页。</ToolbarMenuNote>
         <ToolbarSelect
           label="链接类型"
+          disabled={busy}
           value={kind}
           options={options([
             ['url', '网页或邮箱'],
@@ -928,6 +931,7 @@ export function PptxLinkControls({
         {kind === 'action' && (
           <ToolbarSelect
             label="放映动作"
+            disabled={busy}
             value={action}
             options={options([
               ['nextslide', '下一页'],
@@ -1015,6 +1019,7 @@ export function PptxShapeControls({
       <ToolbarMenuFields label="形状库">
         <ToolbarSelect
           label="形状类型"
+          disabled={busy}
           value={kind}
           options={
             SHAPES.some((item) => item.value === kind)
@@ -1148,6 +1153,7 @@ export function PptxArrangeControls({
         ))}
         <ToolbarSelect
           label="排列参照"
+          disabled={busy}
           value={to}
           options={options([
             ['selection', '选中对象范围'],
@@ -1157,6 +1163,7 @@ export function PptxArrangeControls({
         />
         <ToolbarSelect
           label="对齐方式"
+          disabled={busy}
           value={mode}
           options={options([
             ['left', '左对齐'],
@@ -1178,6 +1185,7 @@ export function PptxArrangeControls({
         </ToolbarButton>
         <ToolbarSelect
           label="分布方向"
+          disabled={busy}
           value={axis}
           options={options([
             ['horizontal', '水平分布'],
@@ -1215,10 +1223,23 @@ export function PptxArrangeControls({
         </ToolbarButton>
       </ToolbarMenuFields>
       <ToolbarMenuFields label="连接两个对象">
-        <ToolbarSelect label="连接起点对象" value={from} options={choices} onChange={setFrom} />
-        <ToolbarSelect label="连接终点对象" value={end} options={choices} onChange={setEnd} />
+        <ToolbarSelect
+          label="连接起点对象"
+          disabled={busy}
+          value={from}
+          options={choices}
+          onChange={setFrom}
+        />
+        <ToolbarSelect
+          label="连接终点对象"
+          disabled={busy}
+          value={end}
+          options={choices}
+          onChange={setEnd}
+        />
         <ToolbarSelect
           label="连接线类型"
+          disabled={busy}
           value={connector}
           options={options([
             ['straight', '直线'],
@@ -1291,6 +1312,7 @@ export function PptxFreeformControls({
     <>
       <ToolbarSelect
         label="路径编辑方式"
+        disabled={busy}
         value={mode}
         options={[
           { value: 'polygon', label: '多边形顶点' },
@@ -1299,7 +1321,7 @@ export function PptxFreeformControls({
         onChange={setMode}
       />
       {mode === 'curves' ? (
-        <PptxCurveControls element={element} target={target} apply={apply} />
+        <PptxCurveControls element={element} target={target} apply={run} />
       ) : (
         <PptxControlPanel busy={busy}>
           <ToolbarMenuFields label="编辑形状顶点">
@@ -1394,7 +1416,13 @@ export function PptxConnectorControls({
             onCommit={(next) => setPoints({ ...points, [key]: next })}
           />
         ))}
-        <ToolbarSelect label="端点1连接对象" value={from} options={choices} onChange={setFrom} />
+        <ToolbarSelect
+          label="端点1连接对象"
+          disabled={busy}
+          value={from}
+          options={choices}
+          onChange={setFrom}
+        />
         <ToolbarNumberField
           label="端点1连接点索引"
           value={startIndex}
@@ -1402,7 +1430,13 @@ export function PptxConnectorControls({
           max={15}
           onCommit={setStartIndex}
         />
-        <ToolbarSelect label="端点2连接对象" value={to} options={choices} onChange={setTo} />
+        <ToolbarSelect
+          label="端点2连接对象"
+          disabled={busy}
+          value={to}
+          options={choices}
+          onChange={setTo}
+        />
         <ToolbarNumberField
           label="端点2连接点索引"
           value={endIndex}

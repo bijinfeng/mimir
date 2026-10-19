@@ -228,7 +228,7 @@ function FillEditor({
                     ? 'pattern'
                     : current.mode
               }
-              disabled={unavailable}
+              disabled={busy || unavailable}
               options={[
                 { value: 'none', label: background ? '使用母版背景' : '无填充' },
                 { value: 'solid', label: '纯色' },
@@ -360,6 +360,7 @@ function FillEditor({
               <ToolbarMenuFields label="方向与类型">
                 <ToolbarSelect
                   label="渐变类型"
+                  disabled={busy}
                   value={current.path}
                   options={[
                     { value: '', label: '线性' },
@@ -416,6 +417,7 @@ function FillEditor({
               <ToolbarMenuFields label="渐变色标">
                 <ToolbarSelect
                   label="当前色标"
+                  disabled={busy}
                   value={String(selectedStop)}
                   options={current.stops.map((item, index) => ({
                     value: String(index),

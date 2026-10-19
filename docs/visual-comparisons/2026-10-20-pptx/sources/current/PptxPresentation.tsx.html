@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxPresentation.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxPresentation.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 b80499da382008d061044c82cb9a2b195b2aed5cb488fd70977c523dc5a489ee
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useEffect, useId, useMemo, useRef, useState, type RefObject } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import {</pre></li>
+    <li id="L3"><pre>  getSlideAnimations,</pre></li>
+    <li id="L4"><pre>  type SlideAnimation,</pre></li>
+    <li id="L5">
+      <pre>} from &#x27;../../vendor/packages/pptx-engine/src/animation.js&#x27;</pre>
+    </li>
+    <li id="L6"><pre>import {</pre></li>
+    <li id="L7"><pre>  readSlideAdvanceTimeXml,</pre></li>
+    <li id="L8"><pre>  readSlideTransitionXml,</pre></li>
+    <li id="L9"><pre>} from &#x27;../../vendor/packages/pptx-engine/src/generate.js&#x27;</pre></li>
+    <li id="L10"><pre>import type { PptxEditSession } from &#x27;../pptx.js&#x27;</pre></li>
+    <li id="L11"><pre>import { renderSlide } from &#x27;../pptx-render.js&#x27;</pre></li>
+    <li id="L12"><pre>import type { PptxLink } from &#x27;../pptx-metadata.js&#x27;</pre></li>
+    <li id="L13">
+      <pre>import { ToolbarButton, ToolbarNote } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L14"><pre>import {</pre></li>
+    <li id="L15"><pre>  pptxPlayOrder,</pre></li>
+    <li id="L16"><pre>  pptxRehearsalVisit,</pre></li>
+    <li id="L17"><pre>  pptxShowClock,</pre></li>
+    <li id="L18"><pre>  type PptxRehearsalClock,</pre></li>
+    <li id="L19"><pre>  type PptxRehearsalResult,</pre></li>
+    <li id="L20"><pre>} from &#x27;./pptx-show.js&#x27;</pre></li>
+    <li id="L21"><pre>import &#x27;./pptx-presentation.css&#x27;</pre></li>
+    <li id="L22"><pre></pre></li>
+    <li id="L23"><pre>export interface PptxPlaybackItem {</pre></li>
+    <li id="L24"><pre>  animation: SlideAnimation</pre></li>
+    <li id="L25"><pre>  startMs: number</pre></li>
+    <li id="L26"><pre>}</pre></li>
+    <li id="L27">
+      <pre>
+/** onClick starts a step; withPrev and afterPrev keep their relative timing in that step. */</pre>
+    </li>
+    <li id="L28">
+      <pre>export function pptxPlaybackSteps(items: SlideAnimation[]): PptxPlaybackItem[][] {</pre>
+    </li>
+    <li id="L29"><pre>  const steps: PptxPlaybackItem[][] = [[]]</pre></li>
+    <li id="L30"><pre>  let previousStart = 0,</pre></li>
+    <li id="L31"><pre>    previousEnd = 0</pre></li>
+    <li id="L32"><pre>  for (const animation of items) {</pre></li>
+    <li id="L33"><pre>    if (animation.trigger === &#x27;onClick&#x27;) {</pre></li>
+    <li id="L34"><pre>      steps.push([])</pre></li>
+    <li id="L35"><pre>      previousStart = 0</pre></li>
+    <li id="L36"><pre>      previousEnd = 0</pre></li>
+    <li id="L37"><pre>    }</pre></li>
+    <li id="L38"><pre>    const startMs =</pre></li>
+    <li id="L39"><pre>      (animation.trigger === &#x27;afterPrev&#x27;</pre></li>
+    <li id="L40"><pre>        ? previousEnd</pre></li>
+    <li id="L41"><pre>        : animation.trigger === &#x27;withPrev&#x27;</pre></li>
+    <li id="L42"><pre>          ? previousStart</pre></li>
+    <li id="L43"><pre>          : 0) + animation.delayMs</pre></li>
+    <li id="L44"><pre>    steps.at(-1)!.push({ animation, startMs })</pre></li>
+    <li id="L45"><pre>    previousStart = startMs</pre></li>
+    <li id="L46"><pre>    previousEnd = startMs + animation.durationMs</pre></li>
+    <li id="L47"><pre>  }</pre></li>
+    <li id="L48"><pre>  return steps</pre></li>
+    <li id="L49"><pre>}</pre></li>
+    <li id="L50">
+      <pre>
+const exits = new Set([&#x27;disappear&#x27;, &#x27;fadeOut&#x27;, &#x27;flyOut&#x27;, &#x27;wipeOut&#x27;, &#x27;shrink&#x27;, &#x27;zoomOut&#x27;])</pre>
+    </li>
+    <li id="L51"><pre>const entrances = new Set([</pre></li>
+    <li id="L52"><pre>  &#x27;appear&#x27;,</pre></li>
+    <li id="L53"><pre>  &#x27;fade&#x27;,</pre></li>
+    <li id="L54"><pre>  &#x27;flyIn&#x27;,</pre></li>
+    <li id="L55"><pre>  &#x27;wipe&#x27;,</pre></li>
+    <li id="L56"><pre>  &#x27;wipeDown&#x27;,</pre></li>
+    <li id="L57"><pre>  &#x27;splitIn&#x27;,</pre></li>
+    <li id="L58"><pre>  &#x27;bounce&#x27;,</pre></li>
+    <li id="L59"><pre>  &#x27;flipIn&#x27;,</pre></li>
+    <li id="L60"><pre>  &#x27;zoom&#x27;,</pre></li>
+    <li id="L61"><pre>])</pre></li>
+    <li id="L62"><pre>const supported = (animation: SlideAnimation) =&gt;</pre></li>
+    <li id="L63">
+      <pre>
+  !animation.presetXml &amp;&amp; animation.paragraph === undefined &amp;&amp; !animation.effect.startsWith(&#x27;media&#x27;)</pre>
+    </li>
+    <li id="L64">
+      <pre>function frames(item: SlideAnimation, width: number, height: number): Keyframe[] {</pre>
+    </li>
+    <li id="L65"><pre>  const distance =</pre></li>
+    <li id="L66"><pre>    item.direction === &#x27;left&#x27;</pre></li>
+    <li id="L67"><pre>      ? [-width, 0]</pre></li>
+    <li id="L68"><pre>      : item.direction === &#x27;right&#x27;</pre></li>
+    <li id="L69"><pre>        ? [width, 0]</pre></li>
+    <li id="L70"><pre>        : item.direction === &#x27;top&#x27;</pre></li>
+    <li id="L71"><pre>          ? [0, -height]</pre></li>
+    <li id="L72"><pre>          : [0, height]</pre></li>
+    <li id="L73"><pre>  const offset = `${distance[0]}px ${distance[1]}px`</pre></li>
+    <li id="L74"><pre>  switch (item.effect) {</pre></li>
+    <li id="L75"><pre>    case &#x27;appear&#x27;:</pre></li>
+    <li id="L76"><pre>    case &#x27;fade&#x27;:</pre></li>
+    <li id="L77"><pre>      return [{ opacity: 0 }, { opacity: 1 }]</pre></li>
+    <li id="L78"><pre>    case &#x27;disappear&#x27;:</pre></li>
+    <li id="L79"><pre>    case &#x27;fadeOut&#x27;:</pre></li>
+    <li id="L80"><pre>      return [{ opacity: 1 }, { opacity: 0 }]</pre></li>
+    <li id="L81"><pre>    case &#x27;flyIn&#x27;:</pre></li>
+    <li id="L82"><pre>      return [</pre></li>
+    <li id="L83"><pre>        { opacity: 0, translate: offset },</pre></li>
+    <li id="L84"><pre>        { opacity: 1, translate: &#x27;0px 0px&#x27; },</pre></li>
+    <li id="L85"><pre>      ]</pre></li>
+    <li id="L86"><pre>    case &#x27;flyOut&#x27;:</pre></li>
+    <li id="L87"><pre>      return [</pre></li>
+    <li id="L88"><pre>        { opacity: 1, translate: &#x27;0px 0px&#x27; },</pre></li>
+    <li id="L89"><pre>        { opacity: 0, translate: offset },</pre></li>
+    <li id="L90"><pre>      ]</pre></li>
+    <li id="L91"><pre>    case &#x27;zoom&#x27;:</pre></li>
+    <li id="L92"><pre>      return [</pre></li>
+    <li id="L93"><pre>        { opacity: 0, scale: &#x27;.2&#x27; },</pre></li>
+    <li id="L94"><pre>        { opacity: 1, scale: &#x27;1&#x27; },</pre></li>
+    <li id="L95"><pre>      ]</pre></li>
+    <li id="L96"><pre>    case &#x27;shrink&#x27;:</pre></li>
+    <li id="L97"><pre>    case &#x27;zoomOut&#x27;:</pre></li>
+    <li id="L98"><pre>      return [</pre></li>
+    <li id="L99"><pre>        { scale: &#x27;1&#x27;, opacity: 1 },</pre></li>
+    <li id="L100"><pre>        { scale: &#x27;.1&#x27;, opacity: 0 },</pre></li>
+    <li id="L101"><pre>      ]</pre></li>
+    <li id="L102"><pre>    case &#x27;pulse&#x27;:</pre></li>
+    <li id="L103">
+      <pre>
+      return [{ scale: &#x27;1&#x27; }, { scale: &#x27;1.15&#x27;, offset: 0.5 }, { scale: &#x27;1&#x27; }]</pre>
+    </li>
+    <li id="L104"><pre>    case &#x27;spin&#x27;:</pre></li>
+    <li id="L105">
+      <pre>      return [{ rotate: &#x27;0deg&#x27; }, { rotate: &#x27;360deg&#x27; }]</pre>
+    </li>
+    <li id="L106"><pre>    case &#x27;grow&#x27;:</pre></li>
+    <li id="L107">
+      <pre>      return [{ scale: &#x27;1&#x27; }, { scale: &#x27;1.25&#x27; }]</pre>
+    </li>
+    <li id="L108"><pre>    case &#x27;teeter&#x27;:</pre></li>
+    <li id="L109"><pre>      return [</pre></li>
+    <li id="L110"><pre>        { rotate: &#x27;0deg&#x27; },</pre></li>
+    <li id="L111"><pre>        { rotate: &#x27;-8deg&#x27;, offset: 0.25 },</pre></li>
+    <li id="L112"><pre>        { rotate: &#x27;8deg&#x27;, offset: 0.75 },</pre></li>
+    <li id="L113"><pre>        { rotate: &#x27;0deg&#x27; },</pre></li>
+    <li id="L114"><pre>      ]</pre></li>
+    <li id="L115"><pre>    case &#x27;bounce&#x27;:</pre></li>
+    <li id="L116"><pre>      return [</pre></li>
+    <li id="L117"><pre>        { opacity: 0, translate: `0px ${-height}px` },</pre></li>
+    <li id="L118">
+      <pre>        { opacity: 1, translate: &#x27;0px 12px&#x27;, offset: 0.7 },</pre>
+    </li>
+    <li id="L119"><pre>        { translate: &#x27;0px -5px&#x27;, offset: 0.85 },</pre></li>
+    <li id="L120"><pre>        { translate: &#x27;0px 0px&#x27; },</pre></li>
+    <li id="L121"><pre>      ]</pre></li>
+    <li id="L122"><pre>    case &#x27;flipIn&#x27;:</pre></li>
+    <li id="L123"><pre>      return [</pre></li>
+    <li id="L124"><pre>        { scale: &#x27;0 1&#x27;, opacity: 0 },</pre></li>
+    <li id="L125"><pre>        { scale: &#x27;1 1&#x27;, opacity: 1 },</pre></li>
+    <li id="L126"><pre>      ]</pre></li>
+    <li id="L127"><pre>    case &#x27;wipe&#x27;:</pre></li>
+    <li id="L128"><pre>    case &#x27;wipeDown&#x27;:</pre></li>
+    <li id="L129">
+      <pre>
+      return [{ clipPath: &#x27;inset(0 0 100% 0)&#x27; }, { clipPath: &#x27;inset(0 0 0 0)&#x27; }]</pre>
+    </li>
+    <li id="L130"><pre>    case &#x27;wipeOut&#x27;:</pre></li>
+    <li id="L131">
+      <pre>
+      return [{ clipPath: &#x27;inset(0 0 0 0)&#x27; }, { clipPath: &#x27;inset(0 100% 0 0)&#x27; }]</pre>
+    </li>
+    <li id="L132"><pre>    case &#x27;splitIn&#x27;:</pre></li>
+    <li id="L133">
+      <pre>
+      return [{ clipPath: &#x27;inset(0 50% 0 50%)&#x27; }, { clipPath: &#x27;inset(0 0 0 0)&#x27; }]</pre>
+    </li>
+    <li id="L134"><pre>    case &#x27;motionPath&#x27;: {</pre></li>
+    <li id="L135"><pre>      const points = [</pre></li>
+    <li id="L136">
+      <pre>
+        ...(item.motionPath ?? &#x27;&#x27;).matchAll(/[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/gi),</pre>
+    </li>
+    <li id="L137"><pre>      ].map((match) =&gt; Number(match[0]))</pre></li>
+    <li id="L138"><pre>      const x = points.at(-2) ?? 0,</pre></li>
+    <li id="L139"><pre>        y = points.at(-1) ?? 0</pre></li>
+    <li id="L140">
+      <pre>
+      return [{ translate: &#x27;0px 0px&#x27; }, { translate: `${x * width}px ${y * height}px` }]</pre>
+    </li>
+    <li id="L141"><pre>    }</pre></li>
+    <li id="L142"><pre>    default:</pre></li>
+    <li id="L143"><pre>      return [{ opacity: 1 }, { opacity: 1 }]</pre></li>
+    <li id="L144"><pre>  }</pre></li>
+    <li id="L145"><pre>}</pre></li>
+    <li id="L146"><pre></pre></li>
+    <li id="L147"><pre>export function PptxPresentation({</pre></li>
+    <li id="L148"><pre>  session,</pre></li>
+    <li id="L149"><pre>  start,</pre></li>
+    <li id="L150"><pre>  presenter,</pre></li>
+    <li id="L151"><pre>  slideIndices,</pre></li>
+    <li id="L152"><pre>  rehearse = false,</pre></li>
+    <li id="L153"><pre>  onRehearsal,</pre></li>
+    <li id="L154"><pre>  onClose,</pre></li>
+    <li id="L155"><pre>  triggerRef,</pre></li>
+    <li id="L156"><pre>}: {</pre></li>
+    <li id="L157"><pre>  session: PptxEditSession</pre></li>
+    <li id="L158"><pre>  start: number</pre></li>
+    <li id="L159"><pre>  presenter: boolean</pre></li>
+    <li id="L160"><pre>  slideIndices?: number[]</pre></li>
+    <li id="L161"><pre>  rehearse?: boolean</pre></li>
+    <li id="L162"><pre>  onRehearsal?: (result: PptxRehearsalResult) =&gt; void</pre></li>
+    <li id="L163"><pre>  onClose: () =&gt; void</pre></li>
+    <li id="L164"><pre>  triggerRef: RefObject&lt;HTMLButtonElement | null&gt;</pre></li>
+    <li id="L165"><pre>}) {</pre></li>
+    <li id="L166"><pre>  const svgIdPrefix = useId()</pre></li>
+    <li id="L167"><pre>  const host = useRef&lt;HTMLDivElement&gt;(null),</pre></li>
+    <li id="L168"><pre>    canvas = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L169"><pre>  const [selectedIndex, setIndex] = useState(start),</pre></li>
+    <li id="L170"><pre>    [step, setStep] = useState(0),</pre></li>
+    <li id="L171"><pre>    [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L172"><pre>  const previous = useRef(start)</pre></li>
+    <li id="L173"><pre>  const slides = session.slides()</pre></li>
+    <li id="L174"><pre>  const order = useMemo(</pre></li>
+    <li id="L175"><pre>    () =&gt; pptxPlayOrder(slides, start, slideIndices),</pre></li>
+    <li id="L176"><pre>    [slides, start, slideIndices],</pre></li>
+    <li id="L177"><pre>  )</pre></li>
+    <li id="L178">
+      <pre>  const index = order.includes(selectedIndex) ? selectedIndex : (order[0] ?? 0)</pre>
+    </li>
+    <li id="L179"><pre>  const position = order.indexOf(index)</pre></li>
+    <li id="L180"><pre>  const [baseline] = useState(() =&gt; ({</pre></li>
+    <li id="L181"><pre>    version: session.version(),</pre></li>
+    <li id="L182"><pre>    initialIndex: index,</pre></li>
+    <li id="L183"><pre>    slidePaths: slides.map((slide) =&gt; slide.path),</pre></li>
+    <li id="L184"><pre>  }))</pre></li>
+    <li id="L185"><pre>  const clock = useRef&lt;PptxRehearsalClock | null&gt;(null)</pre></li>
+    <li id="L186"><pre>  const finished = useRef(false)</pre></li>
+    <li id="L187"><pre>  const [elapsed, setElapsed] = useState({ page: 0, total: 0 })</pre></li>
+    <li id="L188"><pre>  const callbacks = useRef({ onClose, onRehearsal })</pre></li>
+    <li id="L189"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L190"><pre>    callbacks.current = { onClose, onRehearsal }</pre></li>
+    <li id="L191"><pre>  })</pre></li>
+    <li id="L192"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L193"><pre>    if (!rehearse) return</pre></li>
+    <li id="L194"><pre>    clock.current = {</pre></li>
+    <li id="L195"><pre>      current: baseline.initialIndex,</pre></li>
+    <li id="L196"><pre>      enteredAt: performance.now(),</pre></li>
+    <li id="L197">
+      <pre>      perPageMs: Array.from({ length: baseline.slidePaths.length }, () =&gt; 0),</pre>
+    </li>
+    <li id="L198"><pre>    }</pre></li>
+    <li id="L199"><pre>    const timer = setInterval(() =&gt; {</pre></li>
+    <li id="L200"><pre>      const active = clock.current</pre></li>
+    <li id="L201"><pre>      if (!active) return</pre></li>
+    <li id="L202">
+      <pre>      const page = Math.max(0, performance.now() - active.enteredAt)</pre>
+    </li>
+    <li id="L203"><pre>      setElapsed({</pre></li>
+    <li id="L204"><pre>        page: page + (active.perPageMs[active.current] ?? 0),</pre></li>
+    <li id="L205">
+      <pre>        total: active.perPageMs.reduce((sum, ms) =&gt; sum + ms, 0) + page,</pre>
+    </li>
+    <li id="L206"><pre>      })</pre></li>
+    <li id="L207"><pre>    }, 200)</pre></li>
+    <li id="L208"><pre>    return () =&gt; {</pre></li>
+    <li id="L209"><pre>      clearInterval(timer)</pre></li>
+    <li id="L210"><pre>      clock.current = null</pre></li>
+    <li id="L211"><pre>    }</pre></li>
+    <li id="L212">
+      <pre>    // The show owns one clock; navigation checkpoints it synchronously below.</pre>
+    </li>
+    <li id="L213"><pre>  }, [rehearse, baseline])</pre></li>
+    <li id="L214"><pre>  const finish = () =&gt; {</pre></li>
+    <li id="L215"><pre>    if (finished.current) return</pre></li>
+    <li id="L216"><pre>    finished.current = true</pre></li>
+    <li id="L217">
+      <pre>
+    if (rehearse &amp;&amp; clock.current &amp;&amp; session.version() === baseline.version) {</pre>
+    </li>
+    <li id="L218">
+      <pre>      const result = pptxRehearsalVisit(clock.current, -1, performance.now())</pre>
+    </li>
+    <li id="L219"><pre>      clock.current = null</pre></li>
+    <li id="L220">
+      <pre>      callbacks.current.onRehearsal?.({ ...baseline, perPageMs: result.perPageMs })</pre>
+    </li>
+    <li id="L221"><pre>    }</pre></li>
+    <li id="L222"><pre>    callbacks.current.onClose()</pre></li>
+    <li id="L223"><pre>  }</pre></li>
+    <li id="L224"><pre>  const finishRef = useRef(finish)</pre></li>
+    <li id="L225"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L226"><pre>    finishRef.current = finish</pre></li>
+    <li id="L227"><pre>  })</pre></li>
+    <li id="L228"><pre>  const visit = (nextIndex: number) =&gt; {</pre></li>
+    <li id="L229"><pre>    if (nextIndex === index) return</pre></li>
+    <li id="L230"><pre>    if (rehearse &amp;&amp; clock.current)</pre></li>
+    <li id="L231">
+      <pre>
+      clock.current = pptxRehearsalVisit(clock.current, nextIndex, performance.now())</pre>
+    </li>
+    <li id="L232"><pre>    previous.current = index</pre></li>
+    <li id="L233"><pre>    setIndex(nextIndex)</pre></li>
+    <li id="L234"><pre>    setStep(0)</pre></li>
+    <li id="L235"><pre>  }</pre></li>
+    <li id="L236"><pre>  const view = session.view()</pre></li>
+    <li id="L237"><pre>  const rendered = useMemo(</pre></li>
+    <li id="L238">
+      <pre>
+    () =&gt; renderSlide(view, index, { fitWidthPx: 1000, svgIdPrefix: `${svgIdPrefix}-current` }),</pre>
+    </li>
+    <li id="L239"><pre>    [view, index, svgIdPrefix],</pre></li>
+    <li id="L240"><pre>  )</pre></li>
+    <li id="L241"><pre>  const slide = slides[index]!</pre></li>
+    <li id="L242">
+      <pre>  const timeline = useMemo(() =&gt; getSlideAnimations(slide), [slide])</pre>
+    </li>
+    <li id="L243">
+      <pre>  const steps = useMemo(() =&gt; pptxPlaybackSteps(timeline), [timeline])</pre>
+    </li>
+    <li id="L244"><pre>  const [playing, setPlaying] = useState(false)</pre></li>
+    <li id="L245"><pre>  const move = (direction: number) =&gt; {</pre></li>
+    <li id="L246"><pre>    const nextIndex = order[position + direction]</pre></li>
+    <li id="L247"><pre>    if (nextIndex !== undefined) visit(nextIndex)</pre></li>
+    <li id="L248"><pre>    else if (direction &gt; 0 &amp;&amp; rehearse) finish()</pre></li>
+    <li id="L249"><pre>  }</pre></li>
+    <li id="L250"><pre>  const moveRef = useRef(move)</pre></li>
+    <li id="L251"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L252"><pre>    moveRef.current = move</pre></li>
+    <li id="L253"><pre>  })</pre></li>
+    <li id="L254"><pre>  const next = () =&gt; {</pre></li>
+    <li id="L255"><pre>    if (playing) return</pre></li>
+    <li id="L256"><pre>    if (step &lt; steps.length - 1) setStep(step + 1)</pre></li>
+    <li id="L257"><pre>    else move(1)</pre></li>
+    <li id="L258"><pre>  }</pre></li>
+    <li id="L259"><pre>  const nextRef = useRef(next)</pre></li>
+    <li id="L260"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L261"><pre>    nextRef.current = next</pre></li>
+    <li id="L262"><pre>  })</pre></li>
+    <li id="L263"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L264"><pre>    const container = host.current</pre></li>
+    <li id="L265">
+      <pre>
+    const prior = triggerRef.current ?? (document.activeElement as HTMLElement | null)</pre>
+    </li>
+    <li id="L266">
+      <pre>
+    const inspector = prior?.closest&lt;HTMLElement&gt;(&#x27;.mimir-pptx-inspector&#x27;)</pre>
+    </li>
+    <li id="L267">
+      <pre>    const editor = prior?.closest&lt;HTMLElement&gt;(&#x27;.mimir-editor&#x27;)</pre>
+    </li>
+    <li id="L268">
+      <pre>
+    const section = prior?.closest&lt;HTMLElement&gt;(&#x27;[data-section-key]&#x27;)?.dataset.sectionKey</pre>
+    </li>
+    <li id="L269">
+      <pre>
+    host.current?.querySelector&lt;HTMLButtonElement&gt;(&#x27;button&#x27;)?.focus()</pre>
+    </li>
+    <li id="L270"><pre>    const key = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L271"><pre>      if (event.defaultPrevented) return</pre></li>
+    <li id="L272">
+      <pre>      // Space retains native activation on toolbar controls and links. The</pre>
+    </li>
+    <li id="L273">
+      <pre>      // canvas and unhandled presentation background use it for the next step.</pre>
+    </li>
+    <li id="L274"><pre>      if (</pre></li>
+    <li id="L275"><pre>        event.key === &#x27; &#x27; &amp;&amp;</pre></li>
+    <li id="L276"><pre>        event.target instanceof Element &amp;&amp;</pre></li>
+    <li id="L277">
+      <pre>
+        event.target.closest(&#x27;button, a, input, textarea, select, [contenteditable=&quot;true&quot;]&#x27;)</pre>
+    </li>
+    <li id="L278"><pre>      )</pre></li>
+    <li id="L279"><pre>        return</pre></li>
+    <li id="L280"><pre>      if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L281"><pre>        event.preventDefault()</pre></li>
+    <li id="L282"><pre>        finishRef.current()</pre></li>
+    <li id="L283">
+      <pre>
+      } else if ([&#x27;ArrowRight&#x27;, &#x27;PageDown&#x27;, &#x27; &#x27;].includes(event.key)) {</pre>
+    </li>
+    <li id="L284"><pre>        event.preventDefault()</pre></li>
+    <li id="L285"><pre>        nextRef.current()</pre></li>
+    <li id="L286">
+      <pre>      } else if ([&#x27;ArrowLeft&#x27;, &#x27;PageUp&#x27;].includes(event.key)) {</pre>
+    </li>
+    <li id="L287"><pre>        event.preventDefault()</pre></li>
+    <li id="L288"><pre>        moveRef.current(-1)</pre></li>
+    <li id="L289"><pre>      }</pre></li>
+    <li id="L290"><pre>    }</pre></li>
+    <li id="L291"><pre>    window.addEventListener(&#x27;keydown&#x27;, key)</pre></li>
+    <li id="L292"><pre>    return () =&gt; {</pre></li>
+    <li id="L293"><pre>      window.removeEventListener(&#x27;keydown&#x27;, key)</pre></li>
+    <li id="L294">
+      <pre>
+      if (document.fullscreenElement === container) void document.exitFullscreen().catch(() =&gt; {})</pre>
+    </li>
+    <li id="L295"><pre>      const focused = document.activeElement</pre></li>
+    <li id="L296">
+      <pre>
+      if (focused &amp;&amp; focused !== document.body &amp;&amp; !container?.contains(focused)) return</pre>
+    </li>
+    <li id="L297">
+      <pre>      if (prior?.isConnected &amp;&amp; !prior.matches(&#x27;:disabled&#x27;)) {</pre>
+    </li>
+    <li id="L298"><pre>        prior.focus()</pre></li>
+    <li id="L299"><pre>        return</pre></li>
+    <li id="L300"><pre>      }</pre></li>
+    <li id="L301"><pre>      const group = section</pre></li>
+    <li id="L302">
+      <pre>
+        ? [...(editor?.querySelectorAll&lt;HTMLElement&gt;(&#x27;[data-section-key]&#x27;) ?? [])].find(</pre>
+    </li>
+    <li id="L303"><pre>            (node) =&gt; node.dataset.sectionKey === section,</pre></li>
+    <li id="L304"><pre>          )</pre></li>
+    <li id="L305"><pre>        : undefined</pre></li>
+    <li id="L306"><pre>      const fallback =</pre></li>
+    <li id="L307"><pre>        (inspector?.isConnected &amp;&amp;</pre></li>
+    <li id="L308">
+      <pre>
+          inspector.querySelector&lt;HTMLButtonElement&gt;(&#x27;button:not(:disabled)&#x27;)) ||</pre>
+    </li>
+    <li id="L309">
+      <pre>
+        group?.querySelector&lt;HTMLButtonElement&gt;(&#x27;button:not(:disabled)&#x27;) ||</pre>
+    </li>
+    <li id="L310"><pre>        editor?.querySelector&lt;HTMLButtonElement&gt;(</pre></li>
+    <li id="L311">
+      <pre>
+          &#x27;.mimir-compact-toolbar__tabs [aria-selected=&quot;true&quot;]&#x27;,</pre>
+    </li>
+    <li id="L312"><pre>        )</pre></li>
+    <li id="L313"><pre>      fallback?.focus()</pre></li>
+    <li id="L314"><pre>    }</pre></li>
+    <li id="L315"><pre>  }, [triggerRef])</pre></li>
+    <li id="L316"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L317"><pre>    const node = canvas.current</pre></li>
+    <li id="L318"><pre>    if (!node) return</pre></li>
+    <li id="L319"><pre>    for (const animation of timeline) {</pre></li>
+    <li id="L320">
+      <pre>      if (!entrances.has(animation.effect) || !supported(animation)) continue</pre>
+    </li>
+    <li id="L321">
+      <pre>
+      const source = slide.elements.find((element) =&gt; Number(element.nvId) === animation.spid)</pre>
+    </li>
+    <li id="L322"><pre>      const target =</pre></li>
+    <li id="L323"><pre>        source &amp;&amp;</pre></li>
+    <li id="L324">
+      <pre>
+        [...node.querySelectorAll&lt;SVGElement&gt;(&#x27;[data-element-id]&#x27;)].find(</pre>
+    </li>
+    <li id="L325"><pre>          (el) =&gt; el.dataset.elementId === source.id,</pre></li>
+    <li id="L326"><pre>        )</pre></li>
+    <li id="L327"><pre>      if (target) target.style.opacity = &#x27;0&#x27;</pre></li>
+    <li id="L328"><pre>    }</pre></li>
+    <li id="L329"><pre>    const transition = readSlideTransitionXml(slide.bodySuffix)</pre></li>
+    <li id="L330"><pre>    if (transition !== &#x27;none&#x27; &amp;&amp; node.animate)</pre></li>
+    <li id="L331"><pre>      node.animate(</pre></li>
+    <li id="L332"><pre>        transition === &#x27;push&#x27;</pre></li>
+    <li id="L333"><pre>          ? [</pre></li>
+    <li id="L334"><pre>              { translate: &#x27;12% 0&#x27;, opacity: 0 },</pre></li>
+    <li id="L335"><pre>              { translate: &#x27;0 0&#x27;, opacity: 1 },</pre></li>
+    <li id="L336"><pre>            ]</pre></li>
+    <li id="L337"><pre>          : [{ opacity: 0 }, { opacity: 1 }],</pre></li>
+    <li id="L338"><pre>        { duration: 300 },</pre></li>
+    <li id="L339"><pre>      )</pre></li>
+    <li id="L340"><pre>    return () =&gt; {</pre></li>
+    <li id="L341">
+      <pre>
+      for (const target of node.querySelectorAll&lt;SVGElement&gt;(&#x27;[data-element-id]&#x27;)) {</pre>
+    </li>
+    <li id="L342">
+      <pre>        target.getAnimations?.().forEach((item) =&gt; item.cancel())</pre>
+    </li>
+    <li id="L343"><pre>        target.style.opacity = &#x27;&#x27;</pre></li>
+    <li id="L344"><pre>      }</pre></li>
+    <li id="L345"><pre>    }</pre></li>
+    <li id="L346"><pre>  }, [slide, timeline])</pre></li>
+    <li id="L347"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L348"><pre>    const node = canvas.current</pre></li>
+    <li id="L349"><pre>    if (!node) return</pre></li>
+    <li id="L350"><pre>    const timers: ReturnType&lt;typeof setTimeout&gt;[] = [],</pre></li>
+    <li id="L351"><pre>      animations: Animation[] = []</pre></li>
+    <li id="L352"><pre>    const current = steps[step] ?? []</pre></li>
+    <li id="L353"><pre>    let end = 0</pre></li>
+    <li id="L354"><pre>    for (const { animation, startMs } of current) {</pre></li>
+    <li id="L355"><pre>      if (!supported(animation)) continue</pre></li>
+    <li id="L356">
+      <pre>
+      const source = slide.elements.find((element) =&gt; Number(element.nvId) === animation.spid)</pre>
+    </li>
+    <li id="L357"><pre>      const target =</pre></li>
+    <li id="L358"><pre>        source &amp;&amp;</pre></li>
+    <li id="L359">
+      <pre>
+        [...node.querySelectorAll&lt;SVGElement&gt;(&#x27;[data-element-id]&#x27;)].find(</pre>
+    </li>
+    <li id="L360"><pre>          (el) =&gt; el.dataset.elementId === source.id,</pre></li>
+    <li id="L361"><pre>        )</pre></li>
+    <li id="L362"><pre>      if (!target) continue</pre></li>
+    <li id="L363">
+      <pre>      end = Math.max(end, startMs + Math.max(animation.durationMs, 1))</pre>
+    </li>
+    <li id="L364"><pre>      timers.push(</pre></li>
+    <li id="L365"><pre>        setTimeout(() =&gt; {</pre></li>
+    <li id="L366"><pre>          target.style.opacity = &#x27;1&#x27;</pre></li>
+    <li id="L367"><pre>          target.style.transformBox = &#x27;fill-box&#x27;</pre></li>
+    <li id="L368"><pre>          target.style.transformOrigin = &#x27;center&#x27;</pre></li>
+    <li id="L369"><pre>          if (target.animate)</pre></li>
+    <li id="L370"><pre>            animations.push(</pre></li>
+    <li id="L371"><pre>              target.animate(</pre></li>
+    <li id="L372">
+      <pre>
+                frames(animation, rendered?.widthPx ?? 1000, rendered?.heightPx ?? 562),</pre>
+    </li>
+    <li id="L373"><pre>                {</pre></li>
+    <li id="L374"><pre>                  duration: Math.max(animation.durationMs, 1),</pre></li>
+    <li id="L375"><pre>                  fill: &#x27;forwards&#x27;,</pre></li>
+    <li id="L376"><pre>                  easing: &#x27;ease-out&#x27;,</pre></li>
+    <li id="L377"><pre>                },</pre></li>
+    <li id="L378"><pre>              ),</pre></li>
+    <li id="L379"><pre>            )</pre></li>
+    <li id="L380">
+      <pre>
+          else if (exits.has(animation.effect)) target.style.opacity = &#x27;0&#x27;</pre>
+    </li>
+    <li id="L381"><pre>        }, startMs),</pre></li>
+    <li id="L382"><pre>      )</pre></li>
+    <li id="L383"><pre>    }</pre></li>
+    <li id="L384">
+      <pre>
+    // Navigation remains available; advancing an animation step waits for its duration.</pre>
+    </li>
+    <li id="L385">
+      <pre>    const busyTimer = setTimeout(() =&gt; setPlaying(current.length &gt; 0), 0)</pre>
+    </li>
+    <li id="L386">
+      <pre>    const endTimer = setTimeout(() =&gt; setPlaying(false), end + 1)</pre>
+    </li>
+    <li id="L387"><pre>    const advance = readSlideAdvanceTimeXml(slide.bodySuffix)</pre></li>
+    <li id="L388">
+      <pre>    if (!rehearse &amp;&amp; advance !== null &amp;&amp; step === steps.length - 1)</pre>
+    </li>
+    <li id="L389">
+      <pre>      timers.push(setTimeout(() =&gt; moveRef.current(1), Math.max(advance, end)))</pre>
+    </li>
+    <li id="L390"><pre>    return () =&gt; {</pre></li>
+    <li id="L391"><pre>      timers.forEach(clearTimeout)</pre></li>
+    <li id="L392"><pre>      clearTimeout(busyTimer)</pre></li>
+    <li id="L393"><pre>      clearTimeout(endTimer)</pre></li>
+    <li id="L394">
+      <pre>
+      /* Completed effects remain until the slide changes. */ for (const animation of animations)</pre>
+    </li>
+    <li id="L395">
+      <pre>        if (animation.playState === &#x27;running&#x27;) animation.finish()</pre>
+    </li>
+    <li id="L396"><pre>    }</pre></li>
+    <li id="L397"><pre>  }, [step, steps, slide, rendered, rehearse])</pre></li>
+    <li id="L398"><pre>  const follow = (link: PptxLink) =&gt; {</pre></li>
+    <li id="L399"><pre>    if (link.kind === &#x27;url&#x27;) {</pre></li>
+    <li id="L400"><pre>      if (/^(https?:|mailto:|tel:)/i.test(link.url))</pre></li>
+    <li id="L401">
+      <pre>        window.open(link.url, &#x27;_blank&#x27;, &#x27;noopener,noreferrer&#x27;)</pre>
+    </li>
+    <li id="L402"><pre>      return</pre></li>
+    <li id="L403"><pre>    }</pre></li>
+    <li id="L404"><pre>    if (link.kind === &#x27;slide&#x27;) {</pre></li>
+    <li id="L405"><pre>      if (order.includes(link.slideIndex)) visit(link.slideIndex)</pre></li>
+    <li id="L406"><pre>      else setError(&#x27;目标幻灯片不在本次放映列表中&#x27;)</pre></li>
+    <li id="L407"><pre>      return</pre></li>
+    <li id="L408"><pre>    }</pre></li>
+    <li id="L409"><pre>    if (link.action === &#x27;endshow&#x27;) {</pre></li>
+    <li id="L410"><pre>      finish()</pre></li>
+    <li id="L411"><pre>      return</pre></li>
+    <li id="L412"><pre>    }</pre></li>
+    <li id="L413"><pre>    const at =</pre></li>
+    <li id="L414"><pre>      link.action === &#x27;firstslide&#x27;</pre></li>
+    <li id="L415"><pre>        ? order[0]!</pre></li>
+    <li id="L416"><pre>        : link.action === &#x27;lastslide&#x27;</pre></li>
+    <li id="L417"><pre>          ? order.at(-1)!</pre></li>
+    <li id="L418"><pre>          : link.action === &#x27;lastslideviewed&#x27;</pre></li>
+    <li id="L419"><pre>            ? previous.current</pre></li>
+    <li id="L420"><pre>            : link.action === &#x27;previousslide&#x27;</pre></li>
+    <li id="L421"><pre>              ? (order[Math.max(0, position - 1)] ?? index)</pre></li>
+    <li id="L422">
+      <pre>              : (order[Math.min(order.length - 1, position + 1)] ?? index)</pre>
+    </li>
+    <li id="L423"><pre>    if (order.includes(at)) visit(at)</pre></li>
+    <li id="L424"><pre>  }</pre></li>
+    <li id="L425"><pre>  const nextSlide = order[position + 1] ?? -1</pre></li>
+    <li id="L426"><pre>  const nextRendered =</pre></li>
+    <li id="L427"><pre>    presenter &amp;&amp; nextSlide &gt;= 0</pre></li>
+    <li id="L428">
+      <pre>
+      ? renderSlide(view, nextSlide, { fitWidthPx: 360, svgIdPrefix: `${svgIdPrefix}-next` })</pre>
+    </li>
+    <li id="L429"><pre>      : null</pre></li>
+    <li id="L430"><pre>  return (</pre></li>
+    <li id="L431"><pre>    &lt;div</pre></li>
+    <li id="L432"><pre>      ref={host}</pre></li>
+    <li id="L433"><pre>      className=&quot;mimir-pptx-presentation&quot;</pre></li>
+    <li id="L434"><pre>      role=&quot;dialog&quot;</pre></li>
+    <li id="L435"><pre>      aria-modal=&quot;true&quot;</pre></li>
+    <li id="L436">
+      <pre>
+      aria-label={rehearse ? &#x27;排练计时&#x27; : presenter ? &#x27;演讲者视图&#x27; : &#x27;幻灯片放映&#x27;}</pre>
+    </li>
+    <li id="L437"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L438"><pre>        if (event.key !== &#x27;Tab&#x27;) return</pre></li>
+    <li id="L439">
+      <pre>        const controls = host.current?.querySelectorAll&lt;HTMLElement&gt;(</pre>
+    </li>
+    <li id="L440">
+      <pre>
+          &#x27;button:not([disabled]), a[href], [tabindex]:not([tabindex=&quot;-1&quot;])&#x27;,</pre>
+    </li>
+    <li id="L441"><pre>        )</pre></li>
+    <li id="L442"><pre>        const first = controls?.[0],</pre></li>
+    <li id="L443"><pre>          last = controls?.[controls.length - 1]</pre></li>
+    <li id="L444">
+      <pre>        if (event.shiftKey &amp;&amp; document.activeElement === first) {</pre>
+    </li>
+    <li id="L445"><pre>          event.preventDefault()</pre></li>
+    <li id="L446"><pre>          last?.focus()</pre></li>
+    <li id="L447">
+      <pre>        } else if (!event.shiftKey &amp;&amp; document.activeElement === last) {</pre>
+    </li>
+    <li id="L448"><pre>          event.preventDefault()</pre></li>
+    <li id="L449"><pre>          first?.focus()</pre></li>
+    <li id="L450"><pre>        }</pre></li>
+    <li id="L451"><pre>      }}</pre></li>
+    <li id="L452"><pre>    &gt;</pre></li>
+    <li id="L453">
+      <pre>      &lt;div className=&quot;mimir-pptx-presentation__bar&quot;&gt;</pre>
+    </li>
+    <li id="L454">
+      <pre>
+        &lt;ToolbarButton label={rehearse ? &#x27;结束排练&#x27; : &#x27;退出放映&#x27;} onClick={finish}&gt;</pre>
+    </li>
+    <li id="L455"><pre>          {rehearse ? &#x27;结束排练&#x27; : &#x27;退出&#x27;}</pre></li>
+    <li id="L456"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L457">
+      <pre>
+        &lt;ToolbarButton label=&quot;上一张放映幻灯片&quot; disabled={position &lt;= 0} onClick={() =&gt; move(-1)}&gt;</pre>
+    </li>
+    <li id="L458"><pre>          上一页</pre></li>
+    <li id="L459"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L460"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L461"><pre>          label=&quot;下一步放映&quot;</pre></li>
+    <li id="L462">
+      <pre>
+          disabled={playing || (!rehearse &amp;&amp; step === steps.length - 1 &amp;&amp; nextSlide &lt; 0)}</pre>
+    </li>
+    <li id="L463">
+      <pre>
+          disabledReason={playing ? &#x27;动画正在播放&#x27; : &#x27;已到最后一页&#x27;}</pre>
+    </li>
+    <li id="L464"><pre>          onClick={next}</pre></li>
+    <li id="L465"><pre>        &gt;</pre></li>
+    <li id="L466">
+      <pre>
+          {rehearse &amp;&amp; step === steps.length - 1 &amp;&amp; nextSlide &lt; 0 ? &#x27;完成排练&#x27; : &#x27;下一步&#x27;}</pre>
+    </li>
+    <li id="L467"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L468"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L469"><pre>          label=&quot;全屏放映&quot;</pre></li>
+    <li id="L470"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L471"><pre>            if (!host.current?.requestFullscreen) {</pre></li>
+    <li id="L472"><pre>              setError(&#x27;当前环境不支持全屏&#x27;)</pre></li>
+    <li id="L473"><pre>              return</pre></li>
+    <li id="L474"><pre>            }</pre></li>
+    <li id="L475">
+      <pre>
+            void host.current.requestFullscreen().catch(() =&gt; setError(&#x27;无法进入全屏&#x27;))</pre>
+    </li>
+    <li id="L476"><pre>          }}</pre></li>
+    <li id="L477"><pre>        &gt;</pre></li>
+    <li id="L478"><pre>          全屏</pre></li>
+    <li id="L479"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L480"><pre>        &lt;ToolbarNote&gt;</pre></li>
+    <li id="L481">
+      <pre>
+          {position + 1} / {order.length} · 幻灯片 {index + 1} · 动画步骤 {step} /{&#x27; &#x27;}</pre>
+    </li>
+    <li id="L482"><pre>          {steps.length - 1}</pre></li>
+    <li id="L483"><pre>        &lt;/ToolbarNote&gt;</pre></li>
+    <li id="L484"><pre>        {rehearse &amp;&amp; (</pre></li>
+    <li id="L485">
+      <pre>
+          &lt;span className=&quot;mimir-pptx-presentation__clock&quot; role=&quot;timer&quot; aria-label=&quot;排练用时&quot;&gt;</pre>
+    </li>
+    <li id="L486">
+      <pre>
+            本页 {pptxShowClock(elapsed.page)} · 总计 {pptxShowClock(elapsed.total)}</pre>
+    </li>
+    <li id="L487"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L488"><pre>        )}</pre></li>
+    <li id="L489">
+      <pre>        {error &amp;&amp; &lt;ToolbarNote&gt;{error}&lt;/ToolbarNote&gt;}</pre>
+    </li>
+    <li id="L490"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L491">
+      <pre>
+      &lt;div className={`mimir-pptx-presentation__content${presenter ? &#x27; is-presenter&#x27; : &#x27;&#x27;}`}&gt;</pre>
+    </li>
+    <li id="L492"><pre>        &lt;div</pre></li>
+    <li id="L493"><pre>          ref={canvas}</pre></li>
+    <li id="L494"><pre>          className=&quot;mimir-pptx-presentation__canvas&quot;</pre></li>
+    <li id="L495"><pre>          role=&quot;button&quot;</pre></li>
+    <li id="L496"><pre>          tabIndex={0}</pre></li>
+    <li id="L497"><pre>          aria-label=&quot;放映画布，按空格播放下一步&quot;</pre></li>
+    <li id="L498"><pre>          onClick={(event) =&gt; {</pre></li>
+    <li id="L499"><pre>            event.preventDefault()</pre></li>
+    <li id="L500"><pre>            const link = (event.target as Element)</pre></li>
+    <li id="L501"><pre>              .closest(&#x27;[data-pptx-link]&#x27;)</pre></li>
+    <li id="L502"><pre>              ?.getAttribute(&#x27;data-pptx-link&#x27;)</pre></li>
+    <li id="L503"><pre>            if (link) {</pre></li>
+    <li id="L504"><pre>              try {</pre></li>
+    <li id="L505"><pre>                follow(JSON.parse(link) as PptxLink)</pre></li>
+    <li id="L506"><pre>              } catch {</pre></li>
+    <li id="L507"><pre>                setError(&#x27;此对象链接无法打开&#x27;)</pre></li>
+    <li id="L508"><pre>              }</pre></li>
+    <li id="L509"><pre>            } else {</pre></li>
+    <li id="L510">
+      <pre>
+              const href = (event.target as Element).closest(&#x27;a&#x27;)?.getAttribute(&#x27;href&#x27;)</pre>
+    </li>
+    <li id="L511">
+      <pre>
+              if (href &amp;&amp; /^(https?:|mailto:|tel:)/i.test(href)) follow({ kind: &#x27;url&#x27;, url: href })</pre>
+    </li>
+    <li id="L512"><pre>              else next()</pre></li>
+    <li id="L513"><pre>            }</pre></li>
+    <li id="L514"><pre>          }}</pre></li>
+    <li id="L515">
+      <pre>          dangerouslySetInnerHTML={{ __html: rendered?.svg ?? &#x27;&#x27; }}</pre>
+    </li>
+    <li id="L516"><pre>        /&gt;</pre></li>
+    <li id="L517"><pre>        {presenter &amp;&amp; (</pre></li>
+    <li id="L518">
+      <pre>          &lt;aside className=&quot;mimir-pptx-presentation__notes&quot;&gt;</pre>
+    </li>
+    <li id="L519"><pre>            &lt;h2&gt;演讲者备注&lt;/h2&gt;</pre></li>
+    <li id="L520">
+      <pre>            &lt;p&gt;{session.notes(index) || &#x27;本页没有备注&#x27;}&lt;/p&gt;</pre>
+    </li>
+    <li id="L521"><pre>            &lt;h2&gt;下一页&lt;/h2&gt;</pre></li>
+    <li id="L522"><pre>            {nextRendered ? (</pre></li>
+    <li id="L523">
+      <pre>              &lt;div dangerouslySetInnerHTML={{ __html: nextRendered.svg }} /&gt;</pre>
+    </li>
+    <li id="L524"><pre>            ) : (</pre></li>
+    <li id="L525"><pre>              &lt;p&gt;演示结束&lt;/p&gt;</pre></li>
+    <li id="L526"><pre>            )}</pre></li>
+    <li id="L527"><pre>          &lt;/aside&gt;</pre></li>
+    <li id="L528"><pre>        )}</pre></li>
+    <li id="L529"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L530"><pre>      &lt;ToolbarNote&gt;</pre></li>
+    <li id="L531">
+      <pre>
+        浏览器放映以近似效果播放常用对象动画与淡入/推进切换；运动路径按终点直线预览。原件预设、逐段动画与媒体命令静态显示，完整效果请在</pre>
+    </li>
+    <li id="L532"><pre>        PowerPoint 中播放。</pre></li>
+    <li id="L533"><pre>      &lt;/ToolbarNote&gt;</pre></li>
+    <li id="L534"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L535"><pre>  )</pre></li>
+    <li id="L536"><pre>}</pre></li>
+  </ol>
+</html>

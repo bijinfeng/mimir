@@ -122,6 +122,7 @@ export function PptxCurveControls({
         )}
         <ToolbarSelect
           label="路径闭合"
+          disabled={busy}
           value={closed ? 'true' : 'false'}
           options={[
             { value: 'true', label: '闭合并填充' },
@@ -132,7 +133,7 @@ export function PptxCurveControls({
         <ToolbarSelect
           label="当前节点"
           value={String(selected)}
-          disabled={!segment}
+          disabled={busy || !segment}
           options={segments.map((s, i) => ({
             value: String(i),
             label: `${i + 1}. ${labels[s.op]}`,
@@ -184,6 +185,7 @@ export function PptxCurveControls({
       <ToolbarMenuFields label="添加节点">
         <ToolbarSelect
           label="新节点类型"
+          disabled={busy}
           value={newKind}
           options={[
             { value: 'L', label: '直线' },

@@ -1,0 +1,9 @@
+{
+  "scope": "Static comparison structure and real-capture resources only; actual browser interactions separate",
+  "realMatchedPairs": 8,
+  "actualImageFiles": 16,
+  "allPairFilesPresent": true,
+  "compareBeforeAfterModesPresent": true,
+  "indexAndActualBeforeAfterDemoLinksPresent": true,
+  "comparisonHtmlSha256": "102139eefa452254620cbb07a64dd39f6118b1c5c152d46e5cbd1e3fdf5f1433"
+}

@@ -1,0 +1,54 @@
+[
+  {
+    "name": "table",
+    "bytes": 41607,
+    "sha256": "e4b9df5fa506892f0254866d9cd929499b42ea1a3341521ffdc00bafb75722f5",
+    "slides": 1,
+    "types": ["text", "text", "table"]
+  },
+  {
+    "name": "chart",
+    "bytes": 42451,
+    "sha256": "5b84ae125ecc771af94d4fbabb121d738bed5c706d965fce616e601b590adbb5",
+    "slides": 1,
+    "types": ["text", "text", "chart"]
+  },
+  {
+    "name": "groups",
+    "bytes": 41644,
+    "sha256": "cff0877dd9630bc147fe6561baa64be635ab1f7b851821275a694a5c7cd14c31",
+    "slides": 1,
+    "types": ["text", "text", "group"]
+  },
+  {
+    "name": "rich",
+    "bytes": 42880,
+    "sha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba",
+    "slides": 1,
+    "types": ["text", "text", "table", "chart", "shape", "shape"]
+  },
+  {
+    "name": "title-layout",
+    "bytes": 28790,
+    "sha256": "6025c25cf082c8c14899cc5f470cfc6d1ed97e8b71beeef4cadc418c47be3b68",
+    "source": "packages/office/tests/fixtures/title-layout.pptx"
+  },
+  {
+    "name": "formatted-text",
+    "bytes": 28878,
+    "sha256": "45430ae5ded03436f78e5e9d63bd56390a9a8de3618bf6861f24db3c47970781",
+    "source": "packages/office/tests/fixtures/formatted-text.pptx"
+  },
+  {
+    "name": "image-deck",
+    "bytes": 29220,
+    "sha256": "7c5759f77827b48f57792a82a8e7d224f384ba7271b8ac83b6cfa3ce72cdd4ec",
+    "source": "packages/office/tests/fixtures/image-deck.pptx"
+  },
+  {
+    "name": "empty-deck",
+    "bytes": 27882,
+    "sha256": "5395a1930affd36c16c35a2c64523c7349e8e6b4b49281b1b522a8426626e1a7",
+    "source": "packages/office/tests/fixtures/empty-deck.pptx"
+  }
+]

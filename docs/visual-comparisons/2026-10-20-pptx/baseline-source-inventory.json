@@ -1,0 +1,6244 @@
+{
+  "date": "2026-10-20",
+  "method": "Babel TSX AST. Source-only records; no record implies GUI validation. Components may contain dormant branches; dynamic maps are families, never expanded into tested interactions.",
+  "sourceFiles": [
+    {
+      "path": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "lines": 846,
+      "sha256": "1ed57d0db5d81b1e13fa6d3f909031650ff902a66c91df245528f0f049e61dd4",
+      "bytes": 31798
+    },
+    {
+      "path": "packages/office/src/editors/PptxAiControls.tsx",
+      "lines": 100,
+      "sha256": "b932962dfdf20439747d72883124b23bcd626964b311d4e3f5b0a1aedfa065ee",
+      "bytes": 3285
+    },
+    {
+      "path": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "lines": 348,
+      "sha256": "e6f43e9a9ad5f2a8d43bd0de82c8e8cdc9231710a17b3a5a2a9a930e507dd5f4",
+      "bytes": 12370
+    },
+    {
+      "path": "packages/office/src/editors/PptxAnimationPreview.tsx",
+      "lines": 357,
+      "sha256": "db2a2f881d45b6db40b49556917e17630318de0394276ef8105defc1334de719",
+      "bytes": 11242
+    },
+    {
+      "path": "packages/office/src/editors/PptxAssetControls.tsx",
+      "lines": 356,
+      "sha256": "4138dfe24239b2dba9156eb1af2f9916325ff1e006b21f85846e20932ebf6b12",
+      "bytes": 11894
+    },
+    {
+      "path": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "lines": 327,
+      "sha256": "32cd74c9ce511fced16895a57f520d28967a37fe5204a4ecd93f1c040e699e92",
+      "bytes": 12257
+    },
+    {
+      "path": "packages/office/src/editors/PptxClarificationControls.tsx",
+      "lines": 72,
+      "sha256": "739cb782ee70e749106be4f0edde9737873aec9755c365dc5cb35cc690b87fb4",
+      "bytes": 2435
+    },
+    {
+      "path": "packages/office/src/editors/PptxClipboardBridge.tsx",
+      "lines": 196,
+      "sha256": "e8609e88f7b5de7c71ac18cd7314096f5e6eba5e2389862acf3a572aba55b402",
+      "bytes": 7391
+    },
+    {
+      "path": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "lines": 375,
+      "sha256": "1b495da84a9b5e2b3874f295f328ca153bd76cba8d4dbd8c6b4fbdf96e235220",
+      "bytes": 14567
+    },
+    {
+      "path": "packages/office/src/editors/PptxCommentControls.tsx",
+      "lines": 161,
+      "sha256": "0b38345b7a91864b3a0c69ad38c528ef9cfcff22a915dacedeab80eae22d5d25",
+      "bytes": 5457
+    },
+    {
+      "path": "packages/office/src/editors/PptxControlPanel.tsx",
+      "lines": 45,
+      "sha256": "2d85b16a0bbe4c6e21699aec23dfa618c4b529f31abfb422c9e3de0636747007",
+      "bytes": 1179
+    },
+    {
+      "path": "packages/office/src/editors/PptxCurveControls.tsx",
+      "lines": 251,
+      "sha256": "edfc60abbca1aaf8f493f84b0f5fa42c93945d70a1fb965b8a06fa181e13a32a",
+      "bytes": 8550
+    },
+    {
+      "path": "packages/office/src/editors/PptxDeckControls.tsx",
+      "lines": 628,
+      "sha256": "5d3d2ca2498fbb31d131342e4c6fa7d78ea6d987275cfe5a8a95f12080039c03",
+      "bytes": 22666
+    },
+    {
+      "path": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "lines": 344,
+      "sha256": "e59f491d42ad931571f9b5aeea4d8adb5cddc05dec2e2b7dbf5d3bed24acafeb",
+      "bytes": 12807
+    },
+    {
+      "path": "packages/office/src/editors/PptxEditor.tsx",
+      "lines": 5055,
+      "sha256": "717f3f107d06b8260cc8ef471e01044b32867290b6fcded619b7c239e6ee1961",
+      "bytes": 196026
+    },
+    {
+      "path": "packages/office/src/editors/PptxFillControls.tsx",
+      "lines": 629,
+      "sha256": "6909b2001013bcf990d7aa3df49aa7bc67232df3241f8fac4effea32ab8730d5",
+      "bytes": 23111
+    },
+    {
+      "path": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "lines": 453,
+      "sha256": "52147b4ff0271a0a04b81d934b570f0ebc1303b08942c1b4131259e2133c9d61",
+      "bytes": 17593
+    },
+    {
+      "path": "packages/office/src/editors/PptxGroupTextControls.tsx",
+      "lines": 207,
+      "sha256": "12e2ecc3799aec5afcd8b48b2cb25434b8351c12a0b62eb518d80c6d0c59269b",
+      "bytes": 6690
+    },
+    {
+      "path": "packages/office/src/editors/PptxIconControls.tsx",
+      "lines": 279,
+      "sha256": "1f6b393aad614ff31e5b4874f7380fdc3ad633bfb7827a72d5de2c42dc3bdeea",
+      "bytes": 9451
+    },
+    {
+      "path": "packages/office/src/editors/PptxInkCanvas.tsx",
+      "lines": 297,
+      "sha256": "601230f1ebe31c2e087ca785fb827b68ef9cce101c1016bda72a83574b5a93ba",
+      "bytes": 9353
+    },
+    {
+      "path": "packages/office/src/editors/PptxInkControls.tsx",
+      "lines": 168,
+      "sha256": "1f6c0849ff9fbcbe8276ecd4bb9981d3e7f342aac63dda900921ae9e0d59ff6f",
+      "bytes": 5340
+    },
+    {
+      "path": "packages/office/src/editors/PptxInsertControls.tsx",
+      "lines": 360,
+      "sha256": "644d41b3d747a4d96ed5c8719c15c5ae09ffa4895f940f0b3cc3257ef8c183b2",
+      "bytes": 11824
+    },
+    {
+      "path": "packages/office/src/editors/PptxMasterControls.tsx",
+      "lines": 230,
+      "sha256": "8d0eb7c2281bd7c8e2e4a392d3b3331e0f1fcd2f40d79d6c20e96faadeb8e5e9",
+      "bytes": 7949
+    },
+    {
+      "path": "packages/office/src/editors/PptxMediaControls.tsx",
+      "lines": 258,
+      "sha256": "2c0f4e89e444bba94e20f2420e11987c674bda99abb88e1cfe14074f081d6e55",
+      "bytes": 9369
+    },
+    {
+      "path": "packages/office/src/editors/PptxModelControls.tsx",
+      "lines": 177,
+      "sha256": "04d0d0b026922c5ad0d178788547ef75592f3ee54107eda8ae71eaa418134f1b",
+      "bytes": 6186
+    },
+    {
+      "path": "packages/office/src/editors/PptxObjectControls.tsx",
+      "lines": 1433,
+      "sha256": "1c2092cfc41995be0c04fa66b7acf1b7d7e5e0b9fdac02ae3395df6a73a0d723",
+      "bytes": 51107
+    },
+    {
+      "path": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "lines": 246,
+      "sha256": "59b09f6058f282b944f399ee3d32232cd731ae09c6a185ddae85fc5b71873bcc",
+      "bytes": 9284
+    },
+    {
+      "path": "packages/office/src/editors/PptxOutputControls.tsx",
+      "lines": 372,
+      "sha256": "5998c657d72964fc1baff8a6975f925ef09363ba74aebf02b1030c645e8db562",
+      "bytes": 13903
+    },
+    {
+      "path": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "lines": 436,
+      "sha256": "229dbc4a508c8ce068b2b97dd1b52764618305790c9e89f04f1aca8d2995d910",
+      "bytes": 14660
+    },
+    {
+      "path": "packages/office/src/editors/PptxPictureTools.tsx",
+      "lines": 132,
+      "sha256": "e0ae1c78138705e0f8fe33ddf18d3985327bb2d4f8d92fe6ea7cee078d4c29e4",
+      "bytes": 4288
+    },
+    {
+      "path": "packages/office/src/editors/PptxPresentation.tsx",
+      "lines": 537,
+      "sha256": "b80499da382008d061044c82cb9a2b195b2aed5cb488fd70977c523dc5a489ee",
+      "bytes": 19095
+    },
+    {
+      "path": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "lines": 125,
+      "sha256": "9f6eb27d574d8bcd8e9781c06958dcae5ec765a2391f5168b3381cdab58a3152",
+      "bytes": 4459
+    },
+    {
+      "path": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "lines": 461,
+      "sha256": "7618ed0f1f1277e880bc6b57fa02c42f82093a11bc0c0f7bb578cd371b5c05e2",
+      "bytes": 19059
+    },
+    {
+      "path": "packages/office/src/editors/PptxSelectionCanvas.tsx",
+      "lines": 151,
+      "sha256": "11233c24219ad3a351f92297d4376aadca5078291eb6f6ba33826259ca54b35f",
+      "bytes": 5328
+    },
+    {
+      "path": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "lines": 768,
+      "sha256": "c006d5741731e6ce18ad7897301b7d2f058947154b4081286397e4b0fa20725a",
+      "bytes": 30553
+    },
+    {
+      "path": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "lines": 408,
+      "sha256": "3c0b8bf1b6c95bffc7de454ea887fade236eed0b8d1a9e6eadf8798991e55543",
+      "bytes": 15829
+    },
+    {
+      "path": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "lines": 252,
+      "sha256": "4cd5f54640cce378f0864906a835a4dc859f98c7e9e6276abc422f39a372c998",
+      "bytes": 9031
+    },
+    {
+      "path": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "lines": 419,
+      "sha256": "02761ddaa692b3a1c545d7840d677136a63c9ca54b109a09c767a2735cd4f787",
+      "bytes": 14949
+    },
+    {
+      "path": "packages/office/src/editors/PptxShapeInsertCanvas.tsx",
+      "lines": 250,
+      "sha256": "f0b984f89686429607e948f9014f82b041cf2c880b0507f15a9ba8c05fa2b7bb",
+      "bytes": 8065
+    },
+    {
+      "path": "packages/office/src/editors/PptxShowControls.tsx",
+      "lines": 355,
+      "sha256": "884371c97dd1db6c576c2f3e11da13f0c4b9d304f3a15fcb19c1baccaaa05203",
+      "bytes": 12972
+    },
+    {
+      "path": "packages/office/src/editors/PptxTableControls.tsx",
+      "lines": 642,
+      "sha256": "802db38429f988d682e97ad02208fa9bee5698f97f1147a1498cb2f3a9276e45",
+      "bytes": 24493
+    },
+    {
+      "path": "packages/office/src/editors/PptxTextRangeEditor.tsx",
+      "lines": 217,
+      "sha256": "dfa75bead91f9fac29df2b2c763ad916611953d074d7b1195bada867a77face2",
+      "bytes": 7214
+    },
+    {
+      "path": "packages/office/src/editors/PptxViewControls.tsx",
+      "lines": 160,
+      "sha256": "37bedc4ae0bbdc8a3a6f8526f9b456dae570d9f107dbe4b511f5e268cabc6372",
+      "bytes": 4472
+    },
+    {
+      "path": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "lines": 385,
+      "sha256": "293f74eaccbae36fe3f1b0c3c19b3383ef74962a26b8bd7570216ae6e0b4be1c",
+      "bytes": 13541
+    },
+    {
+      "path": "packages/office/src/editors/PptxZoomControls.tsx",
+      "lines": 216,
+      "sha256": "2704f6a93ab93e8f5a9665885618ce6d98081524ad248de54f9c1975316231b3",
+      "bytes": 8622
+    }
+  ],
+  "tabs": [
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3565,
+      "key": "home",
+      "label": "开始"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3566,
+      "key": "insert",
+      "label": "插入"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3567,
+      "key": "object",
+      "label": "对象"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3568,
+      "key": "draw",
+      "label": "绘图"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3569,
+      "key": "slide",
+      "label": "幻灯片"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3570,
+      "key": "view",
+      "label": "视图"
+    }
+  ],
+  "groups": [
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3573,
+      "key": "clipboard",
+      "label": "剪贴板",
+      "tab": "home"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3614,
+      "key": "text",
+      "label": "字形与查找",
+      "tab": "home"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3615,
+      "key": "format-brush",
+      "label": "格式刷",
+      "tab": "home"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3684,
+      "key": "paragraph-advanced",
+      "label": "段落与文本框",
+      "tab": "home"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3731,
+      "key": "text-extra",
+      "label": "字体与颜色",
+      "tab": "home"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3738,
+      "key": "ai-create",
+      "label": "AI 编辑",
+      "tab": "home"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3757,
+      "key": "ai-review",
+      "label": "检查与翻译",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3776,
+      "key": "insert",
+      "label": "对象",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3877,
+      "key": "equation",
+      "label": "公式",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3897,
+      "key": "media-insert",
+      "label": "音视频",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3912,
+      "key": "screen-recording",
+      "label": "录屏",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3923,
+      "key": "image-fill",
+      "label": "图片填充",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3942,
+      "key": "shape-fill",
+      "label": "形状填充",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3962,
+      "key": "background-fill",
+      "label": "背景",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3980,
+      "key": "drawing",
+      "label": "绘图",
+      "tab": "draw"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4012,
+      "key": "slide-import",
+      "label": "导入",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4025,
+      "key": "media-playback",
+      "label": "媒体播放",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4042,
+      "key": "diagram",
+      "label": "图示",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4057,
+      "key": "wordart",
+      "label": "艺术字",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4072,
+      "key": "dynamic-field",
+      "label": "动态字段",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4087,
+      "key": "shape-library",
+      "label": "形状库",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4116,
+      "key": "object-selection",
+      "label": "对象选择与格式",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4123,
+      "key": "object-arrange-advanced",
+      "label": "对齐与组合",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4140,
+      "key": "object-effects",
+      "label": "效果",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4157,
+      "key": "object-link",
+      "label": "链接",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4175,
+      "key": "object-outline",
+      "label": "轮廓",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4193,
+      "key": "group-picture",
+      "label": "组合图片",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4202,
+      "key": "picture-crop",
+      "label": "图片裁切",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4243,
+      "key": "object-freeform",
+      "label": "编辑顶点",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4265,
+      "key": "connector-endpoints",
+      "label": "连接线端点",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4285,
+      "key": "object-main",
+      "label": "排列",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4325,
+      "key": "object-box",
+      "label": "位置与大小",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4365,
+      "key": "object-extra",
+      "label": "属性与位置",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4372,
+      "key": "slides",
+      "label": "页面",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4416,
+      "key": "page-layout",
+      "label": "尺寸与版式",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4432,
+      "key": "deck-theme",
+      "label": "主题",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4442,
+      "key": "deck-footer",
+      "label": "页脚",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4452,
+      "key": "deck-review",
+      "label": "分节与批注",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4480,
+      "key": "presentation",
+      "label": "放映",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4563,
+      "key": "zoom-navigation",
+      "label": "缩放导航",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4604,
+      "key": "playback",
+      "label": "备注与放映",
+      "tab": "slide"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4654,
+      "key": "icons",
+      "label": "图标",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4671,
+      "key": "cutout",
+      "label": "图片去背景",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4693,
+      "key": "model3d",
+      "label": "3D 模型",
+      "tab": "insert"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4703,
+      "key": "model3d-preview",
+      "label": "3D 预览",
+      "tab": "object"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4727,
+      "key": "master-edit",
+      "label": "母版编辑",
+      "tab": "view"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4734,
+      "key": "output",
+      "label": "导出与打印",
+      "tab": "view"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4773,
+      "key": "workspace-view",
+      "label": "演示文稿视图",
+      "tab": "view"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4782,
+      "key": "canvas-view",
+      "label": "画布视图",
+      "tab": "view"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4789,
+      "key": "view",
+      "label": "查找",
+      "tab": "view"
+    }
+  ],
+  "surfaces": [
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2985,
+      "type": "inspector",
+      "label": "组合图片"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3061,
+      "type": "inspector",
+      "label": "对象选择与格式"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3103,
+      "type": "inspector",
+      "label": "编辑表格"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3116,
+      "type": "inspector",
+      "label": "编辑图表"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3132,
+      "type": "inspector",
+      "label": "演示需求"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3578,
+      "type": "advancedMenu",
+      "label": "剪贴板"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3689,
+      "type": "advancedMenu",
+      "label": "段落与文本框"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3844,
+      "type": "advancedMenu",
+      "label": "插入图表"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3882,
+      "type": "advancedMenu",
+      "label": "公式"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3902,
+      "type": "advancedMenu",
+      "label": "音视频"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3917,
+      "type": "advancedMenu",
+      "label": "屏幕录制"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3928,
+      "type": "advancedMenu",
+      "label": "图片填充"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3947,
+      "type": "advancedMenu",
+      "label": "形状填充"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3967,
+      "type": "advancedMenu",
+      "label": "设置背景"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4017,
+      "type": "advancedMenu",
+      "label": "导入幻灯片"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4030,
+      "type": "advancedMenu",
+      "label": "媒体播放"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4047,
+      "type": "advancedMenu",
+      "label": "图示"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4062,
+      "type": "advancedMenu",
+      "label": "艺术字"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4077,
+      "type": "advancedMenu",
+      "label": "动态字段"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4092,
+      "type": "advancedMenu",
+      "label": "形状库"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4121,
+      "type": "advancedMenu",
+      "label": "对象选择与格式"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4128,
+      "type": "advancedMenu",
+      "label": "对齐与组合"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4145,
+      "type": "advancedMenu",
+      "label": "对象效果"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4162,
+      "type": "advancedMenu",
+      "label": "对象链接"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4180,
+      "type": "advancedMenu",
+      "label": "轮廓"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4199,
+      "type": "advancedMenu",
+      "label": "组合图片"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4209,
+      "type": "advancedMenu",
+      "label": "图片裁切"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4252,
+      "type": "advancedMenu",
+      "label": "编辑顶点"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4274,
+      "type": "advancedMenu",
+      "label": "连接线端点"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4421,
+      "type": "advancedMenu",
+      "label": "尺寸与版式"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4437,
+      "type": "advancedMenu",
+      "label": "主题"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4447,
+      "type": "advancedMenu",
+      "label": "页脚与页码"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4459,
+      "type": "advancedMenu",
+      "label": "分节与批注"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4468,
+      "type": "advancedMenu",
+      "label": "新建批注"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4547,
+      "type": "advancedMenu",
+      "label": "自定义放映与排练"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4568,
+      "type": "advancedMenu",
+      "label": "缩放导航"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4609,
+      "type": "advancedMenu",
+      "label": "备注与放映"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4659,
+      "type": "advancedMenu",
+      "label": "图标"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4676,
+      "type": "advancedMenu",
+      "label": "图片去背景"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4698,
+      "type": "advancedMenu",
+      "label": "3D 模型"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4708,
+      "type": "advancedMenu",
+      "label": "3D 预览"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4732,
+      "type": "advancedMenu",
+      "label": "母版编辑"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4739,
+      "type": "advancedMenu",
+      "label": "导出与打印"
+    }
+  ],
+  "staticControls": [
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 167,
+      "component": "ToolbarTabs",
+      "label": "图表编辑分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 188,
+      "component": "ToolbarTextField",
+      "label": "图表标题",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 189,
+      "component": "ToolbarSelect",
+      "label": "更改图表类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 195,
+      "component": "ToolbarSelect",
+      "label": "图例位置",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 208,
+      "component": "ToolbarSelect",
+      "label": "数据标签",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 240,
+      "component": "ToolbarButton",
+      "label": "切换图表行列",
+      "disabled": "{busy || changed}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 248,
+      "component": "ToolbarTextArea",
+      "label": "类别（每行一项）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 257,
+      "component": "ToolbarSelect",
+      "label": "要编辑的系列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 310,
+      "component": "ToolbarButton",
+      "label": "添加图表系列",
+      "disabled": "{series.length >= 20}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 339,
+      "component": "ToolbarButton",
+      "label": "应用图表修改",
+      "disabled": "{!changed || busy || Boolean(reason)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 489,
+      "component": "ToolbarTabs",
+      "label": "放映工具分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 519,
+      "component": "ToolbarButton",
+      "label": "取消动画操作",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 554,
+      "component": "ToolbarTextArea",
+      "label": "演讲者备注",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 563,
+      "component": "ToolbarButton",
+      "label": "应用演讲者备注",
+      "disabled": "{busy || draft === null || draft === notes}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 586,
+      "component": "ToolbarSelect",
+      "label": "本页切换效果",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 614,
+      "component": "ToolbarNumberField",
+      "label": "自动换页秒数",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 629,
+      "component": "ToolbarButton",
+      "label": "关闭自动换页",
+      "disabled": "{busy || advance === null}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 810,
+      "component": "ToolbarButton",
+      "label": "将本页切换应用到全部幻灯片",
+      "disabled": "{busy || slideCount < 2}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAiControls.tsx",
+      "line": 49,
+      "component": "ToolbarButton",
+      "label": "事实核查",
+      "disabled": "{unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAiControls.tsx",
+      "line": 58,
+      "component": "ToolbarButton",
+      "label": "生成配图",
+      "disabled": "{unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAiControls.tsx",
+      "line": 71,
+      "component": "ToolbarButton",
+      "label": "拼写检查",
+      "disabled": "{unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAiControls.tsx",
+      "line": 80,
+      "component": "ToolbarMenu",
+      "label": "翻译本页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 173,
+      "component": "Button",
+      "label": "无动画",
+      "disabled": "{busy || !target || existing.length === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 211,
+      "component": "section",
+      "label": "运动路径",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 240,
+      "component": "ToolbarSelect",
+      "label": "新增动画效果",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 251,
+      "component": "ToolbarSelect",
+      "label": "动画开始方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 257,
+      "component": "ToolbarNumberField",
+      "label": "动画持续毫秒",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 265,
+      "component": "ToolbarNumberField",
+      "label": "动画延迟毫秒",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 274,
+      "component": "ToolbarSelect",
+      "label": "运动路径方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 285,
+      "component": "ToolbarSelect",
+      "label": "新增动画方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 298,
+      "component": "ToolbarNumberField",
+      "label": "动画目标段落（0为整个对象）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 313,
+      "component": "ToolbarButton",
+      "label": "为选中对象添加动画",
+      "disabled": "{busy || !target || (effect.startsWith('media') && !media)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 49,
+      "component": "fieldset",
+      "label": "图片填充设置",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 59,
+      "component": "ToolbarSelect",
+      "label": "填充位置",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 69,
+      "component": "ToolbarFileButton",
+      "label": "选择填充图片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 89,
+      "component": "ToolbarSelect",
+      "label": "填充方式",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 106,
+      "component": "ToolbarButton",
+      "label": "应用图片填充",
+      "disabled": "{\n            preparing ||\n            !selected ||\n            selected.file.size > 8 * 1024 * 1024 ||\n            (destination === 'shape' && !elementId)\n          }"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 182,
+      "component": "ToolbarFileButton",
+      "label": "选择源PPTX文件",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 216,
+      "component": "ToolbarTextField",
+      "label": "导入页码",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 223,
+      "component": "div",
+      "label": "首张导入幻灯片预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 230,
+      "component": "ToolbarSelect",
+      "label": "导入格式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 245,
+      "component": "ToolbarButton",
+      "label": "导入幻灯片",
+      "disabled": "{!source || !indices}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 131,
+      "component": "ToolbarSelect",
+      "label": "图表样式预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 149,
+      "component": "ToolbarSelect",
+      "label": "图表网格线",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 160,
+      "component": "ToolbarTextField",
+      "label": "类别轴标题",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 165,
+      "component": "ToolbarTextField",
+      "label": "数值轴标题",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 175,
+      "component": "ToolbarSelect",
+      "label": "柱形方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 185,
+      "component": "ToolbarNumberField",
+      "label": "柱形间距（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 195,
+      "component": "ToolbarNumberField",
+      "label": "圆环孔径（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 207,
+      "component": "ToolbarSelect",
+      "label": "图表配色方案",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 224,
+      "component": "div",
+      "label": "当前图表系列配色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 238,
+      "component": "ToolbarSelect",
+      "label": "要配色的系列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 247,
+      "component": "ToolbarColorPicker",
+      "label": "所选系列颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 260,
+      "component": "ToolbarButton",
+      "label": "恢复所选系列颜色",
+      "disabled": "{palette[colorSeries] === originalPalette[colorSeries]}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 283,
+      "component": "ToolbarSelect",
+      "label": "数据点所属系列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 292,
+      "component": "ToolbarSelect",
+      "label": "数据点类别",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 301,
+      "component": "ToolbarColorPicker",
+      "label": "数据点颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 310,
+      "component": "ToolbarButton",
+      "label": "重置数据点颜色",
+      "disabled": "{!hasPointOverride}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClarificationControls.tsx",
+      "line": 53,
+      "component": "ToolbarButton",
+      "label": "确认演示需求",
+      "disabled": "{!ready}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 195,
+      "component": "ToolbarSelect",
+      "label": "复制内容",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 216,
+      "component": "div",
+      "label": "选择复制的幻灯片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 279,
+      "component": "ToolbarSelect",
+      "label": "粘贴格式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 299,
+      "component": "ToolbarButton",
+      "label": "粘贴系统图片",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 330,
+      "component": "ToolbarButton",
+      "label": "取消图片读取",
+      "disabled": "{!busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 74,
+      "component": "ToolbarTextArea",
+      "label": "新批注",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 86,
+      "component": "section",
+      "label": "本页批注",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 131,
+      "component": "ToolbarButton",
+      "label": "添加本页批注",
+      "disabled": "{!comment.trim() || busy || disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 145,
+      "component": "ToolbarButton",
+      "label": "清空批注草稿",
+      "disabled": "{!comment || busy || disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 87,
+      "component": "svg",
+      "label": "自定义路径预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 123,
+      "component": "ToolbarSelect",
+      "label": "路径闭合",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 132,
+      "component": "ToolbarSelect",
+      "label": "当前节点",
+      "disabled": "{!segment}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 171,
+      "component": "ToolbarButton",
+      "label": "删除当前路径节点",
+      "disabled": "{selected === 0 || segments.length < 3}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 185,
+      "component": "ToolbarSelect",
+      "label": "新节点类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 195,
+      "component": "ToolbarButton",
+      "label": "添加路径节点",
+      "disabled": "{segments.length >= 100}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 225,
+      "component": "ToolbarButton",
+      "label": "应用曲线路径",
+      "disabled": "{!changed || segments.length < 2 || box.cx <= 0 || box.cy <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 51,
+      "component": "ToolbarNumberField",
+      "label": "幻灯片宽（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 58,
+      "component": "ToolbarNumberField",
+      "label": "幻灯片高（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 68,
+      "component": "ToolbarButton",
+      "label": "应用幻灯片尺寸",
+      "disabled": "{width <= 0 || height <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 85,
+      "component": "ToolbarSelect",
+      "label": "选择原件版式",
+      "disabled": "{!metadata.layouts.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 95,
+      "component": "ToolbarButton",
+      "label": "应用当前页版式",
+      "disabled": "{!layout}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 105,
+      "component": "ToolbarButton",
+      "label": "重置本页占位符位置",
+      "disabled": "{!current}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 116,
+      "component": "ToolbarButton",
+      "label": "以所选版式新建幻灯片",
+      "disabled": "{!layout}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 240,
+      "component": "section",
+      "label": "演示文稿主题",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 249,
+      "component": "div",
+      "label": "预设主题",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 278,
+      "component": "ToolbarSelect",
+      "label": "读取原件主题",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 291,
+      "component": "ToolbarTextField",
+      "label": "主题名称",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 325,
+      "component": "ToolbarTextField",
+      "label": "主题标题字体",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 330,
+      "component": "ToolbarTextField",
+      "label": "主题正文字体",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 335,
+      "component": "ToolbarMenu",
+      "label": "自定义主题色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 342,
+      "component": "ToolbarSelect",
+      "label": "自定义颜色位置",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 354,
+      "component": "ToolbarTextField",
+      "label": "自定义色值",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 359,
+      "component": "ToolbarButton",
+      "label": "设置自定义主题色",
+      "disabled": "{!/^#[0-9a-f]{6}$/i.test(customValue)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 401,
+      "component": "ToolbarButton",
+      "label": "应用整份主题",
+      "disabled": "{busy || !source || invalid || unchanged}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 444,
+      "component": "ToolbarTextField",
+      "label": "页脚文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 445,
+      "component": "ToolbarTextField",
+      "label": "页脚日期",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 446,
+      "component": "ToolbarSelect",
+      "label": "自动日期",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 455,
+      "component": "ToolbarSelect",
+      "label": "显示幻灯片页码",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 464,
+      "component": "ToolbarButton",
+      "label": "应用所有幻灯片页脚",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 524,
+      "component": "ToolbarTextField",
+      "label": "新分节名称",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 525,
+      "component": "ToolbarButton",
+      "label": "从当前页添加分节",
+      "disabled": "{!name.trim()}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 535,
+      "component": "ToolbarSelect",
+      "label": "选择分节",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 550,
+      "component": "ToolbarTextField",
+      "label": "分节名称",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 551,
+      "component": "ToolbarButton",
+      "label": "重命名分节",
+      "disabled": "{!section || !rename.trim()}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 559,
+      "component": "ToolbarButton",
+      "label": "分节上移",
+      "disabled": "{at <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 567,
+      "component": "ToolbarButton",
+      "label": "分节下移",
+      "disabled": "{at < 0 || at >= metadata.sections.length - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 575,
+      "component": "ToolbarNumberField",
+      "label": "分节起始页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 582,
+      "component": "ToolbarNumberField",
+      "label": "分节结束页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 590,
+      "component": "ToolbarButton",
+      "label": "更新分节范围",
+      "disabled": "{\n                !section ||\n                first > last ||\n                metadata.sections.some(\n                  (item) =>\n                    item.id !== sectionId && item.slideIndices.some((i) => i >= first && i <= last),\n                )\n              }"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 611,
+      "component": "ToolbarButton",
+      "label": "移除分节",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 255,
+      "component": "aside",
+      "label": "演示文稿生成草稿",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 269,
+      "component": "ToolbarButton",
+      "label": "丢弃生成草稿",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 300,
+      "component": "nav",
+      "label": "浏览已完成页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 301,
+      "component": "ToolbarButton",
+      "label": "上一完成页",
+      "disabled": "{selected <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 311,
+      "component": "ToolbarButton",
+      "label": "下一完成页",
+      "disabled": "{selected >= completed - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 330,
+      "component": "ToolbarButton",
+      "label": "停止演示文稿生成",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 298,
+      "component": "ToolbarSelect",
+      "label": "图表类型",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 311,
+      "component": "ToolbarTextField",
+      "label": "图表标题（可选）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 319,
+      "component": "ToolbarTextField",
+      "label": "数据系列名称",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 327,
+      "component": "ToolbarTextArea",
+      "label": "图表类别（每行一项）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 336,
+      "component": "ToolbarTextArea",
+      "label": "图表数值（每行一项）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 347,
+      "component": "ToolbarTextField",
+      "label": "折线系列名称",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 355,
+      "component": "ToolbarTextArea",
+      "label": "折线系列数值（每行一项）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 373,
+      "component": "ToolbarButton",
+      "label": "按输入数据插入图表",
+      "disabled": "{Boolean(reason) || busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 1818,
+      "component": "ToolbarButton",
+      "label": "重试",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2255,
+      "component": "ToolbarGroup",
+      "label": "文字格式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2302,
+      "component": "ToolbarButton",
+      "label": "查找和替换",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2309,
+      "component": "ToolbarMenu",
+      "label": "文字格式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2463,
+      "component": "ToolbarMenu",
+      "label": "对象与幻灯片操作",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2566,
+      "component": "ToolbarFileButton",
+      "label": "替换选中图片",
+      "disabled": "{pictureBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2608,
+      "component": "ToolbarColorPicker",
+      "label": "填充颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2631,
+      "component": "ToolbarColorPicker",
+      "label": "轮廓颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2660,
+      "component": "ToolbarNumberField",
+      "label": "左",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2667,
+      "component": "ToolbarNumberField",
+      "label": "上",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2674,
+      "component": "ToolbarNumberField",
+      "label": "宽",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2682,
+      "component": "ToolbarNumberField",
+      "label": "高",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2772,
+      "component": "ToolbarColorPicker",
+      "label": "本页背景颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3064,
+      "component": "ToolbarToggleGroup",
+      "label": "对象属性分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3350,
+      "component": "div",
+      "label": "幻灯片对象画布",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3534,
+      "component": "ToolbarButton",
+      "label": "撤销",
+      "disabled": "{!history?.canUndo || editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3548,
+      "component": "ToolbarButton",
+      "label": "重做",
+      "disabled": "{!history?.canRedo || editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3621,
+      "component": "ToolbarMenu",
+      "label": "格式刷",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3630,
+      "component": "ToolbarSelect",
+      "label": "使用方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3639,
+      "component": "ToolbarButton",
+      "label": "复制选中对象格式",
+      "disabled": "{!selectedObject || !hostApply}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3660,
+      "component": "ToolbarButton",
+      "label": "应用到选中对象",
+      "disabled": "{!formatBrush || !selectedObject}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3669,
+      "component": "ToolbarButton",
+      "label": "退出格式刷",
+      "disabled": "{!formatBrush}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3782,
+      "component": "ToolbarGroup",
+      "label": "插入对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3783,
+      "component": "ToolbarButton",
+      "label": "插入文本框",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3802,
+      "component": "ToolbarButton",
+      "label": "插入矩形",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3821,
+      "component": "ToolbarMenu",
+      "label": "插入表格",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3828,
+      "component": "ToolbarGridPicker",
+      "label": "插入表格的大小",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3857,
+      "component": "ToolbarFileButton",
+      "label": "插入图片",
+      "disabled": "{pictureBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3866,
+      "component": "ToolbarButton",
+      "label": "插入图片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4291,
+      "component": "ToolbarGroup",
+      "label": "对象排列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4292,
+      "component": "ToolbarButton",
+      "label": "置于顶层",
+      "disabled": "{objectTarget === null || objectOrder >= objectCount - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4307,
+      "component": "ToolbarButton",
+      "label": "置于底层",
+      "disabled": "{objectTarget === null || objectOrder <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4331,
+      "component": "ToolbarGroup",
+      "label": "对象位置与大小",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4332,
+      "component": "ToolbarNumberField",
+      "label": "左",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4339,
+      "component": "ToolbarNumberField",
+      "label": "上",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4346,
+      "component": "ToolbarNumberField",
+      "label": "宽",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4354,
+      "component": "ToolbarNumberField",
+      "label": "高",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4378,
+      "component": "ToolbarGroup",
+      "label": "幻灯片操作",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4379,
+      "component": "ToolbarButton",
+      "label": "新增幻灯片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4382,
+      "component": "ToolbarButton",
+      "label": "复制当前幻灯片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4392,
+      "component": "ToolbarButton",
+      "label": "删除当前幻灯片",
+      "disabled": "{slideCount <= 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4458,
+      "component": "ToolbarGroup",
+      "label": "分节与批注",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4486,
+      "component": "ToolbarGroup",
+      "label": "播放演示文稿",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4487,
+      "component": "ToolbarButton",
+      "label": "从头放映",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4506,
+      "component": "ToolbarButton",
+      "label": "从当前页放映",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4515,
+      "component": "ToolbarButton",
+      "label": "演讲者视图",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4527,
+      "component": "ToolbarButton",
+      "label": "从头演讲者视图",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4795,
+      "component": "ToolbarButton",
+      "label": "查找和替换",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4812,
+      "component": "ToolbarGroup",
+      "label": "翻页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4813,
+      "component": "ToolbarButton",
+      "label": "上一页",
+      "disabled": "{active === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4821,
+      "component": "ToolbarButton",
+      "label": "下一页",
+      "disabled": "{active >= slideCount - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4830,
+      "component": "ToolbarNumberField",
+      "label": "跳到第几页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4841,
+      "component": "ToolbarTabs",
+      "label": "幻灯片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4852,
+      "component": "ToolbarButton",
+      "label": "打开对象选择与格式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 5006,
+      "component": "ToolbarButton",
+      "label": "关闭幻灯片属性面板",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 222,
+      "component": "ToolbarSelect",
+      "label": "填充类型",
+      "disabled": "{unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 311,
+      "component": "ToolbarButton",
+      "label": "改为双色渐变",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 330,
+      "component": "div",
+      "label": "渐变预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 361,
+      "component": "ToolbarSelect",
+      "label": "渐变类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 376,
+      "component": "div",
+      "label": "渐变方向预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 405,
+      "component": "ToolbarNumberField",
+      "label": "渐变角度（°）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 417,
+      "component": "ToolbarSelect",
+      "label": "当前色标",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 433,
+      "component": "ToolbarNumberField",
+      "label": "色标位置（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 443,
+      "component": "ToolbarButton",
+      "label": "添加渐变色标",
+      "disabled": "{current.stops.length >= 16}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 453,
+      "component": "ToolbarButton",
+      "label": "删除当前色标",
+      "disabled": "{current.stops.length <= 2}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 479,
+      "component": "div",
+      "label": "内置纹理",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 499,
+      "component": "ToolbarButton",
+      "label": "隐藏背景图形",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 518,
+      "component": "ToolbarButton",
+      "label": "重置本页背景",
+      "disabled": "{!own}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 553,
+      "component": "ToolbarButton",
+      "label": "背景应用到全部幻灯片",
+      "disabled": "{busy || (Boolean(draft) && !validDraft(current)) || !applyFill}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 232,
+      "component": "section",
+      "label": "组合图片编辑",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 246,
+      "component": "ToolbarToggleGroup",
+      "label": "组合图片工具",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 267,
+      "component": "div",
+      "label": "图片预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 312,
+      "component": "ToolbarNumberField",
+      "label": "不透明度（%）",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 343,
+      "component": "ToolbarButton",
+      "label": "重置裁切",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 356,
+      "component": "ToolbarButton",
+      "label": "在画布裁切组合图片",
+      "disabled": "{locked || !!cropUnavailableReason || appearanceDirty || numericDraft}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 374,
+      "component": "ToolbarFileButton",
+      "label": "选择替换图片",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 401,
+      "component": "ToolbarNumberField",
+      "label": "颜色容差（%）",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 412,
+      "component": "ToolbarToggleGroup",
+      "label": "去背景预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 442,
+      "component": "ToolbarButton",
+      "label": "取消图片草稿",
+      "disabled": "{!busy && !appearanceDirty && !numericDraft && !file && tolerance === 20}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupTextControls.tsx",
+      "line": 70,
+      "component": "section",
+      "label": "组合成员文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupTextControls.tsx",
+      "line": 167,
+      "component": "ToolbarTextArea",
+      "label": "文本框文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupTextControls.tsx",
+      "line": 189,
+      "component": "ToolbarButton",
+      "label": "取消文字草稿",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 170,
+      "component": "ToolbarTextField",
+      "label": "搜索图标",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 176,
+      "component": "ToolbarSelect",
+      "label": "图标分类",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 191,
+      "component": "div",
+      "label": "图标图库",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 241,
+      "component": "ToolbarColorPicker",
+      "label": "图标颜色",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 248,
+      "component": "ToolbarNumberField",
+      "label": "图标宽度（磅）",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 260,
+      "component": "ToolbarButton",
+      "label": "取消插入图标",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 264,
+      "component": "ToolbarButton",
+      "label": "插入所选图标",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkCanvas.tsx",
+      "line": 203,
+      "component": "svg",
+      "label": "幻灯片手写画布（Escape退出）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 85,
+      "component": "ToolbarButton",
+      "label": "选择对象（退出绘图）",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 107,
+      "component": "ToolbarButton",
+      "label": "橡皮擦（整笔擦除）",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 116,
+      "component": "ToolbarMenu",
+      "label": "笔迹设置",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 125,
+      "component": "ToolbarColorPicker",
+      "label": "笔迹颜色",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 137,
+      "component": "ToolbarSelect",
+      "label": "笔迹粗细（px）",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 155,
+      "component": "ToolbarButton",
+      "label": "清除本页全部笔迹",
+      "disabled": "{disabled || count === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 54,
+      "component": "ToolbarSelect",
+      "label": "公式模板",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 62,
+      "component": "ToolbarTextArea",
+      "label": "公式内容（LaTeX）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 64,
+      "component": "div",
+      "label": "公式预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 71,
+      "component": "ToolbarSelect",
+      "label": "插入位置",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 84,
+      "component": "ToolbarButton",
+      "label": "插入公式",
+      "disabled": "{!latex.trim() || !!error || latex.length > 4000}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 143,
+      "component": "ToolbarTextField",
+      "label": "艺术字文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 144,
+      "component": "ToolbarSelect",
+      "label": "艺术字样式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 153,
+      "component": "svg",
+      "label": "艺术字预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 178,
+      "component": "ToolbarButton",
+      "label": "插入艺术字",
+      "disabled": "{!text.trim() || text.length > 500}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 223,
+      "component": "ToolbarSelect",
+      "label": "字段类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 238,
+      "component": "ToolbarButton",
+      "label": "插入动态字段",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 283,
+      "component": "ToolbarSelect",
+      "label": "图示类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 289,
+      "component": "svg",
+      "label": "图示预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 331,
+      "component": "ToolbarTextArea",
+      "label": "节点文字（每行一个）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 337,
+      "component": "ToolbarButton",
+      "label": "插入图示",
+      "disabled": "{!items.length || items.length > limit || items.some((item) => item.length > 300)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 102,
+      "component": "ToolbarSelect",
+      "label": "编辑范围",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 115,
+      "component": "div",
+      "label": "母版预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 121,
+      "component": "ToolbarSelect",
+      "label": "母版对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 155,
+      "component": "ToolbarButton",
+      "label": "应用母版位置",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 164,
+      "component": "ToolbarTextArea",
+      "label": "对象文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 165,
+      "component": "ToolbarButton",
+      "label": "应用母版文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 174,
+      "component": "ToolbarTextField",
+      "label": "填充色（#RRGGBB）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 176,
+      "component": "ToolbarTextField",
+      "label": "边框色（#RRGGBB）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 181,
+      "component": "ToolbarNumberField",
+      "label": "边框宽度（磅）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 189,
+      "component": "ToolbarButton",
+      "label": "应用母版填充",
+      "disabled": "{!/^#[a-f\\d]{6}$/i.test(color)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 196,
+      "component": "ToolbarButton",
+      "label": "无填充",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 202,
+      "component": "ToolbarButton",
+      "label": "应用母版边框",
+      "disabled": "{!/^#[a-f\\d]{6}$/i.test(strokeColor)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 219,
+      "component": "ToolbarButton",
+      "label": "删除母版对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMediaControls.tsx",
+      "line": 154,
+      "component": "fieldset",
+      "label": "本地音视频设置",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMediaControls.tsx",
+      "line": 163,
+      "component": "ToolbarSelect",
+      "label": "媒体类型",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMediaControls.tsx",
+      "line": 173,
+      "component": "ToolbarFileButton",
+      "label": "选择音视频文件",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMediaControls.tsx",
+      "line": 245,
+      "component": "ToolbarButton",
+      "label": "插入音视频",
+      "disabled": "{!selected || preparing || busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxModelControls.tsx",
+      "line": 125,
+      "component": "ToolbarFileButton",
+      "label": "选择 GLB 模型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxModelControls.tsx",
+      "line": 144,
+      "component": "ToolbarButton",
+      "label": "插入模型与当前封面",
+      "disabled": "{!selected || !loaded || !ready || !!error}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 292,
+      "component": "div",
+      "label": "段落设置分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 318,
+      "component": "ToolbarSelect",
+      "label": "段落对齐",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 331,
+      "component": "ToolbarSelect",
+      "label": "文字基础方向",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 374,
+      "component": "ToolbarButton",
+      "label": "减少列表缩进",
+      "disabled": "{indices.every((i) => (text.paragraphs[i]?.level ?? 0) <= 0)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 382,
+      "component": "ToolbarButton",
+      "label": "增加列表缩进",
+      "disabled": "{indices.every((i) => (text.paragraphs[i]?.level ?? 0) >= 8)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 397,
+      "component": "ToolbarSelect",
+      "label": "列表样式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 427,
+      "component": "div",
+      "label": "项目符号预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 452,
+      "component": "ToolbarTextField",
+      "label": "项目符号字符",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 460,
+      "component": "ToolbarTextField",
+      "label": "符号字体",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 472,
+      "component": "ToolbarSelect",
+      "label": "编号格式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 484,
+      "component": "input",
+      "label": "图片项目符号文件",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 495,
+      "component": "ToolbarButton",
+      "label": "选择图片项目符号",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 519,
+      "component": "ToolbarColorPicker",
+      "label": "符号颜色预设",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 527,
+      "component": "ToolbarTextField",
+      "label": "符号颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 546,
+      "component": "ToolbarSelect",
+      "label": "文本垂直对齐",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 557,
+      "component": "ToolbarSelect",
+      "label": "文本方向",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 570,
+      "component": "ToolbarSelect",
+      "label": "文本自适应",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 581,
+      "component": "ToolbarSelect",
+      "label": "文本自动换行",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 622,
+      "component": "ToolbarButton",
+      "label": "重置段落草稿",
+      "disabled": "{!dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 631,
+      "component": "ToolbarButton",
+      "label": "应用段落格式",
+      "disabled": "{!dirty || !indices.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 690,
+      "component": "ToolbarButton",
+      "label": "在画布裁切图片",
+      "disabled": "{busy || !!cropUnavailableReason}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 717,
+      "component": "ToolbarNumberField",
+      "label": "图片不透明度（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 727,
+      "component": "ToolbarNumberField",
+      "label": "旋转角度（°）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 735,
+      "component": "ToolbarButton",
+      "label": "图片向左旋转90度",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 742,
+      "component": "ToolbarButton",
+      "label": "图片向右旋转90度",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 758,
+      "component": "ToolbarButton",
+      "label": "重置图片裁切",
+      "disabled": "{busy || !element.srcRect}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 767,
+      "component": "ToolbarButton",
+      "label": "应用图片裁切",
+      "disabled": "{busy || invalid}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 802,
+      "component": "ToolbarSelect",
+      "label": "阴影",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 825,
+      "component": "ToolbarNumberField",
+      "label": "阴影模糊（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 842,
+      "component": "ToolbarNumberField",
+      "label": "发光半径（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 855,
+      "component": "ToolbarNumberField",
+      "label": "柔化边缘（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 862,
+      "component": "ToolbarSelect",
+      "label": "倒影",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 876,
+      "component": "ToolbarButton",
+      "label": "清除全部对象效果",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 908,
+      "component": "ToolbarSelect",
+      "label": "链接类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 918,
+      "component": "ToolbarTextField",
+      "label": "链接地址",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 920,
+      "component": "ToolbarNumberField",
+      "label": "链接目标页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 929,
+      "component": "ToolbarSelect",
+      "label": "放映动作",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 943,
+      "component": "ToolbarButton",
+      "label": "应用对象链接",
+      "disabled": "{!valid}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 962,
+      "component": "ToolbarButton",
+      "label": "移除对象链接",
+      "disabled": "{!link}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1016,
+      "component": "ToolbarSelect",
+      "label": "形状类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1026,
+      "component": "ToolbarButton",
+      "label": "插入所选形状",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1046,
+      "component": "ToolbarButton",
+      "label": "更改选中形状",
+      "disabled": "{\n            !target ||\n            !element ||\n            (element.type !== 'shape' && element.type !== 'text') ||\n            !element.presetGeometry\n          }"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1149,
+      "component": "ToolbarSelect",
+      "label": "排列参照",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1158,
+      "component": "ToolbarSelect",
+      "label": "对齐方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1171,
+      "component": "ToolbarButton",
+      "label": "对齐所选对象",
+      "disabled": "{ids.length < (to === 'slide' ? 1 : 2)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1179,
+      "component": "ToolbarSelect",
+      "label": "分布方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1188,
+      "component": "ToolbarButton",
+      "label": "分布所选对象",
+      "disabled": "{ids.length < (to === 'slide' ? 1 : 3)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1198,
+      "component": "ToolbarButton",
+      "label": "组合所选对象",
+      "disabled": "{ids.length < 2}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1206,
+      "component": "ToolbarButton",
+      "label": "取消所选组合",
+      "disabled": "{!group}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1218,
+      "component": "ToolbarSelect",
+      "label": "连接起点对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1219,
+      "component": "ToolbarSelect",
+      "label": "连接终点对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1220,
+      "component": "ToolbarSelect",
+      "label": "连接线类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1230,
+      "component": "ToolbarButton",
+      "label": "插入对象连接线",
+      "disabled": "{!from || !end || from === end}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1292,
+      "component": "ToolbarSelect",
+      "label": "路径编辑方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1309,
+      "component": "ToolbarTextArea",
+      "label": "形状顶点（每行x,y）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1315,
+      "component": "ToolbarButton",
+      "label": "应用自定义多边形",
+      "disabled": "{invalid || box.cx <= 0 || box.cy <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1397,
+      "component": "ToolbarSelect",
+      "label": "端点1连接对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1398,
+      "component": "ToolbarNumberField",
+      "label": "端点1连接点索引",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1405,
+      "component": "ToolbarSelect",
+      "label": "端点2连接对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1406,
+      "component": "ToolbarNumberField",
+      "label": "端点2连接点索引",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1414,
+      "component": "ToolbarButton",
+      "label": "应用连接线端点",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 126,
+      "component": "ToolbarSelect",
+      "label": "轮廓显示",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 138,
+      "component": "ToolbarColorPicker",
+      "label": "轮廓颜色",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 157,
+      "component": "ToolbarTextField",
+      "label": "轮廓色值",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 163,
+      "component": "ToolbarNumberField",
+      "label": "轮廓宽度（pt）",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 173,
+      "component": "ToolbarSelect",
+      "label": "轮廓线型",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 185,
+      "component": "ToolbarSelect",
+      "label": "端点样式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 196,
+      "component": "ToolbarSelect",
+      "label": "连接样式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 207,
+      "component": "ToolbarSelect",
+      "label": "复合线条",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 238,
+      "component": "ToolbarButton",
+      "label": "重置轮廓草稿",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 194,
+      "component": "ToolbarSelect",
+      "label": "输出操作",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 205,
+      "component": "ToolbarSelect",
+      "label": "文件格式",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 220,
+      "component": "ToolbarTextField",
+      "label": "副本文件名",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 227,
+      "component": "ToolbarSelect",
+      "label": "输出页面",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 240,
+      "component": "ToolbarTextField",
+      "label": "页码范围",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 262,
+      "component": "ToolbarSelect",
+      "label": "图片宽度",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 283,
+      "component": "ToolbarSelect",
+      "label": "每页内容",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 297,
+      "component": "ToolbarSelect",
+      "label": "A4 纸张方向",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 308,
+      "component": "ToolbarSelect",
+      "label": "幻灯片边框",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 349,
+      "component": "ToolbarButton",
+      "label": "取消输出",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 65,
+      "component": "ToolbarButton",
+      "label": "关闭图片拖动裁切",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 228,
+      "component": "svg",
+      "label": "图片拖动裁切画布",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 404,
+      "component": "ToolbarButton",
+      "label": "恢复图片完整范围",
+      "disabled": "{disabled || busy || (!props.element.srcRect && !changed)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 416,
+      "component": "ToolbarButton",
+      "label": "取消图片拖动裁切",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 420,
+      "component": "ToolbarButton",
+      "label": "应用拖动裁切",
+      "disabled": "{disabled || busy || !changed || !posterReady}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureTools.tsx",
+      "line": 78,
+      "component": "ToolbarNumberField",
+      "label": "颜色容差（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureTools.tsx",
+      "line": 86,
+      "component": "ToolbarSelect",
+      "label": "预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureTools.tsx",
+      "line": 105,
+      "component": "ToolbarButton",
+      "label": "应用去背景",
+      "disabled": "{!preview || !original}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 457,
+      "component": "ToolbarButton",
+      "label": "上一张放映幻灯片",
+      "disabled": "{position <= 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 460,
+      "component": "ToolbarButton",
+      "label": "下一步放映",
+      "disabled": "{playing || (!rehearse && step === steps.length - 1 && nextSlide < 0)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 468,
+      "component": "ToolbarButton",
+      "label": "全屏放映",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 485,
+      "component": "span",
+      "label": "排练用时",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 492,
+      "component": "div",
+      "label": "放映画布，按空格播放下一步",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "line": 57,
+      "component": "ToolbarButton",
+      "label": "选择屏幕并开始",
+      "disabled": "{!!unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "line": 69,
+      "component": "ToolbarButton",
+      "label": "停止屏幕录制",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "line": 73,
+      "component": "video",
+      "label": "录屏预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "line": 83,
+      "component": "ToolbarButton",
+      "label": "放弃当前录屏",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "line": 101,
+      "component": "ToolbarButton",
+      "label": "将录屏插入幻灯片",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 142,
+      "component": "ToolbarToggleGroup",
+      "label": "外观分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 165,
+      "component": "ToolbarSelect",
+      "label": "批量填充类型",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 205,
+      "component": "ToolbarButton",
+      "label": "批量平铺当前图片",
+      "disabled": "{disabled || imageLocked || !imageAvailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 212,
+      "component": "ToolbarButton",
+      "label": "批量拉伸当前图片",
+      "disabled": "{disabled || imageLocked || !imageAvailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 229,
+      "component": "div",
+      "label": "批量填充预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 242,
+      "component": "ToolbarTextField",
+      "label": "批量纯色填充",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 256,
+      "component": "ToolbarSelect",
+      "label": "批量渐变预设",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 278,
+      "component": "ToolbarSelect",
+      "label": "批量渐变类型",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 292,
+      "component": "ToolbarTextField",
+      "label": "批量渐变角度（°）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 308,
+      "component": "ToolbarSelect",
+      "label": "批量当前色标",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 319,
+      "component": "ToolbarTextField",
+      "label": "批量色标颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 325,
+      "component": "ToolbarTextField",
+      "label": "批量色标位置（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 333,
+      "component": "ToolbarButton",
+      "label": "添加批量渐变色标",
+      "disabled": "{disabled || !equalCounts || count >= 16}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 348,
+      "component": "ToolbarButton",
+      "label": "删除批量当前色标",
+      "disabled": "{disabled || !equalCounts || count <= 2}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 373,
+      "component": "div",
+      "label": "批量内置纹理",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 398,
+      "component": "ToolbarSelect",
+      "label": "批量图片填充方式",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 451,
+      "component": "section",
+      "label": "本页对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 457,
+      "component": "div",
+      "label": "选择幻灯片对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 495,
+      "component": "ToolbarButton",
+      "label": "选择全部顶层对象",
+      "disabled": "{locked || !rows.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 504,
+      "component": "ToolbarButton",
+      "label": "清除对象选择",
+      "disabled": "{locked || !selected.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 518,
+      "component": "ToolbarToggleGroup",
+      "label": "批量格式分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 604,
+      "component": "ToolbarTextField",
+      "label": "批量字号（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 613,
+      "component": "ToolbarTextField",
+      "label": "批量文字颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 620,
+      "component": "ToolbarSelect",
+      "label": "批量段落对齐",
+      "disabled": "{locked || !textTargets.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 649,
+      "component": "ToolbarTextField",
+      "label": "批量填充颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 661,
+      "component": "ToolbarButton",
+      "label": "批量无填充",
+      "disabled": "{locked || !fillTargets.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 704,
+      "component": "ToolbarTextField",
+      "label": "批量轮廓颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 710,
+      "component": "ToolbarTextField",
+      "label": "批量轮廓宽度（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 760,
+      "component": "ToolbarButton",
+      "label": "重置对象格式草稿",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 91,
+      "component": "ToolbarSelect",
+      "label": "批量段落对齐",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 105,
+      "component": "ToolbarSelect",
+      "label": "批量文字方向",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 129,
+      "component": "ToolbarTextField",
+      "label": "批量行距（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 136,
+      "component": "ToolbarTextField",
+      "label": "批量段前（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 143,
+      "component": "ToolbarTextField",
+      "label": "批量段后（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 159,
+      "component": "ToolbarSelect",
+      "label": "批量级别调整",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 185,
+      "component": "ToolbarSelect",
+      "label": "批量列表类型",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 209,
+      "component": "ToolbarSelect",
+      "label": "批量符号预设",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 221,
+      "component": "ToolbarTextField",
+      "label": "批量符号字符",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 228,
+      "component": "ToolbarTextField",
+      "label": "批量符号字体",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 238,
+      "component": "ToolbarSelect",
+      "label": "批量编号格式",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 246,
+      "component": "ToolbarTextField",
+      "label": "批量起始编号",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 253,
+      "component": "input",
+      "label": "批量图片项目符号文件",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 265,
+      "component": "ToolbarButton",
+      "label": "选择批量图片项目符号",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 291,
+      "component": "ToolbarTextField",
+      "label": "批量符号大小（%）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 300,
+      "component": "ToolbarTextField",
+      "label": "批量悬挂缩进（pt）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 308,
+      "component": "ToolbarTextField",
+      "label": "批量符号颜色",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 346,
+      "component": "ToolbarSelect",
+      "label": "批量轮廓显示",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 357,
+      "component": "ToolbarSelect",
+      "label": "批量轮廓线型",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 365,
+      "component": "ToolbarSelect",
+      "label": "批量端点样式",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 377,
+      "component": "ToolbarSelect",
+      "label": "批量连接样式",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 390,
+      "component": "ToolbarSelect",
+      "label": "批量复合线条",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 131,
+      "component": "fieldset",
+      "label": "对象位置与形状",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 151,
+      "component": "section",
+      "label": "位置与大小",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 166,
+      "component": "section",
+      "label": "旋转与翻转",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 172,
+      "component": "ToolbarButton",
+      "label": "水平翻转",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 181,
+      "component": "ToolbarButton",
+      "label": "垂直翻转",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 194,
+      "component": "section",
+      "label": "形状预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 209,
+      "component": "ToolbarSelect",
+      "label": "更改形状",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 244,
+      "component": "ToolbarButton",
+      "label": "取消位置与形状草稿",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 221,
+      "component": "ToolbarTabs",
+      "label": "形状工具分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 253,
+      "component": "ToolbarTextField",
+      "label": "搜索形状",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 259,
+      "component": "ToolbarSelect",
+      "label": "形状分类",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 365,
+      "component": "ToolbarButton",
+      "label": "在画布绘制所选形状",
+      "disabled": "{!canInsert}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 374,
+      "component": "ToolbarButton",
+      "label": "更改选中形状",
+      "disabled": "{!canChange || selected.kind === currentKind}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 384,
+      "component": "ToolbarButton",
+      "label": "插入所选形状",
+      "disabled": "{!canInsert}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 399,
+      "component": "ToolbarButton",
+      "label": "应用组合样式",
+      "disabled": "{!target || !shape || !chosenStyle || chosenStyle.key === currentStyle?.key}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeInsertCanvas.tsx",
+      "line": 237,
+      "component": "ToolbarButton",
+      "label": "取消绘制形状",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 168,
+      "component": "section",
+      "label": "排练结果",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 188,
+      "component": "ToolbarSelect",
+      "label": "放映列表",
+      "disabled": "{blocked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 199,
+      "component": "ToolbarTextField",
+      "label": "列表名称",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 208,
+      "component": "ToolbarButton",
+      "label": "保存放映列表",
+      "disabled": "{blocked || !name.trim() || !validPaths.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 216,
+      "component": "ToolbarButton",
+      "label": "删除放映列表",
+      "disabled": "{blocked || selected === 'new'}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 229,
+      "component": "section",
+      "label": "放映幻灯片选择",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 299,
+      "component": "ToolbarButton",
+      "label": "丢弃排练计时",
+      "disabled": "{blocked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 302,
+      "component": "ToolbarButton",
+      "label": "应用排练计时",
+      "disabled": "{blocked || !!stale || !timings.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 318,
+      "component": "ToolbarButton",
+      "label": "开始排练计时",
+      "disabled": "{blocked || !slides.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 337,
+      "component": "ToolbarButton",
+      "label": "播放自定义放映",
+      "disabled": "{blocked || !indices.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 271,
+      "component": "ToolbarTabs",
+      "label": "表格编辑分类",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 290,
+      "component": "ToolbarSelect",
+      "label": "行",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 306,
+      "component": "ToolbarSelect",
+      "label": "列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 326,
+      "component": "ToolbarSelect",
+      "label": "段落",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 341,
+      "component": "ToolbarTextArea",
+      "label": "单元格文字",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 354,
+      "component": "ToolbarSelect",
+      "label": "单元格垂直对齐",
+      "disabled": "{busy || Boolean(unavailable)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 372,
+      "component": "ToolbarNumberField",
+      "label": "当前行高（pt）",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 388,
+      "component": "ToolbarNumberField",
+      "label": "当前列宽（pt）",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 473,
+      "component": "div",
+      "label": "表格样式预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 510,
+      "component": "ToolbarButton",
+      "label": "取消预设选择",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 517,
+      "component": "ToolbarSelect",
+      "label": "表格方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 542,
+      "component": "ToolbarSelect",
+      "label": "样式应用范围",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 564,
+      "component": "ToolbarColorPicker",
+      "label": "表格底纹",
+      "disabled": "{cellStyleUnavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 573,
+      "component": "ToolbarSelect",
+      "label": "表格边框",
+      "disabled": "{cellStyleUnavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 589,
+      "component": "ToolbarColorPicker",
+      "label": "表格边框颜色",
+      "disabled": "{cellStyleUnavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 598,
+      "component": "ToolbarNumberField",
+      "label": "边框宽度（pt）",
+      "disabled": "{cellStyleUnavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 620,
+      "component": "ToolbarButton",
+      "label": "应用单元格文字",
+      "disabled": "{Boolean(unavailable) || busy || nextText === currentText}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 628,
+      "component": "ToolbarButton",
+      "label": "应用表格样式",
+      "disabled": "{busy || !Object.keys(stylePatch).length || styleUnavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTextRangeEditor.tsx",
+      "line": 139,
+      "component": "Input.TextArea",
+      "label": "文本框文字",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 25,
+      "component": "ToolbarGroup",
+      "label": "演示文稿视图",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 47,
+      "component": "ToolbarGroup",
+      "label": "画布视图",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 48,
+      "component": "ToolbarSelect",
+      "label": "幻灯片缩放",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 57,
+      "component": "ToolbarButton",
+      "label": "标尺（英寸）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 64,
+      "component": "ToolbarButton",
+      "label": "网格线（半英寸）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 71,
+      "component": "ToolbarButton",
+      "label": "中心参考线",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 95,
+      "component": "svg",
+      "label": "幻灯片辅助线",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 121,
+      "component": "svg",
+      "label": "水平标尺（英寸）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 138,
+      "component": "svg",
+      "label": "垂直标尺（英寸）",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 226,
+      "component": "nav",
+      "label": "幻灯片大纲",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 266,
+      "component": "Button",
+      "label": "阅读幻灯片，点击下一页",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 276,
+      "component": "ToolbarButton",
+      "label": "阅读上一页",
+      "disabled": "{active === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 286,
+      "component": "ToolbarButton",
+      "label": "阅读下一页",
+      "disabled": "{active === slides.length - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 293,
+      "component": "ToolbarButton",
+      "label": "返回普通视图",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 302,
+      "component": "ToolbarButton",
+      "label": "编辑所选幻灯片",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 305,
+      "component": "ToolbarButton",
+      "label": "前移所选幻灯片",
+      "disabled": "{busy || !!reorderReason || first === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 313,
+      "component": "ToolbarButton",
+      "label": "后移所选幻灯片",
+      "disabled": "{busy || !!reorderReason || last === slides.length - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 322,
+      "component": "div",
+      "label": "幻灯片排序",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 117,
+      "component": "ToolbarSelect",
+      "label": "缩放导航类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 192,
+      "component": "ToolbarButton",
+      "label": "插入缩放导航",
+      "disabled": "{busy || disabled || chosen.length === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 205,
+      "component": "ToolbarButton",
+      "label": "清除缩放目标选择",
+      "disabled": "{busy || chosen.length === 0}"
+    }
+  ],
+  "dynamicLabels": [
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 178,
+      "component": "div",
+      "label": "{{ style: '图表样式', colors: '图表配色', data: '图表数据' }[section]}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 270,
+      "component": "ToolbarTextField",
+      "label": "{`系列 ${index + 1} 名称`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 282,
+      "component": "ToolbarTextArea",
+      "label": "{`系列 ${index + 1} 数值（每行一项）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 295,
+      "component": "ToolbarButton",
+      "label": "{`删除系列 ${index + 1}`}",
+      "disabled": "{series.length <= 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 508,
+      "component": "ToolbarButton",
+      "label": "{previewing ? '停止动画预览' : '预览本页动画'}",
+      "disabled": "{busy || animations.length === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 656,
+      "component": "ToolbarSelect",
+      "label": "{`动画 ${seq + 1} 开始方式`}",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 668,
+      "component": "ToolbarNumberField",
+      "label": "{`动画 ${seq + 1} 持续毫秒`}",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 679,
+      "component": "ToolbarNumberField",
+      "label": "{`动画 ${seq + 1} 延迟毫秒`}",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 694,
+      "component": "ToolbarSelect",
+      "label": "{`动画 ${seq + 1} 效果`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 711,
+      "component": "ToolbarSelect",
+      "label": "{`动画 ${seq + 1} 方向`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 731,
+      "component": "ToolbarNumberField",
+      "label": "{`动画 ${seq + 1} 目标段落（0为整个对象）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 762,
+      "component": "ToolbarButton",
+      "label": "{`上移动画 ${seq + 1}`}",
+      "disabled": "{busy || seq === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 776,
+      "component": "ToolbarButton",
+      "label": "{`下移动画 ${seq + 1}`}",
+      "disabled": "{busy || seq === animations.length - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 790,
+      "component": "ToolbarButton",
+      "label": "{`删除动画 ${seq + 1}`}",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 837,
+      "component": "ToolbarTextField",
+      "label": "{`动画 ${seq + 1} 运动路径`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 838,
+      "component": "ToolbarButton",
+      "label": "{`应用动画 ${seq + 1} 运动路径`}",
+      "disabled": "{draft === value}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAiControls.tsx",
+      "line": 40,
+      "component": "ToolbarButton",
+      "label": "{snapshotPending ? '取消准备美化草稿' : '美化本页'}",
+      "disabled": "{!snapshotPending && (!onSnapshot || disabled || !validPptxAiTarget(target))}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 185,
+      "component": "section",
+      "label": "{`${label}动画`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 189,
+      "component": "Button",
+      "label": "{`替换为${PPTX_ANIMATION_LABELS[value]}动画`}",
+      "disabled": "{busy || !target}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 219,
+      "component": "Button",
+      "label": "{`添加${preset.label}运动路径`}",
+      "disabled": "{busy || !target}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClarificationControls.tsx",
+      "line": 28,
+      "component": "ToolbarButton",
+      "label": "{`${q.label}：${option}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxClarificationControls.tsx",
+      "line": 46,
+      "component": "ToolbarTextField",
+      "label": "{`${q.label}：其他要求`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 237,
+      "component": "ToolbarButton",
+      "label": "{kind === 'element' ? '复制对象' : '复制幻灯片'}",
+      "disabled": "{locked || noSelection}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 248,
+      "component": "ToolbarButton",
+      "label": "{kind === 'element' ? '剪切对象' : '剪切幻灯片'}",
+      "disabled": "{\n                locked ||\n                noSelection ||\n                (kind !== 'element' &&\n                  (kind === 'slides' ? slides.length >= slideCount : slideCount <= 1))\n              }"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 348,
+      "component": "ToolbarButton",
+      "label": "{\n            busy ? '正在处理剪贴板' : clip && clip.kind !== 'elements' ? '粘贴幻灯片' : '粘贴对象'\n          }",
+      "disabled": "{locked || !clip}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 93,
+      "component": "ToolbarButton",
+      "label": "{`删除批注 ${item.idx}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 151,
+      "component": "ToolbarNumberField",
+      "label": "{`${axis === 'X' ? '横向' : '纵向'}（%）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 251,
+      "component": "Button",
+      "label": "{`选择${preset.label}主题`}",
+      "disabled": "{busy || !source}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 309,
+      "component": "ToolbarColorPicker",
+      "label": "{`主题${PPTX_THEME_COLOR_LABELS[key]}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 295,
+      "component": "div",
+      "label": "{`已完成第 ${selected + 1} 页预览`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckWritingPreview.tsx",
+      "line": 332,
+      "component": "ToolbarButton",
+      "label": "{`保留已完成 ${completed} 页`}",
+      "disabled": "{draft.stale || !draft.keep || !completed}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2256,
+      "component": "ToolbarButton",
+      "label": "{`加粗（${formatScope}）`}",
+      "disabled": "{formatReason !== undefined}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2265,
+      "component": "ToolbarButton",
+      "label": "{`倾斜（${formatScope}）`}",
+      "disabled": "{formatReason !== undefined}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2274,
+      "component": "ToolbarButton",
+      "label": "{`下划线（${formatScope}）`}",
+      "disabled": "{formatReason !== undefined}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2287,
+      "component": "ToolbarNumberField",
+      "label": "{`字号（pt，${formatScope}）`}",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2424,
+      "component": "ToolbarSelect",
+      "label": "{`字体（${formatScope}，中英文一起换）`}",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2433,
+      "component": "ToolbarColorPicker",
+      "label": "{`字体颜色（${formatScope}）`}",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3183,
+      "component": "ToolbarButton",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3212,
+      "component": "ToolbarMenu",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3526,
+      "component": "ToolbarButton",
+      "label": "{source.saving ? '保存中…' : '保存到库'}",
+      "disabled": "{!dirty || editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4400,
+      "component": "ToolbarButton",
+      "label": "{rendered.hidden ? '放映时显示本页' : '放映时隐藏本页'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4992,
+      "component": "aside",
+      "label": "{`${inspector}面板`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 50,
+      "component": "ToolbarTextField",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 51,
+      "component": "ToolbarColorPicker",
+      "label": "{`选择${label}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 267,
+      "component": "div",
+      "label": "{draft ? '待应用填充预览' : '当前填充预览'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 279,
+      "component": "ToolbarButton",
+      "label": "{mode === 'tile' ? '平铺当前图片' : '拉伸当前图片'}",
+      "disabled": "{unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 338,
+      "component": "ToolbarButton",
+      "label": "{`渐变：${preset.label}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 385,
+      "component": "ToolbarButton",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 481,
+      "component": "ToolbarButton",
+      "label": "{`纹理：${texture.label}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 543,
+      "component": "ToolbarButton",
+      "label": "{background ? '应用本页背景' : '应用形状填充'}",
+      "disabled": "{busy || unavailable || !draft || !validDraft(current)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 326,
+      "component": "ToolbarNumberField",
+      "label": "{`${label}侧（%）`}",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 433,
+      "component": "ToolbarButton",
+      "label": "{busy ? '正在应用图片' : applyLabel}",
+      "disabled": "{locked || (!canApply && !(tab === 'appearance' && numericDraft))}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupTextControls.tsx",
+      "line": 180,
+      "component": "ToolbarButton",
+      "label": "{busy ? '正在应用成员文字' : '应用成员文字'}",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 195,
+      "component": "section",
+      "label": "{group.label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 199,
+      "component": "Button",
+      "label": "{icon.label}",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 95,
+      "component": "ToolbarButton",
+      "label": "{`${entry.tool === 'pen' ? '笔' : '荧光笔'}预设${index + 1}（#${entry.color}，${entry.width}px）`}",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 138,
+      "component": "ToolbarNumberField",
+      "label": "{\n                  {\n                    x: '水平位置（磅）',\n                    y: '垂直位置（磅）',\n                    width: '宽度（磅）',\n                    height: '高度（磅）',\n                    rotation: '旋转（度）',\n                  }[key]\n                }",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 234,
+      "component": "ToolbarTextField",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 300,
+      "component": "ToolbarButton",
+      "label": "{`${label}设置`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 433,
+      "component": "ToolbarButton",
+      "label": "{preset.label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 593,
+      "component": "ToolbarNumberField",
+      "label": "{`文本${['左', '上', '右', '下'][index]}边距（pt）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 703,
+      "component": "ToolbarNumberField",
+      "label": "{`裁去${['左', '上', '右', '下'][index]}侧（%）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1070,
+      "component": "ToolbarNumberField",
+      "label": "{`形状调节 ${key}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1134,
+      "component": "ToolbarButton",
+      "label": "{`排列选择 ${item.label}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1389,
+      "component": "ToolbarNumberField",
+      "label": "{`端点${{ x1: '1 横坐标', y1: '1 纵坐标', x2: '2 横坐标', y2: '2 纵坐标' }[key]}（pt）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 227,
+      "component": "ToolbarButton",
+      "label": "{busy ? '正在应用轮廓' : '应用轮廓'}",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 353,
+      "component": "ToolbarButton",
+      "label": "{busy ? '正在准备输出…' : action}",
+      "disabled": "{busy || (!copy && !!selection.error)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 341,
+      "component": "g",
+      "label": "{`裁切${handleLabels[handle]}边缘`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 431,
+      "component": "div",
+      "label": "{rehearse ? '排练计时' : presenter ? '演讲者视图' : '幻灯片放映'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 454,
+      "component": "ToolbarButton",
+      "label": "{rehearse ? '结束排练' : '退出放映'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 379,
+      "component": "ToolbarButton",
+      "label": "{`批量纹理：${texture.label}`}",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 430,
+      "component": "div",
+      "label": "{`批量${row.label}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 436,
+      "component": "ToolbarButton",
+      "label": "{`批量样式：${style.label}`}",
+      "disabled": "{disabled || !!imageDraft}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 583,
+      "component": "ToolbarSelect",
+      "label": "{\n                            { bold: '批量加粗', italic: '批量倾斜', underline: '批量下划线' }[field]\n                          }",
+      "disabled": "{locked || !textTargets.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 741,
+      "component": "ToolbarButton",
+      "label": "{\n            imageFill\n              ? busy\n                ? '正在应用对象填充'\n                : '应用对象填充'\n              : busy\n                ? '正在应用对象格式'\n                : '应用对象格式'\n          }",
+      "disabled": "{locked || !dirty || !targets.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 120,
+      "component": "ToolbarTextField",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 235,
+      "component": "ToolbarButton",
+      "label": "{busy ? '正在应用位置与形状' : '应用位置与形状'}",
+      "disabled": "{locked || !dirty}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 79,
+      "component": "div",
+      "label": "{label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 81,
+      "component": "Button",
+      "label": "{item.label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 231,
+      "component": "div",
+      "label": "{section === 'shapes' ? '形状图库' : '组合样式'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 274,
+      "component": "section",
+      "label": "{group.label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 299,
+      "component": "ToolbarNumberField",
+      "label": "{`形状调节 ${key}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 323,
+      "component": "section",
+      "label": "{row.label}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeInsertCanvas.tsx",
+      "line": 155,
+      "component": "svg",
+      "label": "{`绘制${pptxShapeLabel(kind)}的幻灯片画布（Escape取消）`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 261,
+      "component": "span",
+      "label": "{`播放顺序 ${at + 1}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 262,
+      "component": "ToolbarButton",
+      "label": "{`上移幻灯片 ${index + 1}`}",
+      "disabled": "{blocked || at === 0}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 269,
+      "component": "ToolbarButton",
+      "label": "{`下移幻灯片 ${index + 1}`}",
+      "disabled": "{blocked || at === validPaths.length - 1}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 282,
+      "component": "div",
+      "label": "{{ content: '表格内容', layout: '表格布局', style: '表格样式' }[section]}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 410,
+      "component": "ToolbarButton",
+      "label": "{\n                    {\n                      'insert-row': '在当前行后插入行',\n                      'insert-col': '在当前列后插入列',\n                      'delete-row': '删除当前行',\n                      'delete-col': '删除当前列',\n                    }[kind]\n                  }",
+      "disabled": "{\n                    busy ||\n                    hasMerges ||\n                    (kind === 'delete-row' && table.rows.length <= 1) ||\n                    (kind === 'delete-col' && table.colWidths.length <= 1)\n                  }"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 446,
+      "component": "ToolbarButton",
+      "label": "{\n                    {\n                      'merge-right': '向右合并单元格',\n                      'merge-down': '向下合并单元格',\n                      split: '拆分单元格',\n                    }[kind]\n                  }",
+      "disabled": "{\n                    busy ||\n                    Boolean(unavailable) ||\n                    (kind === 'merge-right' && colIndex === table.colWidths.length - 1) ||\n                    (kind === 'merge-down' && rowIndex === table.rows.length - 1)\n                  }"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 475,
+      "component": "ToolbarButton",
+      "label": "{`表格样式：${item.label}`}",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 528,
+      "component": "ToolbarButton",
+      "label": "{`表格${label}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 27,
+      "component": "ToolbarButton",
+      "label": "{`${item.label}视图`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 228,
+      "component": "Button",
+      "label": "{`第 ${index + 1} 页：${outlines[index]!.title}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 250,
+      "component": "div",
+      "label": "{mode === 'reading' ? '阅读视图' : '幻灯片浏览视图'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 329,
+      "component": "Button",
+      "label": "{`第 ${index + 1} 页：${outlines[index]!.title}${/<p:sld\\b[^>]*\\bshow=[\"']0[\"']/.test(slide.originalXml) ? '（放映时隐藏）' : ''}`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 142,
+      "component": "div",
+      "label": "{mode === 'section' ? '目标节列表' : '目标幻灯片列表'}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 150,
+      "component": "ToolbarButton",
+      "label": "{`选择${entry.detail}：${entry.title}`}",
+      "disabled": "{!checked && chosen.length >= PPTX_ZOOM_MAX_TILES}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 177,
+      "component": "div",
+      "label": "{`第 ${activePreview! + 1} 页快照预览`}",
+      "disabled": null
+    }
+  ],
+  "dynamicFamilies": [
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 266,
+      "expression": "series",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 647,
+      "expression": "timeline",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 182,
+      "expression": "classes",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 188,
+      "expression": "ANIM_EFFECTS.filter((value) => animClassOf(value) === kind)",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 216,
+      "expression": "PPTX_MOTION_PRESETS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 225,
+      "expression": "pie\n              ? (patch.pointColorScheme ?? chart.themePalette ?? schemes[0]!.colors)\n              : palette",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxClarificationControls.tsx",
+      "line": 24,
+      "expression": "input.questions",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxClarificationControls.tsx",
+      "line": 27,
+      "expression": "[...q.options, '请为我决定']",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 89,
+      "expression": "metadata.comments",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 99,
+      "expression": "segments",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 150,
+      "expression": "['X', 'Y'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 159,
+      "expression": "['accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6']",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 250,
+      "expression": "PPTX_THEME_PRESETS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 297,
+      "expression": "[\n                { title: '基础颜色', keys: ['dk1', 'lt1', 'dk2', 'lt2'] },\n                {\n                  title: '强调色',\n                  keys: ['accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6'],\n                },\n                { title: '链接色', keys: ['hlink', 'folHlink'] },\n              ]",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 306,
+      "expression": "group.keys\n                    .filter((key) => key in draft.colors)",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2580,
+      "expression": "PICTURE_OPACITIES",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2693,
+      "expression": "[\n                    ['front', '置于顶层'],\n                    ['forward', '上移一层'],\n                    ['backward', '下移一层'],\n                    ['back', '置于底层'],\n                  ] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 278,
+      "expression": "['stretch', 'tile'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 335,
+      "expression": "pptxGradientPresets(\n                    /^#[\\da-f]{6}/i.test(current.color) ? current.color.slice(0, 7) : '#4472C4',\n                  )",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 377,
+      "expression": "[\n                      ['从左到右', 0, ''],\n                      ['从上到下', 90, ''],\n                      ['左上到右下', 45, ''],\n                      ['由中心向外', 0, 'circle'],\n                    ] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 480,
+      "expression": "PPTX_FILL_TEXTURES",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxGroupPictureControls.tsx",
+      "line": 325,
+      "expression": "edges",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 192,
+      "expression": "PPTX_ICON_GROUPS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 198,
+      "expression": "items",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkCanvas.tsx",
+      "line": 276,
+      "expression": "entries\n            .filter((entry) => erased.includes(entry.node.durableId ?? entry.node.sourceId))",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 94,
+      "expression": "presets",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 295,
+      "expression": "shapes",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 137,
+      "expression": "['x', 'y', 'width', 'height', 'rotation'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 293,
+      "expression": "[\n            ['paragraph', '段落'],\n            ['list', '列表'],\n            ['textbox', '文本框'],\n          ] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 432,
+      "expression": "bulletPresets",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 592,
+      "expression": "['l', 't', 'r', 'b'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 702,
+      "expression": "['l', 't', 'r', 'b'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1062,
+      "expression": "Object.entries(\n            element.adjust ??\n              (element.presetGeometry === 'roundRect'\n                ? { adj: 16667 }\n                : ['rightArrow', 'chevron'].includes(element.presetGeometry ?? '')\n                  ? { adj1: 50000, adj2: 50000 }\n                  : {}),\n          )",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1133,
+      "expression": "choices",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1388,
+      "expression": "Object.entries(points)",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 321,
+      "expression": "[1 / 3, 2 / 3]",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureCropCanvas.tsx",
+      "line": 338,
+      "expression": "PICTURE_CROP_HANDLES",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 378,
+      "expression": "PPTX_FILL_TEXTURES",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 428,
+      "expression": "PPTX_SHAPE_STYLE_ROWS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 435,
+      "expression": "PPTX_SHAPE_STYLES.filter((style) => style.row === row.key)",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 464,
+      "expression": "rows",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 580,
+      "expression": "['bold', 'italic', 'underline'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 80,
+      "expression": "items",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 273,
+      "expression": "groups",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 280,
+      "expression": "group.shapes",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 298,
+      "expression": "Object.entries(adjustments)",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 322,
+      "expression": "PPTX_SHAPE_STYLE_ROWS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 329,
+      "expression": "PPTX_SHAPE_STYLES.filter((style) => style.row === row.key)",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 175,
+      "expression": "timings",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 235,
+      "expression": "ordered",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 409,
+      "expression": "['insert-row', 'insert-col', 'delete-row', 'delete-col'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 445,
+      "expression": "['merge-right', 'merge-down', 'split'] as const",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 474,
+      "expression": "TABLE_PRESETS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 527,
+      "expression": "TABLE_FLAGS",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 26,
+      "expression": "pptxWorkspaceModes",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 103,
+      "expression": "xs",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 106,
+      "expression": "ys",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 127,
+      "expression": "xs",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 144,
+      "expression": "ys",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 227,
+      "expression": "slides",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 239,
+      "expression": "outlines[index]!.lines",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 328,
+      "expression": "slides",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 147,
+      "expression": "entries",
+      "description": "One source map family; cardinality/input/native document dependent, not GUI verified."
+    }
+  ],
+  "selectAudit": [
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 189,
+      "owner": "ChartEditControls",
+      "label": "更改图表类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 195,
+      "owner": "ChartEditControls",
+      "label": "图例位置",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 208,
+      "owner": "ChartEditControls",
+      "label": "数据标签",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 257,
+      "owner": "ChartEditControls",
+      "label": "要编辑的系列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 586,
+      "owner": "SlidePlaybackControls",
+      "label": "本页切换效果",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 656,
+      "owner": "(nested callback)",
+      "label": "{`动画 ${seq + 1} 开始方式`}",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 694,
+      "owner": "(nested callback)",
+      "label": "{`动画 ${seq + 1} 效果`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 711,
+      "owner": "(nested callback)",
+      "label": "{`动画 ${seq + 1} 方向`}",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 240,
+      "owner": "PptxAnimationGallery",
+      "label": "新增动画效果",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 251,
+      "owner": "PptxAnimationGallery",
+      "label": "动画开始方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 274,
+      "owner": "PptxAnimationGallery",
+      "label": "运动路径方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 285,
+      "owner": "PptxAnimationGallery",
+      "label": "新增动画方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 59,
+      "owner": "PptxImageFillControls",
+      "label": "填充位置",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 89,
+      "owner": "PptxImageFillControls",
+      "label": "填充方式",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 230,
+      "owner": "PptxImportControls",
+      "label": "导入格式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 131,
+      "owner": "PptxChartAppearance",
+      "label": "图表样式预设",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 149,
+      "owner": "PptxChartAppearance",
+      "label": "图表网格线",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 175,
+      "owner": "PptxChartAppearance",
+      "label": "柱形方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 207,
+      "owner": "PptxChartAppearance",
+      "label": "图表配色方案",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 238,
+      "owner": "PptxChartAppearance",
+      "label": "要配色的系列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 283,
+      "owner": "PptxChartAppearance",
+      "label": "数据点所属系列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 292,
+      "owner": "PptxChartAppearance",
+      "label": "数据点类别",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 195,
+      "owner": "PptxClipboardControls",
+      "label": "复制内容",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxClipboardControls.tsx",
+      "line": 279,
+      "owner": "PptxClipboardControls",
+      "label": "粘贴格式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 123,
+      "owner": "PptxCurveControls",
+      "label": "路径闭合",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 132,
+      "owner": "PptxCurveControls",
+      "label": "当前节点",
+      "disabled": "{!segment}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 185,
+      "owner": "PptxCurveControls",
+      "label": "新节点类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 85,
+      "owner": "PptxPageControls",
+      "label": "选择原件版式",
+      "disabled": "{!metadata.layouts.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 278,
+      "owner": "PptxThemeDraftControls",
+      "label": "读取原件主题",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 342,
+      "owner": "(nested callback)",
+      "label": "自定义颜色位置",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 446,
+      "owner": "PptxHeaderFooterControls",
+      "label": "自动日期",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 455,
+      "owner": "PptxHeaderFooterControls",
+      "label": "显示幻灯片页码",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 535,
+      "owner": "PptxReviewControls",
+      "label": "选择分节",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 298,
+      "owner": "ChartInsertControls",
+      "label": "图表类型",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2424,
+      "owner": "(nested callback)",
+      "label": "{`字体（${formatScope}，中英文一起换）`}",
+      "disabled": "{editingBusy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3630,
+      "owner": "(nested callback)",
+      "label": "使用方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 222,
+      "owner": "FillEditor",
+      "label": "填充类型",
+      "disabled": "{unavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 361,
+      "owner": "FillEditor",
+      "label": "渐变类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 417,
+      "owner": "FillEditor",
+      "label": "当前色标",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxIconControls.tsx",
+      "line": 176,
+      "owner": "PptxIconControls",
+      "label": "图标分类",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInkControls.tsx",
+      "line": 137,
+      "owner": "(nested callback)",
+      "label": "笔迹粗细（px）",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 54,
+      "owner": "PptxEquationControls",
+      "label": "公式模板",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 71,
+      "owner": "PptxEquationControls",
+      "label": "插入位置",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 144,
+      "owner": "PptxWordArtControls",
+      "label": "艺术字样式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 223,
+      "owner": "PptxFieldControls",
+      "label": "字段类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 283,
+      "owner": "PptxDiagramControls",
+      "label": "图示类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 102,
+      "owner": "PptxMasterControls",
+      "label": "编辑范围",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 121,
+      "owner": "PptxMasterControls",
+      "label": "母版对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxMediaControls.tsx",
+      "line": 163,
+      "owner": "PptxMediaDraft",
+      "label": "媒体类型",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 318,
+      "owner": "ParagraphEditor",
+      "label": "段落对齐",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 331,
+      "owner": "ParagraphEditor",
+      "label": "文字基础方向",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 397,
+      "owner": "ParagraphEditor",
+      "label": "列表样式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 472,
+      "owner": "ParagraphEditor",
+      "label": "编号格式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 546,
+      "owner": "ParagraphEditor",
+      "label": "文本垂直对齐",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 557,
+      "owner": "ParagraphEditor",
+      "label": "文本方向",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 570,
+      "owner": "ParagraphEditor",
+      "label": "文本自适应",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 581,
+      "owner": "ParagraphEditor",
+      "label": "文本自动换行",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 802,
+      "owner": "PptxEffectsControls",
+      "label": "阴影",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 862,
+      "owner": "PptxEffectsControls",
+      "label": "倒影",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 908,
+      "owner": "PptxLinkControls",
+      "label": "链接类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 929,
+      "owner": "PptxLinkControls",
+      "label": "放映动作",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1016,
+      "owner": "PptxShapeControls",
+      "label": "形状类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1149,
+      "owner": "PptxArrangeControls",
+      "label": "排列参照",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1158,
+      "owner": "PptxArrangeControls",
+      "label": "对齐方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1179,
+      "owner": "PptxArrangeControls",
+      "label": "分布方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1218,
+      "owner": "PptxArrangeControls",
+      "label": "连接起点对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1219,
+      "owner": "PptxArrangeControls",
+      "label": "连接终点对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1220,
+      "owner": "PptxArrangeControls",
+      "label": "连接线类型",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1292,
+      "owner": "PptxFreeformControls",
+      "label": "路径编辑方式",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1397,
+      "owner": "PptxConnectorControls",
+      "label": "端点1连接对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1405,
+      "owner": "PptxConnectorControls",
+      "label": "端点2连接对象",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 126,
+      "owner": "OutlineEditor",
+      "label": "轮廓显示",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 173,
+      "owner": "OutlineEditor",
+      "label": "轮廓线型",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 185,
+      "owner": "OutlineEditor",
+      "label": "端点样式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 196,
+      "owner": "OutlineEditor",
+      "label": "连接样式",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutlineControls.tsx",
+      "line": 207,
+      "owner": "OutlineEditor",
+      "label": "复合线条",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 194,
+      "owner": "OutputEditor",
+      "label": "输出操作",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 205,
+      "owner": "OutputEditor",
+      "label": "文件格式",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 227,
+      "owner": "OutputEditor",
+      "label": "输出页面",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 262,
+      "owner": "OutputEditor",
+      "label": "图片宽度",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 283,
+      "owner": "OutputEditor",
+      "label": "每页内容",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 297,
+      "owner": "OutputEditor",
+      "label": "A4 纸张方向",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 308,
+      "owner": "OutputEditor",
+      "label": "幻灯片边框",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureTools.tsx",
+      "line": 86,
+      "owner": "PptxCutoutControls",
+      "label": "预览",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 165,
+      "owner": "PptxSelectionAppearanceFields",
+      "label": "批量填充类型",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 256,
+      "owner": "PptxSelectionAppearanceFields",
+      "label": "批量渐变预设",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 278,
+      "owner": "PptxSelectionAppearanceFields",
+      "label": "批量渐变类型",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 308,
+      "owner": "PptxSelectionAppearanceFields",
+      "label": "批量当前色标",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionAppearanceFields.tsx",
+      "line": 398,
+      "owner": "PptxSelectionAppearanceFields",
+      "label": "批量图片填充方式",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 583,
+      "owner": "(nested callback)",
+      "label": "{\n                            { bold: '批量加粗', italic: '批量倾斜', underline: '批量下划线' }[field]\n                          }",
+      "disabled": "{locked || !textTargets.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 620,
+      "owner": "SelectionEditor",
+      "label": "批量段落对齐",
+      "disabled": "{locked || !textTargets.length}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 91,
+      "owner": "PptxSelectionParagraphFields",
+      "label": "批量段落对齐",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 105,
+      "owner": "PptxSelectionParagraphFields",
+      "label": "批量文字方向",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 159,
+      "owner": "PptxSelectionParagraphFields",
+      "label": "批量级别调整",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 185,
+      "owner": "PptxSelectionParagraphFields",
+      "label": "批量列表类型",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 209,
+      "owner": "PptxSelectionParagraphFields",
+      "label": "批量符号预设",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 238,
+      "owner": "PptxSelectionParagraphFields",
+      "label": "批量编号格式",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 346,
+      "owner": "PptxSelectionOutlineFields",
+      "label": "批量轮廓显示",
+      "disabled": "{disabled}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 357,
+      "owner": "PptxSelectionOutlineFields",
+      "label": "批量轮廓线型",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 365,
+      "owner": "PptxSelectionOutlineFields",
+      "label": "批量端点样式",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 377,
+      "owner": "PptxSelectionOutlineFields",
+      "label": "批量连接样式",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionFormatFields.tsx",
+      "line": 390,
+      "owner": "PptxSelectionOutlineFields",
+      "label": "批量复合线条",
+      "disabled": "{disabled || enabled === false}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionGeometryControls.tsx",
+      "line": 209,
+      "owner": "GeometryDraft",
+      "label": "更改形状",
+      "disabled": "{locked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShapeGallery.tsx",
+      "line": 259,
+      "owner": "PptxShapeGallery",
+      "label": "形状分类",
+      "disabled": "{busy}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxShowControls.tsx",
+      "line": 188,
+      "owner": "ShowControls",
+      "label": "放映列表",
+      "disabled": "{blocked}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 290,
+      "owner": "PptxTableControls",
+      "label": "行",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 306,
+      "owner": "PptxTableControls",
+      "label": "列",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 326,
+      "owner": "PptxTableControls",
+      "label": "段落",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 354,
+      "owner": "PptxTableControls",
+      "label": "单元格垂直对齐",
+      "disabled": "{busy || Boolean(unavailable)}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 517,
+      "owner": "PptxTableControls",
+      "label": "表格方向",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 542,
+      "owner": "PptxTableControls",
+      "label": "样式应用范围",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 573,
+      "owner": "PptxTableControls",
+      "label": "表格边框",
+      "disabled": "{cellStyleUnavailable}"
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 48,
+      "owner": "PptxViewControls",
+      "label": "幻灯片缩放",
+      "disabled": null
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 117,
+      "owner": "ZoomEditor",
+      "label": "缩放导航类型",
+      "disabled": null
+    }
+  ],
+  "counts": {
+    "sourceFiles": 45,
+    "tabs": 6,
+    "groups": 50,
+    "surfaces": 43,
+    "staticControls": 468,
+    "dynamicLabels": 99,
+    "dynamicFamilies": 63,
+    "selectAudit": 114,
+    "states": 25
+  },
+  "states": [
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 1813,
+      "description": "load failure with reload",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 1827,
+      "description": "parse failure",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 1835,
+      "description": "loading/parse pending",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 2838,
+      "description": "expected version / active slide / durable target guard",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3140,
+      "description": "host unavailable",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3146,
+      "description": "target applicability reason",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3530,
+      "description": "save dirty/busy, undo/redo actual history",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4989,
+      "description": "deck-writing preview replaces Inspector",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 4991,
+      "description": "Inspector Escape/focus return and target identity key",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 5027,
+      "description": "page error/status",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 5037,
+      "description": "presentation / rehearsal overlay",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 175,
+      "description": "import source selection / async parsing / invalid pages / error",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxModelControls.tsx",
+      "line": 25,
+      "description": "3D dynamic loader, local model ready/error and lifecycle",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 129,
+      "description": "paragraph dirty / reading / busy / validation",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 115,
+      "description": "chart data validation / import-conversion confirm / pending lock",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 121,
+      "description": "table busy / persistent target / unavailable cell format",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 103,
+      "description": "fill busy / complex original / draft vs original",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 49,
+      "description": "zoom preview / generation busy / unavailable host",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 47,
+      "description": "master reading / no editable parts / errors",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxScreenRecordControls.tsx",
+      "line": 31,
+      "description": "recording browser permission / capture / upload states",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxOutputControls.tsx",
+      "line": 48,
+      "description": "output preparation / format / page subset / export / error",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCommentControls.tsx",
+      "line": 32,
+      "description": "comment append draft / busy / result / focus ownership",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxSelectionControls.tsx",
+      "line": 60,
+      "description": "selection type / mixed native fields / multi-selection / source changes",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxWorkspaceViews.tsx",
+      "line": 15,
+      "description": "normal / outline / slide-sorter / notes / reading",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPresentation.tsx",
+      "line": 25,
+      "description": "show navigation / hidden slides / exit / target links / rehearsal",
+      "evidence": "source branch inventory; line is branch vicinity, GUI not verified"
+    }
+  ],
+  "sourceRevision": "3b5d912",
+  "sourceHashMethod": "SHA256 of git show 3b5d912:path; no current-worktree hash substituted"
+}

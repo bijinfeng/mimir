@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxShapeInsertCanvas.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxShapeInsertCanvas.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 f0b984f89686429607e948f9014f82b041cf2c880b0507f15a9ba8c05fa2b7bb
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useRef, useState, type PointerEvent } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import type { PptxManualShape } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L3"><pre>import { ToolbarButton } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L4">
+      <pre>
+import { pptxShapeLabel, pptxShapePreview, isPptxLineKind } from &#x27;./pptx-shape-presets.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  resolveShapeDraw,</pre></li>
+    <li id="L7"><pre>  shapeCanvasPoint,</pre></li>
+    <li id="L8"><pre>  shapeInsertInput,</pre></li>
+    <li id="L9"><pre>  type ShapeDrawRect,</pre></li>
+    <li id="L10"><pre>  type ShapePoint,</pre></li>
+    <li id="L11"><pre>} from &#x27;./pptx-shape-insert.js&#x27;</pre></li>
+    <li id="L12"><pre>import &#x27;./pptx-shape-insert.css&#x27;</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14"><pre>export interface PptxShapeInsertCanvasProps {</pre></li>
+    <li id="L15"><pre>  documentId: string</pre></li>
+    <li id="L16"><pre>  slideKey: string</pre></li>
+    <li id="L17"><pre>  slide: number</pre></li>
+    <li id="L18"><pre>  version: number</pre></li>
+    <li id="L19"><pre>  kind: PptxManualShape[&#x27;kind&#x27;] | null</pre></li>
+    <li id="L20"><pre>  width: number</pre></li>
+    <li id="L21"><pre>  height: number</pre></li>
+    <li id="L22"><pre>  slideWidth: number</pre></li>
+    <li id="L23"><pre>  slideHeight: number</pre></li>
+    <li id="L24"><pre>  disabled: boolean</pre></li>
+    <li id="L25">
+      <pre>
+  apply: (input: PptxManualShape, expectedVersion: number, signal: AbortSignal) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L26"><pre>  onExit: () =&gt; void</pre></li>
+    <li id="L27"><pre>  onBusy: (busy: boolean) =&gt; void</pre></li>
+    <li id="L28"><pre>}</pre></li>
+    <li id="L29">
+      <pre>export function PptxShapeInsertCanvas(props: PptxShapeInsertCanvasProps) {</pre>
+    </li>
+    <li id="L30"><pre>  if (!props.kind) return null</pre></li>
+    <li id="L31"><pre>  return (</pre></li>
+    <li id="L32"><pre>    &lt;ShapeGesture</pre></li>
+    <li id="L33">
+      <pre>
+      key={`${props.documentId}:${props.slideKey}:${props.version}:${props.kind}:${props.width}:${props.height}:${props.disabled}`}</pre>
+    </li>
+    <li id="L34"><pre>      {...props}</pre></li>
+    <li id="L35"><pre>      kind={props.kind}</pre></li>
+    <li id="L36"><pre>    /&gt;</pre></li>
+    <li id="L37"><pre>  )</pre></li>
+    <li id="L38"><pre>}</pre></li>
+    <li id="L39">
+      <pre>
+function ShapeGesture(props: PptxShapeInsertCanvasProps &amp; { kind: PptxManualShape[&#x27;kind&#x27;] }) {</pre>
+    </li>
+    <li id="L40">
+      <pre>
+  const { kind, width, height, slide, version, disabled, apply, onExit, onBusy } = props</pre>
+    </li>
+    <li id="L41"><pre>  const surface = useRef&lt;SVGSVGElement&gt;(null)</pre></li>
+    <li id="L42">
+      <pre>
+  const draft = useRef&lt;{ pointer: number; start: ShapePoint; screen: ShapePoint } | null&gt;(null)</pre>
+    </li>
+    <li id="L43"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L44">
+      <pre>  const [preview, setPreview] = useState&lt;ShapeDrawRect | null&gt;(null)</pre>
+    </li>
+    <li id="L45"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L46"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L47"><pre>  const cancel = () =&gt; {</pre></li>
+    <li id="L48"><pre>    draft.current = null</pre></li>
+    <li id="L49"><pre>    pending.current?.abort()</pre></li>
+    <li id="L50"><pre>    pending.current = null</pre></li>
+    <li id="L51"><pre>    setPreview(null)</pre></li>
+    <li id="L52"><pre>    setBusy(false)</pre></li>
+    <li id="L53"><pre>    onBusy(false)</pre></li>
+    <li id="L54"><pre>  }</pre></li>
+    <li id="L55"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L56"><pre>    surface.current?.focus()</pre></li>
+    <li id="L57"><pre>    return () =&gt; {</pre></li>
+    <li id="L58"><pre>      draft.current = null</pre></li>
+    <li id="L59"><pre>      pending.current?.abort()</pre></li>
+    <li id="L60"><pre>      onBusy(false)</pre></li>
+    <li id="L61"><pre>    }</pre></li>
+    <li id="L62"><pre>  }, [onBusy])</pre></li>
+    <li id="L63"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L64"><pre>    const escape = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L65">
+      <pre>      const editor = surface.current?.closest(&#x27;.mimir-editor&#x27;)</pre>
+    </li>
+    <li id="L66"><pre>      if (</pre></li>
+    <li id="L67"><pre>        event.key !== &#x27;Escape&#x27; ||</pre></li>
+    <li id="L68"><pre>        event.defaultPrevented ||</pre></li>
+    <li id="L69"><pre>        !(event.target instanceof Node) ||</pre></li>
+    <li id="L70"><pre>        !editor?.contains(event.target)</pre></li>
+    <li id="L71"><pre>      )</pre></li>
+    <li id="L72"><pre>        return</pre></li>
+    <li id="L73"><pre>      event.preventDefault()</pre></li>
+    <li id="L74"><pre>      event.stopPropagation()</pre></li>
+    <li id="L75"><pre>      draft.current = null</pre></li>
+    <li id="L76"><pre>      pending.current?.abort()</pre></li>
+    <li id="L77"><pre>      pending.current = null</pre></li>
+    <li id="L78"><pre>      setPreview(null)</pre></li>
+    <li id="L79"><pre>      setBusy(false)</pre></li>
+    <li id="L80"><pre>      onBusy(false)</pre></li>
+    <li id="L81"><pre>      onExit()</pre></li>
+    <li id="L82"><pre>    }</pre></li>
+    <li id="L83"><pre>    const blur = () =&gt; {</pre></li>
+    <li id="L84"><pre>      draft.current = null</pre></li>
+    <li id="L85"><pre>      pending.current?.abort()</pre></li>
+    <li id="L86"><pre>      pending.current = null</pre></li>
+    <li id="L87"><pre>      setPreview(null)</pre></li>
+    <li id="L88"><pre>      setBusy(false)</pre></li>
+    <li id="L89"><pre>      onBusy(false)</pre></li>
+    <li id="L90"><pre>      onExit()</pre></li>
+    <li id="L91"><pre>    }</pre></li>
+    <li id="L92"><pre>    document.addEventListener(&#x27;keydown&#x27;, escape, true)</pre></li>
+    <li id="L93"><pre>    window.addEventListener(&#x27;blur&#x27;, blur)</pre></li>
+    <li id="L94"><pre>    return () =&gt; {</pre></li>
+    <li id="L95">
+      <pre>      document.removeEventListener(&#x27;keydown&#x27;, escape, true)</pre>
+    </li>
+    <li id="L96"><pre>      window.removeEventListener(&#x27;blur&#x27;, blur)</pre></li>
+    <li id="L97"><pre>    }</pre></li>
+    <li id="L98"><pre>  }, [onBusy, onExit])</pre></li>
+    <li id="L99">
+      <pre>  const point = (event: { clientX: number; clientY: number }) =&gt; {</pre>
+    </li>
+    <li id="L100"><pre>    const bounds = surface.current?.getBoundingClientRect()</pre></li>
+    <li id="L101"><pre>    return bounds</pre></li>
+    <li id="L102">
+      <pre>
+      ? shapeCanvasPoint({ x: event.clientX, y: event.clientY }, bounds, width, height)</pre>
+    </li>
+    <li id="L103"><pre>      : null</pre></li>
+    <li id="L104"><pre>  }</pre></li>
+    <li id="L105">
+      <pre>  const rectangle = (event: PointerEvent&lt;SVGSVGElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L106"><pre>    const current = draft.current,</pre></li>
+    <li id="L107"><pre>      end = point(event)</pre></li>
+    <li id="L108">
+      <pre>    if (!current || current.pointer !== event.pointerId || !end) return null</pre>
+    </li>
+    <li id="L109"><pre>    return resolveShapeDraw(</pre></li>
+    <li id="L110"><pre>      kind,</pre></li>
+    <li id="L111"><pre>      current.start,</pre></li>
+    <li id="L112"><pre>      end,</pre></li>
+    <li id="L113"><pre>      event.shiftKey,</pre></li>
+    <li id="L114">
+      <pre>
+      Math.hypot(event.clientX - current.screen.x, event.clientY - current.screen.y),</pre>
+    </li>
+    <li id="L115"><pre>    )</pre></li>
+    <li id="L116"><pre>  }</pre></li>
+    <li id="L117">
+      <pre>  const finish = async (event: PointerEvent&lt;SVGSVGElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L118"><pre>    const rect = rectangle(event)</pre></li>
+    <li id="L119"><pre>    if (!rect || !draft.current) return</pre></li>
+    <li id="L120"><pre>    draft.current = null</pre></li>
+    <li id="L121"><pre>    surface.current?.releasePointerCapture?.(event.pointerId)</pre></li>
+    <li id="L122"><pre>    setPreview(null)</pre></li>
+    <li id="L123">
+      <pre>    if (disabled || pending.current || (!rect.w &amp;&amp; !rect.h)) return</pre>
+    </li>
+    <li id="L124"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L125"><pre>    pending.current = controller</pre></li>
+    <li id="L126"><pre>    setBusy(true)</pre></li>
+    <li id="L127"><pre>    onBusy(true)</pre></li>
+    <li id="L128"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L129"><pre>    try {</pre></li>
+    <li id="L130"><pre>      const changed = await apply(</pre></li>
+    <li id="L131"><pre>        shapeInsertInput(kind, slide, rect, props),</pre></li>
+    <li id="L132"><pre>        version,</pre></li>
+    <li id="L133"><pre>        controller.signal,</pre></li>
+    <li id="L134"><pre>      )</pre></li>
+    <li id="L135"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L136"><pre>        if (changed) onExit()</pre></li>
+    <li id="L137">
+      <pre>        else setError(&#x27;形状未插入，请重试；原有内容已保留&#x27;)</pre>
+    </li>
+    <li id="L138"><pre>      }</pre></li>
+    <li id="L139"><pre>    } catch {</pre></li>
+    <li id="L140">
+      <pre>
+      if (!controller.signal.aborted) setError(&#x27;形状未插入，请重试；原有内容已保留&#x27;)</pre>
+    </li>
+    <li id="L141"><pre>    } finally {</pre></li>
+    <li id="L142"><pre>      if (pending.current === controller) {</pre></li>
+    <li id="L143"><pre>        pending.current = null</pre></li>
+    <li id="L144"><pre>        setBusy(false)</pre></li>
+    <li id="L145"><pre>        onBusy(false)</pre></li>
+    <li id="L146"><pre>      }</pre></li>
+    <li id="L147"><pre>    }</pre></li>
+    <li id="L148"><pre>  }</pre></li>
+    <li id="L149"><pre>  const paths = preview</pre></li>
+    <li id="L150">
+      <pre>    ? pptxShapePreview(kind, Math.max(1, preview.w), Math.max(1, preview.h))</pre>
+    </li>
+    <li id="L151"><pre>    : null</pre></li>
+    <li id="L152"><pre>  const line = isPptxLineKind(kind)</pre></li>
+    <li id="L153"><pre>  return (</pre></li>
+    <li id="L154">
+      <pre>    &lt;div className=&quot;mimir-pptx-shape-insert-layer&quot;&gt;</pre>
+    </li>
+    <li id="L155"><pre>      &lt;svg</pre></li>
+    <li id="L156"><pre>        ref={surface}</pre></li>
+    <li id="L157"><pre>        className=&quot;mimir-pptx-shape-insert-canvas&quot;</pre></li>
+    <li id="L158"><pre>        viewBox={`0 0 ${width} ${height}`}</pre></li>
+    <li id="L159"><pre>        preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L160"><pre>        tabIndex={0}</pre></li>
+    <li id="L161"><pre>        role=&quot;img&quot;</pre></li>
+    <li id="L162">
+      <pre>        aria-label={`绘制${pptxShapeLabel(kind)}的幻灯片画布（Escape取消）`}</pre>
+    </li>
+    <li id="L163"><pre>        aria-busy={busy}</pre></li>
+    <li id="L164"><pre>        onPointerDown={(event) =&gt; {</pre></li>
+    <li id="L165">
+      <pre>          if (draft.current &amp;&amp; draft.current.pointer !== event.pointerId) {</pre>
+    </li>
+    <li id="L166"><pre>            cancel()</pre></li>
+    <li id="L167"><pre>            return</pre></li>
+    <li id="L168"><pre>          }</pre></li>
+    <li id="L169"><pre>          if (</pre></li>
+    <li id="L170"><pre>            disabled ||</pre></li>
+    <li id="L171"><pre>            busy ||</pre></li>
+    <li id="L172"><pre>            pending.current ||</pre></li>
+    <li id="L173"><pre>            event.button !== 0 ||</pre></li>
+    <li id="L174"><pre>            event.isPrimary === false</pre></li>
+    <li id="L175"><pre>          )</pre></li>
+    <li id="L176"><pre>            return</pre></li>
+    <li id="L177"><pre>          const start = point(event)</pre></li>
+    <li id="L178"><pre>          if (!start) return</pre></li>
+    <li id="L179"><pre>          event.preventDefault()</pre></li>
+    <li id="L180"><pre>          event.stopPropagation()</pre></li>
+    <li id="L181"><pre>          surface.current?.focus()</pre></li>
+    <li id="L182"><pre>          surface.current?.setPointerCapture?.(event.pointerId)</pre></li>
+    <li id="L183"><pre>          draft.current = {</pre></li>
+    <li id="L184"><pre>            pointer: event.pointerId,</pre></li>
+    <li id="L185"><pre>            start,</pre></li>
+    <li id="L186"><pre>            screen: { x: event.clientX, y: event.clientY },</pre></li>
+    <li id="L187"><pre>          }</pre></li>
+    <li id="L188"><pre>          setError(&#x27;&#x27;)</pre></li>
+    <li id="L189"><pre>        }}</pre></li>
+    <li id="L190"><pre>        onPointerMove={(event) =&gt; {</pre></li>
+    <li id="L191"><pre>          const current = draft.current</pre></li>
+    <li id="L192"><pre>          if (current?.pointer !== event.pointerId) return</pre></li>
+    <li id="L193">
+      <pre>
+          if (Math.hypot(event.clientX - current.screen.x, event.clientY - current.screen.y) &gt; 3)</pre>
+    </li>
+    <li id="L194"><pre>            setPreview(rectangle(event))</pre></li>
+    <li id="L195"><pre>        }}</pre></li>
+    <li id="L196"><pre>        onPointerUp={(event) =&gt; {</pre></li>
+    <li id="L197"><pre>          void finish(event)</pre></li>
+    <li id="L198"><pre>        }}</pre></li>
+    <li id="L199"><pre>        onPointerCancel={(event) =&gt; {</pre></li>
+    <li id="L200"><pre>          if (draft.current?.pointer === event.pointerId) cancel()</pre></li>
+    <li id="L201"><pre>        }}</pre></li>
+    <li id="L202"><pre>        onLostPointerCapture={(event) =&gt; {</pre></li>
+    <li id="L203"><pre>          if (draft.current?.pointer === event.pointerId) cancel()</pre></li>
+    <li id="L204"><pre>        }}</pre></li>
+    <li id="L205"><pre>        onBlur={() =&gt; {</pre></li>
+    <li id="L206"><pre>          if (draft.current || pending.current) cancel()</pre></li>
+    <li id="L207"><pre>        }}</pre></li>
+    <li id="L208"><pre>        onClick={(event) =&gt; event.stopPropagation()}</pre></li>
+    <li id="L209"><pre>      &gt;</pre></li>
+    <li id="L210"><pre>        {preview &amp;&amp; (</pre></li>
+    <li id="L211"><pre>          &lt;g</pre></li>
+    <li id="L212"><pre>            transform={`translate(${preview.x} ${preview.y})`}</pre></li>
+    <li id="L213"><pre>            className=&quot;mimir-pptx-shape-insert-preview&quot;</pre></li>
+    <li id="L214"><pre>          &gt;</pre></li>
+    <li id="L215">
+      <pre>
+            {!line &amp;&amp; &lt;rect width={preview.w} height={preview.h} fill=&quot;none&quot; /&gt;}</pre>
+    </li>
+    <li id="L216"><pre>            &lt;g</pre></li>
+    <li id="L217"><pre>              transform={</pre></li>
+    <li id="L218"><pre>                line</pre></li>
+    <li id="L219">
+      <pre>
+                  ? `translate(${preview.flipH ? preview.w : 0} ${preview.flipV ? 0 : preview.h}) scale(${preview.flipH ? -1 : 1} ${preview.flipV ? 1 : -1})`</pre>
+    </li>
+    <li id="L220"><pre>                  : undefined</pre></li>
+    <li id="L221"><pre>              }</pre></li>
+    <li id="L222"><pre>            &gt;</pre></li>
+    <li id="L223">
+      <pre>              {paths?.path &amp;&amp; &lt;path d={paths.path} /&gt;}</pre>
+    </li>
+    <li id="L224">
+      <pre>              {paths?.fillPath &amp;&amp; &lt;path d={paths.fillPath} /&gt;}</pre>
+    </li>
+    <li id="L225">
+      <pre>
+              {paths?.strokePath &amp;&amp; &lt;path d={paths.strokePath} fill=&quot;none&quot; /&gt;}</pre>
+    </li>
+    <li id="L226"><pre>            &lt;/g&gt;</pre></li>
+    <li id="L227"><pre>          &lt;/g&gt;</pre></li>
+    <li id="L228"><pre>        )}</pre></li>
+    <li id="L229"><pre>      &lt;/svg&gt;</pre></li>
+    <li id="L230">
+      <pre>      &lt;div className=&quot;mimir-pptx-shape-insert-feedback&quot;&gt;</pre>
+    </li>
+    <li id="L231">
+      <pre>        &lt;span role={error ? &#x27;alert&#x27; : &#x27;status&#x27;}&gt;</pre>
+    </li>
+    <li id="L232"><pre>          {error ||</pre></li>
+    <li id="L233"><pre>            (busy</pre></li>
+    <li id="L234"><pre>              ? &#x27;正在插入形状…&#x27;</pre></li>
+    <li id="L235">
+      <pre>
+              : `${pptxShapeLabel(kind)}：点击放置，拖动定大小；Shift约束，Esc取消`)}</pre>
+    </li>
+    <li id="L236"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L237"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L238"><pre>          label=&quot;取消绘制形状&quot;</pre></li>
+    <li id="L239"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L240"><pre>            cancel()</pre></li>
+    <li id="L241"><pre>            onExit()</pre></li>
+    <li id="L242"><pre>          }}</pre></li>
+    <li id="L243"><pre>        &gt;</pre></li>
+    <li id="L244"><pre>          取消</pre></li>
+    <li id="L245"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L246"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L247"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L248"><pre>  )</pre></li>
+    <li id="L249"><pre>}</pre></li>
+  </ol>
+</html>

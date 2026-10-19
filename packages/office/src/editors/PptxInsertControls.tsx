@@ -49,10 +49,39 @@ export function PptxEquationControls({
     error = '公式语法暂不支持。可使用分式、根式、上下标、求和、积分和希腊字母。'
   }
   return (
-    <PptxControlPanel busy={busy}>
+    <PptxControlPanel
+      busy={busy}
+      actions={
+        <ToolbarButton
+          primary
+          label="插入公式"
+          disabled={!latex.trim() || !!error || latex.length > 4000}
+          disabledReason={error || '请输入不超过4000字的公式'}
+          onClick={() =>
+            void run({
+              op: 'insertEquation',
+              latex,
+              position: 'end',
+              ...(destination === 'selected' && target
+                ? { target }
+                : {
+                    target: { slide },
+                    box: {
+                      x: Math.round(width * 0.15),
+                      y: Math.round(height * 0.35),
+                      cx: Math.round(width * 0.7),
+                      cy: Math.round(height * 0.2),
+                    },
+                  }),
+            })
+          }
+        />
+      }
+    >
       <ToolbarMenuFields label="公式">
         <ToolbarSelect
           label="公式模板"
+          disabled={busy}
           value={formulas.some((item) => item.value === latex) ? latex : 'custom'}
           options={[...formulas, { value: 'custom', label: '自定义公式' }]}
           onChange={(value) => {
@@ -70,6 +99,7 @@ export function PptxEquationControls({
         {error && <ToolbarMenuNote>{error}</ToolbarMenuNote>}
         <ToolbarSelect
           label="插入位置"
+          disabled={busy}
           value={destination}
           options={[
             { value: 'new', label: '新建公式文本框' },
@@ -81,30 +111,6 @@ export function PptxEquationControls({
           公式保存在原生 Office 数学结构中。画布以线性文本显示，PowerPoint 中显示排版公式。
         </ToolbarMenuNote>
       </ToolbarMenuFields>
-      <ToolbarButton
-        primary
-        label="插入公式"
-        disabled={!latex.trim() || !!error || latex.length > 4000}
-        disabledReason={error || '请输入不超过4000字的公式'}
-        onClick={() =>
-          void run({
-            op: 'insertEquation',
-            latex,
-            position: 'end',
-            ...(destination === 'selected' && target
-              ? { target }
-              : {
-                  target: { slide },
-                  box: {
-                    x: Math.round(width * 0.15),
-                    y: Math.round(height * 0.35),
-                    cx: Math.round(width * 0.7),
-                    cy: Math.round(height * 0.2),
-                  },
-                }),
-          })
-        }
-      />
     </PptxControlPanel>
   )
 }
@@ -143,6 +149,7 @@ export function PptxWordArtControls({ slide, width, height, apply }: InsertProps
         <ToolbarTextField label="艺术字文字" value={text} onChange={setText} />
         <ToolbarSelect
           label="艺术字样式"
+          disabled={busy}
           value={presetId}
           options={WORDART_PRESETS.map((item, index) => ({
             value: item.id,
@@ -222,6 +229,7 @@ export function PptxFieldControls({ slide, width, height, apply }: InsertProps) 
       <ToolbarMenuFields label="动态字段">
         <ToolbarSelect
           label="字段类型"
+          disabled={busy}
           value={kind}
           options={[
             { value: 'slidenum', label: '幻灯片页码' },
@@ -278,10 +286,37 @@ export function PptxDiagramControls({ slide, width, height, apply }: InsertProps
   const limit = layout === 'venn' ? 4 : 8
   const shapes = layoutShapes(layout, items.slice(0, limit), 300, 180)
   return (
-    <PptxControlPanel busy={busy}>
+    <PptxControlPanel
+      busy={busy}
+      actions={
+        <ToolbarButton
+          primary
+          label="插入图示"
+          disabled={
+            !items.length || items.length > limit || items.some((item) => item.length > 300)
+          }
+          disabledReason={`请填写1–${limit}个节点，每个节点不超过300字`}
+          onClick={() =>
+            void run({
+              op: 'addSmartArt',
+              target: { slide },
+              layout,
+              items,
+              offset: {
+                x: Math.round(width * 0.12),
+                y: Math.round(height * 0.2),
+                cx: Math.round(width * 0.76),
+                cy: Math.round(height * 0.6),
+              },
+            })
+          }
+        />
+      }
+    >
       <ToolbarMenuFields label="图示布局">
         <ToolbarSelect
           label="图示类型"
+          disabled={busy}
           value={layout}
           options={layouts}
           onChange={(value) => setLayout(value as SmartArtLayout)}
@@ -334,26 +369,6 @@ export function PptxDiagramControls({ slide, width, height, apply }: InsertProps
           个。插入后为可编辑形状组合，可取消组合后逐个调整。
         </ToolbarMenuNote>
       </ToolbarMenuFields>
-      <ToolbarButton
-        primary
-        label="插入图示"
-        disabled={!items.length || items.length > limit || items.some((item) => item.length > 300)}
-        disabledReason={`请填写1–${limit}个节点，每个节点不超过300字`}
-        onClick={() =>
-          void run({
-            op: 'addSmartArt',
-            target: { slide },
-            layout,
-            items,
-            offset: {
-              x: Math.round(width * 0.12),
-              y: Math.round(height * 0.2),
-              cx: Math.round(width * 0.76),
-              cy: Math.round(height * 0.6),
-            },
-          })
-        }
-      />
     </PptxControlPanel>
   )
 }

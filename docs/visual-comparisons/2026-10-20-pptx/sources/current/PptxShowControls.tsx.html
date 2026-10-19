@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxShowControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxShowControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 884371c97dd1db6c576c2f3e11da13f0c4b9d304f3a15fcb19c1baccaaa05203
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useLayoutEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { Checkbox } from &#x27;antd&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import { ArrowDown, ArrowUp, Check, LoaderCircle, Play } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import type { Slide } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  ToolbarButton,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L8"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L9"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L10"><pre>  ToolbarSelect,</pre></li>
+    <li id="L11"><pre>  ToolbarTextField,</pre></li>
+    <li id="L12"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L13"><pre>import {</pre></li>
+    <li id="L14"><pre>  pptxReadCustomShows,</pre></li>
+    <li id="L15"><pre>  pptxRehearsalOps,</pre></li>
+    <li id="L16"><pre>  pptxShowClock,</pre></li>
+    <li id="L17"><pre>  pptxShowIndices,</pre></li>
+    <li id="L18"><pre>  type PptxCustomShow,</pre></li>
+    <li id="L19"><pre>  type PptxRehearsalResult,</pre></li>
+    <li id="L20"><pre>  type PptxShowRequest,</pre></li>
+    <li id="L21"><pre>} from &#x27;./pptx-show.js&#x27;</pre></li>
+    <li id="L22">
+      <pre>import { pptxSlideOutline } from &#x27;./PptxWorkspaceViews.js&#x27;</pre>
+    </li>
+    <li id="L23"><pre>import &#x27;./pptx-show-controls.css&#x27;</pre></li>
+    <li id="L24"><pre></pre></li>
+    <li id="L25">
+      <pre>
+export type { PptxRehearsalResult, PptxShowRequest } from &#x27;./pptx-show.js&#x27;</pre>
+    </li>
+    <li id="L26"><pre>export interface PptxShowControlsProps {</pre></li>
+    <li id="L27"><pre>  documentId: string</pre></li>
+    <li id="L28"><pre>  slides: readonly Slide[]</pre></li>
+    <li id="L29"><pre>  version: number</pre></li>
+    <li id="L30"><pre>  pending?: boolean</pre></li>
+    <li id="L31"><pre>  rehearsal: PptxRehearsalResult | null</pre></li>
+    <li id="L32"><pre>  onDismissRehearsal(): void</pre></li>
+    <li id="L33">
+      <pre>  onStart(request: PptxShowRequest, trigger: HTMLButtonElement | null): void</pre>
+    </li>
+    <li id="L34">
+      <pre>  apply(ops: Record&lt;string, unknown&gt;[]): Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L35"><pre>}</pre></li>
+    <li id="L36"><pre>export function PptxShowControls(props: PptxShowControlsProps) {</pre></li>
+    <li id="L37"><pre>  return &lt;ShowControls key={props.documentId} {...props} /&gt;</pre></li>
+    <li id="L38"><pre>}</pre></li>
+    <li id="L39"><pre>function ShowControls({</pre></li>
+    <li id="L40"><pre>  documentId,</pre></li>
+    <li id="L41"><pre>  slides,</pre></li>
+    <li id="L42"><pre>  version,</pre></li>
+    <li id="L43"><pre>  pending = false,</pre></li>
+    <li id="L44"><pre>  rehearsal,</pre></li>
+    <li id="L45"><pre>  onDismissRehearsal,</pre></li>
+    <li id="L46"><pre>  onStart,</pre></li>
+    <li id="L47"><pre>  apply,</pre></li>
+    <li id="L48"><pre>}: PptxShowControlsProps) {</pre></li>
+    <li id="L49"><pre>  const storageKey = `mimir:pptx-custom-shows:${documentId}`</pre></li>
+    <li id="L50"><pre>  const [shows, setShows] = useState(() =&gt; {</pre></li>
+    <li id="L51"><pre>    try {</pre></li>
+    <li id="L52"><pre>      return pptxReadCustomShows(localStorage.getItem(storageKey))</pre></li>
+    <li id="L53"><pre>    } catch {</pre></li>
+    <li id="L54"><pre>      return []</pre></li>
+    <li id="L55"><pre>    }</pre></li>
+    <li id="L56"><pre>  })</pre></li>
+    <li id="L57"><pre>  const [selected, setSelected] = useState(&#x27;new&#x27;)</pre></li>
+    <li id="L58"><pre>  const [name, setName] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L59"><pre>  const [paths, setPaths] = useState&lt;string[]&gt;([])</pre></li>
+    <li id="L60"><pre>  const [notice, setNotice] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L61"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L62"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L63"><pre>  const lock = useRef(false)</pre></li>
+    <li id="L64">
+      <pre>  const rehearsalTrigger = useRef&lt;HTMLButtonElement | null&gt;(null)</pre>
+    </li>
+    <li id="L65">
+      <pre>  const customTrigger = useRef&lt;HTMLButtonElement | null&gt;(null)</pre>
+    </li>
+    <li id="L66"><pre>  const live = useRef(true)</pre></li>
+    <li id="L67"><pre>  const currentResult = useRef(rehearsal)</pre></li>
+    <li id="L68"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L69"><pre>    live.current = true</pre></li>
+    <li id="L70"><pre>    return () =&gt; {</pre></li>
+    <li id="L71"><pre>      live.current = false</pre></li>
+    <li id="L72"><pre>    }</pre></li>
+    <li id="L73"><pre>  }, [])</pre></li>
+    <li id="L74"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L75"><pre>    currentResult.current = rehearsal</pre></li>
+    <li id="L76"><pre>  }, [rehearsal])</pre></li>
+    <li id="L77"><pre>  const blocked = pending || busy</pre></li>
+    <li id="L78">
+      <pre>
+  const validPaths = paths.filter((path) =&gt; slides.some((slide) =&gt; slide.path === path))</pre>
+    </li>
+    <li id="L79">
+      <pre>
+  const indices = pptxShowIndices({ id: &#x27;&#x27;, name: &#x27;&#x27;, slidePaths: validPaths }, slides)</pre>
+    </li>
+    <li id="L80"><pre>  const stale =</pre></li>
+    <li id="L81"><pre>    rehearsal &amp;&amp;</pre></li>
+    <li id="L82"><pre>    (rehearsal.version !== version ||</pre></li>
+    <li id="L83"><pre>      rehearsal.slidePaths.length !== slides.length ||</pre></li>
+    <li id="L84">
+      <pre>      rehearsal.slidePaths.some((path, index) =&gt; path !== slides[index]?.path))</pre>
+    </li>
+    <li id="L85"><pre>  const timings = rehearsal ? pptxRehearsalOps(rehearsal) : []</pre></li>
+    <li id="L86">
+      <pre>  const totalMs = timings.reduce((sum, item) =&gt; sum + item.ms, 0)</pre>
+    </li>
+    <li id="L87"><pre>  const store = (next: PptxCustomShow[]) =&gt; {</pre></li>
+    <li id="L88"><pre>    setShows(next)</pre></li>
+    <li id="L89"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L90"><pre>    try {</pre></li>
+    <li id="L91"><pre>      localStorage.setItem(storageKey, JSON.stringify(next))</pre></li>
+    <li id="L92"><pre>      setNotice(&#x27;已保存在此浏览器中&#x27;)</pre></li>
+    <li id="L93"><pre>    } catch {</pre></li>
+    <li id="L94">
+      <pre>      setNotice(&#x27;浏览器存储不可用，本次仍可播放；关闭页面后列表不会保留&#x27;)</pre>
+    </li>
+    <li id="L95"><pre>    }</pre></li>
+    <li id="L96"><pre>  }</pre></li>
+    <li id="L97"><pre>  const select = (id: string) =&gt; {</pre></li>
+    <li id="L98"><pre>    const show = shows.find((item) =&gt; item.id === id)</pre></li>
+    <li id="L99"><pre>    setSelected(id)</pre></li>
+    <li id="L100"><pre>    setName(show?.name ?? &#x27;&#x27;)</pre></li>
+    <li id="L101"><pre>    setPaths(show?.slidePaths ?? [])</pre></li>
+    <li id="L102"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L103"><pre>    setNotice(&#x27;&#x27;)</pre></li>
+    <li id="L104"><pre>  }</pre></li>
+    <li id="L105"><pre>  const save = () =&gt; {</pre></li>
+    <li id="L106"><pre>    const title = name.trim().slice(0, 80)</pre></li>
+    <li id="L107"><pre>    if (!title || !validPaths.length || blocked) return</pre></li>
+    <li id="L108">
+      <pre>
+    if (shows.some((show) =&gt; show.id !== selected &amp;&amp; show.name === title)) {</pre>
+    </li>
+    <li id="L109"><pre>      setError(&#x27;此名称已存在，请使用其他名称&#x27;)</pre></li>
+    <li id="L110"><pre>      return</pre></li>
+    <li id="L111"><pre>    }</pre></li>
+    <li id="L112">
+      <pre>    if (selected === &#x27;new&#x27; &amp;&amp; shows.length &gt;= 100) {</pre>
+    </li>
+    <li id="L113">
+      <pre>      setError(&#x27;最多保留 100 个自定义放映，请先删除不再使用的列表&#x27;)</pre>
+    </li>
+    <li id="L114"><pre>      return</pre></li>
+    <li id="L115"><pre>    }</pre></li>
+    <li id="L116"><pre>    const next = {</pre></li>
+    <li id="L117">
+      <pre>      id: selected === &#x27;new&#x27; ? crypto.randomUUID() : selected,</pre>
+    </li>
+    <li id="L118"><pre>      name: title,</pre></li>
+    <li id="L119"><pre>      slidePaths: validPaths,</pre></li>
+    <li id="L120"><pre>    }</pre></li>
+    <li id="L121"><pre>    store(</pre></li>
+    <li id="L122"><pre>      selected === &#x27;new&#x27;</pre></li>
+    <li id="L123"><pre>        ? [...shows, next]</pre></li>
+    <li id="L124">
+      <pre>        : shows.map((show) =&gt; (show.id === selected ? next : show)),</pre>
+    </li>
+    <li id="L125"><pre>    )</pre></li>
+    <li id="L126"><pre>    setSelected(next.id)</pre></li>
+    <li id="L127"><pre>    setName(title)</pre></li>
+    <li id="L128"><pre>    setPaths(validPaths)</pre></li>
+    <li id="L129"><pre>  }</pre></li>
+    <li id="L130"><pre>  const move = (path: string, direction: number) =&gt; {</pre></li>
+    <li id="L131"><pre>    const at = validPaths.indexOf(path)</pre></li>
+    <li id="L132"><pre>    const next = validPaths.slice()</pre></li>
+    <li id="L133"><pre>    const destination = at + direction</pre></li>
+    <li id="L134">
+      <pre>    if (destination &lt; 0 || destination &gt;= next.length) return</pre>
+    </li>
+    <li id="L135">
+      <pre>    ;[next[at], next[destination]] = [next[destination]!, next[at]!]</pre>
+    </li>
+    <li id="L136"><pre>    setPaths(next)</pre></li>
+    <li id="L137"><pre>  }</pre></li>
+    <li id="L138"><pre>  const confirmTimings = async () =&gt; {</pre></li>
+    <li id="L139">
+      <pre>    if (!rehearsal || stale || !timings.length || blocked || lock.current) return</pre>
+    </li>
+    <li id="L140"><pre>    lock.current = true</pre></li>
+    <li id="L141"><pre>    setBusy(true)</pre></li>
+    <li id="L142"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L143"><pre>    const submitted = rehearsal</pre></li>
+    <li id="L144"><pre>    try {</pre></li>
+    <li id="L145"><pre>      const success = await apply(timings)</pre></li>
+    <li id="L146">
+      <pre>      if (!live.current || currentResult.current !== submitted) return</pre>
+    </li>
+    <li id="L147"><pre>      if (success) {</pre></li>
+    <li id="L148"><pre>        onDismissRehearsal()</pre></li>
+    <li id="L149">
+      <pre>        setNotice(`已应用 ${timings.length} 页换片时间，请保存文档`)</pre>
+    </li>
+    <li id="L150">
+      <pre>      } else setError(&#x27;换片时间未应用，请检查画布状态后重试&#x27;)</pre>
+    </li>
+    <li id="L151"><pre>    } catch (cause) {</pre></li>
+    <li id="L152">
+      <pre>      if (live.current &amp;&amp; currentResult.current === submitted)</pre>
+    </li>
+    <li id="L153">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;换片时间应用失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L154"><pre>    } finally {</pre></li>
+    <li id="L155"><pre>      lock.current = false</pre></li>
+    <li id="L156"><pre>      if (live.current) setBusy(false)</pre></li>
+    <li id="L157"><pre>    }</pre></li>
+    <li id="L158"><pre>  }</pre></li>
+    <li id="L159">
+      <pre>
+  // Included slides appear in playback order, followed by the remaining source slides.</pre>
+    </li>
+    <li id="L160"><pre>  const ordered = [</pre></li>
+    <li id="L161"><pre>    ...indices,</pre></li>
+    <li id="L162">
+      <pre>
+    ...slides.map((_, index) =&gt; index).filter((index) =&gt; !indices.includes(index)),</pre>
+    </li>
+    <li id="L163"><pre>  ]</pre></li>
+    <li id="L164"><pre>  return (</pre></li>
+    <li id="L165">
+      <pre>    &lt;div className=&quot;mimir-pptx-show&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L166"><pre>      &lt;div className=&quot;mimir-pptx-show__body&quot;&gt;</pre></li>
+    <li id="L167"><pre>        {rehearsal &amp;&amp; (</pre></li>
+    <li id="L168">
+      <pre>
+          &lt;section className=&quot;mimir-pptx-show__rehearsal&quot; aria-label=&quot;排练结果&quot;&gt;</pre>
+    </li>
+    <li id="L169"><pre>            &lt;h3&gt;排练已结束&lt;/h3&gt;</pre></li>
+    <li id="L170"><pre>            &lt;p&gt;</pre></li>
+    <li id="L171">
+      <pre>              已记录 {timings.length} 页，总计 {pptxShowClock(totalMs)}</pre>
+    </li>
+    <li id="L172"><pre>              。应用后将按这些时间自动换片。</pre></li>
+    <li id="L173"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L174">
+      <pre>            &lt;ol className=&quot;mimir-pptx-show__timings&quot;&gt;</pre>
+    </li>
+    <li id="L175"><pre>              {timings.map((item) =&gt; (</pre></li>
+    <li id="L176"><pre>                &lt;li key={item.target.slide}&gt;</pre></li>
+    <li id="L177">
+      <pre>                  &lt;span&gt;幻灯片 {item.target.slide + 1}&lt;/span&gt;</pre>
+    </li>
+    <li id="L178">
+      <pre>                  &lt;span&gt;{pptxShowClock(item.ms)}&lt;/span&gt;</pre>
+    </li>
+    <li id="L179"><pre>                &lt;/li&gt;</pre></li>
+    <li id="L180"><pre>              ))}</pre></li>
+    <li id="L181"><pre>            &lt;/ol&gt;</pre></li>
+    <li id="L182">
+      <pre>
+            {stale &amp;&amp; &lt;ToolbarMenuNote&gt;画布已发生变化，请丢弃此结果后重新排练。&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L183"><pre>          &lt;/section&gt;</pre></li>
+    <li id="L184"><pre>        )}</pre></li>
+    <li id="L185"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L186"><pre>          &lt;ToolbarMenuFields label=&quot;自定义放映&quot;&gt;</pre></li>
+    <li id="L187">
+      <pre>
+            &lt;ToolbarMenuNote&gt;列表按文稿保存在此浏览器。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L188"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L189"><pre>              label=&quot;放映列表&quot;</pre></li>
+    <li id="L190"><pre>              value={selected}</pre></li>
+    <li id="L191"><pre>              disabled={blocked}</pre></li>
+    <li id="L192"><pre>              options={[</pre></li>
+    <li id="L193">
+      <pre>                { value: &#x27;new&#x27;, label: &#x27;新建自定义放映&#x27; },</pre>
+    </li>
+    <li id="L194">
+      <pre>                ...shows.map((show) =&gt; ({ value: show.id, label: show.name })),</pre>
+    </li>
+    <li id="L195"><pre>              ]}</pre></li>
+    <li id="L196"><pre>              onChange={select}</pre></li>
+    <li id="L197"><pre>            /&gt;</pre></li>
+    <li id="L198">
+      <pre>
+            &lt;fieldset disabled={blocked} className=&quot;mimir-pptx-show__name&quot;&gt;</pre>
+    </li>
+    <li id="L199"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L200"><pre>                label=&quot;列表名称&quot;</pre></li>
+    <li id="L201"><pre>                value={name}</pre></li>
+    <li id="L202"><pre>                onChange={setName}</pre></li>
+    <li id="L203"><pre>                onSubmit={save}</pre></li>
+    <li id="L204"><pre>                placeholder=&quot;例如：客户演示&quot;</pre></li>
+    <li id="L205"><pre>              /&gt;</pre></li>
+    <li id="L206"><pre>            &lt;/fieldset&gt;</pre></li>
+    <li id="L207">
+      <pre>            &lt;div className=&quot;mimir-pptx-show__actions&quot;&gt;</pre>
+    </li>
+    <li id="L208"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L209"><pre>                label=&quot;保存放映列表&quot;</pre></li>
+    <li id="L210">
+      <pre>                disabled={blocked || !name.trim() || !validPaths.length}</pre>
+    </li>
+    <li id="L211">
+      <pre>
+                disabledReason={!name.trim() ? &#x27;请填写列表名称&#x27; : &#x27;请至少选择一页&#x27;}</pre>
+    </li>
+    <li id="L212"><pre>                onClick={save}</pre></li>
+    <li id="L213"><pre>              &gt;</pre></li>
+    <li id="L214"><pre>                保存列表</pre></li>
+    <li id="L215"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L216"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L217"><pre>                label=&quot;删除放映列表&quot;</pre></li>
+    <li id="L218"><pre>                disabled={blocked || selected === &#x27;new&#x27;}</pre></li>
+    <li id="L219"><pre>                onClick={() =&gt; {</pre></li>
+    <li id="L220">
+      <pre>                  store(shows.filter((show) =&gt; show.id !== selected))</pre>
+    </li>
+    <li id="L221"><pre>                  select(&#x27;new&#x27;)</pre></li>
+    <li id="L222"><pre>                }}</pre></li>
+    <li id="L223"><pre>              &gt;</pre></li>
+    <li id="L224"><pre>                删除列表</pre></li>
+    <li id="L225"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L226"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L227"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L228"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L229">
+      <pre>
+        &lt;section className=&quot;mimir-pptx-show__slides&quot; aria-label=&quot;放映幻灯片选择&quot;&gt;</pre>
+    </li>
+    <li id="L230"><pre>          &lt;h3&gt;</pre></li>
+    <li id="L231">
+      <pre>            播放顺序 &lt;span&gt;{validPaths.length} 页&lt;/span&gt;</pre>
+    </li>
+    <li id="L232"><pre>          &lt;/h3&gt;</pre></li>
+    <li id="L233"><pre>          &lt;p&gt;勾选要播放的页面，使用箭头调整顺序。&lt;/p&gt;</pre></li>
+    <li id="L234"><pre>          &lt;ol&gt;</pre></li>
+    <li id="L235"><pre>            {ordered.map((index) =&gt; {</pre></li>
+    <li id="L236"><pre>              const slide = slides[index]!</pre></li>
+    <li id="L237"><pre>              const at = validPaths.indexOf(slide.path)</pre></li>
+    <li id="L238"><pre>              const title = pptxSlideOutline(slide).title</pre></li>
+    <li id="L239">
+      <pre>              const hidden = /\bshow=&quot;0&quot;/.test(slide.bodyPrefix)</pre>
+    </li>
+    <li id="L240"><pre>              return (</pre></li>
+    <li id="L241"><pre>                &lt;li key={slide.path}&gt;</pre></li>
+    <li id="L242"><pre>                  &lt;Checkbox</pre></li>
+    <li id="L243"><pre>                    checked={at &gt;= 0}</pre></li>
+    <li id="L244"><pre>                    disabled={blocked}</pre></li>
+    <li id="L245"><pre>                    onChange={(event) =&gt;</pre></li>
+    <li id="L246"><pre>                      setPaths(</pre></li>
+    <li id="L247"><pre>                        event.target.checked</pre></li>
+    <li id="L248"><pre>                          ? [...validPaths, slide.path]</pre></li>
+    <li id="L249">
+      <pre>                          : validPaths.filter((path) =&gt; path !== slide.path),</pre>
+    </li>
+    <li id="L250"><pre>                      )</pre></li>
+    <li id="L251"><pre>                    }</pre></li>
+    <li id="L252"><pre>                  &gt;</pre></li>
+    <li id="L253">
+      <pre>                    &lt;span className=&quot;mimir-pptx-show__slide-label&quot;&gt;</pre>
+    </li>
+    <li id="L254"><pre>                      幻灯片 {index + 1}</pre></li>
+    <li id="L255">
+      <pre>                      {hidden ? &#x27; · 已隐藏&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L256">
+      <pre>                      &lt;small title={title}&gt;{title}&lt;/small&gt;</pre>
+    </li>
+    <li id="L257"><pre>                    &lt;/span&gt;</pre></li>
+    <li id="L258"><pre>                  &lt;/Checkbox&gt;</pre></li>
+    <li id="L259"><pre>                  {at &gt;= 0 &amp;&amp; (</pre></li>
+    <li id="L260">
+      <pre>                    &lt;div className=&quot;mimir-pptx-show__order&quot;&gt;</pre>
+    </li>
+    <li id="L261">
+      <pre>
+                      &lt;span aria-label={`播放顺序 ${at + 1}`}&gt;{at + 1}&lt;/span&gt;</pre>
+    </li>
+    <li id="L262"><pre>                      &lt;ToolbarButton</pre></li>
+    <li id="L263"><pre>                        label={`上移幻灯片 ${index + 1}`}</pre></li>
+    <li id="L264"><pre>                        disabled={blocked || at === 0}</pre></li>
+    <li id="L265"><pre>                        onClick={() =&gt; move(slide.path, -1)}</pre></li>
+    <li id="L266"><pre>                      &gt;</pre></li>
+    <li id="L267"><pre>                        &lt;ArrowUp size={14} /&gt;</pre></li>
+    <li id="L268"><pre>                      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L269"><pre>                      &lt;ToolbarButton</pre></li>
+    <li id="L270"><pre>                        label={`下移幻灯片 ${index + 1}`}</pre></li>
+    <li id="L271">
+      <pre>                        disabled={blocked || at === validPaths.length - 1}</pre>
+    </li>
+    <li id="L272"><pre>                        onClick={() =&gt; move(slide.path, 1)}</pre></li>
+    <li id="L273"><pre>                      &gt;</pre></li>
+    <li id="L274"><pre>                        &lt;ArrowDown size={14} /&gt;</pre></li>
+    <li id="L275"><pre>                      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L276"><pre>                    &lt;/div&gt;</pre></li>
+    <li id="L277"><pre>                  )}</pre></li>
+    <li id="L278"><pre>                &lt;/li&gt;</pre></li>
+    <li id="L279"><pre>              )</pre></li>
+    <li id="L280"><pre>            })}</pre></li>
+    <li id="L281"><pre>          &lt;/ol&gt;</pre></li>
+    <li id="L282"><pre>          {paths.length !== validPaths.length &amp;&amp; (</pre></li>
+    <li id="L283">
+      <pre>
+            &lt;ToolbarMenuNote&gt;已移除的幻灯片不会播放；保存列表可清理这些记录。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L284"><pre>          )}</pre></li>
+    <li id="L285"><pre>          {indices.some(</pre></li>
+    <li id="L286">
+      <pre>
+            (index, position) =&gt; position &gt; 0 &amp;&amp; /\bshow=&quot;0&quot;/.test(slides[index]!.bodyPrefix),</pre>
+    </li>
+    <li id="L287">
+      <pre>
+          ) &amp;&amp; &lt;ToolbarMenuNote&gt;已隐藏的页面会跳过；列表的起始页仍会播放。&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L288"><pre>        &lt;/section&gt;</pre></li>
+    <li id="L289"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L290">
+      <pre>
+          &lt;p role=&quot;alert&quot; className=&quot;mimir-pptx-show__error&quot;&gt;</pre>
+    </li>
+    <li id="L291"><pre>            {error}</pre></li>
+    <li id="L292"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L293"><pre>        )}</pre></li>
+    <li id="L294">
+      <pre>        {notice &amp;&amp; &lt;p role=&quot;status&quot;&gt;{notice}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L295"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L296"><pre>      &lt;div className=&quot;mimir-pptx-show__footer&quot;&gt;</pre></li>
+    <li id="L297"><pre>        {rehearsal ? (</pre></li>
+    <li id="L298"><pre>          &lt;&gt;</pre></li>
+    <li id="L299">
+      <pre>
+            &lt;ToolbarButton label=&quot;丢弃排练计时&quot; disabled={blocked} onClick={onDismissRehearsal}&gt;</pre>
+    </li>
+    <li id="L300"><pre>              丢弃</pre></li>
+    <li id="L301"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L302"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L303"><pre>              label=&quot;应用排练计时&quot;</pre></li>
+    <li id="L304"><pre>              primary</pre></li>
+    <li id="L305"><pre>              disabled={blocked || !!stale || !timings.length}</pre></li>
+    <li id="L306">
+      <pre>
+              disabledReason={stale ? &#x27;画布已变化，请重新排练&#x27; : &#x27;没有可应用的计时&#x27;}</pre>
+    </li>
+    <li id="L307"><pre>              onClick={() =&gt; void confirmTimings()}</pre></li>
+    <li id="L308"><pre>            &gt;</pre></li>
+    <li id="L309"><pre>              {busy ? (</pre></li>
+    <li id="L310">
+      <pre>                &lt;LoaderCircle size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L311"><pre>              ) : (</pre></li>
+    <li id="L312">
+      <pre>                &lt;Check size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L313"><pre>              )}</pre></li>
+    <li id="L314"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L315"><pre>          &lt;/&gt;</pre></li>
+    <li id="L316"><pre>        ) : (</pre></li>
+    <li id="L317"><pre>          &lt;&gt;</pre></li>
+    <li id="L318"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L319"><pre>              label=&quot;开始排练计时&quot;</pre></li>
+    <li id="L320"><pre>              ref={rehearsalTrigger}</pre></li>
+    <li id="L321"><pre>              disabled={blocked || !slides.length}</pre></li>
+    <li id="L322"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L323"><pre>                onStart(</pre></li>
+    <li id="L324"><pre>                  {</pre></li>
+    <li id="L325"><pre>                    start: Math.max(</pre></li>
+    <li id="L326"><pre>                      0,</pre></li>
+    <li id="L327">
+      <pre>
+                      slides.findIndex((slide) =&gt; !/\bshow=&quot;0&quot;/.test(slide.bodyPrefix)),</pre>
+    </li>
+    <li id="L328"><pre>                    ),</pre></li>
+    <li id="L329"><pre>                    rehearse: true,</pre></li>
+    <li id="L330"><pre>                  },</pre></li>
+    <li id="L331"><pre>                  rehearsalTrigger.current,</pre></li>
+    <li id="L332"><pre>                )</pre></li>
+    <li id="L333"><pre>              }</pre></li>
+    <li id="L334"><pre>            &gt;</pre></li>
+    <li id="L335"><pre>              排练计时</pre></li>
+    <li id="L336"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L337"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L338"><pre>              label=&quot;播放自定义放映&quot;</pre></li>
+    <li id="L339"><pre>              ref={customTrigger}</pre></li>
+    <li id="L340"><pre>              primary</pre></li>
+    <li id="L341"><pre>              disabled={blocked || !indices.length}</pre></li>
+    <li id="L342"><pre>              disabledReason=&quot;请至少选择一页&quot;</pre></li>
+    <li id="L343"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L344">
+      <pre>
+                onStart({ start: indices[0]!, slideIndices: indices }, customTrigger.current)</pre>
+    </li>
+    <li id="L345"><pre>              }</pre></li>
+    <li id="L346"><pre>            &gt;</pre></li>
+    <li id="L347">
+      <pre>              &lt;Play size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L348"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L349"><pre>          &lt;/&gt;</pre></li>
+    <li id="L350"><pre>        )}</pre></li>
+    <li id="L351"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L352"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L353"><pre>  )</pre></li>
+    <li id="L354"><pre>}</pre></li>
+  </ol>
+</html>

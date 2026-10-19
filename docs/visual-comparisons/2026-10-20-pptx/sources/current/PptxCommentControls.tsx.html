@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxCommentControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxCommentControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 0b38345b7a91864b3a0c69ad38c528ef9cfcff22a915dacedeab80eae22d5d25
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useLayoutEffect, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import { MessageSquarePlus, RotateCcw, Trash2 } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import type { PptxMetadata } from &#x27;../pptx-metadata.js&#x27;</pre></li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarButton,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L7"><pre>  ToolbarNotice,</pre></li>
+    <li id="L8"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L9"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L10"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L11"><pre>import type { PptxApply } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L12"><pre>import &#x27;./pptx-comment-controls.css&#x27;</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14"><pre>export function PptxCommentControls({</pre></li>
+    <li id="L15"><pre>  metadata,</pre></li>
+    <li id="L16"><pre>  index,</pre></li>
+    <li id="L17"><pre>  apply,</pre></li>
+    <li id="L18"><pre>  embedded = false,</pre></li>
+    <li id="L19"><pre>  disabled = false,</pre></li>
+    <li id="L20"><pre>}: {</pre></li>
+    <li id="L21"><pre>  metadata: PptxMetadata</pre></li>
+    <li id="L22"><pre>  index: number</pre></li>
+    <li id="L23"><pre>  apply: PptxApply</pre></li>
+    <li id="L24"><pre>  embedded?: boolean</pre></li>
+    <li id="L25"><pre>  disabled?: boolean</pre></li>
+    <li id="L26"><pre>}) {</pre></li>
+    <li id="L27"><pre>  const [comment, setComment] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L28"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L29"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L30"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L31"><pre>  const fieldset = useRef&lt;HTMLFieldSetElement&gt;(null)</pre></li>
+    <li id="L32"><pre>  const restoreAfterAdd = useRef(false)</pre></li>
+    <li id="L33"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L34"><pre>    if (busy || disabled || !restoreAfterAdd.current) return</pre></li>
+    <li id="L35"><pre>    restoreAfterAdd.current = false</pre></li>
+    <li id="L36"><pre>    const node = fieldset.current</pre></li>
+    <li id="L37">
+      <pre>
+    if (node &amp;&amp; (document.activeElement === document.body || node.contains(document.activeElement)))</pre>
+    </li>
+    <li id="L38"><pre>      node.querySelector(&#x27;textarea&#x27;)?.focus()</pre></li>
+    <li id="L39"><pre>  }, [busy, disabled])</pre></li>
+    <li id="L40"><pre>  useEffect(() =&gt; () =&gt; pending.current?.abort(), [])</pre></li>
+    <li id="L41">
+      <pre>  const run = async (op: Record&lt;string, unknown&gt;, added = false) =&gt; {</pre>
+    </li>
+    <li id="L42"><pre>    if (pending.current || disabled) return</pre></li>
+    <li id="L43"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L44"><pre>    pending.current = controller</pre></li>
+    <li id="L45"><pre>    setBusy(true)</pre></li>
+    <li id="L46"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L47"><pre>    try {</pre></li>
+    <li id="L48"><pre>      const ok = await apply(op)</pre></li>
+    <li id="L49"><pre>      if (controller.signal.aborted) return</pre></li>
+    <li id="L50"><pre>      if (ok &amp;&amp; added) {</pre></li>
+    <li id="L51"><pre>        restoreAfterAdd.current = true</pre></li>
+    <li id="L52"><pre>        setComment(&#x27;&#x27;)</pre></li>
+    <li id="L53"><pre>      }</pre></li>
+    <li id="L54"><pre>      if (!ok) setError(&#x27;批注未更新，请检查提示后重试。&#x27;)</pre></li>
+    <li id="L55"><pre>    } catch (cause) {</pre></li>
+    <li id="L56"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L57">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;批注未更新，请稍后重试。&#x27;)</pre>
+    </li>
+    <li id="L58"><pre>    } finally {</pre></li>
+    <li id="L59"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L60"><pre>        pending.current = null</pre></li>
+    <li id="L61"><pre>        setBusy(false)</pre></li>
+    <li id="L62"><pre>      }</pre></li>
+    <li id="L63"><pre>    }</pre></li>
+    <li id="L64"><pre>  }</pre></li>
+    <li id="L65"><pre>  return (</pre></li>
+    <li id="L66"><pre>    &lt;fieldset</pre></li>
+    <li id="L67"><pre>      ref={fieldset}</pre></li>
+    <li id="L68">
+      <pre>
+      className={`mimir-pptx-comment-controls${embedded ? &#x27; mimir-pptx-comment-controls--embedded&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L69"><pre>      disabled={busy || disabled}</pre></li>
+    <li id="L70"><pre>      aria-busy={busy}</pre></li>
+    <li id="L71"><pre>    &gt;</pre></li>
+    <li id="L72">
+      <pre>      &lt;div className=&quot;mimir-pptx-comment-controls__content&quot;&gt;</pre>
+    </li>
+    <li id="L73"><pre>        &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L74"><pre>          &lt;ToolbarTextArea</pre></li>
+    <li id="L75"><pre>            label=&quot;新批注&quot;</pre></li>
+    <li id="L76"><pre>            value={comment}</pre></li>
+    <li id="L77"><pre>            rows={4}</pre></li>
+    <li id="L78"><pre>            placeholder=&quot;为本页添加批注…&quot;</pre></li>
+    <li id="L79"><pre>            onChange={(value) =&gt; {</pre></li>
+    <li id="L80"><pre>              setComment(value)</pre></li>
+    <li id="L81"><pre>              setError(&#x27;&#x27;)</pre></li>
+    <li id="L82"><pre>            }}</pre></li>
+    <li id="L83"><pre>          /&gt;</pre></li>
+    <li id="L84"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L85">
+      <pre>
+        {comment.trim() &amp;&amp; &lt;ToolbarMenuNote&gt;添加后才会写入文稿。&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L86">
+      <pre>
+        &lt;section className=&quot;mimir-pptx-comment-controls__thread&quot; aria-label=&quot;本页批注&quot;&gt;</pre>
+    </li>
+    <li id="L87">
+      <pre>          &lt;h3&gt;本页批注 · {metadata.comments.length}&lt;/h3&gt;</pre>
+    </li>
+    <li id="L88"><pre>          {metadata.comments.length ? (</pre></li>
+    <li id="L89"><pre>            metadata.comments.map((item) =&gt; (</pre></li>
+    <li id="L90"><pre>              &lt;article key={`${item.authorId}:${item.idx}`}&gt;</pre></li>
+    <li id="L91">
+      <pre>
+                &lt;div className=&quot;mimir-pptx-comment-controls__author&quot;&gt;</pre>
+    </li>
+    <li id="L92"><pre>                  &lt;strong&gt;{item.author}&lt;/strong&gt;</pre></li>
+    <li id="L93"><pre>                  &lt;ToolbarButton</pre></li>
+    <li id="L94"><pre>                    label={`删除批注 ${item.idx}`}</pre></li>
+    <li id="L95"><pre>                    onClick={() =&gt;</pre></li>
+    <li id="L96"><pre>                      void run({</pre></li>
+    <li id="L97"><pre>                        op: &#x27;deleteComment&#x27;,</pre></li>
+    <li id="L98"><pre>                        target: { slide: index },</pre></li>
+    <li id="L99"><pre>                        authorId: item.authorId,</pre></li>
+    <li id="L100"><pre>                        idx: item.idx,</pre></li>
+    <li id="L101"><pre>                      })</pre></li>
+    <li id="L102"><pre>                    }</pre></li>
+    <li id="L103"><pre>                  &gt;</pre></li>
+    <li id="L104"><pre>                    &lt;Trash2 size={14} /&gt;</pre></li>
+    <li id="L105"><pre>                  &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L106"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L107"><pre>                {item.date &amp;&amp; (</pre></li>
+    <li id="L108"><pre>                  &lt;time dateTime={item.date}&gt;</pre></li>
+    <li id="L109"><pre>                    {Number.isNaN(Date.parse(item.date))</pre></li>
+    <li id="L110"><pre>                      ? item.date</pre></li>
+    <li id="L111">
+      <pre>                      : new Date(item.date).toLocaleString(&#x27;zh-CN&#x27;, {</pre>
+    </li>
+    <li id="L112"><pre>                          year: &#x27;numeric&#x27;,</pre></li>
+    <li id="L113"><pre>                          month: &#x27;2-digit&#x27;,</pre></li>
+    <li id="L114"><pre>                          day: &#x27;2-digit&#x27;,</pre></li>
+    <li id="L115"><pre>                          hour: &#x27;2-digit&#x27;,</pre></li>
+    <li id="L116"><pre>                          minute: &#x27;2-digit&#x27;,</pre></li>
+    <li id="L117"><pre>                          hour12: false,</pre></li>
+    <li id="L118"><pre>                        })}</pre></li>
+    <li id="L119"><pre>                  &lt;/time&gt;</pre></li>
+    <li id="L120"><pre>                )}</pre></li>
+    <li id="L121"><pre>                &lt;p&gt;{item.text}&lt;/p&gt;</pre></li>
+    <li id="L122"><pre>              &lt;/article&gt;</pre></li>
+    <li id="L123"><pre>            ))</pre></li>
+    <li id="L124"><pre>          ) : (</pre></li>
+    <li id="L125">
+      <pre>            &lt;ToolbarMenuNote&gt;本页还没有批注。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L126"><pre>          )}</pre></li>
+    <li id="L127"><pre>        &lt;/section&gt;</pre></li>
+    <li id="L128"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L129">
+      <pre>      &lt;div className=&quot;mimir-pptx-comment-controls__actions&quot;&gt;</pre>
+    </li>
+    <li id="L130">
+      <pre>        {error &amp;&amp; &lt;ToolbarNotice&gt;{error}&lt;/ToolbarNotice&gt;}</pre>
+    </li>
+    <li id="L131"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L132"><pre>          label=&quot;添加本页批注&quot;</pre></li>
+    <li id="L133"><pre>          primary</pre></li>
+    <li id="L134"><pre>          disabled={!comment.trim() || busy || disabled}</pre></li>
+    <li id="L135">
+      <pre>
+          disabledReason={busy ? &#x27;正在更新批注&#x27; : &#x27;请输入批注内容&#x27;}</pre>
+    </li>
+    <li id="L136"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L137"><pre>            void run(</pre></li>
+    <li id="L138">
+      <pre>
+              { op: &#x27;addComment&#x27;, target: { slide: index }, text: comment, author: &#x27;用户&#x27; },</pre>
+    </li>
+    <li id="L139"><pre>              true,</pre></li>
+    <li id="L140"><pre>            )</pre></li>
+    <li id="L141"><pre>          }</pre></li>
+    <li id="L142"><pre>        &gt;</pre></li>
+    <li id="L143"><pre>          &lt;MessageSquarePlus size={14} /&gt;</pre></li>
+    <li id="L144"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L145"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L146"><pre>          label=&quot;清空批注草稿&quot;</pre></li>
+    <li id="L147"><pre>          disabled={!comment || busy || disabled}</pre></li>
+    <li id="L148"><pre>          disabledReason=&quot;没有批注草稿&quot;</pre></li>
+    <li id="L149"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L150"><pre>            setComment(&#x27;&#x27;)</pre></li>
+    <li id="L151"><pre>            setError(&#x27;&#x27;)</pre></li>
+    <li id="L152"><pre>          }}</pre></li>
+    <li id="L153"><pre>        &gt;</pre></li>
+    <li id="L154"><pre>          &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L155"><pre>          清空草稿</pre></li>
+    <li id="L156"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L157"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L158"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L159"><pre>  )</pre></li>
+    <li id="L160"><pre>}</pre></li>
+  </ol>
+</html>

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxSelectionCanvas.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxSelectionCanvas.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 11233c24219ad3a351f92297d4376aadca5078291eb6f6ba33826259ca54b35f
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useRef, useState, type RefObject } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import &#x27;./pptx-selection-canvas.css&#x27;</pre></li>
+    <li id="L3"><pre>type Rect = { x: number; y: number; width: number; height: number }</pre></li>
+    <li id="L4">
+      <pre>/** Blank-canvas marquee; the SVG remains the only hit-test source. */</pre>
+    </li>
+    <li id="L5"><pre>export function PptxSelectionCanvas({</pre></li>
+    <li id="L6"><pre>  host,</pre></li>
+    <li id="L7"><pre>  binding,</pre></li>
+    <li id="L8"><pre>  ids,</pre></li>
+    <li id="L9"><pre>  selectedIds,</pre></li>
+    <li id="L10"><pre>  disabled,</pre></li>
+    <li id="L11"><pre>  onSelect,</pre></li>
+    <li id="L12"><pre>}: {</pre></li>
+    <li id="L13"><pre>  host: RefObject&lt;HTMLDivElement | null&gt;</pre></li>
+    <li id="L14"><pre>  binding: string</pre></li>
+    <li id="L15"><pre>  ids: readonly string[]</pre></li>
+    <li id="L16"><pre>  selectedIds: readonly string[]</pre></li>
+    <li id="L17"><pre>  disabled: boolean</pre></li>
+    <li id="L18"><pre>  onSelect: (ids: string[]) =&gt; void</pre></li>
+    <li id="L19"><pre>}) {</pre></li>
+    <li id="L20"><pre>  const [rect, setRect] = useState&lt;Rect | null&gt;(null)</pre></li>
+    <li id="L21"><pre>  const current = useRef({ ids, selectedIds, onSelect })</pre></li>
+    <li id="L22"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L23"><pre>    current.current = { ids, selectedIds, onSelect }</pre></li>
+    <li id="L24"><pre>  })</pre></li>
+    <li id="L25"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L26"><pre>    const node = host.current</pre></li>
+    <li id="L27"><pre>    if (!node || disabled || !binding) return</pre></li>
+    <li id="L28"><pre>    let drag: {</pre></li>
+    <li id="L29"><pre>      pointerId: number</pre></li>
+    <li id="L30"><pre>      x: number</pre></li>
+    <li id="L31"><pre>      y: number</pre></li>
+    <li id="L32"><pre>      additive: boolean</pre></li>
+    <li id="L33"><pre>      before: string[]</pre></li>
+    <li id="L34"><pre>      moved: boolean</pre></li>
+    <li id="L35"><pre>    } | null = null</pre></li>
+    <li id="L36"><pre>    let suppressClick = false</pre></li>
+    <li id="L37"><pre>    const clear = () =&gt; {</pre></li>
+    <li id="L38"><pre>      const previous = drag</pre></li>
+    <li id="L39"><pre>      drag = null</pre></li>
+    <li id="L40">
+      <pre>      if (previous &amp;&amp; node.hasPointerCapture?.(previous.pointerId))</pre>
+    </li>
+    <li id="L41"><pre>        node.releasePointerCapture(previous.pointerId)</pre></li>
+    <li id="L42"><pre>      setRect(null)</pre></li>
+    <li id="L43"><pre>    }</pre></li>
+    <li id="L44"><pre>    const down = (event: PointerEvent) =&gt; {</pre></li>
+    <li id="L45"><pre>      if (event.button !== 0 || drag || !event.isPrimary) return</pre></li>
+    <li id="L46">
+      <pre>      if ((event.target as Element).closest(&#x27;[data-element-id]&#x27;)) return</pre>
+    </li>
+    <li id="L47"><pre>      const box = node.getBoundingClientRect()</pre></li>
+    <li id="L48"><pre>      if (!box.width || !box.height) return</pre></li>
+    <li id="L49"><pre>      drag = {</pre></li>
+    <li id="L50"><pre>        pointerId: event.pointerId,</pre></li>
+    <li id="L51"><pre>        x: event.clientX,</pre></li>
+    <li id="L52"><pre>        y: event.clientY,</pre></li>
+    <li id="L53"><pre>        additive: event.shiftKey || event.ctrlKey || event.metaKey,</pre></li>
+    <li id="L54"><pre>        before: [...current.current.selectedIds],</pre></li>
+    <li id="L55"><pre>        moved: false,</pre></li>
+    <li id="L56"><pre>      }</pre></li>
+    <li id="L57"><pre>      suppressClick = false</pre></li>
+    <li id="L58"><pre>      node.focus({ preventScroll: true })</pre></li>
+    <li id="L59"><pre>      node.setPointerCapture?.(event.pointerId)</pre></li>
+    <li id="L60"><pre>      event.preventDefault()</pre></li>
+    <li id="L61"><pre>    }</pre></li>
+    <li id="L62"><pre>    const move = (event: PointerEvent) =&gt; {</pre></li>
+    <li id="L63"><pre>      if (!drag || event.pointerId !== drag.pointerId) return</pre></li>
+    <li id="L64"><pre>      const box = node.getBoundingClientRect()</pre></li>
+    <li id="L65">
+      <pre>      const left = Math.max(box.left, Math.min(drag.x, event.clientX)),</pre>
+    </li>
+    <li id="L66"><pre>        top = Math.max(box.top, Math.min(drag.y, event.clientY))</pre></li>
+    <li id="L67">
+      <pre>      const right = Math.min(box.right, Math.max(drag.x, event.clientX)),</pre>
+    </li>
+    <li id="L68">
+      <pre>        bottom = Math.min(box.bottom, Math.max(drag.y, event.clientY))</pre>
+    </li>
+    <li id="L69">
+      <pre>
+      if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) &lt; 4 &amp;&amp; !drag.moved) return</pre>
+    </li>
+    <li id="L70"><pre>      drag.moved = true</pre></li>
+    <li id="L71"><pre>      setRect({</pre></li>
+    <li id="L72"><pre>        x: left - box.left,</pre></li>
+    <li id="L73"><pre>        y: top - box.top,</pre></li>
+    <li id="L74"><pre>        width: Math.max(0, right - left),</pre></li>
+    <li id="L75"><pre>        height: Math.max(0, bottom - top),</pre></li>
+    <li id="L76"><pre>      })</pre></li>
+    <li id="L77"><pre>      event.preventDefault()</pre></li>
+    <li id="L78"><pre>    }</pre></li>
+    <li id="L79"><pre>    const up = (event: PointerEvent) =&gt; {</pre></li>
+    <li id="L80"><pre>      if (!drag || event.pointerId !== drag.pointerId) return</pre></li>
+    <li id="L81"><pre>      if (drag.moved) {</pre></li>
+    <li id="L82"><pre>        const left = Math.min(drag.x, event.clientX),</pre></li>
+    <li id="L83"><pre>          right = Math.max(drag.x, event.clientX)</pre></li>
+    <li id="L84"><pre>        const top = Math.min(drag.y, event.clientY),</pre></li>
+    <li id="L85"><pre>          bottom = Math.max(drag.y, event.clientY)</pre></li>
+    <li id="L86"><pre>        const wanted = new Set(current.current.ids)</pre></li>
+    <li id="L87">
+      <pre>        const hit = [...node.querySelectorAll(&#x27;[data-element-id]&#x27;)]</pre>
+    </li>
+    <li id="L88">
+      <pre>
+          .filter((item) =&gt; wanted.has(item.getAttribute(&#x27;data-element-id&#x27;) ?? &#x27;&#x27;))</pre>
+    </li>
+    <li id="L89"><pre>          .filter((item) =&gt; {</pre></li>
+    <li id="L90"><pre>            const box = item.getBoundingClientRect()</pre></li>
+    <li id="L91"><pre>            return (</pre></li>
+    <li id="L92"><pre>              box.width &gt; 0 &amp;&amp;</pre></li>
+    <li id="L93"><pre>              box.height &gt; 0 &amp;&amp;</pre></li>
+    <li id="L94"><pre>              box.right &gt; left &amp;&amp;</pre></li>
+    <li id="L95"><pre>              box.left &lt; right &amp;&amp;</pre></li>
+    <li id="L96"><pre>              box.bottom &gt; top &amp;&amp;</pre></li>
+    <li id="L97"><pre>              box.top &lt; bottom</pre></li>
+    <li id="L98"><pre>            )</pre></li>
+    <li id="L99"><pre>          })</pre></li>
+    <li id="L100">
+      <pre>          .map((item) =&gt; item.getAttribute(&#x27;data-element-id&#x27;)!)</pre>
+    </li>
+    <li id="L101">
+      <pre>
+        current.current.onSelect([...new Set([...(drag.additive ? drag.before : []), ...hit])])</pre>
+    </li>
+    <li id="L102"><pre>        suppressClick = true</pre></li>
+    <li id="L103"><pre>      }</pre></li>
+    <li id="L104"><pre>      clear()</pre></li>
+    <li id="L105"><pre>    }</pre></li>
+    <li id="L106"><pre>    const click = (event: MouseEvent) =&gt; {</pre></li>
+    <li id="L107"><pre>      if (!suppressClick) return</pre></li>
+    <li id="L108"><pre>      suppressClick = false</pre></li>
+    <li id="L109"><pre>      event.preventDefault()</pre></li>
+    <li id="L110"><pre>      event.stopImmediatePropagation()</pre></li>
+    <li id="L111"><pre>    }</pre></li>
+    <li id="L112"><pre>    const cancel = (event: PointerEvent) =&gt; {</pre></li>
+    <li id="L113"><pre>      if (drag?.pointerId === event.pointerId) clear()</pre></li>
+    <li id="L114"><pre>    }</pre></li>
+    <li id="L115"><pre>    const key = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L116"><pre>      if (event.key === &#x27;Escape&#x27; &amp;&amp; drag) {</pre></li>
+    <li id="L117"><pre>        event.preventDefault()</pre></li>
+    <li id="L118"><pre>        event.stopPropagation()</pre></li>
+    <li id="L119"><pre>        suppressClick = drag.moved</pre></li>
+    <li id="L120"><pre>        clear()</pre></li>
+    <li id="L121"><pre>      }</pre></li>
+    <li id="L122"><pre>    }</pre></li>
+    <li id="L123"><pre>    node.addEventListener(&#x27;pointerdown&#x27;, down)</pre></li>
+    <li id="L124"><pre>    node.addEventListener(&#x27;click&#x27;, click, true)</pre></li>
+    <li id="L125"><pre>    node.addEventListener(&#x27;lostpointercapture&#x27;, cancel)</pre></li>
+    <li id="L126"><pre>    window.addEventListener(&#x27;pointermove&#x27;, move)</pre></li>
+    <li id="L127"><pre>    window.addEventListener(&#x27;pointerup&#x27;, up)</pre></li>
+    <li id="L128"><pre>    window.addEventListener(&#x27;pointercancel&#x27;, cancel)</pre></li>
+    <li id="L129"><pre>    window.addEventListener(&#x27;keydown&#x27;, key, true)</pre></li>
+    <li id="L130"><pre>    window.addEventListener(&#x27;blur&#x27;, clear)</pre></li>
+    <li id="L131"><pre>    return () =&gt; {</pre></li>
+    <li id="L132"><pre>      clear()</pre></li>
+    <li id="L133"><pre>      node.removeEventListener(&#x27;pointerdown&#x27;, down)</pre></li>
+    <li id="L134"><pre>      node.removeEventListener(&#x27;click&#x27;, click, true)</pre></li>
+    <li id="L135">
+      <pre>      node.removeEventListener(&#x27;lostpointercapture&#x27;, cancel)</pre>
+    </li>
+    <li id="L136"><pre>      window.removeEventListener(&#x27;pointermove&#x27;, move)</pre></li>
+    <li id="L137"><pre>      window.removeEventListener(&#x27;pointerup&#x27;, up)</pre></li>
+    <li id="L138">
+      <pre>      window.removeEventListener(&#x27;pointercancel&#x27;, cancel)</pre>
+    </li>
+    <li id="L139"><pre>      window.removeEventListener(&#x27;keydown&#x27;, key, true)</pre></li>
+    <li id="L140"><pre>      window.removeEventListener(&#x27;blur&#x27;, clear)</pre></li>
+    <li id="L141"><pre>    }</pre></li>
+    <li id="L142"><pre>  }, [host, binding, disabled])</pre></li>
+    <li id="L143"><pre>  return rect ? (</pre></li>
+    <li id="L144"><pre>    &lt;div</pre></li>
+    <li id="L145"><pre>      className=&quot;mimir-pptx-marquee&quot;</pre></li>
+    <li id="L146"><pre>      aria-hidden=&quot;true&quot;</pre></li>
+    <li id="L147">
+      <pre>      style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height }}</pre>
+    </li>
+    <li id="L148"><pre>    /&gt;</pre></li>
+    <li id="L149"><pre>  ) : null</pre></li>
+    <li id="L150"><pre>}</pre></li>
+  </ol>
+</html>

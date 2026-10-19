@@ -23,22 +23,36 @@ export function PptxControlPanel({
   busy,
   children,
   columns = 1,
+  actions,
 }: {
   busy: boolean
   children: ReactNode
   columns?: 1 | 2
+  actions?: ReactNode
 }) {
   return (
     <fieldset
-      className="mimir-pptx-control-panel"
+      className={`mimir-pptx-control-panel${actions ? ' mimir-pptx-control-panel--actions' : ''}`}
       disabled={busy}
       aria-busy={busy}
       style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
     >
-      <ToolbarPropertyForm columns={columns}>
-        {busy && <ToolbarMenuNote>正在应用修改…</ToolbarMenuNote>}
-        {children}
-      </ToolbarPropertyForm>
+      {actions ? (
+        <>
+          <div className="mimir-pptx-control-panel__body">
+            <ToolbarPropertyForm columns={columns}>{children}</ToolbarPropertyForm>
+          </div>
+          <div className="mimir-pptx-control-panel__footer">
+            {busy && <p role="status">正在应用修改…</p>}
+            {actions}
+          </div>
+        </>
+      ) : (
+        <ToolbarPropertyForm columns={columns}>
+          {busy && <ToolbarMenuNote>正在应用修改…</ToolbarMenuNote>}
+          {children}
+        </ToolbarPropertyForm>
+      )}
     </fieldset>
   )
 }

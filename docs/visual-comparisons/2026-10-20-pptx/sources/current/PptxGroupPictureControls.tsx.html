@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxGroupPictureControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxGroupPictureControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 52147b4ff0271a0a04b81d934b570f0ebc1303b08942c1b4131259e2133c9d61
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useMemo, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import { Check, Crop, ImagePlus, RotateCcw } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  PPTX_PICTURE_ACCEPT,</pre></li>
+    <li id="L5"><pre>  PPTX_PICTURE_FORMATS,</pre></li>
+    <li id="L6"><pre>  type PptxManualPicture,</pre></li>
+    <li id="L7"><pre>  type PptxManualUpload,</pre></li>
+    <li id="L8"><pre>} from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L9">
+      <pre>import { usePptxPicturePreview } from &#x27;./use-pptx-picture-preview.js&#x27;</pre>
+    </li>
+    <li id="L10">
+      <pre>
+import type { PictureElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L11">
+      <pre>
+import { removeBackground } from &#x27;../../vendor/apps/slides/src/renderer/cutout.js&#x27;</pre>
+    </li>
+    <li id="L12">
+      <pre>
+import { pptxGroupPicturePreviewFrame } from &#x27;./pptx-group-picture-preview.js&#x27;</pre>
+    </li>
+    <li id="L13"><pre>import {</pre></li>
+    <li id="L14"><pre>  ToolbarButton,</pre></li>
+    <li id="L15"><pre>  ToolbarFileButton,</pre></li>
+    <li id="L16"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L17"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L18"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L19"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L20"><pre>  ToolbarToggleGroup,</pre></li>
+    <li id="L21"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L22"><pre>import &#x27;./pptx-group-picture-controls.css&#x27;</pre></li>
+    <li id="L23"><pre></pre></li>
+    <li id="L24"><pre>type Crop = { l: number; t: number; r: number; b: number }</pre></li>
+    <li id="L25"><pre>const edges = [</pre></li>
+    <li id="L26"><pre>  [&#x27;l&#x27;, &#x27;左&#x27;],</pre></li>
+    <li id="L27"><pre>  [&#x27;r&#x27;, &#x27;右&#x27;],</pre></li>
+    <li id="L28"><pre>  [&#x27;t&#x27;, &#x27;上&#x27;],</pre></li>
+    <li id="L29"><pre>  [&#x27;b&#x27;, &#x27;下&#x27;],</pre></li>
+    <li id="L30"><pre>] as const</pre></li>
+    <li id="L31"><pre>const emptyCrop: Crop = { l: 0, r: 0, t: 0, b: 0 }</pre></li>
+    <li id="L32"><pre>export interface PptxGroupPictureControlsProps {</pre></li>
+    <li id="L33"><pre>  element: PictureElement</pre></li>
+    <li id="L34"><pre>  groupName: string</pre></li>
+    <li id="L35"><pre>  target: { slide: number; group: string; elementId: string }</pre></li>
+    <li id="L36"><pre>  source: string</pre></li>
+    <li id="L37"><pre>  disabled?: boolean</pre></li>
+    <li id="L38"><pre>  canUpload?: boolean</pre></li>
+    <li id="L39"><pre>  onStartCrop?: () =&gt; void</pre></li>
+    <li id="L40"><pre>  cropUnavailableReason?: string</pre></li>
+    <li id="L41">
+      <pre>
+  apply: (input: PptxManualPicture, signal: AbortSignal) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L42">
+      <pre>
+  upload: (input: PptxManualUpload, file: File, signal: AbortSignal) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L43"><pre>}</pre></li>
+    <li id="L44">
+      <pre>
+/** Parent keys this draft to document, slide, durable selection and published version. */</pre>
+    </li>
+    <li id="L45"><pre>export function PptxGroupPictureControls({</pre></li>
+    <li id="L46"><pre>  element,</pre></li>
+    <li id="L47"><pre>  groupName,</pre></li>
+    <li id="L48"><pre>  target,</pre></li>
+    <li id="L49"><pre>  source,</pre></li>
+    <li id="L50"><pre>  disabled = false,</pre></li>
+    <li id="L51"><pre>  canUpload = true,</pre></li>
+    <li id="L52"><pre>  onStartCrop,</pre></li>
+    <li id="L53"><pre>  cropUnavailableReason,</pre></li>
+    <li id="L54"><pre>  apply,</pre></li>
+    <li id="L55"><pre>  upload,</pre></li>
+    <li id="L56"><pre>}: PptxGroupPictureControlsProps) {</pre></li>
+    <li id="L57"><pre>  const [tab, setTab] = useState(&#x27;appearance&#x27;)</pre></li>
+    <li id="L58"><pre>  const currentOpacity = (element.opacity ?? 1) * 100</pre></li>
+    <li id="L59"><pre>  const currentCrop = element.srcRect ?? emptyCrop</pre></li>
+    <li id="L60"><pre>  const [opacity, setOpacity] = useState(currentOpacity)</pre></li>
+    <li id="L61"><pre>  const [crop, setCrop] = useState&lt;Crop&gt;(</pre></li>
+    <li id="L62">
+      <pre>
+    () =&gt; Object.fromEntries(edges.map(([key]) =&gt; [key, currentCrop[key] * 100])) as Crop,</pre>
+    </li>
+    <li id="L63"><pre>  )</pre></li>
+    <li id="L64"><pre>  const [cropTouched, setCropTouched] = useState(false)</pre></li>
+    <li id="L65"><pre>  const picturePreview = usePptxPicturePreview()</pre></li>
+    <li id="L66"><pre>  const file = picturePreview.selected?.file ?? null</pre></li>
+    <li id="L67"><pre>  const fileSource = picturePreview.selected?.url ?? &#x27;&#x27;</pre></li>
+    <li id="L68"><pre>  const [decoded, setDecoded] = useState&lt;{</pre></li>
+    <li id="L69"><pre>    source: string</pre></li>
+    <li id="L70"><pre>    data?: ImageData</pre></li>
+    <li id="L71"><pre>    error?: string</pre></li>
+    <li id="L72"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L73">
+      <pre>  const original = decoded?.source === source ? (decoded.data ?? null) : null</pre>
+    </li>
+    <li id="L74">
+      <pre>
+  const decodeError = decoded?.source === source ? (decoded.error ?? &#x27;&#x27;) : &#x27;&#x27;</pre>
+    </li>
+    <li id="L75"><pre>  const [tolerance, setTolerance] = useState(20)</pre></li>
+    <li id="L76">
+      <pre>  const [previewMode, setPreviewMode] = useState(&#x27;result&#x27;)</pre>
+    </li>
+    <li id="L77"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L78"><pre>  const [numericDraft, setNumericDraft] = useState(false)</pre></li>
+    <li id="L79"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L80"><pre>  const [failedSource, setFailedSource] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L81"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L82"><pre>  useEffect(() =&gt; () =&gt; pending.current?.abort(), [])</pre></li>
+    <li id="L83"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L84"><pre>    if (tab !== &#x27;cutout&#x27; || !source) return</pre></li>
+    <li id="L85"><pre>    let cancelled = false</pre></li>
+    <li id="L86"><pre>    const image = new Image()</pre></li>
+    <li id="L87"><pre>    const load = () =&gt; {</pre></li>
+    <li id="L88"><pre>      if (cancelled) return</pre></li>
+    <li id="L89"><pre>      try {</pre></li>
+    <li id="L90"><pre>        if (!image.naturalWidth || !image.naturalHeight)</pre></li>
+    <li id="L91"><pre>          throw new Error(&#x27;原图尺寸无效，请重新选择图片&#x27;)</pre></li>
+    <li id="L92">
+      <pre>        if (image.naturalWidth * image.naturalHeight &gt; 12_000_000)</pre>
+    </li>
+    <li id="L93">
+      <pre>          throw new Error(&#x27;图片超过 1200 万像素，请先缩小后重试&#x27;)</pre>
+    </li>
+    <li id="L94"><pre>        const canvas = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L95"><pre>        canvas.width = image.naturalWidth</pre></li>
+    <li id="L96"><pre>        canvas.height = image.naturalHeight</pre></li>
+    <li id="L97">
+      <pre>
+        const context = canvas.getContext(&#x27;2d&#x27;, { willReadFrequently: true })</pre>
+    </li>
+    <li id="L98">
+      <pre>        if (!context) throw new Error(&#x27;无法准备图片预览，请重新打开面板&#x27;)</pre>
+    </li>
+    <li id="L99"><pre>        context.drawImage(image, 0, 0)</pre></li>
+    <li id="L100">
+      <pre>
+        setDecoded({ source, data: context.getImageData(0, 0, canvas.width, canvas.height) })</pre>
+    </li>
+    <li id="L101"><pre>      } catch (cause) {</pre></li>
+    <li id="L102"><pre>        setDecoded({</pre></li>
+    <li id="L103"><pre>          source,</pre></li>
+    <li id="L104">
+      <pre>
+          error: cause instanceof Error ? cause.message : &#x27;无法读取原图，请重新选择图片&#x27;,</pre>
+    </li>
+    <li id="L105"><pre>        })</pre></li>
+    <li id="L106"><pre>      }</pre></li>
+    <li id="L107"><pre>    }</pre></li>
+    <li id="L108"><pre>    const failed = () =&gt; {</pre></li>
+    <li id="L109">
+      <pre>
+      if (!cancelled) setDecoded({ source, error: &#x27;无法解码原图，请重新选择图片&#x27; })</pre>
+    </li>
+    <li id="L110"><pre>    }</pre></li>
+    <li id="L111"><pre>    image.addEventListener(&#x27;load&#x27;, load, { once: true })</pre></li>
+    <li id="L112">
+      <pre>    image.addEventListener(&#x27;error&#x27;, failed, { once: true })</pre>
+    </li>
+    <li id="L113"><pre>    image.src = source</pre></li>
+    <li id="L114"><pre>    return () =&gt; {</pre></li>
+    <li id="L115"><pre>      cancelled = true</pre></li>
+    <li id="L116"><pre>      image.removeEventListener(&#x27;load&#x27;, load)</pre></li>
+    <li id="L117"><pre>      image.removeEventListener(&#x27;error&#x27;, failed)</pre></li>
+    <li id="L118"><pre>    }</pre></li>
+    <li id="L119"><pre>  }, [source, tab])</pre></li>
+    <li id="L120"><pre>  const cutout = useMemo(() =&gt; {</pre></li>
+    <li id="L121"><pre>    if (!original) return &#x27;&#x27;</pre></li>
+    <li id="L122"><pre>    try {</pre></li>
+    <li id="L123"><pre>      const result = removeBackground(original, tolerance)</pre></li>
+    <li id="L124"><pre>      const canvas = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L125"><pre>      canvas.width = original.width</pre></li>
+    <li id="L126"><pre>      canvas.height = original.height</pre></li>
+    <li id="L127"><pre>      const context = canvas.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L128"><pre>      if (!context) return &#x27;&#x27;</pre></li>
+    <li id="L129">
+      <pre>
+      context.putImageData(new ImageData(result.data, original.width, original.height), 0, 0)</pre>
+    </li>
+    <li id="L130"><pre>      return canvas.toDataURL(&#x27;image/png&#x27;)</pre></li>
+    <li id="L131"><pre>    } catch {</pre></li>
+    <li id="L132"><pre>      return &#x27;&#x27;</pre></li>
+    <li id="L133"><pre>    }</pre></li>
+    <li id="L134"><pre>  }, [original, tolerance])</pre></li>
+    <li id="L135"><pre>  const validCrop =</pre></li>
+    <li id="L136">
+      <pre>
+    edges.every(([key]) =&gt; Number.isFinite(crop[key]) &amp;&amp; crop[key] &gt;= 0 &amp;&amp; crop[key] &lt; 100) &amp;&amp;</pre>
+    </li>
+    <li id="L137"><pre>    crop.l + crop.r &lt; 100 &amp;&amp;</pre></li>
+    <li id="L138"><pre>    crop.t + crop.b &lt; 100</pre></li>
+    <li id="L139">
+      <pre>
+  const cropChanged = cropTouched &amp;&amp; edges.some(([key]) =&gt; crop[key] !== currentCrop[key] * 100)</pre>
+    </li>
+    <li id="L140">
+      <pre>  const appearanceDirty = opacity !== currentOpacity || cropChanged</pre>
+    </li>
+    <li id="L141"><pre>  const locked = disabled || busy</pre></li>
+    <li id="L142"><pre>  const cancel = () =&gt; {</pre></li>
+    <li id="L143"><pre>    pending.current?.abort()</pre></li>
+    <li id="L144"><pre>    pending.current = null</pre></li>
+    <li id="L145"><pre>    picturePreview.cancel()</pre></li>
+    <li id="L146"><pre>    setBusy(false)</pre></li>
+    <li id="L147"><pre>    setNumericDraft(false)</pre></li>
+    <li id="L148"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L149"><pre>  }</pre></li>
+    <li id="L150"><pre>  const reset = () =&gt; {</pre></li>
+    <li id="L151"><pre>    cancel()</pre></li>
+    <li id="L152"><pre>    setOpacity(currentOpacity)</pre></li>
+    <li id="L153">
+      <pre>
+    setCrop(Object.fromEntries(edges.map(([key]) =&gt; [key, currentCrop[key] * 100])) as Crop)</pre>
+    </li>
+    <li id="L154"><pre>    setCropTouched(false)</pre></li>
+    <li id="L155"><pre>    picturePreview.clear()</pre></li>
+    <li id="L156"><pre>    setTolerance(20)</pre></li>
+    <li id="L157"><pre>  }</pre></li>
+    <li id="L158"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L159"><pre>    if (</pre></li>
+    <li id="L160"><pre>      locked ||</pre></li>
+    <li id="L161"><pre>      picturePreview.preparing ||</pre></li>
+    <li id="L162"><pre>      pending.current ||</pre></li>
+    <li id="L163">
+      <pre>
+      (tab === &#x27;appearance&#x27; &amp;&amp; (!appearanceDirty || !validCrop)) ||</pre>
+    </li>
+    <li id="L164"><pre>      (tab === &#x27;replace&#x27; &amp;&amp; !file) ||</pre></li>
+    <li id="L165"><pre>      (tab === &#x27;cutout&#x27; &amp;&amp; !cutout)</pre></li>
+    <li id="L166"><pre>    )</pre></li>
+    <li id="L167"><pre>      return</pre></li>
+    <li id="L168"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L169"><pre>    pending.current = controller</pre></li>
+    <li id="L170"><pre>    setBusy(true)</pre></li>
+    <li id="L171"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L172"><pre>    try {</pre></li>
+    <li id="L173"><pre>      let ok = false</pre></li>
+    <li id="L174"><pre>      if (tab === &#x27;appearance&#x27;) {</pre></li>
+    <li id="L175"><pre>        const input: PptxManualPicture = { ...target }</pre></li>
+    <li id="L176">
+      <pre>        if (opacity !== currentOpacity) input.opacity = opacity / 100</pre>
+    </li>
+    <li id="L177"><pre>        if (cropChanged)</pre></li>
+    <li id="L178">
+      <pre>          input.srcRect = edges.every(([key]) =&gt; crop[key] === 0)</pre>
+    </li>
+    <li id="L179"><pre>            ? null</pre></li>
+    <li id="L180">
+      <pre>
+            : (Object.fromEntries(edges.map(([key]) =&gt; [key, crop[key] / 100])) as Crop)</pre>
+    </li>
+    <li id="L181"><pre>        ok = await apply(input, controller.signal)</pre></li>
+    <li id="L182"><pre>      } else {</pre></li>
+    <li id="L183"><pre>        const selected =</pre></li>
+    <li id="L184"><pre>          tab === &#x27;replace&#x27;</pre></li>
+    <li id="L185"><pre>            ? file!</pre></li>
+    <li id="L186"><pre>            : new File(</pre></li>
+    <li id="L187">
+      <pre>
+                [Uint8Array.from(atob(cutout.split(&#x27;,&#x27;)[1]!), (char) =&gt; char.charCodeAt(0))],</pre>
+    </li>
+    <li id="L188"><pre>                &#x27;cutout.png&#x27;,</pre></li>
+    <li id="L189"><pre>                { type: &#x27;image/png&#x27; },</pre></li>
+    <li id="L190"><pre>              )</pre></li>
+    <li id="L191"><pre>        ok = await upload(</pre></li>
+    <li id="L192">
+      <pre>
+          { kind: &#x27;picture&#x27;, ...target, widthPt: 72, keepCrop: tab === &#x27;cutout&#x27; },</pre>
+    </li>
+    <li id="L193"><pre>          selected,</pre></li>
+    <li id="L194"><pre>          controller.signal,</pre></li>
+    <li id="L195"><pre>        )</pre></li>
+    <li id="L196"><pre>      }</pre></li>
+    <li id="L197">
+      <pre>
+      if (!controller.signal.aborted &amp;&amp; !ok) setError(&#x27;图片未应用，已保留草稿，请重试&#x27;)</pre>
+    </li>
+    <li id="L198"><pre>    } catch (cause) {</pre></li>
+    <li id="L199"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L200">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;图片未应用，已保留草稿，请重试&#x27;)</pre>
+    </li>
+    <li id="L201"><pre>    } finally {</pre></li>
+    <li id="L202"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L203"><pre>        pending.current = null</pre></li>
+    <li id="L204"><pre>        setBusy(false)</pre></li>
+    <li id="L205"><pre>      }</pre></li>
+    <li id="L206"><pre>    }</pre></li>
+    <li id="L207"><pre>  }</pre></li>
+    <li id="L208"><pre>  const visibleSource =</pre></li>
+    <li id="L209"><pre>    tab === &#x27;replace&#x27;</pre></li>
+    <li id="L210"><pre>      ? fileSource || source</pre></li>
+    <li id="L211">
+      <pre>      : tab === &#x27;cutout&#x27; &amp;&amp; previewMode === &#x27;result&#x27;</pre>
+    </li>
+    <li id="L212"><pre>        ? cutout || source</pre></li>
+    <li id="L213"><pre>        : source</pre></li>
+    <li id="L214">
+      <pre>  const previewFailed = !!visibleSource &amp;&amp; failedSource === visibleSource</pre>
+    </li>
+    <li id="L215"><pre>  const cutoutError =</pre></li>
+    <li id="L216">
+      <pre>
+    decodeError || (original &amp;&amp; !cutout ? &#x27;无法生成去背景预览，请重新打开面板后重试&#x27; : &#x27;&#x27;)</pre>
+    </li>
+    <li id="L217"><pre>  const applyLabel =</pre></li>
+    <li id="L218">
+      <pre>
+    tab === &#x27;appearance&#x27; ? &#x27;应用修改&#x27; : tab === &#x27;replace&#x27; ? &#x27;替换图片&#x27; : &#x27;应用去背景&#x27;</pre>
+    </li>
+    <li id="L219"><pre>  const canApply =</pre></li>
+    <li id="L220"><pre>    tab === &#x27;appearance&#x27;</pre></li>
+    <li id="L221"><pre>      ? appearanceDirty &amp;&amp; validCrop</pre></li>
+    <li id="L222"><pre>      : tab === &#x27;replace&#x27;</pre></li>
+    <li id="L223"><pre>        ? !!file &amp;&amp; !picturePreview.preparing</pre></li>
+    <li id="L224"><pre>        : !!cutout</pre></li>
+    <li id="L225"><pre>  const previewCrop =</pre></li>
+    <li id="L226"><pre>    tab === &#x27;appearance&#x27;</pre></li>
+    <li id="L227"><pre>      ? crop</pre></li>
+    <li id="L228"><pre>      : tab === &#x27;replace&#x27;</pre></li>
+    <li id="L229"><pre>        ? emptyCrop</pre></li>
+    <li id="L230">
+      <pre>
+        : (Object.fromEntries(edges.map(([key]) =&gt; [key, currentCrop[key] * 100])) as Crop)</pre>
+    </li>
+    <li id="L231"><pre>  return (</pre></li>
+    <li id="L232"><pre>    &lt;section</pre></li>
+    <li id="L233"><pre>      className=&quot;mimir-pptx-group-picture&quot;</pre></li>
+    <li id="L234"><pre>      aria-label=&quot;组合图片编辑&quot;</pre></li>
+    <li id="L235"><pre>      aria-busy={busy}</pre></li>
+    <li id="L236"><pre>      onInputCapture={(event) =&gt; {</pre></li>
+    <li id="L237">
+      <pre>
+        if (event.target instanceof HTMLInputElement &amp;&amp; event.target.closest(&#x27;.me-input--num&#x27;))</pre>
+    </li>
+    <li id="L238"><pre>          setNumericDraft(true)</pre></li>
+    <li id="L239"><pre>      }}</pre></li>
+    <li id="L240"><pre>      onBlurCapture={(event) =&gt; {</pre></li>
+    <li id="L241">
+      <pre>
+        if (event.target instanceof HTMLInputElement &amp;&amp; event.target.closest(&#x27;.me-input--num&#x27;))</pre>
+    </li>
+    <li id="L242"><pre>          setNumericDraft(false)</pre></li>
+    <li id="L243"><pre>      }}</pre></li>
+    <li id="L244"><pre>    &gt;</pre></li>
+    <li id="L245">
+      <pre>      &lt;div className=&quot;mimir-pptx-group-picture__tabs&quot;&gt;</pre>
+    </li>
+    <li id="L246"><pre>        &lt;ToolbarToggleGroup</pre></li>
+    <li id="L247"><pre>          label=&quot;组合图片工具&quot;</pre></li>
+    <li id="L248"><pre>          value={tab}</pre></li>
+    <li id="L249"><pre>          options={[</pre></li>
+    <li id="L250">
+      <pre>            { value: &#x27;appearance&#x27;, label: &#x27;外观&#x27; },</pre>
+    </li>
+    <li id="L251">
+      <pre>
+            { value: &#x27;replace&#x27;, label: &#x27;替换&#x27;, disabled: !canUpload },</pre>
+    </li>
+    <li id="L252">
+      <pre>
+            { value: &#x27;cutout&#x27;, label: &#x27;去背景&#x27;, disabled: !canUpload },</pre>
+    </li>
+    <li id="L253"><pre>          ]}</pre></li>
+    <li id="L254"><pre>          onChange={(value) =&gt; {</pre></li>
+    <li id="L255"><pre>            cancel()</pre></li>
+    <li id="L256"><pre>            setTab(value)</pre></li>
+    <li id="L257"><pre>          }}</pre></li>
+    <li id="L258"><pre>        /&gt;</pre></li>
+    <li id="L259"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L260">
+      <pre>      &lt;div className=&quot;mimir-pptx-group-picture__body&quot;&gt;</pre>
+    </li>
+    <li id="L261">
+      <pre>        &lt;p className=&quot;mimir-pptx-group-picture__name&quot;&gt;</pre>
+    </li>
+    <li id="L262">
+      <pre>          {groupName || &#x27;组合&#x27;} › {element.name || &#x27;图片&#x27;}</pre>
+    </li>
+    <li id="L263"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L264"><pre>        {!canUpload &amp;&amp; (</pre></li>
+    <li id="L265">
+      <pre>
+          &lt;ToolbarMenuNote&gt;当前未连接图片素材宿主，替换和去背景暂不可用。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L266"><pre>        )}</pre></li>
+    <li id="L267"><pre>        &lt;div</pre></li>
+    <li id="L268"><pre>          className=&quot;mimir-pptx-group-picture__preview&quot;</pre></li>
+    <li id="L269"><pre>          aria-label=&quot;图片预览&quot;</pre></li>
+    <li id="L270">
+      <pre>          data-empty={!visibleSource || previewFailed ? &#x27;&#x27; : undefined}</pre>
+    </li>
+    <li id="L271"><pre>          style={</pre></li>
+    <li id="L272"><pre>            visibleSource &amp;&amp; !previewFailed</pre></li>
+    <li id="L273"><pre>              ? pptxGroupPicturePreviewFrame(</pre></li>
+    <li id="L274"><pre>                  element.transform.offset.cx,</pre></li>
+    <li id="L275"><pre>                  element.transform.offset.cy,</pre></li>
+    <li id="L276"><pre>                )</pre></li>
+    <li id="L277"><pre>              : undefined</pre></li>
+    <li id="L278"><pre>          }</pre></li>
+    <li id="L279"><pre>        &gt;</pre></li>
+    <li id="L280"><pre>          {visibleSource &amp;&amp; !previewFailed ? (</pre></li>
+    <li id="L281"><pre>            &lt;img</pre></li>
+    <li id="L282">
+      <pre>
+              alt={tab === &#x27;cutout&#x27; &amp;&amp; previewMode === &#x27;result&#x27; ? &#x27;去背景结果预览&#x27; : &#x27;组合图片预览&#x27;}</pre>
+    </li>
+    <li id="L283"><pre>              src={visibleSource}</pre></li>
+    <li id="L284"><pre>              onError={() =&gt; {</pre></li>
+    <li id="L285"><pre>                setFailedSource(visibleSource)</pre></li>
+    <li id="L286"><pre>                if (tab === &#x27;replace&#x27; &amp;&amp; file) {</pre></li>
+    <li id="L287"><pre>                  picturePreview.clear()</pre></li>
+    <li id="L288">
+      <pre>                  setError(&#x27;替换图片无法解码，请重新选择图片&#x27;)</pre>
+    </li>
+    <li id="L289"><pre>                }</pre></li>
+    <li id="L290"><pre>              }}</pre></li>
+    <li id="L291"><pre>              style={{</pre></li>
+    <li id="L292">
+      <pre>
+                opacity: (tab === &#x27;appearance&#x27; ? opacity : currentOpacity) / 100,</pre>
+    </li>
+    <li id="L293">
+      <pre>
+                width: `${10000 / Math.max(1, 100 - previewCrop.l - previewCrop.r)}%`,</pre>
+    </li>
+    <li id="L294">
+      <pre>
+                height: `${10000 / Math.max(1, 100 - previewCrop.t - previewCrop.b)}%`,</pre>
+    </li>
+    <li id="L295">
+      <pre>
+                left: `${(-previewCrop.l * 100) / Math.max(1, 100 - previewCrop.l - previewCrop.r)}%`,</pre>
+    </li>
+    <li id="L296">
+      <pre>
+                top: `${(-previewCrop.t * 100) / Math.max(1, 100 - previewCrop.t - previewCrop.b)}%`,</pre>
+    </li>
+    <li id="L297"><pre>              }}</pre></li>
+    <li id="L298"><pre>            /&gt;</pre></li>
+    <li id="L299"><pre>          ) : (</pre></li>
+    <li id="L300"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L301"><pre>              {previewFailed</pre></li>
+    <li id="L302">
+      <pre>                ? &#x27;图片预览无法加载，请重新选择图片或重新打开文档&#x27;</pre>
+    </li>
+    <li id="L303"><pre>                : &#x27;图片源未加载，请重新打开文档后重试&#x27;}</pre></li>
+    <li id="L304"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L305"><pre>          )}</pre></li>
+    <li id="L306"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L307">
+      <pre>
+        &lt;fieldset disabled={locked} className=&quot;mimir-pptx-group-picture__fields&quot;&gt;</pre>
+    </li>
+    <li id="L308"><pre>          {tab === &#x27;appearance&#x27; &amp;&amp; (</pre></li>
+    <li id="L309"><pre>            &lt;&gt;</pre></li>
+    <li id="L310"><pre>              &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L311">
+      <pre>                &lt;ToolbarMenuFields label=&quot;图片外观&quot;&gt;</pre>
+    </li>
+    <li id="L312"><pre>                  &lt;ToolbarNumberField</pre></li>
+    <li id="L313"><pre>                    label=&quot;不透明度（%）&quot;</pre></li>
+    <li id="L314"><pre>                    value={opacity}</pre></li>
+    <li id="L315"><pre>                    min={0}</pre></li>
+    <li id="L316"><pre>                    max={100}</pre></li>
+    <li id="L317"><pre>                    step={1}</pre></li>
+    <li id="L318"><pre>                    disabled={locked}</pre></li>
+    <li id="L319"><pre>                    onCommit={setOpacity}</pre></li>
+    <li id="L320"><pre>                  /&gt;</pre></li>
+    <li id="L321"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L322"><pre>              &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L323"><pre>              &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L324">
+      <pre>                &lt;ToolbarMenuFields label=&quot;四边裁切&quot;&gt;</pre>
+    </li>
+    <li id="L325"><pre>                  {edges.map(([key, label]) =&gt; (</pre></li>
+    <li id="L326"><pre>                    &lt;ToolbarNumberField</pre></li>
+    <li id="L327"><pre>                      key={key}</pre></li>
+    <li id="L328"><pre>                      label={`${label}侧（%）`}</pre></li>
+    <li id="L329"><pre>                      value={crop[key]}</pre></li>
+    <li id="L330"><pre>                      min={0}</pre></li>
+    <li id="L331"><pre>                      max={99.9}</pre></li>
+    <li id="L332"><pre>                      step={0.1}</pre></li>
+    <li id="L333"><pre>                      disabled={locked}</pre></li>
+    <li id="L334"><pre>                      onCommit={(value) =&gt; {</pre></li>
+    <li id="L335">
+      <pre>                        setCrop((old) =&gt; ({ ...old, [key]: value }))</pre>
+    </li>
+    <li id="L336"><pre>                        setCropTouched(true)</pre></li>
+    <li id="L337"><pre>                        setError(&#x27;&#x27;)</pre></li>
+    <li id="L338"><pre>                      }}</pre></li>
+    <li id="L339"><pre>                    /&gt;</pre></li>
+    <li id="L340"><pre>                  ))}</pre></li>
+    <li id="L341"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L342"><pre>              &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L343"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L344"><pre>                label=&quot;重置裁切&quot;</pre></li>
+    <li id="L345"><pre>                onClick={() =&gt; {</pre></li>
+    <li id="L346"><pre>                  setCrop({ ...emptyCrop })</pre></li>
+    <li id="L347"><pre>                  setCropTouched(true)</pre></li>
+    <li id="L348"><pre>                  setError(&#x27;&#x27;)</pre></li>
+    <li id="L349"><pre>                }}</pre></li>
+    <li id="L350"><pre>              &gt;</pre></li>
+    <li id="L351"><pre>                &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L352"><pre>                重置裁切</pre></li>
+    <li id="L353"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L354">
+      <pre>
+              {!validCrop &amp;&amp; &lt;p role=&quot;alert&quot;&gt;对边裁切之和须小于 100%，请保留可见区域&lt;/p&gt;}</pre>
+    </li>
+    <li id="L355"><pre>              {onStartCrop &amp;&amp; (</pre></li>
+    <li id="L356"><pre>                &lt;ToolbarButton</pre></li>
+    <li id="L357"><pre>                  label=&quot;在画布裁切组合图片&quot;</pre></li>
+    <li id="L358">
+      <pre>
+                  disabled={locked || !!cropUnavailableReason || appearanceDirty || numericDraft}</pre>
+    </li>
+    <li id="L359">
+      <pre>
+                  disabledReason={cropUnavailableReason ?? &#x27;请先应用或取消当前参数草稿&#x27;}</pre>
+    </li>
+    <li id="L360"><pre>                  onClick={onStartCrop}</pre></li>
+    <li id="L361"><pre>                &gt;</pre></li>
+    <li id="L362"><pre>                  &lt;Crop size={14} /&gt;</pre></li>
+    <li id="L363"><pre>                  在画布裁切</pre></li>
+    <li id="L364"><pre>                &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L365"><pre>              )}</pre></li>
+    <li id="L366">
+      <pre>
+              {cropUnavailableReason &amp;&amp; &lt;ToolbarMenuNote&gt;{cropUnavailableReason}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L367"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L368">
+      <pre>                数值裁切保留原框；画布裁切同时调整图片边框，可向外恢复原图。</pre>
+    </li>
+    <li id="L369"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L370"><pre>            &lt;/&gt;</pre></li>
+    <li id="L371"><pre>          )}</pre></li>
+    <li id="L372"><pre>          {tab === &#x27;replace&#x27; &amp;&amp; (</pre></li>
+    <li id="L373"><pre>            &lt;&gt;</pre></li>
+    <li id="L374"><pre>              &lt;ToolbarFileButton</pre></li>
+    <li id="L375"><pre>                label=&quot;选择替换图片&quot;</pre></li>
+    <li id="L376"><pre>                accept={PPTX_PICTURE_ACCEPT}</pre></li>
+    <li id="L377"><pre>                disabled={locked}</pre></li>
+    <li id="L378"><pre>                onPick={(picked) =&gt; {</pre></li>
+    <li id="L379"><pre>                  void picturePreview.choose(picked)</pre></li>
+    <li id="L380"><pre>                }}</pre></li>
+    <li id="L381"><pre>              &gt;</pre></li>
+    <li id="L382"><pre>                &lt;ImagePlus size={14} /&gt;</pre></li>
+    <li id="L383"><pre>                选择图片</pre></li>
+    <li id="L384"><pre>              &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L385">
+      <pre>
+              {picturePreview.preparing &amp;&amp; &lt;ToolbarMenuNote&gt;正在准备图片预览…&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L386">
+      <pre>
+              {picturePreview.error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{picturePreview.error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L387">
+      <pre>              {picturePreview.selected?.info.ext === &#x27;tiff&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L388">
+      <pre>
+                &lt;ToolbarMenuNote&gt;TIFF 显示尺寸最大的安全页面，保存保留全部页面。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L389"><pre>              )}</pre></li>
+    <li id="L390">
+      <pre>
+              {file &amp;&amp; &lt;p className=&quot;mimir-pptx-group-picture__filename&quot;&gt;{file.name}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L391"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L392">
+      <pre>
+                支持 {PPTX_PICTURE_FORMATS}，最大 8 MiB。替换保留位置、大小和效果，重置原有裁切。</pre>
+    </li>
+    <li id="L393"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L394"><pre>            &lt;/&gt;</pre></li>
+    <li id="L395"><pre>          )}</pre></li>
+    <li id="L396"><pre>          {tab === &#x27;cutout&#x27; &amp;&amp; (</pre></li>
+    <li id="L397"><pre>            &lt;&gt;</pre></li>
+    <li id="L398">
+      <pre>
+              &lt;ToolbarMenuNote&gt;结果为静态 PNG；GIF 或 WebP 动画仅使用当前画面。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L399"><pre>              &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L400"><pre>                &lt;ToolbarMenuFields label=&quot;去背景&quot;&gt;</pre></li>
+    <li id="L401"><pre>                  &lt;ToolbarNumberField</pre></li>
+    <li id="L402"><pre>                    label=&quot;颜色容差（%）&quot;</pre></li>
+    <li id="L403"><pre>                    value={tolerance}</pre></li>
+    <li id="L404"><pre>                    min={0}</pre></li>
+    <li id="L405"><pre>                    max={100}</pre></li>
+    <li id="L406"><pre>                    step={5}</pre></li>
+    <li id="L407"><pre>                    disabled={locked}</pre></li>
+    <li id="L408"><pre>                    onCommit={setTolerance}</pre></li>
+    <li id="L409"><pre>                  /&gt;</pre></li>
+    <li id="L410"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L411"><pre>              &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L412"><pre>              &lt;ToolbarToggleGroup</pre></li>
+    <li id="L413"><pre>                label=&quot;去背景预览&quot;</pre></li>
+    <li id="L414"><pre>                value={previewMode}</pre></li>
+    <li id="L415"><pre>                options={[</pre></li>
+    <li id="L416">
+      <pre>
+                  { value: &#x27;result&#x27;, label: &#x27;处理结果&#x27;, disabled: locked },</pre>
+    </li>
+    <li id="L417">
+      <pre>
+                  { value: &#x27;original&#x27;, label: &#x27;原图&#x27;, disabled: locked },</pre>
+    </li>
+    <li id="L418"><pre>                ]}</pre></li>
+    <li id="L419"><pre>                onChange={setPreviewMode}</pre></li>
+    <li id="L420"><pre>              /&gt;</pre></li>
+    <li id="L421"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L422">
+      <pre>
+                移除与图片边缘相连的相近颜色，适合纯色背景。输出保留原图尺寸和当前裁切。</pre>
+    </li>
+    <li id="L423"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L424">
+      <pre>
+              {cutoutError &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{cutoutError}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L425">
+      <pre>
+              {!source &amp;&amp; &lt;p role=&quot;alert&quot;&gt;图片源未加载，无法去背景，请重新打开文档&lt;/p&gt;}</pre>
+    </li>
+    <li id="L426">
+      <pre>
+              {source &amp;&amp; !cutoutError &amp;&amp; !cutout &amp;&amp; &lt;p role=&quot;status&quot;&gt;正在准备去背景预览…&lt;/p&gt;}</pre>
+    </li>
+    <li id="L427"><pre>            &lt;/&gt;</pre></li>
+    <li id="L428"><pre>          )}</pre></li>
+    <li id="L429"><pre>        &lt;/fieldset&gt;</pre></li>
+    <li id="L430">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L431"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L432">
+      <pre>      &lt;div className=&quot;mimir-pptx-group-picture__footer&quot;&gt;</pre>
+    </li>
+    <li id="L433"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L434"><pre>          label={busy ? &#x27;正在应用图片&#x27; : applyLabel}</pre></li>
+    <li id="L435"><pre>          primary</pre></li>
+    <li id="L436">
+      <pre>
+          disabled={locked || (!canApply &amp;&amp; !(tab === &#x27;appearance&#x27; &amp;&amp; numericDraft))}</pre>
+    </li>
+    <li id="L437">
+      <pre>
+          disabledReason={busy ? &#x27;正在应用图片&#x27; : &#x27;请先调整参数或准备图片&#x27;}</pre>
+    </li>
+    <li id="L438"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L439"><pre>        &gt;</pre></li>
+    <li id="L440"><pre>          &lt;Check size={14} /&gt;</pre></li>
+    <li id="L441"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L442"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L443"><pre>          label=&quot;取消图片草稿&quot;</pre></li>
+    <li id="L444">
+      <pre>
+          disabled={!busy &amp;&amp; !appearanceDirty &amp;&amp; !numericDraft &amp;&amp; !file &amp;&amp; tolerance === 20}</pre>
+    </li>
+    <li id="L445"><pre>          onClick={reset}</pre></li>
+    <li id="L446"><pre>        &gt;</pre></li>
+    <li id="L447"><pre>          {busy ? &#x27;取消操作&#x27; : &#x27;取消&#x27;}</pre></li>
+    <li id="L448"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L449"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L450"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L451"><pre>  )</pre></li>
+    <li id="L452"><pre>}</pre></li>
+  </ol>
+</html>

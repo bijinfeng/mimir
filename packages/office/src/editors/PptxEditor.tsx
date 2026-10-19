@@ -3629,6 +3629,7 @@ export function PptxEditor({
                         </ToolbarMenuNote>
                         <ToolbarSelect
                           label="使用方式"
+                          disabled={editingBusy}
                           value={brushContinuous ? 'continuous' : 'once'}
                           options={[
                             { value: 'once', label: '使用一次' },

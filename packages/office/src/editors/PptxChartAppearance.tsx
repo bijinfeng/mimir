@@ -58,7 +58,9 @@ export function PptxChartAppearance({
   patch,
   setPatch,
   preset,
+  disabled = false,
 }: {
+  disabled?: boolean
   chart: ChartModel
   kind: string
   section: 'style' | 'colors'
@@ -130,6 +132,7 @@ export function PptxChartAppearance({
         <ToolbarMenuFields label="图表样式">
           <ToolbarSelect
             label="图表样式预设"
+            disabled={disabled}
             value=""
             options={[
               { value: '', label: '选择样式…' },
@@ -148,6 +151,7 @@ export function PptxChartAppearance({
             <>
               <ToolbarSelect
                 label="图表网格线"
+                disabled={disabled}
                 value={String(
                   patch.gridlines ?? !!(chart.valAxis?.gridColor || chart.valAxis?.gridColorAuto),
                 )}
@@ -174,6 +178,7 @@ export function PptxChartAppearance({
               {bar && (
                 <ToolbarSelect
                   label="柱形方向"
+                  disabled={disabled}
                   value={patch.barDir ?? chart.barDir ?? 'col'}
                   options={[
                     { value: 'col', label: '竖向柱形' },
@@ -206,6 +211,7 @@ export function PptxChartAppearance({
         <ToolbarMenuFields label="图表配色">
           <ToolbarSelect
             label="图表配色方案"
+            disabled={disabled}
             value={selectedPalette}
             options={[
               { value: '', label: '保留当前配色' },
@@ -237,6 +243,7 @@ export function PptxChartAppearance({
             <>
               <ToolbarSelect
                 label="要配色的系列"
+                disabled={disabled}
                 value={String(colorSeries)}
                 options={chart.series.map((series, index) => ({
                   value: String(index),
@@ -282,6 +289,7 @@ export function PptxChartAppearance({
           </ToolbarMenuNote>
           <ToolbarSelect
             label="数据点所属系列"
+            disabled={disabled}
             value={String(pointSeries)}
             options={chart.series.map((series, index) => ({
               value: String(index),
@@ -291,6 +299,7 @@ export function PptxChartAppearance({
           />
           <ToolbarSelect
             label="数据点类别"
+            disabled={disabled}
             value={String(point)}
             options={chart.categories.map((category, index) => ({
               value: String(index),

@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxMasterControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxMasterControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 b60c7fb2ad3e8792925f01adf9058f5983d012450d578625d6b7e17aed36a18c
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import type { PptxManualAsset } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  ToolbarButton,</pre></li>
+    <li id="L5"><pre>  ToolbarConfirm,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L8"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L9"><pre>  ToolbarSelect,</pre></li>
+    <li id="L10"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L11"><pre>  ToolbarTextField,</pre></li>
+    <li id="L12"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L13"><pre>import { PptxControlPanel } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L14"><pre>interface MasterElement {</pre></li>
+    <li id="L15"><pre>  id: string</pre></li>
+    <li id="L16"><pre>  name: string</pre></li>
+    <li id="L17"><pre>  type: string</pre></li>
+    <li id="L18"><pre>  text: string</pre></li>
+    <li id="L19"><pre>  fill: string | null</pre></li>
+    <li id="L20"><pre>  strokeColor: string | null</pre></li>
+    <li id="L21"><pre>  strokeWidth: number</pre></li>
+    <li id="L22">
+      <pre>  box: { x: number; y: number; width: number; height: number; rotation: number }</pre>
+    </li>
+    <li id="L23"><pre>}</pre></li>
+    <li id="L24"><pre>interface MasterPart {</pre></li>
+    <li id="L25"><pre>  partPath: string</pre></li>
+    <li id="L26"><pre>  kind: &#x27;master&#x27; | &#x27;layout&#x27;</pre></li>
+    <li id="L27"><pre>  name: string</pre></li>
+    <li id="L28"><pre>  svg: string</pre></li>
+    <li id="L29"><pre>  elements: MasterElement[]</pre></li>
+    <li id="L30"><pre>}</pre></li>
+    <li id="L31"><pre>export function PptxMasterControls({</pre></li>
+    <li id="L32"><pre>  execute,</pre></li>
+    <li id="L33"><pre>}: {</pre></li>
+    <li id="L34">
+      <pre>
+  execute: (input: PptxManualAsset) =&gt; Promise&lt;Record&lt;string, unknown&gt; | null&gt;</pre>
+    </li>
+    <li id="L35"><pre>}) {</pre></li>
+    <li id="L36"><pre>  const [parts, setParts] = useState&lt;MasterPart[]&gt;([]),</pre></li>
+    <li id="L37"><pre>    [partPath, setPartPath] = useState(&#x27;&#x27;),</pre></li>
+    <li id="L38"><pre>    [elementId, setElementId] = useState(&#x27;&#x27;),</pre></li>
+    <li id="L39"><pre>    [busy, setBusy] = useState(false)</pre></li>
+    <li id="L40"><pre>  const [text, setText] = useState(&#x27;&#x27;),</pre></li>
+    <li id="L41"><pre>    [color, setColor] = useState(&#x27;#000000&#x27;),</pre></li>
+    <li id="L42"><pre>    [strokeColor, setStrokeColor] = useState(&#x27;#000000&#x27;),</pre></li>
+    <li id="L43"><pre>    [strokeWidth, setStrokeWidth] = useState(1),</pre></li>
+    <li id="L44">
+      <pre>    [box, setBox] = useState({ x: 0, y: 0, width: 100, height: 100, rotation: 0 })</pre>
+    </li>
+    <li id="L45"><pre>  const [message, setMessage] = useState(&#x27;正在读取母版…&#x27;)</pre></li>
+    <li id="L46"><pre>  const executeRef = useRef(execute)</pre></li>
+    <li id="L47"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L48"><pre>    executeRef.current = execute</pre></li>
+    <li id="L49"><pre>  }, [execute])</pre></li>
+    <li id="L50"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L51"><pre>    let cancelled = false</pre></li>
+    <li id="L52">
+      <pre>    void executeRef.current({ kind: &#x27;master_parts&#x27; }).then((data) =&gt; {</pre>
+    </li>
+    <li id="L53"><pre>      if (cancelled) return</pre></li>
+    <li id="L54"><pre>      const items = data?.parts as MasterPart[] | undefined</pre></li>
+    <li id="L55"><pre>      setParts(items ?? [])</pre></li>
+    <li id="L56"><pre>      setPartPath(items?.[0]?.partPath ?? &#x27;&#x27;)</pre></li>
+    <li id="L57">
+      <pre>      setMessage(items?.length ? &#x27;&#x27; : &#x27;此文件没有可编辑母版&#x27;)</pre>
+    </li>
+    <li id="L58"><pre>    })</pre></li>
+    <li id="L59"><pre>    return () =&gt; {</pre></li>
+    <li id="L60"><pre>      cancelled = true</pre></li>
+    <li id="L61"><pre>    }</pre></li>
+    <li id="L62"><pre>  }, [])</pre></li>
+    <li id="L63"><pre>  const part = parts.find((item) =&gt; item.partPath === partPath),</pre></li>
+    <li id="L64">
+      <pre>    element = part?.elements.find((item) =&gt; item.id === elementId)</pre>
+    </li>
+    <li id="L65"><pre>  const choose = (id: string) =&gt; {</pre></li>
+    <li id="L66"><pre>    setElementId(id)</pre></li>
+    <li id="L67"><pre>    const el = part?.elements.find((item) =&gt; item.id === id)</pre></li>
+    <li id="L68"><pre>    if (el) {</pre></li>
+    <li id="L69"><pre>      setText(el.text)</pre></li>
+    <li id="L70"><pre>      setBox(el.box)</pre></li>
+    <li id="L71"><pre>      setColor(el.fill ?? &#x27;#000000&#x27;)</pre></li>
+    <li id="L72"><pre>      setStrokeColor(el.strokeColor ?? &#x27;#000000&#x27;)</pre></li>
+    <li id="L73"><pre>      setStrokeWidth(el.strokeWidth)</pre></li>
+    <li id="L74"><pre>    }</pre></li>
+    <li id="L75"><pre>  }</pre></li>
+    <li id="L76"><pre>  const apply = async (</pre></li>
+    <li id="L77">
+      <pre>
+    operation: Extract&lt;PptxManualAsset, { kind: &#x27;master_edit&#x27; }&gt;[&#x27;operation&#x27;],</pre>
+    </li>
+    <li id="L78"><pre>  ) =&gt; {</pre></li>
+    <li id="L79"><pre>    if (!part || !element) return</pre></li>
+    <li id="L80"><pre>    setBusy(true)</pre></li>
+    <li id="L81"><pre>    setMessage(&#x27;&#x27;)</pre></li>
+    <li id="L82"><pre>    try {</pre></li>
+    <li id="L83"><pre>      const data = await execute({</pre></li>
+    <li id="L84"><pre>        kind: &#x27;master_edit&#x27;,</pre></li>
+    <li id="L85"><pre>        part: part.partPath,</pre></li>
+    <li id="L86"><pre>        elementId: element.id,</pre></li>
+    <li id="L87"><pre>        operation,</pre></li>
+    <li id="L88"><pre>      })</pre></li>
+    <li id="L89"><pre>      if (data?.parts) {</pre></li>
+    <li id="L90"><pre>        setParts(data.parts as MasterPart[])</pre></li>
+    <li id="L91">
+      <pre>        setMessage(&#x27;已更新母版；使用此母版或版式的页面会同步变化&#x27;)</pre>
+    </li>
+    <li id="L92"><pre>      }</pre></li>
+    <li id="L93"><pre>    } catch (cause) {</pre></li>
+    <li id="L94">
+      <pre>
+      setMessage(cause instanceof Error ? cause.message : &#x27;母版修改失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L95"><pre>    } finally {</pre></li>
+    <li id="L96"><pre>      setBusy(false)</pre></li>
+    <li id="L97"><pre>    }</pre></li>
+    <li id="L98"><pre>  }</pre></li>
+    <li id="L99"><pre>  return (</pre></li>
+    <li id="L100"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L101"><pre>      &lt;ToolbarMenuFields label=&quot;母版与版式&quot;&gt;</pre></li>
+    <li id="L102"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L103"><pre>          label=&quot;编辑范围&quot;</pre></li>
+    <li id="L104"><pre>          disabled={busy}</pre></li>
+    <li id="L105"><pre>          value={partPath}</pre></li>
+    <li id="L106"><pre>          options={parts.map((item) =&gt; ({</pre></li>
+    <li id="L107"><pre>            value: item.partPath,</pre></li>
+    <li id="L108">
+      <pre>
+            label: `${item.kind === &#x27;master&#x27; ? &#x27;母版&#x27; : &#x27;版式&#x27;} · ${item.name}`,</pre>
+    </li>
+    <li id="L109"><pre>          }))}</pre></li>
+    <li id="L110"><pre>          onChange={(value) =&gt; {</pre></li>
+    <li id="L111"><pre>            setPartPath(value)</pre></li>
+    <li id="L112"><pre>            setElementId(&#x27;&#x27;)</pre></li>
+    <li id="L113"><pre>          }}</pre></li>
+    <li id="L114"><pre>        /&gt;</pre></li>
+    <li id="L115"><pre>        {part?.svg &amp;&amp; (</pre></li>
+    <li id="L116"><pre>          &lt;div</pre></li>
+    <li id="L117"><pre>            className=&quot;mimir-pptx-asset-preview&quot;</pre></li>
+    <li id="L118"><pre>            aria-label=&quot;母版预览&quot;</pre></li>
+    <li id="L119"><pre>            dangerouslySetInnerHTML={{ __html: part.svg }}</pre></li>
+    <li id="L120"><pre>          /&gt;</pre></li>
+    <li id="L121"><pre>        )}</pre></li>
+    <li id="L122"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L123"><pre>          label=&quot;母版对象&quot;</pre></li>
+    <li id="L124"><pre>          disabled={busy}</pre></li>
+    <li id="L125"><pre>          value={elementId}</pre></li>
+    <li id="L126"><pre>          options={[</pre></li>
+    <li id="L127">
+      <pre>            { value: &#x27;&#x27;, label: &#x27;请选择对象&#x27; },</pre>
+    </li>
+    <li id="L128"><pre>            ...(part?.elements.map((item) =&gt; ({</pre></li>
+    <li id="L129"><pre>              value: item.id,</pre></li>
+    <li id="L130"><pre>              label: `${item.name} · ${item.type}`,</pre></li>
+    <li id="L131"><pre>            })) ?? []),</pre></li>
+    <li id="L132"><pre>          ]}</pre></li>
+    <li id="L133"><pre>          onChange={choose}</pre></li>
+    <li id="L134"><pre>        /&gt;</pre></li>
+    <li id="L135"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L136"><pre>      {element &amp;&amp; (</pre></li>
+    <li id="L137"><pre>        &lt;&gt;</pre></li>
+    <li id="L138">
+      <pre>          &lt;ToolbarMenuFields label=&quot;对象位置（磅）&quot;&gt;</pre>
+    </li>
+    <li id="L139">
+      <pre>
+            {([&#x27;x&#x27;, &#x27;y&#x27;, &#x27;width&#x27;, &#x27;height&#x27;, &#x27;rotation&#x27;] as const).map((key) =&gt; (</pre>
+    </li>
+    <li id="L140"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L141"><pre>                key={key}</pre></li>
+    <li id="L142"><pre>                label={</pre></li>
+    <li id="L143"><pre>                  {</pre></li>
+    <li id="L144"><pre>                    x: &#x27;水平位置（磅）&#x27;,</pre></li>
+    <li id="L145"><pre>                    y: &#x27;垂直位置（磅）&#x27;,</pre></li>
+    <li id="L146"><pre>                    width: &#x27;宽度（磅）&#x27;,</pre></li>
+    <li id="L147"><pre>                    height: &#x27;高度（磅）&#x27;,</pre></li>
+    <li id="L148"><pre>                    rotation: &#x27;旋转（度）&#x27;,</pre></li>
+    <li id="L149"><pre>                  }[key]</pre></li>
+    <li id="L150"><pre>                }</pre></li>
+    <li id="L151"><pre>                value={box[key]}</pre></li>
+    <li id="L152">
+      <pre>
+                min={key === &#x27;width&#x27; || key === &#x27;height&#x27; ? 1 : -7200}</pre>
+    </li>
+    <li id="L153"><pre>                max={7200}</pre></li>
+    <li id="L154">
+      <pre>                onCommit={(value) =&gt; setBox({ ...box, [key]: value })}</pre>
+    </li>
+    <li id="L155"><pre>              /&gt;</pre></li>
+    <li id="L156"><pre>            ))}</pre></li>
+    <li id="L157"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L158"><pre>              label=&quot;应用母版位置&quot;</pre></li>
+    <li id="L159">
+      <pre>
+              onClick={() =&gt; void apply({ action: &#x27;transform&#x27;, ...box })}</pre>
+    </li>
+    <li id="L160"><pre>            &gt;</pre></li>
+    <li id="L161"><pre>              {&#x27;应用母版位置&#x27;}</pre></li>
+    <li id="L162"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L163"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L164">
+      <pre>
+          {(element.type === &#x27;text&#x27; || element.type === &#x27;shape&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L165"><pre>            &lt;ToolbarMenuFields label=&quot;母版文字&quot;&gt;</pre></li>
+    <li id="L166">
+      <pre>
+              &lt;ToolbarTextArea label=&quot;对象文字&quot; rows={3} value={text} onChange={setText} /&gt;</pre>
+    </li>
+    <li id="L167"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L168"><pre>                label=&quot;应用母版文字&quot;</pre></li>
+    <li id="L169">
+      <pre>                onClick={() =&gt; void apply({ action: &#x27;text&#x27;, text })}</pre>
+    </li>
+    <li id="L170"><pre>              &gt;</pre></li>
+    <li id="L171"><pre>                {&#x27;应用母版文字&#x27;}</pre></li>
+    <li id="L172"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L173"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L174"><pre>          )}</pre></li>
+    <li id="L175"><pre>          &lt;ToolbarMenuFields label=&quot;对象外观&quot;&gt;</pre></li>
+    <li id="L176">
+      <pre>
+            &lt;ToolbarTextField label=&quot;填充色（#RRGGBB）&quot; value={color} onChange={setColor} /&gt;</pre>
+    </li>
+    <li id="L177">
+      <pre>
+            &lt;ToolbarMenuNote&gt;当前填充：{element.fill ?? &#x27;无纯色填充&#x27;}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L178"><pre>            &lt;ToolbarTextField</pre></li>
+    <li id="L179"><pre>              label=&quot;边框色（#RRGGBB）&quot;</pre></li>
+    <li id="L180"><pre>              value={strokeColor}</pre></li>
+    <li id="L181"><pre>              onChange={setStrokeColor}</pre></li>
+    <li id="L182"><pre>            /&gt;</pre></li>
+    <li id="L183"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L184"><pre>              label=&quot;边框宽度（磅）&quot;</pre></li>
+    <li id="L185"><pre>              value={strokeWidth}</pre></li>
+    <li id="L186"><pre>              min={0}</pre></li>
+    <li id="L187"><pre>              max={100}</pre></li>
+    <li id="L188"><pre>              onCommit={setStrokeWidth}</pre></li>
+    <li id="L189"><pre>            /&gt;</pre></li>
+    <li id="L190">
+      <pre>            &lt;div className=&quot;mimir-pptx-clipboard-actions&quot;&gt;</pre>
+    </li>
+    <li id="L191"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L192"><pre>                label=&quot;应用母版填充&quot;</pre></li>
+    <li id="L193"><pre>                disabled={!/^#[a-f\d]{6}$/i.test(color)}</pre></li>
+    <li id="L194">
+      <pre>                onClick={() =&gt; void apply({ action: &#x27;fill&#x27;, color })}</pre>
+    </li>
+    <li id="L195"><pre>              &gt;</pre></li>
+    <li id="L196"><pre>                {&#x27;应用母版填充&#x27;}</pre></li>
+    <li id="L197"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L198"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L199"><pre>                label=&quot;无填充&quot;</pre></li>
+    <li id="L200">
+      <pre>
+                onClick={() =&gt; void apply({ action: &#x27;fill&#x27;, color: &#x27;none&#x27; })}</pre>
+    </li>
+    <li id="L201"><pre>              &gt;</pre></li>
+    <li id="L202"><pre>                {&#x27;无填充&#x27;}</pre></li>
+    <li id="L203"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L204"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L205"><pre>                label=&quot;应用母版边框&quot;</pre></li>
+    <li id="L206"><pre>                disabled={!/^#[a-f\d]{6}$/i.test(strokeColor)}</pre></li>
+    <li id="L207"><pre>                onClick={() =&gt;</pre></li>
+    <li id="L208">
+      <pre>
+                  void apply({ action: &#x27;stroke&#x27;, color: strokeColor, widthPt: strokeWidth })</pre>
+    </li>
+    <li id="L209"><pre>                }</pre></li>
+    <li id="L210"><pre>              &gt;</pre></li>
+    <li id="L211"><pre>                {&#x27;应用母版边框&#x27;}</pre></li>
+    <li id="L212"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L213"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L214"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L215"><pre>          &lt;ToolbarConfirm</pre></li>
+    <li id="L216"><pre>            confirmLabel=&quot;删除母版对象&quot;</pre></li>
+    <li id="L217"><pre>            title=&quot;删除此母版对象？&quot;</pre></li>
+    <li id="L218">
+      <pre>
+            description=&quot;使用此母版或版式的页面都会受影响，可通过撤销恢复。&quot;</pre>
+    </li>
+    <li id="L219">
+      <pre>            onConfirm={() =&gt; void apply({ action: &#x27;delete&#x27; })}</pre>
+    </li>
+    <li id="L220"><pre>          &gt;</pre></li>
+    <li id="L221">
+      <pre>
+            &lt;ToolbarButton label=&quot;删除母版对象&quot;&gt;{&#x27;删除母版对象&#x27;}&lt;/ToolbarButton&gt;</pre>
+    </li>
+    <li id="L222"><pre>          &lt;/ToolbarConfirm&gt;</pre></li>
+    <li id="L223"><pre>        &lt;/&gt;</pre></li>
+    <li id="L224"><pre>      )}</pre></li>
+    <li id="L225"><pre>      &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L226">
+      <pre>
+        修改会影响所有使用此母版或版式的页面；不含单页覆盖的内容。通过顶部撤销恢复，通过保存写回原文件。</pre>
+    </li>
+    <li id="L227"><pre>      &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L228">
+      <pre>
+      {message &amp;&amp; &lt;span role=&quot;status&quot;&gt;{message}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L229"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L230"><pre>  )</pre></li>
+    <li id="L231"><pre>}</pre></li>
+  </ol>
+</html>

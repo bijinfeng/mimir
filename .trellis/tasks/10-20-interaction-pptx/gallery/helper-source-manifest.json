@@ -1,0 +1,1300 @@
+{
+  "baseline": "3b5d912",
+  "adapterSha256": "de756b33a80c6b5eeba5d48885dd9a4e741386e5cc08db7842bb19c60d52ecc1",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-pptx-baseline-3b5d912",
+      "entryPoint": "apps/server/src/services/pptx-agent-host.ts",
+      "bundleSha256": "8b6d6b2a5a8173bd2011ca9e828767d01d7d1cdde639b3a521d6a6c9e22c6dbe",
+      "files": [
+        {
+          "path": "apps/server/src/services/document-agent-format.ts",
+          "sha256": "7105faa424bae5fd61c1a53967569e6918736366a6d6559b7ad933b54318548c"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-codec.ts",
+          "sha256": "3467d20786639d798e3a05c93399eb7610bc4b2d5281a6528a96a1d55b5b8e05"
+        },
+        {
+          "path": "apps/server/src/services/pptx-agent-host.ts",
+          "sha256": "c0f7ddf2a6133e3201843997a50fc3bac9ae36a633146cbdfc758917bef50dcd"
+        },
+        {
+          "path": "apps/server/src/services/pptx-clipboard-elements.ts",
+          "sha256": "4e4546407a52e2eb68b0600e732e786d6eb8ac9363492a9d0f7047c453ab764c"
+        },
+        {
+          "path": "apps/server/src/services/pptx-clipboard-slides.ts",
+          "sha256": "2c0f8dcb69a642f915a6871bca4e6cdb43ce0e9918caa48af9509f17231e84b9"
+        },
+        {
+          "path": "apps/server/src/services/pptx-copy-background.ts",
+          "sha256": "592ce7831a2548537b3d5ef0c34986b62e14ace81bf68b69daf270c6cf192366"
+        },
+        {
+          "path": "apps/server/src/services/pptx-group-flip.ts",
+          "sha256": "66013283e43e075898010e46912f13425bb72e1ceb60bdd626034cf02dcdd829"
+        },
+        {
+          "path": "apps/server/src/services/pptx-image-info.ts",
+          "sha256": "48daa1a8890fc881de17c0e80a8f4b0cc145c43b9c530fe2f8c3bd569b03ada9"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-animation.ts",
+          "sha256": "d864d165c341ce7185181b45bd289779da0f7941d95367ba0279ad1ffe47e1fd"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-clipboard.ts",
+          "sha256": "ed5c65fea0defc5b5227fea2383174796a38d4a8ba0ef1909689921b78c609af"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-fill.ts",
+          "sha256": "61a0c2a56c0d6d3469e67c79f622b9c10f00be829488e6604788dc9f49a34d1d"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-ink.ts",
+          "sha256": "90d301042747ce77bfed629ef4f20d5c4340dd16abc57d1bd9472ac5f3333345"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-paragraph.ts",
+          "sha256": "0c2c0a28ccf5baba2bc8c325b7f16b30b5ed2c2db70f081c7269eefb4959c375"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-picture.ts",
+          "sha256": "67f561f8d06581c187e00972a53cec1a72ceda6a87defbed5f7cdcdec2f9bf0c"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-shape.ts",
+          "sha256": "294db944c37263c121797b077498173407b19812307422579ca009211317d229"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-upload.ts",
+          "sha256": "799e8a92f6368b0e3d079e1afd9eb723557913c528ceaaa56f2dd73ac89e7905"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-zoom.ts",
+          "sha256": "c9447c77bab1363c4fda477822f2518be1cc75f8065a865cb25ef6029300a958"
+        },
+        {
+          "path": "apps/server/src/services/pptx-picture-bullet.ts",
+          "sha256": "a7f0238ac787026e92c8a5a947844c02dd1b859106a8dea9d461b1c5a6175c47"
+        },
+        {
+          "path": "packages/office/src/pptx-archive.ts",
+          "sha256": "e985c74c1645f39678baadfb7fd40edba7f379867dbd055b3851a3241266c0fd"
+        },
+        {
+          "path": "packages/office/src/pptx-element-capabilities.ts",
+          "sha256": "a263705e73b5dccd8617f7a2d79aa11b873bc984fb29ab6f1e16b6783dad6145"
+        },
+        {
+          "path": "packages/office/src/pptx-glb.ts",
+          "sha256": "9647209347ed821f9e7eaffaf9db3392b7ab1970e68748bf0cf62d63a3b6feed"
+        },
+        {
+          "path": "packages/office/src/pptx-group-picture-crop-guard.ts",
+          "sha256": "64613d6d5d9fe3d071ab158669127fe7b9ead80a5d381e8de3aee43d23805f64"
+        },
+        {
+          "path": "packages/office/src/pptx-group-placement.ts",
+          "sha256": "7602270d3918c375138291b1bdd5173fa0141e06cb0ebf583c703dee422b5aa3"
+        },
+        {
+          "path": "packages/office/src/pptx-ink.ts",
+          "sha256": "bdff12162cd4198ac8d8972dfd7d3a602564f6714bc552b56542164daafe7b34"
+        },
+        {
+          "path": "packages/office/src/pptx-media-audio.ts",
+          "sha256": "2c250684d69d51107049b422555bd519d246ec3566645b426464eb08cb323944"
+        },
+        {
+          "path": "packages/office/src/pptx-media-binary.ts",
+          "sha256": "51a6ae1df218234965a08c75b37a2489b3c55b4a008e461d6fad939bf4da65bf"
+        },
+        {
+          "path": "packages/office/src/pptx-media-containers.ts",
+          "sha256": "2eebf310b51fe4307facaf0b4aa8c4f0e4a2c43facb484a7c392f82ebaf142e2"
+        },
+        {
+          "path": "packages/office/src/pptx-media-frame.ts",
+          "sha256": "daa8adb8cc2015ddcccc433461b26fe2f294f3313c9977703837ab631f9277aa"
+        },
+        {
+          "path": "packages/office/src/pptx-media-info.ts",
+          "sha256": "e7af8f0aaa80eb6661d79f8f0cc4550e12ac1ade39b9a32a3aa042916be88fda"
+        },
+        {
+          "path": "packages/office/src/pptx-picture-edit.ts",
+          "sha256": "c8867945296f68b2e4083d88eaf52498bcd76a7baa91ae655b10ccbc4cf6bfec"
+        },
+        {
+          "path": "packages/office/src/pptx-picture-placement.ts",
+          "sha256": "dce9cfb52aa3a34223962da80f31b139fa62a977df1cc8b30c1a22e58e31a52c"
+        },
+        {
+          "path": "packages/office/src/pptx-render.ts",
+          "sha256": "f8ceb494b27883eb077580ea7aec707dc40a794ecf5810a4388e23b50146cc40"
+        },
+        {
+          "path": "packages/office/src/pptx-selection-clipboard.ts",
+          "sha256": "e7abe54d9512b9251da7439ca0b0b26be4c577f7236f787e46264bb82814f29a"
+        },
+        {
+          "path": "packages/office/src/pptx-svg.ts",
+          "sha256": "63e048bbf69f49a4b5cbf49b6f62dfd339957bb09b6295be06d663dfd3298c91"
+        },
+        {
+          "path": "packages/office/src/pptx-zoom.ts",
+          "sha256": "fec88502022086ccc5281d3e81b8a687a57ca3c250caac6b020934b4a6ef80fd"
+        },
+        {
+          "path": "packages/office/src/shims/pptx-engine-types.ts",
+          "sha256": "d70da490c13ede7c674e9291b92fc924add0c97a18680d3a9e6a1e07d0cfc40e"
+        },
+        {
+          "path": "packages/office/src/zip-bounds.ts",
+          "sha256": "58f4b5114cc8660ff48fea23549351d5a64157585fbc5ee02afed7b83be3297f"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/math.ts",
+          "sha256": "48bdb590e7f234e22e96bba95f1abce78d4b6ae8832a95fdff6724068a4b3f1b"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/xml-utils.ts",
+          "sha256": "69ebdb5bff764beaec6ecbf33fcbfe5991b61b939997e8b1d7edc73baa5d6dd1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/align.ts",
+          "sha256": "d02fc779e66f8878b9b4c1dbcb60971daae9ae106c1bd4f02ac4364c37bbe32b"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/animation.ts",
+          "sha256": "e435af3a32bf8a784318d85795cd076139cc6b283349fd2357d5fbfd00f69bde"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/background-promote.ts",
+          "sha256": "f55a2505323706bec76675e39e1c1f2dd243841f5e44876f33ca7a0064148291"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/blank.ts",
+          "sha256": "7a55b66dca2f423452afb3e24cdb27b466e473bb2f5ba1c3c8bd0f6e6305cb35"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/builtin-layouts.ts",
+          "sha256": "a1731a7b00426635f79d599056f2e84e8adf60c5c01ababfdabd1c5103201643"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chart-insert.ts",
+          "sha256": "d9f7ec351a7dc9a678d3c6e36d75b3d889d9281992befe7bca9cae0d84d59642"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chart.ts",
+          "sha256": "4d74bb8156228d10c89114f9d75236e7883ed6a46417f583bf0238c20cd83655"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chartex.ts",
+          "sha256": "b494d56242847ff27102ca80c94c6225d767c14de45b56562a7e4b65e6ab05dd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/color.ts",
+          "sha256": "449b9a8cf4b6a2a6bc5b66b52cf7eab87756fbfe80f72ddc0452ee38eeec38a2"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/comments.ts",
+          "sha256": "b925d2786d4d0cbde16c443a04dc6577c217ec650a20464cfe306bdbc20576c0"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/custgeom.ts",
+          "sha256": "d814fa01d8bd40b9c439780e733d5ee2f28bef49113db65f511d137860b45ade"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/dgm-hier.ts",
+          "sha256": "c33bc070b0b8cabbc1224866c0fc06296f3c7b4c1965ef7a4d17addf10b81d8e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/embedded-fonts.ts",
+          "sha256": "89bc413a645018281e73b0f2a431fa12212ae5e1ebccb9b4ec41dcab1e175e81"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/format-brush.ts",
+          "sha256": "2cb39076074fa591a4238573f98c64d3f561d729842b5ffeaaf5225f6a014c74"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/generate.ts",
+          "sha256": "c26ddaf81b00dc495f34bd2103482c05a5334a2e843f94950446ff0dfbc2ab0e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/headerfooter.ts",
+          "sha256": "47184630999d85d92401f606f97b40658afc3b211190acea667f135a46a3c5d3"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/hyperlink.ts",
+          "sha256": "ad367e32f26cf6e0b4d128f216f823f078958d8bf1738977f9fba6e5ac5d1934"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/identity.ts",
+          "sha256": "d36917ace53025bc6f246f95c0a38ba235f1e9cb290546d63e5cdf131027954f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/index.ts",
+          "sha256": "f6f30c36851f2a6ba6ea4f5197356940fd1e949901ea6563e5a5deb5a570dc5a"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/insert.ts",
+          "sha256": "7900a1fd7ab76b3de769772079cff999f4689133b3deed92e86a9a1aaffcb019"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/layout.ts",
+          "sha256": "463d0964de60487a262b845983f0bb1bccceffa5a67c45dd68b41c97303c596d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/master-edit.ts",
+          "sha256": "4ca7fc40f48ea8e14e0f25ae47dc23fe1bcd1d2741e8d9cb38aa778697cff2a8"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/media-insert.ts",
+          "sha256": "f9e1b9305e2e1a9c562d2b05538c80f8c412ff1533f9136dcb9ea45d41e55a4a"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/named-action.ts",
+          "sha256": "f1037b8b2d11394d438862c1b94bfea8c00b39a13cb199e519fe492bc59bbe9c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/notes.ts",
+          "sha256": "5f2afafa97274fc2a4a5eeeadc2db9f26638a5066a4d7a41e4e8730f15d284dc"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/parse.ts",
+          "sha256": "bebfa2a8b0ff5a1f409d06c6c078cb873842d4b362a028403c99154db6154da3"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/placeholder.ts",
+          "sha256": "441614171751acf64e2ea6b1ecab05f77f37430de1af355e88be9659e0ce2f0f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/preset-shape-types.ts",
+          "sha256": "f5e349f8afc14dc219cff1991587f72b59fbd5095b58e495b766c93dbe56b00f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/resource-cleanup.ts",
+          "sha256": "290c9c6cd20c0b62ea39145d09616c34be5540a4caf6a38f62315a2a32edd883"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/scan.ts",
+          "sha256": "be9e0241176e634796dca02941b8d5ab14e0a31b2c46fcbc49443af6018e60ff"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/sections.ts",
+          "sha256": "c59a6468e40265572c23c4f8b24d8f4aefd61b15dcd657559f45c0ceefcc5623"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/slide-ids.ts",
+          "sha256": "ae71798bb63618e4b15a557d701ed7c322c7bd2fc693e35b487e2ca17bf6e157"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/slide-transfer.ts",
+          "sha256": "64457cae61856f7916dd3b22c6df9e943a2b1b77a8654244efe9e5631bf24062"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/smartart-layout.ts",
+          "sha256": "58445c04595102429c26e63ba015b47ff92c525725f759ce59739e197fcd8c3c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/smartart.ts",
+          "sha256": "865b288fb00f09fb4c1b4adc6967451dc05b10fe2dc2fe9508d2386c0d690e0b"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-edit.ts",
+          "sha256": "e81c5b088d85948182c54bb45b0839b8867c7e77ff0ea06d81c6fee512fd3b61"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-grid.ts",
+          "sha256": "dd6015aa8c1f9d95d2fda02f6d34ec2100a2f96a766b3090ff059f5e9af2cd4d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-style.ts",
+          "sha256": "bc2417e18e680ac6d760e70013962ea9502e7872a5437fd7d480f5223c6ea188"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/theme-apply.ts",
+          "sha256": "13f17f197cba557f0eec22dcadee6bb75b0222de91b102013751163f50983be8"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/theme.ts",
+          "sha256": "eea493cb5921170ece16b8311741b010d6847e7752aad528c75537843d88aadb"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/types.ts",
+          "sha256": "6881c093165fe5256935310f9ffdd371137a41f5d2ed489e8a1c4241b7994842"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/vendor/mtx/ctf.ts",
+          "sha256": "d94b9705e53bfec4f98df8198e8cef1cd048b0a5f0eaf254d309a2808edc1e8d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/vendor/mtx/index.ts",
+          "sha256": "08d6393e9c0b8d722380a7cb35abc7e64d4979290e0377cb736f7a6a6760e511"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/vendor/mtx/lzcomp.ts",
+          "sha256": "2b39141b600692616d3df7d277921880f9aae8ace3de0b824a89a4be76edfbc5"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/xml-utils.ts",
+          "sha256": "445c823bf29fded797e033d0ea958030027d3225eb224cbaeffce0fe0ea2371c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/zip.ts",
+          "sha256": "d249538c5496f99b5d9f3e2452a20923c477fd87f89e81bc63468eab24ba57f1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/edit-text.ts",
+          "sha256": "cdb617bce712d76e5dfdd24478fe4712479f5e659e1967af50f6cf918e298ced"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/font-size.ts",
+          "sha256": "d02e4276884bfa918ff5657a27686a3caec1006a84aad72df90da21bb9929499"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/op-docs.ts",
+          "sha256": "337ea6dfd925164278bab81d8bf018ff79847c27a4ce287bf5d99cf775e253b9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/animation-ops.ts",
+          "sha256": "8d86e668bdeacbdd9e0d0c21346a16f8f5f30326c8a95af9cdd98022e6c3ae14"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/arrange-ops.ts",
+          "sha256": "a62c5e711dd859b628a8b8b551cf1b3483dfa80d28e54e900c1afa981b32b1f9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/core-ops.ts",
+          "sha256": "5a252744e8b8b74933aff08cb5be942cb0b7f6d4f9fd9a0d7ca60cb6b11afaa1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/element-ops.ts",
+          "sha256": "6fb70ed8655e4cf76fc861dfa9a25721e36aa5a9941b2f4364b3be0a732dd5d5"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/equation-ops.ts",
+          "sha256": "79601c5ed875d0bea05cf99baafe2803d3419cf527a58ddb63849459ee1c12cd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/executor.ts",
+          "sha256": "84a06b8a41fa1725f73b53d151f4033d33c318a8aa3d8e7a2f4e734ce3ffea0d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/index.ts",
+          "sha256": "4d32d200ccfa2ea499076c8ecba0819b9428dfc2d68591248a0e00a513b667e5"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/insert-ops.ts",
+          "sha256": "8587ffc28e3ce491517db08976cfb333538e7e45466ddfe8b16bbc29bd6f78ac"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/omml-linear.ts",
+          "sha256": "0e9b1095b402005949db5fafbc0c628d349b32b71bf93d1e41b8f6c1d220b169"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/registry.ts",
+          "sha256": "d5d27b6d653983fcc870d6af3d9424b1d6e2854a5616be3bb691f259abde78ab"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/slide-ops.ts",
+          "sha256": "184ccf784aecb3f1c8bfbc4f206d4672eeb29e964cedb579da1f0242399dea28"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/table-ops.ts",
+          "sha256": "cded46843d91295abfd42213372d988ce70c632a267e25a681e3f5967ab6e34d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/text-ops.ts",
+          "sha256": "d8a8e9dca82d82ef95cde59a3794f72cae29474f5171ff84ebb3ee606ecd4d22"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/units.ts",
+          "sha256": "05e6109d72108974640b34979f7ed228c2c6d73d974e108538b7d4e71814ac6c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/deck.md",
+          "sha256": "8bab6db3a000a6dbcd476c973d4dd8c9788a3ff00f54c57df84af044f494b559"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/element.md",
+          "sha256": "9aac176bd41ef0b1979a881ef1d705297275af7189c68a2586105bdf907a8d94"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/insert.md",
+          "sha256": "54e7f9e32e6555ee3d718c2c5eda14dae9a181e9ebfa6a3a9b971941299c3a63"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/slide.md",
+          "sha256": "022df20a67941067a6b80efd199e9dcee6140f967a24eb66b5c4561ca0611129"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/table.md",
+          "sha256": "3c3c24c07423b11e3ce4e8aaf771f80ecb21183ec06595acc6f7be108d761d28"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/text.md",
+          "sha256": "6181e8db98d96c7b2b56920f95593ee305c5f31753d197ac02fd863e854c8234"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/auto-num.ts",
+          "sha256": "de686effc135aa7975bdbb119aac9c523edbdf1b9579703d08003d3cbb56a611"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/build-chart.ts",
+          "sha256": "68327d0001db020dbacd76a5fb39fba8822c774c043c1bb0bb2dba8463e06214"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/build-slide.ts",
+          "sha256": "b2fc14e845207bd860d0771cb7c80dec4e861fdae4433ac7aa62e6bde0d40548"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/cell-bevel.ts",
+          "sha256": "66f1007b0e6decda18b38f247fea89b53e9455e436f9c8edb68602222bbe5206"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/coords.ts",
+          "sha256": "0ca48416d1d652cae716ecc8670faabb1913f41796b9d401c06b25fe66ff557e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/fill.ts",
+          "sha256": "f9bc79197dd9762f276218d5a2d5a41ddad09ed1d48b7eb4f705f472fd740ed9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/image-dpi.ts",
+          "sha256": "5d303a037ca40de4aed7e36f74c087d958922e35ccb3dc34de29c143ea2738df"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/metrics.ts",
+          "sha256": "bfa02b26b685bc82fe417d47c76b084e03546bbba417e49738b9b404de83d980"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/pattern-fills.ts",
+          "sha256": "5c73223e295f5f43524c97e9484885c966d42e689328280d398e334888d36a76"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/preset-geometry.ts",
+          "sha256": "4b588ccca3dbb218978a07509264dca57fcb1aa22552bba38d827decb5b923cd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/scene3d.ts",
+          "sha256": "a5c0e1c3eee2efc6c6cf24a0e5783907f5738d3654e1c53cce670fd3e3f5a7bc"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/text-layout.ts",
+          "sha256": "27b3901d5b0f97300f3d14f3ab97597d1456c536dd8b1c8ab2a65a4fcfc126c6"
+        },
+        {
+          "path": "packages/shared/src/agent-media.ts",
+          "sha256": "0fb7c24258c60d1d7ec5e4dada2e3accc5cdb564156bc836a883b34b371e9e85"
+        },
+        {
+          "path": "packages/shared/src/ai-text.ts",
+          "sha256": "6a7c2ac21168b1cf7cdc1f1867b607bc74b5a09fc223c4c5b71d1919fb74428c"
+        },
+        {
+          "path": "packages/shared/src/auth.ts",
+          "sha256": "441ea506f814d9ec809cb92f0e68179b17725c2e62f229f0c685ca6cf7f772ca"
+        },
+        {
+          "path": "packages/shared/src/capture.ts",
+          "sha256": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098"
+        },
+        {
+          "path": "packages/shared/src/chat-attachments.ts",
+          "sha256": "79d68ea992f28ab4924bed461b805f3985535c80dec9636f2ad4432a53065196"
+        },
+        {
+          "path": "packages/shared/src/chat-models.ts",
+          "sha256": "219a4e596de1a73ba44b5631a99fb4aa2eccf0bb952419a4b367980d5b13d755"
+        },
+        {
+          "path": "packages/shared/src/config.ts",
+          "sha256": "48405f0b5e840a6647a122e3dbf2a09aa7aee1231932ac60c50e4ea4c2f9ceba"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "sha256": "28465744520de1eaf9f949d1d13786f4c955eca688a3b8405be8976a386b83a7"
+        },
+        {
+          "path": "packages/shared/src/desktop.ts",
+          "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6"
+        },
+        {
+          "path": "packages/shared/src/document-agent.ts",
+          "sha256": "c52bc6ccf6796332da5e527f0cd7f48d68423b8a67e407be0939e82798b843d2"
+        },
+        {
+          "path": "packages/shared/src/documents.ts",
+          "sha256": "c2d867c38bc91a826aec09c458c0bd374564fb658cee5dbbbd42f75376942fe5"
+        },
+        {
+          "path": "packages/shared/src/docx-agent.ts",
+          "sha256": "86387516b18450550319124daff63286a5b92f1df0c92bc92c9d2cbcc7580131"
+        },
+        {
+          "path": "packages/shared/src/docx-office-tools.ts",
+          "sha256": "22200ac02b679f2d22756bed993ef6cdd16d349afe30880c7dedde8794d0f3c3"
+        },
+        {
+          "path": "packages/shared/src/export.ts",
+          "sha256": "ee13032f2e82b2c44723580062b7c0c79a9d2f95f7359391b4a8f8412cd6890b"
+        },
+        {
+          "path": "packages/shared/src/feeds.ts",
+          "sha256": "38b1d7bb968fb93deb6087a26763b633cc10fb6938edaa383b53ca723275d53a"
+        },
+        {
+          "path": "packages/shared/src/files.ts",
+          "sha256": "e229f62fdf3f5404bdd63c28b855964c86adc5c927b949457cbf8b38cc043237"
+        },
+        {
+          "path": "packages/shared/src/html-brief.ts",
+          "sha256": "72e7551932bc6c72e05a1f05fb9b06b00f7c09f6a3d5501ed5cefac64a018b4c"
+        },
+        {
+          "path": "packages/shared/src/index.ts",
+          "sha256": "ba21f0b1168d184d19dd92aa4489e8e9d1493f37ebb71f9c7dff8d93c0d6fb26"
+        },
+        {
+          "path": "packages/shared/src/local.ts",
+          "sha256": "e6780f8af15ce51a5482f81e3163c8f1f71f7ed76b395ef068bf37a130b64bd3"
+        },
+        {
+          "path": "packages/shared/src/miniapp.ts",
+          "sha256": "f0e74622dff90236b5a39e2783816d4137907ed49cf91c49d61a8dcd593e5c59"
+        },
+        {
+          "path": "packages/shared/src/pdf-agent.ts",
+          "sha256": "611abc1f4708888194276c40ecb5302668300f1755604a85a2d184f1ca21df46"
+        },
+        {
+          "path": "packages/shared/src/pdf-visual-signature.ts",
+          "sha256": "52acded015883a0ddb8a69e9a0089af494d994568e97e65ae4bea3b645d149f7"
+        },
+        {
+          "path": "packages/shared/src/plugin.ts",
+          "sha256": "243f7d1569d33a616ee57332f5599810ed41436339e688b59cde92430f123723"
+        },
+        {
+          "path": "packages/shared/src/pptx-agent.ts",
+          "sha256": "f9c50470a326dfd0b57aa3650f69222670e4e302f6c9cf268eacdcd7314de9ac"
+        },
+        {
+          "path": "packages/shared/src/pptx-animation.ts",
+          "sha256": "f556f66fb4904630a06104418a711c09f17dd333ed2437b9c6aff17bad2aa40f"
+        },
+        {
+          "path": "packages/shared/src/pptx-deck-progress.ts",
+          "sha256": "a39014d4279feffa9f299401d439da141725c39ace2cd95f9bc9b83c2879db28"
+        },
+        {
+          "path": "packages/shared/src/pptx-fill.ts",
+          "sha256": "1cd2981b906969e0d4beacd6ac5a5540a109613f359b43a6b96c718fb0194373"
+        },
+        {
+          "path": "packages/shared/src/pptx-image.ts",
+          "sha256": "2e796250e171653045a453215c810af24f8db298ce39dce853e26845fa9d380d"
+        },
+        {
+          "path": "packages/shared/src/pptx-ink.ts",
+          "sha256": "fa4556647bbf553aa758f8850093fc20ce2715cb7e833bbd299cc6cd052157c5"
+        },
+        {
+          "path": "packages/shared/src/pptx-paragraph.ts",
+          "sha256": "a69d627fd6a71ba8e7be3bf352afbd93b4b070dd077698e10649d6585ed6552f"
+        },
+        {
+          "path": "packages/shared/src/pptx-picture.ts",
+          "sha256": "e1f829619f57dba4d931668fcbdd9f608232332f1bcf0b677027a2bb24d5fc59"
+        },
+        {
+          "path": "packages/shared/src/pptx-shape.ts",
+          "sha256": "0d47e4546cf3659206bfa8cd2dfaf13d1a1a7e39e23e9c62e22c60bdf82b77bd"
+        },
+        {
+          "path": "packages/shared/src/pptx-zoom.ts",
+          "sha256": "572f160ac854894cf769c31c6320152f14e0b622df667c50e30e114f201fea5a"
+        },
+        {
+          "path": "packages/shared/src/retrieval.ts",
+          "sha256": "5661f5aeaadf63f36bad957e15e5cba6af98afac385eb1259fe214901448d2fb"
+        },
+        {
+          "path": "packages/shared/src/seams.ts",
+          "sha256": "1ab833ff66a44890b603e118fe6233317be550a763b377e890889923dbc17df8"
+        },
+        {
+          "path": "packages/shared/src/search.ts",
+          "sha256": "dcbcf32017e2c4d7e13ee66686e8c618ef6faff3603735b0c302f8d2bbbbfe08"
+        },
+        {
+          "path": "packages/shared/src/structure.ts",
+          "sha256": "d0cdb24ad03e4a030f872d246588ed7110a7001c7827ce7973b4518a17d8d3ed"
+        },
+        {
+          "path": "packages/shared/src/usage.ts",
+          "sha256": "5f55cd19e4ae213449ce67394a148c5f08ed8e8a324a8dc202dfa3f7953123ba"
+        },
+        {
+          "path": "packages/shared/src/xlsx-agent.ts",
+          "sha256": "f0681ab8265ad8d1565f5847d3cd6cc77d0a180aa0120a928997b09e6a35de37"
+        }
+      ],
+      "substitutions": [
+        "getDocument: fixed fixture identity only; no DB module",
+        "applyPptxService: explicit rejection; no model/network/storage calls"
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "entryPoint": "apps/server/src/services/pptx-agent-host.ts",
+      "bundleSha256": "92fb56b5daf85f4dd72da6338e77070aa38979eaac100b6903b7b1710250cf52",
+      "files": [
+        {
+          "path": "apps/server/src/services/document-agent-format.ts",
+          "sha256": "7105faa424bae5fd61c1a53967569e6918736366a6d6559b7ad933b54318548c"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-codec.ts",
+          "sha256": "3467d20786639d798e3a05c93399eb7610bc4b2d5281a6528a96a1d55b5b8e05"
+        },
+        {
+          "path": "apps/server/src/services/pptx-agent-host.ts",
+          "sha256": "c0f7ddf2a6133e3201843997a50fc3bac9ae36a633146cbdfc758917bef50dcd"
+        },
+        {
+          "path": "apps/server/src/services/pptx-clipboard-elements.ts",
+          "sha256": "4e4546407a52e2eb68b0600e732e786d6eb8ac9363492a9d0f7047c453ab764c"
+        },
+        {
+          "path": "apps/server/src/services/pptx-clipboard-slides.ts",
+          "sha256": "2c0f8dcb69a642f915a6871bca4e6cdb43ce0e9918caa48af9509f17231e84b9"
+        },
+        {
+          "path": "apps/server/src/services/pptx-copy-background.ts",
+          "sha256": "592ce7831a2548537b3d5ef0c34986b62e14ace81bf68b69daf270c6cf192366"
+        },
+        {
+          "path": "apps/server/src/services/pptx-group-flip.ts",
+          "sha256": "66013283e43e075898010e46912f13425bb72e1ceb60bdd626034cf02dcdd829"
+        },
+        {
+          "path": "apps/server/src/services/pptx-image-info.ts",
+          "sha256": "48daa1a8890fc881de17c0e80a8f4b0cc145c43b9c530fe2f8c3bd569b03ada9"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-animation.ts",
+          "sha256": "d864d165c341ce7185181b45bd289779da0f7941d95367ba0279ad1ffe47e1fd"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-clipboard.ts",
+          "sha256": "ed5c65fea0defc5b5227fea2383174796a38d4a8ba0ef1909689921b78c609af"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-fill.ts",
+          "sha256": "61a0c2a56c0d6d3469e67c79f622b9c10f00be829488e6604788dc9f49a34d1d"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-ink.ts",
+          "sha256": "90d301042747ce77bfed629ef4f20d5c4340dd16abc57d1bd9472ac5f3333345"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-paragraph.ts",
+          "sha256": "0c2c0a28ccf5baba2bc8c325b7f16b30b5ed2c2db70f081c7269eefb4959c375"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-picture.ts",
+          "sha256": "67f561f8d06581c187e00972a53cec1a72ceda6a87defbed5f7cdcdec2f9bf0c"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-shape.ts",
+          "sha256": "294db944c37263c121797b077498173407b19812307422579ca009211317d229"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-upload.ts",
+          "sha256": "799e8a92f6368b0e3d079e1afd9eb723557913c528ceaaa56f2dd73ac89e7905"
+        },
+        {
+          "path": "apps/server/src/services/pptx-manual-zoom.ts",
+          "sha256": "c9447c77bab1363c4fda477822f2518be1cc75f8065a865cb25ef6029300a958"
+        },
+        {
+          "path": "apps/server/src/services/pptx-picture-bullet.ts",
+          "sha256": "a7f0238ac787026e92c8a5a947844c02dd1b859106a8dea9d461b1c5a6175c47"
+        },
+        {
+          "path": "packages/office/src/pptx-archive.ts",
+          "sha256": "e985c74c1645f39678baadfb7fd40edba7f379867dbd055b3851a3241266c0fd"
+        },
+        {
+          "path": "packages/office/src/pptx-element-capabilities.ts",
+          "sha256": "a263705e73b5dccd8617f7a2d79aa11b873bc984fb29ab6f1e16b6783dad6145"
+        },
+        {
+          "path": "packages/office/src/pptx-glb.ts",
+          "sha256": "9647209347ed821f9e7eaffaf9db3392b7ab1970e68748bf0cf62d63a3b6feed"
+        },
+        {
+          "path": "packages/office/src/pptx-group-picture-crop-guard.ts",
+          "sha256": "64613d6d5d9fe3d071ab158669127fe7b9ead80a5d381e8de3aee43d23805f64"
+        },
+        {
+          "path": "packages/office/src/pptx-group-placement.ts",
+          "sha256": "7602270d3918c375138291b1bdd5173fa0141e06cb0ebf583c703dee422b5aa3"
+        },
+        {
+          "path": "packages/office/src/pptx-ink.ts",
+          "sha256": "bdff12162cd4198ac8d8972dfd7d3a602564f6714bc552b56542164daafe7b34"
+        },
+        {
+          "path": "packages/office/src/pptx-media-audio.ts",
+          "sha256": "2c250684d69d51107049b422555bd519d246ec3566645b426464eb08cb323944"
+        },
+        {
+          "path": "packages/office/src/pptx-media-binary.ts",
+          "sha256": "51a6ae1df218234965a08c75b37a2489b3c55b4a008e461d6fad939bf4da65bf"
+        },
+        {
+          "path": "packages/office/src/pptx-media-containers.ts",
+          "sha256": "2eebf310b51fe4307facaf0b4aa8c4f0e4a2c43facb484a7c392f82ebaf142e2"
+        },
+        {
+          "path": "packages/office/src/pptx-media-frame.ts",
+          "sha256": "daa8adb8cc2015ddcccc433461b26fe2f294f3313c9977703837ab631f9277aa"
+        },
+        {
+          "path": "packages/office/src/pptx-media-info.ts",
+          "sha256": "e7af8f0aaa80eb6661d79f8f0cc4550e12ac1ade39b9a32a3aa042916be88fda"
+        },
+        {
+          "path": "packages/office/src/pptx-picture-edit.ts",
+          "sha256": "c8867945296f68b2e4083d88eaf52498bcd76a7baa91ae655b10ccbc4cf6bfec"
+        },
+        {
+          "path": "packages/office/src/pptx-picture-placement.ts",
+          "sha256": "dce9cfb52aa3a34223962da80f31b139fa62a977df1cc8b30c1a22e58e31a52c"
+        },
+        {
+          "path": "packages/office/src/pptx-render.ts",
+          "sha256": "f8ceb494b27883eb077580ea7aec707dc40a794ecf5810a4388e23b50146cc40"
+        },
+        {
+          "path": "packages/office/src/pptx-selection-clipboard.ts",
+          "sha256": "e7abe54d9512b9251da7439ca0b0b26be4c577f7236f787e46264bb82814f29a"
+        },
+        {
+          "path": "packages/office/src/pptx-svg.ts",
+          "sha256": "63e048bbf69f49a4b5cbf49b6f62dfd339957bb09b6295be06d663dfd3298c91"
+        },
+        {
+          "path": "packages/office/src/pptx-zoom.ts",
+          "sha256": "fec88502022086ccc5281d3e81b8a687a57ca3c250caac6b020934b4a6ef80fd"
+        },
+        {
+          "path": "packages/office/src/shims/pptx-engine-types.ts",
+          "sha256": "d70da490c13ede7c674e9291b92fc924add0c97a18680d3a9e6a1e07d0cfc40e"
+        },
+        {
+          "path": "packages/office/src/zip-bounds.ts",
+          "sha256": "58f4b5114cc8660ff48fea23549351d5a64157585fbc5ee02afed7b83be3297f"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/math.ts",
+          "sha256": "48bdb590e7f234e22e96bba95f1abce78d4b6ae8832a95fdff6724068a4b3f1b"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/xml-utils.ts",
+          "sha256": "69ebdb5bff764beaec6ecbf33fcbfe5991b61b939997e8b1d7edc73baa5d6dd1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/align.ts",
+          "sha256": "d02fc779e66f8878b9b4c1dbcb60971daae9ae106c1bd4f02ac4364c37bbe32b"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/animation.ts",
+          "sha256": "e435af3a32bf8a784318d85795cd076139cc6b283349fd2357d5fbfd00f69bde"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/background-promote.ts",
+          "sha256": "f55a2505323706bec76675e39e1c1f2dd243841f5e44876f33ca7a0064148291"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/blank.ts",
+          "sha256": "7a55b66dca2f423452afb3e24cdb27b466e473bb2f5ba1c3c8bd0f6e6305cb35"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/builtin-layouts.ts",
+          "sha256": "a1731a7b00426635f79d599056f2e84e8adf60c5c01ababfdabd1c5103201643"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chart-insert.ts",
+          "sha256": "d9f7ec351a7dc9a678d3c6e36d75b3d889d9281992befe7bca9cae0d84d59642"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chart.ts",
+          "sha256": "4d74bb8156228d10c89114f9d75236e7883ed6a46417f583bf0238c20cd83655"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chartex.ts",
+          "sha256": "b494d56242847ff27102ca80c94c6225d767c14de45b56562a7e4b65e6ab05dd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/color.ts",
+          "sha256": "449b9a8cf4b6a2a6bc5b66b52cf7eab87756fbfe80f72ddc0452ee38eeec38a2"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/comments.ts",
+          "sha256": "b925d2786d4d0cbde16c443a04dc6577c217ec650a20464cfe306bdbc20576c0"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/custgeom.ts",
+          "sha256": "d814fa01d8bd40b9c439780e733d5ee2f28bef49113db65f511d137860b45ade"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/dgm-hier.ts",
+          "sha256": "c33bc070b0b8cabbc1224866c0fc06296f3c7b4c1965ef7a4d17addf10b81d8e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/embedded-fonts.ts",
+          "sha256": "89bc413a645018281e73b0f2a431fa12212ae5e1ebccb9b4ec41dcab1e175e81"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/format-brush.ts",
+          "sha256": "2cb39076074fa591a4238573f98c64d3f561d729842b5ffeaaf5225f6a014c74"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/generate.ts",
+          "sha256": "c26ddaf81b00dc495f34bd2103482c05a5334a2e843f94950446ff0dfbc2ab0e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/headerfooter.ts",
+          "sha256": "47184630999d85d92401f606f97b40658afc3b211190acea667f135a46a3c5d3"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/hyperlink.ts",
+          "sha256": "ad367e32f26cf6e0b4d128f216f823f078958d8bf1738977f9fba6e5ac5d1934"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/identity.ts",
+          "sha256": "d36917ace53025bc6f246f95c0a38ba235f1e9cb290546d63e5cdf131027954f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/index.ts",
+          "sha256": "f6f30c36851f2a6ba6ea4f5197356940fd1e949901ea6563e5a5deb5a570dc5a"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/insert.ts",
+          "sha256": "7900a1fd7ab76b3de769772079cff999f4689133b3deed92e86a9a1aaffcb019"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/layout.ts",
+          "sha256": "463d0964de60487a262b845983f0bb1bccceffa5a67c45dd68b41c97303c596d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/master-edit.ts",
+          "sha256": "4ca7fc40f48ea8e14e0f25ae47dc23fe1bcd1d2741e8d9cb38aa778697cff2a8"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/media-insert.ts",
+          "sha256": "f9e1b9305e2e1a9c562d2b05538c80f8c412ff1533f9136dcb9ea45d41e55a4a"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/named-action.ts",
+          "sha256": "f1037b8b2d11394d438862c1b94bfea8c00b39a13cb199e519fe492bc59bbe9c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/notes.ts",
+          "sha256": "5f2afafa97274fc2a4a5eeeadc2db9f26638a5066a4d7a41e4e8730f15d284dc"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/parse.ts",
+          "sha256": "bebfa2a8b0ff5a1f409d06c6c078cb873842d4b362a028403c99154db6154da3"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/placeholder.ts",
+          "sha256": "441614171751acf64e2ea6b1ecab05f77f37430de1af355e88be9659e0ce2f0f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/preset-shape-types.ts",
+          "sha256": "f5e349f8afc14dc219cff1991587f72b59fbd5095b58e495b766c93dbe56b00f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/resource-cleanup.ts",
+          "sha256": "290c9c6cd20c0b62ea39145d09616c34be5540a4caf6a38f62315a2a32edd883"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/scan.ts",
+          "sha256": "be9e0241176e634796dca02941b8d5ab14e0a31b2c46fcbc49443af6018e60ff"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/sections.ts",
+          "sha256": "c59a6468e40265572c23c4f8b24d8f4aefd61b15dcd657559f45c0ceefcc5623"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/slide-ids.ts",
+          "sha256": "ae71798bb63618e4b15a557d701ed7c322c7bd2fc693e35b487e2ca17bf6e157"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/slide-transfer.ts",
+          "sha256": "64457cae61856f7916dd3b22c6df9e943a2b1b77a8654244efe9e5631bf24062"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/smartart-layout.ts",
+          "sha256": "58445c04595102429c26e63ba015b47ff92c525725f759ce59739e197fcd8c3c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/smartart.ts",
+          "sha256": "865b288fb00f09fb4c1b4adc6967451dc05b10fe2dc2fe9508d2386c0d690e0b"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-edit.ts",
+          "sha256": "e81c5b088d85948182c54bb45b0839b8867c7e77ff0ea06d81c6fee512fd3b61"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-grid.ts",
+          "sha256": "dd6015aa8c1f9d95d2fda02f6d34ec2100a2f96a766b3090ff059f5e9af2cd4d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-style.ts",
+          "sha256": "bc2417e18e680ac6d760e70013962ea9502e7872a5437fd7d480f5223c6ea188"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/theme-apply.ts",
+          "sha256": "13f17f197cba557f0eec22dcadee6bb75b0222de91b102013751163f50983be8"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/theme.ts",
+          "sha256": "eea493cb5921170ece16b8311741b010d6847e7752aad528c75537843d88aadb"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/types.ts",
+          "sha256": "6881c093165fe5256935310f9ffdd371137a41f5d2ed489e8a1c4241b7994842"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/vendor/mtx/ctf.ts",
+          "sha256": "d94b9705e53bfec4f98df8198e8cef1cd048b0a5f0eaf254d309a2808edc1e8d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/vendor/mtx/index.ts",
+          "sha256": "08d6393e9c0b8d722380a7cb35abc7e64d4979290e0377cb736f7a6a6760e511"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/vendor/mtx/lzcomp.ts",
+          "sha256": "2b39141b600692616d3df7d277921880f9aae8ace3de0b824a89a4be76edfbc5"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/xml-utils.ts",
+          "sha256": "445c823bf29fded797e033d0ea958030027d3225eb224cbaeffce0fe0ea2371c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/zip.ts",
+          "sha256": "d249538c5496f99b5d9f3e2452a20923c477fd87f89e81bc63468eab24ba57f1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/edit-text.ts",
+          "sha256": "cdb617bce712d76e5dfdd24478fe4712479f5e659e1967af50f6cf918e298ced"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/font-size.ts",
+          "sha256": "d02e4276884bfa918ff5657a27686a3caec1006a84aad72df90da21bb9929499"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/op-docs.ts",
+          "sha256": "337ea6dfd925164278bab81d8bf018ff79847c27a4ce287bf5d99cf775e253b9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/animation-ops.ts",
+          "sha256": "8d86e668bdeacbdd9e0d0c21346a16f8f5f30326c8a95af9cdd98022e6c3ae14"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/arrange-ops.ts",
+          "sha256": "a62c5e711dd859b628a8b8b551cf1b3483dfa80d28e54e900c1afa981b32b1f9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/core-ops.ts",
+          "sha256": "5a252744e8b8b74933aff08cb5be942cb0b7f6d4f9fd9a0d7ca60cb6b11afaa1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/element-ops.ts",
+          "sha256": "6fb70ed8655e4cf76fc861dfa9a25721e36aa5a9941b2f4364b3be0a732dd5d5"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/equation-ops.ts",
+          "sha256": "79601c5ed875d0bea05cf99baafe2803d3419cf527a58ddb63849459ee1c12cd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/executor.ts",
+          "sha256": "84a06b8a41fa1725f73b53d151f4033d33c318a8aa3d8e7a2f4e734ce3ffea0d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/index.ts",
+          "sha256": "4d32d200ccfa2ea499076c8ecba0819b9428dfc2d68591248a0e00a513b667e5"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/insert-ops.ts",
+          "sha256": "8587ffc28e3ce491517db08976cfb333538e7e45466ddfe8b16bbc29bd6f78ac"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/omml-linear.ts",
+          "sha256": "0e9b1095b402005949db5fafbc0c628d349b32b71bf93d1e41b8f6c1d220b169"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/registry.ts",
+          "sha256": "d5d27b6d653983fcc870d6af3d9424b1d6e2854a5616be3bb691f259abde78ab"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/slide-ops.ts",
+          "sha256": "184ccf784aecb3f1c8bfbc4f206d4672eeb29e964cedb579da1f0242399dea28"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/table-ops.ts",
+          "sha256": "cded46843d91295abfd42213372d988ce70c632a267e25a681e3f5967ab6e34d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/text-ops.ts",
+          "sha256": "d8a8e9dca82d82ef95cde59a3794f72cae29474f5171ff84ebb3ee606ecd4d22"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/ops/units.ts",
+          "sha256": "05e6109d72108974640b34979f7ed228c2c6d73d974e108538b7d4e71814ac6c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/deck.md",
+          "sha256": "8bab6db3a000a6dbcd476c973d4dd8c9788a3ff00f54c57df84af044f494b559"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/element.md",
+          "sha256": "9aac176bd41ef0b1979a881ef1d705297275af7189c68a2586105bdf907a8d94"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/insert.md",
+          "sha256": "54e7f9e32e6555ee3d718c2c5eda14dae9a181e9ebfa6a3a9b971941299c3a63"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/slide.md",
+          "sha256": "022df20a67941067a6b80efd199e9dcee6140f967a24eb66b5c4561ca0611129"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/table.md",
+          "sha256": "3c3c24c07423b11e3ce4e8aaf771f80ecb21183ec06595acc6f7be108d761d28"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-ops/src/prompts/ops/text.md",
+          "sha256": "6181e8db98d96c7b2b56920f95593ee305c5f31753d197ac02fd863e854c8234"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/auto-num.ts",
+          "sha256": "de686effc135aa7975bdbb119aac9c523edbdf1b9579703d08003d3cbb56a611"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/build-chart.ts",
+          "sha256": "68327d0001db020dbacd76a5fb39fba8822c774c043c1bb0bb2dba8463e06214"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/build-slide.ts",
+          "sha256": "b2fc14e845207bd860d0771cb7c80dec4e861fdae4433ac7aa62e6bde0d40548"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/cell-bevel.ts",
+          "sha256": "66f1007b0e6decda18b38f247fea89b53e9455e436f9c8edb68602222bbe5206"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/coords.ts",
+          "sha256": "0ca48416d1d652cae716ecc8670faabb1913f41796b9d401c06b25fe66ff557e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/fill.ts",
+          "sha256": "f9bc79197dd9762f276218d5a2d5a41ddad09ed1d48b7eb4f705f472fd740ed9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/image-dpi.ts",
+          "sha256": "5d303a037ca40de4aed7e36f74c087d958922e35ccb3dc34de29c143ea2738df"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/metrics.ts",
+          "sha256": "bfa02b26b685bc82fe417d47c76b084e03546bbba417e49738b9b404de83d980"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/pattern-fills.ts",
+          "sha256": "5c73223e295f5f43524c97e9484885c966d42e689328280d398e334888d36a76"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/preset-geometry.ts",
+          "sha256": "4b588ccca3dbb218978a07509264dca57fcb1aa22552bba38d827decb5b923cd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/scene3d.ts",
+          "sha256": "a5c0e1c3eee2efc6c6cf24a0e5783907f5738d3654e1c53cce670fd3e3f5a7bc"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/text-layout.ts",
+          "sha256": "27b3901d5b0f97300f3d14f3ab97597d1456c536dd8b1c8ab2a65a4fcfc126c6"
+        },
+        {
+          "path": "packages/shared/src/agent-media.ts",
+          "sha256": "0fb7c24258c60d1d7ec5e4dada2e3accc5cdb564156bc836a883b34b371e9e85"
+        },
+        {
+          "path": "packages/shared/src/ai-text.ts",
+          "sha256": "6a7c2ac21168b1cf7cdc1f1867b607bc74b5a09fc223c4c5b71d1919fb74428c"
+        },
+        {
+          "path": "packages/shared/src/auth.ts",
+          "sha256": "441ea506f814d9ec809cb92f0e68179b17725c2e62f229f0c685ca6cf7f772ca"
+        },
+        {
+          "path": "packages/shared/src/capture.ts",
+          "sha256": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098"
+        },
+        {
+          "path": "packages/shared/src/chat-attachments.ts",
+          "sha256": "79d68ea992f28ab4924bed461b805f3985535c80dec9636f2ad4432a53065196"
+        },
+        {
+          "path": "packages/shared/src/chat-models.ts",
+          "sha256": "219a4e596de1a73ba44b5631a99fb4aa2eccf0bb952419a4b367980d5b13d755"
+        },
+        {
+          "path": "packages/shared/src/config.ts",
+          "sha256": "48405f0b5e840a6647a122e3dbf2a09aa7aee1231932ac60c50e4ea4c2f9ceba"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "sha256": "28465744520de1eaf9f949d1d13786f4c955eca688a3b8405be8976a386b83a7"
+        },
+        {
+          "path": "packages/shared/src/desktop.ts",
+          "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6"
+        },
+        {
+          "path": "packages/shared/src/document-agent.ts",
+          "sha256": "c52bc6ccf6796332da5e527f0cd7f48d68423b8a67e407be0939e82798b843d2"
+        },
+        {
+          "path": "packages/shared/src/documents.ts",
+          "sha256": "c2d867c38bc91a826aec09c458c0bd374564fb658cee5dbbbd42f75376942fe5"
+        },
+        {
+          "path": "packages/shared/src/docx-agent.ts",
+          "sha256": "86387516b18450550319124daff63286a5b92f1df0c92bc92c9d2cbcc7580131"
+        },
+        {
+          "path": "packages/shared/src/docx-office-tools.ts",
+          "sha256": "22200ac02b679f2d22756bed993ef6cdd16d349afe30880c7dedde8794d0f3c3"
+        },
+        {
+          "path": "packages/shared/src/export.ts",
+          "sha256": "ee13032f2e82b2c44723580062b7c0c79a9d2f95f7359391b4a8f8412cd6890b"
+        },
+        {
+          "path": "packages/shared/src/feeds.ts",
+          "sha256": "38b1d7bb968fb93deb6087a26763b633cc10fb6938edaa383b53ca723275d53a"
+        },
+        {
+          "path": "packages/shared/src/files.ts",
+          "sha256": "e229f62fdf3f5404bdd63c28b855964c86adc5c927b949457cbf8b38cc043237"
+        },
+        {
+          "path": "packages/shared/src/html-brief.ts",
+          "sha256": "72e7551932bc6c72e05a1f05fb9b06b00f7c09f6a3d5501ed5cefac64a018b4c"
+        },
+        {
+          "path": "packages/shared/src/index.ts",
+          "sha256": "ba21f0b1168d184d19dd92aa4489e8e9d1493f37ebb71f9c7dff8d93c0d6fb26"
+        },
+        {
+          "path": "packages/shared/src/local.ts",
+          "sha256": "e6780f8af15ce51a5482f81e3163c8f1f71f7ed76b395ef068bf37a130b64bd3"
+        },
+        {
+          "path": "packages/shared/src/miniapp.ts",
+          "sha256": "f0e74622dff90236b5a39e2783816d4137907ed49cf91c49d61a8dcd593e5c59"
+        },
+        {
+          "path": "packages/shared/src/pdf-agent.ts",
+          "sha256": "611abc1f4708888194276c40ecb5302668300f1755604a85a2d184f1ca21df46"
+        },
+        {
+          "path": "packages/shared/src/pdf-visual-signature.ts",
+          "sha256": "52acded015883a0ddb8a69e9a0089af494d994568e97e65ae4bea3b645d149f7"
+        },
+        {
+          "path": "packages/shared/src/plugin.ts",
+          "sha256": "243f7d1569d33a616ee57332f5599810ed41436339e688b59cde92430f123723"
+        },
+        {
+          "path": "packages/shared/src/pptx-agent.ts",
+          "sha256": "f9c50470a326dfd0b57aa3650f69222670e4e302f6c9cf268eacdcd7314de9ac"
+        },
+        {
+          "path": "packages/shared/src/pptx-animation.ts",
+          "sha256": "f556f66fb4904630a06104418a711c09f17dd333ed2437b9c6aff17bad2aa40f"
+        },
+        {
+          "path": "packages/shared/src/pptx-deck-progress.ts",
+          "sha256": "a39014d4279feffa9f299401d439da141725c39ace2cd95f9bc9b83c2879db28"
+        },
+        {
+          "path": "packages/shared/src/pptx-fill.ts",
+          "sha256": "1cd2981b906969e0d4beacd6ac5a5540a109613f359b43a6b96c718fb0194373"
+        },
+        {
+          "path": "packages/shared/src/pptx-image.ts",
+          "sha256": "2e796250e171653045a453215c810af24f8db298ce39dce853e26845fa9d380d"
+        },
+        {
+          "path": "packages/shared/src/pptx-ink.ts",
+          "sha256": "fa4556647bbf553aa758f8850093fc20ce2715cb7e833bbd299cc6cd052157c5"
+        },
+        {
+          "path": "packages/shared/src/pptx-paragraph.ts",
+          "sha256": "a69d627fd6a71ba8e7be3bf352afbd93b4b070dd077698e10649d6585ed6552f"
+        },
+        {
+          "path": "packages/shared/src/pptx-picture.ts",
+          "sha256": "e1f829619f57dba4d931668fcbdd9f608232332f1bcf0b677027a2bb24d5fc59"
+        },
+        {
+          "path": "packages/shared/src/pptx-shape.ts",
+          "sha256": "0d47e4546cf3659206bfa8cd2dfaf13d1a1a7e39e23e9c62e22c60bdf82b77bd"
+        },
+        {
+          "path": "packages/shared/src/pptx-zoom.ts",
+          "sha256": "572f160ac854894cf769c31c6320152f14e0b622df667c50e30e114f201fea5a"
+        },
+        {
+          "path": "packages/shared/src/retrieval.ts",
+          "sha256": "5661f5aeaadf63f36bad957e15e5cba6af98afac385eb1259fe214901448d2fb"
+        },
+        {
+          "path": "packages/shared/src/seams.ts",
+          "sha256": "1ab833ff66a44890b603e118fe6233317be550a763b377e890889923dbc17df8"
+        },
+        {
+          "path": "packages/shared/src/search.ts",
+          "sha256": "dcbcf32017e2c4d7e13ee66686e8c618ef6faff3603735b0c302f8d2bbbbfe08"
+        },
+        {
+          "path": "packages/shared/src/structure.ts",
+          "sha256": "d0cdb24ad03e4a030f872d246588ed7110a7001c7827ce7973b4518a17d8d3ed"
+        },
+        {
+          "path": "packages/shared/src/usage.ts",
+          "sha256": "5f55cd19e4ae213449ce67394a148c5f08ed8e8a324a8dc202dfa3f7953123ba"
+        },
+        {
+          "path": "packages/shared/src/xlsx-agent.ts",
+          "sha256": "f0681ab8265ad8d1565f5847d3cd6cc77d0a180aa0120a928997b09e6a35de37"
+        }
+      ],
+      "substitutions": [
+        "getDocument: fixed fixture identity only; no DB module",
+        "applyPptxService: explicit rejection; no model/network/storage calls"
+      ]
+    }
+  }
+}

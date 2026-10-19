@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxShapeGallery.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxShapeGallery.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 02761ddaa692b3a1c545d7840d677136a63c9ca54b109a09c767a2735cd4f787
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useRef, useState, type KeyboardEvent, type ReactNode } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { Button } from &#x27;antd&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import { PPTX_INSERT_SHAPE_KINDS, type PptxManualShape } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import type { SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  ToolbarButton,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L8"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L9"><pre>  ToolbarSelect,</pre></li>
+    <li id="L10"><pre>  ToolbarTabs,</pre></li>
+    <li id="L11"><pre>  ToolbarTextField,</pre></li>
+    <li id="L12"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L13"><pre>import type { PptxTarget } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L14"><pre>import {</pre></li>
+    <li id="L15"><pre>  currentPptxShapeStyle,</pre></li>
+    <li id="L16"><pre>  isPptxLineKind,</pre></li>
+    <li id="L17"><pre>  PPTX_SHAPE_GROUPS,</pre></li>
+    <li id="L18"><pre>  PPTX_SHAPE_STYLE_ROWS,</pre></li>
+    <li id="L19"><pre>  PPTX_SHAPE_STYLES,</pre></li>
+    <li id="L20"><pre>  PPTX_SHAPES,</pre></li>
+    <li id="L21"><pre>  pptxInsertShapeOp,</pre></li>
+    <li id="L22"><pre>  pptxShapeLabel,</pre></li>
+    <li id="L23"><pre>  pptxShapePreview,</pre></li>
+    <li id="L24"><pre>  pptxShapeStyleOps,</pre></li>
+    <li id="L25"><pre>  type PptxShapeStyle,</pre></li>
+    <li id="L26"><pre>} from &#x27;./pptx-shape-presets.js&#x27;</pre></li>
+    <li id="L27"><pre>import &#x27;./pptx-shape-gallery.css&#x27;</pre></li>
+    <li id="L28"><pre></pre></li>
+    <li id="L29">
+      <pre>
+export function PptxShapePreview({ kind, style }: { kind: string; style?: PptxShapeStyle }) {</pre>
+    </li>
+    <li id="L30"><pre>  const paths = pptxShapePreview(kind)</pre></li>
+    <li id="L31"><pre>  return (</pre></li>
+    <li id="L32">
+      <pre>
+    &lt;svg width=&quot;44&quot; height=&quot;36&quot; viewBox=&quot;-4 -4 44 36&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L33"><pre>      &lt;g</pre></li>
+    <li id="L34"><pre>        fill={style?.fill ?? &#x27;none&#x27;}</pre></li>
+    <li id="L35"><pre>        stroke={style?.stroke ?? &#x27;currentColor&#x27;}</pre></li>
+    <li id="L36"><pre>        strokeWidth=&quot;1.5&quot;</pre></li>
+    <li id="L37"><pre>        strokeLinejoin=&quot;round&quot;</pre></li>
+    <li id="L38">
+      <pre>
+        strokeDasharray={style?.dash === &#x27;dash&#x27; ? &#x27;4 3&#x27; : undefined}</pre>
+    </li>
+    <li id="L39"><pre>      &gt;</pre></li>
+    <li id="L40"><pre>        {paths?.path &amp;&amp; &lt;path d={paths.path} /&gt;}</pre></li>
+    <li id="L41">
+      <pre>
+        {paths?.fillPath &amp;&amp; &lt;path d={paths.fillPath} stroke=&quot;none&quot; /&gt;}</pre>
+    </li>
+    <li id="L42">
+      <pre>
+        {paths?.strokePath &amp;&amp; &lt;path d={paths.strokePath} fill=&quot;none&quot; /&gt;}</pre>
+    </li>
+    <li id="L43"><pre>      &lt;/g&gt;</pre></li>
+    <li id="L44"><pre>    &lt;/svg&gt;</pre></li>
+    <li id="L45"><pre>  )</pre></li>
+    <li id="L46"><pre>}</pre></li>
+    <li id="L47"><pre></pre></li>
+    <li id="L48">
+      <pre>
+/** One Tab stop per gallery; arrows select a preview without changing the document. */</pre>
+    </li>
+    <li id="L49"><pre>function Gallery({</pre></li>
+    <li id="L50"><pre>  label,</pre></li>
+    <li id="L51"><pre>  items,</pre></li>
+    <li id="L52"><pre>  value,</pre></li>
+    <li id="L53"><pre>  onChange,</pre></li>
+    <li id="L54"><pre>}: {</pre></li>
+    <li id="L55"><pre>  label: string</pre></li>
+    <li id="L56">
+      <pre>  items: readonly { key: string; label: string; content: ReactNode }[]</pre>
+    </li>
+    <li id="L57"><pre>  value: string</pre></li>
+    <li id="L58"><pre>  onChange: (key: string) =&gt; void</pre></li>
+    <li id="L59"><pre>}) {</pre></li>
+    <li id="L60"><pre>  const ref = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L61">
+      <pre>
+  const active = items.some((item) =&gt; item.key === value) ? value : items[0]?.key</pre>
+    </li>
+    <li id="L62"><pre>  const navigate = (event: KeyboardEvent, index: number) =&gt; {</pre></li>
+    <li id="L63">
+      <pre>
+    const offset = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 4, ArrowUp: -4 }[event.key]</pre>
+    </li>
+    <li id="L64">
+      <pre>
+    if (offset === undefined &amp;&amp; event.key !== &#x27;Home&#x27; &amp;&amp; event.key !== &#x27;End&#x27;) return</pre>
+    </li>
+    <li id="L65"><pre>    event.preventDefault()</pre></li>
+    <li id="L66"><pre>    event.stopPropagation()</pre></li>
+    <li id="L67"><pre>    const next =</pre></li>
+    <li id="L68"><pre>      event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L69"><pre>        ? 0</pre></li>
+    <li id="L70"><pre>        : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L71"><pre>          ? items.length - 1</pre></li>
+    <li id="L72">
+      <pre>          : Math.max(0, Math.min(items.length - 1, index + (offset ?? 0)))</pre>
+    </li>
+    <li id="L73"><pre>    const item = items[next]</pre></li>
+    <li id="L74"><pre>    if (!item) return</pre></li>
+    <li id="L75"><pre>    onChange(item.key)</pre></li>
+    <li id="L76">
+      <pre>
+    ref.current?.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;button&#x27;)[next]?.focus()</pre>
+    </li>
+    <li id="L77"><pre>  }</pre></li>
+    <li id="L78"><pre>  return (</pre></li>
+    <li id="L79">
+      <pre>
+    &lt;div ref={ref} className=&quot;mimir-pptx-shape-grid&quot; role=&quot;radiogroup&quot; aria-label={label}&gt;</pre>
+    </li>
+    <li id="L80"><pre>      {items.map((item, index) =&gt; (</pre></li>
+    <li id="L81"><pre>        &lt;Button</pre></li>
+    <li id="L82"><pre>          key={item.key}</pre></li>
+    <li id="L83"><pre>          className=&quot;mimir-pptx-shape-cell&quot;</pre></li>
+    <li id="L84">
+      <pre>          color={item.key === value ? &#x27;primary&#x27; : &#x27;default&#x27;}</pre>
+    </li>
+    <li id="L85"><pre>          variant=&quot;outlined&quot;</pre></li>
+    <li id="L86"><pre>          role=&quot;radio&quot;</pre></li>
+    <li id="L87"><pre>          aria-checked={item.key === value}</pre></li>
+    <li id="L88"><pre>          aria-label={item.label}</pre></li>
+    <li id="L89"><pre>          tabIndex={item.key === active ? 0 : -1}</pre></li>
+    <li id="L90"><pre>          title={item.label}</pre></li>
+    <li id="L91"><pre>          onKeyDown={(event) =&gt; navigate(event, index)}</pre></li>
+    <li id="L92"><pre>          onClick={() =&gt; onChange(item.key)}</pre></li>
+    <li id="L93"><pre>        &gt;</pre></li>
+    <li id="L94">
+      <pre>
+          &lt;span className=&quot;mimir-pptx-shape-cell__content&quot;&gt;{item.content}&lt;/span&gt;</pre>
+    </li>
+    <li id="L95"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L96"><pre>      ))}</pre></li>
+    <li id="L97"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L98"><pre>  )</pre></li>
+    <li id="L99"><pre>}</pre></li>
+    <li id="L100"><pre></pre></li>
+    <li id="L101"><pre>export interface PptxShapeGalleryProps {</pre></li>
+    <li id="L102"><pre>  version: number</pre></li>
+    <li id="L103"><pre>  target: PptxTarget | null</pre></li>
+    <li id="L104"><pre>  element: SlideElement | null</pre></li>
+    <li id="L105"><pre>  slide: number</pre></li>
+    <li id="L106"><pre>  width: number</pre></li>
+    <li id="L107"><pre>  height: number</pre></li>
+    <li id="L108">
+      <pre>  onDrawShape?: (kind: PptxManualShape[&#x27;kind&#x27;]) =&gt; void</pre>
+    </li>
+    <li id="L109">
+      <pre>  applyOps: (ops: Record&lt;string, unknown&gt;[]) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L110"><pre>}</pre></li>
+    <li id="L111"><pre></pre></li>
+    <li id="L112">
+      <pre>
+/** Persistent compact Inspector content; the existing host handles close, Escape and focus return. */</pre>
+    </li>
+    <li id="L113"><pre>export function PptxShapeGallery({</pre></li>
+    <li id="L114"><pre>  version,</pre></li>
+    <li id="L115"><pre>  target,</pre></li>
+    <li id="L116"><pre>  element,</pre></li>
+    <li id="L117"><pre>  slide,</pre></li>
+    <li id="L118"><pre>  width,</pre></li>
+    <li id="L119"><pre>  height,</pre></li>
+    <li id="L120"><pre>  applyOps,</pre></li>
+    <li id="L121"><pre>  onDrawShape,</pre></li>
+    <li id="L122"><pre>}: PptxShapeGalleryProps) {</pre></li>
+    <li id="L123">
+      <pre>
+  const shape = element?.type === &#x27;shape&#x27; || element?.type === &#x27;text&#x27; ? element : null</pre>
+    </li>
+    <li id="L124"><pre>  const currentKind = shape?.presetGeometry</pre></li>
+    <li id="L125"><pre>  const currentStyle = currentPptxShapeStyle(element)</pre></li>
+    <li id="L126"><pre>  const sourceKey = JSON.stringify([</pre></li>
+    <li id="L127"><pre>    version,</pre></li>
+    <li id="L128"><pre>    slide,</pre></li>
+    <li id="L129"><pre>    target?.el,</pre></li>
+    <li id="L130"><pre>    currentKind,</pre></li>
+    <li id="L131"><pre>    shape?.fill,</pre></li>
+    <li id="L132"><pre>    shape?.stroke,</pre></li>
+    <li id="L133"><pre>  ])</pre></li>
+    <li id="L134">
+      <pre>
+  const [section, setSection] = useState&lt;&#x27;shapes&#x27; | &#x27;styles&#x27;&gt;(&#x27;shapes&#x27;)</pre>
+    </li>
+    <li id="L135"><pre>  const [category, setCategory] = useState(&#x27;rects&#x27;)</pre></li>
+    <li id="L136"><pre>  const [search, setSearch] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L137"><pre>  const [draft, setDraft] = useState({</pre></li>
+    <li id="L138"><pre>    sourceKey,</pre></li>
+    <li id="L139"><pre>    kind: currentKind ?? &#x27;rect&#x27;,</pre></li>
+    <li id="L140"><pre>    style: currentStyle?.key ?? &#x27;&#x27;,</pre></li>
+    <li id="L141"><pre>  })</pre></li>
+    <li id="L142"><pre>  const selected =</pre></li>
+    <li id="L143"><pre>    draft.sourceKey === sourceKey</pre></li>
+    <li id="L144"><pre>      ? draft</pre></li>
+    <li id="L145">
+      <pre>
+      : { sourceKey, kind: currentKind ?? &#x27;rect&#x27;, style: currentStyle?.key ?? &#x27;&#x27; }</pre>
+    </li>
+    <li id="L146"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L147"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L148">
+      <pre>  const [feedback, setFeedback] = useState({ sourceKey, message: &#x27;&#x27; })</pre>
+    </li>
+    <li id="L149">
+      <pre>  const status = feedback.sourceKey === sourceKey ? feedback.message : &#x27;&#x27;</pre>
+    </li>
+    <li id="L150">
+      <pre>  const setStatus = (message: string) =&gt; setFeedback({ sourceKey, message })</pre>
+    </li>
+    <li id="L151">
+      <pre>
+  const chosenStyle = PPTX_SHAPE_STYLES.find((style) =&gt; style.key === selected.style)</pre>
+    </li>
+    <li id="L152"><pre>  const query = search.trim().toLowerCase()</pre></li>
+    <li id="L153"><pre>  const groups = PPTX_SHAPE_GROUPS.filter(</pre></li>
+    <li id="L154">
+      <pre>    (group) =&gt; query || category === &#x27;all&#x27; || category === group.key,</pre>
+    </li>
+    <li id="L155"><pre>  )</pre></li>
+    <li id="L156"><pre>    .map((group) =&gt; ({</pre></li>
+    <li id="L157"><pre>      key: group.key,</pre></li>
+    <li id="L158"><pre>      label: group.label,</pre></li>
+    <li id="L159"><pre>      shapes: group.shapes.filter(</pre></li>
+    <li id="L160">
+      <pre>
+        (item) =&gt; !query || `${item.label} ${item.kind}`.toLowerCase().includes(query),</pre>
+    </li>
+    <li id="L161"><pre>      ),</pre></li>
+    <li id="L162"><pre>    }))</pre></li>
+    <li id="L163"><pre>    .filter((group) =&gt; group.shapes.length)</pre></li>
+    <li id="L164"><pre>  const pickKind = (kind: string) =&gt; {</pre></li>
+    <li id="L165"><pre>    setDraft({ ...selected, kind })</pre></li>
+    <li id="L166"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L167"><pre>  }</pre></li>
+    <li id="L168"><pre>  const pickStyle = (style: string) =&gt; {</pre></li>
+    <li id="L169"><pre>    setDraft({ ...selected, style })</pre></li>
+    <li id="L170"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L171"><pre>  }</pre></li>
+    <li id="L172"><pre>  const run = async (ops: Record&lt;string, unknown&gt;[]) =&gt; {</pre></li>
+    <li id="L173"><pre>    if (pending.current) return</pre></li>
+    <li id="L174"><pre>    pending.current = true</pre></li>
+    <li id="L175"><pre>    setBusy(true)</pre></li>
+    <li id="L176"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L177"><pre>    try {</pre></li>
+    <li id="L178"><pre>      const applied = await applyOps(ops)</pre></li>
+    <li id="L179">
+      <pre>
+      setStatus(applied ? &#x27;已应用到当前幻灯片&#x27; : &#x27;修改未应用，已保留所选草稿&#x27;)</pre>
+    </li>
+    <li id="L180"><pre>    } catch {</pre></li>
+    <li id="L181"><pre>      setStatus(&#x27;修改未应用，请重试；已保留所选草稿&#x27;)</pre></li>
+    <li id="L182"><pre>    } finally {</pre></li>
+    <li id="L183"><pre>      pending.current = false</pre></li>
+    <li id="L184"><pre>      setBusy(false)</pre></li>
+    <li id="L185"><pre>    }</pre></li>
+    <li id="L186"><pre>  }</pre></li>
+    <li id="L187"><pre>  const canChange =</pre></li>
+    <li id="L188"><pre>    !!target &amp;&amp;</pre></li>
+    <li id="L189"><pre>    !!shape?.presetGeometry &amp;&amp;</pre></li>
+    <li id="L190"><pre>    !isPptxLineKind(selected.kind) &amp;&amp;</pre></li>
+    <li id="L191">
+      <pre>
+    !/^(line|straightConnector|bentConnector|curvedConnector)/.test(shape.presetGeometry)</pre>
+    </li>
+    <li id="L192">
+      <pre>
+  const insertKind = PPTX_INSERT_SHAPE_KINDS.find((kind) =&gt; kind === selected.kind)</pre>
+    </li>
+    <li id="L193">
+      <pre>  const canInsert = PPTX_SHAPES.some((item) =&gt; item.kind === selected.kind)</pre>
+    </li>
+    <li id="L194"><pre>  const adjustments =</pre></li>
+    <li id="L195"><pre>    shape?.adjust ??</pre></li>
+    <li id="L196"><pre>    (currentKind === &#x27;roundRect&#x27;</pre></li>
+    <li id="L197"><pre>      ? { adj: 16667 }</pre></li>
+    <li id="L198">
+      <pre>
+      : [&#x27;rightArrow&#x27;, &#x27;chevron&#x27;].includes(currentKind ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L199"><pre>        ? { adj1: 50000, adj2: 50000 }</pre></li>
+    <li id="L200"><pre>        : {})</pre></li>
+    <li id="L201"><pre>  return (</pre></li>
+    <li id="L202">
+      <pre>
+    &lt;fieldset className=&quot;mimir-pptx-shape-editor&quot; disabled={busy} aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L203"><pre>      &lt;div</pre></li>
+    <li id="L204"><pre>        className=&quot;mimir-pptx-shape-editor__tabs&quot;</pre></li>
+    <li id="L205"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L206">
+      <pre>
+          if (![&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) return</pre>
+    </li>
+    <li id="L207"><pre>          event.preventDefault()</pre></li>
+    <li id="L208"><pre>          const next =</pre></li>
+    <li id="L209"><pre>            event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L210"><pre>              ? &#x27;shapes&#x27;</pre></li>
+    <li id="L211"><pre>              : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L212"><pre>                ? &#x27;styles&#x27;</pre></li>
+    <li id="L213"><pre>                : section === &#x27;shapes&#x27;</pre></li>
+    <li id="L214"><pre>                  ? &#x27;styles&#x27;</pre></li>
+    <li id="L215"><pre>                  : &#x27;shapes&#x27;</pre></li>
+    <li id="L216"><pre>          setSection(next)</pre></li>
+    <li id="L217">
+      <pre>
+          const tabs = event.currentTarget.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;[role=&quot;tab&quot;]&#x27;)</pre>
+    </li>
+    <li id="L218"><pre>          tabs[next === &#x27;shapes&#x27; ? 0 : 1]?.focus()</pre></li>
+    <li id="L219"><pre>        }}</pre></li>
+    <li id="L220"><pre>      &gt;</pre></li>
+    <li id="L221"><pre>        &lt;ToolbarTabs</pre></li>
+    <li id="L222"><pre>          label=&quot;形状工具分类&quot;</pre></li>
+    <li id="L223"><pre>          value={section}</pre></li>
+    <li id="L224"><pre>          onChange={setSection}</pre></li>
+    <li id="L225"><pre>          items={[</pre></li>
+    <li id="L226">
+      <pre>            { value: &#x27;shapes&#x27;, label: &#x27;形状图库&#x27; },</pre>
+    </li>
+    <li id="L227">
+      <pre>            { value: &#x27;styles&#x27;, label: &#x27;组合样式&#x27; },</pre>
+    </li>
+    <li id="L228"><pre>          ]}</pre></li>
+    <li id="L229"><pre>        /&gt;</pre></li>
+    <li id="L230"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L231"><pre>      &lt;div</pre></li>
+    <li id="L232"><pre>        className=&quot;mimir-pptx-shape-editor__content&quot;</pre></li>
+    <li id="L233"><pre>        role=&quot;tabpanel&quot;</pre></li>
+    <li id="L234">
+      <pre>
+        aria-label={section === &#x27;shapes&#x27; ? &#x27;形状图库&#x27; : &#x27;组合样式&#x27;}</pre>
+    </li>
+    <li id="L235"><pre>        onKeyDownCapture={(event) =&gt; {</pre></li>
+    <li id="L236"><pre>          if (</pre></li>
+    <li id="L237"><pre>            event.key === &#x27;Escape&#x27; &amp;&amp;</pre></li>
+    <li id="L238"><pre>            search &amp;&amp;</pre></li>
+    <li id="L239"><pre>            event.target instanceof HTMLInputElement &amp;&amp;</pre></li>
+    <li id="L240">
+      <pre>
+            event.target.getAttribute(&#x27;aria-label&#x27;) === &#x27;搜索形状&#x27;</pre>
+    </li>
+    <li id="L241"><pre>          ) {</pre></li>
+    <li id="L242"><pre>            event.preventDefault()</pre></li>
+    <li id="L243"><pre>            event.stopPropagation()</pre></li>
+    <li id="L244"><pre>            setSearch(&#x27;&#x27;)</pre></li>
+    <li id="L245"><pre>          }</pre></li>
+    <li id="L246"><pre>        }}</pre></li>
+    <li id="L247"><pre>      &gt;</pre></li>
+    <li id="L248"><pre>        {section === &#x27;shapes&#x27; ? (</pre></li>
+    <li id="L249"><pre>          &lt;&gt;</pre></li>
+    <li id="L250"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L251">
+      <pre>
+              当前形状：{shape ? pptxShapeLabel(currentKind) : &#x27;未选择形状&#x27;}</pre>
+    </li>
+    <li id="L252"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L253"><pre>            &lt;ToolbarTextField</pre></li>
+    <li id="L254"><pre>              label=&quot;搜索形状&quot;</pre></li>
+    <li id="L255"><pre>              value={search}</pre></li>
+    <li id="L256"><pre>              onChange={setSearch}</pre></li>
+    <li id="L257"><pre>              placeholder=&quot;名称或几何类型&quot;</pre></li>
+    <li id="L258"><pre>            /&gt;</pre></li>
+    <li id="L259"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L260"><pre>              label=&quot;形状分类&quot;</pre></li>
+    <li id="L261"><pre>              disabled={busy}</pre></li>
+    <li id="L262"><pre>              value={category}</pre></li>
+    <li id="L263"><pre>              options={[</pre></li>
+    <li id="L264">
+      <pre>                { value: &#x27;all&#x27;, label: &#x27;全部分类&#x27; },</pre>
+    </li>
+    <li id="L265"><pre>                ...PPTX_SHAPE_GROUPS.map((group) =&gt; ({</pre></li>
+    <li id="L266"><pre>                  value: group.key,</pre></li>
+    <li id="L267">
+      <pre>                  label: `${group.label}（${group.shapes.length}）`,</pre>
+    </li>
+    <li id="L268"><pre>                })),</pre></li>
+    <li id="L269"><pre>              ]}</pre></li>
+    <li id="L270"><pre>              onChange={setCategory}</pre></li>
+    <li id="L271"><pre>            /&gt;</pre></li>
+    <li id="L272">
+      <pre>
+            {!groups.length &amp;&amp; &lt;ToolbarMenuNote&gt;没有匹配的形状，请更换关键词。&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L273"><pre>            {groups.map((group) =&gt; (</pre></li>
+    <li id="L274">
+      <pre>
+              &lt;section className=&quot;mimir-pptx-shape-group&quot; key={group.key} aria-label={group.label}&gt;</pre>
+    </li>
+    <li id="L275"><pre>                &lt;h3&gt;{group.label}&lt;/h3&gt;</pre></li>
+    <li id="L276"><pre>                &lt;Gallery</pre></li>
+    <li id="L277"><pre>                  label={`${group.label}形状`}</pre></li>
+    <li id="L278"><pre>                  value={selected.kind}</pre></li>
+    <li id="L279"><pre>                  onChange={pickKind}</pre></li>
+    <li id="L280"><pre>                  items={group.shapes.map((item) =&gt; ({</pre></li>
+    <li id="L281"><pre>                    key: item.kind,</pre></li>
+    <li id="L282"><pre>                    label: item.label,</pre></li>
+    <li id="L283"><pre>                    content: (</pre></li>
+    <li id="L284"><pre>                      &lt;&gt;</pre></li>
+    <li id="L285">
+      <pre>                        &lt;PptxShapePreview kind={item.kind} /&gt;</pre>
+    </li>
+    <li id="L286">
+      <pre>
+                        &lt;span className=&quot;mimir-pptx-shape-cell__label&quot;&gt;{item.label}&lt;/span&gt;</pre>
+    </li>
+    <li id="L287"><pre>                      &lt;/&gt;</pre></li>
+    <li id="L288"><pre>                    ),</pre></li>
+    <li id="L289"><pre>                  }))}</pre></li>
+    <li id="L290"><pre>                /&gt;</pre></li>
+    <li id="L291"><pre>              &lt;/section&gt;</pre></li>
+    <li id="L292"><pre>            ))}</pre></li>
+    <li id="L293"><pre>            {isPptxLineKind(selected.kind) &amp;&amp; (</pre></li>
+    <li id="L294">
+      <pre>
+              &lt;ToolbarMenuNote&gt;线条用于插入连接线，不能替换已有形状几何。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L295"><pre>            )}</pre></li>
+    <li id="L296"><pre>            {shape &amp;&amp;</pre></li>
+    <li id="L297"><pre>              target &amp;&amp;</pre></li>
+    <li id="L298">
+      <pre>              Object.entries(adjustments).map(([key, value]) =&gt; (</pre>
+    </li>
+    <li id="L299"><pre>                &lt;ToolbarNumberField</pre></li>
+    <li id="L300"><pre>                  key={key}</pre></li>
+    <li id="L301"><pre>                  label={`形状调节 ${key}`}</pre></li>
+    <li id="L302"><pre>                  value={value}</pre></li>
+    <li id="L303"><pre>                  min={-1000000}</pre></li>
+    <li id="L304"><pre>                  max={1000000}</pre></li>
+    <li id="L305"><pre>                  step={1000}</pre></li>
+    <li id="L306"><pre>                  onCommit={(next) =&gt;</pre></li>
+    <li id="L307"><pre>                    void run([</pre></li>
+    <li id="L308">
+      <pre>
+                      { op: &#x27;setShapeAdjust&#x27;, target, adjust: { ...shape.adjust, [key]: next } },</pre>
+    </li>
+    <li id="L309"><pre>                    ])</pre></li>
+    <li id="L310"><pre>                  }</pre></li>
+    <li id="L311"><pre>                /&gt;</pre></li>
+    <li id="L312"><pre>              ))}</pre></li>
+    <li id="L313"><pre>          &lt;/&gt;</pre></li>
+    <li id="L314"><pre>        ) : (</pre></li>
+    <li id="L315"><pre>          &lt;&gt;</pre></li>
+    <li id="L316"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L317">
+      <pre>
+              当前样式：{shape ? (currentStyle?.label ?? &#x27;自定义样式&#x27;) : &#x27;未选择形状&#x27;}</pre>
+    </li>
+    <li id="L318"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L319"><pre>            {!shape &amp;&amp; (</pre></li>
+    <li id="L320">
+      <pre>
+              &lt;ToolbarMenuNote&gt;先在画布选择形状或文本框，再应用填充与描边组合。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L321"><pre>            )}</pre></li>
+    <li id="L322"><pre>            {PPTX_SHAPE_STYLE_ROWS.map((row) =&gt; (</pre></li>
+    <li id="L323">
+      <pre>
+              &lt;section className=&quot;mimir-pptx-shape-group&quot; key={row.key} aria-label={row.label}&gt;</pre>
+    </li>
+    <li id="L324"><pre>                &lt;h3&gt;{row.label}&lt;/h3&gt;</pre></li>
+    <li id="L325"><pre>                &lt;Gallery</pre></li>
+    <li id="L326"><pre>                  label={`${row.label}样式`}</pre></li>
+    <li id="L327"><pre>                  value={selected.style}</pre></li>
+    <li id="L328"><pre>                  onChange={pickStyle}</pre></li>
+    <li id="L329">
+      <pre>
+                  items={PPTX_SHAPE_STYLES.filter((style) =&gt; style.row === row.key).map(</pre>
+    </li>
+    <li id="L330"><pre>                    (style) =&gt; ({</pre></li>
+    <li id="L331"><pre>                      key: style.key,</pre></li>
+    <li id="L332"><pre>                      label: style.label,</pre></li>
+    <li id="L333"><pre>                      content: (</pre></li>
+    <li id="L334"><pre>                        &lt;&gt;</pre></li>
+    <li id="L335"><pre>                          &lt;PptxShapePreview</pre></li>
+    <li id="L336"><pre>                            kind={</pre></li>
+    <li id="L337"><pre>                              currentKind &amp;&amp;</pre></li>
+    <li id="L338">
+      <pre>                              !isPptxLineKind(currentKind) &amp;&amp;</pre>
+    </li>
+    <li id="L339"><pre>                              pptxShapePreview(currentKind)</pre></li>
+    <li id="L340"><pre>                                ? currentKind</pre></li>
+    <li id="L341"><pre>                                : &#x27;roundRect&#x27;</pre></li>
+    <li id="L342"><pre>                            }</pre></li>
+    <li id="L343"><pre>                            style={style}</pre></li>
+    <li id="L344"><pre>                          /&gt;</pre></li>
+    <li id="L345">
+      <pre>
+                          &lt;span className=&quot;mimir-pptx-shape-cell__label&quot;&gt;{style.colorLabel}&lt;/span&gt;</pre>
+    </li>
+    <li id="L346"><pre>                        &lt;/&gt;</pre></li>
+    <li id="L347"><pre>                      ),</pre></li>
+    <li id="L348"><pre>                    }),</pre></li>
+    <li id="L349"><pre>                  )}</pre></li>
+    <li id="L350"><pre>                /&gt;</pre></li>
+    <li id="L351"><pre>              &lt;/section&gt;</pre></li>
+    <li id="L352"><pre>            ))}</pre></li>
+    <li id="L353"><pre>          &lt;/&gt;</pre></li>
+    <li id="L354"><pre>        )}</pre></li>
+    <li id="L355"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L356">
+      <pre>      &lt;div className=&quot;mimir-pptx-shape-editor__actions&quot;&gt;</pre>
+    </li>
+    <li id="L357">
+      <pre>        &lt;div className=&quot;mimir-pptx-shape-editor__selection&quot;&gt;</pre>
+    </li>
+    <li id="L358"><pre>          {section === &#x27;shapes&#x27;</pre></li>
+    <li id="L359"><pre>            ? `已选：${pptxShapeLabel(selected.kind)}`</pre></li>
+    <li id="L360">
+      <pre>            : `已选：${chosenStyle?.label ?? &#x27;请选择组合样式&#x27;}`}</pre>
+    </li>
+    <li id="L361"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L362"><pre>        {section === &#x27;shapes&#x27; ? (</pre></li>
+    <li id="L363">
+      <pre>          &lt;div className=&quot;mimir-pptx-shape-editor__insertion&quot;&gt;</pre>
+    </li>
+    <li id="L364"><pre>            {onDrawShape &amp;&amp; (</pre></li>
+    <li id="L365"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L366"><pre>                label=&quot;在画布绘制所选形状&quot;</pre></li>
+    <li id="L367"><pre>                primary</pre></li>
+    <li id="L368"><pre>                disabled={!canInsert}</pre></li>
+    <li id="L369"><pre>                disabledReason=&quot;请先从图库选择形状&quot;</pre></li>
+    <li id="L370">
+      <pre>                onClick={() =&gt; insertKind &amp;&amp; onDrawShape(insertKind)}</pre>
+    </li>
+    <li id="L371"><pre>              /&gt;</pre></li>
+    <li id="L372"><pre>            )}</pre></li>
+    <li id="L373">
+      <pre>            &lt;div className=&quot;mimir-pptx-shape-editor__buttons&quot;&gt;</pre>
+    </li>
+    <li id="L374"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L375"><pre>                label=&quot;更改选中形状&quot;</pre></li>
+    <li id="L376">
+      <pre>                disabled={!canChange || selected.kind === currentKind}</pre>
+    </li>
+    <li id="L377">
+      <pre>
+                disabledReason={!canChange ? &#x27;先选择预设形状；线条仅用于插入&#x27; : &#x27;形状类型没有变化&#x27;}</pre>
+    </li>
+    <li id="L378"><pre>                onClick={() =&gt;</pre></li>
+    <li id="L379">
+      <pre>
+                  target &amp;&amp; void run([{ op: &#x27;setShapeGeometry&#x27;, target, prst: selected.kind }])</pre>
+    </li>
+    <li id="L380"><pre>                }</pre></li>
+    <li id="L381"><pre>              &gt;</pre></li>
+    <li id="L382"><pre>                更改形状</pre></li>
+    <li id="L383"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L384"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L385"><pre>                label=&quot;插入所选形状&quot;</pre></li>
+    <li id="L386"><pre>                primary={!onDrawShape}</pre></li>
+    <li id="L387"><pre>                disabled={!canInsert}</pre></li>
+    <li id="L388"><pre>                disabledReason=&quot;请先从图库选择形状&quot;</pre></li>
+    <li id="L389">
+      <pre>
+                onClick={() =&gt; void run([pptxInsertShapeOp(selected.kind, slide, width, height)])}</pre>
+    </li>
+    <li id="L390"><pre>              &gt;</pre></li>
+    <li id="L391"><pre>                {onDrawShape ? &#x27;直接插入&#x27; : undefined}</pre></li>
+    <li id="L392"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L393"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L394"><pre>            {onDrawShape &amp;&amp; (</pre></li>
+    <li id="L395">
+      <pre>
+              &lt;ToolbarMenuNote&gt;在画布点击或拖动；也可直接插入默认位置。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L396"><pre>            )}</pre></li>
+    <li id="L397"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L398"><pre>        ) : (</pre></li>
+    <li id="L399"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L400"><pre>            label=&quot;应用组合样式&quot;</pre></li>
+    <li id="L401"><pre>            primary</pre></li>
+    <li id="L402">
+      <pre>
+            disabled={!target || !shape || !chosenStyle || chosenStyle.key === currentStyle?.key}</pre>
+    </li>
+    <li id="L403">
+      <pre>
+            disabledReason={!shape ? &#x27;先选择形状或文本框&#x27; : &#x27;请选择不同的组合样式&#x27;}</pre>
+    </li>
+    <li id="L404"><pre>            onClick={() =&gt;</pre></li>
+    <li id="L405"><pre>              target &amp;&amp;</pre></li>
+    <li id="L406"><pre>              shape &amp;&amp;</pre></li>
+    <li id="L407"><pre>              chosenStyle &amp;&amp;</pre></li>
+    <li id="L408">
+      <pre>              void run(pptxShapeStyleOps(target, shape, chosenStyle))</pre>
+    </li>
+    <li id="L409"><pre>            }</pre></li>
+    <li id="L410"><pre>          /&gt;</pre></li>
+    <li id="L411"><pre>        )}</pre></li>
+    <li id="L412">
+      <pre>
+        &lt;div role=&quot;status&quot; className=&quot;mimir-pptx-shape-editor__status&quot;&gt;</pre>
+    </li>
+    <li id="L413"><pre>          {busy ? &#x27;正在应用修改…&#x27; : status}</pre></li>
+    <li id="L414"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L415"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L416"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L417"><pre>  )</pre></li>
+    <li id="L418"><pre>}</pre></li>
+  </ol>
+</html>

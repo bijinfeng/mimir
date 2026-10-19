@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxAssetControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxAssetControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 bc4154adc482767dbf5ea34b7ad32bceada6c829de991dcc7aafb42ad00f3fe1
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { usePptxPicturePreview } from &#x27;./use-pptx-picture-preview.js&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import { useEffect, useId, useMemo, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  PPTX_ASSET_MAX_BYTES,</pre></li>
+    <li id="L5"><pre>  PPTX_PICTURE_ACCEPT,</pre></li>
+    <li id="L6"><pre>  PPTX_PICTURE_FORMATS,</pre></li>
+    <li id="L7"><pre>  type PptxManualUpload,</pre></li>
+    <li id="L8"><pre>} from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L9">
+      <pre>
+import type { PictureElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L10">
+      <pre>import { openPptxForEdit, type PptxEditSession } from &#x27;../pptx.js&#x27;</pre>
+    </li>
+    <li id="L11"><pre>import { renderSlide } from &#x27;../pptx-render.js&#x27;</pre></li>
+    <li id="L12"><pre>import {</pre></li>
+    <li id="L13"><pre>  ToolbarButton,</pre></li>
+    <li id="L14"><pre>  ToolbarFileButton,</pre></li>
+    <li id="L15"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L16"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L17"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L18"><pre>  ToolbarSelect,</pre></li>
+    <li id="L19"><pre>  ToolbarTextField,</pre></li>
+    <li id="L20"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L21"><pre>import { PptxControlPanel } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L22"><pre></pre></li>
+    <li id="L23"><pre>export type PptxUpload = (</pre></li>
+    <li id="L24"><pre>  input: PptxManualUpload,</pre></li>
+    <li id="L25"><pre>  file: File,</pre></li>
+    <li id="L26"><pre>  poster?: File,</pre></li>
+    <li id="L27"><pre>  signal?: AbortSignal,</pre></li>
+    <li id="L28"><pre>) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L29"><pre>function assetNote(file: File) {</pre></li>
+    <li id="L30">
+      <pre>  return `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MiB`</pre>
+    </li>
+    <li id="L31"><pre>}</pre></li>
+    <li id="L32">
+      <pre>export { PptxMediaControls } from &#x27;./PptxMediaControls.js&#x27;</pre>
+    </li>
+    <li id="L33"><pre></pre></li>
+    <li id="L34"><pre>export function PptxImageFillControls({</pre></li>
+    <li id="L35"><pre>  slide,</pre></li>
+    <li id="L36"><pre>  elementId,</pre></li>
+    <li id="L37"><pre>  upload,</pre></li>
+    <li id="L38"><pre>}: {</pre></li>
+    <li id="L39"><pre>  slide: number</pre></li>
+    <li id="L40"><pre>  elementId: string | null</pre></li>
+    <li id="L41"><pre>  upload: PptxUpload</pre></li>
+    <li id="L42"><pre>}) {</pre></li>
+    <li id="L43">
+      <pre>  const { selected, choose, preparing, error } = usePptxPicturePreview()</pre>
+    </li>
+    <li id="L44"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L45">
+      <pre>
+  const [destination, setDestination] = useState(elementId ? &#x27;shape&#x27; : &#x27;background&#x27;)</pre>
+    </li>
+    <li id="L46"><pre>  const [mode, setMode] = useState(&#x27;stretch&#x27;)</pre></li>
+    <li id="L47"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L48"><pre>  return (</pre></li>
+    <li id="L49"><pre>    &lt;fieldset</pre></li>
+    <li id="L50">
+      <pre>      className=&quot;mimir-pptx-control-panel mimir-pptx-image-fill&quot;</pre>
+    </li>
+    <li id="L51"><pre>      disabled={busy}</pre></li>
+    <li id="L52"><pre>      aria-busy={busy}</pre></li>
+    <li id="L53"><pre>      aria-label=&quot;图片填充设置&quot;</pre></li>
+    <li id="L54"><pre>    &gt;</pre></li>
+    <li id="L55"><pre>      &lt;div className=&quot;mimir-pptx-image-fill__body&quot;&gt;</pre></li>
+    <li id="L56"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L57">
+      <pre>
+          {busy &amp;&amp; &lt;p role=&quot;status&quot;&gt;正在应用修改…&lt;/p&gt;}</pre>
+    </li>
+    <li id="L58"><pre>          &lt;ToolbarMenuFields label=&quot;图片填充&quot;&gt;</pre></li>
+    <li id="L59"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L60"><pre>              label=&quot;填充位置&quot;</pre></li>
+    <li id="L61"><pre>              disabled={busy}</pre></li>
+    <li id="L62"><pre>              value={destination}</pre></li>
+    <li id="L63"><pre>              options={[</pre></li>
+    <li id="L64">
+      <pre>                { value: &#x27;shape&#x27;, label: &#x27;所选形状或文本框&#x27; },</pre>
+    </li>
+    <li id="L65">
+      <pre>
+                { value: &#x27;background&#x27;, label: &#x27;当前幻灯片背景&#x27; },</pre>
+    </li>
+    <li id="L66"><pre>              ]}</pre></li>
+    <li id="L67"><pre>              onChange={setDestination}</pre></li>
+    <li id="L68"><pre>            /&gt;</pre></li>
+    <li id="L69"><pre>            &lt;ToolbarFileButton</pre></li>
+    <li id="L70"><pre>              label=&quot;选择填充图片&quot;</pre></li>
+    <li id="L71"><pre>              accept={PPTX_PICTURE_ACCEPT}</pre></li>
+    <li id="L72"><pre>              onPick={(file) =&gt; {</pre></li>
+    <li id="L73"><pre>                void choose(file)</pre></li>
+    <li id="L74"><pre>              }}</pre></li>
+    <li id="L75"><pre>            &gt;</pre></li>
+    <li id="L76"><pre>              选择图片</pre></li>
+    <li id="L77"><pre>            &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L78"><pre>            {selected &amp;&amp; (</pre></li>
+    <li id="L79"><pre>              &lt;&gt;</pre></li>
+    <li id="L80">
+      <pre>
+                &lt;img className=&quot;mimir-pptx-asset-preview&quot; src={selected.url} alt=&quot;所选填充图片&quot; /&gt;</pre>
+    </li>
+    <li id="L81">
+      <pre>
+                &lt;ToolbarMenuNote&gt;{assetNote(selected.file)}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L82"><pre>              &lt;/&gt;</pre></li>
+    <li id="L83"><pre>            )}</pre></li>
+    <li id="L84">
+      <pre>
+            {preparing &amp;&amp; &lt;ToolbarMenuNote&gt;正在准备图片预览…&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L85">
+      <pre>            {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L86"><pre>            {selected?.info.ext === &#x27;tiff&#x27; &amp;&amp; (</pre></li>
+    <li id="L87">
+      <pre>
+              &lt;ToolbarMenuNote&gt;TIFF 显示尺寸最大的安全页面，保存保留全部页面。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L88"><pre>            )}</pre></li>
+    <li id="L89"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L90"><pre>              label=&quot;填充方式&quot;</pre></li>
+    <li id="L91"><pre>              disabled={busy}</pre></li>
+    <li id="L92"><pre>              value={mode}</pre></li>
+    <li id="L93"><pre>              options={[</pre></li>
+    <li id="L94">
+      <pre>                { value: &#x27;stretch&#x27;, label: &#x27;拉伸填满&#x27; },</pre>
+    </li>
+    <li id="L95">
+      <pre>                { value: &#x27;tile&#x27;, label: &#x27;平铺&#x27; },</pre>
+    </li>
+    <li id="L96"><pre>              ]}</pre></li>
+    <li id="L97"><pre>              onChange={setMode}</pre></li>
+    <li id="L98"><pre>            /&gt;</pre></li>
+    <li id="L99"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L100">
+      <pre>
+              {PPTX_PICTURE_FORMATS}，不超过8 MiB。替换填充后仍可编辑形状文字和边框。</pre>
+    </li>
+    <li id="L101"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L102"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L103"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L104"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L105">
+      <pre>      &lt;div className=&quot;mimir-pptx-image-fill__footer&quot;&gt;</pre>
+    </li>
+    <li id="L106"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L107"><pre>          primary</pre></li>
+    <li id="L108"><pre>          label=&quot;应用图片填充&quot;</pre></li>
+    <li id="L109"><pre>          disabled={</pre></li>
+    <li id="L110"><pre>            preparing ||</pre></li>
+    <li id="L111"><pre>            !selected ||</pre></li>
+    <li id="L112"><pre>            selected.file.size &gt; 8 * 1024 * 1024 ||</pre></li>
+    <li id="L113">
+      <pre>            (destination === &#x27;shape&#x27; &amp;&amp; !elementId)</pre>
+    </li>
+    <li id="L114"><pre>          }</pre></li>
+    <li id="L115"><pre>          disabledReason={</pre></li>
+    <li id="L116">
+      <pre>            destination === &#x27;shape&#x27; &amp;&amp; !elementId</pre>
+    </li>
+    <li id="L117"><pre>              ? &#x27;先选择形状或文本框&#x27;</pre></li>
+    <li id="L118"><pre>              : &#x27;请选择不超过8 MiB的有效图片&#x27;</pre></li>
+    <li id="L119"><pre>          }</pre></li>
+    <li id="L120"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L121"><pre>            if (!selected || pending.current) return</pre></li>
+    <li id="L122"><pre>            pending.current = true</pre></li>
+    <li id="L123"><pre>            setBusy(true)</pre></li>
+    <li id="L124"><pre>            void upload(</pre></li>
+    <li id="L125"><pre>              destination === &#x27;shape&#x27;</pre></li>
+    <li id="L126">
+      <pre>
+                ? { kind: &#x27;image_fill&#x27;, slide, elementId: elementId!, tile: mode === &#x27;tile&#x27; }</pre>
+    </li>
+    <li id="L127">
+      <pre>
+                : { kind: &#x27;image_background&#x27;, slide, tile: mode === &#x27;tile&#x27; },</pre>
+    </li>
+    <li id="L128"><pre>              selected.file,</pre></li>
+    <li id="L129"><pre>            ).finally(() =&gt; {</pre></li>
+    <li id="L130"><pre>              pending.current = false</pre></li>
+    <li id="L131"><pre>              setBusy(false)</pre></li>
+    <li id="L132"><pre>            })</pre></li>
+    <li id="L133"><pre>          }}</pre></li>
+    <li id="L134"><pre>        /&gt;</pre></li>
+    <li id="L135"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L136"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L137"><pre>  )</pre></li>
+    <li id="L138"><pre>}</pre></li>
+    <li id="L139"><pre></pre></li>
+    <li id="L140"><pre>function pagesOf(value: string, count: number): number[] | null {</pre></li>
+    <li id="L141"><pre>  const indices: number[] = []</pre></li>
+    <li id="L142"><pre>  if (!value.trim()) return null</pre></li>
+    <li id="L143"><pre>  for (const token of value.split(/[,，]/)) {</pre></li>
+    <li id="L144"><pre>    const match = /^\s*(\d+)\s*(?:-\s*(\d+)\s*)?$/.exec(token)</pre></li>
+    <li id="L145"><pre>    if (!match) return null</pre></li>
+    <li id="L146"><pre>    const start = Number(match[1]),</pre></li>
+    <li id="L147"><pre>      end = Number(match[2] ?? match[1])</pre></li>
+    <li id="L148">
+      <pre>
+    if (start &lt; 1 || end &lt; start || end &gt; count || end - start &gt; 40) return null</pre>
+    </li>
+    <li id="L149">
+      <pre>
+    for (let i = start; i &lt;= end; i++) if (!indices.includes(i - 1)) indices.push(i - 1)</pre>
+    </li>
+    <li id="L150"><pre>  }</pre></li>
+    <li id="L151">
+      <pre>  return indices.length &amp;&amp; indices.length &lt;= 40 ? indices : null</pre>
+    </li>
+    <li id="L152"><pre>}</pre></li>
+    <li id="L153"><pre>export function PptxImportControls({</pre></li>
+    <li id="L154"><pre>  afterIndex,</pre></li>
+    <li id="L155"><pre>  upload,</pre></li>
+    <li id="L156"><pre>}: {</pre></li>
+    <li id="L157"><pre>  afterIndex: number</pre></li>
+    <li id="L158"><pre>  upload: PptxUpload</pre></li>
+    <li id="L159"><pre>}) {</pre></li>
+    <li id="L160"><pre>  const previewId = useId()</pre></li>
+    <li id="L161">
+      <pre>
+  const [source, setSource] = useState&lt;{ file: File; session: PptxEditSession } | null&gt;(null)</pre>
+    </li>
+    <li id="L162"><pre>  const [pages, setPages] = useState(&#x27;1&#x27;)</pre></li>
+    <li id="L163"><pre>  const [style, setStyle] = useState(&#x27;destination&#x27;)</pre></li>
+    <li id="L164"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L165"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L166"><pre>  const token = useRef(0)</pre></li>
+    <li id="L167"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L168"><pre>  useEffect(</pre></li>
+    <li id="L169"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L170"><pre>      token.current++</pre></li>
+    <li id="L171"><pre>    },</pre></li>
+    <li id="L172"><pre>    [],</pre></li>
+    <li id="L173"><pre>  )</pre></li>
+    <li id="L174">
+      <pre>  const indices = source ? pagesOf(pages, source.session.slides().length) : null</pre>
+    </li>
+    <li id="L175"><pre>  const preview =</pre></li>
+    <li id="L176"><pre>    source &amp;&amp; indices</pre></li>
+    <li id="L177">
+      <pre>
+      ? renderSlide(source.session.view(), indices[0]!, { fitWidthPx: 300, svgIdPrefix: previewId })</pre>
+    </li>
+    <li id="L178"><pre>          ?.svg</pre></li>
+    <li id="L179"><pre>      : &#x27;&#x27;</pre></li>
+    <li id="L180"><pre>  return (</pre></li>
+    <li id="L181"><pre>    &lt;PptxControlPanel</pre></li>
+    <li id="L182"><pre>      busy={busy}</pre></li>
+    <li id="L183"><pre>      actions={</pre></li>
+    <li id="L184"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L185"><pre>          primary</pre></li>
+    <li id="L186"><pre>          label=&quot;导入幻灯片&quot;</pre></li>
+    <li id="L187"><pre>          disabled={!source || !indices}</pre></li>
+    <li id="L188">
+      <pre>          disabledReason=&quot;请选择源文件并填写有效页码，例如1-3,5&quot;</pre>
+    </li>
+    <li id="L189"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L190"><pre>            if (!source || !indices || pending.current) return</pre></li>
+    <li id="L191"><pre>            pending.current = true</pre></li>
+    <li id="L192"><pre>            setBusy(true)</pre></li>
+    <li id="L193"><pre>            void upload(</pre></li>
+    <li id="L194"><pre>              {</pre></li>
+    <li id="L195"><pre>                kind: &#x27;import_slides&#x27;,</pre></li>
+    <li id="L196"><pre>                afterIndex,</pre></li>
+    <li id="L197"><pre>                slideIndices: indices,</pre></li>
+    <li id="L198">
+      <pre>                keepSourceFormatting: style === &#x27;source&#x27;,</pre>
+    </li>
+    <li id="L199"><pre>              },</pre></li>
+    <li id="L200"><pre>              source.file,</pre></li>
+    <li id="L201"><pre>            ).finally(() =&gt; {</pre></li>
+    <li id="L202"><pre>              pending.current = false</pre></li>
+    <li id="L203"><pre>              setBusy(false)</pre></li>
+    <li id="L204"><pre>            })</pre></li>
+    <li id="L205"><pre>          }}</pre></li>
+    <li id="L206"><pre>        /&gt;</pre></li>
+    <li id="L207"><pre>      }</pre></li>
+    <li id="L208"><pre>    &gt;</pre></li>
+    <li id="L209"><pre>      &lt;ToolbarMenuFields label=&quot;源演示文稿&quot;&gt;</pre></li>
+    <li id="L210"><pre>        &lt;ToolbarFileButton</pre></li>
+    <li id="L211"><pre>          label=&quot;选择源PPTX文件&quot;</pre></li>
+    <li id="L212"><pre>          accept=&quot;.pptx&quot;</pre></li>
+    <li id="L213"><pre>          onPick={(file) =&gt; {</pre></li>
+    <li id="L214"><pre>            const request = ++token.current</pre></li>
+    <li id="L215"><pre>            setBusy(true)</pre></li>
+    <li id="L216"><pre>            setError(&#x27;&#x27;)</pre></li>
+    <li id="L217"><pre>            void (async () =&gt; {</pre></li>
+    <li id="L218"><pre>              try {</pre></li>
+    <li id="L219">
+      <pre>                if (!file.size || file.size &gt; PPTX_ASSET_MAX_BYTES)</pre>
+    </li>
+    <li id="L220">
+      <pre>                  throw new Error(&#x27;源PPTX须为非空文件且不超过32 MiB&#x27;)</pre>
+    </li>
+    <li id="L221">
+      <pre>
+                const session = await openPptxForEdit(new Uint8Array(await file.arrayBuffer()))</pre>
+    </li>
+    <li id="L222"><pre>                if (token.current === request) {</pre></li>
+    <li id="L223"><pre>                  setSource({ file, session })</pre></li>
+    <li id="L224"><pre>                  setPages(&#x27;1&#x27;)</pre></li>
+    <li id="L225"><pre>                }</pre></li>
+    <li id="L226"><pre>              } catch (cause) {</pre></li>
+    <li id="L227"><pre>                if (token.current === request) {</pre></li>
+    <li id="L228"><pre>                  setSource(null)</pre></li>
+    <li id="L229">
+      <pre>
+                  setError(cause instanceof Error ? cause.message : &#x27;源文件无法打开&#x27;)</pre>
+    </li>
+    <li id="L230"><pre>                }</pre></li>
+    <li id="L231"><pre>              } finally {</pre></li>
+    <li id="L232"><pre>                if (token.current === request) setBusy(false)</pre></li>
+    <li id="L233"><pre>              }</pre></li>
+    <li id="L234"><pre>            })()</pre></li>
+    <li id="L235"><pre>          }}</pre></li>
+    <li id="L236"><pre>        &gt;</pre></li>
+    <li id="L237"><pre>          选择PPTX文件</pre></li>
+    <li id="L238"><pre>        &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L239"><pre>        {source &amp;&amp; (</pre></li>
+    <li id="L240"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L241">
+      <pre>            {source.file.name} · 共{source.session.slides().length}页</pre>
+    </li>
+    <li id="L242"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L243"><pre>        )}</pre></li>
+    <li id="L244"><pre>        &lt;ToolbarTextField</pre></li>
+    <li id="L245"><pre>          label=&quot;导入页码&quot;</pre></li>
+    <li id="L246"><pre>          value={pages}</pre></li>
+    <li id="L247"><pre>          onChange={setPages}</pre></li>
+    <li id="L248"><pre>          placeholder=&quot;例如：1-3,5&quot;</pre></li>
+    <li id="L249"><pre>        /&gt;</pre></li>
+    <li id="L250"><pre>        {preview &amp;&amp; (</pre></li>
+    <li id="L251"><pre>          &lt;div</pre></li>
+    <li id="L252"><pre>            className=&quot;mimir-pptx-asset-preview&quot;</pre></li>
+    <li id="L253"><pre>            role=&quot;img&quot;</pre></li>
+    <li id="L254"><pre>            aria-label=&quot;首张导入幻灯片预览&quot;</pre></li>
+    <li id="L255"><pre>            dangerouslySetInnerHTML={{ __html: preview }}</pre></li>
+    <li id="L256"><pre>          /&gt;</pre></li>
+    <li id="L257"><pre>        )}</pre></li>
+    <li id="L258"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L259"><pre>          label=&quot;导入格式&quot;</pre></li>
+    <li id="L260"><pre>          disabled={busy}</pre></li>
+    <li id="L261"><pre>          value={style}</pre></li>
+    <li id="L262"><pre>          options={[</pre></li>
+    <li id="L263">
+      <pre>            { value: &#x27;destination&#x27;, label: &#x27;使用目标主题&#x27; },</pre>
+    </li>
+    <li id="L264">
+      <pre>            { value: &#x27;source&#x27;, label: &#x27;保留源格式&#x27; },</pre>
+    </li>
+    <li id="L265"><pre>          ]}</pre></li>
+    <li id="L266"><pre>          onChange={setStyle}</pre></li>
+    <li id="L267"><pre>        /&gt;</pre></li>
+    <li id="L268"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L269"><pre>          在第{afterIndex + 1}</pre></li>
+    <li id="L270">
+      <pre>          页之后导入，最多40页。源文件须与当前文稿页面尺寸一致；失败时整批不应用。</pre>
+    </li>
+    <li id="L271"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L272">
+      <pre>        {error &amp;&amp; &lt;ToolbarMenuNote&gt;{error}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L273"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L274"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L275"><pre>  )</pre></li>
+    <li id="L276"><pre>}</pre></li>
+    <li id="L277"><pre></pre></li>
+    <li id="L278"><pre>export function PptxMediaPlayer({</pre></li>
+    <li id="L279"><pre>  session,</pre></li>
+    <li id="L280"><pre>  element,</pre></li>
+    <li id="L281"><pre>  version,</pre></li>
+    <li id="L282"><pre>}: {</pre></li>
+    <li id="L283"><pre>  session: PptxEditSession</pre></li>
+    <li id="L284"><pre>  element: PictureElement</pre></li>
+    <li id="L285"><pre>  version: number</pre></li>
+    <li id="L286"><pre>}) {</pre></li>
+    <li id="L287"><pre>  const media = element.media</pre></li>
+    <li id="L288"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L289"><pre>  const player = useRef&lt;HTMLMediaElement | null&gt;(null)</pre></li>
+    <li id="L290"><pre>  const source = useMemo(() =&gt; {</pre></li>
+    <li id="L291"><pre>    if (session.version() !== version) return null</pre></li>
+    <li id="L292"><pre>    if (!media?.target || media.external) return null</pre></li>
+    <li id="L293"><pre>    const bytes = session.mediaPart(media.target)</pre></li>
+    <li id="L294">
+      <pre>    if (!bytes || bytes.length &gt; PPTX_ASSET_MAX_BYTES) return null</pre>
+    </li>
+    <li id="L295">
+      <pre>
+    const ext = media.target.split(&#x27;.&#x27;).at(-1)?.toLowerCase() ?? &#x27;&#x27;</pre>
+    </li>
+    <li id="L296"><pre>    const mime = (</pre></li>
+    <li id="L297"><pre>      {</pre></li>
+    <li id="L298"><pre>        mp4: &#x27;video/mp4&#x27;,</pre></li>
+    <li id="L299"><pre>        webm: &#x27;video/webm&#x27;,</pre></li>
+    <li id="L300"><pre>        mov: &#x27;video/mp4&#x27;,</pre></li>
+    <li id="L301"><pre>        m4v: &#x27;video/mp4&#x27;,</pre></li>
+    <li id="L302"><pre>        avi: &#x27;video/x-msvideo&#x27;,</pre></li>
+    <li id="L303"><pre>        mp3: &#x27;audio/mpeg&#x27;,</pre></li>
+    <li id="L304"><pre>        wav: &#x27;audio/wav&#x27;,</pre></li>
+    <li id="L305"><pre>        m4a: &#x27;audio/mp4&#x27;,</pre></li>
+    <li id="L306"><pre>        ogg: &#x27;audio/ogg&#x27;,</pre></li>
+    <li id="L307"><pre>        aac: &#x27;audio/aac&#x27;,</pre></li>
+    <li id="L308"><pre>      } as Record&lt;string, string&gt;</pre></li>
+    <li id="L309"><pre>    )[ext]</pre></li>
+    <li id="L310"><pre>    if (!mime) return null</pre></li>
+    <li id="L311"><pre>    let binary = &#x27;&#x27;</pre></li>
+    <li id="L312"><pre>    for (let i = 0; i &lt; bytes.length; i += 8192)</pre></li>
+    <li id="L313">
+      <pre>      binary += String.fromCharCode(...bytes.subarray(i, i + 8192))</pre>
+    </li>
+    <li id="L314"><pre>    return `data:${mime};base64,${btoa(binary)}`</pre></li>
+    <li id="L315"><pre>  }, [session, media, version])</pre></li>
+    <li id="L316"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L317"><pre>    if (!source) return</pre></li>
+    <li id="L318"><pre>    const node = player.current</pre></li>
+    <li id="L319"><pre>    return () =&gt; {</pre></li>
+    <li id="L320"><pre>      node?.pause()</pre></li>
+    <li id="L321"><pre>      node?.removeAttribute(&#x27;src&#x27;)</pre></li>
+    <li id="L322"><pre>      node?.load()</pre></li>
+    <li id="L323"><pre>    }</pre></li>
+    <li id="L324"><pre>  }, [source])</pre></li>
+    <li id="L325"><pre>  return (</pre></li>
+    <li id="L326"><pre>    &lt;PptxControlPanel busy={false}&gt;</pre></li>
+    <li id="L327">
+      <pre>
+      &lt;ToolbarMenuFields label={media?.kind === &#x27;audio&#x27; ? &#x27;音频播放&#x27; : &#x27;视频播放&#x27;}&gt;</pre>
+    </li>
+    <li id="L328">
+      <pre>        &lt;ToolbarMenuNote&gt;{element.name}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L329"><pre>        {source ? (</pre></li>
+    <li id="L330"><pre>          media?.kind === &#x27;audio&#x27; ? (</pre></li>
+    <li id="L331"><pre>            &lt;audio</pre></li>
+    <li id="L332"><pre>              className=&quot;mimir-pptx-media-preview&quot;</pre></li>
+    <li id="L333"><pre>              ref={(node) =&gt; {</pre></li>
+    <li id="L334"><pre>                player.current = node</pre></li>
+    <li id="L335"><pre>              }}</pre></li>
+    <li id="L336"><pre>              key={source}</pre></li>
+    <li id="L337"><pre>              src={source}</pre></li>
+    <li id="L338"><pre>              controls</pre></li>
+    <li id="L339">
+      <pre>
+              onError={() =&gt; setError(&#x27;浏览器不支持此音频编码，可下载原件后使用PowerPoint播放。&#x27;)}</pre>
+    </li>
+    <li id="L340"><pre>            /&gt;</pre></li>
+    <li id="L341"><pre>          ) : (</pre></li>
+    <li id="L342"><pre>            &lt;video</pre></li>
+    <li id="L343"><pre>              className=&quot;mimir-pptx-media-preview&quot;</pre></li>
+    <li id="L344"><pre>              ref={(node) =&gt; {</pre></li>
+    <li id="L345"><pre>                player.current = node</pre></li>
+    <li id="L346"><pre>              }}</pre></li>
+    <li id="L347"><pre>              key={source}</pre></li>
+    <li id="L348"><pre>              src={source}</pre></li>
+    <li id="L349"><pre>              controls</pre></li>
+    <li id="L350">
+      <pre>
+              onError={() =&gt; setError(&#x27;浏览器不支持此视频编码，可下载原件后使用PowerPoint播放。&#x27;)}</pre>
+    </li>
+    <li id="L351"><pre>            /&gt;</pre></li>
+    <li id="L352"><pre>          )</pre></li>
+    <li id="L353"><pre>        ) : (</pre></li>
+    <li id="L354"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L355"><pre>            {media?.external</pre></li>
+    <li id="L356">
+      <pre>              ? &#x27;这是外链媒体，编辑器不会自动加载外部地址。&#x27;</pre>
+    </li>
+    <li id="L357">
+      <pre>
+              : &#x27;媒体缺失、编码暂不支持或超过32 MiB预览上限。原件内容保留。&#x27;}</pre>
+    </li>
+    <li id="L358"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L359"><pre>        )}</pre></li>
+    <li id="L360">
+      <pre>        {error &amp;&amp; &lt;ToolbarMenuNote&gt;{error}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L361">
+      <pre>
+        &lt;ToolbarMenuNote&gt;播放不修改文稿。媒体以原生Office音视频结构保存在文件中。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L362"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L363"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L364"><pre>  )</pre></li>
+    <li id="L365"><pre>}</pre></li>
+  </ol>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxAiControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxAiControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 b932962dfdf20439747d72883124b23bcd626964b311d4e3f5b0a1aedfa065ee
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { ImagePlus, Languages, ScanSearch, SpellCheck, WandSparkles, X } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import { ToolbarButton, ToolbarMenu } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  PPTX_AI_LANGUAGES,</pre></li>
+    <li id="L5"><pre>  pptxAiPresetInstruction,</pre></li>
+    <li id="L6"><pre>  validPptxAiTarget,</pre></li>
+    <li id="L7"><pre>  type PptxAiPreset,</pre></li>
+    <li id="L8"><pre>  type PptxAiTarget,</pre></li>
+    <li id="L9"><pre>} from &#x27;./pptx-ai-presets.js&#x27;</pre></li>
+    <li id="L10"><pre></pre></li>
+    <li id="L11"><pre>export interface PptxAiControlsProps extends PptxAiTarget {</pre></li>
+    <li id="L12"><pre>  onAiPreset?: ((instruction: string) =&gt; void) | undefined</pre></li>
+    <li id="L13"><pre>  onSnapshot?: (() =&gt; void) | undefined</pre></li>
+    <li id="L14"><pre>  snapshotPending?: boolean | undefined</pre></li>
+    <li id="L15"><pre>  disabled?: boolean</pre></li>
+    <li id="L16"><pre>  section?: &#x27;create&#x27; | &#x27;review&#x27;</pre></li>
+    <li id="L17"><pre>}</pre></li>
+    <li id="L18">
+      <pre>
+/** Beautify prepares a real PNG draft; other presets stay text-only. Never starts a run. */</pre>
+    </li>
+    <li id="L19"><pre>export function PptxAiControls({</pre></li>
+    <li id="L20"><pre>  onAiPreset,</pre></li>
+    <li id="L21"><pre>  onSnapshot,</pre></li>
+    <li id="L22"><pre>  snapshotPending = false,</pre></li>
+    <li id="L23"><pre>  disabled = false,</pre></li>
+    <li id="L24"><pre>  section,</pre></li>
+    <li id="L25"><pre>  ...target</pre></li>
+    <li id="L26"><pre>}: PptxAiControlsProps) {</pre></li>
+    <li id="L27">
+      <pre>  const unavailable = !onAiPreset || disabled || !validPptxAiTarget(target)</pre>
+    </li>
+    <li id="L28"><pre>  const reason = !onAiPreset</pre></li>
+    <li id="L29"><pre>    ? &#x27;当前宿主没有接入问 AI 侧栏&#x27;</pre></li>
+    <li id="L30"><pre>    : disabled</pre></li>
+    <li id="L31"><pre>      ? &#x27;请等待当前编辑操作完成&#x27;</pre></li>
+    <li id="L32"><pre>      : &#x27;请先打开可编辑的幻灯片&#x27;</pre></li>
+    <li id="L33"><pre>  const prepare = (preset: PptxAiPreset) =&gt; {</pre></li>
+    <li id="L34">
+      <pre>    if (!unavailable) onAiPreset?.(pptxAiPresetInstruction(preset, target))</pre>
+    </li>
+    <li id="L35"><pre>  }</pre></li>
+    <li id="L36"><pre>  return (</pre></li>
+    <li id="L37"><pre>    &lt;&gt;</pre></li>
+    <li id="L38"><pre>      {section !== &#x27;review&#x27; &amp;&amp; (</pre></li>
+    <li id="L39"><pre>        &lt;&gt;</pre></li>
+    <li id="L40"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L41">
+      <pre>
+            label={snapshotPending ? &#x27;取消准备美化草稿&#x27; : &#x27;美化本页&#x27;}</pre>
+    </li>
+    <li id="L42">
+      <pre>
+            disabled={!snapshotPending &amp;&amp; (!onSnapshot || disabled || !validPptxAiTarget(target))}</pre>
+    </li>
+    <li id="L43">
+      <pre>
+            disabledReason={!onSnapshot ? &#x27;当前宿主没有接入截图草稿&#x27; : reason}</pre>
+    </li>
+    <li id="L44"><pre>            onClick={onSnapshot}</pre></li>
+    <li id="L45"><pre>          &gt;</pre></li>
+    <li id="L46">
+      <pre>
+            {snapshotPending ? &lt;X size={16} /&gt; : &lt;WandSparkles size={16} /&gt;}</pre>
+    </li>
+    <li id="L47">
+      <pre>
+            &lt;span&gt;{snapshotPending ? &#x27;取消准备&#x27; : &#x27;美化本页&#x27;}&lt;/span&gt;</pre>
+    </li>
+    <li id="L48"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L49"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L50"><pre>            label=&quot;事实核查&quot;</pre></li>
+    <li id="L51"><pre>            disabled={unavailable}</pre></li>
+    <li id="L52"><pre>            disabledReason={reason}</pre></li>
+    <li id="L53"><pre>            onClick={() =&gt; prepare(&#x27;fact-check&#x27;)}</pre></li>
+    <li id="L54"><pre>          &gt;</pre></li>
+    <li id="L55"><pre>            &lt;ScanSearch size={16} /&gt;</pre></li>
+    <li id="L56"><pre>            &lt;span&gt;事实核查&lt;/span&gt;</pre></li>
+    <li id="L57"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L58"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L59"><pre>            label=&quot;生成配图&quot;</pre></li>
+    <li id="L60"><pre>            disabled={unavailable}</pre></li>
+    <li id="L61"><pre>            disabledReason={reason}</pre></li>
+    <li id="L62"><pre>            onClick={() =&gt; prepare(&#x27;image&#x27;)}</pre></li>
+    <li id="L63"><pre>          &gt;</pre></li>
+    <li id="L64"><pre>            &lt;ImagePlus size={16} /&gt;</pre></li>
+    <li id="L65"><pre>            &lt;span&gt;生成配图&lt;/span&gt;</pre></li>
+    <li id="L66"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L67"><pre>        &lt;/&gt;</pre></li>
+    <li id="L68"><pre>      )}</pre></li>
+    <li id="L69"><pre>      {section !== &#x27;create&#x27; &amp;&amp; (</pre></li>
+    <li id="L70"><pre>        &lt;&gt;</pre></li>
+    <li id="L71"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L72"><pre>            label=&quot;拼写检查&quot;</pre></li>
+    <li id="L73"><pre>            disabled={unavailable}</pre></li>
+    <li id="L74"><pre>            disabledReason={reason}</pre></li>
+    <li id="L75"><pre>            onClick={() =&gt; prepare(&#x27;spelling&#x27;)}</pre></li>
+    <li id="L76"><pre>          &gt;</pre></li>
+    <li id="L77"><pre>            &lt;SpellCheck size={16} /&gt;</pre></li>
+    <li id="L78"><pre>            &lt;span&gt;拼写检查&lt;/span&gt;</pre></li>
+    <li id="L79"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L80"><pre>          &lt;ToolbarMenu</pre></li>
+    <li id="L81"><pre>            label=&quot;翻译本页&quot;</pre></li>
+    <li id="L82"><pre>            text=&quot;翻译&quot;</pre></li>
+    <li id="L83"><pre>            icon={&lt;Languages size={16} /&gt;}</pre></li>
+    <li id="L84"><pre>            items={PPTX_AI_LANGUAGES.map((language) =&gt; ({</pre></li>
+    <li id="L85"><pre>              key: language,</pre></li>
+    <li id="L86"><pre>              label: `翻译为${language}`,</pre></li>
+    <li id="L87"><pre>              disabled: unavailable,</pre></li>
+    <li id="L88"><pre>              disabledReason: reason,</pre></li>
+    <li id="L89"><pre>              onSelect: () =&gt; {</pre></li>
+    <li id="L90"><pre>                if (!unavailable)</pre></li>
+    <li id="L91">
+      <pre>
+                  onAiPreset?.(pptxAiPresetInstruction(&#x27;translate&#x27;, target, language))</pre>
+    </li>
+    <li id="L92"><pre>              },</pre></li>
+    <li id="L93"><pre>            }))}</pre></li>
+    <li id="L94"><pre>          /&gt;</pre></li>
+    <li id="L95"><pre>        &lt;/&gt;</pre></li>
+    <li id="L96"><pre>      )}</pre></li>
+    <li id="L97"><pre>    &lt;/&gt;</pre></li>
+    <li id="L98"><pre>  )</pre></li>
+    <li id="L99"><pre>}</pre></li>
+  </ol>
+</html>

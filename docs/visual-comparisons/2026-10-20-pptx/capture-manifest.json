@@ -1,0 +1,227 @@
+{
+  "baseline": "3b5d912",
+  "date": "2026-10-20",
+  "evidence": "Real PptxEditor screenshots; matched native fixture/theme/viewport/editor dimensions; no mockups",
+  "pairs": [
+    {
+      "key": "formula-short",
+      "title": "公式 · 短高窄屏",
+      "theme": "light",
+      "viewport": [390, 400],
+      "editorSize": [390, 400],
+      "fixture": "rich",
+      "steps": "插入 → 公式 → 插入公式。默认质能方程；不滚动。",
+      "selectedFile": null,
+      "before": "captures/before-formula-short.png",
+      "after": "captures/after-formula-short.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    },
+    {
+      "key": "diagram-short",
+      "title": "图示 · 短高窄屏",
+      "theme": "light",
+      "viewport": [390, 400],
+      "editorSize": [390, 400],
+      "fixture": "rich",
+      "steps": "插入 → 图示 → 插入图示。默认流程与三节点；不滚动。",
+      "selectedFile": null,
+      "before": "captures/before-diagram-short.png",
+      "after": "captures/after-diagram-short.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    },
+    {
+      "key": "formula-wide",
+      "title": "公式 · 宽编辑区",
+      "theme": "light",
+      "viewport": [1100, 760],
+      "editorSize": [1100, 760],
+      "fixture": "rich",
+      "steps": "插入 → 公式 → 插入公式。默认质能方程；不滚动。",
+      "selectedFile": null,
+      "before": "captures/before-formula-wide.png",
+      "after": "captures/after-formula-wide.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    },
+    {
+      "key": "diagram-wide",
+      "title": "图示 · 宽编辑区",
+      "theme": "light",
+      "viewport": [1100, 760],
+      "editorSize": [1100, 760],
+      "fixture": "rich",
+      "steps": "插入 → 图示 → 插入图示。默认流程与三节点；不滚动。",
+      "selectedFile": null,
+      "before": "captures/before-diagram-wide.png",
+      "after": "captures/after-diagram-wide.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    },
+    {
+      "key": "diagram-medium",
+      "title": "图示 · 690栏",
+      "theme": "light",
+      "viewport": [690, 600],
+      "editorSize": [690, 600],
+      "fixture": "rich",
+      "steps": "插入 → 图示 → 插入图示。默认流程与三节点；不滚动。",
+      "selectedFile": null,
+      "before": "captures/before-diagram-medium.png",
+      "after": "captures/after-diagram-medium.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    },
+    {
+      "key": "import-dark-short",
+      "title": "导入 · 深色短高窄屏",
+      "theme": "dark",
+      "viewport": [390, 400],
+      "editorSize": [390, 400],
+      "fixture": "rich",
+      "steps": "幻灯片 → 导入。尚未选择源文件。基线具名折叠菜单保持原生打开状态；不手动遮盖或滚动。",
+      "selectedFile": null,
+      "before": "captures/before-import-dark-short.png",
+      "after": "captures/after-import-dark-short.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    },
+    {
+      "key": "import-preview-dark-short",
+      "title": "导入预览 · 深色短高窄屏",
+      "theme": "dark",
+      "viewport": [390, 400],
+      "editorSize": [390, 400],
+      "fixture": "rich",
+      "steps": "幻灯片 → 导入，原生文件选择title-layout.pptx。基线具名折叠菜单保持原生打开状态。",
+      "selectedFile": "title-layout.pptx",
+      "before": "captures/before-import-preview-dark-short.png",
+      "after": "captures/after-import-preview-dark-short.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba",
+      "selectedFileSha256": "6025c25cf082c8c14899cc5f470cfc6d1ed97e8b71beeef4cadc418c47be3b68"
+    },
+    {
+      "key": "import-dark-medium",
+      "title": "导入 · 深色690栏",
+      "theme": "dark",
+      "viewport": [690, 600],
+      "editorSize": [690, 600],
+      "fixture": "rich",
+      "steps": "幻灯片 → 导入。尚未选择源文件；不滚动。",
+      "selectedFile": null,
+      "before": "captures/before-import-dark-medium.png",
+      "after": "captures/after-import-dark-medium.png",
+      "baseline": "3b5d912",
+      "sameContentThemeSizeRequired": true,
+      "fixtureSha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+    }
+  ],
+  "supplements": [],
+  "images": [
+    {
+      "path": "captures/before-formula-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "d562c201a7072acd0c24a7bb00dccf03313b3f0491a04f45357ad4a824609632"
+    },
+    {
+      "path": "captures/after-formula-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "03096871ed687a103f1534d0cab347190d8cc77c3e237bdc949d4bb81a016dd4"
+    },
+    {
+      "path": "captures/before-diagram-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "5b2023a24741b05e06bfb0a2c579940325334185d7bea7d7d824fb757cc1247e"
+    },
+    {
+      "path": "captures/after-diagram-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "060fab63758ccd63a57815a5d4a37ba84bb2a8c213ef2ead3ed761b2b9bbeee4"
+    },
+    {
+      "path": "captures/before-formula-wide.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "8a49ba00783a0208805cf4e4da708eb441b73e06f4043e56047b4367ddc43014"
+    },
+    {
+      "path": "captures/after-formula-wide.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "c15977564bcdb173320e54f42c108c772513b430bbadda9e63e94e2d95d9f920"
+    },
+    {
+      "path": "captures/before-diagram-wide.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "261fe1f45b31aab9fad815909e54c36b5d9ecc0bfe427f25ed61e650e15631b9"
+    },
+    {
+      "path": "captures/after-diagram-wide.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "c17b7e768845a3f4719b4bb47e80e4dcdaf00608bb1748dbaa3bb5b8c52ab7ea"
+    },
+    {
+      "path": "captures/before-diagram-medium.png",
+      "width": 690,
+      "height": 600,
+      "sha256": "e8f8d75e9dcaaddfc32665a9d59b34bcf919978f5dadfe7cdef69e91c45e45b6"
+    },
+    {
+      "path": "captures/after-diagram-medium.png",
+      "width": 690,
+      "height": 600,
+      "sha256": "3eafa211bbd1d0ba1601fafa89baa0de5ce3c7577b4c11c37c39f4e2c81c2411"
+    },
+    {
+      "path": "captures/before-import-dark-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "1aa058d851611f5cbfa5f25faf66dc4004c74f4159c0b12ad90557f6a4b6710f"
+    },
+    {
+      "path": "captures/after-import-dark-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "c4a8d5f34d232950bbaa4a73dd1e7616dd158bde27b94d72bd5bdd37d95f248d"
+    },
+    {
+      "path": "captures/before-import-preview-dark-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "b58d35f2eae66f3ac5e5a8967b08934d51c94683bba5fca3ef106b525f82ff7b"
+    },
+    {
+      "path": "captures/after-import-preview-dark-short.png",
+      "width": 390,
+      "height": 400,
+      "sha256": "f23b9536ab4994debafe294a35228a70ca16ad96d5017e98e591fda81a25cdc2"
+    },
+    {
+      "path": "captures/before-import-dark-medium.png",
+      "width": 690,
+      "height": 600,
+      "sha256": "9fb71a85c68b8395fb9a65cd883783c61027382bbc492f49eb9205e50894f1d6"
+    },
+    {
+      "path": "captures/after-import-dark-medium.png",
+      "width": 690,
+      "height": 600,
+      "sha256": "91c6fb5f25dac370d2298b45e3fac6feb31a48af1aa14f02077743c34dc7cc2d"
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+[
+  {
+    "name": "weknora-site",
+    "url": "https://weknora.weixin.qq.com/",
+    "finalUrl": "https://weknora.weixin.qq.com/",
+    "status": 200,
+    "bytes": 113529,
+    "retrievedAt": "2026-10-19T19:51:33.988333+00:00",
+    "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe"
+  },
+  {
+    "name": "weknora-release",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+    "finalUrl": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+    "status": 200,
+    "bytes": 44048,
+    "retrievedAt": "2026-10-19T19:51:36.784501+00:00",
+    "tag_name": "v0.8.3",
+    "published_at": "2026-10-14T07:53:24Z",
+    "target_commitish": "main",
+    "html_url": "https://github.com/Tencent/WeKnora/releases/tag/v0.8.3",
+    "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478"
+  },
+  {
+    "name": "weknora-readme",
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/main/README.md",
+    "error": "The read operation timed out"
+  },
+  {
+    "name": "genoffice-tree",
+    "url": "https://api.github.com/repos/genspark-ai/genoffice/git/trees/480548fd55f1be3593ee0d8e316a734751d58309?recursive=1",
+    "finalUrl": "https://api.github.com/repos/genspark-ai/genoffice/git/trees/480548fd55f1be3593ee0d8e316a734751d58309?recursive=1",
+    "status": 200,
+    "bytes": 935627,
+    "retrievedAt": "2026-10-19T19:52:15.808898+00:00",
+    "sha256": "455a0085caaf357bf4ec195081934ee952fe393592bc9b12bcc402c4893464fa"
+  },
+  {
+    "name": "powerpoint-ribbon",
+    "url": "https://support.microsoft.com/en-us/office/where-are-the-menus-and-toolbars-e25451c0-8a1f-428c-afb4-d91e98807bd4",
+    "finalUrl": "https://support.microsoft.com/en-us/powerpoint/where-are-the-menus-and-toolbars",
+    "status": 200,
+    "bytes": 112483,
+    "retrievedAt": "2026-10-19T19:52:20.450964+00:00",
+    "sha256": "f266d69bc0367c07d1bfec534759b7871ea81243c9f3d063e041c72bd1e67633"
+  },
+  {
+    "name": "google-slides-edit",
+    "url": "https://support.google.com/docs/answer/1697627?hl=en",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "name": "weknora-tag",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/git/ref/tags/v0.8.3",
+    "finalUrl": "https://api.github.com/repos/Tencent/WeKnora/git/ref/tags/v0.8.3",
+    "status": 200,
+    "bytes": 331,
+    "retrievedAt": "2026-10-19T19:52:46.079136+00:00",
+    "sha256": "c89b8fa98ab3886eb77bfb414206de35e9570d1cb522289081505cefda2d290c"
+  },
+  {
+    "name": "weknora-pinned-readme",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/contents/README.md?ref=3e22822c1d2397be730c458c7539d0eb8c113a24",
+    "finalUrl": "https://api.github.com/repos/Tencent/WeKnora/contents/README.md?ref=3e22822c1d2397be730c458c7539d0eb8c113a24",
+    "status": 200,
+    "bytes": 35814,
+    "retrievedAt": "2026-10-19T19:52:46.317628+00:00",
+    "sha256": "0394b8bfa95e5db458ebf710476066fd0fe1d27aa2dfa65bc79be5c0b6a6e9ce"
+  },
+  {
+    "name": "genoffice-ribbon",
+    "url": "https://api.github.com/repos/genspark-ai/genoffice/contents/apps/slides/src/renderer/components/Ribbon.tsx?ref=480548fd55f1be3593ee0d8e316a734751d58309",
+    "finalUrl": "https://api.github.com/repos/genspark-ai/genoffice/contents/apps/slides/src/renderer/components/Ribbon.tsx?ref=480548fd55f1be3593ee0d8e316a734751d58309",
+    "status": 200,
+    "bytes": 127078,
+    "retrievedAt": "2026-10-19T19:52:46.575678+00:00",
+    "sha256": "fc38c8ff75ed3753d459945315443af38d2617d8ab0ee6ac6cb27fe7e5285375"
+  },
+  {
+    "name": "google-slides-edit-2",
+    "url": "https://support.google.com/docs/answer/2763168?hl=en",
+    "finalUrl": "https://support.google.com/docs/answer/2763168?hl=en",
+    "status": 200,
+    "bytes": 1614006,
+    "retrievedAt": "2026-10-19T19:52:47.968780+00:00",
+    "sha256": "797b849001d168283851370f105a3871318284e6d883bece10d9ea6bd1917dd0"
+  }
+]

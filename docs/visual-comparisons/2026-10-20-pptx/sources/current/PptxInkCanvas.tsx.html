@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxInkCanvas.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxInkCanvas.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 601230f1ebe31c2e087ca785fb827b68ef9cce101c1016bda72a83574b5a93ba
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import type { PptxManualInk, PptxInkStroke } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>
+import type { RenderSlide } from &#x27;../../vendor/packages/pptx-render/src/render-tree.js&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  HIGHLIGHTER_ALPHA,</pre></li>
+    <li id="L6"><pre>  inkNodeHitTest,</pre></li>
+    <li id="L7"><pre>  inkNodesOf,</pre></li>
+    <li id="L8"><pre>  strokePathD,</pre></li>
+    <li id="L9"><pre>  type InkPoint,</pre></li>
+    <li id="L10"><pre>  type InkPreset,</pre></li>
+    <li id="L11"><pre>  type InkTool,</pre></li>
+    <li id="L12"><pre>} from &#x27;../pptx-ink.js&#x27;</pre></li>
+    <li id="L13"><pre>import { rasterizeInk } from &#x27;./pptx-ink-raster.js&#x27;</pre></li>
+    <li id="L14"><pre>import &#x27;./pptx-ink.css&#x27;</pre></li>
+    <li id="L15"><pre></pre></li>
+    <li id="L16"><pre>type Draft = {</pre></li>
+    <li id="L17"><pre>  pointer: number</pre></li>
+    <li id="L18"><pre>  version: number</pre></li>
+    <li id="L19"><pre>  tool: InkTool</pre></li>
+    <li id="L20"><pre>  stroke: PptxInkStroke</pre></li>
+    <li id="L21"><pre>  ids: Set&lt;string&gt;</pre></li>
+    <li id="L22"><pre>  last: InkPoint</pre></li>
+    <li id="L23"><pre>  overflow?: boolean</pre></li>
+    <li id="L24"><pre>}</pre></li>
+    <li id="L25"><pre>export interface PptxInkCanvasProps {</pre></li>
+    <li id="L26"><pre>  slide: number</pre></li>
+    <li id="L27"><pre>  version: number</pre></li>
+    <li id="L28"><pre>  tree: RenderSlide</pre></li>
+    <li id="L29"><pre>  width: number</pre></li>
+    <li id="L30"><pre>  height: number</pre></li>
+    <li id="L31"><pre>  tool: InkTool</pre></li>
+    <li id="L32"><pre>  preset: InkPreset</pre></li>
+    <li id="L33"><pre>  disabled: boolean</pre></li>
+    <li id="L34">
+      <pre>
+  apply: (input: PptxManualInk, expectedVersion: number, signal: AbortSignal) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L35"><pre>  onExit: () =&gt; void</pre></li>
+    <li id="L36"><pre>  onBusy: (busy: boolean) =&gt; void</pre></li>
+    <li id="L37"><pre>}</pre></li>
+    <li id="L38">
+      <pre>
+/** One pointer gesture = one atomic native transaction and one existing history entry. */</pre>
+    </li>
+    <li id="L39"><pre>export function PptxInkCanvas(props: PptxInkCanvasProps) {</pre></li>
+    <li id="L40">
+      <pre>
+  return &lt;InkGesture key={`${props.slide}:${props.version}:${props.tool}`} {...props} /&gt;</pre>
+    </li>
+    <li id="L41"><pre>}</pre></li>
+    <li id="L42"><pre>function InkGesture({</pre></li>
+    <li id="L43"><pre>  slide,</pre></li>
+    <li id="L44"><pre>  version,</pre></li>
+    <li id="L45"><pre>  tree,</pre></li>
+    <li id="L46"><pre>  width,</pre></li>
+    <li id="L47"><pre>  height,</pre></li>
+    <li id="L48"><pre>  tool,</pre></li>
+    <li id="L49"><pre>  preset,</pre></li>
+    <li id="L50"><pre>  disabled,</pre></li>
+    <li id="L51"><pre>  apply,</pre></li>
+    <li id="L52"><pre>  onExit,</pre></li>
+    <li id="L53"><pre>  onBusy,</pre></li>
+    <li id="L54"><pre>}: PptxInkCanvasProps) {</pre></li>
+    <li id="L55"><pre>  const entries = useMemo(() =&gt; inkNodesOf(tree), [tree])</pre></li>
+    <li id="L56"><pre>  const draft = useRef&lt;Draft | null&gt;(null),</pre></li>
+    <li id="L57"><pre>    pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L58"><pre>  const surface = useRef&lt;SVGSVGElement&gt;(null)</pre></li>
+    <li id="L59">
+      <pre>  const [preview, setPreview] = useState&lt;PptxInkStroke | null&gt;(null),</pre>
+    </li>
+    <li id="L60"><pre>    [erased, setErased] = useState&lt;string[]&gt;([]),</pre></li>
+    <li id="L61"><pre>    [busy, setBusy] = useState(false),</pre></li>
+    <li id="L62"><pre>    [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L63"><pre>  const cancelDraft = () =&gt; {</pre></li>
+    <li id="L64"><pre>    draft.current = null</pre></li>
+    <li id="L65"><pre>    setPreview(null)</pre></li>
+    <li id="L66"><pre>    setErased([])</pre></li>
+    <li id="L67"><pre>  }</pre></li>
+    <li id="L68"><pre>  useEffect(</pre></li>
+    <li id="L69"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L70"><pre>      draft.current = null</pre></li>
+    <li id="L71"><pre>      pending.current?.abort()</pre></li>
+    <li id="L72"><pre>      onBusy(false)</pre></li>
+    <li id="L73"><pre>    },</pre></li>
+    <li id="L74"><pre>    [onBusy],</pre></li>
+    <li id="L75"><pre>  )</pre></li>
+    <li id="L76"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L77"><pre>    const keydown = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L78">
+      <pre>      const editor = surface.current?.closest(&#x27;.mimir-editor&#x27;)</pre>
+    </li>
+    <li id="L79"><pre>      if (</pre></li>
+    <li id="L80"><pre>        event.key !== &#x27;Escape&#x27; ||</pre></li>
+    <li id="L81"><pre>        event.defaultPrevented ||</pre></li>
+    <li id="L82"><pre>        !(event.target instanceof Node) ||</pre></li>
+    <li id="L83"><pre>        !editor?.contains(event.target)</pre></li>
+    <li id="L84"><pre>      )</pre></li>
+    <li id="L85"><pre>        return</pre></li>
+    <li id="L86"><pre>      event.preventDefault()</pre></li>
+    <li id="L87"><pre>      draft.current = null</pre></li>
+    <li id="L88"><pre>      pending.current?.abort()</pre></li>
+    <li id="L89"><pre>      pending.current = null</pre></li>
+    <li id="L90"><pre>      setPreview(null)</pre></li>
+    <li id="L91"><pre>      setErased([])</pre></li>
+    <li id="L92"><pre>      setBusy(false)</pre></li>
+    <li id="L93"><pre>      onBusy(false)</pre></li>
+    <li id="L94"><pre>      onExit()</pre></li>
+    <li id="L95"><pre>    }</pre></li>
+    <li id="L96"><pre>    document.addEventListener(&#x27;keydown&#x27;, keydown)</pre></li>
+    <li id="L97">
+      <pre>    return () =&gt; document.removeEventListener(&#x27;keydown&#x27;, keydown)</pre>
+    </li>
+    <li id="L98"><pre>  }, [onBusy, onExit])</pre></li>
+    <li id="L99">
+      <pre>  const point = (event: { clientX: number; clientY: number }) =&gt; {</pre>
+    </li>
+    <li id="L100"><pre>    const bounds = surface.current?.getBoundingClientRect()</pre></li>
+    <li id="L101"><pre>    if (!bounds?.width || !bounds.height) return null</pre></li>
+    <li id="L102"><pre>    return {</pre></li>
+    <li id="L103">
+      <pre>
+      x: Math.max(0, Math.min(width, ((event.clientX - bounds.left) * width) / bounds.width)),</pre>
+    </li>
+    <li id="L104">
+      <pre>
+      y: Math.max(0, Math.min(height, ((event.clientY - bounds.top) * height) / bounds.height)),</pre>
+    </li>
+    <li id="L105"><pre>    }</pre></li>
+    <li id="L106"><pre>  }</pre></li>
+    <li id="L107"><pre>  const eraseAt = (current: Draft, next: InkPoint) =&gt; {</pre></li>
+    <li id="L108">
+      <pre>    const distance = Math.hypot(next.x - current.last.x, next.y - current.last.y),</pre>
+    </li>
+    <li id="L109"><pre>      steps = Math.max(1, Math.ceil(distance / 4))</pre></li>
+    <li id="L110"><pre>    for (let step = 0; step &lt;= steps; step++) {</pre></li>
+    <li id="L111"><pre>      const p = {</pre></li>
+    <li id="L112">
+      <pre>        x: current.last.x + ((next.x - current.last.x) * step) / steps,</pre>
+    </li>
+    <li id="L113">
+      <pre>        y: current.last.y + ((next.y - current.last.y) * step) / steps,</pre>
+    </li>
+    <li id="L114"><pre>      }</pre></li>
+    <li id="L115"><pre>      for (const entry of entries)</pre></li>
+    <li id="L116"><pre>        if (inkNodeHitTest(entry, p, 6))</pre></li>
+    <li id="L117">
+      <pre>          current.ids.add(entry.node.durableId ?? entry.node.sourceId)</pre>
+    </li>
+    <li id="L118"><pre>    }</pre></li>
+    <li id="L119"><pre>    current.last = next</pre></li>
+    <li id="L120"><pre>    setErased([...current.ids])</pre></li>
+    <li id="L121"><pre>  }</pre></li>
+    <li id="L122">
+      <pre>  const sample = (event: PointerEvent&lt;SVGSVGElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L123"><pre>    const current = draft.current</pre></li>
+    <li id="L124"><pre>    if (!current || current.pointer !== event.pointerId) return</pre></li>
+    <li id="L125">
+      <pre>    const samples = event.nativeEvent.getCoalescedEvents?.() ?? [event]</pre>
+    </li>
+    <li id="L126"><pre>    for (const item of samples.length ? samples : [event]) {</pre></li>
+    <li id="L127"><pre>      const p = point(item)</pre></li>
+    <li id="L128"><pre>      if (!p) continue</pre></li>
+    <li id="L129"><pre>      if (current.tool === &#x27;eraser&#x27;) eraseAt(current, p)</pre></li>
+    <li id="L130">
+      <pre>      else if (current.stroke.points.length &gt;= 20000) current.overflow = true</pre>
+    </li>
+    <li id="L131">
+      <pre>      else if (Math.hypot(p.x - current.last.x, p.y - current.last.y) &gt;= 0.35) {</pre>
+    </li>
+    <li id="L132"><pre>        current.stroke.points.push(p)</pre></li>
+    <li id="L133"><pre>        current.last = p</pre></li>
+    <li id="L134"><pre>      }</pre></li>
+    <li id="L135"><pre>    }</pre></li>
+    <li id="L136"><pre>    if (current.tool !== &#x27;eraser&#x27;)</pre></li>
+    <li id="L137">
+      <pre>      setPreview({ ...current.stroke, points: [...current.stroke.points] })</pre>
+    </li>
+    <li id="L138"><pre>  }</pre></li>
+    <li id="L139">
+      <pre>  const finish = async (event: PointerEvent&lt;SVGSVGElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L140"><pre>    const current = draft.current</pre></li>
+    <li id="L141"><pre>    if (!current || current.pointer !== event.pointerId) return</pre></li>
+    <li id="L142"><pre>    sample(event)</pre></li>
+    <li id="L143"><pre>    draft.current = null</pre></li>
+    <li id="L144"><pre>    surface.current?.releasePointerCapture?.(event.pointerId)</pre></li>
+    <li id="L145"><pre>    if (current.overflow) {</pre></li>
+    <li id="L146"><pre>      cancelDraft()</pre></li>
+    <li id="L147"><pre>      setError(&#x27;这笔采样过长，请分成几笔绘制&#x27;)</pre></li>
+    <li id="L148"><pre>      return</pre></li>
+    <li id="L149"><pre>    }</pre></li>
+    <li id="L150">
+      <pre>    if (disabled || current.version !== version || current.tool !== tool) {</pre>
+    </li>
+    <li id="L151"><pre>      cancelDraft()</pre></li>
+    <li id="L152"><pre>      return</pre></li>
+    <li id="L153"><pre>    }</pre></li>
+    <li id="L154">
+      <pre>    if (current.tool === &#x27;eraser&#x27; &amp;&amp; !current.ids.size) {</pre>
+    </li>
+    <li id="L155"><pre>      cancelDraft()</pre></li>
+    <li id="L156"><pre>      return</pre></li>
+    <li id="L157"><pre>    }</pre></li>
+    <li id="L158"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L159"><pre>    pending.current = controller</pre></li>
+    <li id="L160"><pre>    setBusy(true)</pre></li>
+    <li id="L161"><pre>    onBusy(true)</pre></li>
+    <li id="L162"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L163"><pre>    try {</pre></li>
+    <li id="L164"><pre>      const input: PptxManualInk =</pre></li>
+    <li id="L165"><pre>        current.tool === &#x27;eraser&#x27;</pre></li>
+    <li id="L166">
+      <pre>          ? { kind: &#x27;erase&#x27;, slide, ids: [...current.ids] }</pre>
+    </li>
+    <li id="L167"><pre>          : {</pre></li>
+    <li id="L168"><pre>              kind: &#x27;add&#x27;,</pre></li>
+    <li id="L169"><pre>              slide,</pre></li>
+    <li id="L170"><pre>              fitWidthPx: width,</pre></li>
+    <li id="L171"><pre>              stroke: current.stroke,</pre></li>
+    <li id="L172"><pre>              png: rasterizeInk(current.stroke),</pre></li>
+    <li id="L173"><pre>            }</pre></li>
+    <li id="L174">
+      <pre>
+      if (JSON.stringify(input).length &gt; 950000) throw new Error(&#x27;这笔内容较大，请分成几笔绘制&#x27;)</pre>
+    </li>
+    <li id="L175">
+      <pre>      const changed = await apply(input, current.version, controller.signal)</pre>
+    </li>
+    <li id="L176">
+      <pre>
+      if (!controller.signal.aborted &amp;&amp; !changed) setError(&#x27;笔迹未应用，请重试；原有内容已保留&#x27;)</pre>
+    </li>
+    <li id="L177"><pre>    } catch (cause) {</pre></li>
+    <li id="L178"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L179">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;笔迹未应用，请重试&#x27;)</pre>
+    </li>
+    <li id="L180"><pre>    } finally {</pre></li>
+    <li id="L181"><pre>      if (pending.current === controller) {</pre></li>
+    <li id="L182"><pre>        pending.current = null</pre></li>
+    <li id="L183"><pre>        if (!controller.signal.aborted) {</pre></li>
+    <li id="L184"><pre>          setBusy(false)</pre></li>
+    <li id="L185"><pre>          setPreview(null)</pre></li>
+    <li id="L186"><pre>          setErased([])</pre></li>
+    <li id="L187"><pre>        }</pre></li>
+    <li id="L188"><pre>        onBusy(false)</pre></li>
+    <li id="L189"><pre>      }</pre></li>
+    <li id="L190"><pre>    }</pre></li>
+    <li id="L191"><pre>  }</pre></li>
+    <li id="L192"><pre>  const exit = () =&gt; {</pre></li>
+    <li id="L193"><pre>    cancelDraft()</pre></li>
+    <li id="L194"><pre>    pending.current?.abort()</pre></li>
+    <li id="L195"><pre>    pending.current = null</pre></li>
+    <li id="L196"><pre>    setBusy(false)</pre></li>
+    <li id="L197"><pre>    onBusy(false)</pre></li>
+    <li id="L198"><pre>    onExit()</pre></li>
+    <li id="L199"><pre>  }</pre></li>
+    <li id="L200"><pre>  if (tool === &#x27;select&#x27;) return null</pre></li>
+    <li id="L201"><pre>  return (</pre></li>
+    <li id="L202"><pre>    &lt;div className=&quot;mimir-pptx-ink-layer&quot;&gt;</pre></li>
+    <li id="L203"><pre>      &lt;svg</pre></li>
+    <li id="L204"><pre>        ref={surface}</pre></li>
+    <li id="L205">
+      <pre>
+        className={`mimir-pptx-ink-canvas${tool === &#x27;eraser&#x27; ? &#x27; is-eraser&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L206"><pre>        viewBox={`0 0 ${width} ${height}`}</pre></li>
+    <li id="L207"><pre>        preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L208"><pre>        tabIndex={0}</pre></li>
+    <li id="L209"><pre>        role=&quot;img&quot;</pre></li>
+    <li id="L210"><pre>        aria-label=&quot;幻灯片手写画布（Escape退出）&quot;</pre></li>
+    <li id="L211"><pre>        aria-busy={busy}</pre></li>
+    <li id="L212"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L213"><pre>          if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L214"><pre>            event.preventDefault()</pre></li>
+    <li id="L215"><pre>            event.stopPropagation()</pre></li>
+    <li id="L216"><pre>            exit()</pre></li>
+    <li id="L217"><pre>          }</pre></li>
+    <li id="L218"><pre>        }}</pre></li>
+    <li id="L219"><pre>        onPointerDown={(event) =&gt; {</pre></li>
+    <li id="L220"><pre>          if (</pre></li>
+    <li id="L221"><pre>            disabled ||</pre></li>
+    <li id="L222"><pre>            busy ||</pre></li>
+    <li id="L223"><pre>            pending.current ||</pre></li>
+    <li id="L224"><pre>            draft.current ||</pre></li>
+    <li id="L225"><pre>            event.button !== 0 ||</pre></li>
+    <li id="L226"><pre>            event.isPrimary === false</pre></li>
+    <li id="L227"><pre>          )</pre></li>
+    <li id="L228"><pre>            return</pre></li>
+    <li id="L229"><pre>          const p = point(event)</pre></li>
+    <li id="L230"><pre>          if (!p) return</pre></li>
+    <li id="L231"><pre>          event.preventDefault()</pre></li>
+    <li id="L232"><pre>          event.stopPropagation()</pre></li>
+    <li id="L233"><pre>          surface.current?.focus()</pre></li>
+    <li id="L234"><pre>          surface.current?.setPointerCapture?.(event.pointerId)</pre></li>
+    <li id="L235"><pre>          const stroke = { ...preset, points: [p] }</pre></li>
+    <li id="L236"><pre>          const current = {</pre></li>
+    <li id="L237"><pre>            pointer: event.pointerId,</pre></li>
+    <li id="L238"><pre>            version,</pre></li>
+    <li id="L239"><pre>            tool,</pre></li>
+    <li id="L240"><pre>            stroke,</pre></li>
+    <li id="L241"><pre>            ids: new Set&lt;string&gt;(),</pre></li>
+    <li id="L242"><pre>            last: p,</pre></li>
+    <li id="L243"><pre>          }</pre></li>
+    <li id="L244"><pre>          draft.current = current</pre></li>
+    <li id="L245"><pre>          setError(&#x27;&#x27;)</pre></li>
+    <li id="L246"><pre>          if (tool === &#x27;eraser&#x27;) eraseAt(current, p)</pre></li>
+    <li id="L247"><pre>          else setPreview(stroke)</pre></li>
+    <li id="L248"><pre>        }}</pre></li>
+    <li id="L249"><pre>        onPointerMove={sample}</pre></li>
+    <li id="L250"><pre>        onPointerUp={(event) =&gt; {</pre></li>
+    <li id="L251"><pre>          void finish(event)</pre></li>
+    <li id="L252"><pre>        }}</pre></li>
+    <li id="L253"><pre>        onPointerCancel={(event) =&gt; {</pre></li>
+    <li id="L254">
+      <pre>          if (draft.current?.pointer === event.pointerId) cancelDraft()</pre>
+    </li>
+    <li id="L255"><pre>        }}</pre></li>
+    <li id="L256"><pre>        onLostPointerCapture={(event) =&gt; {</pre></li>
+    <li id="L257">
+      <pre>          if (draft.current?.pointer === event.pointerId) cancelDraft()</pre>
+    </li>
+    <li id="L258"><pre>        }}</pre></li>
+    <li id="L259"><pre>        onBlur={() =&gt; {</pre></li>
+    <li id="L260"><pre>          if (draft.current) cancelDraft()</pre></li>
+    <li id="L261"><pre>        }}</pre></li>
+    <li id="L262"><pre>        onClick={(event) =&gt; event.stopPropagation()}</pre></li>
+    <li id="L263"><pre>      &gt;</pre></li>
+    <li id="L264"><pre>        {preview &amp;&amp; (</pre></li>
+    <li id="L265"><pre>          &lt;path</pre></li>
+    <li id="L266"><pre>            d={strokePathD(preview.points)}</pre></li>
+    <li id="L267"><pre>            fill=&quot;none&quot;</pre></li>
+    <li id="L268"><pre>            stroke={`#${preview.color}`}</pre></li>
+    <li id="L269"><pre>            strokeWidth={preview.width}</pre></li>
+    <li id="L270"><pre>            strokeLinecap=&quot;round&quot;</pre></li>
+    <li id="L271"><pre>            strokeLinejoin=&quot;round&quot;</pre></li>
+    <li id="L272">
+      <pre>
+            opacity={preview.tool === &#x27;highlighter&#x27; ? HIGHLIGHTER_ALPHA : 1}</pre>
+    </li>
+    <li id="L273"><pre>          /&gt;</pre></li>
+    <li id="L274"><pre>        )}</pre></li>
+    <li id="L275"><pre>        {erased.length &gt; 0 &amp;&amp;</pre></li>
+    <li id="L276"><pre>          entries</pre></li>
+    <li id="L277">
+      <pre>
+            .filter((entry) =&gt; erased.includes(entry.node.durableId ?? entry.node.sourceId))</pre>
+    </li>
+    <li id="L278"><pre>            .map((entry) =&gt; (</pre></li>
+    <li id="L279"><pre>              &lt;rect</pre></li>
+    <li id="L280"><pre>                key={entry.node.id}</pre></li>
+    <li id="L281"><pre>                x={entry.node.box.x}</pre></li>
+    <li id="L282"><pre>                y={entry.node.box.y}</pre></li>
+    <li id="L283"><pre>                width={entry.node.box.w}</pre></li>
+    <li id="L284"><pre>                height={entry.node.box.h}</pre></li>
+    <li id="L285"><pre>                className=&quot;mimir-pptx-ink-erasing&quot;</pre></li>
+    <li id="L286"><pre>              /&gt;</pre></li>
+    <li id="L287"><pre>            ))}</pre></li>
+    <li id="L288"><pre>      &lt;/svg&gt;</pre></li>
+    <li id="L289"><pre>      {(busy || error) &amp;&amp; (</pre></li>
+    <li id="L290">
+      <pre>
+        &lt;div className=&quot;mimir-pptx-ink-feedback&quot; role={error ? &#x27;alert&#x27; : &#x27;status&#x27;}&gt;</pre>
+    </li>
+    <li id="L291"><pre>          {error || &#x27;正在应用笔迹…&#x27;}</pre></li>
+    <li id="L292"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L293"><pre>      )}</pre></li>
+    <li id="L294"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L295"><pre>  )</pre></li>
+    <li id="L296"><pre>}</pre></li>
+  </ol>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxClarificationControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxClarificationControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 739cb782ee70e749106be4f0edde9737873aec9755c365dc5cb35cc690b87fb4
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import type { PptxClarification } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  ToolbarButton,</pre></li>
+    <li id="L5"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L7"><pre>  ToolbarTextField,</pre></li>
+    <li id="L8"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L9"><pre>import { PptxControlPanel } from &#x27;./PptxObjectControls.js&#x27;</pre></li>
+    <li id="L10"><pre></pre></li>
+    <li id="L11"><pre>export function PptxClarificationControls({</pre></li>
+    <li id="L12"><pre>  input,</pre></li>
+    <li id="L13"><pre>  complete,</pre></li>
+    <li id="L14"><pre>}: {</pre></li>
+    <li id="L15"><pre>  input: PptxClarification</pre></li>
+    <li id="L16">
+      <pre>
+  complete: (answers: { id: string; label: string; choices: string[]; other: string }[]) =&gt; void</pre>
+    </li>
+    <li id="L17"><pre>}) {</pre></li>
+    <li id="L18">
+      <pre>  const [choices, setChoices] = useState&lt;Record&lt;string, string[]&gt;&gt;({})</pre>
+    </li>
+    <li id="L19">
+      <pre>  const [other, setOther] = useState&lt;Record&lt;string, string&gt;&gt;({})</pre>
+    </li>
+    <li id="L20">
+      <pre>
+  const ready = input.questions.every((q) =&gt; choices[q.id]?.length || other[q.id]?.trim())</pre>
+    </li>
+    <li id="L21"><pre>  return (</pre></li>
+    <li id="L22"><pre>    &lt;PptxControlPanel busy={false}&gt;</pre></li>
+    <li id="L23">
+      <pre>
+      &lt;ToolbarMenuNote&gt;选择演示文稿的方向，确认后继续生成。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L24"><pre>      {input.questions.map((q) =&gt; (</pre></li>
+    <li id="L25"><pre>        &lt;ToolbarMenuFields key={q.id} label={q.label}&gt;</pre></li>
+    <li id="L26">
+      <pre>
+          {q.description &amp;&amp; &lt;ToolbarMenuNote&gt;{q.description}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L27">
+      <pre>          {[...q.options, &#x27;请为我决定&#x27;].map((option) =&gt; (</pre>
+    </li>
+    <li id="L28"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L29"><pre>              key={option}</pre></li>
+    <li id="L30"><pre>              label={`${q.label}：${option}`}</pre></li>
+    <li id="L31"><pre>              active={choices[q.id]?.includes(option)}</pre></li>
+    <li id="L32"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L33"><pre>                setChoices((current) =&gt; ({</pre></li>
+    <li id="L34"><pre>                  ...current,</pre></li>
+    <li id="L35"><pre>                  [q.id]: q.multi</pre></li>
+    <li id="L36"><pre>                    ? current[q.id]?.includes(option)</pre></li>
+    <li id="L37">
+      <pre>                      ? current[q.id]!.filter((item) =&gt; item !== option)</pre>
+    </li>
+    <li id="L38"><pre>                      : [...(current[q.id] ?? []), option]</pre></li>
+    <li id="L39"><pre>                    : [option],</pre></li>
+    <li id="L40"><pre>                }))</pre></li>
+    <li id="L41"><pre>              }</pre></li>
+    <li id="L42"><pre>            &gt;</pre></li>
+    <li id="L43"><pre>              {option}</pre></li>
+    <li id="L44"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L45"><pre>          ))}</pre></li>
+    <li id="L46"><pre>          &lt;ToolbarTextField</pre></li>
+    <li id="L47"><pre>            label={`${q.label}：其他要求`}</pre></li>
+    <li id="L48"><pre>            value={other[q.id] ?? &#x27;&#x27;}</pre></li>
+    <li id="L49">
+      <pre>
+            onChange={(value) =&gt; setOther((current) =&gt; ({ ...current, [q.id]: value }))}</pre>
+    </li>
+    <li id="L50"><pre>          /&gt;</pre></li>
+    <li id="L51"><pre>        &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L52"><pre>      ))}</pre></li>
+    <li id="L53"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L54"><pre>        primary</pre></li>
+    <li id="L55"><pre>        label=&quot;确认演示需求&quot;</pre></li>
+    <li id="L56"><pre>        disabled={!ready}</pre></li>
+    <li id="L57">
+      <pre>        disabledReason=&quot;请为每个问题选择方向或填写其他要求&quot;</pre>
+    </li>
+    <li id="L58"><pre>        onClick={() =&gt;</pre></li>
+    <li id="L59"><pre>          complete(</pre></li>
+    <li id="L60"><pre>            input.questions.map((q) =&gt; ({</pre></li>
+    <li id="L61"><pre>              id: q.id,</pre></li>
+    <li id="L62"><pre>              label: q.label,</pre></li>
+    <li id="L63"><pre>              choices: choices[q.id] ?? [],</pre></li>
+    <li id="L64"><pre>              other: other[q.id]?.trim() ?? &#x27;&#x27;,</pre></li>
+    <li id="L65"><pre>            })),</pre></li>
+    <li id="L66"><pre>          )</pre></li>
+    <li id="L67"><pre>        }</pre></li>
+    <li id="L68"><pre>      /&gt;</pre></li>
+    <li id="L69"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L70"><pre>  )</pre></li>
+    <li id="L71"><pre>}</pre></li>
+  </ol>
+</html>

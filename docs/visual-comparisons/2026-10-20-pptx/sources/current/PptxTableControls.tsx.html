@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxTableControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxTableControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 7738c8543fdd734a5b4f6e5d9ab6f76996034f9343a22321b93337ba3992475f
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import type { TableElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>
+import type { EditParagraph, EditRun } from &#x27;../../vendor/packages/pptx-ops/src/types.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import { TABLE_STYLE_PRESETS } from &#x27;../../vendor/packages/pptx-engine/src/table-edit.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  ToolbarButton,</pre></li>
+    <li id="L7"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L8"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L9"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L10"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L11"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L12"><pre>  ToolbarSelect,</pre></li>
+    <li id="L13"><pre>  ToolbarTabs,</pre></li>
+    <li id="L14"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L15"><pre>  type ToolbarColorOption,</pre></li>
+    <li id="L16"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L17"><pre></pre></li>
+    <li id="L18"><pre>const TABLE_FLAGS = [</pre></li>
+    <li id="L19"><pre>  [&#x27;firstRow&#x27;, &#x27;标题行&#x27;],</pre></li>
+    <li id="L20"><pre>  [&#x27;lastRow&#x27;, &#x27;汇总行&#x27;],</pre></li>
+    <li id="L21"><pre>  [&#x27;firstCol&#x27;, &#x27;首列&#x27;],</pre></li>
+    <li id="L22"><pre>  [&#x27;lastCol&#x27;, &#x27;末列&#x27;],</pre></li>
+    <li id="L23"><pre>  [&#x27;bandRow&#x27;, &#x27;交替行&#x27;],</pre></li>
+    <li id="L24"><pre>  [&#x27;bandCol&#x27;, &#x27;交替列&#x27;],</pre></li>
+    <li id="L25"><pre>] as const</pre></li>
+    <li id="L26"><pre>const TABLE_PRESETS = [</pre></li>
+    <li id="L27"><pre>  {</pre></li>
+    <li id="L28"><pre>    key: &#x27;none&#x27;,</pre></li>
+    <li id="L29"><pre>    label: &#x27;无样式&#x27;,</pre></li>
+    <li id="L30"><pre>    header: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L31"><pre>    band: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L32"><pre>    border: &#x27;transparent&#x27;,</pre></li>
+    <li id="L33"><pre>  },</pre></li>
+    <li id="L34"><pre>  {</pre></li>
+    <li id="L35"><pre>    key: &#x27;lightGrid&#x27;,</pre></li>
+    <li id="L36"><pre>    label: &#x27;浅色网格&#x27;,</pre></li>
+    <li id="L37"><pre>    header: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L38"><pre>    band: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L39"><pre>    border: &#x27;#BFBFBF&#x27;,</pre></li>
+    <li id="L40"><pre>  },</pre></li>
+    <li id="L41"><pre>  {</pre></li>
+    <li id="L42"><pre>    key: &#x27;zebraBlue&#x27;,</pre></li>
+    <li id="L43"><pre>    label: &#x27;蓝色交替行&#x27;,</pre></li>
+    <li id="L44"><pre>    header: &#x27;#4472C4&#x27;,</pre></li>
+    <li id="L45"><pre>    band: &#x27;#D6E4F0&#x27;,</pre></li>
+    <li id="L46"><pre>    border: &#x27;transparent&#x27;,</pre></li>
+    <li id="L47"><pre>  },</pre></li>
+    <li id="L48"><pre>  {</pre></li>
+    <li id="L49"><pre>    key: &#x27;zebraGray&#x27;,</pre></li>
+    <li id="L50"><pre>    label: &#x27;灰色交替行&#x27;,</pre></li>
+    <li id="L51"><pre>    header: &#x27;#595959&#x27;,</pre></li>
+    <li id="L52"><pre>    band: &#x27;#EDEDED&#x27;,</pre></li>
+    <li id="L53"><pre>    border: &#x27;transparent&#x27;,</pre></li>
+    <li id="L54"><pre>  },</pre></li>
+    <li id="L55"><pre>  {</pre></li>
+    <li id="L56"><pre>    key: &#x27;headerDarkBlue&#x27;,</pre></li>
+    <li id="L57"><pre>    label: &#x27;深蓝标题行&#x27;,</pre></li>
+    <li id="L58"><pre>    header: &#x27;#1F3864&#x27;,</pre></li>
+    <li id="L59"><pre>    band: &#x27;#FFFFFF&#x27;,</pre></li>
+    <li id="L60"><pre>    border: &#x27;transparent&#x27;,</pre></li>
+    <li id="L61"><pre>  },</pre></li>
+    <li id="L62"><pre>  {</pre></li>
+    <li id="L63"><pre>    key: &#x27;headerOrange&#x27;,</pre></li>
+    <li id="L64"><pre>    label: &#x27;橙色标题行&#x27;,</pre></li>
+    <li id="L65"><pre>    header: &#x27;#ED7D31&#x27;,</pre></li>
+    <li id="L66"><pre>    band: &#x27;#FFFFFF&#x27;,</pre></li>
+    <li id="L67"><pre>    border: &#x27;transparent&#x27;,</pre></li>
+    <li id="L68"><pre>  },</pre></li>
+    <li id="L69"><pre>  {</pre></li>
+    <li id="L70"><pre>    key: &#x27;noBorder&#x27;,</pre></li>
+    <li id="L71"><pre>    label: &#x27;简洁无边框&#x27;,</pre></li>
+    <li id="L72"><pre>    header: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L73"><pre>    band: &#x27;#F2F2F2&#x27;,</pre></li>
+    <li id="L74"><pre>    border: &#x27;transparent&#x27;,</pre></li>
+    <li id="L75"><pre>  },</pre></li>
+    <li id="L76"><pre>  {</pre></li>
+    <li id="L77"><pre>    key: &#x27;fullBorder&#x27;,</pre></li>
+    <li id="L78"><pre>    label: &#x27;完整边框&#x27;,</pre></li>
+    <li id="L79"><pre>    header: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L80"><pre>    band: &#x27;var(--me-surface)&#x27;,</pre></li>
+    <li id="L81"><pre>    border: &#x27;#000000&#x27;,</pre></li>
+    <li id="L82"><pre>  },</pre></li>
+    <li id="L83"><pre>] as const</pre></li>
+    <li id="L84"><pre>function currentTablePreset(table: TableElement): string {</pre></li>
+    <li id="L85"><pre>  const custom = TABLE_PRESETS.find(</pre></li>
+    <li id="L86">
+      <pre>
+    (preset) =&gt; TABLE_STYLE_PRESETS[preset.key]?.styleId === table.styleId &amp;&amp; table.styleId,</pre>
+    </li>
+    <li id="L87"><pre>  )</pre></li>
+    <li id="L88"><pre>  if (custom) return custom.key</pre></li>
+    <li id="L89">
+      <pre>
+  if (table.styleId !== &#x27;{2D5ABB26-0587-4C30-8999-92F81FD0307C}&#x27;) return &#x27;&#x27;</pre>
+    </li>
+    <li id="L90"><pre>  const border = table.rows[0]?.[0]?.borders?.l</pre></li>
+    <li id="L91">
+      <pre>
+  return (border?.fill.type === &#x27;solid&#x27; ? border.fill.color : undefined) === &#x27;#BFBFBF&#x27;</pre>
+    </li>
+    <li id="L92"><pre>    ? &#x27;lightGrid&#x27;</pre></li>
+    <li id="L93">
+      <pre>
+    : (border?.fill.type === &#x27;solid&#x27; ? border.fill.color : undefined) === &#x27;#000000&#x27;</pre>
+    </li>
+    <li id="L94"><pre>      ? &#x27;fullBorder&#x27;</pre></li>
+    <li id="L95"><pre>      : &#x27;none&#x27;</pre></li>
+    <li id="L96"><pre>}</pre></li>
+    <li id="L97"><pre></pre></li>
+    <li id="L98">
+      <pre>
+/** Keep all unaffected table paragraphs and runs when changing one cell paragraph. */</pre>
+    </li>
+    <li id="L99"><pre>export function PptxTableControls({</pre></li>
+    <li id="L100"><pre>  table,</pre></li>
+    <li id="L101"><pre>  version,</pre></li>
+    <li id="L102"><pre>  target,</pre></li>
+    <li id="L103"><pre>  apply,</pre></li>
+    <li id="L104"><pre>  editParagraphRuns,</pre></li>
+    <li id="L105"><pre>  colors,</pre></li>
+    <li id="L106"><pre>}: {</pre></li>
+    <li id="L107">
+      <pre>
+  editParagraphRuns: (runs: readonly string[], next: string) =&gt; { texts: string[] } | null</pre>
+    </li>
+    <li id="L108"><pre>  colors: readonly ToolbarColorOption[]</pre></li>
+    <li id="L109"><pre>  table: TableElement</pre></li>
+    <li id="L110"><pre>  version: number</pre></li>
+    <li id="L111"><pre>  target: { slide: number; el: string }</pre></li>
+    <li id="L112">
+      <pre>  apply: (op: Record&lt;string, unknown&gt;) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L113"><pre>}) {</pre></li>
+    <li id="L114">
+      <pre>
+  const [section, setSection] = useState&lt;&#x27;content&#x27; | &#x27;layout&#x27; | &#x27;style&#x27;&gt;(&#x27;content&#x27;)</pre>
+    </li>
+    <li id="L115">
+      <pre>
+  const [stylePatch, setStylePatch] = useState&lt;Record&lt;string, unknown&gt;&gt;({})</pre>
+    </li>
+    <li id="L116"><pre>  const [scope, setScope] = useState(&#x27;cell&#x27;)</pre></li>
+    <li id="L117"><pre>  const [row, setRow] = useState(&#x27;0&#x27;)</pre></li>
+    <li id="L118"><pre>  const [col, setCol] = useState(&#x27;0&#x27;)</pre></li>
+    <li id="L119">
+      <pre>  const [paragraphIndex, setParagraphIndex] = useState(&#x27;0&#x27;)</pre>
+    </li>
+    <li id="L120"><pre>  const [draft, setDraft] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L121"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L122"><pre>  const [draftVersion, setDraftVersion] = useState(version)</pre></li>
+    <li id="L123"><pre>  const draftRevision = useRef(0)</pre></li>
+    <li id="L124">
+      <pre>
+  // Keep navigation stable, but never apply a draft prepared against an older canvas.</pre>
+    </li>
+    <li id="L125">
+      <pre>
+  // Revisions advance through undo/redo too, so returning to old content cannot revive it.</pre>
+    </li>
+    <li id="L126"><pre>  if (draftVersion !== version) {</pre></li>
+    <li id="L127"><pre>    setDraftVersion(version)</pre></li>
+    <li id="L128"><pre>    setDraft(null)</pre></li>
+    <li id="L129"><pre>    setStylePatch({})</pre></li>
+    <li id="L130"><pre>  }</pre></li>
+    <li id="L131"><pre>  const rowIndex = Math.min(Number(row), table.rows.length - 1)</pre></li>
+    <li id="L132">
+      <pre>  const colIndex = Math.min(Number(col), (table.rows[rowIndex]?.length ?? 1) - 1)</pre>
+    </li>
+    <li id="L133"><pre>  const cell = table.rows[rowIndex]?.[colIndex]</pre></li>
+    <li id="L134"><pre>  const paragraphs = cell?.text?.paragraphs ?? []</pre></li>
+    <li id="L135">
+      <pre>
+  const selectedIndex = Math.min(Number(paragraphIndex), Math.max(0, paragraphs.length - 1))</pre>
+    </li>
+    <li id="L136">
+      <pre>
+  const currentText = paragraphs[selectedIndex]?.runs.map((run) =&gt; run.text).join(&#x27;&#x27;) ?? &#x27;&#x27;</pre>
+    </li>
+    <li id="L137"><pre>  const nextText = draft ?? currentText</pre></li>
+    <li id="L138">
+      <pre>
+  const unavailable = cell?.merged ? &#x27;合并区域的占位格不能直接编辑，请选择左上角单元格&#x27; : undefined</pre>
+    </li>
+    <li id="L139"><pre></pre></li>
+    <li id="L140"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L141">
+      <pre>    if (!cell || unavailable || busy || nextText === currentText) return</pre>
+    </li>
+    <li id="L142"><pre>    const edited: EditParagraph[] = paragraphs.length</pre></li>
+    <li id="L143"><pre>      ? paragraphs.map((paragraph, index) =&gt; {</pre></li>
+    <li id="L144">
+      <pre>          const runs: EditRun[] = paragraph.runs.map((run, runIndex) =&gt; ({</pre>
+    </li>
+    <li id="L145"><pre>            text: run.text,</pre></li>
+    <li id="L146"><pre>            srcRun: runIndex,</pre></li>
+    <li id="L147"><pre>          }))</pre></li>
+    <li id="L148">
+      <pre>          if (index !== selectedIndex) return { runs, srcPara: index }</pre>
+    </li>
+    <li id="L149"><pre>          const narrowed = editParagraphRuns(</pre></li>
+    <li id="L150"><pre>            runs.map((run) =&gt; run.text),</pre></li>
+    <li id="L151"><pre>            nextText,</pre></li>
+    <li id="L152"><pre>          )</pre></li>
+    <li id="L153"><pre>          return {</pre></li>
+    <li id="L154"><pre>            runs: narrowed</pre></li>
+    <li id="L155">
+      <pre>
+              ? narrowed.texts.map((text, runIndex) =&gt; ({ text, srcRun: runIndex }))</pre>
+    </li>
+    <li id="L156"><pre>              : [{ text: nextText }],</pre></li>
+    <li id="L157"><pre>            srcPara: index,</pre></li>
+    <li id="L158"><pre>          }</pre></li>
+    <li id="L159"><pre>        })</pre></li>
+    <li id="L160"><pre>      : [{ runs: [{ text: nextText }] }]</pre></li>
+    <li id="L161"><pre>    const submittedRevision = draftRevision.current</pre></li>
+    <li id="L162"><pre>    setBusy(true)</pre></li>
+    <li id="L163"><pre>    try {</pre></li>
+    <li id="L164"><pre>      const applied = await apply({</pre></li>
+    <li id="L165"><pre>        op: &#x27;setTableCell&#x27;,</pre></li>
+    <li id="L166"><pre>        target,</pre></li>
+    <li id="L167"><pre>        row: rowIndex,</pre></li>
+    <li id="L168"><pre>        col: colIndex,</pre></li>
+    <li id="L169"><pre>        paragraphs: edited,</pre></li>
+    <li id="L170"><pre>      })</pre></li>
+    <li id="L171">
+      <pre>
+      if (applied &amp;&amp; draftRevision.current === submittedRevision) setDraft(null)</pre>
+    </li>
+    <li id="L172"><pre>    } finally {</pre></li>
+    <li id="L173"><pre>      setBusy(false)</pre></li>
+    <li id="L174"><pre>    }</pre></li>
+    <li id="L175"><pre>  }</pre></li>
+    <li id="L176"><pre></pre></li>
+    <li id="L177">
+      <pre>  const applyTable = async (op: Record&lt;string, unknown&gt;) =&gt; {</pre>
+    </li>
+    <li id="L178"><pre>    if (busy) return</pre></li>
+    <li id="L179"><pre>    setBusy(true)</pre></li>
+    <li id="L180"><pre>    try {</pre></li>
+    <li id="L181"><pre>      await apply({ ...op, target })</pre></li>
+    <li id="L182"><pre>    } finally {</pre></li>
+    <li id="L183"><pre>      setBusy(false)</pre></li>
+    <li id="L184"><pre>    }</pre></li>
+    <li id="L185"><pre>  }</pre></li>
+    <li id="L186"><pre>  const hasMerges = table.rows.some((cells) =&gt;</pre></li>
+    <li id="L187">
+      <pre>
+    cells.some((item) =&gt; item.merged || (item.gridSpan ?? 1) &gt; 1 || (item.rowSpan ?? 1) &gt; 1),</pre>
+    </li>
+    <li id="L188"><pre>  )</pre></li>
+    <li id="L189">
+      <pre>
+  const scopeCells = scope === &#x27;cell&#x27; ? [cell] : table.rows.flat().filter((item) =&gt; !item.merged)</pre>
+    </li>
+    <li id="L190"><pre>  const borderValues = scopeCells.flatMap((item) =&gt;</pre></li>
+    <li id="L191">
+      <pre>
+    ([&#x27;l&#x27;, &#x27;r&#x27;, &#x27;t&#x27;, &#x27;b&#x27;] as const).map((edge) =&gt; item?.borders?.[edge]),</pre>
+    </li>
+    <li id="L192"><pre>  )</pre></li>
+    <li id="L193"><pre>  const borderKeys = borderValues.map((stroke) =&gt;</pre></li>
+    <li id="L194">
+      <pre>    stroke?.fill.type === &#x27;solid&#x27; &amp;&amp; stroke.width &gt; 0</pre>
+    </li>
+    <li id="L195"><pre>      ? `${stroke.fill.color}:${stroke.width}`</pre></li>
+    <li id="L196"><pre>      : &#x27;none&#x27;,</pre></li>
+    <li id="L197"><pre>  )</pre></li>
+    <li id="L198"><pre>  const borderMixed = new Set(borderKeys).size &gt; 1</pre></li>
+    <li id="L199">
+      <pre>
+  const fillKeys = scopeCells.map((item) =&gt; JSON.stringify(item?.fill ?? { type: &#x27;none&#x27; }))</pre>
+    </li>
+    <li id="L200"><pre>  const fillMixed = new Set(fillKeys).size &gt; 1</pre></li>
+    <li id="L201">
+      <pre>
+  const currentBorder = borderValues.find((stroke) =&gt; stroke?.width &amp;&amp; stroke.fill.type === &#x27;solid&#x27;)</pre>
+    </li>
+    <li id="L202"><pre>  const color =</pre></li>
+    <li id="L203"><pre>    typeof stylePatch.borderColor === &#x27;string&#x27;</pre></li>
+    <li id="L204"><pre>      ? stylePatch.borderColor</pre></li>
+    <li id="L205"><pre>      : currentBorder?.fill.type === &#x27;solid&#x27;</pre></li>
+    <li id="L206"><pre>        ? currentBorder.fill.color</pre></li>
+    <li id="L207"><pre>        : &#x27;#000000&#x27;</pre></li>
+    <li id="L208"><pre>  const width =</pre></li>
+    <li id="L209"><pre>    typeof stylePatch.borderWidthPt === &#x27;number&#x27;</pre></li>
+    <li id="L210"><pre>      ? stylePatch.borderWidthPt</pre></li>
+    <li id="L211"><pre>      : Math.max(0.25, (currentBorder?.width ?? 12700) / 12700)</pre></li>
+    <li id="L212"><pre>  const shading =</pre></li>
+    <li id="L213"><pre>    typeof stylePatch.shadingColor === &#x27;string&#x27;</pre></li>
+    <li id="L214"><pre>      ? stylePatch.shadingColor</pre></li>
+    <li id="L215">
+      <pre>      : !fillMixed &amp;&amp; scopeCells[0]?.fill?.type === &#x27;solid&#x27;</pre>
+    </li>
+    <li id="L216"><pre>        ? scopeCells[0].fill.color</pre></li>
+    <li id="L217"><pre>        : null</pre></li>
+    <li id="L218"><pre>  const preset =</pre></li>
+    <li id="L219">
+      <pre>
+    typeof stylePatch.styleName === &#x27;string&#x27; ? stylePatch.styleName : currentTablePreset(table)</pre>
+    </li>
+    <li id="L220"><pre>  const updateStyle = (patch: Record&lt;string, unknown&gt;) =&gt;</pre></li>
+    <li id="L221"><pre>    setStylePatch((current) =&gt; ({ ...current, ...patch }))</pre></li>
+    <li id="L222">
+      <pre>
+  const cellStyleUnavailable = scope === &#x27;cell&#x27; &amp;&amp; Boolean(unavailable)</pre>
+    </li>
+    <li id="L223"><pre>  const styleUnavailable =</pre></li>
+    <li id="L224"><pre>    cellStyleUnavailable &amp;&amp;</pre></li>
+    <li id="L225"><pre>    !stylePatch.styleName &amp;&amp;</pre></li>
+    <li id="L226">
+      <pre>
+    (stylePatch.shadingColor !== undefined || stylePatch.borderPreset !== undefined)</pre>
+    </li>
+    <li id="L227"><pre>  const colorOptions = (current: string | null) =&gt;</pre></li>
+    <li id="L228">
+      <pre>    current &amp;&amp; !colors.some((item) =&gt; item.value === current)</pre>
+    </li>
+    <li id="L229">
+      <pre>
+      ? [{ value: current, label: `当前颜色 ${current}`, swatch: current }, ...colors]</pre>
+    </li>
+    <li id="L230"><pre>      : colors</pre></li>
+    <li id="L231"><pre>  const submitStyle = async () =&gt; {</pre></li>
+    <li id="L232"><pre>    if (busy || !Object.keys(stylePatch).length) return</pre></li>
+    <li id="L233"><pre>    setBusy(true)</pre></li>
+    <li id="L234"><pre>    try {</pre></li>
+    <li id="L235"><pre>      if (</pre></li>
+    <li id="L236"><pre>        await apply({</pre></li>
+    <li id="L237"><pre>          op: &#x27;setTableStyle&#x27;,</pre></li>
+    <li id="L238"><pre>          target,</pre></li>
+    <li id="L239"><pre>          ...stylePatch,</pre></li>
+    <li id="L240">
+      <pre>          ...(scope === &#x27;cell&#x27; &amp;&amp; !stylePatch.styleName</pre>
+    </li>
+    <li id="L241"><pre>            ? { cells: [{ row: rowIndex, col: colIndex }] }</pre></li>
+    <li id="L242"><pre>            : {}),</pre></li>
+    <li id="L243"><pre>        })</pre></li>
+    <li id="L244"><pre>      )</pre></li>
+    <li id="L245">
+      <pre>        setStylePatch((current) =&gt; (current === stylePatch ? {} : current))</pre>
+    </li>
+    <li id="L246"><pre>    } finally {</pre></li>
+    <li id="L247"><pre>      setBusy(false)</pre></li>
+    <li id="L248"><pre>    }</pre></li>
+    <li id="L249"><pre>  }</pre></li>
+    <li id="L250"><pre>  return (</pre></li>
+    <li id="L251">
+      <pre>
+    &lt;fieldset disabled={busy} aria-busy={busy} className=&quot;mimir-pptx-table-editor&quot;&gt;</pre>
+    </li>
+    <li id="L252"><pre>      &lt;div</pre></li>
+    <li id="L253"><pre>        className=&quot;mimir-pptx-table-tabs&quot;</pre></li>
+    <li id="L254"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L255"><pre>          const tabs = Array.from(</pre></li>
+    <li id="L256">
+      <pre>
+            event.currentTarget.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;[role=&quot;tab&quot;]&#x27;),</pre>
+    </li>
+    <li id="L257"><pre>          )</pre></li>
+    <li id="L258">
+      <pre>          const index = tabs.indexOf(event.target as HTMLButtonElement)</pre>
+    </li>
+    <li id="L259">
+      <pre>
+          if (index &lt; 0 || ![&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)) return</pre>
+    </li>
+    <li id="L260"><pre>          event.preventDefault()</pre></li>
+    <li id="L261"><pre>          const next =</pre></li>
+    <li id="L262"><pre>            event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L263"><pre>              ? 0</pre></li>
+    <li id="L264"><pre>              : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L265"><pre>                ? tabs.length - 1</pre></li>
+    <li id="L266">
+      <pre>
+                : (index + (event.key === &#x27;ArrowRight&#x27; ? 1 : -1) + tabs.length) % tabs.length</pre>
+    </li>
+    <li id="L267"><pre>          tabs[next]?.click()</pre></li>
+    <li id="L268"><pre>          tabs[next]?.focus()</pre></li>
+    <li id="L269"><pre>        }}</pre></li>
+    <li id="L270"><pre>      &gt;</pre></li>
+    <li id="L271"><pre>        &lt;ToolbarTabs</pre></li>
+    <li id="L272"><pre>          label=&quot;表格编辑分类&quot;</pre></li>
+    <li id="L273"><pre>          value={section}</pre></li>
+    <li id="L274"><pre>          items={[</pre></li>
+    <li id="L275">
+      <pre>            { value: &#x27;content&#x27;, label: &#x27;内容&#x27; },</pre>
+    </li>
+    <li id="L276">
+      <pre>            { value: &#x27;layout&#x27;, label: &#x27;布局&#x27; },</pre>
+    </li>
+    <li id="L277"><pre>            { value: &#x27;style&#x27;, label: &#x27;样式&#x27; },</pre></li>
+    <li id="L278"><pre>          ]}</pre></li>
+    <li id="L279"><pre>          onChange={setSection}</pre></li>
+    <li id="L280"><pre>        /&gt;</pre></li>
+    <li id="L281"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L282"><pre>      &lt;div</pre></li>
+    <li id="L283"><pre>        className=&quot;mimir-pptx-table-editor__content&quot;</pre></li>
+    <li id="L284"><pre>        role=&quot;tabpanel&quot;</pre></li>
+    <li id="L285">
+      <pre>
+        aria-label={{ content: &#x27;表格内容&#x27;, layout: &#x27;表格布局&#x27;, style: &#x27;表格样式&#x27; }[section]}</pre>
+    </li>
+    <li id="L286"><pre>      &gt;</pre></li>
+    <li id="L287"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L288"><pre>          &lt;ToolbarMenuFields label=&quot;当前单元格&quot;&gt;</pre></li>
+    <li id="L289">
+      <pre>            &lt;div className=&quot;mimir-pptx-table-cell-selector&quot;&gt;</pre>
+    </li>
+    <li id="L290"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L291"><pre>                label=&quot;行&quot;</pre></li>
+    <li id="L292"><pre>                disabled={busy}</pre></li>
+    <li id="L293"><pre>                value={String(rowIndex)}</pre></li>
+    <li id="L294"><pre>                options={table.rows.map((_, index) =&gt; ({</pre></li>
+    <li id="L295"><pre>                  value: String(index),</pre></li>
+    <li id="L296"><pre>                  label: `第 ${index + 1} 行`,</pre></li>
+    <li id="L297"><pre>                }))}</pre></li>
+    <li id="L298"><pre>                onChange={(value) =&gt; {</pre></li>
+    <li id="L299"><pre>                  draftRevision.current += 1</pre></li>
+    <li id="L300"><pre>                  setRow(value)</pre></li>
+    <li id="L301"><pre>                  setCol(&#x27;0&#x27;)</pre></li>
+    <li id="L302"><pre>                  setParagraphIndex(&#x27;0&#x27;)</pre></li>
+    <li id="L303"><pre>                  setDraft(null)</pre></li>
+    <li id="L304"><pre>                  setStylePatch({})</pre></li>
+    <li id="L305"><pre>                }}</pre></li>
+    <li id="L306"><pre>              /&gt;</pre></li>
+    <li id="L307"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L308"><pre>                label=&quot;列&quot;</pre></li>
+    <li id="L309"><pre>                disabled={busy}</pre></li>
+    <li id="L310"><pre>                value={String(colIndex)}</pre></li>
+    <li id="L311">
+      <pre>                options={(table.rows[rowIndex] ?? []).map((_, index) =&gt; ({</pre>
+    </li>
+    <li id="L312"><pre>                  value: String(index),</pre></li>
+    <li id="L313"><pre>                  label: `第 ${index + 1} 列`,</pre></li>
+    <li id="L314"><pre>                }))}</pre></li>
+    <li id="L315"><pre>                onChange={(value) =&gt; {</pre></li>
+    <li id="L316"><pre>                  draftRevision.current += 1</pre></li>
+    <li id="L317"><pre>                  setCol(value)</pre></li>
+    <li id="L318"><pre>                  setParagraphIndex(&#x27;0&#x27;)</pre></li>
+    <li id="L319"><pre>                  setDraft(null)</pre></li>
+    <li id="L320"><pre>                  setStylePatch({})</pre></li>
+    <li id="L321"><pre>                }}</pre></li>
+    <li id="L322"><pre>              /&gt;</pre></li>
+    <li id="L323"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L324"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L325"><pre>          {section === &#x27;content&#x27; &amp;&amp; (</pre></li>
+    <li id="L326"><pre>            &lt;ToolbarMenuFields label=&quot;单元格文字&quot;&gt;</pre></li>
+    <li id="L327"><pre>              {paragraphs.length &gt; 1 &amp;&amp; (</pre></li>
+    <li id="L328"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L329"><pre>                  label=&quot;段落&quot;</pre></li>
+    <li id="L330"><pre>                  disabled={busy}</pre></li>
+    <li id="L331"><pre>                  value={String(selectedIndex)}</pre></li>
+    <li id="L332"><pre>                  options={paragraphs.map((_, index) =&gt; ({</pre></li>
+    <li id="L333"><pre>                    value: String(index),</pre></li>
+    <li id="L334"><pre>                    label: `第 ${index + 1} 段`,</pre></li>
+    <li id="L335"><pre>                  }))}</pre></li>
+    <li id="L336"><pre>                  onChange={(value) =&gt; {</pre></li>
+    <li id="L337"><pre>                    draftRevision.current += 1</pre></li>
+    <li id="L338"><pre>                    setParagraphIndex(value)</pre></li>
+    <li id="L339"><pre>                    setDraft(null)</pre></li>
+    <li id="L340"><pre>                    setStylePatch({})</pre></li>
+    <li id="L341"><pre>                  }}</pre></li>
+    <li id="L342"><pre>                /&gt;</pre></li>
+    <li id="L343"><pre>              )}</pre></li>
+    <li id="L344"><pre>              &lt;ToolbarTextArea</pre></li>
+    <li id="L345"><pre>                label=&quot;单元格文字&quot;</pre></li>
+    <li id="L346"><pre>                value={nextText}</pre></li>
+    <li id="L347"><pre>                rows={2}</pre></li>
+    <li id="L348"><pre>                onChange={(value) =&gt; {</pre></li>
+    <li id="L349"><pre>                  draftRevision.current += 1</pre></li>
+    <li id="L350"><pre>                  setDraft(value)</pre></li>
+    <li id="L351"><pre>                }}</pre></li>
+    <li id="L352"><pre>              /&gt;</pre></li>
+    <li id="L353"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L354"><pre>          )}</pre></li>
+    <li id="L355"><pre>          {section === &#x27;layout&#x27; &amp;&amp; (</pre></li>
+    <li id="L356"><pre>            &lt;ToolbarMenuFields label=&quot;尺寸与对齐&quot;&gt;</pre></li>
+    <li id="L357"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L358"><pre>                label=&quot;单元格垂直对齐&quot;</pre></li>
+    <li id="L359"><pre>                value={cell?.text?.anchor ?? &#x27;top&#x27;}</pre></li>
+    <li id="L360"><pre>                options={[</pre></li>
+    <li id="L361">
+      <pre>                  { value: &#x27;top&#x27;, label: &#x27;顶端&#x27; },</pre>
+    </li>
+    <li id="L362">
+      <pre>                  { value: &#x27;middle&#x27;, label: &#x27;居中&#x27; },</pre>
+    </li>
+    <li id="L363">
+      <pre>                  { value: &#x27;bottom&#x27;, label: &#x27;底端&#x27; },</pre>
+    </li>
+    <li id="L364"><pre>                ]}</pre></li>
+    <li id="L365"><pre>                disabled={busy || Boolean(unavailable)}</pre></li>
+    <li id="L366"><pre>                onChange={(anchor) =&gt;</pre></li>
+    <li id="L367"><pre>                  void applyTable({</pre></li>
+    <li id="L368"><pre>                    op: &#x27;setTableCellAnchor&#x27;,</pre></li>
+    <li id="L369"><pre>                    row: rowIndex,</pre></li>
+    <li id="L370"><pre>                    col: colIndex,</pre></li>
+    <li id="L371"><pre>                    anchor,</pre></li>
+    <li id="L372"><pre>                  })</pre></li>
+    <li id="L373"><pre>                }</pre></li>
+    <li id="L374"><pre>              /&gt;</pre></li>
+    <li id="L375"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L376"><pre>                key={`height:${version}:${rowIndex}`}</pre></li>
+    <li id="L377"><pre>                label=&quot;当前行高（pt）&quot;</pre></li>
+    <li id="L378">
+      <pre>                value={(table.rowHeights[rowIndex] ?? 12700) / 12700}</pre>
+    </li>
+    <li id="L379"><pre>                min={1}</pre></li>
+    <li id="L380"><pre>                max={2000}</pre></li>
+    <li id="L381"><pre>                step={1}</pre></li>
+    <li id="L382"><pre>                disabled={busy}</pre></li>
+    <li id="L383"><pre>                onCommit={(value) =&gt;</pre></li>
+    <li id="L384"><pre>                  void applyTable({</pre></li>
+    <li id="L385"><pre>                    op: &#x27;setTableRowHeight&#x27;,</pre></li>
+    <li id="L386"><pre>                    row: rowIndex,</pre></li>
+    <li id="L387"><pre>                    hEmu: Math.round(value * 12700),</pre></li>
+    <li id="L388"><pre>                  })</pre></li>
+    <li id="L389"><pre>                }</pre></li>
+    <li id="L390"><pre>              /&gt;</pre></li>
+    <li id="L391"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L392"><pre>                key={`width:${version}:${colIndex}`}</pre></li>
+    <li id="L393"><pre>                label=&quot;当前列宽（pt）&quot;</pre></li>
+    <li id="L394">
+      <pre>                value={(table.colWidths[colIndex] ?? 12700) / 12700}</pre>
+    </li>
+    <li id="L395"><pre>                min={1}</pre></li>
+    <li id="L396"><pre>                max={2000}</pre></li>
+    <li id="L397"><pre>                step={1}</pre></li>
+    <li id="L398"><pre>                disabled={busy}</pre></li>
+    <li id="L399"><pre>                onCommit={(value) =&gt;</pre></li>
+    <li id="L400"><pre>                  void applyTable({</pre></li>
+    <li id="L401"><pre>                    op: &#x27;setTableColWidth&#x27;,</pre></li>
+    <li id="L402"><pre>                    col: colIndex,</pre></li>
+    <li id="L403"><pre>                    wEmu: Math.round(value * 12700),</pre></li>
+    <li id="L404"><pre>                  })</pre></li>
+    <li id="L405"><pre>                }</pre></li>
+    <li id="L406"><pre>              /&gt;</pre></li>
+    <li id="L407"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L408"><pre>                {hasMerges</pre></li>
+    <li id="L409">
+      <pre>                  ? &#x27;含合并单元格的表格须先拆分，才能插入或删除行列&#x27;</pre>
+    </li>
+    <li id="L410"><pre>                  : &#x27;行列操作作用于当前所选行或列&#x27;}</pre></li>
+    <li id="L411"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L412">
+      <pre>
+              {([&#x27;insert-row&#x27;, &#x27;insert-col&#x27;, &#x27;delete-row&#x27;, &#x27;delete-col&#x27;] as const).map((kind) =&gt; (</pre>
+    </li>
+    <li id="L413"><pre>                &lt;ToolbarButton</pre></li>
+    <li id="L414"><pre>                  key={kind}</pre></li>
+    <li id="L415"><pre>                  label={</pre></li>
+    <li id="L416"><pre>                    {</pre></li>
+    <li id="L417">
+      <pre>                      &#x27;insert-row&#x27;: &#x27;在当前行后插入行&#x27;,</pre>
+    </li>
+    <li id="L418">
+      <pre>                      &#x27;insert-col&#x27;: &#x27;在当前列后插入列&#x27;,</pre>
+    </li>
+    <li id="L419">
+      <pre>                      &#x27;delete-row&#x27;: &#x27;删除当前行&#x27;,</pre>
+    </li>
+    <li id="L420">
+      <pre>                      &#x27;delete-col&#x27;: &#x27;删除当前列&#x27;,</pre>
+    </li>
+    <li id="L421"><pre>                    }[kind]</pre></li>
+    <li id="L422"><pre>                  }</pre></li>
+    <li id="L423"><pre>                  disabled={</pre></li>
+    <li id="L424"><pre>                    busy ||</pre></li>
+    <li id="L425"><pre>                    hasMerges ||</pre></li>
+    <li id="L426">
+      <pre>
+                    (kind === &#x27;delete-row&#x27; &amp;&amp; table.rows.length &lt;= 1) ||</pre>
+    </li>
+    <li id="L427">
+      <pre>
+                    (kind === &#x27;delete-col&#x27; &amp;&amp; table.colWidths.length &lt;= 1)</pre>
+    </li>
+    <li id="L428"><pre>                  }</pre></li>
+    <li id="L429">
+      <pre>
+                  disabledReason={hasMerges ? &#x27;请先拆分合并单元格&#x27; : &#x27;至少保留一行和一列&#x27;}</pre>
+    </li>
+    <li id="L430"><pre>                  onClick={() =&gt;</pre></li>
+    <li id="L431"><pre>                    void applyTable({</pre></li>
+    <li id="L432"><pre>                      op: &#x27;tableStructure&#x27;,</pre></li>
+    <li id="L433"><pre>                      kind,</pre></li>
+    <li id="L434">
+      <pre>                      index: kind.endsWith(&#x27;row&#x27;) ? rowIndex : colIndex,</pre>
+    </li>
+    <li id="L435"><pre>                    })</pre></li>
+    <li id="L436"><pre>                  }</pre></li>
+    <li id="L437"><pre>                &gt;</pre></li>
+    <li id="L438"><pre>                  {</pre></li>
+    <li id="L439"><pre>                    {</pre></li>
+    <li id="L440"><pre>                      &#x27;insert-row&#x27;: &#x27;插入行&#x27;,</pre></li>
+    <li id="L441"><pre>                      &#x27;insert-col&#x27;: &#x27;插入列&#x27;,</pre></li>
+    <li id="L442"><pre>                      &#x27;delete-row&#x27;: &#x27;删除行&#x27;,</pre></li>
+    <li id="L443"><pre>                      &#x27;delete-col&#x27;: &#x27;删除列&#x27;,</pre></li>
+    <li id="L444"><pre>                    }[kind]</pre></li>
+    <li id="L445"><pre>                  }</pre></li>
+    <li id="L446"><pre>                &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L447"><pre>              ))}</pre></li>
+    <li id="L448">
+      <pre>
+              {([&#x27;merge-right&#x27;, &#x27;merge-down&#x27;, &#x27;split&#x27;] as const).map((kind) =&gt; (</pre>
+    </li>
+    <li id="L449"><pre>                &lt;ToolbarButton</pre></li>
+    <li id="L450"><pre>                  key={kind}</pre></li>
+    <li id="L451"><pre>                  label={</pre></li>
+    <li id="L452"><pre>                    {</pre></li>
+    <li id="L453">
+      <pre>                      &#x27;merge-right&#x27;: &#x27;向右合并单元格&#x27;,</pre>
+    </li>
+    <li id="L454">
+      <pre>                      &#x27;merge-down&#x27;: &#x27;向下合并单元格&#x27;,</pre>
+    </li>
+    <li id="L455"><pre>                      split: &#x27;拆分单元格&#x27;,</pre></li>
+    <li id="L456"><pre>                    }[kind]</pre></li>
+    <li id="L457"><pre>                  }</pre></li>
+    <li id="L458"><pre>                  disabled={</pre></li>
+    <li id="L459"><pre>                    busy ||</pre></li>
+    <li id="L460"><pre>                    Boolean(unavailable) ||</pre></li>
+    <li id="L461">
+      <pre>
+                    (kind === &#x27;merge-right&#x27; &amp;&amp; colIndex === table.colWidths.length - 1) ||</pre>
+    </li>
+    <li id="L462">
+      <pre>
+                    (kind === &#x27;merge-down&#x27; &amp;&amp; rowIndex === table.rows.length - 1)</pre>
+    </li>
+    <li id="L463"><pre>                  }</pre></li>
+    <li id="L464"><pre>                  onClick={() =&gt;</pre></li>
+    <li id="L465">
+      <pre>
+                    void applyTable({ op: &#x27;tableMerge&#x27;, kind, row: rowIndex, col: colIndex })</pre>
+    </li>
+    <li id="L466"><pre>                  }</pre></li>
+    <li id="L467"><pre>                &gt;</pre></li>
+    <li id="L468">
+      <pre>
+                  {{ &#x27;merge-right&#x27;: &#x27;向右合并&#x27;, &#x27;merge-down&#x27;: &#x27;向下合并&#x27;, split: &#x27;拆分&#x27; }[kind]}</pre>
+    </li>
+    <li id="L469"><pre>                &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L470"><pre>              ))}</pre></li>
+    <li id="L471"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L472"><pre>          )}</pre></li>
+    <li id="L473"><pre>          {section === &#x27;style&#x27; &amp;&amp; (</pre></li>
+    <li id="L474"><pre>            &lt;&gt;</pre></li>
+    <li id="L475"><pre>              &lt;ToolbarMenuFields label=&quot;表格设计&quot;&gt;</pre></li>
+    <li id="L476">
+      <pre>
+                &lt;div className=&quot;mimir-pptx-table-gallery&quot; role=&quot;group&quot; aria-label=&quot;表格样式预设&quot;&gt;</pre>
+    </li>
+    <li id="L477"><pre>                  {TABLE_PRESETS.map((item) =&gt; (</pre></li>
+    <li id="L478"><pre>                    &lt;ToolbarButton</pre></li>
+    <li id="L479"><pre>                      key={item.key}</pre></li>
+    <li id="L480"><pre>                      label={`表格样式：${item.label}`}</pre></li>
+    <li id="L481"><pre>                      active={preset === item.key}</pre></li>
+    <li id="L482"><pre>                      disabled={busy}</pre></li>
+    <li id="L483">
+      <pre>                      onClick={() =&gt; setStylePatch({ styleName: item.key })}</pre>
+    </li>
+    <li id="L484"><pre>                    &gt;</pre></li>
+    <li id="L485">
+      <pre>
+                      &lt;span className=&quot;mimir-pptx-table-swatch&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L486">
+      <pre>                        {Array.from({ length: 9 }, (_, index) =&gt; (</pre>
+    </li>
+    <li id="L487"><pre>                          &lt;span</pre></li>
+    <li id="L488"><pre>                            key={index}</pre></li>
+    <li id="L489"><pre>                            style={{</pre></li>
+    <li id="L490"><pre>                              background:</pre></li>
+    <li id="L491"><pre>                                index &lt; 3</pre></li>
+    <li id="L492"><pre>                                  ? item.header</pre></li>
+    <li id="L493"><pre>                                  : Math.floor(index / 3) % 2</pre></li>
+    <li id="L494"><pre>                                    ? item.band</pre></li>
+    <li id="L495">
+      <pre>                                    : &#x27;var(--me-surface)&#x27;,</pre>
+    </li>
+    <li id="L496"><pre>                              borderColor: item.border,</pre></li>
+    <li id="L497"><pre>                            }}</pre></li>
+    <li id="L498"><pre>                          /&gt;</pre></li>
+    <li id="L499"><pre>                        ))}</pre></li>
+    <li id="L500"><pre>                      &lt;/span&gt;</pre></li>
+    <li id="L501"><pre>                      &lt;span&gt;{item.label}&lt;/span&gt;</pre></li>
+    <li id="L502"><pre>                    &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L503"><pre>                  ))}</pre></li>
+    <li id="L504"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L505"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L506"><pre>                  {preset</pre></li>
+    <li id="L507">
+      <pre>
+                    ? `${stylePatch.styleName ? &#x27;待应用样式&#x27; : &#x27;当前样式&#x27;}：${TABLE_PRESETS.find((item) =&gt; item.key === preset)?.label}`</pre>
+    </li>
+    <li id="L508"><pre>                    : &#x27;当前样式：文档原有样式&#x27;}</pre></li>
+    <li id="L509"><pre>                  ；应用预设会重置直接底纹和边框。</pre></li>
+    <li id="L510"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L511"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L512"><pre>              {Boolean(stylePatch.styleName) &amp;&amp; (</pre></li>
+    <li id="L513">
+      <pre>
+                &lt;ToolbarButton label=&quot;取消预设选择&quot; onClick={() =&gt; setStylePatch({})}&gt;</pre>
+    </li>
+    <li id="L514"><pre>                  取消预设选择</pre></li>
+    <li id="L515"><pre>                &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L516"><pre>              )}</pre></li>
+    <li id="L517"><pre>              {!stylePatch.styleName &amp;&amp; (</pre></li>
+    <li id="L518"><pre>                &lt;&gt;</pre></li>
+    <li id="L519">
+      <pre>                  &lt;ToolbarMenuFields label=&quot;表格选项&quot;&gt;</pre>
+    </li>
+    <li id="L520"><pre>                    &lt;ToolbarSelect</pre></li>
+    <li id="L521"><pre>                      label=&quot;表格方向&quot;</pre></li>
+    <li id="L522"><pre>                      disabled={busy}</pre></li>
+    <li id="L523">
+      <pre>                      value={String(stylePatch.rtl ?? table.rtl ?? false)}</pre>
+    </li>
+    <li id="L524"><pre>                      options={[</pre></li>
+    <li id="L525">
+      <pre>                        { value: &#x27;false&#x27;, label: &#x27;从左到右&#x27; },</pre>
+    </li>
+    <li id="L526">
+      <pre>                        { value: &#x27;true&#x27;, label: &#x27;从右到左&#x27; },</pre>
+    </li>
+    <li id="L527"><pre>                      ]}</pre></li>
+    <li id="L528">
+      <pre>
+                      onChange={(value) =&gt; updateStyle({ rtl: value === &#x27;true&#x27; })}</pre>
+    </li>
+    <li id="L529"><pre>                    /&gt;</pre></li>
+    <li id="L530">
+      <pre>                    &lt;div className=&quot;mimir-pptx-table-flags&quot;&gt;</pre>
+    </li>
+    <li id="L531"><pre>                      {TABLE_FLAGS.map(([flag, label]) =&gt; (</pre></li>
+    <li id="L532"><pre>                        &lt;ToolbarButton</pre></li>
+    <li id="L533"><pre>                          key={flag}</pre></li>
+    <li id="L534"><pre>                          label={`表格${label}`}</pre></li>
+    <li id="L535">
+      <pre>
+                          active={Boolean(stylePatch[flag] ?? table.styleFlags?.[flag])}</pre>
+    </li>
+    <li id="L536"><pre>                          onClick={() =&gt;</pre></li>
+    <li id="L537">
+      <pre>
+                            updateStyle({ [flag]: !(stylePatch[flag] ?? table.styleFlags?.[flag]) })</pre>
+    </li>
+    <li id="L538"><pre>                          }</pre></li>
+    <li id="L539"><pre>                        &gt;</pre></li>
+    <li id="L540"><pre>                          {label}</pre></li>
+    <li id="L541"><pre>                        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L542"><pre>                      ))}</pre></li>
+    <li id="L543"><pre>                    &lt;/div&gt;</pre></li>
+    <li id="L544"><pre>                  &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L545">
+      <pre>                  &lt;ToolbarMenuFields label=&quot;底纹与边框&quot;&gt;</pre>
+    </li>
+    <li id="L546"><pre>                    &lt;ToolbarSelect</pre></li>
+    <li id="L547"><pre>                      label=&quot;样式应用范围&quot;</pre></li>
+    <li id="L548"><pre>                      disabled={busy}</pre></li>
+    <li id="L549"><pre>                      value={scope}</pre></li>
+    <li id="L550"><pre>                      options={[</pre></li>
+    <li id="L551"><pre>                        {</pre></li>
+    <li id="L552"><pre>                          value: &#x27;cell&#x27;,</pre></li>
+    <li id="L553">
+      <pre>
+                          label: `当前单元格（${rowIndex + 1} 行 ${colIndex + 1} 列）`,</pre>
+    </li>
+    <li id="L554"><pre>                        },</pre></li>
+    <li id="L555">
+      <pre>                        { value: &#x27;table&#x27;, label: &#x27;整个表格&#x27; },</pre>
+    </li>
+    <li id="L556"><pre>                      ]}</pre></li>
+    <li id="L557"><pre>                      onChange={(value) =&gt; {</pre></li>
+    <li id="L558"><pre>                        setScope(value)</pre></li>
+    <li id="L559"><pre>                        setStylePatch({})</pre></li>
+    <li id="L560"><pre>                      }}</pre></li>
+    <li id="L561"><pre>                    /&gt;</pre></li>
+    <li id="L562"><pre>                    {(fillMixed || borderMixed) &amp;&amp; (</pre></li>
+    <li id="L563"><pre>                      &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L564">
+      <pre>                        当前范围含{fillMixed ? &#x27;多种底纹&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L565">
+      <pre>
+                        {fillMixed &amp;&amp; borderMixed ? &#x27;和&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L566">
+      <pre>
+                        {borderMixed ? &#x27;多种边框&#x27; : &#x27;&#x27;}；应用更改会统一所选范围。</pre>
+    </li>
+    <li id="L567"><pre>                      &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L568"><pre>                    )}</pre></li>
+    <li id="L569"><pre>                    &lt;ToolbarColorPicker</pre></li>
+    <li id="L570"><pre>                      label=&quot;表格底纹&quot;</pre></li>
+    <li id="L571">
+      <pre>                      value={shading === &#x27;none&#x27; ? null : shading}</pre>
+    </li>
+    <li id="L572"><pre>                      options={colorOptions(shading)}</pre></li>
+    <li id="L573"><pre>                      disabled={cellStyleUnavailable}</pre></li>
+    <li id="L574">
+      <pre>                      onPick={(shadingColor) =&gt; updateStyle({ shadingColor })}</pre>
+    </li>
+    <li id="L575">
+      <pre>
+                      onClear={() =&gt; updateStyle({ shadingColor: &#x27;none&#x27; })}</pre>
+    </li>
+    <li id="L576"><pre>                      clearLabel=&quot;无底纹&quot;</pre></li>
+    <li id="L577"><pre>                    /&gt;</pre></li>
+    <li id="L578"><pre>                    &lt;ToolbarSelect</pre></li>
+    <li id="L579"><pre>                      label=&quot;表格边框&quot;</pre></li>
+    <li id="L580"><pre>                      disabled={busy || cellStyleUnavailable}</pre></li>
+    <li id="L581"><pre>                      value={String(</pre></li>
+    <li id="L582"><pre>                        stylePatch.borderPreset ??</pre></li>
+    <li id="L583">
+      <pre>
+                          (borderMixed ? &#x27;mixed&#x27; : currentBorder?.width ? &#x27;all&#x27; : &#x27;none&#x27;),</pre>
+    </li>
+    <li id="L584"><pre>                      )}</pre></li>
+    <li id="L585"><pre>                      options={[</pre></li>
+    <li id="L586">
+      <pre>
+                        ...(borderMixed ? [{ value: &#x27;mixed&#x27;, label: &#x27;混合边框&#x27; }] : []),</pre>
+    </li>
+    <li id="L587">
+      <pre>                        { value: &#x27;all&#x27;, label: &#x27;所有边框&#x27; },</pre>
+    </li>
+    <li id="L588">
+      <pre>                        { value: &#x27;none&#x27;, label: &#x27;无边框&#x27; },</pre>
+    </li>
+    <li id="L589"><pre>                      ]}</pre></li>
+    <li id="L590"><pre>                      onChange={(borderPreset) =&gt;</pre></li>
+    <li id="L591">
+      <pre>
+                        updateStyle({ borderPreset, borderColor: color, borderWidthPt: width })</pre>
+    </li>
+    <li id="L592"><pre>                      }</pre></li>
+    <li id="L593"><pre>                    /&gt;</pre></li>
+    <li id="L594"><pre>                    &lt;ToolbarColorPicker</pre></li>
+    <li id="L595"><pre>                      label=&quot;表格边框颜色&quot;</pre></li>
+    <li id="L596"><pre>                      disabled={cellStyleUnavailable}</pre></li>
+    <li id="L597"><pre>                      value={color}</pre></li>
+    <li id="L598"><pre>                      options={colorOptions(color)}</pre></li>
+    <li id="L599"><pre>                      onPick={(borderColor) =&gt;</pre></li>
+    <li id="L600">
+      <pre>
+                        updateStyle({ borderColor, borderPreset: &#x27;all&#x27;, borderWidthPt: width })</pre>
+    </li>
+    <li id="L601"><pre>                      }</pre></li>
+    <li id="L602"><pre>                    /&gt;</pre></li>
+    <li id="L603"><pre>                    &lt;ToolbarNumberField</pre></li>
+    <li id="L604">
+      <pre>
+                      key={`${version}:${rowIndex}:${colIndex}:${scope}:${currentBorder?.width ?? 0}`}</pre>
+    </li>
+    <li id="L605"><pre>                      label=&quot;边框宽度（pt）&quot;</pre></li>
+    <li id="L606"><pre>                      disabled={cellStyleUnavailable}</pre></li>
+    <li id="L607"><pre>                      value={width}</pre></li>
+    <li id="L608"><pre>                      min={0.25}</pre></li>
+    <li id="L609"><pre>                      max={1584}</pre></li>
+    <li id="L610"><pre>                      step={0.25}</pre></li>
+    <li id="L611"><pre>                      onCommit={(borderWidthPt) =&gt;</pre></li>
+    <li id="L612">
+      <pre>
+                        updateStyle({ borderWidthPt, borderColor: color, borderPreset: &#x27;all&#x27; })</pre>
+    </li>
+    <li id="L613"><pre>                      }</pre></li>
+    <li id="L614"><pre>                    /&gt;</pre></li>
+    <li id="L615"><pre>                  &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L616"><pre>                &lt;/&gt;</pre></li>
+    <li id="L617"><pre>              )}</pre></li>
+    <li id="L618"><pre>            &lt;/&gt;</pre></li>
+    <li id="L619"><pre>          )}</pre></li>
+    <li id="L620"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L621">
+      <pre>
+        {unavailable &amp;&amp; &lt;ToolbarMenuNote&gt;{unavailable}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L622"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L623">
+      <pre>      &lt;div className=&quot;mimir-pptx-table-editor__actions&quot;&gt;</pre>
+    </li>
+    <li id="L624"><pre>        {section === &#x27;content&#x27; ? (</pre></li>
+    <li id="L625"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L626"><pre>            primary</pre></li>
+    <li id="L627"><pre>            label=&quot;应用单元格文字&quot;</pre></li>
+    <li id="L628">
+      <pre>            disabled={Boolean(unavailable) || busy || nextText === currentText}</pre>
+    </li>
+    <li id="L629">
+      <pre>
+            disabledReason={unavailable ?? (busy ? &#x27;正在修改表格&#x27; : &#x27;文字没有变化&#x27;)}</pre>
+    </li>
+    <li id="L630"><pre>            onClick={() =&gt; void submit()}</pre></li>
+    <li id="L631"><pre>          /&gt;</pre></li>
+    <li id="L632"><pre>        ) : section === &#x27;style&#x27; ? (</pre></li>
+    <li id="L633"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L634"><pre>            primary</pre></li>
+    <li id="L635"><pre>            label=&quot;应用表格样式&quot;</pre></li>
+    <li id="L636">
+      <pre>            disabled={busy || !Object.keys(stylePatch).length || styleUnavailable}</pre>
+    </li>
+    <li id="L637">
+      <pre>            disabledReason={unavailable ?? &#x27;样式没有变化&#x27;}</pre>
+    </li>
+    <li id="L638"><pre>            onClick={() =&gt; void submitStyle()}</pre></li>
+    <li id="L639"><pre>          /&gt;</pre></li>
+    <li id="L640"><pre>        ) : (</pre></li>
+    <li id="L641">
+      <pre>          &lt;ToolbarMenuNote&gt;布局更改即时应用&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L642"><pre>        )}</pre></li>
+    <li id="L643"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L644"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L645"><pre>  )</pre></li>
+    <li id="L646"><pre>}</pre></li>
+  </ol>
+</html>

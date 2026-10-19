@@ -85,6 +85,7 @@ export function PptxCutoutControls({
         />
         <ToolbarSelect
           label="预览"
+          disabled={busy}
           value={mode}
           options={[
             { value: 'removed', label: '处理结果' },

@@ -1,0 +1,2030 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxObjectControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxObjectControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 a410c0bb1bf90cfe10f0cf44b5d5494302620873fdf2f90018be24f2fc77631b
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import { Check, Crop, ImagePlus, RotateCcw, RotateCw } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  pptxParagraphFormatSchema,</pre></li>
+    <li id="L5"><pre>  PPTX_PARAGRAPH_NUMBER_TYPES,</pre></li>
+    <li id="L6"><pre>  PPTX_PARAGRAPH_IMAGE_MAX_BYTES,</pre></li>
+    <li id="L7"><pre>  type PptxParagraphFormat,</pre></li>
+    <li id="L8"><pre>} from &#x27;../../../shared/src/pptx-paragraph.js&#x27;</pre></li>
+    <li id="L9"><pre>import {</pre></li>
+    <li id="L10"><pre>  pptxParagraphIndices,</pre></li>
+    <li id="L11"><pre>  pptxParagraphScope,</pre></li>
+    <li id="L12"><pre>  uniformPptxParagraphValue,</pre></li>
+    <li id="L13"><pre>} from &#x27;../pptx-paragraph-range.js&#x27;</pre></li>
+    <li id="L14">
+      <pre>import type { PptxTextSelection } from &#x27;../pptx-text-range.js&#x27;</pre>
+    </li>
+    <li id="L15">
+      <pre>
+import type { Paragraph } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L16"><pre>import &#x27;./pptx-paragraph-controls.css&#x27;</pre></li>
+    <li id="L17"><pre>import &#x27;./pptx-picture-controls.css&#x27;</pre></li>
+    <li id="L18">
+      <pre>
+import type { SlideElement, TextBody } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L19"><pre>import type { PptxLink } from &#x27;../pptx-metadata.js&#x27;</pre></li>
+    <li id="L20">
+      <pre>import { PptxCurveControls } from &#x27;./PptxCurveControls.js&#x27;</pre>
+    </li>
+    <li id="L21"><pre>import {</pre></li>
+    <li id="L22"><pre>  elementDurableId,</pre></li>
+    <li id="L23"><pre>  matchesElementRef,</pre></li>
+    <li id="L24">
+      <pre>} from &#x27;../../vendor/packages/pptx-engine/src/identity.js&#x27;</pre>
+    </li>
+    <li id="L25"><pre>import {</pre></li>
+    <li id="L26"><pre>  ToolbarButton,</pre></li>
+    <li id="L27"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L28"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L29"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L30"><pre>  ToolbarSelect,</pre></li>
+    <li id="L31"><pre>  ToolbarTextField,</pre></li>
+    <li id="L32"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L33"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L34"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L35"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L36"><pre></pre></li>
+    <li id="L37"><pre>export {</pre></li>
+    <li id="L38"><pre>  PptxControlPanel,</pre></li>
+    <li id="L39"><pre>  usePptxAction,</pre></li>
+    <li id="L40"><pre>  type PptxApply,</pre></li>
+    <li id="L41"><pre>  type PptxTarget,</pre></li>
+    <li id="L42"><pre>} from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L43"><pre>import {</pre></li>
+    <li id="L44"><pre>  PptxControlPanel,</pre></li>
+    <li id="L45"><pre>  usePptxAction,</pre></li>
+    <li id="L46"><pre>  type PptxApply,</pre></li>
+    <li id="L47"><pre>  type PptxTarget,</pre></li>
+    <li id="L48"><pre>} from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L49"><pre>const PT = 12700</pre></li>
+    <li id="L50">
+      <pre>const options = (values: readonly (readonly [string, string])[]) =&gt;</pre>
+    </li>
+    <li id="L51"><pre>  values.map(([value, label]) =&gt; ({ value, label }))</pre></li>
+    <li id="L52"><pre></pre></li>
+    <li id="L53"><pre>export interface PptxParagraphControlsProps {</pre></li>
+    <li id="L54"><pre>  text: TextBody</pre></li>
+    <li id="L55"><pre>  target: PptxTarget</pre></li>
+    <li id="L56"><pre>  apply: PptxApply</pre></li>
+    <li id="L57"><pre>  selection?: PptxTextSelection | null</pre></li>
+    <li id="L58"><pre>  version?: number</pre></li>
+    <li id="L59"><pre>  applyParagraphFormat?: (</pre></li>
+    <li id="L60"><pre>    format: PptxParagraphFormat,</pre></li>
+    <li id="L61"><pre>    paraIndices: number[],</pre></li>
+    <li id="L62"><pre>    signal: AbortSignal,</pre></li>
+    <li id="L63"><pre>  ) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L64"><pre>}</pre></li>
+    <li id="L65">
+      <pre>type ParagraphTab = &#x27;paragraph&#x27; | &#x27;list&#x27; | &#x27;textbox&#x27;</pre>
+    </li>
+    <li id="L66"><pre>const paragraphNumberNames = [</pre></li>
+    <li id="L67"><pre>  &#x27;1. 2. 3.&#x27;,</pre></li>
+    <li id="L68"><pre>  &#x27;1) 2) 3)&#x27;,</pre></li>
+    <li id="L69"><pre>  &#x27;I. II. III.&#x27;,</pre></li>
+    <li id="L70"><pre>  &#x27;A. B. C.&#x27;,</pre></li>
+    <li id="L71"><pre>  &#x27;a) b) c)&#x27;,</pre></li>
+    <li id="L72"><pre>  &#x27;a. b. c.&#x27;,</pre></li>
+    <li id="L73"><pre>  &#x27;i. ii. iii.&#x27;,</pre></li>
+    <li id="L74"><pre>  &#x27;① ② ③&#x27;,</pre></li>
+    <li id="L75"><pre>  &#x27;一、二、三、&#x27;,</pre></li>
+    <li id="L76"><pre>]</pre></li>
+    <li id="L77"><pre>const bulletPresets = [</pre></li>
+    <li id="L78">
+      <pre>
+  { char: &#x27;•&#x27;, font: &#x27;Arial&#x27;, glyph: &#x27;•&#x27;, label: &#x27;实心圆&#x27; },</pre>
+    </li>
+    <li id="L79">
+      <pre>
+  { char: &#x27;o&#x27;, font: &#x27;Courier New&#x27;, glyph: &#x27;○&#x27;, label: &#x27;空心圆&#x27; },</pre>
+    </li>
+    <li id="L80">
+      <pre>
+  { char: &#x27;§&#x27;, font: &#x27;Wingdings&#x27;, glyph: &#x27;▪&#x27;, label: &#x27;实心方块&#x27; },</pre>
+    </li>
+    <li id="L81">
+      <pre>
+  { char: &#x27;q&#x27;, font: &#x27;Wingdings&#x27;, glyph: &#x27;❑&#x27;, label: &#x27;空心方块&#x27; },</pre>
+    </li>
+    <li id="L82">
+      <pre>
+  { char: &#x27;v&#x27;, font: &#x27;Wingdings&#x27;, glyph: &#x27;❖&#x27;, label: &#x27;菱形&#x27; },</pre>
+    </li>
+    <li id="L83">
+      <pre>
+  { char: &#x27;Ø&#x27;, font: &#x27;Wingdings&#x27;, glyph: &#x27;➢&#x27;, label: &#x27;箭头&#x27; },</pre>
+    </li>
+    <li id="L84">
+      <pre>
+  { char: &#x27;ü&#x27;, font: &#x27;Wingdings&#x27;, glyph: &#x27;✓&#x27;, label: &#x27;对勾&#x27; },</pre>
+    </li>
+    <li id="L85"><pre>] as const</pre></li>
+    <li id="L86"><pre>const bulletColors = [</pre></li>
+    <li id="L87"><pre>  [&#x27;#000000&#x27;, &#x27;黑色&#x27;],</pre></li>
+    <li id="L88"><pre>  [&#x27;#FFFFFF&#x27;, &#x27;白色&#x27;],</pre></li>
+    <li id="L89"><pre>  [&#x27;#C00000&#x27;, &#x27;红色&#x27;],</pre></li>
+    <li id="L90"><pre>  [&#x27;#ED7D31&#x27;, &#x27;橙色&#x27;],</pre></li>
+    <li id="L91"><pre>  [&#x27;#FFC000&#x27;, &#x27;金色&#x27;],</pre></li>
+    <li id="L92"><pre>  [&#x27;#70AD47&#x27;, &#x27;绿色&#x27;],</pre></li>
+    <li id="L93"><pre>  [&#x27;#4472C4&#x27;, &#x27;蓝色&#x27;],</pre></li>
+    <li id="L94"><pre>  [&#x27;#7030A0&#x27;, &#x27;紫色&#x27;],</pre></li>
+    <li id="L95">
+      <pre>
+].map(([color, label]) =&gt; ({ value: color!, swatch: color!, label: `符号${label!}` }))</pre>
+    </li>
+    <li id="L96">
+      <pre>export function PptxParagraphControls(props: PptxParagraphControlsProps) {</pre>
+    </li>
+    <li id="L97">
+      <pre>  const [tab, setTab] = useState&lt;ParagraphTab&gt;(&#x27;paragraph&#x27;)</pre>
+    </li>
+    <li id="L98"><pre>  const range = props.selection</pre></li>
+    <li id="L99">
+      <pre>
+  const source = `${props.target.slide}:${props.target.el}:${props.version ?? 0}:${range ? `${range.start}:${range.end}` : &#x27;all&#x27;}`</pre>
+    </li>
+    <li id="L100">
+      <pre>
+  return &lt;ParagraphEditor key={source} {...props} tab={tab} setTab={setTab} /&gt;</pre>
+    </li>
+    <li id="L101"><pre>}</pre></li>
+    <li id="L102"><pre>function ParagraphEditor({</pre></li>
+    <li id="L103"><pre>  text,</pre></li>
+    <li id="L104"><pre>  target,</pre></li>
+    <li id="L105"><pre>  apply,</pre></li>
+    <li id="L106"><pre>  selection = null,</pre></li>
+    <li id="L107"><pre>  applyParagraphFormat,</pre></li>
+    <li id="L108"><pre>  tab,</pre></li>
+    <li id="L109"><pre>  setTab,</pre></li>
+    <li id="L110">
+      <pre>
+}: PptxParagraphControlsProps &amp; { tab: ParagraphTab; setTab: (tab: ParagraphTab) =&gt; void }) {</pre>
+    </li>
+    <li id="L111"><pre>  const { busy: bodyBusy, run } = usePptxAction(apply)</pre></li>
+    <li id="L112">
+      <pre>  const [draft, setDraft] = useState&lt;Record&lt;string, unknown&gt;&gt;({})</pre>
+    </li>
+    <li id="L113"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L114"><pre>  const [reading, setReading] = useState(false)</pre></li>
+    <li id="L115"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L116"><pre>  const [status, setStatus] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L117"><pre>  const [imageName, setImageName] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L118"><pre>  const operation = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L119"><pre>  const reader = useRef&lt;FileReader | null&gt;(null)</pre></li>
+    <li id="L120"><pre>  const fileInput = useRef&lt;HTMLInputElement | null&gt;(null)</pre></li>
+    <li id="L121"><pre>  useEffect(</pre></li>
+    <li id="L122"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L123"><pre>      operation.current?.abort()</pre></li>
+    <li id="L124"><pre>      reader.current?.abort()</pre></li>
+    <li id="L125"><pre>    },</pre></li>
+    <li id="L126"><pre>    [],</pre></li>
+    <li id="L127"><pre>  )</pre></li>
+    <li id="L128"><pre>  const indices = pptxParagraphIndices(text.paragraphs, selection)</pre></li>
+    <li id="L129"><pre>  const scope = pptxParagraphScope(indices, selection)</pre></li>
+    <li id="L130">
+      <pre>  const uniform = &lt;T,&gt;(read: (paragraph: Paragraph) =&gt; T) =&gt;</pre>
+    </li>
+    <li id="L131"><pre>    uniformPptxParagraphValue(text.paragraphs, indices, read)</pre></li>
+    <li id="L132">
+      <pre>
+  const value = &lt;T,&gt;(key: string, read: (paragraph: Paragraph) =&gt; T): T | null =&gt;</pre>
+    </li>
+    <li id="L133"><pre>    Object.hasOwn(draft, key) ? (draft[key] as T) : uniform(read)</pre></li>
+    <li id="L134"><pre>  const change = (patch: Record&lt;string, unknown&gt;) =&gt; {</pre></li>
+    <li id="L135"><pre>    setDraft((current) =&gt; ({ ...current, ...patch }))</pre></li>
+    <li id="L136"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L137"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L138"><pre>  }</pre></li>
+    <li id="L139">
+      <pre>
+  const listType = value(&#x27;bullet&#x27;, (p) =&gt; p.bullet?.type ?? &#x27;none&#x27;)</pre>
+    </li>
+    <li id="L140"><pre>  const paragraphRtl = value(&#x27;rtl&#x27;, (p) =&gt; p.rtl)</pre></li>
+    <li id="L141">
+      <pre>
+  const numberType = value(&#x27;numType&#x27;, (p) =&gt; p.bullet?.numType ?? &#x27;arabicPeriod&#x27;)</pre>
+    </li>
+    <li id="L142">
+      <pre>  const numberOptions = PPTX_PARAGRAPH_NUMBER_TYPES.map((type, i) =&gt; ({</pre>
+    </li>
+    <li id="L143"><pre>    value: type as string,</pre></li>
+    <li id="L144"><pre>    label: paragraphNumberNames[i]!,</pre></li>
+    <li id="L145"><pre>    disabled: false,</pre></li>
+    <li id="L146"><pre>  }))</pre></li>
+    <li id="L147">
+      <pre>
+  if (numberType &amp;&amp; !numberOptions.some((option) =&gt; option.value === numberType))</pre>
+    </li>
+    <li id="L148">
+      <pre>
+    numberOptions.push({ value: numberType, label: &#x27;原件编号格式&#x27;, disabled: true })</pre>
+    </li>
+    <li id="L149"><pre>  const dirty = Object.keys(draft).length &gt; 0</pre></li>
+    <li id="L150"><pre>  const locked = busy || bodyBusy || reading</pre></li>
+    <li id="L151"><pre>  const body = (props: Record&lt;string, unknown&gt;) =&gt;</pre></li>
+    <li id="L152"><pre>    void run({ op: &#x27;setTextBodyProps&#x27;, target, props })</pre></li>
+    <li id="L153"><pre>  const reset = () =&gt; {</pre></li>
+    <li id="L154"><pre>    setDraft({})</pre></li>
+    <li id="L155"><pre>    setImageName(&#x27;&#x27;)</pre></li>
+    <li id="L156"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L157"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L158"><pre>    reader.current?.abort()</pre></li>
+    <li id="L159"><pre>    setReading(false)</pre></li>
+    <li id="L160"><pre>  }</pre></li>
+    <li id="L161"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L162"><pre>    if (operation.current || locked || !dirty) return</pre></li>
+    <li id="L163"><pre>    const patch = { ...draft }</pre></li>
+    <li id="L164"><pre>    const numericLabels: Record&lt;string, string&gt; = {</pre></li>
+    <li id="L165"><pre>      lineSpacingPct: &#x27;行距&#x27;,</pre></li>
+    <li id="L166"><pre>      spaceBeforePt: &#x27;段前&#x27;,</pre></li>
+    <li id="L167"><pre>      spaceAfterPt: &#x27;段后&#x27;,</pre></li>
+    <li id="L168"><pre>      startAt: &#x27;起始编号&#x27;,</pre></li>
+    <li id="L169"><pre>      bulletSizePct: &#x27;符号大小&#x27;,</pre></li>
+    <li id="L170"><pre>      bulletHangEmu: &#x27;悬挂缩进&#x27;,</pre></li>
+    <li id="L171"><pre>    }</pre></li>
+    <li id="L172"><pre>    for (const [key, label] of Object.entries(numericLabels)) {</pre></li>
+    <li id="L173"><pre>      if (!Object.hasOwn(patch, key)) continue</pre></li>
+    <li id="L174"><pre>      const number =</pre></li>
+    <li id="L175"><pre>        typeof patch[key] === &#x27;number&#x27;</pre></li>
+    <li id="L176"><pre>          ? patch[key]</pre></li>
+    <li id="L177"><pre>          : String(patch[key]).trim() === &#x27;&#x27;</pre></li>
+    <li id="L178"><pre>            ? NaN</pre></li>
+    <li id="L179"><pre>            : Number(patch[key])</pre></li>
+    <li id="L180"><pre>      if (!Number.isFinite(number)) {</pre></li>
+    <li id="L181"><pre>        setError(`${label}请输入有效数字`)</pre></li>
+    <li id="L182"><pre>        return</pre></li>
+    <li id="L183"><pre>      }</pre></li>
+    <li id="L184">
+      <pre>
+      patch[key] = key === &#x27;bulletHangEmu&#x27; ? Math.round(number * PT) : number</pre>
+    </li>
+    <li id="L185"><pre>    }</pre></li>
+    <li id="L186"><pre>    const parsed = pptxParagraphFormatSchema.safeParse(patch)</pre></li>
+    <li id="L187"><pre>    if (!parsed.success) {</pre></li>
+    <li id="L188">
+      <pre>      const field = String(parsed.error.issues[0]?.path[0] ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L189"><pre>      const hints: Record&lt;string, string&gt; = {</pre></li>
+    <li id="L190"><pre>        lineSpacingPct: &#x27;行距须为0–13200%&#x27;,</pre></li>
+    <li id="L191"><pre>        spaceBeforePt: &#x27;段前须为0–1584pt&#x27;,</pre></li>
+    <li id="L192"><pre>        spaceAfterPt: &#x27;段后须为0–1584pt&#x27;,</pre></li>
+    <li id="L193"><pre>        startAt: &#x27;起始编号须为1–32767的整数&#x27;,</pre></li>
+    <li id="L194"><pre>        bulletSizePct: &#x27;符号大小须为25–400%&#x27;,</pre></li>
+    <li id="L195"><pre>        bulletHangEmu: &#x27;悬挂缩进须为0–4032pt&#x27;,</pre></li>
+    <li id="L196"><pre>        bulletColor: &#x27;符号颜色使用#RRGGBB，例如#4472C4&#x27;,</pre></li>
+    <li id="L197"><pre>        bulletChar: &#x27;请输入1–16个字符的项目符号&#x27;,</pre></li>
+    <li id="L198"><pre>        bulletFont: &#x27;请输入1–128个字符的字体名称&#x27;,</pre></li>
+    <li id="L199"><pre>      }</pre></li>
+    <li id="L200">
+      <pre>
+      setError(hints[field] ?? &#x27;请检查列表参数；图片符号须先选择PNG或JPEG文件&#x27;)</pre>
+    </li>
+    <li id="L201"><pre>      return</pre></li>
+    <li id="L202"><pre>    }</pre></li>
+    <li id="L203"><pre>    if (selection &amp;&amp; !applyParagraphFormat) {</pre></li>
+    <li id="L204">
+      <pre>      setError(&#x27;当前宿主不支持所选段落格式，请重新打开文档&#x27;)</pre>
+    </li>
+    <li id="L205"><pre>      return</pre></li>
+    <li id="L206"><pre>    }</pre></li>
+    <li id="L207"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L208"><pre>    operation.current = controller</pre></li>
+    <li id="L209"><pre>    setBusy(true)</pre></li>
+    <li id="L210"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L211"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L212"><pre>    try {</pre></li>
+    <li id="L213"><pre>      const ok = applyParagraphFormat</pre></li>
+    <li id="L214">
+      <pre>        ? await applyParagraphFormat(parsed.data, indices, controller.signal)</pre>
+    </li>
+    <li id="L215">
+      <pre>
+        : await apply({ op: &#x27;setParagraphFormat&#x27;, target, format: parsed.data })</pre>
+    </li>
+    <li id="L216"><pre>      if (!controller.signal.aborted &amp;&amp; ok) {</pre></li>
+    <li id="L217"><pre>        setDraft({})</pre></li>
+    <li id="L218"><pre>        setImageName(&#x27;&#x27;)</pre></li>
+    <li id="L219"><pre>        setStatus(&#x27;已应用到&#x27; + scope)</pre></li>
+    <li id="L220"><pre>      }</pre></li>
+    <li id="L221"><pre>    } catch (cause) {</pre></li>
+    <li id="L222"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L223">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;段落修改失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L224"><pre>    } finally {</pre></li>
+    <li id="L225"><pre>      if (operation.current === controller) {</pre></li>
+    <li id="L226"><pre>        operation.current = null</pre></li>
+    <li id="L227"><pre>        if (!controller.signal.aborted) setBusy(false)</pre></li>
+    <li id="L228"><pre>      }</pre></li>
+    <li id="L229"><pre>    }</pre></li>
+    <li id="L230"><pre>  }</pre></li>
+    <li id="L231">
+      <pre>
+  const numberField = (key: string, label: string, read: (p: Paragraph) =&gt; number | string) =&gt; {</pre>
+    </li>
+    <li id="L232"><pre>    const current = value(key, read)</pre></li>
+    <li id="L233"><pre>    return (</pre></li>
+    <li id="L234"><pre>      &lt;ToolbarTextField</pre></li>
+    <li id="L235"><pre>        key={key}</pre></li>
+    <li id="L236"><pre>        label={label}</pre></li>
+    <li id="L237"><pre>        value={current === null ? &#x27;&#x27; : String(current)}</pre></li>
+    <li id="L238"><pre>        placeholder=&quot;混合&quot;</pre></li>
+    <li id="L239"><pre>        onChange={(next) =&gt; change({ [key]: next })}</pre></li>
+    <li id="L240"><pre>        onSubmit={() =&gt; void submit()}</pre></li>
+    <li id="L241"><pre>        onCancel={reset}</pre></li>
+    <li id="L242"><pre>      /&gt;</pre></li>
+    <li id="L243"><pre>    )</pre></li>
+    <li id="L244"><pre>  }</pre></li>
+    <li id="L245"><pre>  const pickImage = (file: File | undefined) =&gt; {</pre></li>
+    <li id="L246"><pre>    if (!file) return</pre></li>
+    <li id="L247"><pre>    if (</pre></li>
+    <li id="L248">
+      <pre>      ![&#x27;image/png&#x27;, &#x27;image/jpeg&#x27;].includes(file.type) ||</pre>
+    </li>
+    <li id="L249"><pre>      file.size &gt; PPTX_PARAGRAPH_IMAGE_MAX_BYTES ||</pre></li>
+    <li id="L250"><pre>      !file.size</pre></li>
+    <li id="L251"><pre>    ) {</pre></li>
+    <li id="L252"><pre>      setError(&#x27;请选择512 KiB以内的PNG或JPEG图片&#x27;)</pre></li>
+    <li id="L253"><pre>      return</pre></li>
+    <li id="L254"><pre>    }</pre></li>
+    <li id="L255"><pre>    reader.current?.abort()</pre></li>
+    <li id="L256"><pre>    const next = new FileReader()</pre></li>
+    <li id="L257"><pre>    reader.current = next</pre></li>
+    <li id="L258"><pre>    setReading(true)</pre></li>
+    <li id="L259"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L260"><pre>    next.addEventListener(</pre></li>
+    <li id="L261"><pre>      &#x27;load&#x27;,</pre></li>
+    <li id="L262"><pre>      () =&gt; {</pre></li>
+    <li id="L263"><pre>        if (reader.current !== next) return</pre></li>
+    <li id="L264"><pre>        setReading(false)</pre></li>
+    <li id="L265"><pre>        const base64 = String(next.result).split(&#x27;,&#x27;)[1]</pre></li>
+    <li id="L266"><pre>        if (!base64) {</pre></li>
+    <li id="L267"><pre>          setError(&#x27;图片读取失败，请重新选择&#x27;)</pre></li>
+    <li id="L268"><pre>          return</pre></li>
+    <li id="L269"><pre>        }</pre></li>
+    <li id="L270"><pre>        change({</pre></li>
+    <li id="L271"><pre>          bullet: &#x27;blip&#x27;,</pre></li>
+    <li id="L272">
+      <pre>
+          bulletImage: { ext: file.type === &#x27;image/png&#x27; ? &#x27;png&#x27; : &#x27;jpg&#x27;, base64 },</pre>
+    </li>
+    <li id="L273"><pre>        })</pre></li>
+    <li id="L274"><pre>        setImageName(file.name)</pre></li>
+    <li id="L275"><pre>      },</pre></li>
+    <li id="L276"><pre>      { once: true },</pre></li>
+    <li id="L277"><pre>    )</pre></li>
+    <li id="L278"><pre>    next.addEventListener(</pre></li>
+    <li id="L279"><pre>      &#x27;error&#x27;,</pre></li>
+    <li id="L280"><pre>      () =&gt; {</pre></li>
+    <li id="L281"><pre>        if (reader.current === next) {</pre></li>
+    <li id="L282"><pre>          setReading(false)</pre></li>
+    <li id="L283"><pre>          setError(&#x27;图片读取失败，请重新选择&#x27;)</pre></li>
+    <li id="L284"><pre>        }</pre></li>
+    <li id="L285"><pre>      },</pre></li>
+    <li id="L286"><pre>      { once: true },</pre></li>
+    <li id="L287"><pre>    )</pre></li>
+    <li id="L288"><pre>    next.readAsDataURL(file)</pre></li>
+    <li id="L289"><pre>  }</pre></li>
+    <li id="L290"><pre>  return (</pre></li>
+    <li id="L291">
+      <pre>
+    &lt;fieldset className=&quot;mimir-pptx-paragraph&quot; disabled={locked} aria-busy={locked}&gt;</pre>
+    </li>
+    <li id="L292">
+      <pre>
+      &lt;div className=&quot;mimir-pptx-paragraph__tabs&quot; role=&quot;group&quot; aria-label=&quot;段落设置分类&quot;&gt;</pre>
+    </li>
+    <li id="L293"><pre>        {(</pre></li>
+    <li id="L294"><pre>          [</pre></li>
+    <li id="L295"><pre>            [&#x27;paragraph&#x27;, &#x27;段落&#x27;],</pre></li>
+    <li id="L296"><pre>            [&#x27;list&#x27;, &#x27;列表&#x27;],</pre></li>
+    <li id="L297"><pre>            [&#x27;textbox&#x27;, &#x27;文本框&#x27;],</pre></li>
+    <li id="L298"><pre>          ] as const</pre></li>
+    <li id="L299"><pre>        ).map(([key, label]) =&gt; (</pre></li>
+    <li id="L300"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L301"><pre>            key={key}</pre></li>
+    <li id="L302"><pre>            label={`${label}设置`}</pre></li>
+    <li id="L303"><pre>            active={tab === key}</pre></li>
+    <li id="L304"><pre>            onClick={() =&gt; setTab(key)}</pre></li>
+    <li id="L305"><pre>          &gt;</pre></li>
+    <li id="L306"><pre>            {label}</pre></li>
+    <li id="L307"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L308"><pre>        ))}</pre></li>
+    <li id="L309"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L310">
+      <pre>      &lt;div className=&quot;mimir-pptx-paragraph__content&quot;&gt;</pre>
+    </li>
+    <li id="L311"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L312"><pre>          {tab !== &#x27;textbox&#x27; &amp;&amp; (</pre></li>
+    <li id="L313">
+      <pre>
+            &lt;ToolbarMenuNote&gt;{scope}。仅应用修改过的字段；混合值保持各段原格式。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L314"><pre>          )}</pre></li>
+    <li id="L315"><pre>          {tab === &#x27;paragraph&#x27; &amp;&amp; (</pre></li>
+    <li id="L316"><pre>            &lt;&gt;</pre></li>
+    <li id="L317">
+      <pre>              &lt;ToolbarMenuFields label=&quot;对齐与方向&quot;&gt;</pre>
+    </li>
+    <li id="L318"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L319"><pre>                  disabled={locked}</pre></li>
+    <li id="L320"><pre>                  label=&quot;段落对齐&quot;</pre></li>
+    <li id="L321">
+      <pre>
+                  value={value(&#x27;align&#x27;, (p) =&gt; p.align ?? &#x27;left&#x27;)}</pre>
+    </li>
+    <li id="L322"><pre>                  emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L323"><pre>                  options={options([</pre></li>
+    <li id="L324"><pre>                    [&#x27;left&#x27;, &#x27;左对齐&#x27;],</pre></li>
+    <li id="L325"><pre>                    [&#x27;center&#x27;, &#x27;居中&#x27;],</pre></li>
+    <li id="L326"><pre>                    [&#x27;right&#x27;, &#x27;右对齐&#x27;],</pre></li>
+    <li id="L327"><pre>                    [&#x27;justify&#x27;, &#x27;两端对齐&#x27;],</pre></li>
+    <li id="L328"><pre>                  ])}</pre></li>
+    <li id="L329"><pre>                  onChange={(align) =&gt; change({ align })}</pre></li>
+    <li id="L330"><pre>                /&gt;</pre></li>
+    <li id="L331"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L332"><pre>                  disabled={locked}</pre></li>
+    <li id="L333"><pre>                  label=&quot;文字基础方向&quot;</pre></li>
+    <li id="L334"><pre>                  value={</pre></li>
+    <li id="L335"><pre>                    paragraphRtl === null</pre></li>
+    <li id="L336"><pre>                      ? null</pre></li>
+    <li id="L337"><pre>                      : paragraphRtl === undefined</pre></li>
+    <li id="L338"><pre>                        ? &#x27;auto&#x27;</pre></li>
+    <li id="L339"><pre>                        : paragraphRtl</pre></li>
+    <li id="L340"><pre>                          ? &#x27;rtl&#x27;</pre></li>
+    <li id="L341"><pre>                          : &#x27;ltr&#x27;</pre></li>
+    <li id="L342"><pre>                  }</pre></li>
+    <li id="L343"><pre>                  emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L344"><pre>                  options={[</pre></li>
+    <li id="L345">
+      <pre>
+                    { value: &#x27;auto&#x27;, label: &#x27;自动（按文字）&#x27;, disabled: true },</pre>
+    </li>
+    <li id="L346"><pre>                    ...options([</pre></li>
+    <li id="L347"><pre>                      [&#x27;ltr&#x27;, &#x27;从左到右&#x27;],</pre></li>
+    <li id="L348"><pre>                      [&#x27;rtl&#x27;, &#x27;从右到左&#x27;],</pre></li>
+    <li id="L349"><pre>                    ]),</pre></li>
+    <li id="L350"><pre>                  ]}</pre></li>
+    <li id="L351">
+      <pre>
+                  onChange={(direction) =&gt; change({ rtl: direction === &#x27;rtl&#x27; })}</pre>
+    </li>
+    <li id="L352"><pre>                /&gt;</pre></li>
+    <li id="L353"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L354"><pre>              &lt;ToolbarMenuFields label=&quot;段落间距&quot;&gt;</pre></li>
+    <li id="L355">
+      <pre>
+                {numberField(&#x27;lineSpacingPct&#x27;, &#x27;行距（%）&#x27;, (p) =&gt;</pre>
+    </li>
+    <li id="L356">
+      <pre>
+                  p.lineExact !== undefined ? `${p.lineExact} pt（固定）` : (p.lineHeight ?? 100),</pre>
+    </li>
+    <li id="L357"><pre>                )}</pre></li>
+    <li id="L358">
+      <pre>
+                &lt;ToolbarMenuNote&gt;100%为单倍行距；修改固定行距后改用百分比。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L359">
+      <pre>                &lt;div className=&quot;mimir-pptx-paragraph__pair&quot;&gt;</pre>
+    </li>
+    <li id="L360">
+      <pre>
+                  {numberField(&#x27;spaceBeforePt&#x27;, &#x27;段前（pt）&#x27;, (p) =&gt;</pre>
+    </li>
+    <li id="L361">
+      <pre>
+                    p.spaceBeforePct !== undefined ? `${p.spaceBeforePct}%` : (p.spaceBefore ?? 0),</pre>
+    </li>
+    <li id="L362"><pre>                  )}</pre></li>
+    <li id="L363">
+      <pre>
+                  {numberField(&#x27;spaceAfterPt&#x27;, &#x27;段后（pt）&#x27;, (p) =&gt;</pre>
+    </li>
+    <li id="L364">
+      <pre>
+                    p.spaceAfterPct !== undefined ? `${p.spaceAfterPct}%` : (p.spaceAfter ?? 0),</pre>
+    </li>
+    <li id="L365"><pre>                  )}</pre></li>
+    <li id="L366"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L367"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L368"><pre>              &lt;ToolbarMenuFields label=&quot;列表层级&quot;&gt;</pre></li>
+    <li id="L369"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L370">
+      <pre>
+                  当前层级：{uniform((p) =&gt; (p.level ?? 0) + 1) ?? &#x27;混合&#x27;}</pre>
+    </li>
+    <li id="L371">
+      <pre>
+                  {draft.indentDelta ? `；待${draft.indentDelta === 1 ? &#x27;增加&#x27; : &#x27;减少&#x27;}一级` : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L372"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L373">
+      <pre>                &lt;div className=&quot;mimir-pptx-paragraph__pair&quot;&gt;</pre>
+    </li>
+    <li id="L374"><pre>                  &lt;ToolbarButton</pre></li>
+    <li id="L375"><pre>                    label=&quot;减少列表缩进&quot;</pre></li>
+    <li id="L376">
+      <pre>
+                    disabled={indices.every((i) =&gt; (text.paragraphs[i]?.level ?? 0) &lt;= 0)}</pre>
+    </li>
+    <li id="L377"><pre>                    disabledReason=&quot;所选段落已在第一级&quot;</pre></li>
+    <li id="L378"><pre>                    onClick={() =&gt; change({ indentDelta: -1 })}</pre></li>
+    <li id="L379"><pre>                  &gt;</pre></li>
+    <li id="L380"><pre>                    减少缩进</pre></li>
+    <li id="L381"><pre>                  &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L382"><pre>                  &lt;ToolbarButton</pre></li>
+    <li id="L383"><pre>                    label=&quot;增加列表缩进&quot;</pre></li>
+    <li id="L384">
+      <pre>
+                    disabled={indices.every((i) =&gt; (text.paragraphs[i]?.level ?? 0) &gt;= 8)}</pre>
+    </li>
+    <li id="L385">
+      <pre>                    disabledReason=&quot;所选段落已达到最大层级&quot;</pre>
+    </li>
+    <li id="L386"><pre>                    onClick={() =&gt; change({ indentDelta: 1 })}</pre></li>
+    <li id="L387"><pre>                  &gt;</pre></li>
+    <li id="L388"><pre>                    增加缩进</pre></li>
+    <li id="L389"><pre>                  &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L390"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L391"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L392"><pre>            &lt;/&gt;</pre></li>
+    <li id="L393"><pre>          )}</pre></li>
+    <li id="L394"><pre>          {tab === &#x27;list&#x27; &amp;&amp; (</pre></li>
+    <li id="L395"><pre>            &lt;&gt;</pre></li>
+    <li id="L396"><pre>              &lt;ToolbarMenuFields label=&quot;列表样式&quot;&gt;</pre></li>
+    <li id="L397"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L398"><pre>                  disabled={locked}</pre></li>
+    <li id="L399"><pre>                  label=&quot;列表样式&quot;</pre></li>
+    <li id="L400"><pre>                  value={listType}</pre></li>
+    <li id="L401"><pre>                  emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L402"><pre>                  options={options([</pre></li>
+    <li id="L403"><pre>                    [&#x27;none&#x27;, &#x27;无列表&#x27;],</pre></li>
+    <li id="L404"><pre>                    [&#x27;char&#x27;, &#x27;项目符号&#x27;],</pre></li>
+    <li id="L405"><pre>                    [&#x27;number&#x27;, &#x27;数字编号&#x27;],</pre></li>
+    <li id="L406">
+      <pre>
+                    ...(listType === &#x27;blip&#x27; ? [[&#x27;blip&#x27;, &#x27;图片符号&#x27;] as const] : []),</pre>
+    </li>
+    <li id="L407"><pre>                  ])}</pre></li>
+    <li id="L408"><pre>                  onChange={(bullet) =&gt; {</pre></li>
+    <li id="L409"><pre>                    setError(&#x27;&#x27;)</pre></li>
+    <li id="L410"><pre>                    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L411"><pre>                    setImageName(&#x27;&#x27;)</pre></li>
+    <li id="L412"><pre>                    setDraft((current) =&gt; {</pre></li>
+    <li id="L413"><pre>                      const {</pre></li>
+    <li id="L414"><pre>                        bulletImage: _image,</pre></li>
+    <li id="L415"><pre>                        bulletChar: _char,</pre></li>
+    <li id="L416"><pre>                        bulletFont: _font,</pre></li>
+    <li id="L417"><pre>                        numType: _type,</pre></li>
+    <li id="L418"><pre>                        startAt: _start,</pre></li>
+    <li id="L419"><pre>                        ...rest</pre></li>
+    <li id="L420"><pre>                      } = current</pre></li>
+    <li id="L421"><pre>                      return { ...rest, bullet }</pre></li>
+    <li id="L422"><pre>                    })</pre></li>
+    <li id="L423"><pre>                  }}</pre></li>
+    <li id="L424"><pre>                /&gt;</pre></li>
+    <li id="L425"><pre>                {listType === &#x27;char&#x27; &amp;&amp; (</pre></li>
+    <li id="L426"><pre>                  &lt;&gt;</pre></li>
+    <li id="L427"><pre>                    &lt;div</pre></li>
+    <li id="L428">
+      <pre>                      className=&quot;mimir-pptx-paragraph__gallery&quot;</pre>
+    </li>
+    <li id="L429"><pre>                      role=&quot;group&quot;</pre></li>
+    <li id="L430"><pre>                      aria-label=&quot;项目符号预设&quot;</pre></li>
+    <li id="L431"><pre>                    &gt;</pre></li>
+    <li id="L432"><pre>                      {bulletPresets.map((preset) =&gt; (</pre></li>
+    <li id="L433"><pre>                        &lt;ToolbarButton</pre></li>
+    <li id="L434"><pre>                          key={preset.label}</pre></li>
+    <li id="L435"><pre>                          label={preset.label}</pre></li>
+    <li id="L436"><pre>                          active={</pre></li>
+    <li id="L437">
+      <pre>
+                            value(&#x27;bulletChar&#x27;, (p) =&gt; p.bullet?.char ?? &#x27;•&#x27;) === preset.char &amp;&amp;</pre>
+    </li>
+    <li id="L438">
+      <pre>
+                            value(&#x27;bulletFont&#x27;, (p) =&gt; p.bullet?.font ?? &#x27;&#x27;) === preset.font</pre>
+    </li>
+    <li id="L439"><pre>                          }</pre></li>
+    <li id="L440"><pre>                          onClick={() =&gt;</pre></li>
+    <li id="L441"><pre>                            change({</pre></li>
+    <li id="L442"><pre>                              bullet: &#x27;char&#x27;,</pre></li>
+    <li id="L443"><pre>                              bulletChar: preset.char,</pre></li>
+    <li id="L444"><pre>                              bulletFont: preset.font,</pre></li>
+    <li id="L445"><pre>                            })</pre></li>
+    <li id="L446"><pre>                          }</pre></li>
+    <li id="L447"><pre>                        &gt;</pre></li>
+    <li id="L448"><pre>                          {preset.glyph}</pre></li>
+    <li id="L449"><pre>                        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L450"><pre>                      ))}</pre></li>
+    <li id="L451"><pre>                    &lt;/div&gt;</pre></li>
+    <li id="L452"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L453"><pre>                      label=&quot;项目符号字符&quot;</pre></li>
+    <li id="L454">
+      <pre>
+                      value={value(&#x27;bulletChar&#x27;, (p) =&gt; p.bullet?.char ?? &#x27;•&#x27;) ?? &#x27;&#x27;}</pre>
+    </li>
+    <li id="L455"><pre>                      placeholder=&quot;混合&quot;</pre></li>
+    <li id="L456"><pre>                      onChange={(bulletChar) =&gt;</pre></li>
+    <li id="L457">
+      <pre>
+                        change({ bullet: &#x27;char&#x27;, bulletChar, bulletFont: &#x27;Arial&#x27; })</pre>
+    </li>
+    <li id="L458"><pre>                      }</pre></li>
+    <li id="L459"><pre>                    /&gt;</pre></li>
+    <li id="L460"><pre>                    &lt;ToolbarTextField</pre></li>
+    <li id="L461"><pre>                      label=&quot;符号字体&quot;</pre></li>
+    <li id="L462">
+      <pre>
+                      value={value(&#x27;bulletFont&#x27;, (p) =&gt; p.bullet?.font ?? &#x27;&#x27;) ?? &#x27;&#x27;}</pre>
+    </li>
+    <li id="L463"><pre>                      placeholder={</pre></li>
+    <li id="L464">
+      <pre>
+                        uniform((p) =&gt; p.bullet?.font ?? &#x27;&#x27;) === null ? &#x27;混合&#x27; : &#x27;随文字字体&#x27;</pre>
+    </li>
+    <li id="L465"><pre>                      }</pre></li>
+    <li id="L466">
+      <pre>                      onChange={(bulletFont) =&gt; change({ bulletFont })}</pre>
+    </li>
+    <li id="L467"><pre>                    /&gt;</pre></li>
+    <li id="L468"><pre>                  &lt;/&gt;</pre></li>
+    <li id="L469"><pre>                )}</pre></li>
+    <li id="L470"><pre>                {listType === &#x27;number&#x27; &amp;&amp; (</pre></li>
+    <li id="L471"><pre>                  &lt;&gt;</pre></li>
+    <li id="L472"><pre>                    &lt;ToolbarSelect</pre></li>
+    <li id="L473"><pre>                      disabled={locked}</pre></li>
+    <li id="L474"><pre>                      label=&quot;编号格式&quot;</pre></li>
+    <li id="L475"><pre>                      value={numberType}</pre></li>
+    <li id="L476"><pre>                      emptyLabel=&quot;混合&quot;</pre></li>
+    <li id="L477">
+      <pre>
+                      fallbackLabel={uniform((p) =&gt; p.bullet?.numType ?? &#x27;arabicPeriod&#x27;) ?? &#x27;混合&#x27;}</pre>
+    </li>
+    <li id="L478"><pre>                      options={numberOptions}</pre></li>
+    <li id="L479">
+      <pre>                      onChange={(numType) =&gt; change({ numType })}</pre>
+    </li>
+    <li id="L480"><pre>                    /&gt;</pre></li>
+    <li id="L481">
+      <pre>
+                    {numberField(&#x27;startAt&#x27;, &#x27;起始编号&#x27;, (p) =&gt; p.bullet?.startAt ?? 1)}</pre>
+    </li>
+    <li id="L482"><pre>                  &lt;/&gt;</pre></li>
+    <li id="L483"><pre>                )}</pre></li>
+    <li id="L484"><pre>                &lt;input</pre></li>
+    <li id="L485"><pre>                  ref={fileInput}</pre></li>
+    <li id="L486"><pre>                  hidden</pre></li>
+    <li id="L487"><pre>                  type=&quot;file&quot;</pre></li>
+    <li id="L488"><pre>                  accept=&quot;image/png,image/jpeg&quot;</pre></li>
+    <li id="L489"><pre>                  aria-label=&quot;图片项目符号文件&quot;</pre></li>
+    <li id="L490"><pre>                  onChange={(event) =&gt; {</pre></li>
+    <li id="L491"><pre>                    pickImage(event.currentTarget.files?.[0])</pre></li>
+    <li id="L492"><pre>                    event.currentTarget.value = &#x27;&#x27;</pre></li>
+    <li id="L493"><pre>                  }}</pre></li>
+    <li id="L494"><pre>                /&gt;</pre></li>
+    <li id="L495">
+      <pre>
+                &lt;ToolbarButton label=&quot;选择图片项目符号&quot; onClick={() =&gt; fileInput.current?.click()}&gt;</pre>
+    </li>
+    <li id="L496"><pre>                  &lt;ImagePlus size={15} /&gt;</pre></li>
+    <li id="L497">
+      <pre>
+                  {listType === &#x27;blip&#x27; ? &#x27;替换图片符号&#x27; : &#x27;使用图片符号&#x27;}</pre>
+    </li>
+    <li id="L498"><pre>                &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L499"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L500"><pre>                  {imageName</pre></li>
+    <li id="L501"><pre>                    ? `待应用：${imageName}`</pre></li>
+    <li id="L502"><pre>                    : listType === &#x27;blip&#x27;</pre></li>
+    <li id="L503">
+      <pre>                      ? &#x27;当前为图片符号；未替换时保留原图片。&#x27;</pre>
+    </li>
+    <li id="L504"><pre>                      : &#x27;PNG或JPEG，最多512 KiB。&#x27;}</pre></li>
+    <li id="L505"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L506"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L507"><pre>              {listType !== &#x27;none&#x27; &amp;&amp; (</pre></li>
+    <li id="L508">
+      <pre>                &lt;ToolbarMenuFields label=&quot;符号外观与缩进&quot;&gt;</pre>
+    </li>
+    <li id="L509">
+      <pre>                  &lt;div className=&quot;mimir-pptx-paragraph__pair&quot;&gt;</pre>
+    </li>
+    <li id="L510">
+      <pre>
+                    {numberField(&#x27;bulletSizePct&#x27;, &#x27;符号大小（%）&#x27;, (p) =&gt;</pre>
+    </li>
+    <li id="L511"><pre>                      p.bullet?.sizePt !== undefined</pre></li>
+    <li id="L512"><pre>                        ? `${p.bullet.sizePt} pt（固定）`</pre></li>
+    <li id="L513"><pre>                        : (p.bullet?.sizePct ?? 100),</pre></li>
+    <li id="L514"><pre>                    )}</pre></li>
+    <li id="L515">
+      <pre>
+                    {numberField(&#x27;bulletHangEmu&#x27;, &#x27;悬挂缩进（pt）&#x27;, (p) =&gt;</pre>
+    </li>
+    <li id="L516">
+      <pre>                      p.indent !== undefined ? Math.max(0, -p.indent) / PT : 22.5,</pre>
+    </li>
+    <li id="L517"><pre>                    )}</pre></li>
+    <li id="L518"><pre>                  &lt;/div&gt;</pre></li>
+    <li id="L519"><pre>                  &lt;ToolbarColorPicker</pre></li>
+    <li id="L520"><pre>                    label=&quot;符号颜色预设&quot;</pre></li>
+    <li id="L521"><pre>                    inline</pre></li>
+    <li id="L522"><pre>                    disabled={locked}</pre></li>
+    <li id="L523">
+      <pre>
+                    value={value(&#x27;bulletColor&#x27;, (p) =&gt; p.bullet?.color ?? &#x27;&#x27;)}</pre>
+    </li>
+    <li id="L524"><pre>                    options={bulletColors}</pre></li>
+    <li id="L525">
+      <pre>                    onPick={(bulletColor) =&gt; change({ bulletColor })}</pre>
+    </li>
+    <li id="L526"><pre>                  /&gt;</pre></li>
+    <li id="L527"><pre>                  &lt;ToolbarTextField</pre></li>
+    <li id="L528"><pre>                    label=&quot;符号颜色&quot;</pre></li>
+    <li id="L529"><pre>                    value={</pre></li>
+    <li id="L530"><pre>                      value(&#x27;bulletColor&#x27;, (p) =&gt;</pre></li>
+    <li id="L531">
+      <pre>
+                        typeof p.bullet?.color === &#x27;string&#x27; ? p.bullet.color : &#x27;&#x27;,</pre>
+    </li>
+    <li id="L532"><pre>                      ) ?? &#x27;&#x27;</pre></li>
+    <li id="L533"><pre>                    }</pre></li>
+    <li id="L534">
+      <pre>                    placeholder=&quot;混合或随文字颜色 · #RRGGBB&quot;</pre>
+    </li>
+    <li id="L535">
+      <pre>                    onChange={(bulletColor) =&gt; change({ bulletColor })}</pre>
+    </li>
+    <li id="L536"><pre>                  /&gt;</pre></li>
+    <li id="L537"><pre>                  &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L538">
+      <pre>                    100%与文字等大。悬挂缩进按当前列表层级同步调整。</pre>
+    </li>
+    <li id="L539"><pre>                  &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L540"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L541"><pre>              )}</pre></li>
+    <li id="L542"><pre>            &lt;/&gt;</pre></li>
+    <li id="L543"><pre>          )}</pre></li>
+    <li id="L544"><pre>          {tab === &#x27;textbox&#x27; &amp;&amp; (</pre></li>
+    <li id="L545">
+      <pre>            &lt;ToolbarMenuFields label=&quot;整个文本框 · 即时应用&quot;&gt;</pre>
+    </li>
+    <li id="L546"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L547"><pre>                disabled={locked}</pre></li>
+    <li id="L548"><pre>                label=&quot;文本垂直对齐&quot;</pre></li>
+    <li id="L549"><pre>                value={text.anchor ?? &#x27;top&#x27;}</pre></li>
+    <li id="L550"><pre>                options={options([</pre></li>
+    <li id="L551"><pre>                  [&#x27;top&#x27;, &#x27;顶部&#x27;],</pre></li>
+    <li id="L552"><pre>                  [&#x27;middle&#x27;, &#x27;中部&#x27;],</pre></li>
+    <li id="L553"><pre>                  [&#x27;bottom&#x27;, &#x27;底部&#x27;],</pre></li>
+    <li id="L554"><pre>                ])}</pre></li>
+    <li id="L555">
+      <pre>
+                onChange={(anchor) =&gt; void run({ op: &#x27;setTextAnchor&#x27;, target, anchor })}</pre>
+    </li>
+    <li id="L556"><pre>              /&gt;</pre></li>
+    <li id="L557"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L558"><pre>                disabled={locked}</pre></li>
+    <li id="L559"><pre>                label=&quot;文本方向&quot;</pre></li>
+    <li id="L560"><pre>                value={text.vert ?? &#x27;horz&#x27;}</pre></li>
+    <li id="L561"><pre>                options={options([</pre></li>
+    <li id="L562"><pre>                  [&#x27;horz&#x27;, &#x27;水平&#x27;],</pre></li>
+    <li id="L563"><pre>                  [&#x27;eaVert&#x27;, &#x27;东亚竖排&#x27;],</pre></li>
+    <li id="L564"><pre>                  [&#x27;vert&#x27;, &#x27;垂直&#x27;],</pre></li>
+    <li id="L565"><pre>                  [&#x27;vert270&#x27;, &#x27;旋转270°&#x27;],</pre></li>
+    <li id="L566"><pre>                  [&#x27;wordArtVert&#x27;, &#x27;堆叠&#x27;],</pre></li>
+    <li id="L567"><pre>                ])}</pre></li>
+    <li id="L568"><pre>                onChange={(vert) =&gt; body({ vert })}</pre></li>
+    <li id="L569"><pre>              /&gt;</pre></li>
+    <li id="L570"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L571"><pre>                disabled={locked}</pre></li>
+    <li id="L572"><pre>                label=&quot;文本自适应&quot;</pre></li>
+    <li id="L573"><pre>                value={text.autofit ?? &#x27;none&#x27;}</pre></li>
+    <li id="L574"><pre>                options={options([</pre></li>
+    <li id="L575"><pre>                  [&#x27;none&#x27;, &#x27;不自动调整&#x27;],</pre></li>
+    <li id="L576">
+      <pre>                  [&#x27;shrink&#x27;, &#x27;溢出时缩小文字&#x27;],</pre>
+    </li>
+    <li id="L577">
+      <pre>                  [&#x27;resize&#x27;, &#x27;随文字调整文本框&#x27;],</pre>
+    </li>
+    <li id="L578"><pre>                ])}</pre></li>
+    <li id="L579"><pre>                onChange={(autofit) =&gt; body({ autofit })}</pre></li>
+    <li id="L580"><pre>              /&gt;</pre></li>
+    <li id="L581"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L582"><pre>                disabled={locked}</pre></li>
+    <li id="L583"><pre>                label=&quot;文本自动换行&quot;</pre></li>
+    <li id="L584">
+      <pre>                value={text.wrap === false ? &#x27;false&#x27; : &#x27;true&#x27;}</pre>
+    </li>
+    <li id="L585"><pre>                options={options([</pre></li>
+    <li id="L586"><pre>                  [&#x27;true&#x27;, &#x27;换行&#x27;],</pre></li>
+    <li id="L587"><pre>                  [&#x27;false&#x27;, &#x27;不换行&#x27;],</pre></li>
+    <li id="L588"><pre>                ])}</pre></li>
+    <li id="L589">
+      <pre>                onChange={(next) =&gt; body({ wrap: next === &#x27;true&#x27; })}</pre>
+    </li>
+    <li id="L590"><pre>              /&gt;</pre></li>
+    <li id="L591">
+      <pre>              &lt;div className=&quot;mimir-pptx-paragraph__pair&quot;&gt;</pre>
+    </li>
+    <li id="L592">
+      <pre>
+                {([&#x27;l&#x27;, &#x27;t&#x27;, &#x27;r&#x27;, &#x27;b&#x27;] as const).map((side, index) =&gt; (</pre>
+    </li>
+    <li id="L593"><pre>                  &lt;ToolbarNumberField</pre></li>
+    <li id="L594"><pre>                    key={side}</pre></li>
+    <li id="L595">
+      <pre>
+                    label={`文本${[&#x27;左&#x27;, &#x27;上&#x27;, &#x27;右&#x27;, &#x27;下&#x27;][index]}边距（pt）`}</pre>
+    </li>
+    <li id="L596"><pre>                    value={(text.insets?.[side] ?? 0) / PT}</pre></li>
+    <li id="L597"><pre>                    min={0}</pre></li>
+    <li id="L598"><pre>                    max={1000}</pre></li>
+    <li id="L599"><pre>                    step={0.5}</pre></li>
+    <li id="L600"><pre>                    onCommit={(next) =&gt;</pre></li>
+    <li id="L601">
+      <pre>
+                      body({ insets: { ...text.insets, [side]: Math.round(next * PT) } })</pre>
+    </li>
+    <li id="L602"><pre>                    }</pre></li>
+    <li id="L603"><pre>                  /&gt;</pre></li>
+    <li id="L604"><pre>                ))}</pre></li>
+    <li id="L605"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L606"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L607"><pre>          )}</pre></li>
+    <li id="L608"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L609"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L610">
+      <pre>      &lt;div className=&quot;mimir-pptx-paragraph__actions&quot;&gt;</pre>
+    </li>
+    <li id="L611">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L612">
+      <pre>        {status &amp;&amp; &lt;ToolbarMenuNote&gt;{status}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L613">
+      <pre>
+        {locked &amp;&amp; &lt;ToolbarMenuNote&gt;{reading ? &#x27;正在读取图片…&#x27; : &#x27;正在应用修改…&#x27;}&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L614"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L615"><pre>          {dirty</pre></li>
+    <li id="L616"><pre>            ? `待应用到${scope}`</pre></li>
+    <li id="L617"><pre>            : tab === &#x27;textbox&#x27;</pre></li>
+    <li id="L618"><pre>              ? &#x27;文本框设置即时应用&#x27;</pre></li>
+    <li id="L619"><pre>              : &#x27;修改字段后应用到所选段落&#x27;}</pre></li>
+    <li id="L620"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L621">
+      <pre>        &lt;div className=&quot;mimir-pptx-paragraph__buttons&quot;&gt;</pre>
+    </li>
+    <li id="L622"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L623"><pre>            label=&quot;重置段落草稿&quot;</pre></li>
+    <li id="L624"><pre>            disabled={!dirty}</pre></li>
+    <li id="L625"><pre>            disabledReason=&quot;尚未修改段落格式&quot;</pre></li>
+    <li id="L626"><pre>            onClick={reset}</pre></li>
+    <li id="L627"><pre>          &gt;</pre></li>
+    <li id="L628"><pre>            &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L629"><pre>            重置</pre></li>
+    <li id="L630"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L631"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L632"><pre>            label=&quot;应用段落格式&quot;</pre></li>
+    <li id="L633"><pre>            primary</pre></li>
+    <li id="L634"><pre>            disabled={!dirty || !indices.length}</pre></li>
+    <li id="L635"><pre>            disabledReason=&quot;请先修改段落格式&quot;</pre></li>
+    <li id="L636"><pre>            onClick={() =&gt; void submit()}</pre></li>
+    <li id="L637"><pre>          &gt;</pre></li>
+    <li id="L638"><pre>            &lt;Check size={15} /&gt;</pre></li>
+    <li id="L639"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L640"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L641"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L642"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L643"><pre>  )</pre></li>
+    <li id="L644"><pre>}</pre></li>
+    <li id="L645"><pre></pre></li>
+    <li id="L646"><pre>export function PptxPictureControls({</pre></li>
+    <li id="L647"><pre>  element,</pre></li>
+    <li id="L648"><pre>  target,</pre></li>
+    <li id="L649"><pre>  apply,</pre></li>
+    <li id="L650"><pre>  onStartCrop,</pre></li>
+    <li id="L651"><pre>  cropUnavailableReason,</pre></li>
+    <li id="L652"><pre>}: {</pre></li>
+    <li id="L653">
+      <pre>  element: Extract&lt;SlideElement, { type: &#x27;picture&#x27; }&gt;</pre>
+    </li>
+    <li id="L654"><pre>  target: PptxTarget</pre></li>
+    <li id="L655"><pre>  apply: PptxApply</pre></li>
+    <li id="L656"><pre>  onStartCrop?: () =&gt; void</pre></li>
+    <li id="L657"><pre>  cropUnavailableReason?: string</pre></li>
+    <li id="L658"><pre>}) {</pre></li>
+    <li id="L659"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L660"><pre>  const [crop, setCrop] = useState(() =&gt; ({</pre></li>
+    <li id="L661"><pre>    l: element.srcRect?.l ?? 0,</pre></li>
+    <li id="L662"><pre>    t: element.srcRect?.t ?? 0,</pre></li>
+    <li id="L663"><pre>    r: element.srcRect?.r ?? 0,</pre></li>
+    <li id="L664"><pre>    b: element.srcRect?.b ?? 0,</pre></li>
+    <li id="L665"><pre>  }))</pre></li>
+    <li id="L666">
+      <pre>  const invalid = crop.l + crop.r &gt;= 1 || crop.t + crop.b &gt;= 1</pre>
+    </li>
+    <li id="L667"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L668"><pre>  const submit = async (srcRect: typeof crop | null) =&gt; {</pre></li>
+    <li id="L669"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L670"><pre>    try {</pre></li>
+    <li id="L671">
+      <pre>
+      const changed = await run({ op: &#x27;setPictureSrcRect&#x27;, target, srcRect })</pre>
+    </li>
+    <li id="L672">
+      <pre>      if (!changed) setError(&#x27;裁切未应用，请重试；原有图片已保留&#x27;)</pre>
+    </li>
+    <li id="L673"><pre>    } catch {</pre></li>
+    <li id="L674"><pre>      setError(&#x27;裁切未应用，请重试；原有图片已保留&#x27;)</pre></li>
+    <li id="L675"><pre>    }</pre></li>
+    <li id="L676"><pre>  }</pre></li>
+    <li id="L677"><pre>  const rotate = (rotDeg: number) =&gt;</pre></li>
+    <li id="L678"><pre>    void run({</pre></li>
+    <li id="L679"><pre>      op: &#x27;setTransform&#x27;,</pre></li>
+    <li id="L680"><pre>      target,</pre></li>
+    <li id="L681"><pre>      box: element.transform.offset,</pre></li>
+    <li id="L682"><pre>      rotDeg: ((rotDeg % 360) + 360) % 360,</pre></li>
+    <li id="L683"><pre>    })</pre></li>
+    <li id="L684"><pre>  return (</pre></li>
+    <li id="L685">
+      <pre>
+    &lt;fieldset className=&quot;mimir-pptx-picture-controls&quot; disabled={busy} aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L686">
+      <pre>      &lt;div className=&quot;mimir-pptx-picture-controls__content&quot;&gt;</pre>
+    </li>
+    <li id="L687"><pre>        &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L688"><pre>          &lt;ToolbarMenuFields label=&quot;裁切范围&quot;&gt;</pre></li>
+    <li id="L689"><pre>            {onStartCrop &amp;&amp; (</pre></li>
+    <li id="L690"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L691"><pre>                label=&quot;在画布裁切图片&quot;</pre></li>
+    <li id="L692"><pre>                disabled={busy || !!cropUnavailableReason}</pre></li>
+    <li id="L693">
+      <pre>                disabledReason={cropUnavailableReason || &#x27;正在处理图片&#x27;}</pre>
+    </li>
+    <li id="L694"><pre>                onClick={onStartCrop}</pre></li>
+    <li id="L695"><pre>              &gt;</pre></li>
+    <li id="L696"><pre>                &lt;Crop size={15} /&gt;</pre></li>
+    <li id="L697"><pre>                在画布裁切</pre></li>
+    <li id="L698"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L699"><pre>            )}</pre></li>
+    <li id="L700">
+      <pre>
+            &lt;ToolbarMenuNote&gt;设置四边裁去的比例，点击应用后生效。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L701">
+      <pre>            &lt;div className=&quot;mimir-pptx-picture-controls__pair&quot;&gt;</pre>
+    </li>
+    <li id="L702">
+      <pre>
+              {([&#x27;l&#x27;, &#x27;t&#x27;, &#x27;r&#x27;, &#x27;b&#x27;] as const).map((side, index) =&gt; (</pre>
+    </li>
+    <li id="L703"><pre>                &lt;ToolbarNumberField</pre></li>
+    <li id="L704"><pre>                  key={side}</pre></li>
+    <li id="L705">
+      <pre>
+                  label={`裁去${[&#x27;左&#x27;, &#x27;上&#x27;, &#x27;右&#x27;, &#x27;下&#x27;][index]}侧（%）`}</pre>
+    </li>
+    <li id="L706"><pre>                  value={crop[side] * 100}</pre></li>
+    <li id="L707"><pre>                  min={0}</pre></li>
+    <li id="L708"><pre>                  max={99}</pre></li>
+    <li id="L709"><pre>                  step={1}</pre></li>
+    <li id="L710">
+      <pre>
+                  onCommit={(value) =&gt; setCrop({ ...crop, [side]: value / 100 })}</pre>
+    </li>
+    <li id="L711"><pre>                /&gt;</pre></li>
+    <li id="L712"><pre>              ))}</pre></li>
+    <li id="L713"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L714">
+      <pre>
+            {invalid &amp;&amp; &lt;ToolbarMenuNote&gt;相对两边裁切之和必须小于100%。&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L715"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L716"><pre>          &lt;ToolbarMenuFields label=&quot;图片外观&quot;&gt;</pre></li>
+    <li id="L717"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L718"><pre>              label=&quot;图片不透明度（%）&quot;</pre></li>
+    <li id="L719"><pre>              value={(element.opacity ?? 1) * 100}</pre></li>
+    <li id="L720"><pre>              min={0}</pre></li>
+    <li id="L721"><pre>              max={100}</pre></li>
+    <li id="L722"><pre>              step={1}</pre></li>
+    <li id="L723"><pre>              onCommit={(value) =&gt;</pre></li>
+    <li id="L724">
+      <pre>
+                void run({ op: &#x27;setPictureOpacity&#x27;, target, opacity: value / 100 })</pre>
+    </li>
+    <li id="L725"><pre>              }</pre></li>
+    <li id="L726"><pre>            /&gt;</pre></li>
+    <li id="L727"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L728"><pre>              label=&quot;旋转角度（°）&quot;</pre></li>
+    <li id="L729"><pre>              value={element.transform.rot / 60000}</pre></li>
+    <li id="L730"><pre>              min={-360}</pre></li>
+    <li id="L731"><pre>              max={360}</pre></li>
+    <li id="L732"><pre>              onCommit={rotate}</pre></li>
+    <li id="L733"><pre>            /&gt;</pre></li>
+    <li id="L734">
+      <pre>            &lt;div className=&quot;mimir-pptx-picture-controls__pair&quot;&gt;</pre>
+    </li>
+    <li id="L735"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L736"><pre>                label=&quot;图片向左旋转90度&quot;</pre></li>
+    <li id="L737">
+      <pre>                onClick={() =&gt; rotate(element.transform.rot / 60000 - 90)}</pre>
+    </li>
+    <li id="L738"><pre>              &gt;</pre></li>
+    <li id="L739"><pre>                &lt;RotateCcw size={15} /&gt;</pre></li>
+    <li id="L740"><pre>                向左90°</pre></li>
+    <li id="L741"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L742"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L743"><pre>                label=&quot;图片向右旋转90度&quot;</pre></li>
+    <li id="L744">
+      <pre>                onClick={() =&gt; rotate(element.transform.rot / 60000 + 90)}</pre>
+    </li>
+    <li id="L745"><pre>              &gt;</pre></li>
+    <li id="L746"><pre>                &lt;RotateCw size={15} /&gt;</pre></li>
+    <li id="L747"><pre>                向右90°</pre></li>
+    <li id="L748"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L749"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L750">
+      <pre>
+            &lt;ToolbarMenuNote&gt;不透明度和旋转角度即时应用。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L751"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L752"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L753"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L754">
+      <pre>      &lt;div className=&quot;mimir-pptx-picture-controls__actions&quot;&gt;</pre>
+    </li>
+    <li id="L755">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L756">
+      <pre>
+        {busy &amp;&amp; &lt;ToolbarMenuNote&gt;正在应用图片修改…&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L757">
+      <pre>        &lt;div className=&quot;mimir-pptx-picture-controls__pair&quot;&gt;</pre>
+    </li>
+    <li id="L758"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L759"><pre>            label=&quot;重置图片裁切&quot;</pre></li>
+    <li id="L760"><pre>            disabled={busy || !element.srcRect}</pre></li>
+    <li id="L761"><pre>            disabledReason=&quot;图片没有裁切&quot;</pre></li>
+    <li id="L762"><pre>            onClick={() =&gt; void submit(null)}</pre></li>
+    <li id="L763"><pre>          &gt;</pre></li>
+    <li id="L764"><pre>            &lt;RotateCcw size={15} /&gt;</pre></li>
+    <li id="L765"><pre>            重置裁切</pre></li>
+    <li id="L766"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L767"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L768"><pre>            label=&quot;应用图片裁切&quot;</pre></li>
+    <li id="L769"><pre>            primary</pre></li>
+    <li id="L770"><pre>            disabled={busy || invalid}</pre></li>
+    <li id="L771">
+      <pre>
+            disabledReason={busy ? &#x27;正在应用图片修改&#x27; : &#x27;裁切后须保留可见区域&#x27;}</pre>
+    </li>
+    <li id="L772"><pre>            onClick={() =&gt; void submit(crop)}</pre></li>
+    <li id="L773"><pre>          &gt;</pre></li>
+    <li id="L774"><pre>            &lt;Check size={15} /&gt;</pre></li>
+    <li id="L775"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L776"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L777"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L778"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L779"><pre>  )</pre></li>
+    <li id="L780"><pre>}</pre></li>
+    <li id="L781"><pre></pre></li>
+    <li id="L782"><pre>export function PptxEffectsControls({</pre></li>
+    <li id="L783"><pre>  element,</pre></li>
+    <li id="L784"><pre>  target,</pre></li>
+    <li id="L785"><pre>  apply,</pre></li>
+    <li id="L786"><pre>}: {</pre></li>
+    <li id="L787"><pre>  element: SlideElement</pre></li>
+    <li id="L788"><pre>  target: PptxTarget</pre></li>
+    <li id="L789"><pre>  apply: PptxApply</pre></li>
+    <li id="L790"><pre>}) {</pre></li>
+    <li id="L791"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L792">
+      <pre>
+  if (element.type !== &#x27;picture&#x27; &amp;&amp; element.type !== &#x27;shape&#x27; &amp;&amp; element.type !== &#x27;text&#x27;)</pre>
+    </li>
+    <li id="L793">
+      <pre>
+    return &lt;ToolbarMenuNote&gt;效果适用于图片、文本框和形状。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L794"><pre>  const effects = (value: Record&lt;string, unknown&gt;) =&gt;</pre></li>
+    <li id="L795">
+      <pre>    void run({ op: &#x27;setEffects&#x27;, target, effects: value })</pre>
+    </li>
+    <li id="L796"><pre>  return (</pre></li>
+    <li id="L797"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L798"><pre>      &lt;ToolbarMenuFields label=&quot;对象效果&quot;&gt;</pre></li>
+    <li id="L799"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L800">
+      <pre>          画布以 SVG 近似显示阴影、发光、柔化和倒影；原件保留 Office 效果参数。</pre>
+    </li>
+    <li id="L801"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L802"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L803"><pre>          label=&quot;阴影&quot;</pre></li>
+    <li id="L804"><pre>          disabled={busy}</pre></li>
+    <li id="L805">
+      <pre>
+          value={element.shadow ? (element.shadow.inner ? &#x27;inner&#x27; : &#x27;outer&#x27;) : &#x27;none&#x27;}</pre>
+    </li>
+    <li id="L806"><pre>          options={options([</pre></li>
+    <li id="L807"><pre>            [&#x27;none&#x27;, &#x27;无阴影&#x27;],</pre></li>
+    <li id="L808"><pre>            [&#x27;outer&#x27;, &#x27;外阴影&#x27;],</pre></li>
+    <li id="L809"><pre>            [&#x27;inner&#x27;, &#x27;内阴影&#x27;],</pre></li>
+    <li id="L810"><pre>          ])}</pre></li>
+    <li id="L811"><pre>          onChange={(value) =&gt;</pre></li>
+    <li id="L812"><pre>            effects({</pre></li>
+    <li id="L813"><pre>              shadow:</pre></li>
+    <li id="L814"><pre>                value === &#x27;none&#x27;</pre></li>
+    <li id="L815"><pre>                  ? null</pre></li>
+    <li id="L816"><pre>                  : {</pre></li>
+    <li id="L817">
+      <pre>                      color: element.shadow?.color ?? &#x27;#00000066&#x27;,</pre>
+    </li>
+    <li id="L818"><pre>                      blurRad: element.shadow?.blurRad ?? 4 * PT,</pre></li>
+    <li id="L819"><pre>                      dist: element.shadow?.dist ?? 3 * PT,</pre></li>
+    <li id="L820"><pre>                      dirDeg: element.shadow?.dirDeg ?? 45,</pre></li>
+    <li id="L821"><pre>                      inner: value === &#x27;inner&#x27;,</pre></li>
+    <li id="L822"><pre>                    },</pre></li>
+    <li id="L823"><pre>            })</pre></li>
+    <li id="L824"><pre>          }</pre></li>
+    <li id="L825"><pre>        /&gt;</pre></li>
+    <li id="L826"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L827"><pre>          label=&quot;阴影模糊（pt）&quot;</pre></li>
+    <li id="L828"><pre>          value={(element.shadow?.blurRad ?? 0) / PT}</pre></li>
+    <li id="L829"><pre>          min={0}</pre></li>
+    <li id="L830"><pre>          max={100}</pre></li>
+    <li id="L831"><pre>          onCommit={(value) =&gt;</pre></li>
+    <li id="L832"><pre>            effects({</pre></li>
+    <li id="L833"><pre>              shadow: {</pre></li>
+    <li id="L834"><pre>                ...element.shadow,</pre></li>
+    <li id="L835">
+      <pre>                color: element.shadow?.color ?? &#x27;#00000066&#x27;,</pre>
+    </li>
+    <li id="L836"><pre>                dist: element.shadow?.dist ?? 3 * PT,</pre></li>
+    <li id="L837"><pre>                dirDeg: element.shadow?.dirDeg ?? 45,</pre></li>
+    <li id="L838"><pre>                blurRad: value * PT,</pre></li>
+    <li id="L839"><pre>              },</pre></li>
+    <li id="L840"><pre>            })</pre></li>
+    <li id="L841"><pre>          }</pre></li>
+    <li id="L842"><pre>        /&gt;</pre></li>
+    <li id="L843"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L844"><pre>          label=&quot;发光半径（pt）&quot;</pre></li>
+    <li id="L845"><pre>          value={(element.glow?.radius ?? 0) / PT}</pre></li>
+    <li id="L846"><pre>          min={0}</pre></li>
+    <li id="L847"><pre>          max={100}</pre></li>
+    <li id="L848"><pre>          onCommit={(value) =&gt;</pre></li>
+    <li id="L849"><pre>            effects({</pre></li>
+    <li id="L850"><pre>              glow: value</pre></li>
+    <li id="L851">
+      <pre>
+                ? { color: element.glow?.color ?? &#x27;#4A90E299&#x27;, radius: value * PT }</pre>
+    </li>
+    <li id="L852"><pre>                : null,</pre></li>
+    <li id="L853"><pre>            })</pre></li>
+    <li id="L854"><pre>          }</pre></li>
+    <li id="L855"><pre>        /&gt;</pre></li>
+    <li id="L856"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L857"><pre>          label=&quot;柔化边缘（pt）&quot;</pre></li>
+    <li id="L858"><pre>          value={(element.softEdge ?? 0) / PT}</pre></li>
+    <li id="L859"><pre>          min={0}</pre></li>
+    <li id="L860"><pre>          max={100}</pre></li>
+    <li id="L861">
+      <pre>          onCommit={(value) =&gt; effects({ softEdge: value ? value * PT : null })}</pre>
+    </li>
+    <li id="L862"><pre>        /&gt;</pre></li>
+    <li id="L863"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L864"><pre>          label=&quot;倒影&quot;</pre></li>
+    <li id="L865"><pre>          disabled={busy}</pre></li>
+    <li id="L866">
+      <pre>          value={element.reflection ? &#x27;true&#x27; : &#x27;false&#x27;}</pre>
+    </li>
+    <li id="L867"><pre>          options={options([</pre></li>
+    <li id="L868"><pre>            [&#x27;false&#x27;, &#x27;无倒影&#x27;],</pre></li>
+    <li id="L869"><pre>            [&#x27;true&#x27;, &#x27;半透明倒影&#x27;],</pre></li>
+    <li id="L870"><pre>          ])}</pre></li>
+    <li id="L871"><pre>          onChange={(value) =&gt;</pre></li>
+    <li id="L872"><pre>            effects({</pre></li>
+    <li id="L873"><pre>              reflection:</pre></li>
+    <li id="L874">
+      <pre>
+                value === &#x27;true&#x27; ? { blurRad: PT, startA: 0.4, endPos: 0.6, dist: 2 * PT } : null,</pre>
+    </li>
+    <li id="L875"><pre>            })</pre></li>
+    <li id="L876"><pre>          }</pre></li>
+    <li id="L877"><pre>        /&gt;</pre></li>
+    <li id="L878"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L879"><pre>          label=&quot;清除全部对象效果&quot;</pre></li>
+    <li id="L880">
+      <pre>
+          onClick={() =&gt; effects({ shadow: null, glow: null, reflection: null, softEdge: null })}</pre>
+    </li>
+    <li id="L881"><pre>        &gt;</pre></li>
+    <li id="L882"><pre>          清除效果</pre></li>
+    <li id="L883"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L884"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L885"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L886"><pre>  )</pre></li>
+    <li id="L887"><pre>}</pre></li>
+    <li id="L888"><pre></pre></li>
+    <li id="L889"><pre>export function PptxLinkControls({</pre></li>
+    <li id="L890"><pre>  link,</pre></li>
+    <li id="L891"><pre>  target,</pre></li>
+    <li id="L892"><pre>  count,</pre></li>
+    <li id="L893"><pre>  apply,</pre></li>
+    <li id="L894"><pre>}: {</pre></li>
+    <li id="L895"><pre>  link: PptxLink | null</pre></li>
+    <li id="L896"><pre>  target: PptxTarget</pre></li>
+    <li id="L897"><pre>  count: number</pre></li>
+    <li id="L898"><pre>  apply: PptxApply</pre></li>
+    <li id="L899"><pre>}) {</pre></li>
+    <li id="L900"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L901">
+      <pre>  const [kind, setKind] = useState&lt;string&gt;(link?.kind ?? &#x27;url&#x27;)</pre>
+    </li>
+    <li id="L902">
+      <pre>
+  const [url, setUrl] = useState(link?.kind === &#x27;url&#x27; ? link.url : &#x27;&#x27;)</pre>
+    </li>
+    <li id="L903">
+      <pre>
+  const [slide, setSlide] = useState(link?.kind === &#x27;slide&#x27; ? link.slideIndex : 0)</pre>
+    </li>
+    <li id="L904">
+      <pre>
+  const [action, setAction] = useState(link?.kind === &#x27;action&#x27; ? link.action : &#x27;nextslide&#x27;)</pre>
+    </li>
+    <li id="L905">
+      <pre>  const valid = kind !== &#x27;url&#x27; || /^(https?:|mailto:|tel:)/i.test(url)</pre>
+    </li>
+    <li id="L906"><pre>  return (</pre></li>
+    <li id="L907"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L908"><pre>      &lt;ToolbarMenuFields label=&quot;对象超链接&quot;&gt;</pre></li>
+    <li id="L909">
+      <pre>
+        &lt;ToolbarMenuNote&gt;点击编辑画布只选择对象。放映时可点击对象打开链接或跳页。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L910"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L911"><pre>          label=&quot;链接类型&quot;</pre></li>
+    <li id="L912"><pre>          disabled={busy}</pre></li>
+    <li id="L913"><pre>          value={kind}</pre></li>
+    <li id="L914"><pre>          options={options([</pre></li>
+    <li id="L915"><pre>            [&#x27;url&#x27;, &#x27;网页或邮箱&#x27;],</pre></li>
+    <li id="L916"><pre>            [&#x27;slide&#x27;, &#x27;此演示文稿中的幻灯片&#x27;],</pre></li>
+    <li id="L917"><pre>            [&#x27;action&#x27;, &#x27;放映动作&#x27;],</pre></li>
+    <li id="L918"><pre>          ])}</pre></li>
+    <li id="L919"><pre>          onChange={setKind}</pre></li>
+    <li id="L920"><pre>        /&gt;</pre></li>
+    <li id="L921">
+      <pre>
+        {kind === &#x27;url&#x27; &amp;&amp; &lt;ToolbarTextField label=&quot;链接地址&quot; value={url} onChange={setUrl} /&gt;}</pre>
+    </li>
+    <li id="L922"><pre>        {kind === &#x27;slide&#x27; &amp;&amp; (</pre></li>
+    <li id="L923"><pre>          &lt;ToolbarNumberField</pre></li>
+    <li id="L924"><pre>            label=&quot;链接目标页&quot;</pre></li>
+    <li id="L925"><pre>            value={slide + 1}</pre></li>
+    <li id="L926"><pre>            min={1}</pre></li>
+    <li id="L927"><pre>            max={count}</pre></li>
+    <li id="L928"><pre>            onCommit={(value) =&gt; setSlide(value - 1)}</pre></li>
+    <li id="L929"><pre>          /&gt;</pre></li>
+    <li id="L930"><pre>        )}</pre></li>
+    <li id="L931"><pre>        {kind === &#x27;action&#x27; &amp;&amp; (</pre></li>
+    <li id="L932"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L933"><pre>            label=&quot;放映动作&quot;</pre></li>
+    <li id="L934"><pre>            disabled={busy}</pre></li>
+    <li id="L935"><pre>            value={action}</pre></li>
+    <li id="L936"><pre>            options={options([</pre></li>
+    <li id="L937"><pre>              [&#x27;nextslide&#x27;, &#x27;下一页&#x27;],</pre></li>
+    <li id="L938"><pre>              [&#x27;previousslide&#x27;, &#x27;上一页&#x27;],</pre></li>
+    <li id="L939"><pre>              [&#x27;firstslide&#x27;, &#x27;第一页&#x27;],</pre></li>
+    <li id="L940"><pre>              [&#x27;lastslide&#x27;, &#x27;最后一页&#x27;],</pre></li>
+    <li id="L941">
+      <pre>              [&#x27;lastslideviewed&#x27;, &#x27;上次查看的页&#x27;],</pre>
+    </li>
+    <li id="L942"><pre>              [&#x27;endshow&#x27;, &#x27;结束放映&#x27;],</pre></li>
+    <li id="L943"><pre>            ])}</pre></li>
+    <li id="L944"><pre>            onChange={setAction}</pre></li>
+    <li id="L945"><pre>          /&gt;</pre></li>
+    <li id="L946"><pre>        )}</pre></li>
+    <li id="L947"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L948"><pre>          label=&quot;应用对象链接&quot;</pre></li>
+    <li id="L949"><pre>          disabled={!valid}</pre></li>
+    <li id="L950">
+      <pre>          disabledReason=&quot;请输入 http、https、mailto 或 tel 链接&quot;</pre>
+    </li>
+    <li id="L951"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L952"><pre>            void run({</pre></li>
+    <li id="L953"><pre>              op: &#x27;setLink&#x27;,</pre></li>
+    <li id="L954"><pre>              target,</pre></li>
+    <li id="L955"><pre>              link:</pre></li>
+    <li id="L956"><pre>                kind === &#x27;url&#x27;</pre></li>
+    <li id="L957"><pre>                  ? { kind, url }</pre></li>
+    <li id="L958"><pre>                  : kind === &#x27;slide&#x27;</pre></li>
+    <li id="L959"><pre>                    ? { kind, slideIndex: slide }</pre></li>
+    <li id="L960"><pre>                    : { kind, action },</pre></li>
+    <li id="L961"><pre>            })</pre></li>
+    <li id="L962"><pre>          }</pre></li>
+    <li id="L963"><pre>        &gt;</pre></li>
+    <li id="L964"><pre>          应用链接</pre></li>
+    <li id="L965"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L966"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L967"><pre>          label=&quot;移除对象链接&quot;</pre></li>
+    <li id="L968"><pre>          disabled={!link}</pre></li>
+    <li id="L969"><pre>          disabledReason=&quot;对象没有链接&quot;</pre></li>
+    <li id="L970">
+      <pre>
+          onClick={() =&gt; void run({ op: &#x27;setLink&#x27;, target, link: null })}</pre>
+    </li>
+    <li id="L971"><pre>        &gt;</pre></li>
+    <li id="L972"><pre>          移除链接</pre></li>
+    <li id="L973"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L974"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L975"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L976"><pre>  )</pre></li>
+    <li id="L977"><pre>}</pre></li>
+    <li id="L978"><pre></pre></li>
+    <li id="L979"><pre>const SHAPES = options([</pre></li>
+    <li id="L980"><pre>  [&#x27;rect&#x27;, &#x27;矩形&#x27;],</pre></li>
+    <li id="L981"><pre>  [&#x27;roundRect&#x27;, &#x27;圆角矩形&#x27;],</pre></li>
+    <li id="L982"><pre>  [&#x27;ellipse&#x27;, &#x27;椭圆&#x27;],</pre></li>
+    <li id="L983"><pre>  [&#x27;triangle&#x27;, &#x27;三角形&#x27;],</pre></li>
+    <li id="L984"><pre>  [&#x27;diamond&#x27;, &#x27;菱形&#x27;],</pre></li>
+    <li id="L985"><pre>  [&#x27;rightArrow&#x27;, &#x27;右箭头&#x27;],</pre></li>
+    <li id="L986"><pre>  [&#x27;chevron&#x27;, &#x27;燕尾箭头&#x27;],</pre></li>
+    <li id="L987"><pre>  [&#x27;star5&#x27;, &#x27;五角星&#x27;],</pre></li>
+    <li id="L988"><pre>  [&#x27;hexagon&#x27;, &#x27;六边形&#x27;],</pre></li>
+    <li id="L989"><pre>  [&#x27;wedgeRoundRectCallout&#x27;, &#x27;圆角标注&#x27;],</pre></li>
+    <li id="L990"><pre>  [&#x27;line&#x27;, &#x27;直线&#x27;],</pre></li>
+    <li id="L991"><pre>  [&#x27;lineArrow&#x27;, &#x27;箭头线&#x27;],</pre></li>
+    <li id="L992"><pre>  [&#x27;lineArrowDouble&#x27;, &#x27;双向箭头&#x27;],</pre></li>
+    <li id="L993"><pre>  [&#x27;lineBent&#x27;, &#x27;折线&#x27;],</pre></li>
+    <li id="L994"><pre>  [&#x27;lineCurved&#x27;, &#x27;曲线&#x27;],</pre></li>
+    <li id="L995"><pre>])</pre></li>
+    <li id="L996"><pre>export function PptxShapeControls({</pre></li>
+    <li id="L997"><pre>  target,</pre></li>
+    <li id="L998"><pre>  element,</pre></li>
+    <li id="L999"><pre>  slide,</pre></li>
+    <li id="L1000"><pre>  width,</pre></li>
+    <li id="L1001"><pre>  height,</pre></li>
+    <li id="L1002"><pre>  apply,</pre></li>
+    <li id="L1003"><pre>}: {</pre></li>
+    <li id="L1004"><pre>  target: PptxTarget | null</pre></li>
+    <li id="L1005"><pre>  element: SlideElement | null</pre></li>
+    <li id="L1006"><pre>  slide: number</pre></li>
+    <li id="L1007"><pre>  width: number</pre></li>
+    <li id="L1008"><pre>  height: number</pre></li>
+    <li id="L1009"><pre>  apply: PptxApply</pre></li>
+    <li id="L1010"><pre>}) {</pre></li>
+    <li id="L1011"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L1012"><pre>  const [kind, setKind] = useState(</pre></li>
+    <li id="L1013">
+      <pre>
+    element &amp;&amp; (element.type === &#x27;shape&#x27; || element.type === &#x27;text&#x27;)</pre>
+    </li>
+    <li id="L1014"><pre>      ? (element.presetGeometry ?? &#x27;rect&#x27;)</pre></li>
+    <li id="L1015"><pre>      : &#x27;rect&#x27;,</pre></li>
+    <li id="L1016"><pre>  )</pre></li>
+    <li id="L1017"><pre>  return (</pre></li>
+    <li id="L1018"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L1019"><pre>      &lt;ToolbarMenuFields label=&quot;形状库&quot;&gt;</pre></li>
+    <li id="L1020"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1021"><pre>          label=&quot;形状类型&quot;</pre></li>
+    <li id="L1022"><pre>          disabled={busy}</pre></li>
+    <li id="L1023"><pre>          value={kind}</pre></li>
+    <li id="L1024"><pre>          options={</pre></li>
+    <li id="L1025"><pre>            SHAPES.some((item) =&gt; item.value === kind)</pre></li>
+    <li id="L1026"><pre>              ? SHAPES</pre></li>
+    <li id="L1027">
+      <pre>              : [...SHAPES, { value: kind, label: `${kind}（当前）` }]</pre>
+    </li>
+    <li id="L1028"><pre>          }</pre></li>
+    <li id="L1029"><pre>          onChange={setKind}</pre></li>
+    <li id="L1030"><pre>        /&gt;</pre></li>
+    <li id="L1031"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1032"><pre>          label=&quot;插入所选形状&quot;</pre></li>
+    <li id="L1033"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L1034"><pre>            void run({</pre></li>
+    <li id="L1035"><pre>              op: &#x27;addElement&#x27;,</pre></li>
+    <li id="L1036"><pre>              target: { slide },</pre></li>
+    <li id="L1037"><pre>              kind,</pre></li>
+    <li id="L1038"><pre>              offset: {</pre></li>
+    <li id="L1039"><pre>                x: Math.round(width * 0.2),</pre></li>
+    <li id="L1040"><pre>                y: Math.round(height * 0.25),</pre></li>
+    <li id="L1041"><pre>                cx: Math.round(width * 0.3),</pre></li>
+    <li id="L1042"><pre>                cy: Math.round(height * 0.2),</pre></li>
+    <li id="L1043"><pre>              },</pre></li>
+    <li id="L1044"><pre>              fill: &#x27;#D9E8FB&#x27;,</pre></li>
+    <li id="L1045">
+      <pre>              stroke: { color: &#x27;#245A9B&#x27;, widthEmu: PT },</pre>
+    </li>
+    <li id="L1046"><pre>            })</pre></li>
+    <li id="L1047"><pre>          }</pre></li>
+    <li id="L1048"><pre>        &gt;</pre></li>
+    <li id="L1049"><pre>          插入形状</pre></li>
+    <li id="L1050"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1051"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1052"><pre>          label=&quot;更改选中形状&quot;</pre></li>
+    <li id="L1053"><pre>          disabled={</pre></li>
+    <li id="L1054"><pre>            !target ||</pre></li>
+    <li id="L1055"><pre>            !element ||</pre></li>
+    <li id="L1056">
+      <pre>
+            (element.type !== &#x27;shape&#x27; &amp;&amp; element.type !== &#x27;text&#x27;) ||</pre>
+    </li>
+    <li id="L1057"><pre>            !element.presetGeometry</pre></li>
+    <li id="L1058"><pre>          }</pre></li>
+    <li id="L1059"><pre>          disabledReason=&quot;先选择带预设几何的形状&quot;</pre></li>
+    <li id="L1060">
+      <pre>
+          onClick={() =&gt; target &amp;&amp; void run({ op: &#x27;setShapeGeometry&#x27;, target, prst: kind })}</pre>
+    </li>
+    <li id="L1061"><pre>        &gt;</pre></li>
+    <li id="L1062"><pre>          更改形状</pre></li>
+    <li id="L1063"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1064"><pre>        {target &amp;&amp;</pre></li>
+    <li id="L1065"><pre>          element &amp;&amp;</pre></li>
+    <li id="L1066">
+      <pre>
+          (element.type === &#x27;shape&#x27; || element.type === &#x27;text&#x27;) &amp;&amp;</pre>
+    </li>
+    <li id="L1067"><pre>          Object.entries(</pre></li>
+    <li id="L1068"><pre>            element.adjust ??</pre></li>
+    <li id="L1069"><pre>              (element.presetGeometry === &#x27;roundRect&#x27;</pre></li>
+    <li id="L1070"><pre>                ? { adj: 16667 }</pre></li>
+    <li id="L1071">
+      <pre>
+                : [&#x27;rightArrow&#x27;, &#x27;chevron&#x27;].includes(element.presetGeometry ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L1072"><pre>                  ? { adj1: 50000, adj2: 50000 }</pre></li>
+    <li id="L1073"><pre>                  : {}),</pre></li>
+    <li id="L1074"><pre>          ).map(([key, value]) =&gt; (</pre></li>
+    <li id="L1075"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L1076"><pre>              key={key}</pre></li>
+    <li id="L1077"><pre>              label={`形状调节 ${key}`}</pre></li>
+    <li id="L1078"><pre>              value={value}</pre></li>
+    <li id="L1079"><pre>              min={-1000000}</pre></li>
+    <li id="L1080"><pre>              max={1000000}</pre></li>
+    <li id="L1081"><pre>              step={1000}</pre></li>
+    <li id="L1082"><pre>              onCommit={(next) =&gt;</pre></li>
+    <li id="L1083"><pre>                void run({</pre></li>
+    <li id="L1084"><pre>                  op: &#x27;setShapeAdjust&#x27;,</pre></li>
+    <li id="L1085"><pre>                  target,</pre></li>
+    <li id="L1086"><pre>                  adjust: { ...element.adjust, [key]: next },</pre></li>
+    <li id="L1087"><pre>                })</pre></li>
+    <li id="L1088"><pre>              }</pre></li>
+    <li id="L1089"><pre>            /&gt;</pre></li>
+    <li id="L1090"><pre>          ))}</pre></li>
+    <li id="L1091"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L1092"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L1093"><pre>  )</pre></li>
+    <li id="L1094"><pre>}</pre></li>
+    <li id="L1095"><pre></pre></li>
+    <li id="L1096"><pre>const id = (el: SlideElement) =&gt; elementDurableId(el) ?? el.id</pre></li>
+    <li id="L1097"><pre>export function PptxArrangeControls({</pre></li>
+    <li id="L1098"><pre>  elements,</pre></li>
+    <li id="L1099"><pre>  slide,</pre></li>
+    <li id="L1100"><pre>  selected,</pre></li>
+    <li id="L1101"><pre>  selectedRefs,</pre></li>
+    <li id="L1102"><pre>  onSelectionChange,</pre></li>
+    <li id="L1103"><pre>  apply,</pre></li>
+    <li id="L1104"><pre>}: {</pre></li>
+    <li id="L1105"><pre>  elements: readonly SlideElement[]</pre></li>
+    <li id="L1106"><pre>  slide: number</pre></li>
+    <li id="L1107"><pre>  selected: string | null</pre></li>
+    <li id="L1108"><pre>  selectedRefs?: readonly string[]</pre></li>
+    <li id="L1109"><pre>  onSelectionChange?: (refs: string[]) =&gt; void</pre></li>
+    <li id="L1110"><pre>  apply: PptxApply</pre></li>
+    <li id="L1111"><pre>}) {</pre></li>
+    <li id="L1112"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L1113">
+      <pre>  const [localIds, setLocalIds] = useState&lt;string[]&gt;(() =&gt;</pre>
+    </li>
+    <li id="L1114"><pre>    elements.filter((el) =&gt; el.id === selected).map(id),</pre></li>
+    <li id="L1115"><pre>  )</pre></li>
+    <li id="L1116"><pre>  const ids = selectedRefs</pre></li>
+    <li id="L1117">
+      <pre>
+    ? elements.filter((el) =&gt; selectedRefs.some((ref) =&gt; matchesElementRef(el, ref))).map(id)</pre>
+    </li>
+    <li id="L1118"><pre>    : localIds</pre></li>
+    <li id="L1119"><pre>  const setIds = (next: string[]) =&gt;</pre></li>
+    <li id="L1120">
+      <pre>    onSelectionChange ? onSelectionChange(next) : setLocalIds(next)</pre>
+    </li>
+    <li id="L1121"><pre>  const [to, setTo] = useState(&#x27;selection&#x27;)</pre></li>
+    <li id="L1122"><pre>  const [mode, setMode] = useState(&#x27;left&#x27;)</pre></li>
+    <li id="L1123"><pre>  const [axis, setAxis] = useState(&#x27;horizontal&#x27;)</pre></li>
+    <li id="L1124">
+      <pre>  const [from, setFrom] = useState(elements[0] ? id(elements[0]) : &#x27;&#x27;)</pre>
+    </li>
+    <li id="L1125">
+      <pre>  const [end, setEnd] = useState(elements[1] ? id(elements[1]) : &#x27;&#x27;)</pre>
+    </li>
+    <li id="L1126">
+      <pre>  const [connector, setConnector] = useState(&#x27;straight&#x27;)</pre>
+    </li>
+    <li id="L1127"><pre>  const choices = elements.map((el, index) =&gt; ({</pre></li>
+    <li id="L1128"><pre>    value: id(el),</pre></li>
+    <li id="L1129"><pre>    label: `${index + 1}. ${el.name || el.type}`,</pre></li>
+    <li id="L1130"><pre>  }))</pre></li>
+    <li id="L1131">
+      <pre>
+  const group = elements.find((el) =&gt; el.id === selected &amp;&amp; el.type === &#x27;group&#x27;)</pre>
+    </li>
+    <li id="L1132"><pre>  return (</pre></li>
+    <li id="L1133"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L1134"><pre>      &lt;ToolbarMenuFields label=&quot;多对象排列&quot;&gt;</pre></li>
+    <li id="L1135"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L1136">
+      <pre>
+          与画布使用同一组选中对象。按住 Shift 可追加选择；组合成员可在“选择与格式”中编辑。</pre>
+    </li>
+    <li id="L1137"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L1138"><pre>        {choices.map((item) =&gt; (</pre></li>
+    <li id="L1139"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L1140"><pre>            key={item.value}</pre></li>
+    <li id="L1141"><pre>            label={`排列选择 ${item.label}`}</pre></li>
+    <li id="L1142"><pre>            active={ids.includes(item.value)}</pre></li>
+    <li id="L1143"><pre>            onClick={() =&gt;</pre></li>
+    <li id="L1144"><pre>              setIds(</pre></li>
+    <li id="L1145"><pre>                ids.includes(item.value)</pre></li>
+    <li id="L1146">
+      <pre>                  ? ids.filter((value) =&gt; value !== item.value)</pre>
+    </li>
+    <li id="L1147"><pre>                  : [...ids, item.value],</pre></li>
+    <li id="L1148"><pre>              )</pre></li>
+    <li id="L1149"><pre>            }</pre></li>
+    <li id="L1150"><pre>          &gt;</pre></li>
+    <li id="L1151"><pre>            {item.label}</pre></li>
+    <li id="L1152"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1153"><pre>        ))}</pre></li>
+    <li id="L1154"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1155"><pre>          label=&quot;排列参照&quot;</pre></li>
+    <li id="L1156"><pre>          disabled={busy}</pre></li>
+    <li id="L1157"><pre>          value={to}</pre></li>
+    <li id="L1158"><pre>          options={options([</pre></li>
+    <li id="L1159"><pre>            [&#x27;selection&#x27;, &#x27;选中对象范围&#x27;],</pre></li>
+    <li id="L1160"><pre>            [&#x27;slide&#x27;, &#x27;幻灯片&#x27;],</pre></li>
+    <li id="L1161"><pre>          ])}</pre></li>
+    <li id="L1162"><pre>          onChange={setTo}</pre></li>
+    <li id="L1163"><pre>        /&gt;</pre></li>
+    <li id="L1164"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1165"><pre>          label=&quot;对齐方式&quot;</pre></li>
+    <li id="L1166"><pre>          disabled={busy}</pre></li>
+    <li id="L1167"><pre>          value={mode}</pre></li>
+    <li id="L1168"><pre>          options={options([</pre></li>
+    <li id="L1169"><pre>            [&#x27;left&#x27;, &#x27;左对齐&#x27;],</pre></li>
+    <li id="L1170"><pre>            [&#x27;centerH&#x27;, &#x27;水平居中&#x27;],</pre></li>
+    <li id="L1171"><pre>            [&#x27;right&#x27;, &#x27;右对齐&#x27;],</pre></li>
+    <li id="L1172"><pre>            [&#x27;top&#x27;, &#x27;顶端对齐&#x27;],</pre></li>
+    <li id="L1173"><pre>            [&#x27;centerV&#x27;, &#x27;垂直居中&#x27;],</pre></li>
+    <li id="L1174"><pre>            [&#x27;bottom&#x27;, &#x27;底端对齐&#x27;],</pre></li>
+    <li id="L1175"><pre>          ])}</pre></li>
+    <li id="L1176"><pre>          onChange={setMode}</pre></li>
+    <li id="L1177"><pre>        /&gt;</pre></li>
+    <li id="L1178"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1179"><pre>          label=&quot;对齐所选对象&quot;</pre></li>
+    <li id="L1180">
+      <pre>          disabled={ids.length &lt; (to === &#x27;slide&#x27; ? 1 : 2)}</pre>
+    </li>
+    <li id="L1181">
+      <pre>
+          disabledReason={to === &#x27;slide&#x27; ? &#x27;至少选择1个对象&#x27; : &#x27;至少选择2个对象&#x27;}</pre>
+    </li>
+    <li id="L1182">
+      <pre>
+          onClick={() =&gt; void run({ op: &#x27;alignElements&#x27;, target: { slide }, els: ids, to, mode })}</pre>
+    </li>
+    <li id="L1183"><pre>        &gt;</pre></li>
+    <li id="L1184"><pre>          应用对齐</pre></li>
+    <li id="L1185"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1186"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1187"><pre>          label=&quot;分布方向&quot;</pre></li>
+    <li id="L1188"><pre>          disabled={busy}</pre></li>
+    <li id="L1189"><pre>          value={axis}</pre></li>
+    <li id="L1190"><pre>          options={options([</pre></li>
+    <li id="L1191"><pre>            [&#x27;horizontal&#x27;, &#x27;水平分布&#x27;],</pre></li>
+    <li id="L1192"><pre>            [&#x27;vertical&#x27;, &#x27;垂直分布&#x27;],</pre></li>
+    <li id="L1193"><pre>          ])}</pre></li>
+    <li id="L1194"><pre>          onChange={setAxis}</pre></li>
+    <li id="L1195"><pre>        /&gt;</pre></li>
+    <li id="L1196"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1197"><pre>          label=&quot;分布所选对象&quot;</pre></li>
+    <li id="L1198">
+      <pre>          disabled={ids.length &lt; (to === &#x27;slide&#x27; ? 1 : 3)}</pre>
+    </li>
+    <li id="L1199">
+      <pre>
+          disabledReason={to === &#x27;slide&#x27; ? &#x27;至少选择1个对象&#x27; : &#x27;至少选择3个对象&#x27;}</pre>
+    </li>
+    <li id="L1200"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L1201">
+      <pre>
+            void run({ op: &#x27;distributeElements&#x27;, target: { slide }, els: ids, to, axis })</pre>
+    </li>
+    <li id="L1202"><pre>          }</pre></li>
+    <li id="L1203"><pre>        &gt;</pre></li>
+    <li id="L1204"><pre>          应用分布</pre></li>
+    <li id="L1205"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1206"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1207"><pre>          label=&quot;组合所选对象&quot;</pre></li>
+    <li id="L1208"><pre>          disabled={ids.length &lt; 2}</pre></li>
+    <li id="L1209"><pre>          disabledReason=&quot;至少选择2个顶层对象&quot;</pre></li>
+    <li id="L1210">
+      <pre>
+          onClick={() =&gt; void run({ op: &#x27;groupElements&#x27;, target: { slide }, els: ids })}</pre>
+    </li>
+    <li id="L1211"><pre>        &gt;</pre></li>
+    <li id="L1212"><pre>          组合</pre></li>
+    <li id="L1213"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1214"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1215"><pre>          label=&quot;取消所选组合&quot;</pre></li>
+    <li id="L1216"><pre>          disabled={!group}</pre></li>
+    <li id="L1217">
+      <pre>          disabledReason=&quot;先在画布或对象选择器中选择组合&quot;</pre>
+    </li>
+    <li id="L1218"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L1219">
+      <pre>
+            group &amp;&amp; void run({ op: &#x27;ungroupElement&#x27;, target: { slide, el: id(group) } })</pre>
+    </li>
+    <li id="L1220"><pre>          }</pre></li>
+    <li id="L1221"><pre>        &gt;</pre></li>
+    <li id="L1222"><pre>          取消组合</pre></li>
+    <li id="L1223"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1224"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L1225"><pre>      &lt;ToolbarMenuFields label=&quot;连接两个对象&quot;&gt;</pre></li>
+    <li id="L1226"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1227"><pre>          label=&quot;连接起点对象&quot;</pre></li>
+    <li id="L1228"><pre>          disabled={busy}</pre></li>
+    <li id="L1229"><pre>          value={from}</pre></li>
+    <li id="L1230"><pre>          options={choices}</pre></li>
+    <li id="L1231"><pre>          onChange={setFrom}</pre></li>
+    <li id="L1232"><pre>        /&gt;</pre></li>
+    <li id="L1233"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1234"><pre>          label=&quot;连接终点对象&quot;</pre></li>
+    <li id="L1235"><pre>          disabled={busy}</pre></li>
+    <li id="L1236"><pre>          value={end}</pre></li>
+    <li id="L1237"><pre>          options={choices}</pre></li>
+    <li id="L1238"><pre>          onChange={setEnd}</pre></li>
+    <li id="L1239"><pre>        /&gt;</pre></li>
+    <li id="L1240"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1241"><pre>          label=&quot;连接线类型&quot;</pre></li>
+    <li id="L1242"><pre>          disabled={busy}</pre></li>
+    <li id="L1243"><pre>          value={connector}</pre></li>
+    <li id="L1244"><pre>          options={options([</pre></li>
+    <li id="L1245"><pre>            [&#x27;straight&#x27;, &#x27;直线&#x27;],</pre></li>
+    <li id="L1246"><pre>            [&#x27;elbow&#x27;, &#x27;肘形&#x27;],</pre></li>
+    <li id="L1247"><pre>            [&#x27;curved&#x27;, &#x27;曲线&#x27;],</pre></li>
+    <li id="L1248"><pre>          ])}</pre></li>
+    <li id="L1249"><pre>          onChange={setConnector}</pre></li>
+    <li id="L1250"><pre>        /&gt;</pre></li>
+    <li id="L1251"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1252"><pre>          label=&quot;插入对象连接线&quot;</pre></li>
+    <li id="L1253"><pre>          disabled={!from || !end || from === end}</pre></li>
+    <li id="L1254"><pre>          disabledReason=&quot;选择两个不同的顶层对象&quot;</pre></li>
+    <li id="L1255"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L1256"><pre>            void run({</pre></li>
+    <li id="L1257"><pre>              op: &#x27;addConnector&#x27;,</pre></li>
+    <li id="L1258"><pre>              target: { slide },</pre></li>
+    <li id="L1259"><pre>              from,</pre></li>
+    <li id="L1260"><pre>              to: end,</pre></li>
+    <li id="L1261"><pre>              kind: connector,</pre></li>
+    <li id="L1262"><pre>              arrow: &#x27;end&#x27;,</pre></li>
+    <li id="L1263"><pre>            })</pre></li>
+    <li id="L1264"><pre>          }</pre></li>
+    <li id="L1265"><pre>        &gt;</pre></li>
+    <li id="L1266"><pre>          插入连接线</pre></li>
+    <li id="L1267"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1268"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L1269"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L1270"><pre>  )</pre></li>
+    <li id="L1271"><pre>}</pre></li>
+    <li id="L1272"><pre></pre></li>
+    <li id="L1273">
+      <pre>
+/** Explicit points are local to the selected shape; a closed polygon is a useful edit-points subset. */</pre>
+    </li>
+    <li id="L1274"><pre>export function PptxFreeformControls({</pre></li>
+    <li id="L1275"><pre>  element,</pre></li>
+    <li id="L1276"><pre>  target,</pre></li>
+    <li id="L1277"><pre>  apply,</pre></li>
+    <li id="L1278"><pre>}: {</pre></li>
+    <li id="L1279">
+      <pre>
+  element: Extract&lt;SlideElement, { type: &#x27;shape&#x27; | &#x27;text&#x27; }&gt;</pre>
+    </li>
+    <li id="L1280"><pre>  target: PptxTarget</pre></li>
+    <li id="L1281"><pre>  apply: PptxApply</pre></li>
+    <li id="L1282"><pre>}) {</pre></li>
+    <li id="L1283"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L1284">
+      <pre>
+  const [mode, setMode] = useState(element.customGeometry ? &#x27;curves&#x27; : &#x27;polygon&#x27;)</pre>
+    </li>
+    <li id="L1285">
+      <pre>
+  const rawPath = /&lt;a:path\b([^&gt;]*)&gt;([\s\S]*?)&lt;\/a:path&gt;/.exec(element.anchor.originalXml)</pre>
+    </li>
+    <li id="L1286">
+      <pre>
+  const w = Number(/\bw=&quot;([^&quot;]+)&quot;/.exec(rawPath?.[1] ?? &#x27;&#x27;)?.[1]),</pre>
+    </li>
+    <li id="L1287">
+      <pre>
+    h = Number(/\bh=&quot;([^&quot;]+)&quot;/.exec(rawPath?.[1] ?? &#x27;&#x27;)?.[1])</pre>
+    </li>
+    <li id="L1288"><pre>  const initial =</pre></li>
+    <li id="L1289">
+      <pre>
+    rawPath &amp;&amp; w &gt; 0 &amp;&amp; h &gt; 0 &amp;&amp; !/&lt;a:(?:quadBezTo|cubicBezTo|arcTo)\b/.test(rawPath[2]!)</pre>
+    </li>
+    <li id="L1290">
+      <pre>
+      ? [...rawPath[2]!.matchAll(/&lt;a:pt\b[^&gt;]*\bx=&quot;([^&quot;]+)&quot;[^&gt;]*\by=&quot;([^&quot;]+)&quot;/g)]</pre>
+    </li>
+    <li id="L1291"><pre>          .map(</pre></li>
+    <li id="L1292"><pre>            (match) =&gt;</pre></li>
+    <li id="L1293">
+      <pre>
+              `${Math.round((Number(match[1]) / w) * 10000) / 100},${Math.round((Number(match[2]) / h) * 10000) / 100}`,</pre>
+    </li>
+    <li id="L1294"><pre>          )</pre></li>
+    <li id="L1295"><pre>          .join(&#x27;\n&#x27;)</pre></li>
+    <li id="L1296"><pre>      : &#x27;&#x27;</pre></li>
+    <li id="L1297"><pre>  const [points, setPoints] = useState(initial)</pre></li>
+    <li id="L1298"><pre>  const pairs = points</pre></li>
+    <li id="L1299"><pre>    .trim()</pre></li>
+    <li id="L1300"><pre>    .split(/\r?\n/)</pre></li>
+    <li id="L1301"><pre>    .map((line) =&gt; line.split(/[,，\s]+/).map(Number))</pre></li>
+    <li id="L1302"><pre>  const invalid =</pre></li>
+    <li id="L1303"><pre>    pairs.length &lt; 3 ||</pre></li>
+    <li id="L1304"><pre>    pairs.length &gt; 100 ||</pre></li>
+    <li id="L1305"><pre>    pairs.some(</pre></li>
+    <li id="L1306"><pre>      (pair) =&gt;</pre></li>
+    <li id="L1307"><pre>        pair.length !== 2 ||</pre></li>
+    <li id="L1308">
+      <pre>
+        pair.some((value) =&gt; !Number.isFinite(value) || value &lt; 0 || value &gt; 100),</pre>
+    </li>
+    <li id="L1309"><pre>    )</pre></li>
+    <li id="L1310"><pre>  const box = element.transform.offset</pre></li>
+    <li id="L1311"><pre>  return (</pre></li>
+    <li id="L1312"><pre>    &lt;&gt;</pre></li>
+    <li id="L1313"><pre>      &lt;ToolbarSelect</pre></li>
+    <li id="L1314"><pre>        label=&quot;路径编辑方式&quot;</pre></li>
+    <li id="L1315"><pre>        disabled={busy}</pre></li>
+    <li id="L1316"><pre>        value={mode}</pre></li>
+    <li id="L1317"><pre>        options={[</pre></li>
+    <li id="L1318">
+      <pre>          { value: &#x27;polygon&#x27;, label: &#x27;多边形顶点&#x27; },</pre>
+    </li>
+    <li id="L1319">
+      <pre>          { value: &#x27;curves&#x27;, label: &#x27;曲线与开放路径&#x27; },</pre>
+    </li>
+    <li id="L1320"><pre>        ]}</pre></li>
+    <li id="L1321"><pre>        onChange={setMode}</pre></li>
+    <li id="L1322"><pre>      /&gt;</pre></li>
+    <li id="L1323"><pre>      {mode === &#x27;curves&#x27; ? (</pre></li>
+    <li id="L1324">
+      <pre>        &lt;PptxCurveControls element={element} target={target} apply={run} /&gt;</pre>
+    </li>
+    <li id="L1325"><pre>      ) : (</pre></li>
+    <li id="L1326"><pre>        &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L1327">
+      <pre>          &lt;ToolbarMenuFields label=&quot;编辑形状顶点&quot;&gt;</pre>
+    </li>
+    <li id="L1328"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L1329">
+      <pre>
+              输入闭合多边形顶点，每行“横向百分比,纵向百分比”，范围0–100。应用会替换当前几何，保留文字与填充。</pre>
+    </li>
+    <li id="L1330"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L1331"><pre>            &lt;ToolbarTextArea</pre></li>
+    <li id="L1332"><pre>              label=&quot;形状顶点（每行x,y）&quot;</pre></li>
+    <li id="L1333"><pre>              value={points}</pre></li>
+    <li id="L1334"><pre>              rows={5}</pre></li>
+    <li id="L1335"><pre>              onChange={setPoints}</pre></li>
+    <li id="L1336"><pre>            /&gt;</pre></li>
+    <li id="L1337"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L1338"><pre>              label=&quot;应用自定义多边形&quot;</pre></li>
+    <li id="L1339">
+      <pre>              disabled={invalid || box.cx &lt;= 0 || box.cy &lt;= 0}</pre>
+    </li>
+    <li id="L1340">
+      <pre>              disabledReason=&quot;输入至少3个有效顶点且形状须有可见尺寸&quot;</pre>
+    </li>
+    <li id="L1341"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L1342"><pre>                void run({</pre></li>
+    <li id="L1343"><pre>                  op: &#x27;setShapeCustomGeometry&#x27;,</pre></li>
+    <li id="L1344"><pre>                  target,</pre></li>
+    <li id="L1345"><pre>                  path: {</pre></li>
+    <li id="L1346"><pre>                    w: box.cx,</pre></li>
+    <li id="L1347"><pre>                    h: box.cy,</pre></li>
+    <li id="L1348"><pre>                    cmds: [</pre></li>
+    <li id="L1349"><pre>                      ...pairs.map((pair, index) =&gt; ({</pre></li>
+    <li id="L1350">
+      <pre>                        op: index === 0 ? &#x27;M&#x27; : &#x27;L&#x27;,</pre>
+    </li>
+    <li id="L1351"><pre>                        pts: [</pre></li>
+    <li id="L1352"><pre>                          Math.round((pair[0]! * box.cx) / 100),</pre></li>
+    <li id="L1353"><pre>                          Math.round((pair[1]! * box.cy) / 100),</pre></li>
+    <li id="L1354"><pre>                        ],</pre></li>
+    <li id="L1355"><pre>                      })),</pre></li>
+    <li id="L1356"><pre>                      { op: &#x27;Z&#x27;, pts: [] },</pre></li>
+    <li id="L1357"><pre>                    ],</pre></li>
+    <li id="L1358"><pre>                  },</pre></li>
+    <li id="L1359"><pre>                })</pre></li>
+    <li id="L1360"><pre>              }</pre></li>
+    <li id="L1361"><pre>            &gt;</pre></li>
+    <li id="L1362"><pre>              应用顶点</pre></li>
+    <li id="L1363"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1364"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L1365"><pre>        &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L1366"><pre>      )}</pre></li>
+    <li id="L1367"><pre>    &lt;/&gt;</pre></li>
+    <li id="L1368"><pre>  )</pre></li>
+    <li id="L1369"><pre>}</pre></li>
+    <li id="L1370"><pre>export function PptxConnectorControls({</pre></li>
+    <li id="L1371"><pre>  element,</pre></li>
+    <li id="L1372"><pre>  elements,</pre></li>
+    <li id="L1373"><pre>  target,</pre></li>
+    <li id="L1374"><pre>  apply,</pre></li>
+    <li id="L1375"><pre>}: {</pre></li>
+    <li id="L1376"><pre>  element: SlideElement</pre></li>
+    <li id="L1377"><pre>  elements: readonly SlideElement[]</pre></li>
+    <li id="L1378"><pre>  target: PptxTarget</pre></li>
+    <li id="L1379"><pre>  apply: PptxApply</pre></li>
+    <li id="L1380"><pre>}) {</pre></li>
+    <li id="L1381"><pre>  const { busy, run } = usePptxAction(apply),</pre></li>
+    <li id="L1382"><pre>    box = element.transform.offset</pre></li>
+    <li id="L1383"><pre>  const [points, setPoints] = useState({</pre></li>
+    <li id="L1384"><pre>    x1: (element.transform.flipH ? box.x + box.cx : box.x) / PT,</pre></li>
+    <li id="L1385"><pre>    y1: (element.transform.flipV ? box.y + box.cy : box.y) / PT,</pre></li>
+    <li id="L1386"><pre>    x2: (element.transform.flipH ? box.x : box.x + box.cx) / PT,</pre></li>
+    <li id="L1387"><pre>    y2: (element.transform.flipV ? box.y : box.y + box.cy) / PT,</pre></li>
+    <li id="L1388"><pre>  })</pre></li>
+    <li id="L1389">
+      <pre>  const connection = (end: &#x27;start&#x27; | &#x27;end&#x27;) =&gt;</pre>
+    </li>
+    <li id="L1390">
+      <pre>    elements.find((item) =&gt; Number(item.nvId) === element.connection?.[end]?.id)</pre>
+    </li>
+    <li id="L1391"><pre>  const [from, setFrom] = useState(() =&gt; {</pre></li>
+    <li id="L1392"><pre>      const item = connection(&#x27;start&#x27;)</pre></li>
+    <li id="L1393"><pre>      return item ? id(item) : &#x27;&#x27;</pre></li>
+    <li id="L1394"><pre>    }),</pre></li>
+    <li id="L1395"><pre>    [to, setTo] = useState(() =&gt; {</pre></li>
+    <li id="L1396"><pre>      const item = connection(&#x27;end&#x27;)</pre></li>
+    <li id="L1397"><pre>      return item ? id(item) : &#x27;&#x27;</pre></li>
+    <li id="L1398"><pre>    })</pre></li>
+    <li id="L1399">
+      <pre>
+  const [startIndex, setStartIndex] = useState(element.connection?.start?.idx ?? 0),</pre>
+    </li>
+    <li id="L1400">
+      <pre>    [endIndex, setEndIndex] = useState(element.connection?.end?.idx ?? 0)</pre>
+    </li>
+    <li id="L1401"><pre>  const choices = [</pre></li>
+    <li id="L1402"><pre>    { value: &#x27;&#x27;, label: &#x27;不连接对象&#x27; },</pre></li>
+    <li id="L1403"><pre>    ...elements</pre></li>
+    <li id="L1404"><pre>      .filter((item) =&gt; item.id !== element.id)</pre></li>
+    <li id="L1405">
+      <pre>      .map((item) =&gt; ({ value: id(item), label: item.name ?? item.type })),</pre>
+    </li>
+    <li id="L1406"><pre>  ]</pre></li>
+    <li id="L1407"><pre>  return (</pre></li>
+    <li id="L1408"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L1409"><pre>      &lt;ToolbarMenuFields label=&quot;连接线端点&quot;&gt;</pre></li>
+    <li id="L1410"><pre>        {Object.entries(points).map(([key, value]) =&gt; (</pre></li>
+    <li id="L1411"><pre>          &lt;ToolbarNumberField</pre></li>
+    <li id="L1412"><pre>            key={key}</pre></li>
+    <li id="L1413">
+      <pre>
+            label={`端点${{ x1: &#x27;1 横坐标&#x27;, y1: &#x27;1 纵坐标&#x27;, x2: &#x27;2 横坐标&#x27;, y2: &#x27;2 纵坐标&#x27; }[key]}（pt）`}</pre>
+    </li>
+    <li id="L1414"><pre>            value={value}</pre></li>
+    <li id="L1415"><pre>            step={1}</pre></li>
+    <li id="L1416">
+      <pre>            onCommit={(next) =&gt; setPoints({ ...points, [key]: next })}</pre>
+    </li>
+    <li id="L1417"><pre>          /&gt;</pre></li>
+    <li id="L1418"><pre>        ))}</pre></li>
+    <li id="L1419"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1420"><pre>          label=&quot;端点1连接对象&quot;</pre></li>
+    <li id="L1421"><pre>          disabled={busy}</pre></li>
+    <li id="L1422"><pre>          value={from}</pre></li>
+    <li id="L1423"><pre>          options={choices}</pre></li>
+    <li id="L1424"><pre>          onChange={setFrom}</pre></li>
+    <li id="L1425"><pre>        /&gt;</pre></li>
+    <li id="L1426"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L1427"><pre>          label=&quot;端点1连接点索引&quot;</pre></li>
+    <li id="L1428"><pre>          value={startIndex}</pre></li>
+    <li id="L1429"><pre>          min={0}</pre></li>
+    <li id="L1430"><pre>          max={15}</pre></li>
+    <li id="L1431"><pre>          onCommit={setStartIndex}</pre></li>
+    <li id="L1432"><pre>        /&gt;</pre></li>
+    <li id="L1433"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L1434"><pre>          label=&quot;端点2连接对象&quot;</pre></li>
+    <li id="L1435"><pre>          disabled={busy}</pre></li>
+    <li id="L1436"><pre>          value={to}</pre></li>
+    <li id="L1437"><pre>          options={choices}</pre></li>
+    <li id="L1438"><pre>          onChange={setTo}</pre></li>
+    <li id="L1439"><pre>        /&gt;</pre></li>
+    <li id="L1440"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L1441"><pre>          label=&quot;端点2连接点索引&quot;</pre></li>
+    <li id="L1442"><pre>          value={endIndex}</pre></li>
+    <li id="L1443"><pre>          min={0}</pre></li>
+    <li id="L1444"><pre>          max={15}</pre></li>
+    <li id="L1445"><pre>          onCommit={setEndIndex}</pre></li>
+    <li id="L1446"><pre>        /&gt;</pre></li>
+    <li id="L1447">
+      <pre>
+        &lt;ToolbarMenuNote&gt;连接点索引沿用原件几何；移除对象连接后可自由设置端点。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L1448"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L1449"><pre>          label=&quot;应用连接线端点&quot;</pre></li>
+    <li id="L1450"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L1451"><pre>            void run({</pre></li>
+    <li id="L1452"><pre>              op: &#x27;setConnectorEndpoints&#x27;,</pre></li>
+    <li id="L1453"><pre>              target,</pre></li>
+    <li id="L1454">
+      <pre>              p1: { x: Math.round(points.x1 * PT), y: Math.round(points.y1 * PT) },</pre>
+    </li>
+    <li id="L1455">
+      <pre>              p2: { x: Math.round(points.x2 * PT), y: Math.round(points.y2 * PT) },</pre>
+    </li>
+    <li id="L1456">
+      <pre>              start: from ? { targetId: from, idx: startIndex } : null,</pre>
+    </li>
+    <li id="L1457"><pre>              end: to ? { targetId: to, idx: endIndex } : null,</pre></li>
+    <li id="L1458"><pre>            })</pre></li>
+    <li id="L1459"><pre>          }</pre></li>
+    <li id="L1460"><pre>        &gt;</pre></li>
+    <li id="L1461"><pre>          应用端点</pre></li>
+    <li id="L1462"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1463"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L1464"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L1465"><pre>  )</pre></li>
+    <li id="L1466"><pre>}</pre></li>
+  </ol>
+</html>

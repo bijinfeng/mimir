@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxAnimationGallery.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxAnimationGallery.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 4eb5ec21ccb5a65e1c3fa7036d4b2a9123121ff916b7f71346611b635298568a
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { Button, Checkbox } from &#x27;antd&#x27;</pre></li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  Circle,</pre></li>
+    <li id="L5"><pre>  MoveRight,</pre></li>
+    <li id="L6"><pre>  MoveDown,</pre></li>
+    <li id="L7"><pre>  MoveDownRight,</pre></li>
+    <li id="L8"><pre>  RotateCw,</pre></li>
+    <li id="L9"><pre>  Route,</pre></li>
+    <li id="L10"><pre>  Sparkles,</pre></li>
+    <li id="L11"><pre>  Plus,</pre></li>
+    <li id="L12"><pre>  Ban,</pre></li>
+    <li id="L13"><pre>  Play,</pre></li>
+    <li id="L14"><pre>  ZoomIn,</pre></li>
+    <li id="L15"><pre>  ZoomOut,</pre></li>
+    <li id="L16"><pre>  ArrowDownToLine,</pre></li>
+    <li id="L17"><pre>} from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L18"><pre>import {</pre></li>
+    <li id="L19"><pre>  ANIM_EFFECTS,</pre></li>
+    <li id="L20"><pre>  animClassOf,</pre></li>
+    <li id="L21"><pre>  type AnimEffectKind,</pre></li>
+    <li id="L22"><pre>  type SlideAnimation,</pre></li>
+    <li id="L23">
+      <pre>} from &#x27;../../vendor/packages/pptx-engine/src/animation.js&#x27;</pre>
+    </li>
+    <li id="L24">
+      <pre>
+import type { Slide } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L25">
+      <pre>
+import type { PptxManualAnimation } from &#x27;../../../shared/src/pptx-animation.js&#x27;</pre>
+    </li>
+    <li id="L26"><pre>import {</pre></li>
+    <li id="L27"><pre>  ToolbarButton,</pre></li>
+    <li id="L28"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L29"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L30"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L31"><pre>  ToolbarSelect,</pre></li>
+    <li id="L32"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L33"><pre>import {</pre></li>
+    <li id="L34"><pre>  PPTX_ANIMATION_LABELS,</pre></li>
+    <li id="L35"><pre>  PPTX_MOTION_PRESETS,</pre></li>
+    <li id="L36"><pre>  pptxAnimationDefaultDuration,</pre></li>
+    <li id="L37"><pre>  pptxAnimationElement,</pre></li>
+    <li id="L38"><pre>  pptxAnimationItems,</pre></li>
+    <li id="L39"><pre>  pptxAnimationParagraphCount,</pre></li>
+    <li id="L40"><pre>  pptxSelectedAnimations,</pre></li>
+    <li id="L41"><pre>} from &#x27;./pptx-animation-tools.js&#x27;</pre></li>
+    <li id="L42">
+      <pre>
+import type { PptxAnimationPreviewRequest } from &#x27;./PptxAnimationPreview.js&#x27;</pre>
+    </li>
+    <li id="L43"><pre>import &#x27;./pptx-animation-controls.css&#x27;</pre></li>
+    <li id="L44"><pre></pre></li>
+    <li id="L45"><pre>const classes = [</pre></li>
+    <li id="L46"><pre>  [&#x27;entrance&#x27;, &#x27;进入&#x27;],</pre></li>
+    <li id="L47"><pre>  [&#x27;emphasis&#x27;, &#x27;强调&#x27;],</pre></li>
+    <li id="L48"><pre>  [&#x27;exit&#x27;, &#x27;退出&#x27;],</pre></li>
+    <li id="L49"><pre>  [&#x27;media&#x27;, &#x27;媒体&#x27;],</pre></li>
+    <li id="L50"><pre>] as const</pre></li>
+    <li id="L51"><pre>const triggers = [</pre></li>
+    <li id="L52"><pre>  { value: &#x27;onClick&#x27;, label: &#x27;单击时&#x27; },</pre></li>
+    <li id="L53">
+      <pre>  { value: &#x27;withPrev&#x27;, label: &#x27;与上一动画同时&#x27; },</pre>
+    </li>
+    <li id="L54">
+      <pre>  { value: &#x27;afterPrev&#x27;, label: &#x27;上一动画之后&#x27; },</pre>
+    </li>
+    <li id="L55"><pre>] as const</pre></li>
+    <li id="L56"><pre>function EffectIcon({ effect }: { effect: AnimEffectKind }) {</pre></li>
+    <li id="L57"><pre>  const Icon =</pre></li>
+    <li id="L58"><pre>    effect === &#x27;spin&#x27; || effect === &#x27;teeter&#x27;</pre></li>
+    <li id="L59"><pre>      ? RotateCw</pre></li>
+    <li id="L60"><pre>      : effect === &#x27;zoom&#x27; || effect === &#x27;grow&#x27;</pre></li>
+    <li id="L61"><pre>        ? ZoomIn</pre></li>
+    <li id="L62">
+      <pre>        : effect === &#x27;zoomOut&#x27; || effect === &#x27;shrink&#x27;</pre>
+    </li>
+    <li id="L63"><pre>          ? ZoomOut</pre></li>
+    <li id="L64">
+      <pre>          : effect === &#x27;flyIn&#x27; || effect === &#x27;flyOut&#x27;</pre>
+    </li>
+    <li id="L65"><pre>            ? MoveRight</pre></li>
+    <li id="L66">
+      <pre>
+            : effect === &#x27;wipe&#x27; || effect === &#x27;wipeOut&#x27; || effect === &#x27;wipeDown&#x27;</pre>
+    </li>
+    <li id="L67"><pre>              ? ArrowDownToLine</pre></li>
+    <li id="L68"><pre>              : effect.startsWith(&#x27;media&#x27;)</pre></li>
+    <li id="L69"><pre>                ? Play</pre></li>
+    <li id="L70"><pre>                : Sparkles</pre></li>
+    <li id="L71"><pre>  return &lt;Icon size={18} aria-hidden=&quot;true&quot; /&gt;</pre></li>
+    <li id="L72"><pre>}</pre></li>
+    <li id="L73"><pre>export function PptxAnimationGallery({</pre></li>
+    <li id="L74"><pre>  slide,</pre></li>
+    <li id="L75"><pre>  target,</pre></li>
+    <li id="L76"><pre>  busy,</pre></li>
+    <li id="L77"><pre>  run,</pre></li>
+    <li id="L78"><pre>  onPreview,</pre></li>
+    <li id="L79"><pre>}: {</pre></li>
+    <li id="L80"><pre>  slide: Slide</pre></li>
+    <li id="L81"><pre>  target: { slide: number; el: string } | null</pre></li>
+    <li id="L82"><pre>  busy: boolean</pre></li>
+    <li id="L83"><pre>  run: (input: PptxManualAnimation) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L84">
+      <pre>  onPreview?: (request: PptxAnimationPreviewRequest | null) =&gt; void</pre>
+    </li>
+    <li id="L85"><pre>}) {</pre></li>
+    <li id="L86">
+      <pre>  const [effect, setEffect] = useState&lt;AnimEffectKind&gt;(&#x27;fade&#x27;),</pre>
+    </li>
+    <li id="L87">
+      <pre>
+    [trigger, setTrigger] = useState&lt;SlideAnimation[&#x27;trigger&#x27;]&gt;(&#x27;onClick&#x27;),</pre>
+    </li>
+    <li id="L88"><pre>    [duration, setDuration] = useState(500),</pre></li>
+    <li id="L89"><pre>    [delay, setDelay] = useState(0),</pre></li>
+    <li id="L90"><pre>    [byParagraph, setByParagraph] = useState(() =&gt; {</pre></li>
+    <li id="L91">
+      <pre>      const items = target ? pptxSelectedAnimations(slide, target.el) : []</pre>
+    </li>
+    <li id="L92">
+      <pre>
+      return items.length &gt; 1 &amp;&amp; items.every((item) =&gt; item.paragraph !== undefined)</pre>
+    </li>
+    <li id="L93"><pre>    }),</pre></li>
+    <li id="L94">
+      <pre>
+    [direction, setDirection] = useState&lt;NonNullable&lt;SlideAnimation[&#x27;direction&#x27;]&gt;&gt;(&#x27;bottom&#x27;),</pre>
+    </li>
+    <li id="L95"><pre>    [paragraph, setParagraph] = useState(0),</pre></li>
+    <li id="L96">
+      <pre>
+    [motionPath, setMotionPath] = useState&lt;string&gt;(PPTX_MOTION_PRESETS[0].path)</pre>
+    </li>
+    <li id="L97">
+      <pre>
+  const hoverTimer = useRef&lt;ReturnType&lt;typeof setTimeout&gt; | null&gt;(null),</pre>
+    </li>
+    <li id="L98"><pre>    nonce = useRef(0)</pre></li>
+    <li id="L99"><pre>  const previewCallback = useRef(onPreview)</pre></li>
+    <li id="L100"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L101"><pre>    previewCallback.current = onPreview</pre></li>
+    <li id="L102"><pre>  })</pre></li>
+    <li id="L103"><pre>  const stop = () =&gt; {</pre></li>
+    <li id="L104"><pre>    if (hoverTimer.current) clearTimeout(hoverTimer.current)</pre></li>
+    <li id="L105"><pre>    hoverTimer.current = null</pre></li>
+    <li id="L106"><pre>    previewCallback.current?.(null)</pre></li>
+    <li id="L107"><pre>  }</pre></li>
+    <li id="L108"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L109">
+      <pre>    if (!slide.path || !target?.el) previewCallback.current?.(null)</pre>
+    </li>
+    <li id="L110"><pre>    return () =&gt; {</pre></li>
+    <li id="L111"><pre>      if (hoverTimer.current) clearTimeout(hoverTimer.current)</pre></li>
+    <li id="L112"><pre>      previewCallback.current?.(null)</pre></li>
+    <li id="L113"><pre>    }</pre></li>
+    <li id="L114"><pre>  }, [slide.path, target?.el])</pre></li>
+    <li id="L115">
+      <pre>
+  const selected = target ? pptxAnimationElement(slide.elements, target.el) : undefined</pre>
+    </li>
+    <li id="L116">
+      <pre>
+  const media = selected?.type === &#x27;picture&#x27; &amp;&amp; Boolean(selected.media)</pre>
+    </li>
+    <li id="L117"><pre>  const count = pptxAnimationParagraphCount(selected)</pre></li>
+    <li id="L118">
+      <pre>  const existing = target ? pptxSelectedAnimations(slide, target.el) : []</pre>
+    </li>
+    <li id="L119"><pre>  const preview = (value: AnimEffectKind, path?: string) =&gt; {</pre></li>
+    <li id="L120"><pre>    stop()</pre></li>
+    <li id="L121">
+      <pre>    if (!target || busy || value.startsWith(&#x27;media&#x27;)) return</pre>
+    </li>
+    <li id="L122"><pre>    const id = target.el</pre></li>
+    <li id="L123"><pre>    hoverTimer.current = setTimeout(() =&gt; {</pre></li>
+    <li id="L124"><pre>      hoverTimer.current = null</pre></li>
+    <li id="L125"><pre>      previewCallback.current?.({</pre></li>
+    <li id="L126"><pre>        token: ++nonce.current,</pre></li>
+    <li id="L127"><pre>        items: pptxAnimationItems(slide, id, {</pre></li>
+    <li id="L128"><pre>          effect: value,</pre></li>
+    <li id="L129"><pre>          ...(path ? { motionPath: path } : { byParagraph }),</pre></li>
+    <li id="L130"><pre>        }),</pre></li>
+    <li id="L131"><pre>      })</pre></li>
+    <li id="L132"><pre>    }, 350)</pre></li>
+    <li id="L133"><pre>  }</pre></li>
+    <li id="L134">
+      <pre>
+  const commit = (value: AnimEffectKind | &#x27;none&#x27;, replace: boolean, path?: string) =&gt; {</pre>
+    </li>
+    <li id="L135"><pre>    stop()</pre></li>
+    <li id="L136"><pre>    if (!target) return</pre></li>
+    <li id="L137"><pre>    void run(</pre></li>
+    <li id="L138"><pre>      value === &#x27;none&#x27;</pre></li>
+    <li id="L139">
+      <pre>
+        ? { kind: &#x27;animation&#x27;, slide: target.slide, elementId: target.el, operation: &#x27;remove&#x27; }</pre>
+    </li>
+    <li id="L140"><pre>        : {</pre></li>
+    <li id="L141"><pre>            kind: &#x27;animation&#x27;,</pre></li>
+    <li id="L142"><pre>            slide: target.slide,</pre></li>
+    <li id="L143"><pre>            elementId: target.el,</pre></li>
+    <li id="L144">
+      <pre>            operation: replace ? &#x27;replace&#x27; : &#x27;add&#x27;,</pre>
+    </li>
+    <li id="L145"><pre>            effect: value,</pre></li>
+    <li id="L146">
+      <pre>
+            ...(value.startsWith(&#x27;media&#x27;) || path ? {} : { byParagraph }),</pre>
+    </li>
+    <li id="L147"><pre>            ...(path ? { motionPath: path } : {}),</pre></li>
+    <li id="L148"><pre>          },</pre></li>
+    <li id="L149"><pre>    )</pre></li>
+    <li id="L150"><pre>  }</pre></li>
+    <li id="L151"><pre>  const current = !target</pre></li>
+    <li id="L152"><pre>    ? &#x27;先选择一个对象&#x27;</pre></li>
+    <li id="L153"><pre>    : existing.length</pre></li>
+    <li id="L154"><pre>      ? `当前：${existing</pre></li>
+    <li id="L155"><pre>          .map((item) =&gt; PPTX_ANIMATION_LABELS[item.effect])</pre></li>
+    <li id="L156">
+      <pre>          .filter((item, index, all) =&gt; all.indexOf(item) === index)</pre>
+    </li>
+    <li id="L157"><pre>          .join(&#x27;、&#x27;)} · ${existing.length} 项`</pre></li>
+    <li id="L158"><pre>      : &#x27;当前：无动画&#x27;</pre></li>
+    <li id="L159"><pre>  return (</pre></li>
+    <li id="L160"><pre>    &lt;&gt;</pre></li>
+    <li id="L161">
+      <pre>      &lt;div className=&quot;mimir-pptx-animation-gallery&quot;&gt;</pre>
+    </li>
+    <li id="L162"><pre>        &lt;ToolbarMenuNote&gt;{current}&lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L163"><pre>        &lt;Checkbox</pre></li>
+    <li id="L164"><pre>          disabled={busy || count &lt; 2}</pre></li>
+    <li id="L165"><pre>          checked={byParagraph}</pre></li>
+    <li id="L166">
+      <pre>          onChange={(event) =&gt; setByParagraph(event.target.checked)}</pre>
+    </li>
+    <li id="L167"><pre>        &gt;</pre></li>
+    <li id="L168">
+      <pre>          按段落依次播放{count &gt; 1 ? `（${count} 段）` : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L169"><pre>        &lt;/Checkbox&gt;</pre></li>
+    <li id="L170">
+      <pre>        &lt;p className=&quot;mimir-pptx-animation-gallery__hint&quot;&gt;</pre>
+    </li>
+    <li id="L171"><pre>          点击效果替换所选对象的动画；悬停或聚焦可预览。</pre></li>
+    <li id="L172"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L173"><pre>        &lt;Button</pre></li>
+    <li id="L174"><pre>          className=&quot;mimir-pptx-animation-gallery__none&quot;</pre></li>
+    <li id="L175"><pre>          aria-label=&quot;无动画&quot;</pre></li>
+    <li id="L176"><pre>          icon={&lt;Ban size={16} /&gt;}</pre></li>
+    <li id="L177"><pre>          disabled={busy || !target || existing.length === 0}</pre></li>
+    <li id="L178"><pre>          onClick={() =&gt; commit(&#x27;none&#x27;, true)}</pre></li>
+    <li id="L179"><pre>        &gt;</pre></li>
+    <li id="L180"><pre>          无动画</pre></li>
+    <li id="L181"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L182"><pre>        {classes.map(</pre></li>
+    <li id="L183"><pre>          ([kind, label]) =&gt;</pre></li>
+    <li id="L184"><pre>            (kind !== &#x27;media&#x27; || media) &amp;&amp; (</pre></li>
+    <li id="L185">
+      <pre>              &lt;section key={kind} aria-label={`${label}动画`}&gt;</pre>
+    </li>
+    <li id="L186"><pre>                &lt;h4&gt;{label}&lt;/h4&gt;</pre></li>
+    <li id="L187">
+      <pre>
+                &lt;div className=&quot;mimir-pptx-animation-gallery__grid&quot;&gt;</pre>
+    </li>
+    <li id="L188">
+      <pre>
+                  {ANIM_EFFECTS.filter((value) =&gt; animClassOf(value) === kind).map((value) =&gt; (</pre>
+    </li>
+    <li id="L189"><pre>                    &lt;Button</pre></li>
+    <li id="L190"><pre>                      key={value}</pre></li>
+    <li id="L191">
+      <pre>                      className=&quot;mimir-pptx-animation-gallery__effect&quot;</pre>
+    </li>
+    <li id="L192">
+      <pre>                      aria-label={`替换为${PPTX_ANIMATION_LABELS[value]}动画`}</pre>
+    </li>
+    <li id="L193"><pre>                      aria-pressed={</pre></li>
+    <li id="L194">
+      <pre>
+                        existing.length &gt; 0 &amp;&amp; existing.every((item) =&gt; item.effect === value)</pre>
+    </li>
+    <li id="L195"><pre>                      }</pre></li>
+    <li id="L196"><pre>                      disabled={busy || !target}</pre></li>
+    <li id="L197"><pre>                      onClick={() =&gt; commit(value, true)}</pre></li>
+    <li id="L198"><pre>                      onPointerEnter={() =&gt; preview(value)}</pre></li>
+    <li id="L199"><pre>                      onPointerLeave={stop}</pre></li>
+    <li id="L200"><pre>                      onFocus={() =&gt; preview(value)}</pre></li>
+    <li id="L201"><pre>                      onBlur={stop}</pre></li>
+    <li id="L202"><pre>                    &gt;</pre></li>
+    <li id="L203"><pre>                      &lt;EffectIcon effect={value} /&gt;</pre></li>
+    <li id="L204">
+      <pre>                      &lt;span&gt;{PPTX_ANIMATION_LABELS[value]}&lt;/span&gt;</pre>
+    </li>
+    <li id="L205"><pre>                    &lt;/Button&gt;</pre></li>
+    <li id="L206"><pre>                  ))}</pre></li>
+    <li id="L207"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L208"><pre>              &lt;/section&gt;</pre></li>
+    <li id="L209"><pre>            ),</pre></li>
+    <li id="L210"><pre>        )}</pre></li>
+    <li id="L211"><pre>        &lt;section aria-label=&quot;运动路径&quot;&gt;</pre></li>
+    <li id="L212"><pre>          &lt;h4&gt;</pre></li>
+    <li id="L213"><pre>            运动路径&lt;span&gt;追加到现有动画&lt;/span&gt;</pre></li>
+    <li id="L214"><pre>          &lt;/h4&gt;</pre></li>
+    <li id="L215">
+      <pre>          &lt;div className=&quot;mimir-pptx-animation-gallery__grid&quot;&gt;</pre>
+    </li>
+    <li id="L216"><pre>            {PPTX_MOTION_PRESETS.map((preset, index) =&gt; {</pre></li>
+    <li id="L217">
+      <pre>
+              const Icon = [MoveRight, MoveDown, MoveDownRight, Circle, Route][index]!</pre>
+    </li>
+    <li id="L218"><pre>              return (</pre></li>
+    <li id="L219"><pre>                &lt;Button</pre></li>
+    <li id="L220"><pre>                  key={preset.key}</pre></li>
+    <li id="L221">
+      <pre>                  className=&quot;mimir-pptx-animation-gallery__effect&quot;</pre>
+    </li>
+    <li id="L222"><pre>                  aria-label={`添加${preset.label}运动路径`}</pre></li>
+    <li id="L223"><pre>                  disabled={busy || !target}</pre></li>
+    <li id="L224">
+      <pre>
+                  onClick={() =&gt; commit(&#x27;motionPath&#x27;, false, preset.path)}</pre>
+    </li>
+    <li id="L225">
+      <pre>
+                  onPointerEnter={() =&gt; preview(&#x27;motionPath&#x27;, preset.path)}</pre>
+    </li>
+    <li id="L226"><pre>                  onPointerLeave={stop}</pre></li>
+    <li id="L227">
+      <pre>                  onFocus={() =&gt; preview(&#x27;motionPath&#x27;, preset.path)}</pre>
+    </li>
+    <li id="L228"><pre>                  onBlur={stop}</pre></li>
+    <li id="L229"><pre>                &gt;</pre></li>
+    <li id="L230">
+      <pre>                  &lt;Icon size={18} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L231"><pre>                  &lt;span&gt;{preset.label}&lt;/span&gt;</pre></li>
+    <li id="L232"><pre>                &lt;/Button&gt;</pre></li>
+    <li id="L233"><pre>              )</pre></li>
+    <li id="L234"><pre>            })}</pre></li>
+    <li id="L235"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L236"><pre>        &lt;/section&gt;</pre></li>
+    <li id="L237">
+      <pre>
+        &lt;details className=&quot;mimir-pptx-animation-gallery__advanced&quot;&gt;</pre>
+    </li>
+    <li id="L238"><pre>          &lt;summary&gt;添加动画参数&lt;/summary&gt;</pre></li>
+    <li id="L239">
+      <pre>          &lt;ToolbarMenuFields label=&quot;添加另一项动画&quot;&gt;</pre>
+    </li>
+    <li id="L240"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L241"><pre>              label=&quot;新增动画效果&quot;</pre></li>
+    <li id="L242"><pre>              disabled={busy}</pre></li>
+    <li id="L243"><pre>              value={effect}</pre></li>
+    <li id="L244">
+      <pre>
+              options={ANIM_EFFECTS.filter((value) =&gt; !value.startsWith(&#x27;media&#x27;) || media).map(</pre>
+    </li>
+    <li id="L245">
+      <pre>                (value) =&gt; ({ value, label: PPTX_ANIMATION_LABELS[value] }),</pre>
+    </li>
+    <li id="L246"><pre>              )}</pre></li>
+    <li id="L247"><pre>              onChange={(value) =&gt; {</pre></li>
+    <li id="L248"><pre>                setEffect(value)</pre></li>
+    <li id="L249"><pre>                setDuration(pptxAnimationDefaultDuration(value))</pre></li>
+    <li id="L250"><pre>              }}</pre></li>
+    <li id="L251"><pre>            /&gt;</pre></li>
+    <li id="L252"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L253"><pre>              label=&quot;动画开始方式&quot;</pre></li>
+    <li id="L254"><pre>              disabled={busy}</pre></li>
+    <li id="L255"><pre>              value={trigger}</pre></li>
+    <li id="L256"><pre>              options={triggers}</pre></li>
+    <li id="L257"><pre>              onChange={setTrigger}</pre></li>
+    <li id="L258"><pre>            /&gt;</pre></li>
+    <li id="L259"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L260"><pre>              label=&quot;动画持续毫秒&quot;</pre></li>
+    <li id="L261"><pre>              value={duration}</pre></li>
+    <li id="L262"><pre>              min={0}</pre></li>
+    <li id="L263"><pre>              max={60000}</pre></li>
+    <li id="L264"><pre>              step={100}</pre></li>
+    <li id="L265"><pre>              onCommit={setDuration}</pre></li>
+    <li id="L266"><pre>            /&gt;</pre></li>
+    <li id="L267"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L268"><pre>              label=&quot;动画延迟毫秒&quot;</pre></li>
+    <li id="L269"><pre>              value={delay}</pre></li>
+    <li id="L270"><pre>              min={0}</pre></li>
+    <li id="L271"><pre>              max={60000}</pre></li>
+    <li id="L272"><pre>              step={100}</pre></li>
+    <li id="L273"><pre>              onCommit={setDelay}</pre></li>
+    <li id="L274"><pre>            /&gt;</pre></li>
+    <li id="L275"><pre>            {effect === &#x27;motionPath&#x27; &amp;&amp; (</pre></li>
+    <li id="L276"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L277"><pre>                label=&quot;运动路径方向&quot;</pre></li>
+    <li id="L278"><pre>                disabled={busy}</pre></li>
+    <li id="L279"><pre>                value={motionPath}</pre></li>
+    <li id="L280"><pre>                options={PPTX_MOTION_PRESETS.map((preset) =&gt; ({</pre></li>
+    <li id="L281"><pre>                  value: preset.path,</pre></li>
+    <li id="L282"><pre>                  label: preset.label,</pre></li>
+    <li id="L283"><pre>                }))}</pre></li>
+    <li id="L284"><pre>                onChange={setMotionPath}</pre></li>
+    <li id="L285"><pre>              /&gt;</pre></li>
+    <li id="L286"><pre>            )}</pre></li>
+    <li id="L287">
+      <pre>
+            {[&#x27;flyIn&#x27;, &#x27;flyOut&#x27;, &#x27;wipe&#x27;, &#x27;wipeOut&#x27;].includes(effect) &amp;&amp; (</pre>
+    </li>
+    <li id="L288"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L289"><pre>                label=&quot;新增动画方向&quot;</pre></li>
+    <li id="L290"><pre>                disabled={busy}</pre></li>
+    <li id="L291"><pre>                value={direction}</pre></li>
+    <li id="L292"><pre>                options={[</pre></li>
+    <li id="L293">
+      <pre>                  { value: &#x27;top&#x27;, label: &#x27;从上方&#x27; },</pre>
+    </li>
+    <li id="L294">
+      <pre>                  { value: &#x27;bottom&#x27;, label: &#x27;从下方&#x27; },</pre>
+    </li>
+    <li id="L295">
+      <pre>                  { value: &#x27;left&#x27;, label: &#x27;从左侧&#x27; },</pre>
+    </li>
+    <li id="L296">
+      <pre>                  { value: &#x27;right&#x27;, label: &#x27;从右侧&#x27; },</pre>
+    </li>
+    <li id="L297"><pre>                ]}</pre></li>
+    <li id="L298"><pre>                onChange={setDirection}</pre></li>
+    <li id="L299"><pre>              /&gt;</pre></li>
+    <li id="L300"><pre>            )}</pre></li>
+    <li id="L301">
+      <pre>
+            {!effect.startsWith(&#x27;media&#x27;) &amp;&amp; !byParagraph &amp;&amp; (</pre>
+    </li>
+    <li id="L302"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L303"><pre>                label=&quot;动画目标段落（0为整个对象）&quot;</pre></li>
+    <li id="L304"><pre>                value={paragraph}</pre></li>
+    <li id="L305"><pre>                min={0}</pre></li>
+    <li id="L306"><pre>                max={count}</pre></li>
+    <li id="L307"><pre>                onCommit={setParagraph}</pre></li>
+    <li id="L308"><pre>              /&gt;</pre></li>
+    <li id="L309"><pre>            )}</pre></li>
+    <li id="L310"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L311"><pre>        &lt;/details&gt;</pre></li>
+    <li id="L312"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L313">
+      <pre>      &lt;div className=&quot;mimir-pptx-animation__footer&quot;&gt;</pre>
+    </li>
+    <li id="L314">
+      <pre>        &lt;span className=&quot;mimir-pptx-animation__summary&quot;&gt;</pre>
+    </li>
+    <li id="L315"><pre>          {PPTX_ANIMATION_LABELS[effect]} · {duration} ms</pre></li>
+    <li id="L316"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L317"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L318"><pre>          label=&quot;为选中对象添加动画&quot;</pre></li>
+    <li id="L319"><pre>          primary</pre></li>
+    <li id="L320">
+      <pre>
+          disabled={busy || !target || (effect.startsWith(&#x27;media&#x27;) &amp;&amp; !media)}</pre>
+    </li>
+    <li id="L321">
+      <pre>
+          disabledReason={busy ? &#x27;正在修改动画&#x27; : &#x27;先选择适用的对象&#x27;}</pre>
+    </li>
+    <li id="L322"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L323"><pre>            stop()</pre></li>
+    <li id="L324"><pre>            if (target)</pre></li>
+    <li id="L325"><pre>              void run({</pre></li>
+    <li id="L326"><pre>                kind: &#x27;animation&#x27;,</pre></li>
+    <li id="L327"><pre>                slide: target.slide,</pre></li>
+    <li id="L328"><pre>                elementId: target.el,</pre></li>
+    <li id="L329"><pre>                operation: &#x27;add&#x27;,</pre></li>
+    <li id="L330"><pre>                effect,</pre></li>
+    <li id="L331"><pre>                trigger,</pre></li>
+    <li id="L332"><pre>                durationMs: duration,</pre></li>
+    <li id="L333"><pre>                delayMs: delay,</pre></li>
+    <li id="L334">
+      <pre>                ...(effect === &#x27;motionPath&#x27; ? { motionPath } : {}),</pre>
+    </li>
+    <li id="L335">
+      <pre>
+                ...([&#x27;flyIn&#x27;, &#x27;flyOut&#x27;, &#x27;wipe&#x27;, &#x27;wipeOut&#x27;].includes(effect) ? { direction } : {}),</pre>
+    </li>
+    <li id="L336"><pre>                ...(!effect.startsWith(&#x27;media&#x27;)</pre></li>
+    <li id="L337"><pre>                  ? byParagraph</pre></li>
+    <li id="L338"><pre>                    ? { byParagraph }</pre></li>
+    <li id="L339"><pre>                    : paragraph &gt; 0</pre></li>
+    <li id="L340"><pre>                      ? { paragraph: paragraph - 1 }</pre></li>
+    <li id="L341"><pre>                      : {}</pre></li>
+    <li id="L342"><pre>                  : {}),</pre></li>
+    <li id="L343"><pre>              })</pre></li>
+    <li id="L344"><pre>          }}</pre></li>
+    <li id="L345"><pre>        &gt;</pre></li>
+    <li id="L346"><pre>          &lt;Plus size={16} aria-hidden=&quot;true&quot; /&gt;</pre></li>
+    <li id="L347"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L348"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L349"><pre>    &lt;/&gt;</pre></li>
+    <li id="L350"><pre>  )</pre></li>
+    <li id="L351"><pre>}</pre></li>
+  </ol>
+</html>

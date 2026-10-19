@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxDeckControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxDeckControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 b5bbdbd26f743b2989861504a591be05ee16b90552b803a1019f378bcdc307fc
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { Button } from &#x27;antd&#x27;</pre></li>
+    <li id="L3"><pre>import { Palette } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L4">
+      <pre>
+import type { Slide, SlideSize } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import type { PptxMetadata } from &#x27;../pptx-metadata.js&#x27;</pre></li>
+    <li id="L6"><pre>import {</pre></li>
+    <li id="L7"><pre>  ToolbarButton,</pre></li>
+    <li id="L8"><pre>  ToolbarConfirm,</pre></li>
+    <li id="L9"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L10"><pre>  ToolbarMenu,</pre></li>
+    <li id="L11"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L12"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L13"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L14"><pre>  ToolbarSelect,</pre></li>
+    <li id="L15"><pre>  ToolbarTextField,</pre></li>
+    <li id="L16"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L17">
+      <pre>
+import { PptxControlPanel, usePptxAction, type PptxApply } from &#x27;./PptxObjectControls.js&#x27;</pre>
+    </li>
+    <li id="L18"><pre>import {</pre></li>
+    <li id="L19"><pre>  PPTX_THEME_PRESETS,</pre></li>
+    <li id="L20"><pre>  PPTX_THEME_COLOR_LABELS,</pre></li>
+    <li id="L21"><pre>  PPTX_THEME_COLOR_KEYS,</pre></li>
+    <li id="L22"><pre>  pptxThemeMatches,</pre></li>
+    <li id="L23"><pre>  pptxThemePreset,</pre></li>
+    <li id="L24"><pre>  type PptxThemeDraft,</pre></li>
+    <li id="L25"><pre>} from &#x27;./pptx-theme-presets.js&#x27;</pre></li>
+    <li id="L26"><pre>import &#x27;./pptx-theme-controls.css&#x27;</pre></li>
+    <li id="L27">
+      <pre>import { PptxCommentControls } from &#x27;./PptxCommentControls.js&#x27;</pre>
+    </li>
+    <li id="L28"><pre>const PT = 12700</pre></li>
+    <li id="L29"><pre></pre></li>
+    <li id="L30"><pre>export function PptxPageControls({</pre></li>
+    <li id="L31"><pre>  size,</pre></li>
+    <li id="L32"><pre>  slide,</pre></li>
+    <li id="L33"><pre>  index,</pre></li>
+    <li id="L34"><pre>  metadata,</pre></li>
+    <li id="L35"><pre>  apply,</pre></li>
+    <li id="L36"><pre>}: {</pre></li>
+    <li id="L37"><pre>  size: SlideSize</pre></li>
+    <li id="L38"><pre>  slide: Slide</pre></li>
+    <li id="L39"><pre>  index: number</pre></li>
+    <li id="L40"><pre>  metadata: PptxMetadata</pre></li>
+    <li id="L41"><pre>  apply: PptxApply</pre></li>
+    <li id="L42"><pre>}) {</pre></li>
+    <li id="L43"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L44"><pre>  const [width, setWidth] = useState(size.cx / PT)</pre></li>
+    <li id="L45"><pre>  const [height, setHeight] = useState(size.cy / PT)</pre></li>
+    <li id="L46">
+      <pre>
+  const current = metadata.layouts.find((layout) =&gt; layout.path === slide.layoutPath)</pre>
+    </li>
+    <li id="L47">
+      <pre>
+  const [layout, setLayout] = useState(String(current?.index ?? metadata.layouts[0]?.index ?? &#x27;&#x27;))</pre>
+    </li>
+    <li id="L48"><pre>  return (</pre></li>
+    <li id="L49"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L50"><pre>      &lt;ToolbarMenuFields label=&quot;幻灯片尺寸&quot;&gt;</pre></li>
+    <li id="L51"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L52"><pre>          label=&quot;幻灯片宽（pt）&quot;</pre></li>
+    <li id="L53"><pre>          value={width}</pre></li>
+    <li id="L54"><pre>          min={10}</pre></li>
+    <li id="L55"><pre>          max={4000}</pre></li>
+    <li id="L56"><pre>          onCommit={setWidth}</pre></li>
+    <li id="L57"><pre>        /&gt;</pre></li>
+    <li id="L58"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L59"><pre>          label=&quot;幻灯片高（pt）&quot;</pre></li>
+    <li id="L60"><pre>          value={height}</pre></li>
+    <li id="L61"><pre>          min={10}</pre></li>
+    <li id="L62"><pre>          max={4000}</pre></li>
+    <li id="L63"><pre>          onCommit={setHeight}</pre></li>
+    <li id="L64"><pre>        /&gt;</pre></li>
+    <li id="L65"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L66">
+      <pre>          修改整份演示文稿的尺寸；对象尺寸和位置保持原值，请检查边缘内容。</pre>
+    </li>
+    <li id="L67"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L68"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L69"><pre>          label=&quot;应用幻灯片尺寸&quot;</pre></li>
+    <li id="L70"><pre>          disabled={width &lt;= 0 || height &lt;= 0}</pre></li>
+    <li id="L71"><pre>          disabledReason=&quot;宽高必须大于0&quot;</pre></li>
+    <li id="L72"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L73"><pre>            void run({</pre></li>
+    <li id="L74"><pre>              op: &#x27;setSlideSize&#x27;,</pre></li>
+    <li id="L75"><pre>              cx: Math.round(width * PT),</pre></li>
+    <li id="L76"><pre>              cy: Math.round(height * PT),</pre></li>
+    <li id="L77"><pre>            })</pre></li>
+    <li id="L78"><pre>          }</pre></li>
+    <li id="L79"><pre>        &gt;</pre></li>
+    <li id="L80"><pre>          应用尺寸</pre></li>
+    <li id="L81"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L82"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L83"><pre>      &lt;ToolbarMenuFields label=&quot;原件版式&quot;&gt;</pre></li>
+    <li id="L84">
+      <pre>
+        &lt;ToolbarMenuNote&gt;当前版式：{current?.name ?? &#x27;未关联原件版式&#x27;}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L85"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L86"><pre>          label=&quot;选择原件版式&quot;</pre></li>
+    <li id="L87"><pre>          value={layout}</pre></li>
+    <li id="L88"><pre>          options={metadata.layouts.map((item) =&gt; ({</pre></li>
+    <li id="L89"><pre>            value: String(item.index),</pre></li>
+    <li id="L90">
+      <pre>            label: `${item.name}${item.type ? ` · ${item.type}` : &#x27;&#x27;}`,</pre>
+    </li>
+    <li id="L91"><pre>          }))}</pre></li>
+    <li id="L92"><pre>          disabled={busy || !metadata.layouts.length}</pre></li>
+    <li id="L93"><pre>          onChange={setLayout}</pre></li>
+    <li id="L94"><pre>        /&gt;</pre></li>
+    <li id="L95"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L96"><pre>          label=&quot;应用当前页版式&quot;</pre></li>
+    <li id="L97"><pre>          disabled={!layout}</pre></li>
+    <li id="L98"><pre>          disabledReason=&quot;原件没有可用版式&quot;</pre></li>
+    <li id="L99"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L100">
+      <pre>
+            void run({ op: &#x27;setSlideLayout&#x27;, target: { slide: index }, layout: Number(layout) })</pre>
+    </li>
+    <li id="L101"><pre>          }</pre></li>
+    <li id="L102"><pre>        &gt;</pre></li>
+    <li id="L103"><pre>          应用版式</pre></li>
+    <li id="L104"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L105"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L106"><pre>          label=&quot;重置本页占位符位置&quot;</pre></li>
+    <li id="L107"><pre>          disabled={!current}</pre></li>
+    <li id="L108"><pre>          disabledReason=&quot;当前页没有关联的原件版式&quot;</pre></li>
+    <li id="L109">
+      <pre>
+          onClick={() =&gt; void run({ op: &#x27;setSlideLayout&#x27;, target: { slide: index } })}</pre>
+    </li>
+    <li id="L110"><pre>        &gt;</pre></li>
+    <li id="L111"><pre>          重置占位符位置</pre></li>
+    <li id="L112"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L113"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L114">
+      <pre>          将占位符的位置和尺寸恢复为当前版式的默认值，保留文字和其他对象。</pre>
+    </li>
+    <li id="L115"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L116"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L117"><pre>          label=&quot;以所选版式新建幻灯片&quot;</pre></li>
+    <li id="L118"><pre>          disabled={!layout}</pre></li>
+    <li id="L119"><pre>          disabledReason=&quot;原件没有可用版式&quot;</pre></li>
+    <li id="L120"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L121">
+      <pre>
+            void run({ op: &#x27;addSlideWithLayout&#x27;, target: { slide: index }, layout: Number(layout) })</pre>
+    </li>
+    <li id="L122"><pre>          }</pre></li>
+    <li id="L123"><pre>        &gt;</pre></li>
+    <li id="L124"><pre>          按版式新建</pre></li>
+    <li id="L125"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L126"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L127"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L128"><pre>  )</pre></li>
+    <li id="L129"><pre>}</pre></li>
+    <li id="L130"><pre></pre></li>
+    <li id="L131"><pre>export function PptxThemeControls({</pre></li>
+    <li id="L132"><pre>  metadata,</pre></li>
+    <li id="L133"><pre>  apply,</pre></li>
+    <li id="L134"><pre>}: {</pre></li>
+    <li id="L135"><pre>  metadata: PptxMetadata</pre></li>
+    <li id="L136"><pre>  apply: PptxApply</pre></li>
+    <li id="L137"><pre>}) {</pre></li>
+    <li id="L138">
+      <pre>
+  // Permanent invalidation prevents A → B → undo(A) from reviving a discarded draft.</pre>
+    </li>
+    <li id="L139"><pre>  return (</pre></li>
+    <li id="L140"><pre>    &lt;PptxThemeDraftControls</pre></li>
+    <li id="L141"><pre>      key={JSON.stringify(metadata.themes)}</pre></li>
+    <li id="L142"><pre>      metadata={metadata}</pre></li>
+    <li id="L143"><pre>      apply={apply}</pre></li>
+    <li id="L144"><pre>    /&gt;</pre></li>
+    <li id="L145"><pre>  )</pre></li>
+    <li id="L146"><pre>}</pre></li>
+    <li id="L147"><pre></pre></li>
+    <li id="L148"><pre>function ThemePreview({ theme }: { theme: PptxThemeDraft }) {</pre></li>
+    <li id="L149"><pre>  return (</pre></li>
+    <li id="L150"><pre>    &lt;span</pre></li>
+    <li id="L151"><pre>      className=&quot;mimir-pptx-theme__preview&quot;</pre></li>
+    <li id="L152"><pre>      aria-hidden=&quot;true&quot;</pre></li>
+    <li id="L153">
+      <pre>      style={{ background: theme.colors.lt1, color: theme.colors.dk1 }}</pre>
+    </li>
+    <li id="L154"><pre>    &gt;</pre></li>
+    <li id="L155">
+      <pre>
+      &lt;span className=&quot;mimir-pptx-theme__sample&quot; style={{ fontFamily: theme.majorFont }}&gt;</pre>
+    </li>
+    <li id="L156"><pre>        Aa</pre></li>
+    <li id="L157"><pre>      &lt;/span&gt;</pre></li>
+    <li id="L158">
+      <pre>      &lt;span className=&quot;mimir-pptx-theme__swatches&quot;&gt;</pre>
+    </li>
+    <li id="L159">
+      <pre>
+        {[&#x27;accent1&#x27;, &#x27;accent2&#x27;, &#x27;accent3&#x27;, &#x27;accent4&#x27;, &#x27;accent5&#x27;, &#x27;accent6&#x27;].map((key) =&gt; (</pre>
+    </li>
+    <li id="L160">
+      <pre>          &lt;span key={key} style={{ background: theme.colors[key] }} /&gt;</pre>
+    </li>
+    <li id="L161"><pre>        ))}</pre></li>
+    <li id="L162"><pre>      &lt;/span&gt;</pre></li>
+    <li id="L163"><pre>    &lt;/span&gt;</pre></li>
+    <li id="L164"><pre>  )</pre></li>
+    <li id="L165"><pre>}</pre></li>
+    <li id="L166"><pre></pre></li>
+    <li id="L167">
+      <pre>
+function PptxThemeDraftControls({ metadata, apply }: { metadata: PptxMetadata; apply: PptxApply }) {</pre>
+    </li>
+    <li id="L168"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L169">
+      <pre>  const [path, setPath] = useState(metadata.themes[0]?.path ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L170">
+      <pre>  const source = metadata.themes.find((item) =&gt; item.path === path)</pre>
+    </li>
+    <li id="L171">
+      <pre>
+  const [draft, setDraft] = useState&lt;PptxThemeDraft&gt;(() =&gt; source ?? PPTX_THEME_PRESETS[0]!)</pre>
+    </li>
+    <li id="L172"><pre>  const [customKey, setCustomKey] = useState(&#x27;accent1&#x27;)</pre></li>
+    <li id="L173">
+      <pre>
+  const [customValue, setCustomValue] = useState(draft.colors.accent1 ?? &#x27;#000000&#x27;)</pre>
+    </li>
+    <li id="L174"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L175"><pre>  const selectedPreset = pptxThemePreset(draft)</pre></li>
+    <li id="L176"><pre>  const appliedPreset =</pre></li>
+    <li id="L177"><pre>    metadata.themes.length &gt; 0</pre></li>
+    <li id="L178"><pre>      ? PPTX_THEME_PRESETS.find((preset) =&gt;</pre></li>
+    <li id="L179">
+      <pre>          metadata.themes.every((theme) =&gt; pptxThemeMatches(theme, preset)),</pre>
+    </li>
+    <li id="L180"><pre>        )</pre></li>
+    <li id="L181"><pre>      : undefined</pre></li>
+    <li id="L182"><pre>  const currentLabel = appliedPreset</pre></li>
+    <li id="L183"><pre>    ? appliedPreset.label</pre></li>
+    <li id="L184"><pre>    : metadata.themes.length &gt; 1 &amp;&amp;</pre></li>
+    <li id="L185">
+      <pre>
+        !metadata.themes.every((theme) =&gt; pptxThemeMatches(theme, metadata.themes[0]!))</pre>
+    </li>
+    <li id="L186"><pre>      ? &#x27;多个原件主题&#x27;</pre></li>
+    <li id="L187"><pre>      : metadata.themes[0]?.name || &#x27;无主题资源&#x27;</pre></li>
+    <li id="L188"><pre>  const invalid =</pre></li>
+    <li id="L189"><pre>    !draft.name.trim() ||</pre></li>
+    <li id="L190">
+      <pre>    Object.values(draft.colors).some((value) =&gt; !/^#[0-9a-f]{6}$/i.test(value))</pre>
+    </li>
+    <li id="L191"><pre>  const unchanged =</pre></li>
+    <li id="L192"><pre>    metadata.themes.length &gt; 0 &amp;&amp;</pre></li>
+    <li id="L193">
+      <pre>
+    metadata.themes.every((theme) =&gt; theme.name === draft.name &amp;&amp; pptxThemeMatches(theme, draft))</pre>
+    </li>
+    <li id="L194"><pre>  const palette = [</pre></li>
+    <li id="L195"><pre>    ...new Set([</pre></li>
+    <li id="L196"><pre>      ...Object.values(draft.colors),</pre></li>
+    <li id="L197"><pre>      &#x27;#000000&#x27;,</pre></li>
+    <li id="L198"><pre>      &#x27;#FFFFFF&#x27;,</pre></li>
+    <li id="L199"><pre>      &#x27;#C03060&#x27;,</pre></li>
+    <li id="L200"><pre>      &#x27;#FF0000&#x27;,</pre></li>
+    <li id="L201"><pre>      &#x27;#ED7D31&#x27;,</pre></li>
+    <li id="L202"><pre>      &#x27;#FFC000&#x27;,</pre></li>
+    <li id="L203"><pre>      &#x27;#70AD47&#x27;,</pre></li>
+    <li id="L204"><pre>      &#x27;#0070C0&#x27;,</pre></li>
+    <li id="L205"><pre>      &#x27;#7030A0&#x27;,</pre></li>
+    <li id="L206"><pre>    ]),</pre></li>
+    <li id="L207"><pre>  ]</pre></li>
+    <li id="L208"><pre>    .filter((value) =&gt; /^#[0-9a-f]{6}$/i.test(value))</pre></li>
+    <li id="L209">
+      <pre>    .map((value) =&gt; ({ value, label: value.toUpperCase(), swatch: value }))</pre>
+    </li>
+    <li id="L210"><pre>  const update = (patch: Partial&lt;PptxThemeDraft&gt;) =&gt; {</pre></li>
+    <li id="L211"><pre>    setDraft({ ...draft, ...patch })</pre></li>
+    <li id="L212">
+      <pre>    if (patch.colors?.[customKey]) setCustomValue(patch.colors[customKey])</pre>
+    </li>
+    <li id="L213"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L214"><pre>  }</pre></li>
+    <li id="L215"><pre>  const choose = (next: PptxThemeDraft) =&gt; {</pre></li>
+    <li id="L216"><pre>    setDraft({</pre></li>
+    <li id="L217"><pre>      name: next.name,</pre></li>
+    <li id="L218"><pre>      colors: { ...next.colors },</pre></li>
+    <li id="L219"><pre>      majorFont: next.majorFont,</pre></li>
+    <li id="L220"><pre>      minorFont: next.minorFont,</pre></li>
+    <li id="L221"><pre>    })</pre></li>
+    <li id="L222"><pre>    setCustomValue(next.colors[customKey] ?? &#x27;#000000&#x27;)</pre></li>
+    <li id="L223"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L224"><pre>  }</pre></li>
+    <li id="L225"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L226"><pre>    try {</pre></li>
+    <li id="L227"><pre>      const ok = await run({</pre></li>
+    <li id="L228"><pre>        op: &#x27;applyTheme&#x27;,</pre></li>
+    <li id="L229"><pre>        name: draft.name,</pre></li>
+    <li id="L230"><pre>        colors: draft.colors,</pre></li>
+    <li id="L231">
+      <pre>        ...(draft.majorFont ? { majorFont: draft.majorFont } : {}),</pre>
+    </li>
+    <li id="L232">
+      <pre>        ...(draft.minorFont ? { minorFont: draft.minorFont } : {}),</pre>
+    </li>
+    <li id="L233"><pre>      })</pre></li>
+    <li id="L234">
+      <pre>      if (!ok) setError(&#x27;主题未应用，请检查文稿状态后重试。&#x27;)</pre>
+    </li>
+    <li id="L235"><pre>    } catch (cause) {</pre></li>
+    <li id="L236">
+      <pre>
+      setError(cause instanceof Error ? cause.message : &#x27;主题应用失败，请重试。&#x27;)</pre>
+    </li>
+    <li id="L237"><pre>    }</pre></li>
+    <li id="L238"><pre>  }</pre></li>
+    <li id="L239"><pre>  return (</pre></li>
+    <li id="L240">
+      <pre>
+    &lt;section className=&quot;mimir-pptx-theme&quot; aria-label=&quot;演示文稿主题&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L241"><pre>      &lt;div className=&quot;mimir-pptx-theme__header&quot;&gt;</pre></li>
+    <li id="L242"><pre>        &lt;span&gt;</pre></li>
+    <li id="L243"><pre>          当前：{currentLabel}</pre></li>
+    <li id="L244">
+      <pre>
+          {!appliedPreset &amp;&amp; metadata.themes.length &gt; 0 ? &#x27; · 自定义&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L245"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L246">
+      <pre>
+        &lt;ToolbarMenuNote&gt;先选择预览，再应用到整份演示文稿。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L247"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L248"><pre>      &lt;div className=&quot;mimir-pptx-theme__body&quot;&gt;</pre></li>
+    <li id="L249">
+      <pre>
+        &lt;div className=&quot;mimir-pptx-theme__gallery&quot; role=&quot;group&quot; aria-label=&quot;预设主题&quot;&gt;</pre>
+    </li>
+    <li id="L250"><pre>          {PPTX_THEME_PRESETS.map((preset) =&gt; (</pre></li>
+    <li id="L251"><pre>            &lt;Button</pre></li>
+    <li id="L252"><pre>              key={preset.id}</pre></li>
+    <li id="L253"><pre>              className=&quot;mimir-pptx-theme__card&quot;</pre></li>
+    <li id="L254"><pre>              aria-label={`选择${preset.label}主题`}</pre></li>
+    <li id="L255"><pre>              aria-pressed={selectedPreset?.id === preset.id}</pre></li>
+    <li id="L256"><pre>              disabled={busy || !source}</pre></li>
+    <li id="L257"><pre>              onClick={() =&gt; choose(preset)}</pre></li>
+    <li id="L258"><pre>            &gt;</pre></li>
+    <li id="L259"><pre>              &lt;ThemePreview theme={preset} /&gt;</pre></li>
+    <li id="L260">
+      <pre>              &lt;span className=&quot;mimir-pptx-theme__card-label&quot;&gt;</pre>
+    </li>
+    <li id="L261"><pre>                {preset.label}</pre></li>
+    <li id="L262"><pre>                &lt;span&gt;</pre></li>
+    <li id="L263"><pre>                  {appliedPreset?.id === preset.id</pre></li>
+    <li id="L264"><pre>                    ? &#x27;当前&#x27;</pre></li>
+    <li id="L265"><pre>                    : selectedPreset?.id === preset.id</pre></li>
+    <li id="L266"><pre>                      ? &#x27;待应用&#x27;</pre></li>
+    <li id="L267"><pre>                      : &#x27;&#x27;}</pre></li>
+    <li id="L268"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L269"><pre>              &lt;/span&gt;</pre></li>
+    <li id="L270"><pre>            &lt;/Button&gt;</pre></li>
+    <li id="L271"><pre>          ))}</pre></li>
+    <li id="L272"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L273"><pre>        {source ? (</pre></li>
+    <li id="L274">
+      <pre>          &lt;div className=&quot;mimir-pptx-theme__custom&quot;&gt;</pre>
+    </li>
+    <li id="L275"><pre>            &lt;h3&gt;自定义主题&lt;/h3&gt;</pre></li>
+    <li id="L276"><pre>            &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L277"><pre>              &lt;ToolbarMenuFields label=&quot;主题来源&quot;&gt;</pre></li>
+    <li id="L278"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L279"><pre>                  label=&quot;读取原件主题&quot;</pre></li>
+    <li id="L280"><pre>                  disabled={busy}</pre></li>
+    <li id="L281"><pre>                  value={path}</pre></li>
+    <li id="L282">
+      <pre>
+                  options={metadata.themes.map((item) =&gt; ({ value: item.path, label: item.name }))}</pre>
+    </li>
+    <li id="L283"><pre>                  onChange={(value) =&gt; {</pre></li>
+    <li id="L284">
+      <pre>
+                    const next = metadata.themes.find((item) =&gt; item.path === value)</pre>
+    </li>
+    <li id="L285"><pre>                    if (next) {</pre></li>
+    <li id="L286"><pre>                      setPath(value)</pre></li>
+    <li id="L287"><pre>                      choose(next)</pre></li>
+    <li id="L288"><pre>                    }</pre></li>
+    <li id="L289"><pre>                  }}</pre></li>
+    <li id="L290"><pre>                /&gt;</pre></li>
+    <li id="L291"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L292"><pre>                  label=&quot;主题名称&quot;</pre></li>
+    <li id="L293"><pre>                  value={draft.name}</pre></li>
+    <li id="L294"><pre>                  onChange={(name) =&gt; update({ name })}</pre></li>
+    <li id="L295"><pre>                /&gt;</pre></li>
+    <li id="L296"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L297"><pre>              {[</pre></li>
+    <li id="L298">
+      <pre>
+                { title: &#x27;基础颜色&#x27;, keys: [&#x27;dk1&#x27;, &#x27;lt1&#x27;, &#x27;dk2&#x27;, &#x27;lt2&#x27;] },</pre>
+    </li>
+    <li id="L299"><pre>                {</pre></li>
+    <li id="L300"><pre>                  title: &#x27;强调色&#x27;,</pre></li>
+    <li id="L301">
+      <pre>
+                  keys: [&#x27;accent1&#x27;, &#x27;accent2&#x27;, &#x27;accent3&#x27;, &#x27;accent4&#x27;, &#x27;accent5&#x27;, &#x27;accent6&#x27;],</pre>
+    </li>
+    <li id="L302"><pre>                },</pre></li>
+    <li id="L303">
+      <pre>
+                { title: &#x27;链接色&#x27;, keys: [&#x27;hlink&#x27;, &#x27;folHlink&#x27;] },</pre>
+    </li>
+    <li id="L304"><pre>              ].map((group) =&gt; (</pre></li>
+    <li id="L305">
+      <pre>                &lt;ToolbarMenuFields key={group.title} label={group.title}&gt;</pre>
+    </li>
+    <li id="L306"><pre>                  {group.keys</pre></li>
+    <li id="L307"><pre>                    .filter((key) =&gt; key in draft.colors)</pre></li>
+    <li id="L308"><pre>                    .map((key) =&gt; (</pre></li>
+    <li id="L309"><pre>                      &lt;ToolbarColorPicker</pre></li>
+    <li id="L310"><pre>                        key={key}</pre></li>
+    <li id="L311">
+      <pre>                        label={`主题${PPTX_THEME_COLOR_LABELS[key]}`}</pre>
+    </li>
+    <li id="L312"><pre>                        value={draft.colors[key]!}</pre></li>
+    <li id="L313"><pre>                        options={palette}</pre></li>
+    <li id="L314"><pre>                        icon={</pre></li>
+    <li id="L315">
+      <pre>
+                          &lt;span className=&quot;mimir-pptx-theme-color-value&quot;&gt;</pre>
+    </li>
+    <li id="L316"><pre>                            {draft.colors[key]!.toUpperCase()}</pre></li>
+    <li id="L317"><pre>                          &lt;/span&gt;</pre></li>
+    <li id="L318"><pre>                        }</pre></li>
+    <li id="L319">
+      <pre>
+                        onPick={(value) =&gt; update({ colors: { ...draft.colors, [key]: value } })}</pre>
+    </li>
+    <li id="L320"><pre>                      /&gt;</pre></li>
+    <li id="L321"><pre>                    ))}</pre></li>
+    <li id="L322"><pre>                &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L323"><pre>              ))}</pre></li>
+    <li id="L324">
+      <pre>              &lt;ToolbarMenuFields label=&quot;字体与自定义颜色&quot;&gt;</pre>
+    </li>
+    <li id="L325"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L326"><pre>                  label=&quot;主题标题字体&quot;</pre></li>
+    <li id="L327"><pre>                  value={draft.majorFont}</pre></li>
+    <li id="L328">
+      <pre>                  onChange={(majorFont) =&gt; update({ majorFont })}</pre>
+    </li>
+    <li id="L329"><pre>                /&gt;</pre></li>
+    <li id="L330"><pre>                &lt;ToolbarTextField</pre></li>
+    <li id="L331"><pre>                  label=&quot;主题正文字体&quot;</pre></li>
+    <li id="L332"><pre>                  value={draft.minorFont}</pre></li>
+    <li id="L333">
+      <pre>                  onChange={(minorFont) =&gt; update({ minorFont })}</pre>
+    </li>
+    <li id="L334"><pre>                /&gt;</pre></li>
+    <li id="L335"><pre>                &lt;ToolbarMenu</pre></li>
+    <li id="L336"><pre>                  label=&quot;自定义主题色&quot;</pre></li>
+    <li id="L337"><pre>                  text=&quot;自定义主题色&quot;</pre></li>
+    <li id="L338"><pre>                  panelWidth={300}</pre></li>
+    <li id="L339"><pre>                  renderPanel={(close) =&gt; (</pre></li>
+    <li id="L340"><pre>                    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L341">
+      <pre>                      &lt;ToolbarMenuFields label=&quot;自定义主题色&quot;&gt;</pre>
+    </li>
+    <li id="L342"><pre>                        &lt;ToolbarSelect</pre></li>
+    <li id="L343"><pre>                          label=&quot;自定义颜色位置&quot;</pre></li>
+    <li id="L344"><pre>                          disabled={busy}</pre></li>
+    <li id="L345"><pre>                          value={customKey}</pre></li>
+    <li id="L346">
+      <pre>
+                          options={PPTX_THEME_COLOR_KEYS.filter((key) =&gt; key in draft.colors).map(</pre>
+    </li>
+    <li id="L347">
+      <pre>
+                            (key) =&gt; ({ value: key, label: PPTX_THEME_COLOR_LABELS[key]! }),</pre>
+    </li>
+    <li id="L348"><pre>                          )}</pre></li>
+    <li id="L349"><pre>                          onChange={(key) =&gt; {</pre></li>
+    <li id="L350"><pre>                            setCustomKey(key)</pre></li>
+    <li id="L351">
+      <pre>
+                            setCustomValue(draft.colors[key] ?? &#x27;#000000&#x27;)</pre>
+    </li>
+    <li id="L352"><pre>                          }}</pre></li>
+    <li id="L353"><pre>                        /&gt;</pre></li>
+    <li id="L354"><pre>                        &lt;ToolbarTextField</pre></li>
+    <li id="L355"><pre>                          label=&quot;自定义色值&quot;</pre></li>
+    <li id="L356"><pre>                          value={customValue}</pre></li>
+    <li id="L357"><pre>                          onChange={setCustomValue}</pre></li>
+    <li id="L358"><pre>                        /&gt;</pre></li>
+    <li id="L359"><pre>                        &lt;ToolbarButton</pre></li>
+    <li id="L360"><pre>                          label=&quot;设置自定义主题色&quot;</pre></li>
+    <li id="L361">
+      <pre>                          disabled={!/^#[0-9a-f]{6}$/i.test(customValue)}</pre>
+    </li>
+    <li id="L362">
+      <pre>                          disabledReason=&quot;请输入#RRGGBB颜色&quot;</pre>
+    </li>
+    <li id="L363"><pre>                          onClick={() =&gt; {</pre></li>
+    <li id="L364"><pre>                            update({</pre></li>
+    <li id="L365">
+      <pre>
+                              colors: { ...draft.colors, [customKey]: customValue.toUpperCase() },</pre>
+    </li>
+    <li id="L366"><pre>                            })</pre></li>
+    <li id="L367"><pre>                            close()</pre></li>
+    <li id="L368"><pre>                          }}</pre></li>
+    <li id="L369"><pre>                        &gt;</pre></li>
+    <li id="L370"><pre>                          设置颜色</pre></li>
+    <li id="L371"><pre>                        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L372"><pre>                      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L373"><pre>                    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L374"><pre>                  )}</pre></li>
+    <li id="L375"><pre>                /&gt;</pre></li>
+    <li id="L376"><pre>              &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L377"><pre>            &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L378"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L379"><pre>        ) : (</pre></li>
+    <li id="L380">
+      <pre>
+          &lt;ToolbarMenuNote&gt;原件没有可用主题资源，无法应用主题。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L381"><pre>        )}</pre></li>
+    <li id="L382"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L383"><pre>      &lt;div className=&quot;mimir-pptx-theme__footer&quot;&gt;</pre></li>
+    <li id="L384">
+      <pre>
+        &lt;div className=&quot;mimir-pptx-theme__draft&quot; aria-live=&quot;polite&quot;&gt;</pre>
+    </li>
+    <li id="L385"><pre>          &lt;ThemePreview theme={draft} /&gt;</pre></li>
+    <li id="L386"><pre>          &lt;span&gt;</pre></li>
+    <li id="L387"><pre>            {selectedPreset?.label ?? &#x27;自定义&#x27;}</pre></li>
+    <li id="L388"><pre>            &lt;small&gt;</pre></li>
+    <li id="L389">
+      <pre>
+              {busy ? &#x27;正在应用…&#x27; : unchanged ? &#x27;与当前主题一致&#x27; : &#x27;待应用&#x27;}</pre>
+    </li>
+    <li id="L390"><pre>              &lt;span&gt;</pre></li>
+    <li id="L391">
+      <pre>
+                {draft.majorFont || &#x27;保留标题字体&#x27;} / {draft.minorFont || &#x27;保留正文字体&#x27;}</pre>
+    </li>
+    <li id="L392"><pre>              &lt;/span&gt;</pre></li>
+    <li id="L393"><pre>            &lt;/small&gt;</pre></li>
+    <li id="L394"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L395"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L396"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L397">
+      <pre>
+          &lt;p role=&quot;alert&quot; className=&quot;mimir-pptx-theme__error&quot;&gt;</pre>
+    </li>
+    <li id="L398"><pre>            {error}</pre></li>
+    <li id="L399"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L400"><pre>        )}</pre></li>
+    <li id="L401"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L402"><pre>          label=&quot;应用整份主题&quot;</pre></li>
+    <li id="L403"><pre>          primary</pre></li>
+    <li id="L404"><pre>          disabled={busy || !source || invalid || unchanged}</pre></li>
+    <li id="L405"><pre>          disabledReason={</pre></li>
+    <li id="L406"><pre>            busy</pre></li>
+    <li id="L407"><pre>              ? &#x27;正在应用修改&#x27;</pre></li>
+    <li id="L408"><pre>              : !source</pre></li>
+    <li id="L409"><pre>                ? &#x27;原件没有可用主题资源&#x27;</pre></li>
+    <li id="L410"><pre>                : invalid</pre></li>
+    <li id="L411"><pre>                  ? &#x27;主题须有名称，颜色使用#RRGGBB&#x27;</pre></li>
+    <li id="L412"><pre>                  : &#x27;与当前主题一致&#x27;</pre></li>
+    <li id="L413"><pre>          }</pre></li>
+    <li id="L414"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L415"><pre>        &gt;</pre></li>
+    <li id="L416"><pre>          &lt;Palette size={14} aria-hidden=&quot;true&quot; /&gt;</pre></li>
+    <li id="L417"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L418"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L419"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L420"><pre>  )</pre></li>
+    <li id="L421"><pre>}</pre></li>
+    <li id="L422"><pre></pre></li>
+    <li id="L423">
+      <pre>
+export function PptxHeaderFooterControls({ slide, apply }: { slide: Slide; apply: PptxApply }) {</pre>
+    </li>
+    <li id="L424"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L425"><pre>  const get = (type: string) =&gt;</pre></li>
+    <li id="L426"><pre>    slide.elements.find(</pre></li>
+    <li id="L427"><pre>      (element) =&gt;</pre></li>
+    <li id="L428">
+      <pre>
+        (element.type === &#x27;shape&#x27; || element.type === &#x27;text&#x27;) &amp;&amp; element.placeholder === type,</pre>
+    </li>
+    <li id="L429"><pre>    )</pre></li>
+    <li id="L430"><pre>  const read = (type: string) =&gt; {</pre></li>
+    <li id="L431"><pre>    const el = get(type)</pre></li>
+    <li id="L432">
+      <pre>
+    return el &amp;&amp; (el.type === &#x27;shape&#x27; || el.type === &#x27;text&#x27;)</pre>
+    </li>
+    <li id="L433">
+      <pre>
+      ? (el.text?.paragraphs.map((p) =&gt; p.runs.map((r) =&gt; r.text).join(&#x27;&#x27;)).join(&#x27;\n&#x27;) ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L434"><pre>      : &#x27;&#x27;</pre></li>
+    <li id="L435"><pre>  }</pre></li>
+    <li id="L436"><pre>  const [footer, setFooter] = useState(read(&#x27;ftr&#x27;))</pre></li>
+    <li id="L437"><pre>  const [date, setDate] = useState(read(&#x27;dt&#x27;))</pre></li>
+    <li id="L438">
+      <pre>  const [number, setNumber] = useState(Boolean(get(&#x27;sldNum&#x27;)))</pre>
+    </li>
+    <li id="L439">
+      <pre>
+  const [auto, setAuto] = useState(/type=&quot;datetime/.test(get(&#x27;dt&#x27;)?.anchor.originalXml ?? &#x27;&#x27;))</pre>
+    </li>
+    <li id="L440"><pre>  return (</pre></li>
+    <li id="L441"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L442"><pre>      &lt;ToolbarMenuFields label=&quot;页脚、日期与页码&quot;&gt;</pre></li>
+    <li id="L443">
+      <pre>
+        &lt;ToolbarMenuNote&gt;当前值取本页占位符。应用将更新所有幻灯片。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L444">
+      <pre>
+        &lt;ToolbarTextField label=&quot;页脚文字&quot; value={footer} onChange={setFooter} /&gt;</pre>
+    </li>
+    <li id="L445">
+      <pre>
+        &lt;ToolbarTextField label=&quot;页脚日期&quot; value={date} onChange={setDate} /&gt;</pre>
+    </li>
+    <li id="L446"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L447"><pre>          label=&quot;自动日期&quot;</pre></li>
+    <li id="L448"><pre>          disabled={busy}</pre></li>
+    <li id="L449"><pre>          value={String(auto)}</pre></li>
+    <li id="L450"><pre>          options={[</pre></li>
+    <li id="L451">
+      <pre>            { value: &#x27;false&#x27;, label: &#x27;使用输入日期&#x27; },</pre>
+    </li>
+    <li id="L452">
+      <pre>            { value: &#x27;true&#x27;, label: &#x27;使用当前日期字段&#x27; },</pre>
+    </li>
+    <li id="L453"><pre>          ]}</pre></li>
+    <li id="L454">
+      <pre>          onChange={(value) =&gt; setAuto(value === &#x27;true&#x27;)}</pre>
+    </li>
+    <li id="L455"><pre>        /&gt;</pre></li>
+    <li id="L456"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L457"><pre>          label=&quot;显示幻灯片页码&quot;</pre></li>
+    <li id="L458"><pre>          disabled={busy}</pre></li>
+    <li id="L459"><pre>          value={String(number)}</pre></li>
+    <li id="L460"><pre>          options={[</pre></li>
+    <li id="L461">
+      <pre>            { value: &#x27;false&#x27;, label: &#x27;不显示&#x27; },</pre>
+    </li>
+    <li id="L462"><pre>            { value: &#x27;true&#x27;, label: &#x27;显示&#x27; },</pre></li>
+    <li id="L463"><pre>          ]}</pre></li>
+    <li id="L464">
+      <pre>          onChange={(value) =&gt; setNumber(value === &#x27;true&#x27;)}</pre>
+    </li>
+    <li id="L465"><pre>        /&gt;</pre></li>
+    <li id="L466"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L467"><pre>          label=&quot;应用所有幻灯片页脚&quot;</pre></li>
+    <li id="L468"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L469"><pre>            void run({</pre></li>
+    <li id="L470"><pre>              op: &#x27;applyHeaderFooter&#x27;,</pre></li>
+    <li id="L471"><pre>              settings: {</pre></li>
+    <li id="L472"><pre>                footer: footer || null,</pre></li>
+    <li id="L473"><pre>                date: date || null,</pre></li>
+    <li id="L474"><pre>                dateAuto: auto,</pre></li>
+    <li id="L475"><pre>                slideNum: number,</pre></li>
+    <li id="L476"><pre>              },</pre></li>
+    <li id="L477"><pre>            })</pre></li>
+    <li id="L478"><pre>          }</pre></li>
+    <li id="L479"><pre>        &gt;</pre></li>
+    <li id="L480"><pre>          应用所有页</pre></li>
+    <li id="L481"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L482"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L483"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L484"><pre>  )</pre></li>
+    <li id="L485"><pre>}</pre></li>
+    <li id="L486"><pre></pre></li>
+    <li id="L487"><pre>export function PptxReviewControls({</pre></li>
+    <li id="L488"><pre>  metadata,</pre></li>
+    <li id="L489"><pre>  index,</pre></li>
+    <li id="L490"><pre>  count,</pre></li>
+    <li id="L491"><pre>  apply,</pre></li>
+    <li id="L492"><pre>}: {</pre></li>
+    <li id="L493"><pre>  metadata: PptxMetadata</pre></li>
+    <li id="L494"><pre>  index: number</pre></li>
+    <li id="L495"><pre>  count: number</pre></li>
+    <li id="L496"><pre>  apply: PptxApply</pre></li>
+    <li id="L497"><pre>}) {</pre></li>
+    <li id="L498"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L499"><pre>  const [name, setName] = useState(&#x27;新分节&#x27;)</pre></li>
+    <li id="L500"><pre>  const [sectionId, setSection] = useState(</pre></li>
+    <li id="L501">
+      <pre>
+    metadata.sections.find((section) =&gt; section.slideIndices.includes(index))?.id ??</pre>
+    </li>
+    <li id="L502"><pre>      metadata.sections[0]?.id ??</pre></li>
+    <li id="L503"><pre>      &#x27;&#x27;,</pre></li>
+    <li id="L504"><pre>  )</pre></li>
+    <li id="L505">
+      <pre>  const section = metadata.sections.find((item) =&gt; item.id === sectionId)</pre>
+    </li>
+    <li id="L506">
+      <pre>  const [rename, setRename] = useState(section?.name ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L507">
+      <pre>  const [first, setFirst] = useState(section?.slideIndices[0] ?? 0)</pre>
+    </li>
+    <li id="L508">
+      <pre>  const [last, setLast] = useState(section?.slideIndices.at(-1) ?? 0)</pre>
+    </li>
+    <li id="L509">
+      <pre>  const at = metadata.sections.findIndex((item) =&gt; item.id === sectionId)</pre>
+    </li>
+    <li id="L510"><pre>  const applyRange = () =&gt;</pre></li>
+    <li id="L511"><pre>    void run({</pre></li>
+    <li id="L512"><pre>      op: &#x27;setSections&#x27;,</pre></li>
+    <li id="L513"><pre>      sections: metadata.sections.map((item) =&gt;</pre></li>
+    <li id="L514"><pre>        item.id === sectionId</pre></li>
+    <li id="L515"><pre>          ? {</pre></li>
+    <li id="L516"><pre>              ...item,</pre></li>
+    <li id="L517"><pre>              name: rename || item.name,</pre></li>
+    <li id="L518">
+      <pre>
+              slideIndices: Array.from({ length: last - first + 1 }, (_, offset) =&gt; first + offset),</pre>
+    </li>
+    <li id="L519"><pre>            }</pre></li>
+    <li id="L520"><pre>          : item,</pre></li>
+    <li id="L521"><pre>      ),</pre></li>
+    <li id="L522"><pre>    })</pre></li>
+    <li id="L523"><pre>  return (</pre></li>
+    <li id="L524"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L525"><pre>      &lt;ToolbarMenuFields label=&quot;演示文稿分节&quot;&gt;</pre></li>
+    <li id="L526">
+      <pre>
+        &lt;ToolbarTextField label=&quot;新分节名称&quot; value={name} onChange={setName} /&gt;</pre>
+    </li>
+    <li id="L527"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L528"><pre>          label=&quot;从当前页添加分节&quot;</pre></li>
+    <li id="L529"><pre>          disabled={!name.trim()}</pre></li>
+    <li id="L530"><pre>          disabledReason=&quot;请输入分节名称&quot;</pre></li>
+    <li id="L531">
+      <pre>
+          onClick={() =&gt; void run({ op: &#x27;addSection&#x27;, atSlideIndex: index, name })}</pre>
+    </li>
+    <li id="L532"><pre>        &gt;</pre></li>
+    <li id="L533"><pre>          从当前页分节</pre></li>
+    <li id="L534"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L535"><pre>        {metadata.sections.length &gt; 0 ? (</pre></li>
+    <li id="L536"><pre>          &lt;&gt;</pre></li>
+    <li id="L537"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L538"><pre>              label=&quot;选择分节&quot;</pre></li>
+    <li id="L539"><pre>              disabled={busy}</pre></li>
+    <li id="L540"><pre>              value={sectionId}</pre></li>
+    <li id="L541"><pre>              options={metadata.sections.map((item) =&gt; ({</pre></li>
+    <li id="L542"><pre>                value: item.id,</pre></li>
+    <li id="L543">
+      <pre>
+                label: `${item.name}（${item.slideIndices.map((i) =&gt; i + 1).join(&#x27;、&#x27;)}页）`,</pre>
+    </li>
+    <li id="L544"><pre>              }))}</pre></li>
+    <li id="L545"><pre>              onChange={(value) =&gt; {</pre></li>
+    <li id="L546"><pre>                setSection(value)</pre></li>
+    <li id="L547">
+      <pre>                const next = metadata.sections.find((item) =&gt; item.id === value)</pre>
+    </li>
+    <li id="L548"><pre>                setRename(next?.name ?? &#x27;&#x27;)</pre></li>
+    <li id="L549"><pre>                setFirst(next?.slideIndices[0] ?? 0)</pre></li>
+    <li id="L550"><pre>                setLast(next?.slideIndices.at(-1) ?? 0)</pre></li>
+    <li id="L551"><pre>              }}</pre></li>
+    <li id="L552"><pre>            /&gt;</pre></li>
+    <li id="L553">
+      <pre>
+            &lt;ToolbarTextField label=&quot;分节名称&quot; value={rename} onChange={setRename} /&gt;</pre>
+    </li>
+    <li id="L554"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L555"><pre>              label=&quot;重命名分节&quot;</pre></li>
+    <li id="L556"><pre>              disabled={!section || !rename.trim()}</pre></li>
+    <li id="L557"><pre>              disabledReason=&quot;请选择分节并输入名称&quot;</pre></li>
+    <li id="L558">
+      <pre>
+              onClick={() =&gt; void run({ op: &#x27;renameSection&#x27;, id: sectionId, name: rename })}</pre>
+    </li>
+    <li id="L559"><pre>            &gt;</pre></li>
+    <li id="L560"><pre>              重命名</pre></li>
+    <li id="L561"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L562"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L563"><pre>              label=&quot;分节上移&quot;</pre></li>
+    <li id="L564"><pre>              disabled={at &lt;= 0}</pre></li>
+    <li id="L565"><pre>              disabledReason=&quot;已是第一个分节&quot;</pre></li>
+    <li id="L566">
+      <pre>
+              onClick={() =&gt; void run({ op: &#x27;moveSection&#x27;, id: sectionId, dir: &#x27;up&#x27; })}</pre>
+    </li>
+    <li id="L567"><pre>            &gt;</pre></li>
+    <li id="L568"><pre>              分节上移</pre></li>
+    <li id="L569"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L570"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L571"><pre>              label=&quot;分节下移&quot;</pre></li>
+    <li id="L572">
+      <pre>              disabled={at &lt; 0 || at &gt;= metadata.sections.length - 1}</pre>
+    </li>
+    <li id="L573"><pre>              disabledReason=&quot;已是最后一个分节&quot;</pre></li>
+    <li id="L574">
+      <pre>
+              onClick={() =&gt; void run({ op: &#x27;moveSection&#x27;, id: sectionId, dir: &#x27;down&#x27; })}</pre>
+    </li>
+    <li id="L575"><pre>            &gt;</pre></li>
+    <li id="L576"><pre>              分节下移</pre></li>
+    <li id="L577"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L578"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L579"><pre>              label=&quot;分节起始页&quot;</pre></li>
+    <li id="L580"><pre>              value={first + 1}</pre></li>
+    <li id="L581"><pre>              min={1}</pre></li>
+    <li id="L582"><pre>              max={count}</pre></li>
+    <li id="L583"><pre>              onCommit={(value) =&gt; setFirst(value - 1)}</pre></li>
+    <li id="L584"><pre>            /&gt;</pre></li>
+    <li id="L585"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L586"><pre>              label=&quot;分节结束页&quot;</pre></li>
+    <li id="L587"><pre>              value={last + 1}</pre></li>
+    <li id="L588"><pre>              min={1}</pre></li>
+    <li id="L589"><pre>              max={count}</pre></li>
+    <li id="L590"><pre>              onCommit={(value) =&gt; setLast(value - 1)}</pre></li>
+    <li id="L591"><pre>            /&gt;</pre></li>
+    <li id="L592">
+      <pre>
+            &lt;ToolbarMenuNote&gt;分节按连续页范围组织；范围不得与其他分节重叠。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L593"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L594"><pre>              label=&quot;更新分节范围&quot;</pre></li>
+    <li id="L595"><pre>              disabled={</pre></li>
+    <li id="L596"><pre>                !section ||</pre></li>
+    <li id="L597"><pre>                first &gt; last ||</pre></li>
+    <li id="L598"><pre>                metadata.sections.some(</pre></li>
+    <li id="L599"><pre>                  (item) =&gt;</pre></li>
+    <li id="L600">
+      <pre>
+                    item.id !== sectionId &amp;&amp; item.slideIndices.some((i) =&gt; i &gt;= first &amp;&amp; i &lt;= last),</pre>
+    </li>
+    <li id="L601"><pre>                )</pre></li>
+    <li id="L602"><pre>              }</pre></li>
+    <li id="L603"><pre>              disabledReason=&quot;选择不重叠的连续页范围&quot;</pre></li>
+    <li id="L604"><pre>              onClick={applyRange}</pre></li>
+    <li id="L605"><pre>            &gt;</pre></li>
+    <li id="L606"><pre>              更新范围</pre></li>
+    <li id="L607"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L608"><pre>            &lt;ToolbarConfirm</pre></li>
+    <li id="L609"><pre>              title=&quot;移除此分节？&quot;</pre></li>
+    <li id="L610"><pre>              description=&quot;分节中的幻灯片会保留。&quot;</pre></li>
+    <li id="L611"><pre>              confirmLabel=&quot;移除分节&quot;</pre></li>
+    <li id="L612">
+      <pre>
+              onConfirm={() =&gt; void run({ op: &#x27;removeSection&#x27;, id: sectionId })}</pre>
+    </li>
+    <li id="L613"><pre>            &gt;</pre></li>
+    <li id="L614">
+      <pre>
+              &lt;ToolbarButton label=&quot;移除分节&quot;&gt;移除分节&lt;/ToolbarButton&gt;</pre>
+    </li>
+    <li id="L615"><pre>            &lt;/ToolbarConfirm&gt;</pre></li>
+    <li id="L616"><pre>          &lt;/&gt;</pre></li>
+    <li id="L617"><pre>        ) : (</pre></li>
+    <li id="L618">
+      <pre>          &lt;ToolbarMenuNote&gt;当前演示文稿尚未分节。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L619"><pre>        )}</pre></li>
+    <li id="L620"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L621"><pre>      &lt;PptxCommentControls</pre></li>
+    <li id="L622"><pre>        metadata={metadata}</pre></li>
+    <li id="L623"><pre>        index={index}</pre></li>
+    <li id="L624"><pre>        apply={apply}</pre></li>
+    <li id="L625"><pre>        embedded</pre></li>
+    <li id="L626"><pre>        disabled={busy}</pre></li>
+    <li id="L627"><pre>      /&gt;</pre></li>
+    <li id="L628"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L629"><pre>  )</pre></li>
+    <li id="L630"><pre>}</pre></li>
+  </ol>
+</html>

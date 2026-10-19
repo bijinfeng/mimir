@@ -1,0 +1,314 @@
+Where are the menus and toolbars? | Microsoft Support
+Skip to main content
+Microsoft
+Support
+Support
+Support
+Home
+Microsoft 365
+Office
+Products
+Microsoft 365
+Outlook
+Microsoft Teams
+OneDrive
+Microsoft Copilot
+OneNote
+Windows
+more ...
+Devices
+Surface
+PC Accessories
+Xbox
+PC Gaming
+HoloLens
+Surface Hub
+Hardware warranties
+Account & billing
+Resources
+Community forums
+Microsoft 365 Admins
+Developer
+Education
+Report a support scam
+Product safety
+More
+Buy Microsoft 365
+All Microsoft
+Global
+Microsoft 365
+Azure
+Copilot
+Windows
+Surface
+XBOX
+Deals
+Small Business
+Support
+Software
+Software
+Windows Apps
+Outlook
+OneDrive
+Microsoft Teams
+OneNote
+Microsoft Edge
+Moving from Skype to Teams
+PCs & Devices
+PCs & Devices
+Computers
+Shop XBOX
+Accessories
+VR & mixed reality
+Certified Refurbished
+Trade-in for cash
+Entertainment
+Entertainment
+XBOX Game Pass Ultimate
+PC Game Pass
+XBOX games
+PC games
+Business
+Business
+Microsoft AI
+Microsoft Security
+Dynamics 365
+Microsoft 365 for business
+Microsoft Power Platform
+Windows 365
+Small Business
+Digital Sovereignty
+Developer & IT
+Developer & IT
+Azure
+Microsoft Developer
+Microsoft Learn
+Support for AI marketplace apps
+Microsoft Tech Community
+Microsoft Marketplace
+Software companies
+Visual Studio
+Other
+Other
+Microsoft Rewards
+Free downloads & security
+Education
+Gift cards
+Licensing
+Unlocked stories
+View Sitemap
+Search
+Search for help
+No results
+Cancel
+Sign in
+Sign in with Microsoft
+Sign in or create an account.
+Hello,
+Select a different account.
+You have multiple accounts
+Choose the account you want to sign in with.
+Where are the menus and toolbars?
+Applies To
+PowerPoint for Microsoft 365
+PowerPoint 2024
+PowerPoint 2021
+PowerPoint 2019
+PowerPoint 2016
+Get help with Copilot
+Where are the menus and toolbars?
+How do I get more out of ink replay visible on the ribbon?
+How should I customize the ribbon?
+Even though more recent versions of PowerPoint look quite different than earlier versions, the commands and functions that you're used to are still here. They're all now in the
+ribbon
+, which is a kind of menu that organizes them in a visual way.
+Let's first look at how the ribbon works, and then how to find where the features you want might be.
+How do you work with the ribbon?
+When you open a PowerPoint document, the ribbon appears as a row of labels, or what we call
+tabs
+.
+When you go to a tab, the ribbon for that tab opens and you can see the tools and functions that were formerly in menus and toolbars in earlier versions of PowerPoint.
+When you see a feature with an arrow
+, you can click it to get more information or options.
+You might also notice dialog launchers
+at the corner of some of the ribbon's groups—like in the Clipboard and Font groups. Select those to open the dialog box related to that function. For example, the launcher on the
+Font
+group opens the
+Font
+box, where you set effects such as strikethrough, superscript, or character spacing.
+What's on the ribbon tabs?
+The ribbon tabs group tools and features together based on their purpose. For example, to make your slides look better, look for options on the
+Design
+tab. The tools that you use to animate things on your slide would be on the
+Animations
+tab.
+Here's a look at what you'll find in each of the PowerPoint ribbon tabs.
+Home
+The Home tab holds the
+Cut
+and
+Paste
+features,
+Font
+and
+Paragraph
+options, and what you need to add and organize slides.
+Insert
+Select
+Insert
+to add something to a slide. This includes pictures, shapes, charts, links, text boxes, video and more.
+Draw
+The
+Draw
+tab provides tools draw and use ink on your slides. This includes pens, eraser, ruler, ink to shape and in to math conversions, selection, and more.
+Design
+On the
+Design
+tab, you can add a theme or color scheme, or format the slide background.
+Transitions
+Set up how your slides change from one to the next on the
+Transitions
+tab. Find a gallery of the possible transitions in the
+Transition to This Slide
+group – click
+More
+at the side of the gallery to see all of them.
+Animations
+Use the
+Animations
+tab to choreograph the movement of things on your slides. Note that you can see many possible animations in the gallery in the Animation group, and see more of them by clicking
+More
+.
+Slide Show
+On the
+Slide Show
+tab, set up the way that you want to show your presentation to others.
+Record
+On the Record tab  set up recording audio and video of the presentation, exporting as video or saving as a show, and adding a cameo of you on camera.
+Review
+The
+Review
+tab lets you add comments, run spell-check, or compare one presentation with another (such as an earlier version).
+View
+Views allow you to look at your presentation in different ways, depending on where you are in the creation or delivery process.
+File
+At one end of the ribbon is the
+File
+tab, used for the behind-the-scenes file stuff, such as opening, saving, sharing, exporting, printing and managing your presentation. Click the
+File
+tab to open a new view called the Backstage. Select Back
+to return to the presentation that you were working on.
+Contextual tabs
+When you select certain items on a slide—such as a picture, shape, SmartArt graphic or text box—an additional tab temporarily appears.
+For example, when a shape or text box is selected the
+Shape Format
+tab appears. If you select a picture, the
+Picture Format
+tab appears. Other such tabs include
+SmartArt Design
+and
+Format
+,
+Chart design
+and
+Format
+, or
+Table Design
+and
+Table Layout
+. To save space on the ribbon, these tabs are only visible while a corresponding item is selected on the slide.
+Was this information helpful?
+Yes
+No
+Thank you! Any more feedback for Microsoft?
+Can you help us improve?
+(Send feedback to Microsoft so we can help.)
+What affected your experience?
+Resolved my issue
+Clear instructions
+Easy to follow
+No jargon
+Pictures helped
+Other
+Didn't match my screen
+Incorrect instructions
+Too technical
+Not enough information
+Not enough pictures
+Other
+Any additional feedback? (Optional)
+Submit feedback
+By pressing submit, your feedback will be used to improve Microsoft products and services.
+Your IT admin will be able to collect this data.
+Privacy Statement.
+Thank you for your feedback!
+×
+What's new
+Surface Laptop Ultra
+Surface Pro
+Surface Laptop
+Surface RTX Spark Dev Box
+Explore Copilot
+Explore Microsoft products
+Windows 11 apps
+Microsoft Store
+Account profile
+Download Center
+Microsoft Store support
+Returns
+Order tracking
+Certified Refurbished
+Why buy from Microsoft Store
+Flexible Payments
+Education
+Microsoft in education
+Devices for education
+Microsoft Teams for Education
+Microsoft 365 Education
+How to buy for your school
+Educator training and development
+Deals for students and parents
+AI for education
+Business
+Microsoft AI
+Microsoft Security
+Dynamics 365
+Microsoft 365
+Microsoft Power Platform
+Microsoft Teams
+Microsoft Copilot
+Small Business
+Developer & IT
+Azure
+Microsoft Developer
+Microsoft Learn
+Support for AI marketplace apps
+Microsoft Tech Community
+Microsoft Marketplace
+Software companies
+Visual Studio
+Company
+Careers
+About Microsoft
+Company news
+Privacy at Microsoft
+Investors
+Diversity and inclusion
+Accessibility
+Sustainability
+English (United States)
+Your Privacy Choices Opt-Out Icon
+Your Privacy Choices
+Your Privacy Choices Opt-Out Icon
+Your Privacy Choices
+Consumer Health Privacy
+Sitemap
+Contact Microsoft
+Privacy
+Manage cookies
+Terms of use
+Trademarks
+Safety & eco
+Recycling
+About our ads
+© Microsoft 2026

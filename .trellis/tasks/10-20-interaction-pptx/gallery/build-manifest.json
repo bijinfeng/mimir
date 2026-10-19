@@ -1,0 +1,241 @@
+{
+  "baseline": "3b5d912",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-pptx-baseline-3b5d912",
+      "sourceManifest": "dist/before/source-manifest.json",
+      "headAtBuild": "3b5d9121396201325955111cb7f02bcb3a0eb119",
+      "aggregateSha256": "bb344c856172eae08366650c521210cb05a3db607f93e14290bf1f837dc4705b",
+      "files": [
+        {
+          "path": "LICENSE-GenOffice.txt",
+          "bytes": 11345,
+          "sha256": "68e32334df324ef4fc79fad3a26487e5abac36055a484bb6c8d7ecf9d8350885"
+        },
+        {
+          "path": "assets/canvas-BRJXZk8M.png",
+          "bytes": 22995,
+          "sha256": "ffa409fdaf31695bad36751fd490b09a4a7d84fe06bbd8f935b031bcaca614b2"
+        },
+        {
+          "path": "assets/chart-BVRnfItl.pptx",
+          "bytes": 42451,
+          "sha256": "5b84ae125ecc771af94d4fbabb121d738bed5c706d965fce616e601b590adbb5"
+        },
+        {
+          "path": "assets/cork-BseXy6tu.png",
+          "bytes": 29534,
+          "sha256": "31c68ae8cc7155f1e5d850061e2e7bf8913d3b9c528dc9c16d86ffa33d427e05"
+        },
+        {
+          "path": "assets/denim-DTrT_oct.png",
+          "bytes": 29174,
+          "sha256": "dcd536be5b70c7d264124bfa0b032bb814807d3aa29ebb78468ec9ddda2470cc"
+        },
+        {
+          "path": "assets/empty-deck-Dfs_7Oqf.pptx",
+          "bytes": 27882,
+          "sha256": "5395a1930affd36c16c35a2c64523c7349e8e6b4b49281b1b522a8426626e1a7"
+        },
+        {
+          "path": "assets/formatted-text-Dyf0w0GS.pptx",
+          "bytes": 28878,
+          "sha256": "45430ae5ded03436f78e5e9d63bd56390a9a8de3618bf6861f24db3c47970781"
+        },
+        {
+          "path": "assets/granite--1xJtYY3.png",
+          "bytes": 41092,
+          "sha256": "4504f393f0c30652310373f776ce8fd195eb0f1b2643c3ae0abcc1c1af2f7010"
+        },
+        {
+          "path": "assets/groups-DvNBII79.pptx",
+          "bytes": 41644,
+          "sha256": "cff0877dd9630bc147fe6561baa64be635ab1f7b851821275a694a5c7cd14c31"
+        },
+        {
+          "path": "assets/image-deck-ClHJcK0X.pptx",
+          "bytes": 29220,
+          "sha256": "7c5759f77827b48f57792a82a8e7d224f384ba7271b8ac83b6cfa3ce72cdd4ec"
+        },
+        {
+          "path": "assets/index-BHo8YcXo.css",
+          "bytes": 86890,
+          "sha256": "3b0d93b23a577f86a50481d0898bf55a10484cc1f42373f1cdb24e2c23001d29"
+        },
+        {
+          "path": "assets/index-mLch1Xxk.js",
+          "bytes": 2746520,
+          "sha256": "083ba1f31a1625d8a45fd1f1e12822c567a619d1722061118e3544130d8b1313"
+        },
+        {
+          "path": "assets/marble-D7ttTB12.png",
+          "bytes": 9067,
+          "sha256": "0434af3f2f462731f4d81944931539733bc841665a1e6548d3c4c6152fb0539c"
+        },
+        {
+          "path": "assets/model-viewer-DFafRQjB.js",
+          "bytes": 1024105,
+          "sha256": "84390b66e85c51fe56437cec080551e21d3da557d63335e539bc659b341f85bc"
+        },
+        {
+          "path": "assets/paper-DUijYpax.png",
+          "bytes": 19394,
+          "sha256": "c91102652bf97632c2dd4e3dfc84aac3e6022e59d521557750eaed6e1944e158"
+        },
+        {
+          "path": "assets/parchment-BKiptb7w.png",
+          "bytes": 17390,
+          "sha256": "f64b05df420bf21ebcb164aca4ef39a24d5b97792686f0a5979a83d3896619d7"
+        },
+        {
+          "path": "assets/rich-CW-1XyYA.pptx",
+          "bytes": 42880,
+          "sha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+        },
+        {
+          "path": "assets/table-BMKGf3Eu.pptx",
+          "bytes": 41607,
+          "sha256": "e4b9df5fa506892f0254866d9cd929499b42ea1a3341521ffdc00bafb75722f5"
+        },
+        {
+          "path": "assets/title-layout-DRJ4_LeA.pptx",
+          "bytes": 28790,
+          "sha256": "6025c25cf082c8c14899cc5f470cfc6d1ed97e8b71beeef4cadc418c47be3b68"
+        },
+        {
+          "path": "assets/wood-D70XEBVa.png",
+          "bytes": 23402,
+          "sha256": "1f3735b67b527e90dbef8e9cc6632a1779a88019050fb87ebf77bc218c8410b8"
+        },
+        {
+          "path": "index.html",
+          "bytes": 415,
+          "sha256": "533617aedc276a82f12a041ac2684ae0b84c3d58a6639b6f168c335d1f95e556"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 43456,
+          "sha256": "44278a054da2cb2e8c0692ce0eaa31e58b7eb46ee7e2d412e54d3b3222fb3430"
+        }
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "sourceManifest": "dist/after/source-manifest.json",
+      "headAtBuild": "3b5d9121396201325955111cb7f02bcb3a0eb119",
+      "aggregateSha256": "e9632a261967e504a47d9fddee40129e433cc31b99a232ea7456b10960fd852f",
+      "files": [
+        {
+          "path": "LICENSE-GenOffice.txt",
+          "bytes": 11345,
+          "sha256": "68e32334df324ef4fc79fad3a26487e5abac36055a484bb6c8d7ecf9d8350885"
+        },
+        {
+          "path": "assets/canvas-BRJXZk8M.png",
+          "bytes": 22995,
+          "sha256": "ffa409fdaf31695bad36751fd490b09a4a7d84fe06bbd8f935b031bcaca614b2"
+        },
+        {
+          "path": "assets/chart-BVRnfItl.pptx",
+          "bytes": 42451,
+          "sha256": "5b84ae125ecc771af94d4fbabb121d738bed5c706d965fce616e601b590adbb5"
+        },
+        {
+          "path": "assets/cork-BseXy6tu.png",
+          "bytes": 29534,
+          "sha256": "31c68ae8cc7155f1e5d850061e2e7bf8913d3b9c528dc9c16d86ffa33d427e05"
+        },
+        {
+          "path": "assets/denim-DTrT_oct.png",
+          "bytes": 29174,
+          "sha256": "dcd536be5b70c7d264124bfa0b032bb814807d3aa29ebb78468ec9ddda2470cc"
+        },
+        {
+          "path": "assets/empty-deck-Dfs_7Oqf.pptx",
+          "bytes": 27882,
+          "sha256": "5395a1930affd36c16c35a2c64523c7349e8e6b4b49281b1b522a8426626e1a7"
+        },
+        {
+          "path": "assets/formatted-text-Dyf0w0GS.pptx",
+          "bytes": 28878,
+          "sha256": "45430ae5ded03436f78e5e9d63bd56390a9a8de3618bf6861f24db3c47970781"
+        },
+        {
+          "path": "assets/granite--1xJtYY3.png",
+          "bytes": 41092,
+          "sha256": "4504f393f0c30652310373f776ce8fd195eb0f1b2643c3ae0abcc1c1af2f7010"
+        },
+        {
+          "path": "assets/groups-DvNBII79.pptx",
+          "bytes": 41644,
+          "sha256": "cff0877dd9630bc147fe6561baa64be635ab1f7b851821275a694a5c7cd14c31"
+        },
+        {
+          "path": "assets/image-deck-ClHJcK0X.pptx",
+          "bytes": 29220,
+          "sha256": "7c5759f77827b48f57792a82a8e7d224f384ba7271b8ac83b6cfa3ce72cdd4ec"
+        },
+        {
+          "path": "assets/index-BmJfITHu.js",
+          "bytes": 2747560,
+          "sha256": "1731c67b66f888419f4bea47e2fa0124b3d7bdabfd5eaf7640121cb19e48d055"
+        },
+        {
+          "path": "assets/index-BrOlM0KK.css",
+          "bytes": 87554,
+          "sha256": "85f5c4f5b01185506366ce0720b04aa0aebcf223a805d588e88aad447bb21a32"
+        },
+        {
+          "path": "assets/marble-D7ttTB12.png",
+          "bytes": 9067,
+          "sha256": "0434af3f2f462731f4d81944931539733bc841665a1e6548d3c4c6152fb0539c"
+        },
+        {
+          "path": "assets/model-viewer-ZiJl2OKG.js",
+          "bytes": 1024105,
+          "sha256": "916bee87794f11993edd185e005cbd06a4d3434937d3790dc2f9ff0ec27fc0cf"
+        },
+        {
+          "path": "assets/paper-DUijYpax.png",
+          "bytes": 19394,
+          "sha256": "c91102652bf97632c2dd4e3dfc84aac3e6022e59d521557750eaed6e1944e158"
+        },
+        {
+          "path": "assets/parchment-BKiptb7w.png",
+          "bytes": 17390,
+          "sha256": "f64b05df420bf21ebcb164aca4ef39a24d5b97792686f0a5979a83d3896619d7"
+        },
+        {
+          "path": "assets/rich-CW-1XyYA.pptx",
+          "bytes": 42880,
+          "sha256": "71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba"
+        },
+        {
+          "path": "assets/table-BMKGf3Eu.pptx",
+          "bytes": 41607,
+          "sha256": "e4b9df5fa506892f0254866d9cd929499b42ea1a3341521ffdc00bafb75722f5"
+        },
+        {
+          "path": "assets/title-layout-DRJ4_LeA.pptx",
+          "bytes": 28790,
+          "sha256": "6025c25cf082c8c14899cc5f470cfc6d1ed97e8b71beeef4cadc418c47be3b68"
+        },
+        {
+          "path": "assets/wood-D70XEBVa.png",
+          "bytes": 23402,
+          "sha256": "1f3735b67b527e90dbef8e9cc6632a1779a88019050fb87ebf77bc218c8410b8"
+        },
+        {
+          "path": "index.html",
+          "bytes": 415,
+          "sha256": "4abc5d85267c64ca70c31aebef88af760e76fe49bd4795319761ed2439350117"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 43455,
+          "sha256": "9f501e097e49b3d989374e461d289004d6de9dc6357d5f617802c2fd51a3b43e"
+        }
+      ]
+    }
+  }
+}

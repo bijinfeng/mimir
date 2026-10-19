@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxDeckWritingPreview.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxDeckWritingPreview.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 e59f491d42ad931571f9b5aeea4d8adb5cddc05dec2e2b7dbf5d3bed24acafeb
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type RefObject } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>
+import { PptxDeckStreamError, type PptxDeckCheckpoint, type PptxDeckProgress } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>import { openPptxForEdit, type PptxEditSession } from &#x27;../pptx.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>import type { PptxHostApply } from &#x27;../agent/pptx-agent.js&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>import { renderSlide, type PptxRenderable } from &#x27;../pptx-render.js&#x27;</pre>
+    </li>
+    <li id="L6"><pre>import { ToolbarButton } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L7"><pre>import &#x27;./pptx-deck-writing.css&#x27;</pre></li>
+    <li id="L8"><pre></pre></li>
+    <li id="L9"><pre>export interface PptxDeckWritingDraft {</pre></li>
+    <li id="L10"><pre>  generationId: string</pre></li>
+    <li id="L11"><pre>  progress?: PptxDeckProgress</pre></li>
+    <li id="L12"><pre>  preview?: PptxRenderable</pre></li>
+    <li id="L13"><pre>  generating: boolean</pre></li>
+    <li id="L14"><pre>  error?: string</pre></li>
+    <li id="L15"><pre>  stale: boolean</pre></li>
+    <li id="L16"><pre>  stop(): void</pre></li>
+    <li id="L17"><pre>  discard(): void</pre></li>
+    <li id="L18"><pre>  keep?: () =&gt; void</pre></li>
+    <li id="L19"><pre>}</pre></li>
+    <li id="L20">
+      <pre>
+/** Local Stop cancels transport only. The handle&#x27;s outer signal still invalidates the source. */</pre>
+    </li>
+    <li id="L21"><pre>export function usePptxDeckWriting(</pre></li>
+    <li id="L22"><pre>  host: RefObject&lt;PptxHostApply | undefined&gt;,</pre></li>
+    <li id="L23"><pre>  session: PptxEditSession | null,</pre></li>
+    <li id="L24"><pre>  documentId: string,</pre></li>
+    <li id="L25"><pre>  version: number,</pre></li>
+    <li id="L26"><pre>) {</pre></li>
+    <li id="L27"><pre>  const [draft, setDraft] = useState&lt;</pre></li>
+    <li id="L28"><pre>    | (PptxDeckWritingDraft &amp; {</pre></li>
+    <li id="L29"><pre>        session: PptxEditSession</pre></li>
+    <li id="L30"><pre>        documentId: string</pre></li>
+    <li id="L31"><pre>        sourceVersion: number</pre></li>
+    <li id="L32"><pre>      })</pre></li>
+    <li id="L33"><pre>    | null</pre></li>
+    <li id="L34"><pre>  &gt;(null)</pre></li>
+    <li id="L35"><pre>  const active = useRef&lt;{</pre></li>
+    <li id="L36"><pre>    session: PptxEditSession</pre></li>
+    <li id="L37"><pre>    documentId: string</pre></li>
+    <li id="L38"><pre>    version: number</pre></li>
+    <li id="L39"><pre>    cancel: () =&gt; void</pre></li>
+    <li id="L40"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L41"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L42"><pre>    if (</pre></li>
+    <li id="L43"><pre>      active.current &amp;&amp;</pre></li>
+    <li id="L44">
+      <pre>      (active.current.session !== session || active.current.version !== version)</pre>
+    </li>
+    <li id="L45"><pre>    )</pre></li>
+    <li id="L46"><pre>      active.current.cancel()</pre></li>
+    <li id="L47"><pre>  }, [session, version])</pre></li>
+    <li id="L48"><pre>  useEffect(</pre></li>
+    <li id="L49"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L50">
+      <pre>
+      if (active.current?.session === session &amp;&amp; active.current.documentId === documentId) {</pre>
+    </li>
+    <li id="L51"><pre>        active.current.cancel()</pre></li>
+    <li id="L52"><pre>        active.current = null</pre></li>
+    <li id="L53"><pre>      }</pre></li>
+    <li id="L54"><pre>    },</pre></li>
+    <li id="L55"><pre>    [session, documentId],</pre></li>
+    <li id="L56"><pre>  )</pre></li>
+    <li id="L57"><pre>  const apply = useCallback&lt;PptxHostApply&gt;(</pre></li>
+    <li id="L58"><pre>    async (request) =&gt; {</pre></li>
+    <li id="L59">
+      <pre>      if (!host.current) throw new Error(&#x27;PPTX 宿主执行器未配置&#x27;)</pre>
+    </li>
+    <li id="L60">
+      <pre>
+      if (request.action !== &#x27;generate_deck&#x27;) return host.current(request)</pre>
+    </li>
+    <li id="L61">
+      <pre>
+      if (!session || active.current) throw new Error(&#x27;请先保留或丢弃现有生成草稿&#x27;)</pre>
+    </li>
+    <li id="L62"><pre>      const controller = new AbortController()</pre></li>
+    <li id="L63"><pre>      const signal = request.signal</pre></li>
+    <li id="L64"><pre>      let resolvePartial: ((keep: boolean) =&gt; void) | undefined</pre></li>
+    <li id="L65"><pre>      let discarded = false</pre></li>
+    <li id="L66"><pre>      let candidate: PptxDeckCheckpoint | undefined</pre></li>
+    <li id="L67"><pre>      let progress: PptxDeckProgress | undefined</pre></li>
+    <li id="L68"><pre>      let preview: PptxRenderable | undefined</pre></li>
+    <li id="L69"><pre>      const generationId = crypto.randomUUID()</pre></li>
+    <li id="L70"><pre>      const current = () =&gt;</pre></li>
+    <li id="L71"><pre>        active.current === operation &amp;&amp;</pre></li>
+    <li id="L72"><pre>        !signal?.aborted &amp;&amp;</pre></li>
+    <li id="L73"><pre>        session.version() === request.expectedVersion</pre></li>
+    <li id="L74"><pre>      const stop = () =&gt; controller.abort()</pre></li>
+    <li id="L75"><pre>      const discard = () =&gt; {</pre></li>
+    <li id="L76"><pre>        discarded = true</pre></li>
+    <li id="L77"><pre>        setDraft((currentDraft) =&gt;</pre></li>
+    <li id="L78">
+      <pre>          currentDraft?.generationId === generationId ? null : currentDraft,</pre>
+    </li>
+    <li id="L79"><pre>        )</pre></li>
+    <li id="L80"><pre>        controller.abort()</pre></li>
+    <li id="L81"><pre>        resolvePartial?.(false)</pre></li>
+    <li id="L82"><pre>      }</pre></li>
+    <li id="L83">
+      <pre>
+      const operation = { session, documentId, version: request.expectedVersion, cancel: discard }</pre>
+    </li>
+    <li id="L84"><pre>      active.current = operation</pre></li>
+    <li id="L85"><pre>      const abort = () =&gt; discard()</pre></li>
+    <li id="L86">
+      <pre>      signal?.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre>
+    </li>
+    <li id="L87"><pre>      if (signal?.aborted) abort()</pre></li>
+    <li id="L88">
+      <pre>
+      const publish = (generating: boolean, error?: string, keep?: () =&gt; void) =&gt; {</pre>
+    </li>
+    <li id="L89"><pre>        if (active.current !== operation) return</pre></li>
+    <li id="L90"><pre>        setDraft({</pre></li>
+    <li id="L91"><pre>          session,</pre></li>
+    <li id="L92"><pre>          documentId,</pre></li>
+    <li id="L93"><pre>          sourceVersion: request.expectedVersion,</pre></li>
+    <li id="L94"><pre>          generationId,</pre></li>
+    <li id="L95"><pre>          progress,</pre></li>
+    <li id="L96"><pre>          preview,</pre></li>
+    <li id="L97"><pre>          generating,</pre></li>
+    <li id="L98"><pre>          error,</pre></li>
+    <li id="L99"><pre>          stale: !current(),</pre></li>
+    <li id="L100"><pre>          stop,</pre></li>
+    <li id="L101"><pre>          discard,</pre></li>
+    <li id="L102"><pre>          keep,</pre></li>
+    <li id="L103"><pre>        })</pre></li>
+    <li id="L104"><pre>      }</pre></li>
+    <li id="L105"><pre>      publish(true)</pre></li>
+    <li id="L106"><pre>      try {</pre></li>
+    <li id="L107"><pre>        const result = await host.current({</pre></li>
+    <li id="L108"><pre>          ...request,</pre></li>
+    <li id="L109"><pre>          generationId,</pre></li>
+    <li id="L110"><pre>          signal: controller.signal,</pre></li>
+    <li id="L111"><pre>          onDeckProgress: async (next, checkpoint) =&gt; {</pre></li>
+    <li id="L112"><pre>            if (!current() || controller.signal.aborted)</pre></li>
+    <li id="L113">
+      <pre>              throw new PptxDeckStreamError(&#x27;生成来源已失效&#x27;)</pre>
+    </li>
+    <li id="L114">
+      <pre>
+            if (next.generationId !== generationId) throw new PptxDeckStreamError(&#x27;生成会话已失效&#x27;)</pre>
+    </li>
+    <li id="L115"><pre>            if (checkpoint) {</pre></li>
+    <li id="L116">
+      <pre>              const parsed = await openPptxForEdit(checkpoint.bytes)</pre>
+    </li>
+    <li id="L117"><pre>              if (!current() || controller.signal.aborted)</pre></li>
+    <li id="L118">
+      <pre>                throw new PptxDeckStreamError(&#x27;生成来源已失效&#x27;)</pre>
+    </li>
+    <li id="L119"><pre>              if (</pre></li>
+    <li id="L120"><pre>                parsed.slides().length !==</pre></li>
+    <li id="L121">
+      <pre>
+                next.completed + (next.insertMode === &#x27;append&#x27; ? next.originalPages : 0)</pre>
+    </li>
+    <li id="L122"><pre>              )</pre></li>
+    <li id="L123">
+      <pre>                throw new PptxDeckStreamError(&#x27;生成候选页数不一致&#x27;)</pre>
+    </li>
+    <li id="L124"><pre>              candidate = checkpoint</pre></li>
+    <li id="L125"><pre>              preview = parsed.view()</pre></li>
+    <li id="L126"><pre>            }</pre></li>
+    <li id="L127"><pre>            progress = next</pre></li>
+    <li id="L128"><pre>            publish(true)</pre></li>
+    <li id="L129"><pre>          },</pre></li>
+    <li id="L130"><pre>        })</pre></li>
+    <li id="L131">
+      <pre>
+        if (!current() || controller.signal.aborted) throw new PptxDeckStreamError(&#x27;生成已停止&#x27;)</pre>
+    </li>
+    <li id="L132"><pre>        return result</pre></li>
+    <li id="L133"><pre>      } catch (error) {</pre></li>
+    <li id="L134"><pre>        if (!current() || discarded)</pre></li>
+    <li id="L135">
+      <pre>
+          throw new Error(&#x27;已丢弃生成草稿，原文稿未修改&#x27;, { cause: error })</pre>
+    </li>
+    <li id="L136"><pre>        const stopped = controller.signal.aborted</pre></li>
+    <li id="L137">
+      <pre>
+        const allowed = stopped || (error instanceof PptxDeckStreamError &amp;&amp; error.partialAllowed)</pre>
+    </li>
+    <li id="L138">
+      <pre>        if (!candidate || !progress?.completed || !allowed) throw error</pre>
+    </li>
+    <li id="L139">
+      <pre>
+        const message = stopped ? &#x27;已停止生成&#x27; : error instanceof Error ? error.message : &#x27;生成失败&#x27;</pre>
+    </li>
+    <li id="L140">
+      <pre>        const keep = await new Promise&lt;boolean&gt;((resolve) =&gt; {</pre>
+    </li>
+    <li id="L141"><pre>          resolvePartial = resolve</pre></li>
+    <li id="L142"><pre>          publish(false, message, () =&gt; resolve(true))</pre></li>
+    <li id="L143"><pre>        })</pre></li>
+    <li id="L144"><pre>        if (!keep || !current() || discarded)</pre></li>
+    <li id="L145">
+      <pre>
+          throw new Error(&#x27;已丢弃生成草稿，原文稿未修改&#x27;, { cause: error })</pre>
+    </li>
+    <li id="L146"><pre>        return {</pre></li>
+    <li id="L147"><pre>          ...candidate,</pre></li>
+    <li id="L148"><pre>          records: [],</pre></li>
+    <li id="L149"><pre>          version: request.expectedVersion + 1,</pre></li>
+    <li id="L150"><pre>          changed: true,</pre></li>
+    <li id="L151"><pre>          data: {</pre></li>
+    <li id="L152"><pre>            ...candidate.data,</pre></li>
+    <li id="L153"><pre>            keptPartial: true,</pre></li>
+    <li id="L154"><pre>            completed: progress.completed,</pre></li>
+    <li id="L155"><pre>            missing: progress.total - progress.completed,</pre></li>
+    <li id="L156"><pre>            failedPages: stopped ? 0 : 1,</pre></li>
+    <li id="L157">
+      <pre>
+            notGenerated: Math.max(0, progress.total - progress.completed - (stopped ? 0 : 1)),</pre>
+    </li>
+    <li id="L158"><pre>            stopped,</pre></li>
+    <li id="L159"><pre>            failure: stopped ? undefined : message,</pre></li>
+    <li id="L160"><pre>          },</pre></li>
+    <li id="L161"><pre>        }</pre></li>
+    <li id="L162"><pre>      } finally {</pre></li>
+    <li id="L163"><pre>        signal?.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L164"><pre>        if (active.current === operation) {</pre></li>
+    <li id="L165"><pre>          active.current = null</pre></li>
+    <li id="L166"><pre>          setDraft(null)</pre></li>
+    <li id="L167"><pre>        }</pre></li>
+    <li id="L168"><pre>      }</pre></li>
+    <li id="L169"><pre>    },</pre></li>
+    <li id="L170"><pre>    [host, session, documentId],</pre></li>
+    <li id="L171"><pre>  )</pre></li>
+    <li id="L172"><pre>  return {</pre></li>
+    <li id="L173"><pre>    draft:</pre></li>
+    <li id="L174">
+      <pre>      draft?.session === session &amp;&amp; draft.documentId === documentId</pre>
+    </li>
+    <li id="L175">
+      <pre>        ? { ...draft, stale: draft.stale || version !== draft.sourceVersion }</pre>
+    </li>
+    <li id="L176"><pre>        : null,</pre></li>
+    <li id="L177"><pre>    apply,</pre></li>
+    <li id="L178"><pre>  }</pre></li>
+    <li id="L179"><pre>}</pre></li>
+    <li id="L180"><pre></pre></li>
+    <li id="L181"><pre>export function PptxDeckWritingPreview({</pre></li>
+    <li id="L182"><pre>  draft,</pre></li>
+    <li id="L183"><pre>  focusFallback,</pre></li>
+    <li id="L184"><pre>}: {</pre></li>
+    <li id="L185"><pre>  draft: PptxDeckWritingDraft</pre></li>
+    <li id="L186"><pre>  focusFallback: RefObject&lt;HTMLElement | null&gt;</pre></li>
+    <li id="L187"><pre>}) {</pre></li>
+    <li id="L188"><pre>  const root = useRef&lt;HTMLElement&gt;(null)</pre></li>
+    <li id="L189"><pre>  const returnFocus = useRef&lt;HTMLElement | null&gt;(null)</pre></li>
+    <li id="L190"><pre>  const [page, setPage] = useState&lt;number | null&gt;(null)</pre></li>
+    <li id="L191"><pre>  const id = useId()</pre></li>
+    <li id="L192"><pre>  const completed = draft.progress?.completed ?? 0</pre></li>
+    <li id="L193"><pre>  const total = draft.progress?.total ?? 0</pre></li>
+    <li id="L194">
+      <pre>  const selected = Math.max(0, Math.min(page ?? completed - 1, completed - 1))</pre>
+    </li>
+    <li id="L195">
+      <pre>
+  const offset = draft.progress?.insertMode === &#x27;append&#x27; ? draft.progress.originalPages : 0</pre>
+    </li>
+    <li id="L196"><pre>  const rendered = useMemo(</pre></li>
+    <li id="L197"><pre>    () =&gt;</pre></li>
+    <li id="L198"><pre>      draft.preview &amp;&amp; completed</pre></li>
+    <li id="L199">
+      <pre>
+        ? renderSlide(draft.preview, offset + selected, { fitWidthPx: 288, svgIdPrefix: id })</pre>
+    </li>
+    <li id="L200"><pre>        : null,</pre></li>
+    <li id="L201"><pre>    [draft.preview, completed, offset, selected, id],</pre></li>
+    <li id="L202"><pre>  )</pre></li>
+    <li id="L203"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L204"><pre>    const active = document.activeElement</pre></li>
+    <li id="L205">
+      <pre>    // A caller can disable (and blur) its trigger before this preview mounts.</pre>
+    </li>
+    <li id="L206">
+      <pre>    // In that case use this editor&#x27;s own canvas, supplied by its owner.</pre>
+    </li>
+    <li id="L207"><pre>    returnFocus.current =</pre></li>
+    <li id="L208"><pre>      active instanceof HTMLElement &amp;&amp;</pre></li>
+    <li id="L209"><pre>      active !== document.body &amp;&amp;</pre></li>
+    <li id="L210"><pre>      active !== document.documentElement</pre></li>
+    <li id="L211"><pre>        ? active</pre></li>
+    <li id="L212"><pre>        : focusFallback.current</pre></li>
+    <li id="L213"><pre>    const panel = root.current</pre></li>
+    <li id="L214"><pre>    panel?.focus()</pre></li>
+    <li id="L215"><pre>    return () =&gt; {</pre></li>
+    <li id="L216"><pre>      const target = returnFocus.current</pre></li>
+    <li id="L217"><pre>      const ownsFocus = () =&gt;</pre></li>
+    <li id="L218">
+      <pre>
+        document.activeElement === document.body || !!panel?.contains(document.activeElement)</pre>
+    </li>
+    <li id="L219"><pre>      if (!target?.isConnected || !ownsFocus()) return</pre></li>
+    <li id="L220">
+      <pre>
+      // The caller releases its busy/disabled trigger only after execute() settles.</pre>
+    </li>
+    <li id="L221">
+      <pre>
+      // Wait for that real state change, without stealing focus after the user moves on.</pre>
+    </li>
+    <li id="L222"><pre>      const finish = () =&gt; {</pre></li>
+    <li id="L223"><pre>        observer.disconnect()</pre></li>
+    <li id="L224"><pre>        document.removeEventListener(&#x27;focusin&#x27;, onFocus)</pre></li>
+    <li id="L225"><pre>        clearTimeout(expiry)</pre></li>
+    <li id="L226"><pre>      }</pre></li>
+    <li id="L227"><pre>      const restore = () =&gt; {</pre></li>
+    <li id="L228"><pre>        if (!target.isConnected || !ownsFocus()) return finish()</pre></li>
+    <li id="L229">
+      <pre>
+        if (target.matches(&#x27;:disabled&#x27;) || target.closest(&#x27;[aria-disabled=&quot;true&quot;]&#x27;)) return</pre>
+    </li>
+    <li id="L230"><pre>        finish()</pre></li>
+    <li id="L231"><pre>        target.focus({ preventScroll: true })</pre></li>
+    <li id="L232"><pre>      }</pre></li>
+    <li id="L233"><pre>      const onFocus = () =&gt; {</pre></li>
+    <li id="L234"><pre>        if (!ownsFocus()) finish()</pre></li>
+    <li id="L235"><pre>      }</pre></li>
+    <li id="L236"><pre>      const observer = new MutationObserver(restore)</pre></li>
+    <li id="L237"><pre>      observer.observe(document.body, {</pre></li>
+    <li id="L238"><pre>        attributes: true,</pre></li>
+    <li id="L239">
+      <pre>        attributeFilter: [&#x27;disabled&#x27;, &#x27;aria-disabled&#x27;],</pre>
+    </li>
+    <li id="L240"><pre>        childList: true,</pre></li>
+    <li id="L241"><pre>        subtree: true,</pre></li>
+    <li id="L242"><pre>      })</pre></li>
+    <li id="L243"><pre>      document.addEventListener(&#x27;focusin&#x27;, onFocus)</pre></li>
+    <li id="L244"><pre>      const expiry = setTimeout(finish, 1000)</pre></li>
+    <li id="L245"><pre>      restore()</pre></li>
+    <li id="L246"><pre>    }</pre></li>
+    <li id="L247"><pre>  }, [focusFallback])</pre></li>
+    <li id="L248"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L249">
+      <pre>
+    if (!draft.generating &amp;&amp; root.current?.contains(document.activeElement))</pre>
+    </li>
+    <li id="L250"><pre>      root.current</pre></li>
+    <li id="L251">
+      <pre>
+        .querySelector&lt;HTMLButtonElement&gt;(&#x27;.mimir-pptx-deck-writing__actions button&#x27;)</pre>
+    </li>
+    <li id="L252"><pre>        ?.focus()</pre></li>
+    <li id="L253"><pre>  }, [draft.generating])</pre></li>
+    <li id="L254"><pre>  return (</pre></li>
+    <li id="L255"><pre>    &lt;aside</pre></li>
+    <li id="L256">
+      <pre>      className=&quot;mimir-pptx-inspector mimir-pptx-deck-writing&quot;</pre>
+    </li>
+    <li id="L257"><pre>      ref={root}</pre></li>
+    <li id="L258"><pre>      tabIndex={-1}</pre></li>
+    <li id="L259"><pre>      aria-label=&quot;演示文稿生成草稿&quot;</pre></li>
+    <li id="L260"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L261">
+      <pre>        if (event.key === &#x27;Escape&#x27; &amp;&amp; !event.defaultPrevented) {</pre>
+    </li>
+    <li id="L262"><pre>          event.stopPropagation()</pre></li>
+    <li id="L263"><pre>          draft.discard()</pre></li>
+    <li id="L264"><pre>        }</pre></li>
+    <li id="L265"><pre>      }}</pre></li>
+    <li id="L266"><pre>    &gt;</pre></li>
+    <li id="L267">
+      <pre>      &lt;header className=&quot;mimir-pptx-inspector__head&quot;&gt;</pre>
+    </li>
+    <li id="L268">
+      <pre>
+        &lt;h2&gt;{draft.generating ? &#x27;正在生成文稿&#x27; : &#x27;文稿尚未完成&#x27;}&lt;/h2&gt;</pre>
+    </li>
+    <li id="L269">
+      <pre>
+        &lt;ToolbarButton label=&quot;丢弃生成草稿&quot; onClick={draft.discard}&gt;</pre>
+    </li>
+    <li id="L270"><pre>          丢弃</pre></li>
+    <li id="L271"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L272"><pre>      &lt;/header&gt;</pre></li>
+    <li id="L273">
+      <pre>      &lt;div className=&quot;mimir-pptx-deck-writing__content&quot;&gt;</pre>
+    </li>
+    <li id="L274"><pre>        &lt;p role=&quot;status&quot;&gt;</pre></li>
+    <li id="L275"><pre>          {draft.generating</pre></li>
+    <li id="L276">
+      <pre>            ? draft.progress?.stage === &#x27;planning&#x27; || !draft.progress</pre>
+    </li>
+    <li id="L277"><pre>              ? &#x27;正在规划页面…&#x27;</pre></li>
+    <li id="L278"><pre>              : completed === total</pre></li>
+    <li id="L279">
+      <pre>                ? `已完成 ${completed} / ${total} 页 · 正在确认文稿…`</pre>
+    </li>
+    <li id="L280">
+      <pre>
+                : `已完成 ${completed} / ${total} 页 · 正在生成第 ${completed + 1} 页`</pre>
+    </li>
+    <li id="L281">
+      <pre>
+            : `${draft.error} · 已完成 ${completed} / ${total} 页，未完成 ${total - completed} 页`}</pre>
+    </li>
+    <li id="L282"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L283">
+      <pre>        &lt;p className=&quot;mimir-pptx-deck-writing__hint&quot;&gt;</pre>
+    </li>
+    <li id="L284"><pre>          {!draft.progress</pre></li>
+    <li id="L285"><pre>            ? &#x27;正在准备生成计划。&#x27;</pre></li>
+    <li id="L286"><pre>            : draft.progress.insertMode === &#x27;append&#x27;</pre></li>
+    <li id="L287"><pre>              ? &#x27;完成页将追加到原文稿。&#x27;</pre></li>
+    <li id="L288"><pre>              : &#x27;完成页将替换原文稿。&#x27;}</pre></li>
+    <li id="L289"><pre>          {draft.generating</pre></li>
+    <li id="L290"><pre>            ? &#x27;预览暂不修改原文稿；全部完成后统一应用。&#x27;</pre></li>
+    <li id="L291"><pre>            : &#x27;确认保留前原文稿保持不变。&#x27;}</pre></li>
+    <li id="L292"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L293"><pre>        {rendered ? (</pre></li>
+    <li id="L294"><pre>          &lt;&gt;</pre></li>
+    <li id="L295"><pre>            &lt;div</pre></li>
+    <li id="L296"><pre>              className=&quot;mimir-pptx-deck-writing__page&quot;</pre></li>
+    <li id="L297"><pre>              aria-label={`已完成第 ${selected + 1} 页预览`}</pre></li>
+    <li id="L298"><pre>              dangerouslySetInnerHTML={{ __html: rendered.svg }}</pre></li>
+    <li id="L299"><pre>            /&gt;</pre></li>
+    <li id="L300"><pre>            &lt;nav aria-label=&quot;浏览已完成页&quot;&gt;</pre></li>
+    <li id="L301"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L302"><pre>                label=&quot;上一完成页&quot;</pre></li>
+    <li id="L303"><pre>                disabled={selected &lt;= 0}</pre></li>
+    <li id="L304"><pre>                onClick={() =&gt; setPage(selected - 1)}</pre></li>
+    <li id="L305"><pre>              &gt;</pre></li>
+    <li id="L306"><pre>                上一页</pre></li>
+    <li id="L307"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L308"><pre>              &lt;span&gt;</pre></li>
+    <li id="L309"><pre>                {selected + 1} / {completed}</pre></li>
+    <li id="L310"><pre>              &lt;/span&gt;</pre></li>
+    <li id="L311"><pre>              &lt;ToolbarButton</pre></li>
+    <li id="L312"><pre>                label=&quot;下一完成页&quot;</pre></li>
+    <li id="L313"><pre>                disabled={selected &gt;= completed - 1}</pre></li>
+    <li id="L314"><pre>                onClick={() =&gt; setPage(selected + 1)}</pre></li>
+    <li id="L315"><pre>              &gt;</pre></li>
+    <li id="L316"><pre>                下一页</pre></li>
+    <li id="L317"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L318"><pre>            &lt;/nav&gt;</pre></li>
+    <li id="L319"><pre>          &lt;/&gt;</pre></li>
+    <li id="L320"><pre>        ) : (</pre></li>
+    <li id="L321">
+      <pre>
+          &lt;p className=&quot;mimir-pptx-deck-writing__empty&quot;&gt;首个完整页面生成后将在此预览。&lt;/p&gt;</pre>
+    </li>
+    <li id="L322"><pre>        )}</pre></li>
+    <li id="L323"><pre>        {draft.progress?.title &amp;&amp; (</pre></li>
+    <li id="L324">
+      <pre>
+          &lt;p className=&quot;mimir-pptx-deck-writing__hint&quot;&gt;当前任务：{draft.progress.title}&lt;/p&gt;</pre>
+    </li>
+    <li id="L325"><pre>        )}</pre></li>
+    <li id="L326">
+      <pre>
+        {draft.stale &amp;&amp; &lt;p role=&quot;alert&quot;&gt;原文稿已修改，请丢弃此草稿后重新生成。&lt;/p&gt;}</pre>
+    </li>
+    <li id="L327"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L328">
+      <pre>      &lt;footer className=&quot;mimir-pptx-deck-writing__actions&quot;&gt;</pre>
+    </li>
+    <li id="L329"><pre>        {draft.generating ? (</pre></li>
+    <li id="L330">
+      <pre>
+          &lt;ToolbarButton label=&quot;停止演示文稿生成&quot; primary onClick={draft.stop} /&gt;</pre>
+    </li>
+    <li id="L331"><pre>        ) : (</pre></li>
+    <li id="L332"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L333"><pre>            label={`保留已完成 ${completed} 页`}</pre></li>
+    <li id="L334"><pre>            primary</pre></li>
+    <li id="L335"><pre>            disabled={draft.stale || !draft.keep || !completed}</pre></li>
+    <li id="L336">
+      <pre>            disabledReason=&quot;生成来源已变化，请丢弃后重新生成&quot;</pre>
+    </li>
+    <li id="L337"><pre>            onClick={draft.keep}</pre></li>
+    <li id="L338"><pre>          /&gt;</pre></li>
+    <li id="L339"><pre>        )}</pre></li>
+    <li id="L340"><pre>      &lt;/footer&gt;</pre></li>
+    <li id="L341"><pre>    &lt;/aside&gt;</pre></li>
+    <li id="L342"><pre>  )</pre></li>
+    <li id="L343"><pre>}</pre></li>
+  </ol>
+</html>

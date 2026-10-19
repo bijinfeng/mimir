@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxWorkspaceViews.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxWorkspaceViews.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 293f74eaccbae36fe3f1b0c3c19b3383ef74962a26b8bd7570216ae6e0b4be1c
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button } from &#x27;antd&#x27;</pre></li>
+    <li id="L2"><pre>import {</pre></li>
+    <li id="L3"><pre>  useEffect,</pre></li>
+    <li id="L4"><pre>  useId,</pre></li>
+    <li id="L5"><pre>  useMemo,</pre></li>
+    <li id="L6"><pre>  useRef,</pre></li>
+    <li id="L7"><pre>  useState,</pre></li>
+    <li id="L8"><pre>  type ReactNode,</pre></li>
+    <li id="L9"><pre>  type CSSProperties,</pre></li>
+    <li id="L10"><pre>} from &#x27;react&#x27;</pre></li>
+    <li id="L11">
+      <pre>
+import type { Slide } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L12"><pre>import { textOfElement } from &#x27;../pptx.js&#x27;</pre></li>
+    <li id="L13">
+      <pre>import { renderSlide, type PptxRenderable } from &#x27;../pptx-render.js&#x27;</pre>
+    </li>
+    <li id="L14">
+      <pre>import { ToolbarButton, ToolbarLabel } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L15">
+      <pre>import { ChevronLeftIcon, ChevronRightIcon } from &#x27;../shell/icons.js&#x27;</pre>
+    </li>
+    <li id="L16"><pre>import &#x27;./pptx-workspace-views.css&#x27;</pre></li>
+    <li id="L17"><pre></pre></li>
+    <li id="L18">
+      <pre>
+export type PptxWorkspaceMode = &#x27;normal&#x27; | &#x27;outline&#x27; | &#x27;sorter&#x27; | &#x27;reading&#x27;</pre>
+    </li>
+    <li id="L19"><pre>export const pptxWorkspaceModes = [</pre></li>
+    <li id="L20"><pre>  { value: &#x27;normal&#x27;, label: &#x27;普通&#x27; },</pre></li>
+    <li id="L21"><pre>  { value: &#x27;outline&#x27;, label: &#x27;大纲&#x27; },</pre></li>
+    <li id="L22"><pre>  { value: &#x27;sorter&#x27;, label: &#x27;幻灯片浏览&#x27; },</pre></li>
+    <li id="L23"><pre>  { value: &#x27;reading&#x27;, label: &#x27;阅读&#x27; },</pre></li>
+    <li id="L24"><pre>] as const</pre></li>
+    <li id="L25"><pre></pre></li>
+    <li id="L26">
+      <pre>/** Same title heuristic as the fixed upstream: largest text, then topmost. */</pre>
+    </li>
+    <li id="L27"><pre>export function pptxSlideOutline(slide: Slide) {</pre></li>
+    <li id="L28">
+      <pre>  const entries: { key: string; text: string; size: number; y: number }[] = []</pre>
+    </li>
+    <li id="L29"><pre>  const walk = (elements: Slide[&#x27;elements&#x27;]) =&gt; {</pre></li>
+    <li id="L30"><pre>    for (const element of elements) {</pre></li>
+    <li id="L31">
+      <pre>      if (element.type === &#x27;group&#x27;) walk(element.children)</pre>
+    </li>
+    <li id="L32"><pre>      const body = textOfElement(element)</pre></li>
+    <li id="L33"><pre>      if (!body) continue</pre></li>
+    <li id="L34"><pre>      const text = body.paragraphs</pre></li>
+    <li id="L35">
+      <pre>        .map((p) =&gt; p.runs.map((r) =&gt; r.text).join(&#x27;&#x27;))</pre>
+    </li>
+    <li id="L36"><pre>        .join(&#x27;\n&#x27;)</pre></li>
+    <li id="L37"><pre>        .trim()</pre></li>
+    <li id="L38"><pre>      if (text)</pre></li>
+    <li id="L39"><pre>        entries.push({</pre></li>
+    <li id="L40"><pre>          key: element.id,</pre></li>
+    <li id="L41"><pre>          text,</pre></li>
+    <li id="L42">
+      <pre>
+          size: Math.max(0, ...body.paragraphs.flatMap((p) =&gt; p.runs.map((r) =&gt; r.fontSize ?? 0))),</pre>
+    </li>
+    <li id="L43"><pre>          y: element.transform.offset.y,</pre></li>
+    <li id="L44"><pre>        })</pre></li>
+    <li id="L45"><pre>    }</pre></li>
+    <li id="L46"><pre>  }</pre></li>
+    <li id="L47"><pre>  walk(slide.elements)</pre></li>
+    <li id="L48">
+      <pre>  const title = entries.toSorted((a, b) =&gt; b.size - a.size || a.y - b.y)[0]</pre>
+    </li>
+    <li id="L49"><pre>  return {</pre></li>
+    <li id="L50"><pre>    title: title?.text ?? &#x27;无文字幻灯片&#x27;,</pre></li>
+    <li id="L51"><pre>    lines: entries</pre></li>
+    <li id="L52"><pre>      .filter((item) =&gt; item !== title)</pre></li>
+    <li id="L53"><pre>      .toSorted((a, b) =&gt; a.y - b.y)</pre></li>
+    <li id="L54"><pre>      .map((item) =&gt; ({ key: item.key, text: item.text })),</pre></li>
+    <li id="L55"><pre>  }</pre></li>
+    <li id="L56"><pre>}</pre></li>
+    <li id="L57"><pre></pre></li>
+    <li id="L58">
+      <pre>
+/** Insertion boundary is in the original order; the selected block keeps its order. */</pre>
+    </li>
+    <li id="L59"><pre>export function pptxSlideMoveOps(</pre></li>
+    <li id="L60"><pre>  paths: readonly string[],</pre></li>
+    <li id="L61"><pre>  selected: readonly string[],</pre></li>
+    <li id="L62"><pre>  boundary: number,</pre></li>
+    <li id="L63"><pre>) {</pre></li>
+    <li id="L64"><pre>  const chosen = paths.filter((path) =&gt; selected.includes(path))</pre></li>
+    <li id="L65">
+      <pre>  if (!chosen.length || boundary &lt; 0 || boundary &gt; paths.length) return []</pre>
+    </li>
+    <li id="L66">
+      <pre>  const remaining = paths.filter((path) =&gt; !chosen.includes(path))</pre>
+    </li>
+    <li id="L67">
+      <pre>
+  const at = boundary - paths.slice(0, boundary).filter((path) =&gt; chosen.includes(path)).length</pre>
+    </li>
+    <li id="L68">
+      <pre>  const desired = [...remaining.slice(0, at), ...chosen, ...remaining.slice(at)]</pre>
+    </li>
+    <li id="L69"><pre>  const working = [...paths]</pre></li>
+    <li id="L70"><pre>  const ops: Record&lt;string, unknown&gt;[] = []</pre></li>
+    <li id="L71"><pre>  desired.forEach((path, index) =&gt; {</pre></li>
+    <li id="L72"><pre>    const from = working.indexOf(path)</pre></li>
+    <li id="L73"><pre>    if (from === index) return</pre></li>
+    <li id="L74">
+      <pre>    ops.push({ op: &#x27;moveSlide&#x27;, target: { slide: from }, to: index })</pre>
+    </li>
+    <li id="L75"><pre>    working.splice(index, 0, ...working.splice(from, 1))</pre></li>
+    <li id="L76"><pre>  })</pre></li>
+    <li id="L77"><pre>  return ops</pre></li>
+    <li id="L78"><pre>}</pre></li>
+    <li id="L79"><pre></pre></li>
+    <li id="L80"><pre>function SlidePreview({</pre></li>
+    <li id="L81"><pre>  deck,</pre></li>
+    <li id="L82"><pre>  index,</pre></li>
+    <li id="L83"><pre>  width = 280,</pre></li>
+    <li id="L84"><pre>}: {</pre></li>
+    <li id="L85"><pre>  deck: PptxRenderable</pre></li>
+    <li id="L86"><pre>  index: number</pre></li>
+    <li id="L87"><pre>  width?: number</pre></li>
+    <li id="L88"><pre>}) {</pre></li>
+    <li id="L89"><pre>  const prefix = useId()</pre></li>
+    <li id="L90"><pre>  const rendered = useMemo(</pre></li>
+    <li id="L91">
+      <pre>    () =&gt; renderSlide(deck, index, { fitWidthPx: width, svgIdPrefix: prefix }),</pre>
+    </li>
+    <li id="L92"><pre>    [deck, index, width, prefix],</pre></li>
+    <li id="L93"><pre>  )</pre></li>
+    <li id="L94"><pre>  return rendered ? (</pre></li>
+    <li id="L95"><pre>    &lt;span</pre></li>
+    <li id="L96"><pre>      className=&quot;mimir-pptx-view-preview&quot;</pre></li>
+    <li id="L97"><pre>      aria-hidden=&quot;true&quot;</pre></li>
+    <li id="L98"><pre>      dangerouslySetInnerHTML={{ __html: rendered.svg }}</pre></li>
+    <li id="L99"><pre>    /&gt;</pre></li>
+    <li id="L100"><pre>  ) : null</pre></li>
+    <li id="L101"><pre>}</pre></li>
+    <li id="L102"><pre></pre></li>
+    <li id="L103"><pre>export function PptxWorkspaceViews({</pre></li>
+    <li id="L104"><pre>  mode,</pre></li>
+    <li id="L105"><pre>  deck,</pre></li>
+    <li id="L106"><pre>  active,</pre></li>
+    <li id="L107"><pre>  busy,</pre></li>
+    <li id="L108"><pre>  reorderReason,</pre></li>
+    <li id="L109"><pre>  onSelect,</pre></li>
+    <li id="L110"><pre>  onMode,</pre></li>
+    <li id="L111"><pre>  onReorder,</pre></li>
+    <li id="L112"><pre>  normal,</pre></li>
+    <li id="L113"><pre>  children,</pre></li>
+    <li id="L114"><pre>}: {</pre></li>
+    <li id="L115"><pre>  mode: PptxWorkspaceMode</pre></li>
+    <li id="L116"><pre>  deck: PptxRenderable</pre></li>
+    <li id="L117"><pre>  active: number</pre></li>
+    <li id="L118"><pre>  busy: boolean</pre></li>
+    <li id="L119"><pre>  reorderReason?: string</pre></li>
+    <li id="L120"><pre>  onSelect(index: number): void</pre></li>
+    <li id="L121"><pre>  onMode(mode: PptxWorkspaceMode): void</pre></li>
+    <li id="L122">
+      <pre>  onReorder(paths: string[], boundary: number): Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L123"><pre>  normal: ReactNode</pre></li>
+    <li id="L124"><pre>  children: ReactNode</pre></li>
+    <li id="L125"><pre>}) {</pre></li>
+    <li id="L126"><pre>  const slides = deck.slides()</pre></li>
+    <li id="L127"><pre>  const paths = slides.map((slide) =&gt; slide.path)</pre></li>
+    <li id="L128"><pre>  const root = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L129"><pre>  const [selection, setSelection] = useState&lt;string[]&gt;([])</pre></li>
+    <li id="L130"><pre>  const [anchor, setAnchor] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L131"><pre>  const [drag, setDrag] = useState&lt;string[] | null&gt;(null)</pre></li>
+    <li id="L132"><pre>  const [drop, setDrop] = useState&lt;number | null&gt;(null)</pre></li>
+    <li id="L133">
+      <pre>  const selected = selection.filter((path) =&gt; paths.includes(path))</pre>
+    </li>
+    <li id="L134">
+      <pre>  const chosen = selected.length ? selected : paths[active] ? [paths[active]!] : []</pre>
+    </li>
+    <li id="L135">
+      <pre>
+  const indices = chosen.map((path) =&gt; paths.indexOf(path)).toSorted((a, b) =&gt; a - b)</pre>
+    </li>
+    <li id="L136"><pre>  const first = indices[0] ?? 0,</pre></li>
+    <li id="L137"><pre>    last = indices.at(-1) ?? 0</pre></li>
+    <li id="L138">
+      <pre>  const outlines = useMemo(() =&gt; deck.slides().map(pptxSlideOutline), [deck])</pre>
+    </li>
+    <li id="L139"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L140">
+      <pre>
+    if (mode === &#x27;sorter&#x27; || mode === &#x27;reading&#x27;) root.current?.focus()</pre>
+    </li>
+    <li id="L141"><pre>  }, [mode])</pre></li>
+    <li id="L142"><pre>  const select = (</pre></li>
+    <li id="L143"><pre>    index: number,</pre></li>
+    <li id="L144">
+      <pre>    modifiers?: { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean },</pre>
+    </li>
+    <li id="L145"><pre>  ) =&gt; {</pre></li>
+    <li id="L146"><pre>    const path = paths[index]</pre></li>
+    <li id="L147"><pre>    if (!path) return</pre></li>
+    <li id="L148"><pre>    if (modifiers?.shiftKey) {</pre></li>
+    <li id="L149">
+      <pre>      const start = Math.max(0, paths.indexOf(anchor ?? paths[active]!))</pre>
+    </li>
+    <li id="L150">
+      <pre>      setSelection(paths.slice(Math.min(start, index), Math.max(start, index) + 1))</pre>
+    </li>
+    <li id="L151"><pre>    } else if (modifiers?.metaKey || modifiers?.ctrlKey) {</pre></li>
+    <li id="L152"><pre>      setSelection(</pre></li>
+    <li id="L153">
+      <pre>
+        chosen.includes(path) ? chosen.filter((item) =&gt; item !== path) : [...chosen, path],</pre>
+    </li>
+    <li id="L154"><pre>      )</pre></li>
+    <li id="L155"><pre>      setAnchor(path)</pre></li>
+    <li id="L156"><pre>    } else {</pre></li>
+    <li id="L157"><pre>      setSelection([path])</pre></li>
+    <li id="L158"><pre>      setAnchor(path)</pre></li>
+    <li id="L159"><pre>    }</pre></li>
+    <li id="L160"><pre>    onSelect(index)</pre></li>
+    <li id="L161"><pre>  }</pre></li>
+    <li id="L162"><pre>  const edit = (index = active) =&gt; {</pre></li>
+    <li id="L163"><pre>    onSelect(index)</pre></li>
+    <li id="L164"><pre>    onMode(&#x27;normal&#x27;)</pre></li>
+    <li id="L165"><pre>  }</pre></li>
+    <li id="L166"><pre>  const move = async (items: string[], boundary: number) =&gt; {</pre></li>
+    <li id="L167"><pre>    if (busy || reorderReason) return</pre></li>
+    <li id="L168"><pre>    if (await onReorder(items, boundary)) setSelection(items)</pre></li>
+    <li id="L169"><pre>    setDrag(null)</pre></li>
+    <li id="L170"><pre>    setDrop(null)</pre></li>
+    <li id="L171"><pre>  }</pre></li>
+    <li id="L172">
+      <pre>  const keydown = (event: React.KeyboardEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L173"><pre>    if (</pre></li>
+    <li id="L174"><pre>      event.defaultPrevented ||</pre></li>
+    <li id="L175"><pre>      event.target instanceof HTMLInputElement ||</pre></li>
+    <li id="L176"><pre>      event.target instanceof HTMLTextAreaElement</pre></li>
+    <li id="L177"><pre>    )</pre></li>
+    <li id="L178"><pre>      return</pre></li>
+    <li id="L179"><pre>    if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L180"><pre>      event.preventDefault()</pre></li>
+    <li id="L181"><pre>      onMode(&#x27;normal&#x27;)</pre></li>
+    <li id="L182"><pre>      return</pre></li>
+    <li id="L183"><pre>    }</pre></li>
+    <li id="L184">
+      <pre>
+    if (mode === &#x27;sorter&#x27; &amp;&amp; (event.ctrlKey || event.metaKey) &amp;&amp; event.key.toLowerCase() === &#x27;a&#x27;) {</pre>
+    </li>
+    <li id="L185"><pre>      event.preventDefault()</pre></li>
+    <li id="L186"><pre>      setSelection(paths)</pre></li>
+    <li id="L187"><pre>      return</pre></li>
+    <li id="L188"><pre>    }</pre></li>
+    <li id="L189"><pre>    if (</pre></li>
+    <li id="L190"><pre>      mode === &#x27;sorter&#x27; &amp;&amp;</pre></li>
+    <li id="L191"><pre>      event.altKey &amp;&amp;</pre></li>
+    <li id="L192">
+      <pre>      (event.key === &#x27;ArrowLeft&#x27; || event.key === &#x27;ArrowRight&#x27;)</pre>
+    </li>
+    <li id="L193"><pre>    ) {</pre></li>
+    <li id="L194"><pre>      event.preventDefault()</pre></li>
+    <li id="L195">
+      <pre>      void move(chosen, event.key === &#x27;ArrowLeft&#x27; ? first - 1 : last + 2)</pre>
+    </li>
+    <li id="L196"><pre>      return</pre></li>
+    <li id="L197"><pre>    }</pre></li>
+    <li id="L198">
+      <pre>
+    if (event.target !== root.current &amp;&amp; (event.key === &#x27;Enter&#x27; || event.key === &#x27; &#x27;)) return</pre>
+    </li>
+    <li id="L199">
+      <pre>    if (event.key === &#x27;Enter&#x27; &amp;&amp; mode === &#x27;sorter&#x27;) {</pre>
+    </li>
+    <li id="L200"><pre>      event.preventDefault()</pre></li>
+    <li id="L201"><pre>      edit()</pre></li>
+    <li id="L202"><pre>      return</pre></li>
+    <li id="L203"><pre>    }</pre></li>
+    <li id="L204"><pre>    const next =</pre></li>
+    <li id="L205"><pre>      event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L206"><pre>        ? 0</pre></li>
+    <li id="L207"><pre>        : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L208"><pre>          ? slides.length - 1</pre></li>
+    <li id="L209">
+      <pre>
+          : [&#x27;ArrowRight&#x27;, &#x27;ArrowDown&#x27;, &#x27;PageDown&#x27;, &#x27; &#x27;].includes(event.key)</pre>
+    </li>
+    <li id="L210"><pre>            ? Math.min(slides.length - 1, active + 1)</pre></li>
+    <li id="L211">
+      <pre>
+            : [&#x27;ArrowLeft&#x27;, &#x27;ArrowUp&#x27;, &#x27;PageUp&#x27;].includes(event.key)</pre>
+    </li>
+    <li id="L212"><pre>              ? Math.max(0, active - 1)</pre></li>
+    <li id="L213"><pre>              : null</pre></li>
+    <li id="L214"><pre>    if (next !== null) {</pre></li>
+    <li id="L215"><pre>      event.preventDefault()</pre></li>
+    <li id="L216"><pre>      if (mode === &#x27;sorter&#x27;) {</pre></li>
+    <li id="L217"><pre>        select(next, event)</pre></li>
+    <li id="L218">
+      <pre>
+        root.current?.querySelector&lt;HTMLElement&gt;(`[data-slide-index=&quot;${next}&quot;]`)?.focus()</pre>
+    </li>
+    <li id="L219"><pre>      } else onSelect(next)</pre></li>
+    <li id="L220"><pre>    }</pre></li>
+    <li id="L221"><pre>  }</pre></li>
+    <li id="L222"><pre>  if (mode === &#x27;normal&#x27;) return normal</pre></li>
+    <li id="L223"><pre>  if (mode === &#x27;outline&#x27;)</pre></li>
+    <li id="L224"><pre>    return (</pre></li>
+    <li id="L225">
+      <pre>      &lt;div className=&quot;mimir-pptx-outline-workspace&quot;&gt;</pre>
+    </li>
+    <li id="L226">
+      <pre>
+        &lt;nav className=&quot;mimir-pptx-outline&quot; aria-label=&quot;幻灯片大纲&quot;&gt;</pre>
+    </li>
+    <li id="L227"><pre>          {slides.map((slide, index) =&gt; (</pre></li>
+    <li id="L228"><pre>            &lt;Button</pre></li>
+    <li id="L229"><pre>              type=&quot;text&quot;</pre></li>
+    <li id="L230"><pre>              key={slide.path}</pre></li>
+    <li id="L231"><pre>              className=&quot;mimir-pptx-outline-item&quot;</pre></li>
+    <li id="L232">
+      <pre>              aria-current={index === active ? &#x27;page&#x27; : undefined}</pre>
+    </li>
+    <li id="L233">
+      <pre>              aria-label={`第 ${index + 1} 页：${outlines[index]!.title}`}</pre>
+    </li>
+    <li id="L234"><pre>              onClick={() =&gt; onSelect(index)}</pre></li>
+    <li id="L235"><pre>            &gt;</pre></li>
+    <li id="L236">
+      <pre>
+              &lt;span className=&quot;mimir-pptx-outline-number&quot;&gt;{index + 1}&lt;/span&gt;</pre>
+    </li>
+    <li id="L237">
+      <pre>              &lt;span className=&quot;mimir-pptx-outline-text&quot;&gt;</pre>
+    </li>
+    <li id="L238">
+      <pre>                &lt;strong&gt;{outlines[index]!.title}&lt;/strong&gt;</pre>
+    </li>
+    <li id="L239"><pre>                {outlines[index]!.lines.map((line) =&gt; (</pre></li>
+    <li id="L240">
+      <pre>                  &lt;span key={line.key}&gt;{line.text}&lt;/span&gt;</pre>
+    </li>
+    <li id="L241"><pre>                ))}</pre></li>
+    <li id="L242"><pre>              &lt;/span&gt;</pre></li>
+    <li id="L243"><pre>            &lt;/Button&gt;</pre></li>
+    <li id="L244"><pre>          ))}</pre></li>
+    <li id="L245"><pre>        &lt;/nav&gt;</pre></li>
+    <li id="L246"><pre>        {children}</pre></li>
+    <li id="L247"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L248"><pre>    )</pre></li>
+    <li id="L249"><pre>  return (</pre></li>
+    <li id="L250"><pre>    &lt;div</pre></li>
+    <li id="L251"><pre>      ref={root}</pre></li>
+    <li id="L252"><pre>      tabIndex={-1}</pre></li>
+    <li id="L253"><pre>      className={`mimir-pptx-${mode}`}</pre></li>
+    <li id="L254"><pre>      style={</pre></li>
+    <li id="L255"><pre>        {</pre></li>
+    <li id="L256">
+      <pre>          &#x27;--reading-ratio&#x27;: `${deck.size.cx} / ${deck.size.cy}`,</pre>
+    </li>
+    <li id="L257">
+      <pre>          &#x27;--reading-factor&#x27;: deck.size.cx / deck.size.cy,</pre>
+    </li>
+    <li id="L258"><pre>        } as CSSProperties</pre></li>
+    <li id="L259"><pre>      }</pre></li>
+    <li id="L260">
+      <pre>
+      aria-label={mode === &#x27;reading&#x27; ? &#x27;阅读视图&#x27; : &#x27;幻灯片浏览视图&#x27;}</pre>
+    </li>
+    <li id="L261"><pre>      onKeyDown={keydown}</pre></li>
+    <li id="L262"><pre>    &gt;</pre></li>
+    <li id="L263"><pre>      {mode === &#x27;reading&#x27; ? (</pre></li>
+    <li id="L264"><pre>        &lt;&gt;</pre></li>
+    <li id="L265">
+      <pre>          &lt;div className=&quot;mimir-pptx-reading-stage&quot;&gt;</pre>
+    </li>
+    <li id="L266"><pre>            &lt;Button</pre></li>
+    <li id="L267"><pre>              type=&quot;text&quot;</pre></li>
+    <li id="L268"><pre>              className=&quot;mimir-pptx-reading-slide&quot;</pre></li>
+    <li id="L269"><pre>              aria-label=&quot;阅读幻灯片，点击下一页&quot;</pre></li>
+    <li id="L270">
+      <pre>              onClick={() =&gt; onSelect(Math.min(slides.length - 1, active + 1))}</pre>
+    </li>
+    <li id="L271"><pre>            &gt;</pre></li>
+    <li id="L272">
+      <pre>              &lt;SlidePreview deck={deck} index={active} width={1100} /&gt;</pre>
+    </li>
+    <li id="L273"><pre>            &lt;/Button&gt;</pre></li>
+    <li id="L274"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L275">
+      <pre>          &lt;div className=&quot;mimir-pptx-view-actions&quot;&gt;</pre>
+    </li>
+    <li id="L276"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L277"><pre>              label=&quot;阅读上一页&quot;</pre></li>
+    <li id="L278"><pre>              disabled={active === 0}</pre></li>
+    <li id="L279"><pre>              onClick={() =&gt; onSelect(active - 1)}</pre></li>
+    <li id="L280"><pre>            &gt;</pre></li>
+    <li id="L281"><pre>              &lt;ChevronLeftIcon /&gt;</pre></li>
+    <li id="L282"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L283"><pre>            &lt;ToolbarLabel&gt;</pre></li>
+    <li id="L284"><pre>              第 {active + 1} / {slides.length} 页</pre></li>
+    <li id="L285"><pre>            &lt;/ToolbarLabel&gt;</pre></li>
+    <li id="L286"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L287"><pre>              label=&quot;阅读下一页&quot;</pre></li>
+    <li id="L288"><pre>              disabled={active === slides.length - 1}</pre></li>
+    <li id="L289"><pre>              onClick={() =&gt; onSelect(active + 1)}</pre></li>
+    <li id="L290"><pre>            &gt;</pre></li>
+    <li id="L291"><pre>              &lt;ChevronRightIcon /&gt;</pre></li>
+    <li id="L292"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L293">
+      <pre>
+            &lt;ToolbarButton label=&quot;返回普通视图&quot; onClick={() =&gt; onMode(&#x27;normal&#x27;)}&gt;</pre>
+    </li>
+    <li id="L294"><pre>              返回编辑</pre></li>
+    <li id="L295"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L296"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L297"><pre>        &lt;/&gt;</pre></li>
+    <li id="L298"><pre>      ) : (</pre></li>
+    <li id="L299"><pre>        &lt;&gt;</pre></li>
+    <li id="L300">
+      <pre>          &lt;div className=&quot;mimir-pptx-view-actions&quot;&gt;</pre>
+    </li>
+    <li id="L301">
+      <pre>            &lt;ToolbarLabel&gt;已选 {chosen.length} 张&lt;/ToolbarLabel&gt;</pre>
+    </li>
+    <li id="L302">
+      <pre>
+            &lt;ToolbarButton label=&quot;编辑所选幻灯片&quot; onClick={() =&gt; edit()}&gt;</pre>
+    </li>
+    <li id="L303"><pre>              编辑</pre></li>
+    <li id="L304"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L305"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L306"><pre>              label=&quot;前移所选幻灯片&quot;</pre></li>
+    <li id="L307"><pre>              disabled={busy || !!reorderReason || first === 0}</pre></li>
+    <li id="L308">
+      <pre>
+              disabledReason={reorderReason ?? (busy ? &#x27;正在处理文档&#x27; : &#x27;已经在最前&#x27;)}</pre>
+    </li>
+    <li id="L309"><pre>              onClick={() =&gt; void move(chosen, first - 1)}</pre></li>
+    <li id="L310"><pre>            &gt;</pre></li>
+    <li id="L311"><pre>              前移</pre></li>
+    <li id="L312"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L313"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L314"><pre>              label=&quot;后移所选幻灯片&quot;</pre></li>
+    <li id="L315">
+      <pre>              disabled={busy || !!reorderReason || last === slides.length - 1}</pre>
+    </li>
+    <li id="L316">
+      <pre>
+              disabledReason={reorderReason ?? (busy ? &#x27;正在处理文档&#x27; : &#x27;已经在最后&#x27;)}</pre>
+    </li>
+    <li id="L317"><pre>              onClick={() =&gt; void move(chosen, last + 2)}</pre></li>
+    <li id="L318"><pre>            &gt;</pre></li>
+    <li id="L319"><pre>              后移</pre></li>
+    <li id="L320"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L321"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L322"><pre>          &lt;div</pre></li>
+    <li id="L323"><pre>            className=&quot;mimir-pptx-sorter-grid&quot;</pre></li>
+    <li id="L324"><pre>            role=&quot;listbox&quot;</pre></li>
+    <li id="L325"><pre>            aria-label=&quot;幻灯片排序&quot;</pre></li>
+    <li id="L326"><pre>            aria-multiselectable=&quot;true&quot;</pre></li>
+    <li id="L327"><pre>          &gt;</pre></li>
+    <li id="L328"><pre>            {slides.map((slide, index) =&gt; (</pre></li>
+    <li id="L329"><pre>              &lt;Button</pre></li>
+    <li id="L330"><pre>                type=&quot;text&quot;</pre></li>
+    <li id="L331"><pre>                role=&quot;option&quot;</pre></li>
+    <li id="L332"><pre>                aria-selected={chosen.includes(slide.path)}</pre></li>
+    <li id="L333">
+      <pre>
+                aria-label={`第 ${index + 1} 页：${outlines[index]!.title}${/&lt;p:sld\b[^&gt;]*\bshow=[&quot;&#x27;]0[&quot;&#x27;]/.test(slide.originalXml) ? &#x27;（放映时隐藏）&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L334"><pre>                tabIndex={index === active ? 0 : -1}</pre></li>
+    <li id="L335"><pre>                key={slide.path}</pre></li>
+    <li id="L336"><pre>                data-slide-index={index}</pre></li>
+    <li id="L337"><pre>                draggable={!busy &amp;&amp; !reorderReason}</pre></li>
+    <li id="L338">
+      <pre>
+                className={`mimir-pptx-sorter-item${index === active ? &#x27; is-current&#x27; : &#x27;&#x27;}${drop === index ? &#x27; drop-before&#x27; : &#x27;&#x27;}${drop === slides.length &amp;&amp; index === slides.length - 1 ? &#x27; drop-after&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L339"><pre>                onClick={(event) =&gt; select(index, event)}</pre></li>
+    <li id="L340"><pre>                onDoubleClick={() =&gt; edit(index)}</pre></li>
+    <li id="L341"><pre>                onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L342"><pre>                  if (event.key === &#x27;Enter&#x27;) {</pre></li>
+    <li id="L343"><pre>                    event.preventDefault()</pre></li>
+    <li id="L344"><pre>                    event.stopPropagation()</pre></li>
+    <li id="L345"><pre>                    edit(index)</pre></li>
+    <li id="L346"><pre>                  }</pre></li>
+    <li id="L347"><pre>                }}</pre></li>
+    <li id="L348"><pre>                onDragStart={(event) =&gt; {</pre></li>
+    <li id="L349">
+      <pre>                  const block = chosen.includes(slide.path) ? chosen : [slide.path]</pre>
+    </li>
+    <li id="L350"><pre>                  setDrag(block)</pre></li>
+    <li id="L351"><pre>                  setSelection(block)</pre></li>
+    <li id="L352">
+      <pre>                  event.dataTransfer.effectAllowed = &#x27;move&#x27;</pre>
+    </li>
+    <li id="L353"><pre>                }}</pre></li>
+    <li id="L354"><pre>                onDragOver={(event) =&gt; {</pre></li>
+    <li id="L355"><pre>                  if (!drag) return</pre></li>
+    <li id="L356"><pre>                  event.preventDefault()</pre></li>
+    <li id="L357">
+      <pre>                  const rect = event.currentTarget.getBoundingClientRect()</pre>
+    </li>
+    <li id="L358">
+      <pre>
+                  setDrop(index + (event.clientX &gt;= rect.left + rect.width / 2 ? 1 : 0))</pre>
+    </li>
+    <li id="L359"><pre>                }}</pre></li>
+    <li id="L360"><pre>                onDrop={(event) =&gt; {</pre></li>
+    <li id="L361"><pre>                  if (!drag) return</pre></li>
+    <li id="L362"><pre>                  event.preventDefault()</pre></li>
+    <li id="L363">
+      <pre>                  const rect = event.currentTarget.getBoundingClientRect()</pre>
+    </li>
+    <li id="L364">
+      <pre>
+                  void move(drag, index + (event.clientX &gt;= rect.left + rect.width / 2 ? 1 : 0))</pre>
+    </li>
+    <li id="L365"><pre>                }}</pre></li>
+    <li id="L366"><pre>                onDragEnd={() =&gt; {</pre></li>
+    <li id="L367"><pre>                  setDrag(null)</pre></li>
+    <li id="L368"><pre>                  setDrop(null)</pre></li>
+    <li id="L369"><pre>                }}</pre></li>
+    <li id="L370"><pre>              &gt;</pre></li>
+    <li id="L371"><pre>                &lt;SlidePreview deck={deck} index={index} /&gt;</pre></li>
+    <li id="L372">
+      <pre>                &lt;span className=&quot;mimir-pptx-sorter-caption&quot;&gt;</pre>
+    </li>
+    <li id="L373"><pre>                  &lt;span&gt;{index + 1}&lt;/span&gt;</pre></li>
+    <li id="L374">
+      <pre>                  &lt;span&gt;{outlines[index]!.title}&lt;/span&gt;</pre>
+    </li>
+    <li id="L375">
+      <pre>
+                  {/&lt;p:sld\b[^&gt;]*\bshow=[&quot;&#x27;]0[&quot;&#x27;]/.test(slide.originalXml) &amp;&amp; &lt;span&gt;隐藏&lt;/span&gt;}</pre>
+    </li>
+    <li id="L376"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L377"><pre>              &lt;/Button&gt;</pre></li>
+    <li id="L378"><pre>            ))}</pre></li>
+    <li id="L379"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L380"><pre>        &lt;/&gt;</pre></li>
+    <li id="L381"><pre>      )}</pre></li>
+    <li id="L382"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L383"><pre>  )</pre></li>
+    <li id="L384"><pre>}</pre></li>
+  </ol>
+</html>

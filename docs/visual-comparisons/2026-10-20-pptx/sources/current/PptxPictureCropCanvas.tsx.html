@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxPictureCropCanvas.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxPictureCropCanvas.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 229dbc4a508c8ce068b2b97dd1b52764618305790c9e89f04f1aca8d2995d910
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { Check, Crop, RotateCcw, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3"><pre>import type {</pre></li>
+    <li id="L4"><pre>  EmuRect,</pre></li>
+    <li id="L5"><pre>  PictureElement,</pre></li>
+    <li id="L6"><pre>  GroupElement,</pre></li>
+    <li id="L7"><pre>} from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre></li>
+    <li id="L8"><pre>import { ToolbarButton } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L9"><pre>import {</pre></li>
+    <li id="L10"><pre>  PICTURE_CROP_HANDLES,</pre></li>
+    <li id="L11"><pre>  movePictureCropHandle,</pre></li>
+    <li id="L12"><pre>  pictureCropCommit,</pre></li>
+    <li id="L13"><pre>  pictureCropHandlePoint,</pre></li>
+    <li id="L14"><pre>  pictureCropToLocal,</pre></li>
+    <li id="L15"><pre>  pictureCropToSlide,</pre></li>
+    <li id="L16"><pre>  pictureCropTransform,</pre></li>
+    <li id="L17"><pre>  pptxPictureCropGeometry,</pre></li>
+    <li id="L18"><pre>  pptxPictureCropUnavailableReason,</pre></li>
+    <li id="L19"><pre>  type PictureCropFrame,</pre></li>
+    <li id="L20"><pre>  type PictureCropGeometry,</pre></li>
+    <li id="L21"><pre>  type PictureCropHandle,</pre></li>
+    <li id="L22"><pre>  type PictureCropPoint,</pre></li>
+    <li id="L23"><pre>  type PictureCropRect,</pre></li>
+    <li id="L24"><pre>  type PictureCropViewport,</pre></li>
+    <li id="L25"><pre>} from &#x27;./pptx-picture-crop.js&#x27;</pre></li>
+    <li id="L26"><pre>import &#x27;./pptx-picture-crop.css&#x27;</pre></li>
+    <li id="L27"><pre></pre></li>
+    <li id="L28">
+      <pre>export interface PptxPictureCropCanvasProps extends PictureCropViewport {</pre>
+    </li>
+    <li id="L29"><pre>  documentId: string</pre></li>
+    <li id="L30"><pre>  slideKey: string</pre></li>
+    <li id="L31"><pre>  version: number</pre></li>
+    <li id="L32"><pre>  element: PictureElement</pre></li>
+    <li id="L33"><pre>  parent?: GroupElement</pre></li>
+    <li id="L34"><pre>  groupRef?: string</pre></li>
+    <li id="L35"><pre>  target: { slide: number; el: string }</pre></li>
+    <li id="L36"><pre>  imageHref?: string</pre></li>
+    <li id="L37"><pre>  disabled: boolean</pre></li>
+    <li id="L38"><pre>  apply: (</pre></li>
+    <li id="L39"><pre>    srcRect: PictureCropRect | null,</pre></li>
+    <li id="L40"><pre>    expectedVersion: number,</pre></li>
+    <li id="L41"><pre>    signal: AbortSignal,</pre></li>
+    <li id="L42"><pre>    box?: EmuRect,</pre></li>
+    <li id="L43"><pre>  ) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L44"><pre>  onExit: () =&gt; void</pre></li>
+    <li id="L45"><pre>  onBusy: (busy: boolean) =&gt; void</pre></li>
+    <li id="L46"><pre>}</pre></li>
+    <li id="L47"><pre>const handleLabels: Record&lt;PictureCropHandle, string&gt; = {</pre></li>
+    <li id="L48"><pre>  nw: &#x27;左上&#x27;,</pre></li>
+    <li id="L49"><pre>  n: &#x27;上&#x27;,</pre></li>
+    <li id="L50"><pre>  ne: &#x27;右上&#x27;,</pre></li>
+    <li id="L51"><pre>  e: &#x27;右&#x27;,</pre></li>
+    <li id="L52"><pre>  se: &#x27;右下&#x27;,</pre></li>
+    <li id="L53"><pre>  s: &#x27;下&#x27;,</pre></li>
+    <li id="L54"><pre>  sw: &#x27;左下&#x27;,</pre></li>
+    <li id="L55"><pre>  w: &#x27;左&#x27;,</pre></li>
+    <li id="L56"><pre>}</pre></li>
+    <li id="L57">
+      <pre>export function PptxPictureCropCanvas(props: PptxPictureCropCanvasProps) {</pre>
+    </li>
+    <li id="L58">
+      <pre>  const geometry = pptxPictureCropGeometry(props.element, props, props.parent)</pre>
+    </li>
+    <li id="L59"><pre>  if (!geometry)</pre></li>
+    <li id="L60"><pre>    return (</pre></li>
+    <li id="L61">
+      <pre>
+      &lt;div className=&quot;mimir-pptx-picture-crop-feedback&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L62"><pre>        &lt;span&gt;</pre></li>
+    <li id="L63">
+      <pre>
+          {pptxPictureCropUnavailableReason(props.element, props) ?? &#x27;组合定位无效，请重新选择图片&#x27;}</pre>
+    </li>
+    <li id="L64"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L65">
+      <pre>
+        &lt;ToolbarButton label=&quot;关闭图片拖动裁切&quot; onClick={props.onExit}&gt;</pre>
+    </li>
+    <li id="L66"><pre>          &lt;X size={14} /&gt;</pre></li>
+    <li id="L67"><pre>          关闭</pre></li>
+    <li id="L68"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L69"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L70"><pre>    )</pre></li>
+    <li id="L71"><pre>  return (</pre></li>
+    <li id="L72"><pre>    &lt;PictureCropGesture</pre></li>
+    <li id="L73">
+      <pre>
+      key={`${props.documentId}:${props.slideKey}:${props.target.slide}:${props.target.el}:${props.groupRef ?? &#x27;&#x27;}:${props.version}:${props.width}:${props.height}:${props.disabled}`}</pre>
+    </li>
+    <li id="L74"><pre>      {...props}</pre></li>
+    <li id="L75"><pre>      geometry={geometry}</pre></li>
+    <li id="L76"><pre>    /&gt;</pre></li>
+    <li id="L77"><pre>  )</pre></li>
+    <li id="L78"><pre>}</pre></li>
+    <li id="L79">
+      <pre>
+function PictureCropGesture(props: PptxPictureCropCanvasProps &amp; { geometry: PictureCropGeometry }) {</pre>
+    </li>
+    <li id="L80">
+      <pre>
+  const { geometry, width, height, version, disabled, apply, onExit, onBusy } = props,</pre>
+    </li>
+    <li id="L81"><pre>    full = geometry.full,</pre></li>
+    <li id="L82"><pre>    clipId = useId().replaceAll(&#x27;:&#x27;, &#x27;&#x27;),</pre></li>
+    <li id="L83"><pre>    surface = useRef&lt;SVGSVGElement&gt;(null),</pre></li>
+    <li id="L84"><pre>    root = useRef&lt;HTMLDivElement&gt;(null),</pre></li>
+    <li id="L85"><pre>    pending = useRef&lt;AbortController | null&gt;(null),</pre></li>
+    <li id="L86"><pre>    closed = useRef(false),</pre></li>
+    <li id="L87"><pre>    drag = useRef&lt;{</pre></li>
+    <li id="L88"><pre>      pointer: number</pre></li>
+    <li id="L89"><pre>      handle: PictureCropHandle</pre></li>
+    <li id="L90"><pre>      start: PictureCropPoint</pre></li>
+    <li id="L91"><pre>      frame: PictureCropFrame</pre></li>
+    <li id="L92"><pre>    } | null&gt;(null),</pre></li>
+    <li id="L93"><pre>    callbacks = useRef({ onExit, onBusy }),</pre></li>
+    <li id="L94"><pre>    [frame, setFrame] = useState(geometry.frame),</pre></li>
+    <li id="L95"><pre>    [busy, setBusy] = useState(false),</pre></li>
+    <li id="L96"><pre>    [posterReady, setPosterReady] = useState(!props.element.media),</pre></li>
+    <li id="L97"><pre>    [posterFailed, setPosterFailed] = useState(false),</pre></li>
+    <li id="L98"><pre>    [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L99"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L100"><pre>    callbacks.current = { onExit, onBusy }</pre></li>
+    <li id="L101"><pre>  }, [onExit, onBusy])</pre></li>
+    <li id="L102"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L103"><pre>    surface.current?.focus()</pre></li>
+    <li id="L104"><pre>    return () =&gt; {</pre></li>
+    <li id="L105"><pre>      drag.current = null</pre></li>
+    <li id="L106"><pre>      pending.current?.abort()</pre></li>
+    <li id="L107"><pre>      callbacks.current.onBusy(false)</pre></li>
+    <li id="L108"><pre>    }</pre></li>
+    <li id="L109"><pre>  }, [])</pre></li>
+    <li id="L110"><pre>  const cancel = () =&gt; {</pre></li>
+    <li id="L111"><pre>    if (closed.current) return</pre></li>
+    <li id="L112"><pre>    closed.current = true</pre></li>
+    <li id="L113"><pre>    drag.current = null</pre></li>
+    <li id="L114"><pre>    pending.current?.abort()</pre></li>
+    <li id="L115"><pre>    pending.current = null</pre></li>
+    <li id="L116"><pre>    setBusy(false)</pre></li>
+    <li id="L117"><pre>    callbacks.current.onBusy(false)</pre></li>
+    <li id="L118"><pre>    callbacks.current.onExit()</pre></li>
+    <li id="L119"><pre>  }</pre></li>
+    <li id="L120"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L121"><pre>    const cancelOnBlur = () =&gt; {</pre></li>
+    <li id="L122"><pre>      if (closed.current) return</pre></li>
+    <li id="L123"><pre>      closed.current = true</pre></li>
+    <li id="L124"><pre>      drag.current = null</pre></li>
+    <li id="L125"><pre>      pending.current?.abort()</pre></li>
+    <li id="L126"><pre>      pending.current = null</pre></li>
+    <li id="L127"><pre>      setBusy(false)</pre></li>
+    <li id="L128"><pre>      callbacks.current.onBusy(false)</pre></li>
+    <li id="L129"><pre>      callbacks.current.onExit()</pre></li>
+    <li id="L130"><pre>    }</pre></li>
+    <li id="L131"><pre>    const escape = (event: globalThis.KeyboardEvent) =&gt; {</pre></li>
+    <li id="L132"><pre>      if (</pre></li>
+    <li id="L133"><pre>        event.key !== &#x27;Escape&#x27; ||</pre></li>
+    <li id="L134"><pre>        event.defaultPrevented ||</pre></li>
+    <li id="L135"><pre>        !(event.target instanceof Node) ||</pre></li>
+    <li id="L136"><pre>        !root.current?.contains(event.target)</pre></li>
+    <li id="L137"><pre>      )</pre></li>
+    <li id="L138"><pre>        return</pre></li>
+    <li id="L139"><pre>      event.preventDefault()</pre></li>
+    <li id="L140"><pre>      event.stopPropagation()</pre></li>
+    <li id="L141"><pre>      cancelOnBlur()</pre></li>
+    <li id="L142"><pre>    }</pre></li>
+    <li id="L143"><pre>    window.addEventListener(&#x27;blur&#x27;, cancelOnBlur)</pre></li>
+    <li id="L144"><pre>    document.addEventListener(&#x27;keydown&#x27;, escape, true)</pre></li>
+    <li id="L145"><pre>    return () =&gt; {</pre></li>
+    <li id="L146"><pre>      window.removeEventListener(&#x27;blur&#x27;, cancelOnBlur)</pre></li>
+    <li id="L147">
+      <pre>      document.removeEventListener(&#x27;keydown&#x27;, escape, true)</pre>
+    </li>
+    <li id="L148"><pre>    }</pre></li>
+    <li id="L149"><pre>  }, [])</pre></li>
+    <li id="L150"><pre>  const changed =</pre></li>
+    <li id="L151"><pre>    Math.abs(frame.x) &gt; 0.001 ||</pre></li>
+    <li id="L152"><pre>    Math.abs(frame.y) &gt; 0.001 ||</pre></li>
+    <li id="L153"><pre>    Math.abs(frame.w - geometry.frame.w) &gt; 0.001 ||</pre></li>
+    <li id="L154"><pre>    Math.abs(frame.h - geometry.frame.h) &gt; 0.001</pre></li>
+    <li id="L155"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L156">
+      <pre>
+    if (closed.current || disabled || pending.current || !changed || !posterReady) return</pre>
+    </li>
+    <li id="L157"><pre>    drag.current = null</pre></li>
+    <li id="L158"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L159"><pre>    pending.current = controller</pre></li>
+    <li id="L160"><pre>    setBusy(true)</pre></li>
+    <li id="L161"><pre>    callbacks.current.onBusy(true)</pre></li>
+    <li id="L162"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L163"><pre>    const value = pictureCropCommit(geometry, frame)</pre></li>
+    <li id="L164"><pre>    try {</pre></li>
+    <li id="L165">
+      <pre>
+      const accepted = await apply(value.srcRect, version, controller.signal, value.box)</pre>
+    </li>
+    <li id="L166"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L167"><pre>        if (accepted) {</pre></li>
+    <li id="L168"><pre>          closed.current = true</pre></li>
+    <li id="L169"><pre>          callbacks.current.onExit()</pre></li>
+    <li id="L170">
+      <pre>        } else setError(&#x27;裁切未应用，请重试；原图片已保留&#x27;)</pre>
+    </li>
+    <li id="L171"><pre>      }</pre></li>
+    <li id="L172"><pre>    } catch {</pre></li>
+    <li id="L173">
+      <pre>
+      if (!controller.signal.aborted) setError(&#x27;裁切未应用，请重试；原图片已保留&#x27;)</pre>
+    </li>
+    <li id="L174"><pre>    } finally {</pre></li>
+    <li id="L175"><pre>      if (pending.current === controller) {</pre></li>
+    <li id="L176"><pre>        pending.current = null</pre></li>
+    <li id="L177"><pre>        setBusy(false)</pre></li>
+    <li id="L178"><pre>        callbacks.current.onBusy(false)</pre></li>
+    <li id="L179"><pre>      }</pre></li>
+    <li id="L180"><pre>    }</pre></li>
+    <li id="L181"><pre>  }</pre></li>
+    <li id="L182">
+      <pre>  const local = (event: { clientX: number; clientY: number }) =&gt; {</pre>
+    </li>
+    <li id="L183"><pre>    const bounds = surface.current?.getBoundingClientRect()</pre></li>
+    <li id="L184">
+      <pre>    if (!bounds || bounds.width &lt;= 0 || bounds.height &lt;= 0) return null</pre>
+    </li>
+    <li id="L185"><pre>    return pictureCropToLocal(geometry, {</pre></li>
+    <li id="L186"><pre>      x: ((event.clientX - bounds.left) * width) / bounds.width,</pre></li>
+    <li id="L187"><pre>      y: ((event.clientY - bounds.top) * height) / bounds.height,</pre></li>
+    <li id="L188"><pre>    })</pre></li>
+    <li id="L189"><pre>  }</pre></li>
+    <li id="L190">
+      <pre>  const update = (event: PointerEvent&lt;SVGSVGElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L191"><pre>    const current = drag.current,</pre></li>
+    <li id="L192"><pre>      point = local(event)</pre></li>
+    <li id="L193">
+      <pre>    if (!current || current.pointer !== event.pointerId || !point) return</pre>
+    </li>
+    <li id="L194"><pre>    setFrame(</pre></li>
+    <li id="L195"><pre>      movePictureCropHandle(current.frame, full, current.handle, {</pre></li>
+    <li id="L196"><pre>        x: point.x - current.start.x,</pre></li>
+    <li id="L197"><pre>        y: point.y - current.start.y,</pre></li>
+    <li id="L198"><pre>      }),</pre></li>
+    <li id="L199"><pre>    )</pre></li>
+    <li id="L200"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L201"><pre>  }</pre></li>
+    <li id="L202">
+      <pre>
+  const keyHandle = (handle: PictureCropHandle, event: KeyboardEvent&lt;SVGGElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L203"><pre>    if (</pre></li>
+    <li id="L204"><pre>      closed.current ||</pre></li>
+    <li id="L205"><pre>      disabled ||</pre></li>
+    <li id="L206"><pre>      busy ||</pre></li>
+    <li id="L207"><pre>      pending.current ||</pre></li>
+    <li id="L208">
+      <pre>
+      ![&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;, &#x27;ArrowUp&#x27;, &#x27;ArrowDown&#x27;].includes(event.key)</pre>
+    </li>
+    <li id="L209"><pre>    )</pre></li>
+    <li id="L210"><pre>      return</pre></li>
+    <li id="L211"><pre>    event.preventDefault()</pre></li>
+    <li id="L212"><pre>    event.stopPropagation()</pre></li>
+    <li id="L213"><pre>    const amount = event.shiftKey ? 10 : 1,</pre></li>
+    <li id="L214"><pre>      origin = pictureCropToSlide(geometry, { x: 0, y: 0 }),</pre></li>
+    <li id="L215"><pre>      delta = pictureCropToLocal(geometry, {</pre></li>
+    <li id="L216"><pre>        x:</pre></li>
+    <li id="L217"><pre>          origin.x +</pre></li>
+    <li id="L218">
+      <pre>
+          (event.key === &#x27;ArrowRight&#x27; ? amount : event.key === &#x27;ArrowLeft&#x27; ? -amount : 0),</pre>
+    </li>
+    <li id="L219">
+      <pre>
+        y: origin.y + (event.key === &#x27;ArrowDown&#x27; ? amount : event.key === &#x27;ArrowUp&#x27; ? -amount : 0),</pre>
+    </li>
+    <li id="L220"><pre>      })</pre></li>
+    <li id="L221">
+      <pre>    setFrame((current) =&gt; movePictureCropHandle(current, full, handle, delta))</pre>
+    </li>
+    <li id="L222"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L223"><pre>  }</pre></li>
+    <li id="L224"><pre>  const imageHref = props.imageHref ?? props.element.dataUrl,</pre></li>
+    <li id="L225">
+      <pre>    retained = Math.round((frame.w / full.w) * (frame.h / full.h) * 100)</pre>
+    </li>
+    <li id="L226"><pre>  return (</pre></li>
+    <li id="L227">
+      <pre>
+    &lt;div ref={root} className=&quot;mimir-pptx-picture-crop-layer&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L228"><pre>      &lt;svg</pre></li>
+    <li id="L229"><pre>        ref={surface}</pre></li>
+    <li id="L230"><pre>        className=&quot;mimir-pptx-picture-crop-canvas&quot;</pre></li>
+    <li id="L231"><pre>        viewBox={`0 0 ${width} ${height}`}</pre></li>
+    <li id="L232"><pre>        preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L233"><pre>        tabIndex={0}</pre></li>
+    <li id="L234"><pre>        role=&quot;group&quot;</pre></li>
+    <li id="L235"><pre>        aria-label=&quot;图片拖动裁切画布&quot;</pre></li>
+    <li id="L236"><pre>        aria-describedby={`${clipId}-help`}</pre></li>
+    <li id="L237"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L238"><pre>          if (event.key === &#x27;Enter&#x27;) {</pre></li>
+    <li id="L239"><pre>            event.preventDefault()</pre></li>
+    <li id="L240"><pre>            event.stopPropagation()</pre></li>
+    <li id="L241"><pre>            void submit()</pre></li>
+    <li id="L242"><pre>          }</pre></li>
+    <li id="L243"><pre>        }}</pre></li>
+    <li id="L244"><pre>        onPointerDown={(event) =&gt; {</pre></li>
+    <li id="L245"><pre>          event.stopPropagation()</pre></li>
+    <li id="L246">
+      <pre>          if (drag.current &amp;&amp; drag.current.pointer !== event.pointerId) {</pre>
+    </li>
+    <li id="L247"><pre>            setFrame(drag.current.frame)</pre></li>
+    <li id="L248"><pre>            drag.current = null</pre></li>
+    <li id="L249"><pre>          }</pre></li>
+    <li id="L250"><pre>        }}</pre></li>
+    <li id="L251"><pre>        onPointerMove={update}</pre></li>
+    <li id="L252"><pre>        onPointerUp={(event) =&gt; {</pre></li>
+    <li id="L253"><pre>          if (drag.current?.pointer !== event.pointerId) return</pre></li>
+    <li id="L254"><pre>          update(event)</pre></li>
+    <li id="L255"><pre>          drag.current = null</pre></li>
+    <li id="L256">
+      <pre>          surface.current?.releasePointerCapture?.(event.pointerId)</pre>
+    </li>
+    <li id="L257"><pre>        }}</pre></li>
+    <li id="L258"><pre>        onPointerCancel={(event) =&gt; {</pre></li>
+    <li id="L259"><pre>          if (drag.current?.pointer !== event.pointerId) return</pre></li>
+    <li id="L260"><pre>          setFrame(drag.current.frame)</pre></li>
+    <li id="L261"><pre>          drag.current = null</pre></li>
+    <li id="L262"><pre>        }}</pre></li>
+    <li id="L263"><pre>        onLostPointerCapture={(event) =&gt; {</pre></li>
+    <li id="L264"><pre>          if (drag.current?.pointer !== event.pointerId) return</pre></li>
+    <li id="L265"><pre>          setFrame(drag.current.frame)</pre></li>
+    <li id="L266"><pre>          drag.current = null</pre></li>
+    <li id="L267"><pre>        }}</pre></li>
+    <li id="L268"><pre>        onClick={(event) =&gt; event.stopPropagation()}</pre></li>
+    <li id="L269"><pre>      &gt;</pre></li>
+    <li id="L270"><pre>        &lt;defs&gt;</pre></li>
+    <li id="L271"><pre>          &lt;clipPath id={clipId}&gt;</pre></li>
+    <li id="L272">
+      <pre>
+            &lt;rect {...{ x: frame.x, y: frame.y, width: frame.w, height: frame.h }} /&gt;</pre>
+    </li>
+    <li id="L273"><pre>          &lt;/clipPath&gt;</pre></li>
+    <li id="L274"><pre>        &lt;/defs&gt;</pre></li>
+    <li id="L275"><pre>        &lt;g transform={pictureCropTransform(geometry)}&gt;</pre></li>
+    <li id="L276"><pre>          &lt;rect</pre></li>
+    <li id="L277"><pre>            x={full.x}</pre></li>
+    <li id="L278"><pre>            y={full.y}</pre></li>
+    <li id="L279"><pre>            width={full.w}</pre></li>
+    <li id="L280"><pre>            height={full.h}</pre></li>
+    <li id="L281"><pre>            className=&quot;mimir-pptx-picture-crop-backing&quot;</pre></li>
+    <li id="L282"><pre>          /&gt;</pre></li>
+    <li id="L283"><pre>          {imageHref &amp;&amp; (</pre></li>
+    <li id="L284"><pre>            &lt;&gt;</pre></li>
+    <li id="L285"><pre>              &lt;image</pre></li>
+    <li id="L286"><pre>                href={imageHref}</pre></li>
+    <li id="L287"><pre>                x={full.x}</pre></li>
+    <li id="L288"><pre>                y={full.y}</pre></li>
+    <li id="L289"><pre>                width={full.w}</pre></li>
+    <li id="L290"><pre>                height={full.h}</pre></li>
+    <li id="L291"><pre>                preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L292"><pre>                opacity=&quot;.3&quot;</pre></li>
+    <li id="L293"><pre>                onLoad={() =&gt; {</pre></li>
+    <li id="L294"><pre>                  setPosterReady(true)</pre></li>
+    <li id="L295"><pre>                  setPosterFailed(false)</pre></li>
+    <li id="L296"><pre>                }}</pre></li>
+    <li id="L297"><pre>                onError={() =&gt; {</pre></li>
+    <li id="L298"><pre>                  if (!props.element.media) return</pre></li>
+    <li id="L299"><pre>                  setPosterReady(false)</pre></li>
+    <li id="L300"><pre>                  setPosterFailed(true)</pre></li>
+    <li id="L301"><pre>                }}</pre></li>
+    <li id="L302"><pre>              /&gt;</pre></li>
+    <li id="L303"><pre>              &lt;image</pre></li>
+    <li id="L304"><pre>                href={imageHref}</pre></li>
+    <li id="L305"><pre>                x={full.x}</pre></li>
+    <li id="L306"><pre>                y={full.y}</pre></li>
+    <li id="L307"><pre>                width={full.w}</pre></li>
+    <li id="L308"><pre>                height={full.h}</pre></li>
+    <li id="L309"><pre>                preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L310"><pre>                clipPath={`url(#${clipId})`}</pre></li>
+    <li id="L311"><pre>              /&gt;</pre></li>
+    <li id="L312"><pre>            &lt;/&gt;</pre></li>
+    <li id="L313"><pre>          )}</pre></li>
+    <li id="L314"><pre>          &lt;rect</pre></li>
+    <li id="L315"><pre>            x={frame.x}</pre></li>
+    <li id="L316"><pre>            y={frame.y}</pre></li>
+    <li id="L317"><pre>            width={frame.w}</pre></li>
+    <li id="L318"><pre>            height={frame.h}</pre></li>
+    <li id="L319"><pre>            className=&quot;mimir-pptx-picture-crop-frame&quot;</pre></li>
+    <li id="L320"><pre>          /&gt;</pre></li>
+    <li id="L321"><pre>          {[1 / 3, 2 / 3].map((ratio) =&gt; (</pre></li>
+    <li id="L322">
+      <pre>
+            &lt;g key={ratio} className=&quot;mimir-pptx-picture-crop-guide&quot;&gt;</pre>
+    </li>
+    <li id="L323"><pre>              &lt;line</pre></li>
+    <li id="L324"><pre>                x1={frame.x + frame.w * ratio}</pre></li>
+    <li id="L325"><pre>                y1={frame.y}</pre></li>
+    <li id="L326"><pre>                x2={frame.x + frame.w * ratio}</pre></li>
+    <li id="L327"><pre>                y2={frame.y + frame.h}</pre></li>
+    <li id="L328"><pre>              /&gt;</pre></li>
+    <li id="L329"><pre>              &lt;line</pre></li>
+    <li id="L330"><pre>                x1={frame.x}</pre></li>
+    <li id="L331"><pre>                y1={frame.y + frame.h * ratio}</pre></li>
+    <li id="L332"><pre>                x2={frame.x + frame.w}</pre></li>
+    <li id="L333"><pre>                y2={frame.y + frame.h * ratio}</pre></li>
+    <li id="L334"><pre>              /&gt;</pre></li>
+    <li id="L335"><pre>            &lt;/g&gt;</pre></li>
+    <li id="L336"><pre>          ))}</pre></li>
+    <li id="L337"><pre>        &lt;/g&gt;</pre></li>
+    <li id="L338"><pre>        {PICTURE_CROP_HANDLES.map((handle) =&gt; {</pre></li>
+    <li id="L339">
+      <pre>
+          const point = pictureCropToSlide(geometry, pictureCropHandlePoint(frame, handle))</pre>
+    </li>
+    <li id="L340"><pre>          return (</pre></li>
+    <li id="L341"><pre>            &lt;g</pre></li>
+    <li id="L342"><pre>              key={handle}</pre></li>
+    <li id="L343"><pre>              transform={`translate(${point.x} ${point.y})`}</pre></li>
+    <li id="L344"><pre>              className=&quot;mimir-pptx-picture-crop-handle&quot;</pre></li>
+    <li id="L345"><pre>              data-crop-handle={handle}</pre></li>
+    <li id="L346"><pre>              tabIndex={disabled || busy ? -1 : 0}</pre></li>
+    <li id="L347"><pre>              role=&quot;button&quot;</pre></li>
+    <li id="L348"><pre>              aria-disabled={disabled || busy}</pre></li>
+    <li id="L349"><pre>              aria-label={`裁切${handleLabels[handle]}边缘`}</pre></li>
+    <li id="L350"><pre>              onKeyDown={(event) =&gt; keyHandle(handle, event)}</pre></li>
+    <li id="L351"><pre>              onPointerDown={(event) =&gt; {</pre></li>
+    <li id="L352"><pre>                event.stopPropagation()</pre></li>
+    <li id="L353">
+      <pre>
+                if (drag.current &amp;&amp; drag.current.pointer !== event.pointerId) {</pre>
+    </li>
+    <li id="L354"><pre>                  setFrame(drag.current.frame)</pre></li>
+    <li id="L355"><pre>                  drag.current = null</pre></li>
+    <li id="L356"><pre>                  return</pre></li>
+    <li id="L357"><pre>                }</pre></li>
+    <li id="L358"><pre>                if (</pre></li>
+    <li id="L359"><pre>                  disabled ||</pre></li>
+    <li id="L360"><pre>                  busy ||</pre></li>
+    <li id="L361"><pre>                  pending.current ||</pre></li>
+    <li id="L362"><pre>                  event.button !== 0 ||</pre></li>
+    <li id="L363"><pre>                  event.isPrimary === false</pre></li>
+    <li id="L364"><pre>                )</pre></li>
+    <li id="L365"><pre>                  return</pre></li>
+    <li id="L366"><pre>                const start = local(event)</pre></li>
+    <li id="L367"><pre>                if (!start) return</pre></li>
+    <li id="L368"><pre>                event.preventDefault()</pre></li>
+    <li id="L369"><pre>                event.currentTarget.focus()</pre></li>
+    <li id="L370">
+      <pre>                surface.current?.setPointerCapture?.(event.pointerId)</pre>
+    </li>
+    <li id="L371">
+      <pre>                drag.current = { pointer: event.pointerId, handle, start, frame }</pre>
+    </li>
+    <li id="L372"><pre>              }}</pre></li>
+    <li id="L373"><pre>            &gt;</pre></li>
+    <li id="L374"><pre>              &lt;rect</pre></li>
+    <li id="L375"><pre>                x={-12}</pre></li>
+    <li id="L376"><pre>                y={-12}</pre></li>
+    <li id="L377"><pre>                width={24}</pre></li>
+    <li id="L378"><pre>                height={24}</pre></li>
+    <li id="L379"><pre>                className=&quot;mimir-pptx-picture-crop-hit&quot;</pre></li>
+    <li id="L380"><pre>              /&gt;</pre></li>
+    <li id="L381">
+      <pre>
+              &lt;rect x={-4} y={-4} width={8} height={8} className=&quot;mimir-pptx-picture-crop-grip&quot; /&gt;</pre>
+    </li>
+    <li id="L382"><pre>            &lt;/g&gt;</pre></li>
+    <li id="L383"><pre>          )</pre></li>
+    <li id="L384"><pre>        })}</pre></li>
+    <li id="L385"><pre>      &lt;/svg&gt;</pre></li>
+    <li id="L386">
+      <pre>      &lt;div className=&quot;mimir-pptx-picture-crop-feedback&quot;&gt;</pre>
+    </li>
+    <li id="L387">
+      <pre>        &lt;div className=&quot;mimir-pptx-picture-crop-description&quot;&gt;</pre>
+    </li>
+    <li id="L388">
+      <pre>          &lt;span className=&quot;mimir-pptx-picture-crop-title&quot;&gt;</pre>
+    </li>
+    <li id="L389"><pre>            &lt;Crop size={14} /&gt;</pre></li>
+    <li id="L390"><pre>            图片裁切&lt;span&gt;{retained}%&lt;/span&gt;</pre></li>
+    <li id="L391"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L392">
+      <pre>
+          &lt;span id={`${clipId}-help`} role={error || posterFailed ? &#x27;alert&#x27; : &#x27;status&#x27;}&gt;</pre>
+    </li>
+    <li id="L393"><pre>            {posterFailed</pre></li>
+    <li id="L394">
+      <pre>              ? &#x27;媒体封面无法读取，不能裁切；原音视频已保留&#x27;</pre>
+    </li>
+    <li id="L395"><pre>              : error ||</pre></li>
+    <li id="L396"><pre>                (!posterReady</pre></li>
+    <li id="L397"><pre>                  ? &#x27;正在读取媒体封面…&#x27;</pre></li>
+    <li id="L398"><pre>                  : busy</pre></li>
+    <li id="L399"><pre>                    ? &#x27;正在应用裁切…&#x27;</pre></li>
+    <li id="L400">
+      <pre>                    : &#x27;拖动边缘；方向键微调，Shift加速&#x27;)}</pre>
+    </li>
+    <li id="L401"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L402"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L403">
+      <pre>        &lt;div className=&quot;mimir-pptx-picture-crop-actions&quot;&gt;</pre>
+    </li>
+    <li id="L404"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L405"><pre>            label=&quot;恢复图片完整范围&quot;</pre></li>
+    <li id="L406">
+      <pre>
+            disabled={disabled || busy || (!props.element.srcRect &amp;&amp; !changed)}</pre>
+    </li>
+    <li id="L407"><pre>            disabledReason=&quot;图片已显示完整范围&quot;</pre></li>
+    <li id="L408"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L409"><pre>              setFrame(full)</pre></li>
+    <li id="L410"><pre>              setError(&#x27;&#x27;)</pre></li>
+    <li id="L411"><pre>            }}</pre></li>
+    <li id="L412"><pre>          &gt;</pre></li>
+    <li id="L413"><pre>            &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L414"><pre>            完整</pre></li>
+    <li id="L415"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L416">
+      <pre>          &lt;ToolbarButton label=&quot;取消图片拖动裁切&quot; onClick={cancel}&gt;</pre>
+    </li>
+    <li id="L417"><pre>            &lt;X size={14} /&gt;</pre></li>
+    <li id="L418"><pre>            取消</pre></li>
+    <li id="L419"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L420"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L421"><pre>            label=&quot;应用拖动裁切&quot;</pre></li>
+    <li id="L422"><pre>            primary</pre></li>
+    <li id="L423">
+      <pre>            disabled={disabled || busy || !changed || !posterReady}</pre>
+    </li>
+    <li id="L424"><pre>            disabledReason={</pre></li>
+    <li id="L425">
+      <pre>
+              !posterReady ? &#x27;需要可读取的媒体封面&#x27; : busy ? &#x27;正在应用裁切&#x27; : &#x27;请先拖动裁切边缘&#x27;</pre>
+    </li>
+    <li id="L426"><pre>            }</pre></li>
+    <li id="L427"><pre>            onClick={() =&gt; void submit()}</pre></li>
+    <li id="L428"><pre>          &gt;</pre></li>
+    <li id="L429"><pre>            &lt;Check size={14} /&gt;</pre></li>
+    <li id="L430"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L431"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L432"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L433"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L434"><pre>  )</pre></li>
+    <li id="L435"><pre>}</pre></li>
+  </ol>
+</html>

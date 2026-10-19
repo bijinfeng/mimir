@@ -1,0 +1,10 @@
+{
+  "scope": "Static source-index integrity only; not browser acceptance",
+  "records": 754,
+  "unique": true,
+  "currentSourceTargetsAndExactLineAnchorsAllPresent": true,
+  "statesRetained": 25,
+  "selectAuditCountNotAddedToRecords": 114,
+  "sourceOnlyUnverifiedClaimsPreserved": true,
+  "baselineInventoryPreserved": true
+}

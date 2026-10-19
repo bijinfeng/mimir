@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxInkControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxInkControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 1f6c0849ff9fbcbe8276ecd4bb9981d3e7f342aac63dda900921ae9e0d59ff6f
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import {</pre></li>
+    <li id="L3"><pre>  ToolbarButton,</pre></li>
+    <li id="L4"><pre>  ToolbarColorPicker,</pre></li>
+    <li id="L5"><pre>  ToolbarMenu,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L8"><pre>  ToolbarSelect,</pre></li>
+    <li id="L9"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L10"><pre>import {</pre></li>
+    <li id="L11"><pre>  HIGHLIGHTER_WIDTHS,</pre></li>
+    <li id="L12"><pre>  INK_COLORS,</pre></li>
+    <li id="L13"><pre>  PEN_WIDTHS,</pre></li>
+    <li id="L14"><pre>  readInkPresets,</pre></li>
+    <li id="L15"><pre>  type InkPreset,</pre></li>
+    <li id="L16"><pre>  type InkTool,</pre></li>
+    <li id="L17"><pre>} from &#x27;../pptx-ink.js&#x27;</pre></li>
+    <li id="L18"><pre>import &#x27;./pptx-ink.css&#x27;</pre></li>
+    <li id="L19"><pre></pre></li>
+    <li id="L20"><pre>const PRESET_KEY = &#x27;mimir.pptx.ink-presets.v1&#x27;</pre></li>
+    <li id="L21"><pre>export function usePptxInkSettings() {</pre></li>
+    <li id="L22">
+      <pre>  const [tool, setTool] = useState&lt;InkTool&gt;(&#x27;select&#x27;)</pre>
+    </li>
+    <li id="L23"><pre>  const [selectedPreset, setSelectedPreset] = useState(0)</pre></li>
+    <li id="L24">
+      <pre>  const [presets, setPresets] = useState&lt;InkPreset[]&gt;(() =&gt; {</pre>
+    </li>
+    <li id="L25"><pre>    try {</pre></li>
+    <li id="L26"><pre>      return readInkPresets(localStorage.getItem(PRESET_KEY))</pre></li>
+    <li id="L27"><pre>    } catch {</pre></li>
+    <li id="L28"><pre>      return readInkPresets(null)</pre></li>
+    <li id="L29"><pre>    }</pre></li>
+    <li id="L30"><pre>  })</pre></li>
+    <li id="L31"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L32"><pre>    try {</pre></li>
+    <li id="L33"><pre>      localStorage.setItem(PRESET_KEY, JSON.stringify(presets))</pre></li>
+    <li id="L34"><pre>    } catch {</pre></li>
+    <li id="L35"><pre>      /* Drawing works when browser storage is unavailable. */</pre></li>
+    <li id="L36"><pre>    }</pre></li>
+    <li id="L37"><pre>  }, [presets])</pre></li>
+    <li id="L38"><pre>  const selectPreset = (index: number) =&gt; {</pre></li>
+    <li id="L39"><pre>    if (!presets[index]) return</pre></li>
+    <li id="L40"><pre>    setSelectedPreset(index)</pre></li>
+    <li id="L41"><pre>    setTool(presets[index]!.tool)</pre></li>
+    <li id="L42"><pre>  }</pre></li>
+    <li id="L43">
+      <pre>
+  const updatePreset = (patch: Partial&lt;Pick&lt;InkPreset, &#x27;color&#x27; | &#x27;width&#x27;&gt;&gt;) =&gt; {</pre>
+    </li>
+    <li id="L44"><pre>    setPresets((current) =&gt;</pre></li>
+    <li id="L45">
+      <pre>
+      current.map((item, i) =&gt; (i === selectedPreset ? { ...item, ...patch } : item)),</pre>
+    </li>
+    <li id="L46"><pre>    )</pre></li>
+    <li id="L47"><pre>    setTool(presets[selectedPreset]!.tool)</pre></li>
+    <li id="L48"><pre>  }</pre></li>
+    <li id="L49">
+      <pre>  return { tool, setTool, presets, selectedPreset, selectPreset, updatePreset }</pre>
+    </li>
+    <li id="L50"><pre>}</pre></li>
+    <li id="L51">
+      <pre>export type PptxInkSettings = ReturnType&lt;typeof usePptxInkSettings&gt;</pre>
+    </li>
+    <li id="L52"><pre>function PenIcon({ preset }: { preset: InkPreset }) {</pre></li>
+    <li id="L53"><pre>  return (</pre></li>
+    <li id="L54">
+      <pre>
+    &lt;svg width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 20 20&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L55"><pre>      &lt;path</pre></li>
+    <li id="L56">
+      <pre>
+        d={preset.tool === &#x27;pen&#x27; ? &#x27;m4 13 9-10 4 4-10 9-4 1Z&#x27; : &#x27;m4 11 7-8 6 5-7 8H6Z&#x27;}</pre>
+    </li>
+    <li id="L57"><pre>        fill={`#${preset.color}`}</pre></li>
+    <li id="L58"><pre>        stroke=&quot;currentColor&quot;</pre></li>
+    <li id="L59"><pre>        strokeWidth=&quot;1.2&quot;</pre></li>
+    <li id="L60"><pre>      /&gt;</pre></li>
+    <li id="L61"><pre>      &lt;path</pre></li>
+    <li id="L62"><pre>        d=&quot;M3 18h13&quot;</pre></li>
+    <li id="L63"><pre>        stroke={`#${preset.color}`}</pre></li>
+    <li id="L64"><pre>        strokeWidth={preset.tool === &#x27;pen&#x27; ? 2 : 4}</pre></li>
+    <li id="L65"><pre>        opacity={preset.tool === &#x27;pen&#x27; ? 1 : 0.45}</pre></li>
+    <li id="L66"><pre>      /&gt;</pre></li>
+    <li id="L67"><pre>    &lt;/svg&gt;</pre></li>
+    <li id="L68"><pre>  )</pre></li>
+    <li id="L69"><pre>}</pre></li>
+    <li id="L70"><pre>export function PptxInkControls({</pre></li>
+    <li id="L71"><pre>  tool,</pre></li>
+    <li id="L72"><pre>  setTool,</pre></li>
+    <li id="L73"><pre>  presets,</pre></li>
+    <li id="L74"><pre>  selectedPreset,</pre></li>
+    <li id="L75"><pre>  selectPreset,</pre></li>
+    <li id="L76"><pre>  updatePreset,</pre></li>
+    <li id="L77"><pre>  count,</pre></li>
+    <li id="L78"><pre>  disabled,</pre></li>
+    <li id="L79"><pre>  clear,</pre></li>
+    <li id="L80">
+      <pre>
+}: PptxInkSettings &amp; { count: number; disabled: boolean; clear: () =&gt; Promise&lt;boolean&gt; }) {</pre>
+    </li>
+    <li id="L81"><pre>  const preset = presets[selectedPreset]!</pre></li>
+    <li id="L82">
+      <pre>
+  const names = [&#x27;笔1&#x27;, &#x27;笔2&#x27;, &#x27;笔3&#x27;, &#x27;荧光笔4&#x27;, &#x27;荧光笔5&#x27;]</pre>
+    </li>
+    <li id="L83"><pre>  return (</pre></li>
+    <li id="L84"><pre>    &lt;div className=&quot;mimir-pptx-ink-controls&quot;&gt;</pre></li>
+    <li id="L85"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L86"><pre>        label=&quot;选择对象（退出绘图）&quot;</pre></li>
+    <li id="L87"><pre>        active={tool === &#x27;select&#x27;}</pre></li>
+    <li id="L88"><pre>        disabled={disabled}</pre></li>
+    <li id="L89"><pre>        disabledReason=&quot;正在处理幻灯片&quot;</pre></li>
+    <li id="L90"><pre>        onClick={() =&gt; setTool(&#x27;select&#x27;)}</pre></li>
+    <li id="L91"><pre>      &gt;</pre></li>
+    <li id="L92"><pre>        选择</pre></li>
+    <li id="L93"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L94"><pre>      {presets.map((entry, index) =&gt; (</pre></li>
+    <li id="L95"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L96"><pre>          key={names[index]}</pre></li>
+    <li id="L97">
+      <pre>
+          label={`${entry.tool === &#x27;pen&#x27; ? &#x27;笔&#x27; : &#x27;荧光笔&#x27;}预设${index + 1}（#${entry.color}，${entry.width}px）`}</pre>
+    </li>
+    <li id="L98">
+      <pre>          active={tool === entry.tool &amp;&amp; selectedPreset === index}</pre>
+    </li>
+    <li id="L99"><pre>          disabled={disabled}</pre></li>
+    <li id="L100"><pre>          disabledReason=&quot;正在处理幻灯片&quot;</pre></li>
+    <li id="L101"><pre>          onClick={() =&gt; selectPreset(index)}</pre></li>
+    <li id="L102"><pre>        &gt;</pre></li>
+    <li id="L103"><pre>          &lt;PenIcon preset={entry} /&gt;</pre></li>
+    <li id="L104">
+      <pre>          &lt;span className=&quot;me-sr-only&quot;&gt;{names[index]}&lt;/span&gt;</pre>
+    </li>
+    <li id="L105"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L106"><pre>      ))}</pre></li>
+    <li id="L107"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L108"><pre>        label=&quot;橡皮擦（整笔擦除）&quot;</pre></li>
+    <li id="L109"><pre>        active={tool === &#x27;eraser&#x27;}</pre></li>
+    <li id="L110"><pre>        disabled={disabled}</pre></li>
+    <li id="L111"><pre>        disabledReason=&quot;正在处理幻灯片&quot;</pre></li>
+    <li id="L112"><pre>        onClick={() =&gt; setTool(&#x27;eraser&#x27;)}</pre></li>
+    <li id="L113"><pre>      &gt;</pre></li>
+    <li id="L114"><pre>        橡皮擦</pre></li>
+    <li id="L115"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L116"><pre>      &lt;ToolbarMenu</pre></li>
+    <li id="L117"><pre>        label=&quot;笔迹设置&quot;</pre></li>
+    <li id="L118"><pre>        text=&quot;笔迹设置&quot;</pre></li>
+    <li id="L119"><pre>        panelWidth={240}</pre></li>
+    <li id="L120"><pre>        renderPanel={() =&gt; (</pre></li>
+    <li id="L121"><pre>          &lt;&gt;</pre></li>
+    <li id="L122"><pre>            &lt;ToolbarMenuFields</pre></li>
+    <li id="L123">
+      <pre>
+              label={`预设${selectedPreset + 1} · ${preset.tool === &#x27;pen&#x27; ? &#x27;笔&#x27; : &#x27;荧光笔&#x27;}`}</pre>
+    </li>
+    <li id="L124"><pre>            &gt;</pre></li>
+    <li id="L125"><pre>              &lt;ToolbarColorPicker</pre></li>
+    <li id="L126"><pre>                label=&quot;笔迹颜色&quot;</pre></li>
+    <li id="L127"><pre>                value={`#${preset.color}`}</pre></li>
+    <li id="L128"><pre>                options={INK_COLORS.map((color) =&gt; ({</pre></li>
+    <li id="L129"><pre>                  value: `#${color}`,</pre></li>
+    <li id="L130"><pre>                  label: `#${color}`,</pre></li>
+    <li id="L131"><pre>                  swatch: `#${color}`,</pre></li>
+    <li id="L132"><pre>                }))}</pre></li>
+    <li id="L133"><pre>                inline</pre></li>
+    <li id="L134"><pre>                disabled={disabled}</pre></li>
+    <li id="L135">
+      <pre>
+                onPick={(color) =&gt; updatePreset({ color: color.replace(&#x27;#&#x27;, &#x27;&#x27;) })}</pre>
+    </li>
+    <li id="L136"><pre>              /&gt;</pre></li>
+    <li id="L137"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L138"><pre>                label=&quot;笔迹粗细（px）&quot;</pre></li>
+    <li id="L139"><pre>                value={String(preset.width)}</pre></li>
+    <li id="L140"><pre>                disabled={disabled}</pre></li>
+    <li id="L141">
+      <pre>
+                options={(preset.tool === &#x27;pen&#x27; ? PEN_WIDTHS : HIGHLIGHTER_WIDTHS).map((width) =&gt; ({</pre>
+    </li>
+    <li id="L142"><pre>                  value: String(width),</pre></li>
+    <li id="L143"><pre>                  label: `${width} px`,</pre></li>
+    <li id="L144"><pre>                }))}</pre></li>
+    <li id="L145">
+      <pre>                onChange={(width) =&gt; updatePreset({ width: Number(width) })}</pre>
+    </li>
+    <li id="L146"><pre>              /&gt;</pre></li>
+    <li id="L147"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L148"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L149"><pre>              当前：#{preset.color} · {preset.width} px</pre></li>
+    <li id="L150">
+      <pre>
+              {preset.tool === &#x27;highlighter&#x27; ? &#x27; · 45% 不透明度&#x27; : &#x27;&#x27;}。设置自动记住。</pre>
+    </li>
+    <li id="L151"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L152"><pre>          &lt;/&gt;</pre></li>
+    <li id="L153"><pre>        )}</pre></li>
+    <li id="L154"><pre>      /&gt;</pre></li>
+    <li id="L155"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L156"><pre>        label=&quot;清除本页全部笔迹&quot;</pre></li>
+    <li id="L157"><pre>        disabled={disabled || count === 0}</pre></li>
+    <li id="L158">
+      <pre>
+        disabledReason={disabled ? &#x27;正在处理幻灯片&#x27; : &#x27;当前页没有可识别的笔迹&#x27;}</pre>
+    </li>
+    <li id="L159"><pre>        onClick={() =&gt; {</pre></li>
+    <li id="L160"><pre>          void clear()</pre></li>
+    <li id="L161"><pre>        }}</pre></li>
+    <li id="L162"><pre>      &gt;</pre></li>
+    <li id="L163"><pre>        清除笔迹（{count}）</pre></li>
+    <li id="L164"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L165"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L166"><pre>  )</pre></li>
+    <li id="L167"><pre>}</pre></li>
+  </ol>
+</html>

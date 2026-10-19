@@ -1,0 +1,46 @@
+[
+  {
+    "galleryInput": "fixtures/chart.pptx",
+    "archivedPath": "fixtures/chart.pptx"
+  },
+  {
+    "galleryInput": "fixtures/empty-deck.pptx",
+    "archivedPath": "fixtures/empty-deck.pptx"
+  },
+  {
+    "galleryInput": "fixtures/formatted-text.pptx",
+    "archivedPath": "fixtures/formatted-text.pptx"
+  },
+  {
+    "galleryInput": "fixtures/groups.pptx",
+    "archivedPath": "fixtures/groups.pptx"
+  },
+  {
+    "galleryInput": "fixtures/image-deck.pptx",
+    "archivedPath": "fixtures/image-deck.pptx"
+  },
+  {
+    "galleryInput": "fixtures/rich.pptx",
+    "archivedPath": "fixtures/rich.pptx"
+  },
+  {
+    "galleryInput": "fixtures/table.pptx",
+    "archivedPath": "fixtures/table.pptx"
+  },
+  {
+    "galleryInput": "fixtures/title-layout.pptx",
+    "archivedPath": "fixtures/title-layout.pptx"
+  },
+  {
+    "galleryInput": "index.html",
+    "archivedPath": "index.html.txt"
+  },
+  {
+    "galleryInput": "main.jsx",
+    "archivedPath": "main.jsx.txt"
+  },
+  {
+    "galleryInput": "style.css",
+    "archivedPath": "style.css.txt"
+  }
+]

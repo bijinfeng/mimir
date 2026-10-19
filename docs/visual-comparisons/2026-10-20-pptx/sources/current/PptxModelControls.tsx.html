@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxModelControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxModelControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 04d0d0b026922c5ad0d178788547ef75592f3ee54107eda8ae71eaa418134f1b
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useMemo, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import type { ModelViewerElement } from &#x27;@google/model-viewer&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import { validatePptxGlb } from &#x27;../pptx-glb.js&#x27;</pre></li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarButton,</pre></li>
+    <li id="L6"><pre>  ToolbarFileButton,</pre></li>
+    <li id="L7"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L8"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L9"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L10"><pre>import { PptxControlPanel } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L11"><pre>import type { PptxUpload } from &#x27;./PptxAssetControls.js&#x27;</pre></li>
+    <li id="L12"><pre>interface LocalModel {</pre></li>
+    <li id="L13"><pre>  file: File</pre></li>
+    <li id="L14"><pre>  url: string</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre>export function PptxModelControls({</pre></li>
+    <li id="L17"><pre>  slide,</pre></li>
+    <li id="L18"><pre>  upload,</pre></li>
+    <li id="L19"><pre>  existing,</pre></li>
+    <li id="L20"><pre>}: {</pre></li>
+    <li id="L21"><pre>  slide: number</pre></li>
+    <li id="L22"><pre>  upload: PptxUpload</pre></li>
+    <li id="L23"><pre>  existing?: { bytes: Uint8Array; name: string }</pre></li>
+    <li id="L24"><pre>}) {</pre></li>
+    <li id="L25"><pre>  const host = useRef&lt;HTMLDivElement&gt;(null),</pre></li>
+    <li id="L26"><pre>    viewer = useRef&lt;ModelViewerElement | null&gt;(null)</pre></li>
+    <li id="L27">
+      <pre>  const [selected, setSelected] = useState&lt;LocalModel | null&gt;(null),</pre>
+    </li>
+    <li id="L28"><pre>    [ready, setReady] = useState(false),</pre></li>
+    <li id="L29"><pre>    [loaded, setLoaded] = useState(false),</pre></li>
+    <li id="L30"><pre>    [busy, setBusy] = useState(false),</pre></li>
+    <li id="L31"><pre>    [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L32"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L33"><pre>    let cancelled = false</pre></li>
+    <li id="L34"><pre>    void import(&#x27;@google/model-viewer&#x27;)</pre></li>
+    <li id="L35"><pre>      .then(() =&gt; {</pre></li>
+    <li id="L36"><pre>        if (!cancelled) setReady(true)</pre></li>
+    <li id="L37"><pre>      })</pre></li>
+    <li id="L38"><pre>      .catch(() =&gt; {</pre></li>
+    <li id="L39">
+      <pre>        if (!cancelled) setError(&#x27;3D 预览器加载失败，请重新打开面板&#x27;)</pre>
+    </li>
+    <li id="L40"><pre>      })</pre></li>
+    <li id="L41"><pre>    return () =&gt; {</pre></li>
+    <li id="L42"><pre>      cancelled = true</pre></li>
+    <li id="L43"><pre>    }</pre></li>
+    <li id="L44"><pre>  }, [])</pre></li>
+    <li id="L45"><pre>  const lifecycle = useRef({ mounted: true, pick: 0 })</pre></li>
+    <li id="L46"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L47"><pre>    const current = lifecycle.current</pre></li>
+    <li id="L48"><pre>    current.mounted = true</pre></li>
+    <li id="L49"><pre>    return () =&gt; {</pre></li>
+    <li id="L50"><pre>      current.mounted = false</pre></li>
+    <li id="L51"><pre>      current.pick++</pre></li>
+    <li id="L52"><pre>    }</pre></li>
+    <li id="L53"><pre>  }, [])</pre></li>
+    <li id="L54"><pre>  const existingIssue = useMemo(() =&gt; {</pre></li>
+    <li id="L55"><pre>    if (!existing) return &#x27;&#x27;</pre></li>
+    <li id="L56"><pre>    try {</pre></li>
+    <li id="L57"><pre>      validatePptxGlb(existing.bytes)</pre></li>
+    <li id="L58"><pre>      return &#x27;&#x27;</pre></li>
+    <li id="L59"><pre>    } catch (cause) {</pre></li>
+    <li id="L60">
+      <pre>      return cause instanceof Error ? cause.message : &#x27;模型无效&#x27;</pre>
+    </li>
+    <li id="L61"><pre>    }</pre></li>
+    <li id="L62"><pre>  }, [existing])</pre></li>
+    <li id="L63"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L64"><pre>    if (!ready || !host.current || existingIssue) return</pre></li>
+    <li id="L65">
+      <pre>    const element = document.createElement(&#x27;model-viewer&#x27;)</pre>
+    </li>
+    <li id="L66"><pre>    element.setAttribute(&#x27;camera-controls&#x27;, &#x27;&#x27;)</pre></li>
+    <li id="L67">
+      <pre>    element.setAttribute(&#x27;interaction-prompt&#x27;, &#x27;none&#x27;)</pre>
+    </li>
+    <li id="L68"><pre>    element.setAttribute(&#x27;loading&#x27;, &#x27;eager&#x27;)</pre></li>
+    <li id="L69">
+      <pre>
+    element.setAttribute(&#x27;alt&#x27;, &#x27;本地 3D 模型，拖动旋转，滚轮缩放&#x27;)</pre>
+    </li>
+    <li id="L70"><pre>    element.className = &#x27;mimir-pptx-model-preview&#x27;</pre></li>
+    <li id="L71"><pre>    setLoaded(false)</pre></li>
+    <li id="L72"><pre>    let url = selected?.url</pre></li>
+    <li id="L73"><pre>    if (existing &amp;&amp; !url) {</pre></li>
+    <li id="L74"><pre>      url = URL.createObjectURL(</pre></li>
+    <li id="L75">
+      <pre>
+        new Blob([new Uint8Array(existing.bytes)], { type: &#x27;model/gltf-binary&#x27; }),</pre>
+    </li>
+    <li id="L76"><pre>      )</pre></li>
+    <li id="L77"><pre>    }</pre></li>
+    <li id="L78"><pre>    element.addEventListener(&#x27;load&#x27;, () =&gt; {</pre></li>
+    <li id="L79"><pre>      setLoaded(true)</pre></li>
+    <li id="L80"><pre>      setError(&#x27;&#x27;)</pre></li>
+    <li id="L81"><pre>    })</pre></li>
+    <li id="L82"><pre>    element.addEventListener(&#x27;error&#x27;, () =&gt; {</pre></li>
+    <li id="L83"><pre>      setLoaded(false)</pre></li>
+    <li id="L84">
+      <pre>
+      setError(&#x27;模型无法显示，可能不支持此格式或 WebGL 不可用。请尝试未压缩的 GLB。&#x27;)</pre>
+    </li>
+    <li id="L85"><pre>    })</pre></li>
+    <li id="L86">
+      <pre>    element.addEventListener(&#x27;webglcontextlost&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L87"><pre>      setLoaded(false)</pre></li>
+    <li id="L88"><pre>      setError(&#x27;3D 图形上下文已丢失，请重新打开面板&#x27;)</pre></li>
+    <li id="L89"><pre>    })</pre></li>
+    <li id="L90"><pre>    if (url) element.setAttribute(&#x27;src&#x27;, url)</pre></li>
+    <li id="L91"><pre>    host.current.replaceChildren(element)</pre></li>
+    <li id="L92"><pre>    viewer.current = element</pre></li>
+    <li id="L93"><pre>    return () =&gt; {</pre></li>
+    <li id="L94"><pre>      viewer.current = null</pre></li>
+    <li id="L95"><pre>      element.remove()</pre></li>
+    <li id="L96">
+      <pre>      if (existing &amp;&amp; !selected &amp;&amp; url) URL.revokeObjectURL(url)</pre>
+    </li>
+    <li id="L97"><pre>    }</pre></li>
+    <li id="L98"><pre>  }, [ready, selected, existing, existingIssue])</pre></li>
+    <li id="L99"><pre>  useEffect(</pre></li>
+    <li id="L100"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L101"><pre>      if (selected) URL.revokeObjectURL(selected.url)</pre></li>
+    <li id="L102"><pre>    },</pre></li>
+    <li id="L103"><pre>    [selected],</pre></li>
+    <li id="L104"><pre>  )</pre></li>
+    <li id="L105"><pre>  const choose = async (file: File) =&gt; {</pre></li>
+    <li id="L106"><pre>    setLoaded(false)</pre></li>
+    <li id="L107"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L108"><pre>    const pick = ++lifecycle.current.pick</pre></li>
+    <li id="L109"><pre>    try {</pre></li>
+    <li id="L110"><pre>      if (file.size &lt; 28 || file.size &gt; 32 * 1024 * 1024)</pre></li>
+    <li id="L111">
+      <pre>        throw new Error(&#x27;GLB 文件须在 28 字节至 32 MiB 内&#x27;)</pre>
+    </li>
+    <li id="L112"><pre>      const bytes = new Uint8Array(await file.arrayBuffer())</pre></li>
+    <li id="L113">
+      <pre>      if (!lifecycle.current.mounted || lifecycle.current.pick !== pick) return</pre>
+    </li>
+    <li id="L114"><pre>      validatePptxGlb(bytes)</pre></li>
+    <li id="L115"><pre>      setSelected({ file, url: URL.createObjectURL(file) })</pre></li>
+    <li id="L116"><pre>    } catch (cause) {</pre></li>
+    <li id="L117">
+      <pre>      if (!lifecycle.current.mounted || lifecycle.current.pick !== pick) return</pre>
+    </li>
+    <li id="L118">
+      <pre>      setError(cause instanceof Error ? cause.message : &#x27;模型校验失败&#x27;)</pre>
+    </li>
+    <li id="L119"><pre>    }</pre></li>
+    <li id="L120"><pre>  }</pre></li>
+    <li id="L121"><pre>  return (</pre></li>
+    <li id="L122"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L123">
+      <pre>
+      &lt;ToolbarMenuFields label={existing ? &#x27;3D 模型预览&#x27; : &#x27;插入 3D 模型&#x27;}&gt;</pre>
+    </li>
+    <li id="L124"><pre>        {!existing &amp;&amp; (</pre></li>
+    <li id="L125">
+      <pre>
+          &lt;ToolbarFileButton label=&quot;选择 GLB 模型&quot; accept=&quot;.glb,model/gltf-binary&quot; onPick={choose}&gt;</pre>
+    </li>
+    <li id="L126"><pre>            {&#x27;选择 GLB 模型&#x27;}</pre></li>
+    <li id="L127"><pre>          &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L128"><pre>        )}</pre></li>
+    <li id="L129"><pre>        {selected &amp;&amp; (</pre></li>
+    <li id="L130"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L131">
+      <pre>
+            {selected.file.name} · {(selected.file.size / 1024 / 1024).toFixed(1)} MiB</pre>
+    </li>
+    <li id="L132"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L133"><pre>        )}</pre></li>
+    <li id="L134"><pre>        &lt;div ref={host} /&gt;</pre></li>
+    <li id="L135">
+      <pre>
+        {!ready &amp;&amp; !error &amp;&amp; &lt;ToolbarMenuNote&gt;正在加载 3D 预览器…&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L136"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L137">
+      <pre>          拖动旋转，滚轮缩放。仅支持自包含、未压缩 GLB，最大 32 MiB。</pre>
+    </li>
+    <li id="L138"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L139"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L140">
+      <pre>
+      {(error || existingIssue) &amp;&amp; &lt;span role=&quot;alert&quot;&gt;{error || existingIssue}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L141">
+      <pre>
+      &lt;ToolbarMenuNote&gt;保存模型附件和当前视角封面，不含 PowerPoint 交互式 3D。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L142"><pre>      {!existing &amp;&amp; (</pre></li>
+    <li id="L143"><pre>        &lt;div className=&quot;mimir-pptx-model-actions&quot;&gt;</pre></li>
+    <li id="L144"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L145"><pre>            primary</pre></li>
+    <li id="L146"><pre>            label=&quot;插入模型与当前封面&quot;</pre></li>
+    <li id="L147"><pre>            disabled={!selected || !loaded || !ready || !!error}</pre></li>
+    <li id="L148">
+      <pre>            disabledReason={error || &#x27;先选择可预览的 GLB 模型&#x27;}</pre>
+    </li>
+    <li id="L149"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L150"><pre>              if (!selected || !viewer.current) return</pre></li>
+    <li id="L151"><pre>              setBusy(true)</pre></li>
+    <li id="L152"><pre>              void viewer.current</pre></li>
+    <li id="L153">
+      <pre>                .toBlob({ mimeType: &#x27;image/png&#x27;, idealAspect: true })</pre>
+    </li>
+    <li id="L154"><pre>                .then((blob) =&gt; {</pre></li>
+    <li id="L155"><pre>                  if (!lifecycle.current.mounted) return</pre></li>
+    <li id="L156"><pre>                  return upload(</pre></li>
+    <li id="L157"><pre>                    { kind: &#x27;model3d&#x27;, slide },</pre></li>
+    <li id="L158"><pre>                    selected.file,</pre></li>
+    <li id="L159">
+      <pre>
+                    new File([blob], &#x27;model-poster.png&#x27;, { type: &#x27;image/png&#x27; }),</pre>
+    </li>
+    <li id="L160"><pre>                  )</pre></li>
+    <li id="L161"><pre>                })</pre></li>
+    <li id="L162"><pre>                .catch(</pre></li>
+    <li id="L163"><pre>                  (cause: unknown) =&gt;</pre></li>
+    <li id="L164"><pre>                    lifecycle.current.mounted &amp;&amp;</pre></li>
+    <li id="L165">
+      <pre>
+                    setError(cause instanceof Error ? cause.message : &#x27;封面生成失败&#x27;),</pre>
+    </li>
+    <li id="L166"><pre>                )</pre></li>
+    <li id="L167"><pre>                .finally(() =&gt; {</pre></li>
+    <li id="L168"><pre>                  if (lifecycle.current.mounted) setBusy(false)</pre></li>
+    <li id="L169"><pre>                })</pre></li>
+    <li id="L170"><pre>            }}</pre></li>
+    <li id="L171"><pre>          /&gt;</pre></li>
+    <li id="L172"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L173"><pre>      )}</pre></li>
+    <li id="L174"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L175"><pre>  )</pre></li>
+    <li id="L176"><pre>}</pre></li>
+  </ol>
+</html>

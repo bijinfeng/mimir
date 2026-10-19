@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxClipboardBridge.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxClipboardBridge.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 e8609e88f7b5de7c71ac18cd7314096f5e6eba5e2389862acf3a572aba55b402
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useEffect, useLayoutEffect, useRef, type RefObject } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import type { PptxManualAsset } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  parsePptxClipboardMarker,</pre></li>
+    <li id="L5"><pre>  pptxClipboardImageFile,</pre></li>
+    <li id="L6"><pre>  pptxClipboardTextTarget,</pre></li>
+    <li id="L7"><pre>  validatePptxClipboardImage,</pre></li>
+    <li id="L8"><pre>} from &#x27;../pptx-system-clipboard.js&#x27;</pre></li>
+    <li id="L9"><pre></pre></li>
+    <li id="L10"><pre>export interface PptxClipboardBridgeProps {</pre></li>
+    <li id="L11"><pre>  canvasRef: RefObject&lt;HTMLDivElement | null&gt;</pre></li>
+    <li id="L12"><pre>  contextKey: string</pre></li>
+    <li id="L13"><pre>  slide: number</pre></li>
+    <li id="L14"><pre>  disabled: boolean</pre></li>
+    <li id="L15">
+      <pre>  copyInput: (cut: boolean, slides: readonly number[] | null) =&gt; PptxManualAsset</pre>
+    </li>
+    <li id="L16">
+      <pre>
+  execute: (input: PptxManualAsset, options: { signal: AbortSignal }) =&gt; Promise&lt;unknown&gt;</pre>
+    </li>
+    <li id="L17"><pre>  insertImage?: (</pre></li>
+    <li id="L18"><pre>    file: File,</pre></li>
+    <li id="L19"><pre>    signal: AbortSignal,</pre></li>
+    <li id="L20"><pre>    center?: { x: number; y: number },</pre></li>
+    <li id="L21"><pre>  ) =&gt; Promise&lt;boolean&gt;</pre></li>
+    <li id="L22"><pre>  onError: (message: string) =&gt; void</pre></li>
+    <li id="L23"><pre>}</pre></li>
+    <li id="L24">
+      <pre>
+/** Native paste event preserves OS arbitration and leaves text inputs/rich selection alone. */</pre>
+    </li>
+    <li id="L25">
+      <pre>export function PptxClipboardBridge(props: PptxClipboardBridgeProps) {</pre>
+    </li>
+    <li id="L26"><pre>  const latest = useRef(props)</pre></li>
+    <li id="L27"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L28"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L29"><pre>    latest.current = props</pre></li>
+    <li id="L30"><pre>  })</pre></li>
+    <li id="L31"><pre>  const context = useRef(props.contextKey)</pre></li>
+    <li id="L32"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L33"><pre>    context.current = props.contextKey</pre></li>
+    <li id="L34"><pre>    pending.current?.abort()</pre></li>
+    <li id="L35"><pre>    pending.current = null</pre></li>
+    <li id="L36"><pre>    return () =&gt; {</pre></li>
+    <li id="L37"><pre>      pending.current?.abort()</pre></li>
+    <li id="L38"><pre>    }</pre></li>
+    <li id="L39"><pre>  }, [props.contextKey])</pre></li>
+    <li id="L40"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L41">
+      <pre>
+    const root = () =&gt; latest.current.canvasRef.current?.closest(&#x27;.mimir-editor&#x27;)</pre>
+    </li>
+    <li id="L42"><pre>    const eligible = (target: EventTarget | null) =&gt;</pre></li>
+    <li id="L43"><pre>      target instanceof Element &amp;&amp;</pre></li>
+    <li id="L44"><pre>      !!root()?.contains(target) &amp;&amp;</pre></li>
+    <li id="L45"><pre>      !pptxClipboardTextTarget(target) &amp;&amp;</pre></li>
+    <li id="L46"><pre>      !!target.closest(</pre></li>
+    <li id="L47">
+      <pre>
+        &#x27;.mimir-pptx-slide,.mimir-page-browser__sidebar,.mimir-pptx-sorter,.mimir-pptx-outline&#x27;,</pre>
+    </li>
+    <li id="L48"><pre>      )</pre></li>
+    <li id="L49">
+      <pre>
+    const run = (action: (signal: AbortSignal) =&gt; Promise&lt;unknown&gt;) =&gt; {</pre>
+    </li>
+    <li id="L50"><pre>      if (pending.current || latest.current.disabled) return</pre></li>
+    <li id="L51"><pre>      const controller = new AbortController()</pre></li>
+    <li id="L52"><pre>      pending.current = controller</pre></li>
+    <li id="L53">
+      <pre>
+      // Selection validation may throw synchronously before execute returns a promise.</pre>
+    </li>
+    <li id="L54"><pre>      void (async () =&gt; {</pre></li>
+    <li id="L55"><pre>        await action(controller.signal)</pre></li>
+    <li id="L56"><pre>      })()</pre></li>
+    <li id="L57"><pre>        .catch((cause: unknown) =&gt; {</pre></li>
+    <li id="L58"><pre>          if (!controller.signal.aborted)</pre></li>
+    <li id="L59">
+      <pre>
+            latest.current.onError(cause instanceof Error ? cause.message : &#x27;复制粘贴失败&#x27;)</pre>
+    </li>
+    <li id="L60"><pre>        })</pre></li>
+    <li id="L61"><pre>        .finally(() =&gt; {</pre></li>
+    <li id="L62">
+      <pre>          if (pending.current === controller) pending.current = null</pre>
+    </li>
+    <li id="L63"><pre>        })</pre></li>
+    <li id="L64"><pre>    }</pre></li>
+    <li id="L65"><pre>    const keydown = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L66"><pre>      if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L67"><pre>        pending.current?.abort()</pre></li>
+    <li id="L68"><pre>        return</pre></li>
+    <li id="L69"><pre>      }</pre></li>
+    <li id="L70"><pre>      if (</pre></li>
+    <li id="L71"><pre>        event.defaultPrevented ||</pre></li>
+    <li id="L72"><pre>        !eligible(event.target) ||</pre></li>
+    <li id="L73"><pre>        latest.current.disabled ||</pre></li>
+    <li id="L74"><pre>        !(event.metaKey || event.ctrlKey) ||</pre></li>
+    <li id="L75"><pre>        event.altKey ||</pre></li>
+    <li id="L76"><pre>        event.shiftKey</pre></li>
+    <li id="L77"><pre>      )</pre></li>
+    <li id="L78"><pre>        return</pre></li>
+    <li id="L79"><pre>      const key = event.key.toLowerCase()</pre></li>
+    <li id="L80">
+      <pre>      if (key !== &#x27;c&#x27; &amp;&amp; key !== &#x27;x&#x27;) return</pre>
+    </li>
+    <li id="L81">
+      <pre>
+      // Allow a user&#x27;s native text selection outside the editing controls too.</pre>
+    </li>
+    <li id="L82"><pre>      if (window.getSelection()?.toString()) return</pre></li>
+    <li id="L83"><pre>      event.preventDefault()</pre></li>
+    <li id="L84"><pre>      const target = event.target as Element</pre></li>
+    <li id="L85">
+      <pre>      const selectedSlides = target.closest(&#x27;.mimir-pptx-sorter&#x27;)</pre>
+    </li>
+    <li id="L86"><pre>        ? Array.from(</pre></li>
+    <li id="L87">
+      <pre>
+            root()!.querySelectorAll&lt;HTMLElement&gt;(&#x27;.mimir-pptx-sorter-item[aria-selected=&quot;true&quot;]&#x27;),</pre>
+    </li>
+    <li id="L88"><pre>          ).map((item) =&gt; Number(item.dataset.slideIndex))</pre></li>
+    <li id="L89">
+      <pre>
+        : target.closest(&#x27;.mimir-page-browser__sidebar,.mimir-pptx-outline&#x27;)</pre>
+    </li>
+    <li id="L90"><pre>          ? [latest.current.slide]</pre></li>
+    <li id="L91"><pre>          : null</pre></li>
+    <li id="L92"><pre>      run((signal) =&gt;</pre></li>
+    <li id="L93">
+      <pre>
+        latest.current.execute(latest.current.copyInput(key === &#x27;x&#x27;, selectedSlides), { signal }),</pre>
+    </li>
+    <li id="L94"><pre>      )</pre></li>
+    <li id="L95"><pre>    }</pre></li>
+    <li id="L96"><pre>    const paste = (event: ClipboardEvent) =&gt; {</pre></li>
+    <li id="L97"><pre>      if (</pre></li>
+    <li id="L98"><pre>        event.defaultPrevented ||</pre></li>
+    <li id="L99"><pre>        !eligible(event.target) ||</pre></li>
+    <li id="L100"><pre>        latest.current.disabled ||</pre></li>
+    <li id="L101"><pre>        !event.clipboardData</pre></li>
+    <li id="L102"><pre>      )</pre></li>
+    <li id="L103"><pre>        return</pre></li>
+    <li id="L104"><pre>      const files = Array.from(event.clipboardData.files)</pre></li>
+    <li id="L105"><pre>      if (files.length) {</pre></li>
+    <li id="L106"><pre>        event.preventDefault()</pre></li>
+    <li id="L107"><pre>        run(async (signal) =&gt; {</pre></li>
+    <li id="L108"><pre>          const file = pptxClipboardImageFile(files)</pre></li>
+    <li id="L109"><pre>          if (!latest.current.insertImage)</pre></li>
+    <li id="L110">
+      <pre>
+            throw new Error(&#x27;当前宿主未提供图片插入，请使用已配置的文档编辑器&#x27;)</pre>
+    </li>
+    <li id="L111"><pre>          if (file) {</pre></li>
+    <li id="L112"><pre>            await validatePptxClipboardImage(file, signal)</pre></li>
+    <li id="L113"><pre>            await latest.current.insertImage(file, signal)</pre></li>
+    <li id="L114"><pre>          }</pre></li>
+    <li id="L115"><pre>        })</pre></li>
+    <li id="L116"><pre>        return</pre></li>
+    <li id="L117"><pre>      }</pre></li>
+    <li id="L118"><pre>      const input = parsePptxClipboardMarker(</pre></li>
+    <li id="L119"><pre>        event.clipboardData.getData(&#x27;text/plain&#x27;),</pre></li>
+    <li id="L120"><pre>        latest.current.slide,</pre></li>
+    <li id="L121"><pre>      )</pre></li>
+    <li id="L122"><pre>      if (!input) return</pre></li>
+    <li id="L123"><pre>      event.preventDefault()</pre></li>
+    <li id="L124">
+      <pre>      run((signal) =&gt; latest.current.execute(input, { signal }))</pre>
+    </li>
+    <li id="L125"><pre>    }</pre></li>
+    <li id="L126"><pre>    const stageOf = (target: EventTarget | null) =&gt;</pre></li>
+    <li id="L127">
+      <pre>      target instanceof Element &amp;&amp; root()?.contains(target)</pre>
+    </li>
+    <li id="L128">
+      <pre>        ? target.closest&lt;HTMLElement&gt;(&#x27;.mimir-pptx-stage&#x27;)</pre>
+    </li>
+    <li id="L129"><pre>        : null</pre></li>
+    <li id="L130"><pre>    const dragover = (event: DragEvent) =&gt; {</pre></li>
+    <li id="L131"><pre>      const stage = stageOf(event.target)</pre></li>
+    <li id="L132">
+      <pre>      if (!stage || !event.dataTransfer?.types.includes(&#x27;Files&#x27;)) return</pre>
+    </li>
+    <li id="L133">
+      <pre>      // File drags must never navigate away from an unsaved document.</pre>
+    </li>
+    <li id="L134"><pre>      event.preventDefault()</pre></li>
+    <li id="L135">
+      <pre>      if (latest.current.disabled || !latest.current.insertImage) {</pre>
+    </li>
+    <li id="L136"><pre>        event.dataTransfer.dropEffect = &#x27;none&#x27;</pre></li>
+    <li id="L137"><pre>        return</pre></li>
+    <li id="L138"><pre>      }</pre></li>
+    <li id="L139"><pre>      event.dataTransfer.dropEffect = &#x27;copy&#x27;</pre></li>
+    <li id="L140"><pre>      stage.dataset.imageDrop = &#x27;true&#x27;</pre></li>
+    <li id="L141"><pre>    }</pre></li>
+    <li id="L142"><pre>    const clearDrop = () =&gt;</pre></li>
+    <li id="L143"><pre>      root()</pre></li>
+    <li id="L144">
+      <pre>        ?.querySelectorAll&lt;HTMLElement&gt;(&#x27;[data-image-drop]&#x27;)</pre>
+    </li>
+    <li id="L145"><pre>        .forEach((stage) =&gt; {</pre></li>
+    <li id="L146"><pre>          delete stage.dataset.imageDrop</pre></li>
+    <li id="L147"><pre>        })</pre></li>
+    <li id="L148"><pre>    const dragleave = (event: DragEvent) =&gt; {</pre></li>
+    <li id="L149"><pre>      const stage = stageOf(event.target)</pre></li>
+    <li id="L150">
+      <pre>
+      if (stage &amp;&amp; (!(event.relatedTarget instanceof Node) || !stage.contains(event.relatedTarget)))</pre>
+    </li>
+    <li id="L151"><pre>        clearDrop()</pre></li>
+    <li id="L152"><pre>    }</pre></li>
+    <li id="L153"><pre>    const drop = (event: DragEvent) =&gt; {</pre></li>
+    <li id="L154"><pre>      const stage = stageOf(event.target)</pre></li>
+    <li id="L155"><pre>      clearDrop()</pre></li>
+    <li id="L156">
+      <pre>      if (!stage || !event.dataTransfer?.types.includes(&#x27;Files&#x27;)) return</pre>
+    </li>
+    <li id="L157"><pre>      event.preventDefault()</pre></li>
+    <li id="L158"><pre>      const files = Array.from(event.dataTransfer.files)</pre></li>
+    <li id="L159">
+      <pre>      const rect = latest.current.canvasRef.current?.getBoundingClientRect()</pre>
+    </li>
+    <li id="L160"><pre>      const center =</pre></li>
+    <li id="L161">
+      <pre>        rect &amp;&amp; rect.width &gt; 0 &amp;&amp; rect.height &gt; 0</pre>
+    </li>
+    <li id="L162"><pre>          ? {</pre></li>
+    <li id="L163">
+      <pre>
+              x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),</pre>
+    </li>
+    <li id="L164">
+      <pre>
+              y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)),</pre>
+    </li>
+    <li id="L165"><pre>            }</pre></li>
+    <li id="L166"><pre>          : undefined</pre></li>
+    <li id="L167"><pre>      run(async (signal) =&gt; {</pre></li>
+    <li id="L168"><pre>        const file = pptxClipboardImageFile(files)</pre></li>
+    <li id="L169">
+      <pre>
+        if (!latest.current.insertImage) throw new Error(&#x27;当前宿主未提供图片插入&#x27;)</pre>
+    </li>
+    <li id="L170"><pre>        if (file) {</pre></li>
+    <li id="L171"><pre>          await validatePptxClipboardImage(file, signal)</pre></li>
+    <li id="L172"><pre>          await latest.current.insertImage(file, signal, center)</pre></li>
+    <li id="L173"><pre>        }</pre></li>
+    <li id="L174"><pre>      })</pre></li>
+    <li id="L175"><pre>    }</pre></li>
+    <li id="L176"><pre>    window.addEventListener(&#x27;keydown&#x27;, keydown)</pre></li>
+    <li id="L177"><pre>    window.addEventListener(&#x27;paste&#x27;, paste)</pre></li>
+    <li id="L178"><pre>    window.addEventListener(&#x27;dragover&#x27;, dragover)</pre></li>
+    <li id="L179"><pre>    window.addEventListener(&#x27;dragleave&#x27;, dragleave)</pre></li>
+    <li id="L180"><pre>    window.addEventListener(&#x27;drop&#x27;, drop)</pre></li>
+    <li id="L181"><pre>    window.addEventListener(&#x27;dragend&#x27;, clearDrop)</pre></li>
+    <li id="L182"><pre>    window.addEventListener(&#x27;blur&#x27;, clearDrop)</pre></li>
+    <li id="L183"><pre>    return () =&gt; {</pre></li>
+    <li id="L184"><pre>      window.removeEventListener(&#x27;keydown&#x27;, keydown)</pre></li>
+    <li id="L185"><pre>      window.removeEventListener(&#x27;paste&#x27;, paste)</pre></li>
+    <li id="L186"><pre>      window.removeEventListener(&#x27;dragover&#x27;, dragover)</pre></li>
+    <li id="L187"><pre>      window.removeEventListener(&#x27;dragleave&#x27;, dragleave)</pre></li>
+    <li id="L188"><pre>      window.removeEventListener(&#x27;drop&#x27;, drop)</pre></li>
+    <li id="L189"><pre>      window.removeEventListener(&#x27;dragend&#x27;, clearDrop)</pre></li>
+    <li id="L190"><pre>      window.removeEventListener(&#x27;blur&#x27;, clearDrop)</pre></li>
+    <li id="L191"><pre>      clearDrop()</pre></li>
+    <li id="L192"><pre>    }</pre></li>
+    <li id="L193"><pre>  }, [])</pre></li>
+    <li id="L194"><pre>  return null</pre></li>
+    <li id="L195"><pre>}</pre></li>
+  </ol>
+</html>

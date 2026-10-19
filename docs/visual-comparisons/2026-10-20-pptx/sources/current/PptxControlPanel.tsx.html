@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxControlPanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxControlPanel.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 b10b8740f1cf476120f15dec215c7710dc698c5d32e4cbea9ae328c42ea79053
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useRef, useState, type ReactNode } from &#x27;react&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import { ToolbarPropertyForm, ToolbarMenuNote } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre></pre></li>
+    <li id="L4">
+      <pre>
+export type PptxApply = (op: Record&lt;string, unknown&gt;) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L5"><pre>export type PptxTarget = { slide: number; el: string }</pre></li>
+    <li id="L6"><pre>export function usePptxAction(apply: PptxApply) {</pre></li>
+    <li id="L7"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L8"><pre>  const pending = useRef(false)</pre></li>
+    <li id="L9"><pre>  const run = async (op: Record&lt;string, unknown&gt;) =&gt; {</pre></li>
+    <li id="L10"><pre>    if (pending.current) return false</pre></li>
+    <li id="L11"><pre>    pending.current = true</pre></li>
+    <li id="L12"><pre>    setBusy(true)</pre></li>
+    <li id="L13"><pre>    try {</pre></li>
+    <li id="L14"><pre>      return await apply(op)</pre></li>
+    <li id="L15"><pre>    } finally {</pre></li>
+    <li id="L16"><pre>      pending.current = false</pre></li>
+    <li id="L17"><pre>      setBusy(false)</pre></li>
+    <li id="L18"><pre>    }</pre></li>
+    <li id="L19"><pre>  }</pre></li>
+    <li id="L20"><pre>  return { busy, run }</pre></li>
+    <li id="L21"><pre>}</pre></li>
+    <li id="L22"><pre>export function PptxControlPanel({</pre></li>
+    <li id="L23"><pre>  busy,</pre></li>
+    <li id="L24"><pre>  children,</pre></li>
+    <li id="L25"><pre>  columns = 1,</pre></li>
+    <li id="L26"><pre>  actions,</pre></li>
+    <li id="L27"><pre>}: {</pre></li>
+    <li id="L28"><pre>  busy: boolean</pre></li>
+    <li id="L29"><pre>  children: ReactNode</pre></li>
+    <li id="L30"><pre>  columns?: 1 | 2</pre></li>
+    <li id="L31"><pre>  actions?: ReactNode</pre></li>
+    <li id="L32"><pre>}) {</pre></li>
+    <li id="L33"><pre>  return (</pre></li>
+    <li id="L34"><pre>    &lt;fieldset</pre></li>
+    <li id="L35">
+      <pre>
+      className={`mimir-pptx-control-panel${actions ? &#x27; mimir-pptx-control-panel--actions&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L36"><pre>      disabled={busy}</pre></li>
+    <li id="L37"><pre>      aria-busy={busy}</pre></li>
+    <li id="L38"><pre>      style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}</pre></li>
+    <li id="L39"><pre>    &gt;</pre></li>
+    <li id="L40"><pre>      {actions ? (</pre></li>
+    <li id="L41"><pre>        &lt;&gt;</pre></li>
+    <li id="L42">
+      <pre>          &lt;div className=&quot;mimir-pptx-control-panel__body&quot;&gt;</pre>
+    </li>
+    <li id="L43">
+      <pre>
+            &lt;ToolbarPropertyForm columns={columns}&gt;{children}&lt;/ToolbarPropertyForm&gt;</pre>
+    </li>
+    <li id="L44"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L45">
+      <pre>          &lt;div className=&quot;mimir-pptx-control-panel__footer&quot;&gt;</pre>
+    </li>
+    <li id="L46">
+      <pre>
+            {busy &amp;&amp; &lt;p role=&quot;status&quot;&gt;正在应用修改…&lt;/p&gt;}</pre>
+    </li>
+    <li id="L47"><pre>            {actions}</pre></li>
+    <li id="L48"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L49"><pre>        &lt;/&gt;</pre></li>
+    <li id="L50"><pre>      ) : (</pre></li>
+    <li id="L51"><pre>        &lt;ToolbarPropertyForm columns={columns}&gt;</pre></li>
+    <li id="L52">
+      <pre>
+          {busy &amp;&amp; &lt;ToolbarMenuNote&gt;正在应用修改…&lt;/ToolbarMenuNote&gt;}</pre>
+    </li>
+    <li id="L53"><pre>          {children}</pre></li>
+    <li id="L54"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L55"><pre>      )}</pre></li>
+    <li id="L56"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L57"><pre>  )</pre></li>
+    <li id="L58"><pre>}</pre></li>
+  </ol>
+</html>

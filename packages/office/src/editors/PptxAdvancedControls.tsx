@@ -188,12 +188,14 @@ export function ChartEditControls({
                 <ToolbarTextField label="图表标题" value={title} onChange={setTitle} />
                 <ToolbarSelect
                   label="更改图表类型"
+                  disabled={busy}
                   value={currentKind}
                   options={KINDS.map((value) => ({ value, label: KIND_LABELS[value]! }))}
                   onChange={setKind}
                 />
                 <ToolbarSelect
                   label="图例位置"
+                  disabled={busy}
                   value={legend}
                   options={[
                     { value: 'none', label: '无图例' },
@@ -207,6 +209,7 @@ export function ChartEditControls({
                 />
                 <ToolbarSelect
                   label="数据标签"
+                  disabled={busy}
                   value={labels === null ? 'keep' : String(labels)}
                   options={[
                     {
@@ -223,6 +226,7 @@ export function ChartEditControls({
           )}
           {section !== 'data' && (
             <PptxChartAppearance
+              disabled={busy}
               chart={chart.chart}
               kind={kind}
               section={section}
@@ -256,6 +260,7 @@ export function ChartEditControls({
               />
               <ToolbarSelect
                 label="要编辑的系列"
+                disabled={busy}
                 value={String(dataSeries)}
                 options={series.map((item, index) => ({
                   value: String(index),
@@ -693,6 +698,7 @@ export function SlidePlaybackControls({
                     <>
                       <ToolbarSelect
                         label={`动画 ${seq + 1} 效果`}
+                        disabled={busy}
                         value={item.effect}
                         options={ANIM_EFFECTS.map((value) => ({
                           value,
@@ -710,6 +716,7 @@ export function SlidePlaybackControls({
                       {['flyIn', 'flyOut', 'wipe', 'wipeOut'].includes(item.effect) && (
                         <ToolbarSelect
                           label={`动画 ${seq + 1} 方向`}
+                          disabled={busy}
                           value={item.direction ?? 'bottom'}
                           options={[
                             { value: 'top', label: '从上方' },

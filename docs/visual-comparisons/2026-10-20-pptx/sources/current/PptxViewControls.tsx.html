@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxViewControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxViewControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 37bedc4ae0bbdc8a3a6f8526f9b456dae570d9f107dbe4b511f5e268cabc6372
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { ToolbarButton, ToolbarGroup, ToolbarSelect } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>
+import { pptxWorkspaceModes, type PptxWorkspaceMode } from &#x27;./PptxWorkspaceViews.js&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>
+import type { SlideSize } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L4"><pre></pre></li>
+    <li id="L5"><pre>export interface PptxViewSettings {</pre></li>
+    <li id="L6"><pre>  zoom: string</pre></li>
+    <li id="L7"><pre>  ruler: boolean</pre></li>
+    <li id="L8"><pre>  grid: boolean</pre></li>
+    <li id="L9"><pre>  guides: boolean</pre></li>
+    <li id="L10"><pre>}</pre></li>
+    <li id="L11"><pre>export const defaultPptxView: PptxViewSettings = {</pre></li>
+    <li id="L12"><pre>  zoom: &#x27;fit&#x27;,</pre></li>
+    <li id="L13"><pre>  ruler: false,</pre></li>
+    <li id="L14"><pre>  grid: false,</pre></li>
+    <li id="L15"><pre>  guides: false,</pre></li>
+    <li id="L16"><pre>}</pre></li>
+    <li id="L17"><pre>export function PptxWorkspaceModeControls({</pre></li>
+    <li id="L18"><pre>  mode,</pre></li>
+    <li id="L19"><pre>  change,</pre></li>
+    <li id="L20"><pre>}: {</pre></li>
+    <li id="L21"><pre>  mode: PptxWorkspaceMode</pre></li>
+    <li id="L22"><pre>  change(mode: PptxWorkspaceMode): void</pre></li>
+    <li id="L23"><pre>}) {</pre></li>
+    <li id="L24"><pre>  return (</pre></li>
+    <li id="L25"><pre>    &lt;ToolbarGroup label=&quot;演示文稿视图&quot;&gt;</pre></li>
+    <li id="L26"><pre>      {pptxWorkspaceModes.map((item) =&gt; (</pre></li>
+    <li id="L27"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L28"><pre>          key={item.value}</pre></li>
+    <li id="L29"><pre>          label={`${item.label}视图`}</pre></li>
+    <li id="L30"><pre>          active={mode === item.value}</pre></li>
+    <li id="L31"><pre>          onClick={() =&gt; change(item.value)}</pre></li>
+    <li id="L32"><pre>        &gt;</pre></li>
+    <li id="L33"><pre>          {item.label}</pre></li>
+    <li id="L34"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L35"><pre>      ))}</pre></li>
+    <li id="L36"><pre>    &lt;/ToolbarGroup&gt;</pre></li>
+    <li id="L37"><pre>  )</pre></li>
+    <li id="L38"><pre>}</pre></li>
+    <li id="L39"><pre>export function PptxViewControls({</pre></li>
+    <li id="L40"><pre>  value,</pre></li>
+    <li id="L41"><pre>  change,</pre></li>
+    <li id="L42"><pre>}: {</pre></li>
+    <li id="L43"><pre>  value: PptxViewSettings</pre></li>
+    <li id="L44"><pre>  change: (next: PptxViewSettings) =&gt; void</pre></li>
+    <li id="L45"><pre>}) {</pre></li>
+    <li id="L46"><pre>  return (</pre></li>
+    <li id="L47"><pre>    &lt;ToolbarGroup label=&quot;画布视图&quot;&gt;</pre></li>
+    <li id="L48"><pre>      &lt;ToolbarSelect</pre></li>
+    <li id="L49"><pre>        label=&quot;幻灯片缩放&quot;</pre></li>
+    <li id="L50"><pre>        value={value.zoom}</pre></li>
+    <li id="L51"><pre>        options={[</pre></li>
+    <li id="L52"><pre>          { value: &#x27;fit&#x27;, label: &#x27;适合窗口&#x27; },</pre></li>
+    <li id="L53">
+      <pre>
+          ...[&#x27;50&#x27;, &#x27;75&#x27;, &#x27;100&#x27;, &#x27;125&#x27;, &#x27;150&#x27;, &#x27;200&#x27;].map((v) =&gt; ({ value: v, label: `${v}%` })),</pre>
+    </li>
+    <li id="L54"><pre>        ]}</pre></li>
+    <li id="L55"><pre>        onChange={(zoom) =&gt; change({ ...value, zoom })}</pre></li>
+    <li id="L56"><pre>      /&gt;</pre></li>
+    <li id="L57"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L58"><pre>        label=&quot;标尺（英寸）&quot;</pre></li>
+    <li id="L59"><pre>        active={value.ruler}</pre></li>
+    <li id="L60">
+      <pre>        onClick={() =&gt; change({ ...value, ruler: !value.ruler })}</pre>
+    </li>
+    <li id="L61"><pre>      &gt;</pre></li>
+    <li id="L62"><pre>        标尺</pre></li>
+    <li id="L63"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L64"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L65"><pre>        label=&quot;网格线（半英寸）&quot;</pre></li>
+    <li id="L66"><pre>        active={value.grid}</pre></li>
+    <li id="L67"><pre>        onClick={() =&gt; change({ ...value, grid: !value.grid })}</pre></li>
+    <li id="L68"><pre>      &gt;</pre></li>
+    <li id="L69"><pre>        网格线</pre></li>
+    <li id="L70"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L71"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L72"><pre>        label=&quot;中心参考线&quot;</pre></li>
+    <li id="L73"><pre>        active={value.guides}</pre></li>
+    <li id="L74">
+      <pre>        onClick={() =&gt; change({ ...value, guides: !value.guides })}</pre>
+    </li>
+    <li id="L75"><pre>      &gt;</pre></li>
+    <li id="L76"><pre>        参考线</pre></li>
+    <li id="L77"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L78"><pre>    &lt;/ToolbarGroup&gt;</pre></li>
+    <li id="L79"><pre>  )</pre></li>
+    <li id="L80"><pre>}</pre></li>
+    <li id="L81"><pre>export function PptxViewOverlay({</pre></li>
+    <li id="L82"><pre>  size,</pre></li>
+    <li id="L83"><pre>  settings,</pre></li>
+    <li id="L84"><pre>}: {</pre></li>
+    <li id="L85"><pre>  size: SlideSize</pre></li>
+    <li id="L86"><pre>  settings: PptxViewSettings</pre></li>
+    <li id="L87"><pre>}) {</pre></li>
+    <li id="L88"><pre>  const w = size.cx / 914400,</pre></li>
+    <li id="L89"><pre>    h = size.cy / 914400</pre></li>
+    <li id="L90">
+      <pre>  const xs = Array.from({ length: Math.ceil(w * 2) }, (_, i) =&gt; i / 2)</pre>
+    </li>
+    <li id="L91">
+      <pre>  const ys = Array.from({ length: Math.ceil(h * 2) }, (_, i) =&gt; i / 2)</pre>
+    </li>
+    <li id="L92"><pre>  return (</pre></li>
+    <li id="L93"><pre>    &lt;&gt;</pre></li>
+    <li id="L94"><pre>      {(settings.grid || settings.guides) &amp;&amp; (</pre></li>
+    <li id="L95"><pre>        &lt;svg</pre></li>
+    <li id="L96"><pre>          className=&quot;mimir-pptx-view-overlay&quot;</pre></li>
+    <li id="L97"><pre>          aria-label=&quot;幻灯片辅助线&quot;</pre></li>
+    <li id="L98"><pre>          viewBox={`0 0 ${w} ${h}`}</pre></li>
+    <li id="L99"><pre>          preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L100"><pre>        &gt;</pre></li>
+    <li id="L101"><pre>          {settings.grid &amp;&amp; (</pre></li>
+    <li id="L102"><pre>            &lt;g className=&quot;mimir-pptx-gridlines&quot;&gt;</pre></li>
+    <li id="L103"><pre>              {xs.map((x) =&gt; (</pre></li>
+    <li id="L104">
+      <pre>                &lt;line key={`x${x}`} x1={x} y1={0} x2={x} y2={h} /&gt;</pre>
+    </li>
+    <li id="L105"><pre>              ))}</pre></li>
+    <li id="L106"><pre>              {ys.map((y) =&gt; (</pre></li>
+    <li id="L107">
+      <pre>                &lt;line key={`y${y}`} x1={0} y1={y} x2={w} y2={y} /&gt;</pre>
+    </li>
+    <li id="L108"><pre>              ))}</pre></li>
+    <li id="L109"><pre>            &lt;/g&gt;</pre></li>
+    <li id="L110"><pre>          )}</pre></li>
+    <li id="L111"><pre>          {settings.guides &amp;&amp; (</pre></li>
+    <li id="L112">
+      <pre>            &lt;g className=&quot;mimir-pptx-center-guides&quot;&gt;</pre>
+    </li>
+    <li id="L113"><pre>              &lt;line x1={w / 2} y1={0} x2={w / 2} y2={h} /&gt;</pre></li>
+    <li id="L114"><pre>              &lt;line x1={0} y1={h / 2} x2={w} y2={h / 2} /&gt;</pre></li>
+    <li id="L115"><pre>            &lt;/g&gt;</pre></li>
+    <li id="L116"><pre>          )}</pre></li>
+    <li id="L117"><pre>        &lt;/svg&gt;</pre></li>
+    <li id="L118"><pre>      )}</pre></li>
+    <li id="L119"><pre>      {settings.ruler &amp;&amp; (</pre></li>
+    <li id="L120"><pre>        &lt;&gt;</pre></li>
+    <li id="L121"><pre>          &lt;svg</pre></li>
+    <li id="L122">
+      <pre>            className=&quot;mimir-pptx-ruler mimir-pptx-ruler--horizontal&quot;</pre>
+    </li>
+    <li id="L123"><pre>            aria-label=&quot;水平标尺（英寸）&quot;</pre></li>
+    <li id="L124"><pre>            viewBox={`0 0 ${w * 96} 22`}</pre></li>
+    <li id="L125"><pre>            preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L126"><pre>          &gt;</pre></li>
+    <li id="L127"><pre>            {xs.map((x) =&gt; (</pre></li>
+    <li id="L128"><pre>              &lt;g key={x}&gt;</pre></li>
+    <li id="L129">
+      <pre>
+                &lt;line x1={x * 96} y1={x % 1 === 0 ? 12 : 17} x2={x * 96} y2={22} /&gt;</pre>
+    </li>
+    <li id="L130"><pre>                {x % 1 === 0 &amp;&amp; (</pre></li>
+    <li id="L131"><pre>                  &lt;text x={x * 96 + 3} y={10}&gt;</pre></li>
+    <li id="L132"><pre>                    {x}</pre></li>
+    <li id="L133"><pre>                  &lt;/text&gt;</pre></li>
+    <li id="L134"><pre>                )}</pre></li>
+    <li id="L135"><pre>              &lt;/g&gt;</pre></li>
+    <li id="L136"><pre>            ))}</pre></li>
+    <li id="L137"><pre>          &lt;/svg&gt;</pre></li>
+    <li id="L138"><pre>          &lt;svg</pre></li>
+    <li id="L139">
+      <pre>            className=&quot;mimir-pptx-ruler mimir-pptx-ruler--vertical&quot;</pre>
+    </li>
+    <li id="L140"><pre>            aria-label=&quot;垂直标尺（英寸）&quot;</pre></li>
+    <li id="L141"><pre>            viewBox={`0 0 22 ${h * 96}`}</pre></li>
+    <li id="L142"><pre>            preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L143"><pre>          &gt;</pre></li>
+    <li id="L144"><pre>            {ys.map((y) =&gt; (</pre></li>
+    <li id="L145"><pre>              &lt;g key={y}&gt;</pre></li>
+    <li id="L146">
+      <pre>
+                &lt;line x1={y % 1 === 0 ? 12 : 17} y1={y * 96} x2={22} y2={y * 96} /&gt;</pre>
+    </li>
+    <li id="L147"><pre>                {y % 1 === 0 &amp;&amp; (</pre></li>
+    <li id="L148"><pre>                  &lt;text x={2} y={y * 96 + 11}&gt;</pre></li>
+    <li id="L149"><pre>                    {y}</pre></li>
+    <li id="L150"><pre>                  &lt;/text&gt;</pre></li>
+    <li id="L151"><pre>                )}</pre></li>
+    <li id="L152"><pre>              &lt;/g&gt;</pre></li>
+    <li id="L153"><pre>            ))}</pre></li>
+    <li id="L154"><pre>          &lt;/svg&gt;</pre></li>
+    <li id="L155"><pre>        &lt;/&gt;</pre></li>
+    <li id="L156"><pre>      )}</pre></li>
+    <li id="L157"><pre>    &lt;/&gt;</pre></li>
+    <li id="L158"><pre>  )</pre></li>
+    <li id="L159"><pre>}</pre></li>
+  </ol>
+</html>

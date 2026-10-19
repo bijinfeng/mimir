@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxPictureTools.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxPictureTools.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 b9a23df5b503139dcd6d5f57645fe7a3f4a6ce6330533d93d5f58b32a31c9542
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useMemo, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import { removeBackground } from &#x27;../../vendor/apps/slides/src/renderer/cutout.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  ToolbarButton,</pre></li>
+    <li id="L5"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L7"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L8"><pre>  ToolbarSelect,</pre></li>
+    <li id="L9"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L10"><pre>import { PptxControlPanel } from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L11"><pre>import type { PptxUpload } from &#x27;./PptxAssetControls.js&#x27;</pre></li>
+    <li id="L12"><pre></pre></li>
+    <li id="L13"><pre>export { PptxIconControls } from &#x27;./PptxIconControls.js&#x27;</pre></li>
+    <li id="L14"><pre></pre></li>
+    <li id="L15"><pre>export function PptxCutoutControls({</pre></li>
+    <li id="L16"><pre>  slide,</pre></li>
+    <li id="L17"><pre>  elementId,</pre></li>
+    <li id="L18"><pre>  source,</pre></li>
+    <li id="L19"><pre>  upload,</pre></li>
+    <li id="L20"><pre>}: {</pre></li>
+    <li id="L21"><pre>  slide: number</pre></li>
+    <li id="L22"><pre>  elementId: string</pre></li>
+    <li id="L23"><pre>  source: string</pre></li>
+    <li id="L24"><pre>  upload: PptxUpload</pre></li>
+    <li id="L25"><pre>}) {</pre></li>
+    <li id="L26"><pre>  const [tolerance, setTolerance] = useState(20),</pre></li>
+    <li id="L27"><pre>    [mode, setMode] = useState(&#x27;removed&#x27;)</pre></li>
+    <li id="L28">
+      <pre>  const [original, setOriginal] = useState&lt;ImageData | null&gt;(null),</pre>
+    </li>
+    <li id="L29"><pre>    [busy, setBusy] = useState(false),</pre></li>
+    <li id="L30"><pre>    [message, setMessage] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L31"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L32"><pre>    let cancelled = false</pre></li>
+    <li id="L33"><pre>    const image = new Image()</pre></li>
+    <li id="L34"><pre>    image.addEventListener(</pre></li>
+    <li id="L35"><pre>      &#x27;load&#x27;,</pre></li>
+    <li id="L36"><pre>      () =&gt; {</pre></li>
+    <li id="L37"><pre>        if (cancelled) return</pre></li>
+    <li id="L38">
+      <pre>        if (image.naturalWidth * image.naturalHeight &gt; 12_000_000) {</pre>
+    </li>
+    <li id="L39">
+      <pre>          setMessage(&#x27;图片超过 1200 万像素，请先缩小后重试&#x27;)</pre>
+    </li>
+    <li id="L40"><pre>          return</pre></li>
+    <li id="L41"><pre>        }</pre></li>
+    <li id="L42"><pre>        const canvas = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L43"><pre>        canvas.width = image.naturalWidth</pre></li>
+    <li id="L44"><pre>        canvas.height = image.naturalHeight</pre></li>
+    <li id="L45">
+      <pre>        const ctx = canvas.getContext(&#x27;2d&#x27;, { willReadFrequently: true })</pre>
+    </li>
+    <li id="L46"><pre>        if (!ctx) return</pre></li>
+    <li id="L47"><pre>        ctx.drawImage(image, 0, 0)</pre></li>
+    <li id="L48">
+      <pre>        setOriginal(ctx.getImageData(0, 0, canvas.width, canvas.height))</pre>
+    </li>
+    <li id="L49"><pre>      },</pre></li>
+    <li id="L50"><pre>      { once: true },</pre></li>
+    <li id="L51"><pre>    )</pre></li>
+    <li id="L52"><pre>    image.addEventListener(</pre></li>
+    <li id="L53"><pre>      &#x27;error&#x27;,</pre></li>
+    <li id="L54"><pre>      () =&gt; {</pre></li>
+    <li id="L55">
+      <pre>        if (!cancelled) setMessage(&#x27;无法解码原图，请重新选择图片&#x27;)</pre>
+    </li>
+    <li id="L56"><pre>      },</pre></li>
+    <li id="L57"><pre>      { once: true },</pre></li>
+    <li id="L58"><pre>    )</pre></li>
+    <li id="L59"><pre>    image.src = source</pre></li>
+    <li id="L60"><pre>    return () =&gt; {</pre></li>
+    <li id="L61"><pre>      cancelled = true</pre></li>
+    <li id="L62"><pre>    }</pre></li>
+    <li id="L63"><pre>  }, [source])</pre></li>
+    <li id="L64"><pre>  const preview = useMemo(() =&gt; {</pre></li>
+    <li id="L65"><pre>    if (!original) return &#x27;&#x27;</pre></li>
+    <li id="L66"><pre>    const result = removeBackground(original, tolerance)</pre></li>
+    <li id="L67"><pre>    const canvas = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L68"><pre>    canvas.width = original.width</pre></li>
+    <li id="L69"><pre>    canvas.height = original.height</pre></li>
+    <li id="L70"><pre>    const ctx = canvas.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L71"><pre>    if (!ctx) return &#x27;&#x27;</pre></li>
+    <li id="L72">
+      <pre>
+    ctx.putImageData(new ImageData(result.data, original.width, original.height), 0, 0)</pre>
+    </li>
+    <li id="L73"><pre>    return canvas.toDataURL(&#x27;image/png&#x27;)</pre></li>
+    <li id="L74"><pre>  }, [original, tolerance])</pre></li>
+    <li id="L75"><pre>  return (</pre></li>
+    <li id="L76"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L77"><pre>      &lt;ToolbarMenuFields label=&quot;图片去背景&quot;&gt;</pre></li>
+    <li id="L78"><pre>        &lt;ToolbarNumberField</pre></li>
+    <li id="L79"><pre>          label=&quot;颜色容差（%）&quot;</pre></li>
+    <li id="L80"><pre>          value={tolerance}</pre></li>
+    <li id="L81"><pre>          min={0}</pre></li>
+    <li id="L82"><pre>          max={100}</pre></li>
+    <li id="L83"><pre>          step={5}</pre></li>
+    <li id="L84"><pre>          onCommit={setTolerance}</pre></li>
+    <li id="L85"><pre>        /&gt;</pre></li>
+    <li id="L86"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L87"><pre>          label=&quot;预览&quot;</pre></li>
+    <li id="L88"><pre>          disabled={busy}</pre></li>
+    <li id="L89"><pre>          value={mode}</pre></li>
+    <li id="L90"><pre>          options={[</pre></li>
+    <li id="L91">
+      <pre>            { value: &#x27;removed&#x27;, label: &#x27;处理结果&#x27; },</pre>
+    </li>
+    <li id="L92">
+      <pre>            { value: &#x27;original&#x27;, label: &#x27;原图&#x27; },</pre>
+    </li>
+    <li id="L93"><pre>          ]}</pre></li>
+    <li id="L94"><pre>          onChange={setMode}</pre></li>
+    <li id="L95"><pre>        /&gt;</pre></li>
+    <li id="L96"><pre>        &lt;div className=&quot;mimir-pptx-cutout-preview&quot;&gt;</pre></li>
+    <li id="L97"><pre>          {(preview || source) &amp;&amp; (</pre></li>
+    <li id="L98">
+      <pre>
+            &lt;img alt=&quot;去背景预览&quot; src={mode === &#x27;original&#x27; ? source : preview || source} /&gt;</pre>
+    </li>
+    <li id="L99"><pre>          )}</pre></li>
+    <li id="L100"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L101"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L102">
+      <pre>
+          移除与图片边缘相连的相近颜色。适合纯色背景；增加容差会移除更多颜色。应用保留原尺寸、位置、裁切和效果。结果为静态</pre>
+    </li>
+    <li id="L103"><pre>          PNG，GIF 或 WebP 动画仅使用当前画面。</pre></li>
+    <li id="L104"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L105"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L106"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L107"><pre>        primary</pre></li>
+    <li id="L108"><pre>        label=&quot;应用去背景&quot;</pre></li>
+    <li id="L109"><pre>        disabled={!preview || !original}</pre></li>
+    <li id="L110"><pre>        disabledReason=&quot;正在准备图片预览&quot;</pre></li>
+    <li id="L111"><pre>        onClick={() =&gt; {</pre></li>
+    <li id="L112"><pre>          setBusy(true)</pre></li>
+    <li id="L113"><pre>          void (async () =&gt; {</pre></li>
+    <li id="L114">
+      <pre>
+            const bytes = Uint8Array.from(atob(preview.split(&#x27;,&#x27;)[1]!), (c) =&gt; c.charCodeAt(0))</pre>
+    </li>
+    <li id="L115"><pre>            if (</pre></li>
+    <li id="L116"><pre>              await upload(</pre></li>
+    <li id="L117">
+      <pre>
+                { kind: &#x27;picture&#x27;, slide, elementId, widthPt: 72, keepCrop: true },</pre>
+    </li>
+    <li id="L118">
+      <pre>
+                new File([bytes], &#x27;cutout.png&#x27;, { type: &#x27;image/png&#x27; }),</pre>
+    </li>
+    <li id="L119"><pre>              )</pre></li>
+    <li id="L120"><pre>            )</pre></li>
+    <li id="L121"><pre>              setMessage(&#x27;已应用去背景&#x27;)</pre></li>
+    <li id="L122"><pre>          })()</pre></li>
+    <li id="L123"><pre>            .catch((cause: unknown) =&gt;</pre></li>
+    <li id="L124">
+      <pre>
+              setMessage(cause instanceof Error ? cause.message : &#x27;去背景失败&#x27;),</pre>
+    </li>
+    <li id="L125"><pre>            )</pre></li>
+    <li id="L126"><pre>            .finally(() =&gt; setBusy(false))</pre></li>
+    <li id="L127"><pre>        }}</pre></li>
+    <li id="L128"><pre>      /&gt;</pre></li>
+    <li id="L129">
+      <pre>
+      {message &amp;&amp; &lt;span role=&quot;status&quot;&gt;{message}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L130"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L131"><pre>  )</pre></li>
+    <li id="L132"><pre>}</pre></li>
+  </ol>
+</html>

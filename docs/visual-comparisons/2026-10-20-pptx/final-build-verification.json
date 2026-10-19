@@ -1,0 +1,64 @@
+{
+  "scope": "Actual resource and source hashes, not product GUI acceptance",
+  "baseline": "3b5d912",
+  "variants": {
+    "before": {
+      "resources": 22,
+      "aggregateSha256": "bb344c856172eae08366650c521210cb05a3db607f93e14290bf1f837dc4705b",
+      "allResourceBytesAndHashesMatch": true,
+      "sourceInputsVerified": 239,
+      "sourceComparison": "git show3b5d912 + exact frozen gallery inputs"
+    },
+    "after": {
+      "resources": 22,
+      "aggregateSha256": "e9632a261967e504a47d9fddee40129e433cc31b99a232ea7456b10960fd852f",
+      "allResourceBytesAndHashesMatch": true,
+      "sourceInputsVerified": 239,
+      "sourceComparison": "current files"
+    }
+  },
+  "nativeHelper": {
+    "adapterSha256": "de756b33a80c6b5eeba5d48885dd9a4e741386e5cc08db7842bb19c60d52ecc1",
+    "variants": {
+      "before": {
+        "verifiedSourceInputs": 159,
+        "compiledBundleSha256": "8b6d6b2a5a8173bd2011ca9e828767d01d7d1cdde639b3a521d6a6c9e22c6dbe",
+        "actualCompiledBundleHashMatches": true,
+        "substitutions": [
+          "getDocument: fixed fixture identity only; no DB module",
+          "applyPptxService: explicit rejection; no model/network/storage calls"
+        ]
+      },
+      "after": {
+        "verifiedSourceInputs": 159,
+        "compiledBundleSha256": "92fb56b5daf85f4dd72da6338e77070aa38979eaac100b6903b7b1710250cf52",
+        "actualCompiledBundleHashMatches": true,
+        "substitutions": [
+          "getDocument: fixed fixture identity only; no DB module",
+          "applyPptxService: explicit rejection; no model/network/storage calls"
+        ]
+      }
+    }
+  },
+  "inventory": {
+    "records": 754,
+    "unique": true,
+    "sourceSnapshotsCurrent": true,
+    "rawArchiveMatches": true,
+    "mappingSourceOnly": true,
+    "baselineRecordsPreserved": true,
+    "baselineSourceHashesVerified": 45,
+    "currentStateAnchorsVerified": 25,
+    "currentSourceViewsExact": 45
+  },
+  "licenses": {
+    "allOriginalHashesMatch": true,
+    "genofficeCommit": "480548fd55f1be3593ee0d8e316a734751d58309"
+  },
+  "captures": {
+    "matchedPairs": 8,
+    "actualImagesHashAndDimensionsVerified": 16,
+    "sameFixtureThemeViewportAndEditorDimensions": true,
+    "productBrowserAcceptanceSeparate": true
+  }
+}

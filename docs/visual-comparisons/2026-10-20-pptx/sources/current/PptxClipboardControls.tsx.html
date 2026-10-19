@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxClipboardControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxClipboardControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 1b495da84a9b5e2b3874f295f328ca153bd76cba8d4dbd8c6b4fbdf96e235220
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useLayoutEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { Checkbox } from &#x27;antd&#x27;</pre></li>
+    <li id="L3">
+      <pre>import { ClipboardPaste, Copy, Scissors, ImagePlus } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import { pptxManualAssetSchema, type PptxManualAsset } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>
+import type { SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L6">
+      <pre>
+import { pptxClipboardTargets, type PptxClipboardTarget } from &#x27;../pptx-selection-clipboard.js&#x27;</pre>
+    </li>
+    <li id="L7"><pre>import {</pre></li>
+    <li id="L8"><pre>  ToolbarButton,</pre></li>
+    <li id="L9"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L10"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L11"><pre>  ToolbarSelect,</pre></li>
+    <li id="L12"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L13">
+      <pre>
+import { readPptxSystemClipboardImage } from &#x27;../pptx-system-clipboard.js&#x27;</pre>
+    </li>
+    <li id="L14"><pre>import &#x27;./pptx-clipboard-controls.css&#x27;</pre></li>
+    <li id="L15"><pre></pre></li>
+    <li id="L16"><pre>type Clip = {</pre></li>
+    <li id="L17"><pre>  ref: string</pre></li>
+    <li id="L18">
+      <pre>  kind: &#x27;elements&#x27; | &#x27;slide&#x27; | &#x27;slides&#x27;</pre>
+    </li>
+    <li id="L19"><pre>  count: number</pre></li>
+    <li id="L20"><pre>  itemCount: number</pre></li>
+    <li id="L21"><pre>  groupWrapperCount: number</pre></li>
+    <li id="L22"><pre>}</pre></li>
+    <li id="L23"><pre>const STORAGE_KEY = &#x27;mimir.pptx.internal-clipboard&#x27;</pre></li>
+    <li id="L24"><pre>const CLIPBOARD_EVENT = &#x27;mimir:pptx-clipboard&#x27;</pre></li>
+    <li id="L25"><pre>let fallbackClip: Clip | null = null</pre></li>
+    <li id="L26">
+      <pre>function validatedClip(value: Record&lt;string, unknown&gt; | null): Clip | null {</pre>
+    </li>
+    <li id="L27"><pre>  if (</pre></li>
+    <li id="L28"><pre>    !value ||</pre></li>
+    <li id="L29">
+      <pre>
+    (value.kind !== &#x27;elements&#x27; &amp;&amp; value.kind !== &#x27;slide&#x27; &amp;&amp; value.kind !== &#x27;slides&#x27;) ||</pre>
+    </li>
+    <li id="L30"><pre>    typeof value.ref !== &#x27;string&#x27;</pre></li>
+    <li id="L31"><pre>  )</pre></li>
+    <li id="L32"><pre>    return null</pre></li>
+    <li id="L33"><pre>  try {</pre></li>
+    <li id="L34"><pre>    pptxManualAssetSchema.parse(</pre></li>
+    <li id="L35"><pre>      value.kind === &#x27;elements&#x27;</pre></li>
+    <li id="L36">
+      <pre>        ? { kind: &#x27;paste_elements&#x27;, slide: 0, ref: value.ref }</pre>
+    </li>
+    <li id="L37">
+      <pre>        : { kind: &#x27;paste_slide&#x27;, afterIndex: 0, ref: value.ref },</pre>
+    </li>
+    <li id="L38"><pre>    )</pre></li>
+    <li id="L39"><pre>    const count = Number(value.count),</pre></li>
+    <li id="L40"><pre>      itemCount = Number(value.itemCount ?? count),</pre></li>
+    <li id="L41"><pre>      groupWrapperCount = Number(value.groupWrapperCount ?? 0)</pre></li>
+    <li id="L42"><pre>    if (</pre></li>
+    <li id="L43">
+      <pre>
+      ![count, itemCount].every((n) =&gt; Number.isInteger(n) &amp;&amp; n &gt;= 1 &amp;&amp; n &lt;= 100) ||</pre>
+    </li>
+    <li id="L44"><pre>      !Number.isInteger(groupWrapperCount) ||</pre></li>
+    <li id="L45"><pre>      groupWrapperCount &lt; 0 ||</pre></li>
+    <li id="L46"><pre>      groupWrapperCount &gt; itemCount</pre></li>
+    <li id="L47"><pre>    )</pre></li>
+    <li id="L48"><pre>      return null</pre></li>
+    <li id="L49">
+      <pre>
+    return { ref: value.ref, kind: value.kind, count, itemCount, groupWrapperCount }</pre>
+    </li>
+    <li id="L50"><pre>  } catch {</pre></li>
+    <li id="L51"><pre>    return null</pre></li>
+    <li id="L52"><pre>  }</pre></li>
+    <li id="L53"><pre>}</pre></li>
+    <li id="L54">
+      <pre>
+/** Editor publishes accepted cut data before updating its version/selection and invalidating the old panel. */</pre>
+    </li>
+    <li id="L55">
+      <pre>
+export function publishPptxClipboardResult(data: Record&lt;string, unknown&gt;): Clip | null {</pre>
+    </li>
+    <li id="L56"><pre>  const clip = validatedClip(data)</pre></li>
+    <li id="L57"><pre>  if (!clip) return null</pre></li>
+    <li id="L58"><pre>  fallbackClip = clip</pre></li>
+    <li id="L59"><pre>  try {</pre></li>
+    <li id="L60"><pre>    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(clip))</pre></li>
+    <li id="L61"><pre>  } catch {</pre></li>
+    <li id="L62"><pre>    /* Keep this window&#x27;s in-memory copy. */</pre></li>
+    <li id="L63"><pre>  }</pre></li>
+    <li id="L64">
+      <pre>
+  if (typeof window !== &#x27;undefined&#x27;) window.dispatchEvent(new Event(CLIPBOARD_EVENT))</pre>
+    </li>
+    <li id="L65"><pre>  return clip</pre></li>
+    <li id="L66"><pre>}</pre></li>
+    <li id="L67"><pre>function readClip(): Clip | null {</pre></li>
+    <li id="L68"><pre>  try {</pre></li>
+    <li id="L69"><pre>    return validatedClip(</pre></li>
+    <li id="L70">
+      <pre>
+      JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? &#x27;null&#x27;) as Record&lt;string, unknown&gt; | null,</pre>
+    </li>
+    <li id="L71"><pre>    )</pre></li>
+    <li id="L72"><pre>  } catch {</pre></li>
+    <li id="L73"><pre>    return fallbackClip</pre></li>
+    <li id="L74"><pre>  }</pre></li>
+    <li id="L75"><pre>}</pre></li>
+    <li id="L76"><pre>export interface PptxClipboardControlsProps {</pre></li>
+    <li id="L77"><pre>  slide: number</pre></li>
+    <li id="L78"><pre>  slideCount: number</pre></li>
+    <li id="L79"><pre>  slideNames?: readonly string[]</pre></li>
+    <li id="L80">
+      <pre>
+  insertSystemImage?: (file: File, signal: AbortSignal) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L81"><pre>  elements?: readonly SlideElement[]</pre></li>
+    <li id="L82"><pre>  selectedRefs?: readonly string[]</pre></li>
+    <li id="L83"><pre>  elementId?: string | null</pre></li>
+    <li id="L84"><pre>  contextKey?: string</pre></li>
+    <li id="L85"><pre>  disabled?: boolean</pre></li>
+    <li id="L86"><pre>  execute: (</pre></li>
+    <li id="L87"><pre>    input: PptxManualAsset,</pre></li>
+    <li id="L88"><pre>    options: { signal: AbortSignal },</pre></li>
+    <li id="L89"><pre>  ) =&gt; Promise&lt;Record&lt;string, unknown&gt; | null&gt;</pre></li>
+    <li id="L90"><pre>}</pre></li>
+    <li id="L91"><pre>export function PptxClipboardControls({</pre></li>
+    <li id="L92"><pre>  slide,</pre></li>
+    <li id="L93"><pre>  slideCount,</pre></li>
+    <li id="L94"><pre>  slideNames,</pre></li>
+    <li id="L95"><pre>  insertSystemImage,</pre></li>
+    <li id="L96"><pre>  elements,</pre></li>
+    <li id="L97"><pre>  selectedRefs,</pre></li>
+    <li id="L98"><pre>  elementId = null,</pre></li>
+    <li id="L99"><pre>  contextKey,</pre></li>
+    <li id="L100"><pre>  disabled = false,</pre></li>
+    <li id="L101"><pre>  execute,</pre></li>
+    <li id="L102"><pre>}: PptxClipboardControlsProps) {</pre></li>
+    <li id="L103"><pre>  const refs = selectedRefs ?? (elementId ? [elementId] : [])</pre></li>
+    <li id="L104"><pre>  const context = contextKey ?? JSON.stringify([slide, refs])</pre></li>
+    <li id="L105"><pre>  const liveContext = useRef(context)</pre></li>
+    <li id="L106"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L107">
+      <pre>
+  const [kind, setKind] = useState(refs.length ? &#x27;element&#x27; : &#x27;slide&#x27;)</pre>
+    </li>
+    <li id="L108"><pre>  const [clip, setClip] = useState(readClip)</pre></li>
+    <li id="L109"><pre>  const [slides, setSlides] = useState&lt;number[]&gt;([slide])</pre></li>
+    <li id="L110">
+      <pre>  const [sourceStyle, setSourceStyle] = useState(&#x27;destination&#x27;)</pre>
+    </li>
+    <li id="L111"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L112"><pre>  const [message, setMessage] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L113"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L114"><pre>  const [shownContext, setShownContext] = useState(context)</pre></li>
+    <li id="L115"><pre>  if (shownContext !== context) {</pre></li>
+    <li id="L116"><pre>    setShownContext(context)</pre></li>
+    <li id="L117"><pre>    setBusy(false)</pre></li>
+    <li id="L118"><pre>    setMessage(&#x27;&#x27;)</pre></li>
+    <li id="L119"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L120"><pre>    setClip(readClip())</pre></li>
+    <li id="L121"><pre>    setSlides([slide])</pre></li>
+    <li id="L122"><pre>  }</pre></li>
+    <li id="L123"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L124"><pre>    liveContext.current = context</pre></li>
+    <li id="L125"><pre>    pending.current?.abort()</pre></li>
+    <li id="L126"><pre>    pending.current = null</pre></li>
+    <li id="L127"><pre>    return () =&gt; {</pre></li>
+    <li id="L128"><pre>      pending.current?.abort()</pre></li>
+    <li id="L129"><pre>    }</pre></li>
+    <li id="L130"><pre>  }, [context])</pre></li>
+    <li id="L131"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L132"><pre>    const update = () =&gt; setClip(readClip())</pre></li>
+    <li id="L133"><pre>    window.addEventListener(CLIPBOARD_EVENT, update)</pre></li>
+    <li id="L134">
+      <pre>    return () =&gt; window.removeEventListener(CLIPBOARD_EVENT, update)</pre>
+    </li>
+    <li id="L135"><pre>  }, [])</pre></li>
+    <li id="L136"><pre>  let targets: PptxClipboardTarget[] = []</pre></li>
+    <li id="L137"><pre>  let selectionError = &#x27;&#x27;</pre></li>
+    <li id="L138"><pre>  try {</pre></li>
+    <li id="L139">
+      <pre>
+    if (elements &amp;&amp; refs.length) targets = pptxClipboardTargets(elements, refs)</pre>
+    </li>
+    <li id="L140">
+      <pre>    else if (refs.length) targets = refs.map((ref) =&gt; ({ elementId: ref }))</pre>
+    </li>
+    <li id="L141"><pre>  } catch (cause) {</pre></li>
+    <li id="L142">
+      <pre>
+    selectionError = cause instanceof Error ? cause.message : &#x27;请重新选择对象&#x27;</pre>
+    </li>
+    <li id="L143"><pre>  }</pre></li>
+    <li id="L144">
+      <pre>
+  const groupCount = new Set(targets.flatMap((target) =&gt; (target.group ? [target.group] : []))).size</pre>
+    </li>
+    <li id="L145"><pre>  const locked = disabled || busy</pre></li>
+    <li id="L146"><pre>  const noSelection =</pre></li>
+    <li id="L147">
+      <pre>
+    (kind === &#x27;element&#x27; &amp;&amp; (!targets.length || !!selectionError)) ||</pre>
+    </li>
+    <li id="L148">
+      <pre>
+    (kind === &#x27;slides&#x27; &amp;&amp; (!slides.length || slides.length &gt; 40))</pre>
+    </li>
+    <li id="L149"><pre>  const slideInput = (cut: boolean): PptxManualAsset =&gt;</pre></li>
+    <li id="L150"><pre>    kind === &#x27;slides&#x27;</pre></li>
+    <li id="L151">
+      <pre>      ? { kind: cut ? &#x27;cut_slides&#x27; : &#x27;copy_slides&#x27;, slides }</pre>
+    </li>
+    <li id="L152">
+      <pre>      : { kind: cut ? &#x27;cut_slide&#x27; : &#x27;copy_slide&#x27;, slide }</pre>
+    </li>
+    <li id="L153"><pre>  const run = async (input: PptxManualAsset) =&gt; {</pre></li>
+    <li id="L154"><pre>    if (disabled || pending.current) return</pre></li>
+    <li id="L155"><pre>    const controller = new AbortController(),</pre></li>
+    <li id="L156"><pre>      startedAt = context</pre></li>
+    <li id="L157"><pre>    pending.current = controller</pre></li>
+    <li id="L158"><pre>    setBusy(true)</pre></li>
+    <li id="L159"><pre>    setMessage(&#x27;&#x27;)</pre></li>
+    <li id="L160"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L161"><pre>    try {</pre></li>
+    <li id="L162">
+      <pre>      const data = await execute(input, { signal: controller.signal })</pre>
+    </li>
+    <li id="L163">
+      <pre>      if (controller.signal.aborted || liveContext.current !== startedAt) return</pre>
+    </li>
+    <li id="L164"><pre>      if (!data) {</pre></li>
+    <li id="L165">
+      <pre>        setError(&#x27;操作未完成，原有复制内容已保留，请重试。&#x27;)</pre>
+    </li>
+    <li id="L166"><pre>        return</pre></li>
+    <li id="L167"><pre>      }</pre></li>
+    <li id="L168"><pre>      const next = publishPptxClipboardResult(data)</pre></li>
+    <li id="L169"><pre>      if (next) {</pre></li>
+    <li id="L170"><pre>        setClip(next)</pre></li>
+    <li id="L171"><pre>        setMessage(</pre></li>
+    <li id="L172"><pre>          input.kind.startsWith(&#x27;cut_&#x27;)</pre></li>
+    <li id="L173"><pre>            ? &#x27;已剪切，可粘贴到其他位置。&#x27;</pre></li>
+    <li id="L174"><pre>            : &#x27;已复制，可粘贴到其他位置。&#x27;,</pre></li>
+    <li id="L175"><pre>        )</pre></li>
+    <li id="L176"><pre>      } else setMessage(&#x27;已粘贴，可继续编辑新对象。&#x27;)</pre></li>
+    <li id="L177"><pre>    } catch (cause) {</pre></li>
+    <li id="L178">
+      <pre>      if (!controller.signal.aborted &amp;&amp; liveContext.current === startedAt)</pre>
+    </li>
+    <li id="L179">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;复制粘贴失败，请重试。&#x27;)</pre>
+    </li>
+    <li id="L180"><pre>    } finally {</pre></li>
+    <li id="L181"><pre>      if (pending.current === controller) {</pre></li>
+    <li id="L182"><pre>        pending.current = null</pre></li>
+    <li id="L183"><pre>        setBusy(false)</pre></li>
+    <li id="L184"><pre>      }</pre></li>
+    <li id="L185"><pre>    }</pre></li>
+    <li id="L186"><pre>  }</pre></li>
+    <li id="L187">
+      <pre>
+  const selectionInput = (action: &#x27;copy_elements&#x27; | &#x27;cut_elements&#x27;): PptxManualAsset =&gt;</pre>
+    </li>
+    <li id="L188"><pre>    elements</pre></li>
+    <li id="L189"><pre>      ? { kind: action, slide, targets }</pre></li>
+    <li id="L190">
+      <pre>
+      : { kind: action, slide, elementIds: targets.map((target) =&gt; target.elementId) }</pre>
+    </li>
+    <li id="L191"><pre>  return (</pre></li>
+    <li id="L192">
+      <pre>    &lt;fieldset className=&quot;mimir-pptx-clipboard&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L193">
+      <pre>      &lt;div className=&quot;mimir-pptx-clipboard__content&quot;&gt;</pre>
+    </li>
+    <li id="L194"><pre>        &lt;ToolbarMenuFields label=&quot;复制范围&quot;&gt;</pre></li>
+    <li id="L195"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L196"><pre>            label=&quot;复制内容&quot;</pre></li>
+    <li id="L197"><pre>            value={kind}</pre></li>
+    <li id="L198"><pre>            disabled={locked}</pre></li>
+    <li id="L199"><pre>            options={[</pre></li>
+    <li id="L200">
+      <pre>
+              { value: &#x27;element&#x27;, label: `所选对象（${targets.length}个）` },</pre>
+    </li>
+    <li id="L201">
+      <pre>
+              { value: &#x27;slide&#x27;, label: `当前幻灯片（第${slide + 1}页）` },</pre>
+    </li>
+    <li id="L202">
+      <pre>
+              { value: &#x27;slides&#x27;, label: `多张幻灯片（已选${slides.length}页）` },</pre>
+    </li>
+    <li id="L203"><pre>            ]}</pre></li>
+    <li id="L204"><pre>            onChange={setKind}</pre></li>
+    <li id="L205"><pre>          /&gt;</pre></li>
+    <li id="L206"><pre>          {kind === &#x27;element&#x27; &amp;&amp; (</pre></li>
+    <li id="L207"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L208"><pre>              {selectionError ||</pre></li>
+    <li id="L209"><pre>                (targets.length</pre></li>
+    <li id="L210">
+      <pre>
+                  ? `当前选择 ${targets.length} 个对象${groupCount ? `，来自 ${groupCount} 个组合的成员以独立组合粘贴。` : &#x27;，整组对象保持整组。&#x27;}`</pre>
+    </li>
+    <li id="L211">
+      <pre>                  : &#x27;先在画布或对象列表选择要复制的对象。&#x27;)}</pre>
+    </li>
+    <li id="L212"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L213"><pre>          )}</pre></li>
+    <li id="L214"><pre>          {kind === &#x27;slides&#x27; &amp;&amp; (</pre></li>
+    <li id="L215"><pre>            &lt;&gt;</pre></li>
+    <li id="L216"><pre>              &lt;div</pre></li>
+    <li id="L217"><pre>                className=&quot;mimir-pptx-clipboard__pages&quot;</pre></li>
+    <li id="L218"><pre>                role=&quot;group&quot;</pre></li>
+    <li id="L219"><pre>                aria-label=&quot;选择复制的幻灯片&quot;</pre></li>
+    <li id="L220"><pre>              &gt;</pre></li>
+    <li id="L221"><pre>                &lt;Checkbox.Group</pre></li>
+    <li id="L222"><pre>                  value={slides}</pre></li>
+    <li id="L223"><pre>                  disabled={locked}</pre></li>
+    <li id="L224">
+      <pre>                  options={Array.from({ length: slideCount }, (_, index) =&gt; ({</pre>
+    </li>
+    <li id="L225"><pre>                    value: index,</pre></li>
+    <li id="L226">
+      <pre>
+                    label: `第${index + 1}页${slideNames?.[index] ? ` · ${slideNames[index]}` : &#x27;&#x27;}`,</pre>
+    </li>
+    <li id="L227"><pre>                  }))}</pre></li>
+    <li id="L228">
+      <pre>
+                  onChange={(values) =&gt; setSlides(values.map(Number).toSorted((a, b) =&gt; a - b))}</pre>
+    </li>
+    <li id="L229"><pre>                /&gt;</pre></li>
+    <li id="L230"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L231"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L232">
+      <pre>
+                按原顺序复制，最多40页；页面间跳转请将目标页一起选择。备注随页面保留。</pre>
+    </li>
+    <li id="L233"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L234"><pre>            &lt;/&gt;</pre></li>
+    <li id="L235"><pre>          )}</pre></li>
+    <li id="L236">
+      <pre>          &lt;div className=&quot;mimir-pptx-clipboard-actions&quot;&gt;</pre>
+    </li>
+    <li id="L237"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L238">
+      <pre>
+              label={kind === &#x27;element&#x27; ? &#x27;复制对象&#x27; : &#x27;复制幻灯片&#x27;}</pre>
+    </li>
+    <li id="L239"><pre>              disabled={locked || noSelection}</pre></li>
+    <li id="L240">
+      <pre>              disabledReason={selectionError || &#x27;请先选择可复制对象&#x27;}</pre>
+    </li>
+    <li id="L241"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L242">
+      <pre>
+                void run(kind === &#x27;element&#x27; ? selectionInput(&#x27;copy_elements&#x27;) : slideInput(false))</pre>
+    </li>
+    <li id="L243"><pre>              }</pre></li>
+    <li id="L244"><pre>            &gt;</pre></li>
+    <li id="L245"><pre>              &lt;Copy size={14} /&gt;</pre></li>
+    <li id="L246"><pre>              &lt;span&gt;复制&lt;/span&gt;</pre></li>
+    <li id="L247"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L248"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L249">
+      <pre>
+              label={kind === &#x27;element&#x27; ? &#x27;剪切对象&#x27; : &#x27;剪切幻灯片&#x27;}</pre>
+    </li>
+    <li id="L250"><pre>              disabled={</pre></li>
+    <li id="L251"><pre>                locked ||</pre></li>
+    <li id="L252"><pre>                noSelection ||</pre></li>
+    <li id="L253"><pre>                (kind !== &#x27;element&#x27; &amp;&amp;</pre></li>
+    <li id="L254">
+      <pre>
+                  (kind === &#x27;slides&#x27; ? slides.length &gt;= slideCount : slideCount &lt;= 1))</pre>
+    </li>
+    <li id="L255"><pre>              }</pre></li>
+    <li id="L256"><pre>              disabledReason={</pre></li>
+    <li id="L257"><pre>                noSelection</pre></li>
+    <li id="L258">
+      <pre>                  ? selectionError || &#x27;请先选择可复制对象&#x27;</pre>
+    </li>
+    <li id="L259"><pre>                  : &#x27;至少保留一张幻灯片，最后一页可复制&#x27;</pre></li>
+    <li id="L260"><pre>              }</pre></li>
+    <li id="L261"><pre>              onClick={() =&gt;</pre></li>
+    <li id="L262">
+      <pre>
+                void run(kind === &#x27;element&#x27; ? selectionInput(&#x27;cut_elements&#x27;) : slideInput(true))</pre>
+    </li>
+    <li id="L263"><pre>              }</pre></li>
+    <li id="L264"><pre>            &gt;</pre></li>
+    <li id="L265"><pre>              &lt;Scissors size={14} /&gt;</pre></li>
+    <li id="L266"><pre>              &lt;span&gt;剪切&lt;/span&gt;</pre></li>
+    <li id="L267"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L268"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L269"><pre>        &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L270"><pre>        &lt;ToolbarMenuFields label=&quot;已复制内容&quot;&gt;</pre></li>
+    <li id="L271"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L272"><pre>            {clip</pre></li>
+    <li id="L273"><pre>              ? clip.kind !== &#x27;elements&#x27;</pre></li>
+    <li id="L274">
+      <pre>                ? `${clip.count} 张幻灯片，将按原顺序插在当前页之后。`</pre>
+    </li>
+    <li id="L275">
+      <pre>
+                : `${clip.count} 个所选对象，将作为 ${clip.itemCount} 个顶层对象粘贴到当前页并稍微错开。${clip.groupWrapperCount ? `其中 ${clip.groupWrapperCount} 个为独立组合。` : &#x27;&#x27;}`</pre>
+    </li>
+    <li id="L276"><pre>              : &#x27;尚未复制内容。&#x27;}</pre></li>
+    <li id="L277"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L278">
+      <pre>          {clip &amp;&amp; clip.kind !== &#x27;elements&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L279"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L280"><pre>              label=&quot;粘贴格式&quot;</pre></li>
+    <li id="L281"><pre>              value={sourceStyle}</pre></li>
+    <li id="L282"><pre>              disabled={locked}</pre></li>
+    <li id="L283"><pre>              options={[</pre></li>
+    <li id="L284">
+      <pre>
+                { value: &#x27;destination&#x27;, label: &#x27;使用目标主题&#x27; },</pre>
+    </li>
+    <li id="L285">
+      <pre>                { value: &#x27;source&#x27;, label: &#x27;保留源格式&#x27; },</pre>
+    </li>
+    <li id="L286"><pre>              ]}</pre></li>
+    <li id="L287"><pre>              onChange={setSourceStyle}</pre></li>
+    <li id="L288"><pre>            /&gt;</pre></li>
+    <li id="L289"><pre>          )}</pre></li>
+    <li id="L290"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L291">
+      <pre>
+            内部复制有效15分钟；系统标记写入成功后，可在画布用复制、剪切、粘贴快捷键。对象粘贴使用目标主题，不携带动画；组内成员以独立组合粘贴。附着连接线、跳转引用和外链媒体须先解除。</pre>
+    </li>
+    <li id="L292"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L293"><pre>        &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L294"><pre>        {insertSystemImage &amp;&amp; (</pre></li>
+    <li id="L295"><pre>          &lt;ToolbarMenuFields label=&quot;系统图片&quot;&gt;</pre></li>
+    <li id="L296"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L297">
+      <pre>
+              从系统剪贴板读取一张 PNG 或 JPEG（≤8 MiB），也可直接拖入画布。读取需浏览器授权。</pre>
+    </li>
+    <li id="L298"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L299"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L300"><pre>              label=&quot;粘贴系统图片&quot;</pre></li>
+    <li id="L301"><pre>              disabled={locked}</pre></li>
+    <li id="L302"><pre>              onClick={() =&gt; {</pre></li>
+    <li id="L303"><pre>                if (disabled || pending.current) return</pre></li>
+    <li id="L304"><pre>                const controller = new AbortController(),</pre></li>
+    <li id="L305"><pre>                  startedAt = context</pre></li>
+    <li id="L306"><pre>                pending.current = controller</pre></li>
+    <li id="L307"><pre>                setBusy(true)</pre></li>
+    <li id="L308"><pre>                setError(&#x27;&#x27;)</pre></li>
+    <li id="L309"><pre>                setMessage(&#x27;&#x27;)</pre></li>
+    <li id="L310">
+      <pre>                void readPptxSystemClipboardImage(controller.signal)</pre>
+    </li>
+    <li id="L311"><pre>                  .then(async (file) =&gt; {</pre></li>
+    <li id="L312">
+      <pre>
+                    if (controller.signal.aborted || liveContext.current !== startedAt) return</pre>
+    </li>
+    <li id="L313">
+      <pre>                    await insertSystemImage(file, controller.signal)</pre>
+    </li>
+    <li id="L314"><pre>                  })</pre></li>
+    <li id="L315"><pre>                  .catch((cause: unknown) =&gt; {</pre></li>
+    <li id="L316">
+      <pre>
+                    if (!controller.signal.aborted &amp;&amp; liveContext.current === startedAt)</pre>
+    </li>
+    <li id="L317">
+      <pre>
+                      setError(cause instanceof Error ? cause.message : &#x27;系统图片粘贴失败&#x27;)</pre>
+    </li>
+    <li id="L318"><pre>                  })</pre></li>
+    <li id="L319"><pre>                  .finally(() =&gt; {</pre></li>
+    <li id="L320"><pre>                    if (pending.current === controller) {</pre></li>
+    <li id="L321"><pre>                      pending.current = null</pre></li>
+    <li id="L322"><pre>                      setBusy(false)</pre></li>
+    <li id="L323"><pre>                    }</pre></li>
+    <li id="L324"><pre>                  })</pre></li>
+    <li id="L325"><pre>              }}</pre></li>
+    <li id="L326"><pre>            &gt;</pre></li>
+    <li id="L327"><pre>              &lt;ImagePlus size={14} /&gt;</pre></li>
+    <li id="L328"><pre>              &lt;span&gt;粘贴系统图片&lt;/span&gt;</pre></li>
+    <li id="L329"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L330"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L331"><pre>              label=&quot;取消图片读取&quot;</pre></li>
+    <li id="L332"><pre>              disabled={!busy}</pre></li>
+    <li id="L333"><pre>              onClick={() =&gt; {</pre></li>
+    <li id="L334"><pre>                pending.current?.abort()</pre></li>
+    <li id="L335"><pre>                pending.current = null</pre></li>
+    <li id="L336"><pre>                setBusy(false)</pre></li>
+    <li id="L337"><pre>                setMessage(&#x27;已取消读取&#x27;)</pre></li>
+    <li id="L338"><pre>              }}</pre></li>
+    <li id="L339"><pre>            &gt;</pre></li>
+    <li id="L340"><pre>              &lt;span&gt;取消读取&lt;/span&gt;</pre></li>
+    <li id="L341"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L342"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L343"><pre>        )}</pre></li>
+    <li id="L344"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L345">
+      <pre>      &lt;div className=&quot;mimir-pptx-clipboard__actions&quot;&gt;</pre>
+    </li>
+    <li id="L346">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L347">
+      <pre>        {message &amp;&amp; &lt;p role=&quot;status&quot;&gt;{message}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L348"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L349"><pre>          primary</pre></li>
+    <li id="L350"><pre>          label={</pre></li>
+    <li id="L351">
+      <pre>
+            busy ? &#x27;正在处理剪贴板&#x27; : clip &amp;&amp; clip.kind !== &#x27;elements&#x27; ? &#x27;粘贴幻灯片&#x27; : &#x27;粘贴对象&#x27;</pre>
+    </li>
+    <li id="L352"><pre>          }</pre></li>
+    <li id="L353"><pre>          disabled={locked || !clip}</pre></li>
+    <li id="L354">
+      <pre>
+          disabledReason={locked ? &#x27;正在处理修改&#x27; : &#x27;请先复制对象或幻灯片&#x27;}</pre>
+    </li>
+    <li id="L355"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L356"><pre>            if (clip)</pre></li>
+    <li id="L357"><pre>              void run(</pre></li>
+    <li id="L358"><pre>                clip.kind !== &#x27;elements&#x27;</pre></li>
+    <li id="L359"><pre>                  ? {</pre></li>
+    <li id="L360">
+      <pre>
+                      kind: clip.kind === &#x27;slides&#x27; ? &#x27;paste_slides&#x27; : &#x27;paste_slide&#x27;,</pre>
+    </li>
+    <li id="L361"><pre>                      afterIndex: slide,</pre></li>
+    <li id="L362"><pre>                      ref: clip.ref,</pre></li>
+    <li id="L363">
+      <pre>                      keepSourceFormatting: sourceStyle === &#x27;source&#x27;,</pre>
+    </li>
+    <li id="L364"><pre>                    }</pre></li>
+    <li id="L365">
+      <pre>
+                  : { kind: &#x27;paste_elements&#x27;, slide, ref: clip.ref, dx: 190500, dy: 190500 },</pre>
+    </li>
+    <li id="L366"><pre>              )</pre></li>
+    <li id="L367"><pre>          }}</pre></li>
+    <li id="L368"><pre>        &gt;</pre></li>
+    <li id="L369"><pre>          &lt;ClipboardPaste size={14} /&gt;</pre></li>
+    <li id="L370"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L371"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L372"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L373"><pre>  )</pre></li>
+    <li id="L374"><pre>}</pre></li>
+  </ol>
+</html>

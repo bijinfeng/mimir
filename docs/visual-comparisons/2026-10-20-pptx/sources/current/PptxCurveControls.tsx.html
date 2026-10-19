@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxCurveControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxCurveControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 c528428d14362a77e093d5843ea0a444cc35742397e61bcc146d6946a63574a7
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import type { SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  ToolbarButton,</pre></li>
+    <li id="L5"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L7"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L8"><pre>  ToolbarSelect,</pre></li>
+    <li id="L9"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L10"><pre>import {</pre></li>
+    <li id="L11"><pre>  type PptxApply,</pre></li>
+    <li id="L12"><pre>  type PptxTarget,</pre></li>
+    <li id="L13"><pre>  usePptxAction,</pre></li>
+    <li id="L14"><pre>  PptxControlPanel,</pre></li>
+    <li id="L15"><pre>} from &#x27;./PptxControlPanel.js&#x27;</pre></li>
+    <li id="L16">
+      <pre>
+type Segment = { id: number; op: &#x27;M&#x27; | &#x27;L&#x27; | &#x27;Q&#x27; | &#x27;C&#x27;; pts: number[] }</pre>
+    </li>
+    <li id="L17"><pre>const round = (v: number) =&gt; Math.round(v * 100) / 100</pre></li>
+    <li id="L18">
+      <pre>
+const currentPath = (element: Extract&lt;SlideElement, { type: &#x27;shape&#x27; | &#x27;text&#x27; }&gt;) =&gt;</pre>
+    </li>
+    <li id="L19"><pre>  element.customGeometry?.path ??</pre></li>
+    <li id="L20"><pre>  element.customGeometry?.strokePath ??</pre></li>
+    <li id="L21"><pre>  element.customGeometry?.fillPath ??</pre></li>
+    <li id="L22"><pre>  &#x27;&#x27;</pre></li>
+    <li id="L23">
+      <pre>
+const isClosed = (element: Extract&lt;SlideElement, { type: &#x27;shape&#x27; | &#x27;text&#x27; }&gt;) =&gt;</pre>
+    </li>
+    <li id="L24"><pre>  /Z\s*$/i.test(currentPath(element)) || !element.customGeometry</pre></li>
+    <li id="L25">
+      <pre>
+function initialSegments(element: Extract&lt;SlideElement, { type: &#x27;shape&#x27; | &#x27;text&#x27; }&gt;): Segment[] {</pre>
+    </li>
+    <li id="L26"><pre>  const path = currentPath(element)</pre></li>
+    <li id="L27"><pre>  if (!path)</pre></li>
+    <li id="L28"><pre>    return [</pre></li>
+    <li id="L29"><pre>      { id: 0, op: &#x27;M&#x27;, pts: [0, 0] },</pre></li>
+    <li id="L30"><pre>      { id: 1, op: &#x27;L&#x27;, pts: [100, 0] },</pre></li>
+    <li id="L31"><pre>      { id: 2, op: &#x27;L&#x27;, pts: [50, 100] },</pre></li>
+    <li id="L32"><pre>    ]</pre></li>
+    <li id="L33"><pre>  if (</pre></li>
+    <li id="L34"><pre>    path</pre></li>
+    <li id="L35"><pre>      .replace(/([MLQC])\s*([-+\d.eE,\s]+)/g, &#x27;&#x27;)</pre></li>
+    <li id="L36"><pre>      .replace(/Z/g, &#x27;&#x27;)</pre></li>
+    <li id="L37"><pre>      .trim()</pre></li>
+    <li id="L38"><pre>  )</pre></li>
+    <li id="L39"><pre>    return []</pre></li>
+    <li id="L40">
+      <pre>
+  const found = [...path.matchAll(/([MLQC])\s*([-+\d.eE,\s]+)/g)].map((m, id) =&gt; ({</pre>
+    </li>
+    <li id="L41"><pre>    id,</pre></li>
+    <li id="L42"><pre>    op: m[1] as Segment[&#x27;op&#x27;],</pre></li>
+    <li id="L43"><pre>    pts: m[2]!</pre></li>
+    <li id="L44"><pre>      .trim()</pre></li>
+    <li id="L45"><pre>      .split(/[,\s]+/)</pre></li>
+    <li id="L46"><pre>      .map((n) =&gt; round(Number(n) * 100)),</pre></li>
+    <li id="L47"><pre>  }))</pre></li>
+    <li id="L48"><pre>  if (</pre></li>
+    <li id="L49"><pre>    found.length &amp;&amp;</pre></li>
+    <li id="L50"><pre>    found.every(</pre></li>
+    <li id="L51">
+      <pre>
+      (s) =&gt; s.pts.length === { M: 2, L: 2, Q: 4, C: 6 }[s.op] &amp;&amp; s.pts.every(Number.isFinite),</pre>
+    </li>
+    <li id="L52"><pre>    )</pre></li>
+    <li id="L53"><pre>  )</pre></li>
+    <li id="L54"><pre>    return found</pre></li>
+    <li id="L55"><pre>  return []</pre></li>
+    <li id="L56"><pre>}</pre></li>
+    <li id="L57"><pre>export function PptxCurveControls({</pre></li>
+    <li id="L58"><pre>  element,</pre></li>
+    <li id="L59"><pre>  target,</pre></li>
+    <li id="L60"><pre>  apply,</pre></li>
+    <li id="L61"><pre>}: {</pre></li>
+    <li id="L62">
+      <pre>
+  element: Extract&lt;SlideElement, { type: &#x27;shape&#x27; | &#x27;text&#x27; }&gt;</pre>
+    </li>
+    <li id="L63"><pre>  target: PptxTarget</pre></li>
+    <li id="L64"><pre>  apply: PptxApply</pre></li>
+    <li id="L65"><pre>}) {</pre></li>
+    <li id="L66"><pre>  const { busy, run } = usePptxAction(apply)</pre></li>
+    <li id="L67">
+      <pre>  const [segments, setSegments] = useState(() =&gt; initialSegments(element))</pre>
+    </li>
+    <li id="L68"><pre>  const [closed, setClosed] = useState(() =&gt; isClosed(element))</pre></li>
+    <li id="L69"><pre>  const [selected, setSelected] = useState(0)</pre></li>
+    <li id="L70"><pre>  const [newKind, setNewKind] = useState(&#x27;C&#x27;)</pre></li>
+    <li id="L71"><pre>  const segment = segments[selected]</pre></li>
+    <li id="L72"><pre>  const source = JSON.stringify({</pre></li>
+    <li id="L73"><pre>    segments: initialSegments(element),</pre></li>
+    <li id="L74"><pre>    closed: isClosed(element),</pre></li>
+    <li id="L75"><pre>  })</pre></li>
+    <li id="L76"><pre>  const changed = source !== JSON.stringify({ segments, closed })</pre></li>
+    <li id="L77">
+      <pre>
+  const path = segments.map((s) =&gt; `${s.op} ${s.pts.join(&#x27; &#x27;)}`).join(&#x27; &#x27;) + (closed ? &#x27; Z&#x27; : &#x27;&#x27;)</pre>
+    </li>
+    <li id="L78"><pre>  const box = element.transform.offset</pre></li>
+    <li id="L79">
+      <pre>
+  const labels = { M: &#x27;起点&#x27;, L: &#x27;直线&#x27;, Q: &#x27;二次曲线&#x27;, C: &#x27;三次曲线&#x27; }</pre>
+    </li>
+    <li id="L80"><pre>  return (</pre></li>
+    <li id="L81"><pre>    &lt;PptxControlPanel busy={busy}&gt;</pre></li>
+    <li id="L82"><pre>      &lt;ToolbarMenuFields label=&quot;曲线与路径&quot;&gt;</pre></li>
+    <li id="L83"><pre>        &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L84">
+      <pre>
+          坐标以对象宽高的百分比表示。先选择节点，再调整端点与控制点；预览与保存使用同一路径。</pre>
+    </li>
+    <li id="L85"><pre>        &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L86"><pre>        {segments.length ? (</pre></li>
+    <li id="L87"><pre>          &lt;svg</pre></li>
+    <li id="L88"><pre>            className=&quot;mimir-pptx-path-preview&quot;</pre></li>
+    <li id="L89"><pre>            viewBox=&quot;-8 -8 116 116&quot;</pre></li>
+    <li id="L90"><pre>            role=&quot;img&quot;</pre></li>
+    <li id="L91"><pre>            aria-label=&quot;自定义路径预览&quot;</pre></li>
+    <li id="L92"><pre>          &gt;</pre></li>
+    <li id="L93"><pre>            &lt;path</pre></li>
+    <li id="L94"><pre>              d={path}</pre></li>
+    <li id="L95">
+      <pre>
+              fill={closed ? &#x27;var(--me-accent-bg, #e6f4ec)&#x27; : &#x27;none&#x27;}</pre>
+    </li>
+    <li id="L96"><pre>              stroke=&quot;currentColor&quot;</pre></li>
+    <li id="L97"><pre>              strokeWidth=&quot;1.5&quot;</pre></li>
+    <li id="L98"><pre>            /&gt;</pre></li>
+    <li id="L99"><pre>            {segments.map((s, i) =&gt; (</pre></li>
+    <li id="L100"><pre>              &lt;g key={s.id}&gt;</pre></li>
+    <li id="L101"><pre>                &lt;circle</pre></li>
+    <li id="L102"><pre>                  cx={s.pts.at(-2)}</pre></li>
+    <li id="L103"><pre>                  cy={s.pts.at(-1)}</pre></li>
+    <li id="L104"><pre>                  r={i === selected ? 3 : 1.5}</pre></li>
+    <li id="L105">
+      <pre>
+                  fill={i === selected ? &#x27;var(--me-accent, #00834d)&#x27; : &#x27;currentColor&#x27;}</pre>
+    </li>
+    <li id="L106"><pre>                /&gt;</pre></li>
+    <li id="L107"><pre>                &lt;text</pre></li>
+    <li id="L108"><pre>                  x={(s.pts.at(-2) ?? 0) + 3}</pre></li>
+    <li id="L109"><pre>                  y={(s.pts.at(-1) ?? 0) - 3}</pre></li>
+    <li id="L110"><pre>                  fontSize=&quot;5&quot;</pre></li>
+    <li id="L111"><pre>                  fill=&quot;currentColor&quot;</pre></li>
+    <li id="L112"><pre>                &gt;</pre></li>
+    <li id="L113"><pre>                  {i + 1}</pre></li>
+    <li id="L114"><pre>                &lt;/text&gt;</pre></li>
+    <li id="L115"><pre>              &lt;/g&gt;</pre></li>
+    <li id="L116"><pre>            ))}</pre></li>
+    <li id="L117"><pre>          &lt;/svg&gt;</pre></li>
+    <li id="L118"><pre>        ) : (</pre></li>
+    <li id="L119"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L120">
+      <pre>
+            原路径包含无法直接转换的圆弧或公式坐标。可先选择新的曲线路径，原件在应用前保持不变。</pre>
+    </li>
+    <li id="L121"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L122"><pre>        )}</pre></li>
+    <li id="L123"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L124"><pre>          label=&quot;路径闭合&quot;</pre></li>
+    <li id="L125"><pre>          disabled={busy}</pre></li>
+    <li id="L126"><pre>          value={closed ? &#x27;true&#x27; : &#x27;false&#x27;}</pre></li>
+    <li id="L127"><pre>          options={[</pre></li>
+    <li id="L128">
+      <pre>            { value: &#x27;true&#x27;, label: &#x27;闭合并填充&#x27; },</pre>
+    </li>
+    <li id="L129">
+      <pre>            { value: &#x27;false&#x27;, label: &#x27;开放路径&#x27; },</pre>
+    </li>
+    <li id="L130"><pre>          ]}</pre></li>
+    <li id="L131"><pre>          onChange={(v) =&gt; setClosed(v === &#x27;true&#x27;)}</pre></li>
+    <li id="L132"><pre>        /&gt;</pre></li>
+    <li id="L133"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L134"><pre>          label=&quot;当前节点&quot;</pre></li>
+    <li id="L135"><pre>          value={String(selected)}</pre></li>
+    <li id="L136"><pre>          disabled={busy || !segment}</pre></li>
+    <li id="L137"><pre>          options={segments.map((s, i) =&gt; ({</pre></li>
+    <li id="L138"><pre>            value: String(i),</pre></li>
+    <li id="L139"><pre>            label: `${i + 1}. ${labels[s.op]}`,</pre></li>
+    <li id="L140"><pre>          }))}</pre></li>
+    <li id="L141"><pre>          onChange={(v) =&gt; setSelected(Number(v))}</pre></li>
+    <li id="L142"><pre>        /&gt;</pre></li>
+    <li id="L143"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L144"><pre>      {segment &amp;&amp; (</pre></li>
+    <li id="L145">
+      <pre>        &lt;ToolbarMenuFields label={`${selected + 1}. ${labels[segment.op]}`}&gt;</pre>
+    </li>
+    <li id="L146">
+      <pre>          {Array.from({ length: segment.pts.length / 2 }, (_, pair) =&gt; (</pre>
+    </li>
+    <li id="L147"><pre>            &lt;ToolbarMenuFields</pre></li>
+    <li id="L148"><pre>              key={pair}</pre></li>
+    <li id="L149">
+      <pre>
+              label={pair === segment.pts.length / 2 - 1 ? &#x27;节点位置&#x27; : `控制点 ${pair + 1}`}</pre>
+    </li>
+    <li id="L150"><pre>            &gt;</pre></li>
+    <li id="L151">
+      <pre>              {([&#x27;X&#x27;, &#x27;Y&#x27;] as const).map((axis, j) =&gt; (</pre>
+    </li>
+    <li id="L152"><pre>                &lt;ToolbarNumberField</pre></li>
+    <li id="L153"><pre>                  key={axis}</pre></li>
+    <li id="L154">
+      <pre>
+                  label={`${axis === &#x27;X&#x27; ? &#x27;横向&#x27; : &#x27;纵向&#x27;}（%）`}</pre>
+    </li>
+    <li id="L155"><pre>                  value={segment.pts[pair * 2 + j]!}</pre></li>
+    <li id="L156"><pre>                  min={-1000}</pre></li>
+    <li id="L157"><pre>                  max={1000}</pre></li>
+    <li id="L158"><pre>                  step={1}</pre></li>
+    <li id="L159"><pre>                  onCommit={(v) =&gt;</pre></li>
+    <li id="L160"><pre>                    setSegments((items) =&gt;</pre></li>
+    <li id="L161"><pre>                      items.map((s, i) =&gt;</pre></li>
+    <li id="L162"><pre>                        i === selected</pre></li>
+    <li id="L163">
+      <pre>
+                          ? { ...s, pts: s.pts.map((n, k) =&gt; (k === pair * 2 + j ? v : n)) }</pre>
+    </li>
+    <li id="L164"><pre>                          : s,</pre></li>
+    <li id="L165"><pre>                      ),</pre></li>
+    <li id="L166"><pre>                    )</pre></li>
+    <li id="L167"><pre>                  }</pre></li>
+    <li id="L168"><pre>                /&gt;</pre></li>
+    <li id="L169"><pre>              ))}</pre></li>
+    <li id="L170"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L171"><pre>          ))}</pre></li>
+    <li id="L172"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L173"><pre>            label=&quot;删除当前路径节点&quot;</pre></li>
+    <li id="L174"><pre>            disabled={selected === 0 || segments.length &lt; 3}</pre></li>
+    <li id="L175"><pre>            disabledReason=&quot;路径至少保留起点和一个节点&quot;</pre></li>
+    <li id="L176"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L177">
+      <pre>              setSegments(segments.filter((_, i) =&gt; i !== selected))</pre>
+    </li>
+    <li id="L178"><pre>              setSelected(Math.max(0, selected - 1))</pre></li>
+    <li id="L179"><pre>            }}</pre></li>
+    <li id="L180"><pre>          &gt;</pre></li>
+    <li id="L181"><pre>            删除节点</pre></li>
+    <li id="L182"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L183"><pre>        &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L184"><pre>      )}</pre></li>
+    <li id="L185"><pre>      &lt;ToolbarMenuFields label=&quot;添加节点&quot;&gt;</pre></li>
+    <li id="L186"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L187"><pre>          label=&quot;新节点类型&quot;</pre></li>
+    <li id="L188"><pre>          disabled={busy}</pre></li>
+    <li id="L189"><pre>          value={newKind}</pre></li>
+    <li id="L190"><pre>          options={[</pre></li>
+    <li id="L191"><pre>            { value: &#x27;L&#x27;, label: &#x27;直线&#x27; },</pre></li>
+    <li id="L192">
+      <pre>            { value: &#x27;Q&#x27;, label: &#x27;二次曲线（一个控制点）&#x27; },</pre>
+    </li>
+    <li id="L193">
+      <pre>            { value: &#x27;C&#x27;, label: &#x27;三次曲线（两个控制点）&#x27; },</pre>
+    </li>
+    <li id="L194"><pre>          ]}</pre></li>
+    <li id="L195"><pre>          onChange={setNewKind}</pre></li>
+    <li id="L196"><pre>        /&gt;</pre></li>
+    <li id="L197"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L198"><pre>          label=&quot;添加路径节点&quot;</pre></li>
+    <li id="L199"><pre>          disabled={segments.length &gt;= 100}</pre></li>
+    <li id="L200"><pre>          disabledReason=&quot;每条路径最多100个节点&quot;</pre></li>
+    <li id="L201"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L202"><pre>            const next: Segment[] = segments.length</pre></li>
+    <li id="L203"><pre>              ? [</pre></li>
+    <li id="L204"><pre>                  ...segments,</pre></li>
+    <li id="L205"><pre>                  {</pre></li>
+    <li id="L206">
+      <pre>                    id: Math.max(...segments.map((item) =&gt; item.id)) + 1,</pre>
+    </li>
+    <li id="L207"><pre>                    op: newKind as Segment[&#x27;op&#x27;],</pre></li>
+    <li id="L208"><pre>                    pts:</pre></li>
+    <li id="L209"><pre>                      newKind === &#x27;C&#x27;</pre></li>
+    <li id="L210"><pre>                        ? [25, 0, 75, 100, 100, 100]</pre></li>
+    <li id="L211"><pre>                        : newKind === &#x27;Q&#x27;</pre></li>
+    <li id="L212"><pre>                          ? [50, 0, 100, 100]</pre></li>
+    <li id="L213"><pre>                          : [100, 100],</pre></li>
+    <li id="L214"><pre>                  },</pre></li>
+    <li id="L215"><pre>                ]</pre></li>
+    <li id="L216"><pre>              : [</pre></li>
+    <li id="L217"><pre>                  { id: 0, op: &#x27;M&#x27;, pts: [0, 0] },</pre></li>
+    <li id="L218">
+      <pre>                  { id: 1, op: &#x27;C&#x27;, pts: [25, 0, 75, 100, 100, 100] },</pre>
+    </li>
+    <li id="L219"><pre>                ]</pre></li>
+    <li id="L220"><pre>            setSegments(next)</pre></li>
+    <li id="L221"><pre>            setSelected(next.length - 1)</pre></li>
+    <li id="L222"><pre>          }}</pre></li>
+    <li id="L223"><pre>        &gt;</pre></li>
+    <li id="L224"><pre>          添加节点</pre></li>
+    <li id="L225"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L226"><pre>      &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L227"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L228"><pre>        primary</pre></li>
+    <li id="L229"><pre>        label=&quot;应用曲线路径&quot;</pre></li>
+    <li id="L230">
+      <pre>
+        disabled={!changed || segments.length &lt; 2 || box.cx &lt;= 0 || box.cy &lt;= 0}</pre>
+    </li>
+    <li id="L231">
+      <pre>
+        disabledReason={!changed ? &#x27;路径尚未修改&#x27; : &#x27;路径至少需要两个节点和有效的对象尺寸&#x27;}</pre>
+    </li>
+    <li id="L232"><pre>        onClick={() =&gt;</pre></li>
+    <li id="L233"><pre>          void run({</pre></li>
+    <li id="L234"><pre>            op: &#x27;setShapeCustomGeometry&#x27;,</pre></li>
+    <li id="L235"><pre>            target,</pre></li>
+    <li id="L236"><pre>            path: {</pre></li>
+    <li id="L237"><pre>              w: box.cx,</pre></li>
+    <li id="L238"><pre>              h: box.cy,</pre></li>
+    <li id="L239"><pre>              cmds: [</pre></li>
+    <li id="L240"><pre>                ...segments.map((s) =&gt; ({</pre></li>
+    <li id="L241"><pre>                  op: s.op,</pre></li>
+    <li id="L242">
+      <pre>
+                  pts: s.pts.map((v, i) =&gt; Math.round((v * (i % 2 ? box.cy : box.cx)) / 100)),</pre>
+    </li>
+    <li id="L243"><pre>                })),</pre></li>
+    <li id="L244">
+      <pre>                ...(closed ? [{ op: &#x27;Z&#x27;, pts: [] }] : []),</pre>
+    </li>
+    <li id="L245"><pre>              ],</pre></li>
+    <li id="L246"><pre>            },</pre></li>
+    <li id="L247"><pre>          })</pre></li>
+    <li id="L248"><pre>        }</pre></li>
+    <li id="L249"><pre>      /&gt;</pre></li>
+    <li id="L250"><pre>    &lt;/PptxControlPanel&gt;</pre></li>
+    <li id="L251"><pre>  )</pre></li>
+    <li id="L252"><pre>}</pre></li>
+  </ol>
+</html>

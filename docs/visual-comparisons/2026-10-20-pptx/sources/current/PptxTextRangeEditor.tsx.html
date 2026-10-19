@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxTextRangeEditor.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxTextRangeEditor.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 dfa75bead91f9fac29df2b2c763ad916611953d074d7b1195bada867a77face2
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Input } from &#x27;antd&#x27;</pre></li>
+    <li id="L2">
+      <pre>import { useId, useLayoutEffect, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>
+import type { Paragraph } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import type { EditParagraph } from &#x27;../../vendor/packages/pptx-ops/src/types.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  editPptxTextValue,</pre></li>
+    <li id="L7"><pre>  normalizePptxTextSelection,</pre></li>
+    <li id="L8"><pre>  pptxTextValue,</pre></li>
+    <li id="L9"><pre>  type PptxRunFormat,</pre></li>
+    <li id="L10"><pre>  type PptxTextSelection,</pre></li>
+    <li id="L11"><pre>} from &#x27;../pptx-text-range.js&#x27;</pre></li>
+    <li id="L12"><pre>import &#x27;./pptx-text-range.css&#x27;</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14"><pre>export interface PptxTextSelectionEvent {</pre></li>
+    <li id="L15"><pre>  targetKey: string</pre></li>
+    <li id="L16"><pre>  version: number</pre></li>
+    <li id="L17"><pre>  selection: PptxTextSelection | null</pre></li>
+    <li id="L18"><pre>}</pre></li>
+    <li id="L19"><pre>export interface PptxTextRangeEditorProps {</pre></li>
+    <li id="L20"><pre>  paragraphs: readonly Paragraph[]</pre></li>
+    <li id="L21"><pre>  targetKey: string</pre></li>
+    <li id="L22"><pre>  version: number</pre></li>
+    <li id="L23"><pre>  disabled?: boolean</pre></li>
+    <li id="L24"><pre>  selection: PptxTextSelection | null</pre></li>
+    <li id="L25"><pre>  pendingFormat?: PptxRunFormat</pre></li>
+    <li id="L26"><pre>  onSelectionChange: (event: PptxTextSelectionEvent) =&gt; void</pre></li>
+    <li id="L27">
+      <pre>  onEdit: (paragraphs: EditParagraph[], event: PptxTextSelectionEvent) =&gt; void</pre>
+    </li>
+    <li id="L28"><pre>}</pre></li>
+    <li id="L29"><pre></pre></li>
+    <li id="L30">
+      <pre>/** Native selection spans the whole text box, including paragraph boundaries. */</pre>
+    </li>
+    <li id="L31"><pre>export function PptxTextRangeEditor({</pre></li>
+    <li id="L32"><pre>  paragraphs,</pre></li>
+    <li id="L33"><pre>  targetKey,</pre></li>
+    <li id="L34"><pre>  version,</pre></li>
+    <li id="L35"><pre>  disabled = false,</pre></li>
+    <li id="L36"><pre>  selection,</pre></li>
+    <li id="L37"><pre>  pendingFormat,</pre></li>
+    <li id="L38"><pre>  onSelectionChange,</pre></li>
+    <li id="L39"><pre>  onEdit,</pre></li>
+    <li id="L40"><pre>}: PptxTextRangeEditorProps) {</pre></li>
+    <li id="L41"><pre>  const hintId = useId()</pre></li>
+    <li id="L42"><pre>  const [composition, setComposition] = useState&lt;{</pre></li>
+    <li id="L43"><pre>    targetKey: string</pre></li>
+    <li id="L44"><pre>    version: number</pre></li>
+    <li id="L45"><pre>    value: string</pre></li>
+    <li id="L46"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L47"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L48"><pre>  const container = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L49"><pre>  const composing = useRef(false)</pre></li>
+    <li id="L50"><pre>  const softBreak = useRef(false)</pre></li>
+    <li id="L51"><pre>  const inputRange = useRef&lt;{</pre></li>
+    <li id="L52"><pre>    targetKey: string</pre></li>
+    <li id="L53"><pre>    version: number</pre></li>
+    <li id="L54"><pre>    selection: PptxTextSelection</pre></li>
+    <li id="L55"><pre>    inputType?: string</pre></li>
+    <li id="L56"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L57"><pre>  const text = pptxTextValue(paragraphs)</pre></li>
+    <li id="L58"><pre>  const draft =</pre></li>
+    <li id="L59">
+      <pre>    composition?.targetKey === targetKey &amp;&amp; composition.version === version</pre>
+    </li>
+    <li id="L60"><pre>      ? composition.value</pre></li>
+    <li id="L61"><pre>      : null</pre></li>
+    <li id="L62"><pre>  const value = draft ?? text</pre></li>
+    <li id="L63"><pre>  const emitSelection = (node: HTMLTextAreaElement) =&gt; {</pre></li>
+    <li id="L64"><pre>    if (composing.current || disabled) return</pre></li>
+    <li id="L65"><pre>    inputRange.current = {</pre></li>
+    <li id="L66"><pre>      targetKey,</pre></li>
+    <li id="L67"><pre>      version,</pre></li>
+    <li id="L68"><pre>      selection: {</pre></li>
+    <li id="L69"><pre>        start: node.selectionStart,</pre></li>
+    <li id="L70"><pre>        end: node.selectionEnd,</pre></li>
+    <li id="L71"><pre>        direction: node.selectionDirection,</pre></li>
+    <li id="L72"><pre>      },</pre></li>
+    <li id="L73"><pre>    }</pre></li>
+    <li id="L74"><pre>    onSelectionChange({</pre></li>
+    <li id="L75"><pre>      targetKey,</pre></li>
+    <li id="L76"><pre>      version,</pre></li>
+    <li id="L77"><pre>      selection: normalizePptxTextSelection(paragraphs, {</pre></li>
+    <li id="L78"><pre>        start: node.selectionStart,</pre></li>
+    <li id="L79"><pre>        end: node.selectionEnd,</pre></li>
+    <li id="L80"><pre>        direction: node.selectionDirection,</pre></li>
+    <li id="L81"><pre>      }),</pre></li>
+    <li id="L82"><pre>    })</pre></li>
+    <li id="L83"><pre>  }</pre></li>
+    <li id="L84"><pre>  const edit = (node: HTMLTextAreaElement) =&gt; {</pre></li>
+    <li id="L85"><pre>    if (disabled) return</pre></li>
+    <li id="L86"><pre>    const nextSelection: PptxTextSelection = {</pre></li>
+    <li id="L87"><pre>      start: node.selectionStart,</pre></li>
+    <li id="L88"><pre>      end: node.selectionEnd,</pre></li>
+    <li id="L89"><pre>      direction: node.selectionDirection,</pre></li>
+    <li id="L90"><pre>    }</pre></li>
+    <li id="L91"><pre>    try {</pre></li>
+    <li id="L92"><pre>      const prior = inputRange.current</pre></li>
+    <li id="L93">
+      <pre>
+      const validPrior = prior?.targetKey === targetKey &amp;&amp; prior.version === version ? prior : null</pre>
+    </li>
+    <li id="L94"><pre>      const next = editPptxTextValue(</pre></li>
+    <li id="L95"><pre>        paragraphs,</pre></li>
+    <li id="L96"><pre>        node.value,</pre></li>
+    <li id="L97"><pre>        pendingFormat,</pre></li>
+    <li id="L98"><pre>        softBreak.current,</pre></li>
+    <li id="L99"><pre>        validPrior?.selection,</pre></li>
+    <li id="L100"><pre>        validPrior?.inputType,</pre></li>
+    <li id="L101"><pre>      )</pre></li>
+    <li id="L102"><pre>      softBreak.current = false</pre></li>
+    <li id="L103">
+      <pre>      onEdit(next, { targetKey, version, selection: nextSelection })</pre>
+    </li>
+    <li id="L104"><pre>      setError(null)</pre></li>
+    <li id="L105"><pre>    } catch (reason) {</pre></li>
+    <li id="L106">
+      <pre>
+      setError(reason instanceof Error ? reason.message : &#x27;文字修改失败，请重新选择文字&#x27;)</pre>
+    </li>
+    <li id="L107"><pre>    }</pre></li>
+    <li id="L108"><pre>  }</pre></li>
+    <li id="L109"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L110">
+      <pre>    const node = container.current?.querySelector(&#x27;textarea&#x27;)</pre>
+    </li>
+    <li id="L111"><pre>    if (</pre></li>
+    <li id="L112"><pre>      !node ||</pre></li>
+    <li id="L113"><pre>      composing.current ||</pre></li>
+    <li id="L114"><pre>      node.dataset.textTarget !== targetKey ||</pre></li>
+    <li id="L115"><pre>      node.dataset.textVersion !== String(version)</pre></li>
+    <li id="L116"><pre>    )</pre></li>
+    <li id="L117"><pre>      return</pre></li>
+    <li id="L118"><pre>    if (selection) {</pre></li>
+    <li id="L119"><pre>      if (</pre></li>
+    <li id="L120"><pre>        node.selectionStart !== selection.start ||</pre></li>
+    <li id="L121"><pre>        node.selectionEnd !== selection.end ||</pre></li>
+    <li id="L122">
+      <pre>        node.selectionDirection !== (selection.direction ?? &#x27;none&#x27;)</pre>
+    </li>
+    <li id="L123"><pre>      ) {</pre></li>
+    <li id="L124">
+      <pre>        node.setSelectionRange(selection.start, selection.end, selection.direction)</pre>
+    </li>
+    <li id="L125"><pre>      }</pre></li>
+    <li id="L126">
+      <pre>    } else if (document.activeElement !== node) node.setSelectionRange(0, 0)</pre>
+    </li>
+    <li id="L127"><pre>  }, [selection, targetKey, version])</pre></li>
+    <li id="L128"><pre>  const scope = selection</pre></li>
+    <li id="L129"><pre>    ? selection.start === selection.end</pre></li>
+    <li id="L130"><pre>      ? &#x27;插入点格式&#x27;</pre></li>
+    <li id="L131">
+      <pre>
+      : `已选 ${Array.from(text.slice(selection.start, selection.end)).length} 个字符`</pre>
+    </li>
+    <li id="L132"><pre>    : &#x27;整个文本框&#x27;</pre></li>
+    <li id="L133"><pre>  return (</pre></li>
+    <li id="L134">
+      <pre>    &lt;div className=&quot;mimir-pptx-text-range&quot; ref={container}&gt;</pre>
+    </li>
+    <li id="L135">
+      <pre>      &lt;div className=&quot;mimir-pptx-text-range__head&quot;&gt;</pre>
+    </li>
+    <li id="L136">
+      <pre>        &lt;label htmlFor={`${hintId}-input`}&gt;文字&lt;/label&gt;</pre>
+    </li>
+    <li id="L137">
+      <pre>        &lt;span aria-live=&quot;polite&quot;&gt;{scope}&lt;/span&gt;</pre>
+    </li>
+    <li id="L138"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L139"><pre>      &lt;Input.TextArea</pre></li>
+    <li id="L140"><pre>        id={`${hintId}-input`}</pre></li>
+    <li id="L141"><pre>        aria-label=&quot;文本框文字&quot;</pre></li>
+    <li id="L142"><pre>        data-text-target={targetKey}</pre></li>
+    <li id="L143"><pre>        data-text-version={version}</pre></li>
+    <li id="L144"><pre>        aria-describedby={hintId}</pre></li>
+    <li id="L145"><pre>        value={value}</pre></li>
+    <li id="L146"><pre>        autoSize={{ minRows: 2, maxRows: 5 }}</pre></li>
+    <li id="L147"><pre>        disabled={disabled}</pre></li>
+    <li id="L148">
+      <pre>        onSelect={(event) =&gt; emitSelection(event.currentTarget)}</pre>
+    </li>
+    <li id="L149">
+      <pre>        onPointerUp={(event) =&gt; emitSelection(event.currentTarget)}</pre>
+    </li>
+    <li id="L150"><pre>        onKeyUp={(event) =&gt; emitSelection(event.currentTarget)}</pre></li>
+    <li id="L151"><pre>        onFocus={(event) =&gt; emitSelection(event.currentTarget)}</pre></li>
+    <li id="L152"><pre>        onBeforeInput={(event) =&gt; {</pre></li>
+    <li id="L153"><pre>          inputRange.current = {</pre></li>
+    <li id="L154"><pre>            targetKey,</pre></li>
+    <li id="L155"><pre>            version,</pre></li>
+    <li id="L156"><pre>            selection: {</pre></li>
+    <li id="L157"><pre>              start: event.currentTarget.selectionStart,</pre></li>
+    <li id="L158"><pre>              end: event.currentTarget.selectionEnd,</pre></li>
+    <li id="L159"><pre>            },</pre></li>
+    <li id="L160">
+      <pre>            inputType: (event.nativeEvent as InputEvent).inputType,</pre>
+    </li>
+    <li id="L161"><pre>          }</pre></li>
+    <li id="L162"><pre>        }}</pre></li>
+    <li id="L163"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L164"><pre>          inputRange.current = {</pre></li>
+    <li id="L165"><pre>            targetKey,</pre></li>
+    <li id="L166"><pre>            version,</pre></li>
+    <li id="L167"><pre>            selection: {</pre></li>
+    <li id="L168"><pre>              start: event.currentTarget.selectionStart,</pre></li>
+    <li id="L169"><pre>              end: event.currentTarget.selectionEnd,</pre></li>
+    <li id="L170"><pre>            },</pre></li>
+    <li id="L171"><pre>            inputType:</pre></li>
+    <li id="L172"><pre>              event.key === &#x27;Backspace&#x27;</pre></li>
+    <li id="L173"><pre>                ? &#x27;deleteContentBackward&#x27;</pre></li>
+    <li id="L174"><pre>                : event.key === &#x27;Delete&#x27;</pre></li>
+    <li id="L175"><pre>                  ? &#x27;deleteContentForward&#x27;</pre></li>
+    <li id="L176"><pre>                  : undefined,</pre></li>
+    <li id="L177"><pre>          }</pre></li>
+    <li id="L178">
+      <pre>          if (event.key === &#x27;Enter&#x27;) softBreak.current = event.shiftKey</pre>
+    </li>
+    <li id="L179">
+      <pre>
+          if (event.key === &#x27;Escape&#x27; &amp;&amp; !composing.current &amp;&amp; !event.nativeEvent.isComposing) {</pre>
+    </li>
+    <li id="L180"><pre>            event.preventDefault()</pre></li>
+    <li id="L181"><pre>            event.stopPropagation()</pre></li>
+    <li id="L182">
+      <pre>            onSelectionChange({ targetKey, version, selection: null })</pre>
+    </li>
+    <li id="L183"><pre>            event.currentTarget.blur()</pre></li>
+    <li id="L184"><pre>          }</pre></li>
+    <li id="L185"><pre>        }}</pre></li>
+    <li id="L186"><pre>        onCompositionStart={() =&gt; {</pre></li>
+    <li id="L187"><pre>          composing.current = true</pre></li>
+    <li id="L188"><pre>          setComposition({ targetKey, version, value: text })</pre></li>
+    <li id="L189"><pre>        }}</pre></li>
+    <li id="L190"><pre>        onCompositionEnd={(event) =&gt; {</pre></li>
+    <li id="L191"><pre>          composing.current = false</pre></li>
+    <li id="L192">
+      <pre>
+          const valid = composition?.targetKey === targetKey &amp;&amp; composition.version === version</pre>
+    </li>
+    <li id="L193"><pre>          setComposition(null)</pre></li>
+    <li id="L194"><pre>          if (valid) edit(event.currentTarget)</pre></li>
+    <li id="L195"><pre>        }}</pre></li>
+    <li id="L196"><pre>        onChange={(event) =&gt; {</pre></li>
+    <li id="L197"><pre>          if (composing.current) {</pre></li>
+    <li id="L198"><pre>            setComposition((current) =&gt;</pre></li>
+    <li id="L199">
+      <pre>
+              current &amp;&amp; current.targetKey === targetKey &amp;&amp; current.version === version</pre>
+    </li>
+    <li id="L200"><pre>                ? { ...current, value: event.target.value }</pre></li>
+    <li id="L201"><pre>                : null,</pre></li>
+    <li id="L202"><pre>            )</pre></li>
+    <li id="L203"><pre>          } else edit(event.target)</pre></li>
+    <li id="L204"><pre>        }}</pre></li>
+    <li id="L205"><pre>      /&gt;</pre></li>
+    <li id="L206">
+      <pre>      &lt;div id={hintId} className=&quot;mimir-pptx-text-range__hint&quot;&gt;</pre>
+    </li>
+    <li id="L207">
+      <pre>        选择文字后设置格式 · Enter 分段 · Shift+Enter 换行 · Esc 返回整框</pre>
+    </li>
+    <li id="L208"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L209"><pre>      {error &amp;&amp; (</pre></li>
+    <li id="L210">
+      <pre>
+        &lt;div role=&quot;alert&quot; className=&quot;mimir-pptx-text-range__error&quot;&gt;</pre>
+    </li>
+    <li id="L211"><pre>          {error}</pre></li>
+    <li id="L212"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L213"><pre>      )}</pre></li>
+    <li id="L214"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L215"><pre>  )</pre></li>
+    <li id="L216"><pre>}</pre></li>
+  </ol>
+</html>

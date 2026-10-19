@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxMediaControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxMediaControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 2c0f4e89e444bba94e20f2420e11987c674bda99abb88e1cfe14074f081d6e55
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import { PPTX_ASSET_MAX_BYTES } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import { inspectPptxMedia, type PptxMediaInfo } from &#x27;../pptx-media-info.js&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import type { PptxUpload } from &#x27;./PptxAssetControls.js&#x27;</pre></li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  ToolbarButton,</pre></li>
+    <li id="L7"><pre>  ToolbarFileButton,</pre></li>
+    <li id="L8"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L9"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L10"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L11"><pre>  ToolbarSelect,</pre></li>
+    <li id="L12"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14"><pre>type Selection = { file: File; url: string; info: PptxMediaInfo }</pre></li>
+    <li id="L15">
+      <pre>/** Optional poster capture: bounded, cancellable, and independent of whether</pre>
+    </li>
+    <li id="L16"><pre> * the validated original media can be embedded unchanged. */</pre></li>
+    <li id="L17"><pre>export function pptxVideoPoster(</pre></li>
+    <li id="L18"><pre>  video: HTMLVideoElement | null,</pre></li>
+    <li id="L19"><pre>  signal: AbortSignal,</pre></li>
+    <li id="L20"><pre>): Promise&lt;File | undefined&gt; {</pre></li>
+    <li id="L21">
+      <pre>
+  if (!video || video.readyState &lt; 2 || !video.videoWidth || !video.videoHeight || signal.aborted)</pre>
+    </li>
+    <li id="L22"><pre>    return Promise.resolve(undefined)</pre></li>
+    <li id="L23"><pre>  return new Promise((resolve) =&gt; {</pre></li>
+    <li id="L24"><pre>    let settled = false</pre></li>
+    <li id="L25"><pre>    const finish = (file?: File) =&gt; {</pre></li>
+    <li id="L26"><pre>      if (settled) return</pre></li>
+    <li id="L27"><pre>      settled = true</pre></li>
+    <li id="L28"><pre>      clearTimeout(timer)</pre></li>
+    <li id="L29"><pre>      signal.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L30"><pre>      resolve(file)</pre></li>
+    <li id="L31"><pre>    }</pre></li>
+    <li id="L32"><pre>    const abort = () =&gt; finish(),</pre></li>
+    <li id="L33"><pre>      timer = setTimeout(() =&gt; finish(), 3000)</pre></li>
+    <li id="L34">
+      <pre>    signal.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre>
+    </li>
+    <li id="L35"><pre>    try {</pre></li>
+    <li id="L36"><pre>      const canvas = document.createElement(&#x27;canvas&#x27;),</pre></li>
+    <li id="L37">
+      <pre>        ratio = Math.min(1, 1280 / video.videoWidth, 1280 / video.videoHeight)</pre>
+    </li>
+    <li id="L38">
+      <pre>      canvas.width = Math.max(1, Math.round(video.videoWidth * ratio))</pre>
+    </li>
+    <li id="L39">
+      <pre>      canvas.height = Math.max(1, Math.round(video.videoHeight * ratio))</pre>
+    </li>
+    <li id="L40"><pre>      const ctx = canvas.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L41"><pre>      if (!ctx) {</pre></li>
+    <li id="L42"><pre>        finish()</pre></li>
+    <li id="L43"><pre>        return</pre></li>
+    <li id="L44"><pre>      }</pre></li>
+    <li id="L45"><pre>      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)</pre></li>
+    <li id="L46"><pre>      canvas.toBlob(</pre></li>
+    <li id="L47"><pre>        (blob) =&gt;</pre></li>
+    <li id="L48">
+      <pre>
+          finish(blob ? new File([blob], &#x27;video-poster.png&#x27;, { type: &#x27;image/png&#x27; }) : undefined),</pre>
+    </li>
+    <li id="L49"><pre>        &#x27;image/png&#x27;,</pre></li>
+    <li id="L50"><pre>      )</pre></li>
+    <li id="L51"><pre>    } catch {</pre></li>
+    <li id="L52"><pre>      finish()</pre></li>
+    <li id="L53"><pre>    }</pre></li>
+    <li id="L54"><pre>  })</pre></li>
+    <li id="L55"><pre>}</pre></li>
+    <li id="L56">
+      <pre>export function PptxMediaControls(props: { slide: number; upload: PptxUpload }) {</pre>
+    </li>
+    <li id="L57"><pre>  return &lt;PptxMediaDraft key={props.slide} {...props} /&gt;</pre></li>
+    <li id="L58"><pre>}</pre></li>
+    <li id="L59">
+      <pre>function PptxMediaDraft({ slide, upload }: { slide: number; upload: PptxUpload }) {</pre>
+    </li>
+    <li id="L60">
+      <pre>
+  const [kind, setKind] = useState&lt;&#x27;video&#x27; | &#x27;audio&#x27;&gt;(&#x27;video&#x27;),</pre>
+    </li>
+    <li id="L61">
+      <pre>    [selected, setSelected] = useState&lt;Selection | null&gt;(null)</pre>
+    </li>
+    <li id="L62"><pre>  const [preparing, setPreparing] = useState(false),</pre></li>
+    <li id="L63"><pre>    [busy, setBusy] = useState(false),</pre></li>
+    <li id="L64"><pre>    [error, setError] = useState(&#x27;&#x27;),</pre></li>
+    <li id="L65"><pre>    [warning, setWarning] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L66"><pre>  const epoch = useRef(0),</pre></li>
+    <li id="L67"><pre>    pending = useRef&lt;AbortController | null&gt;(null),</pre></li>
+    <li id="L68"><pre>    video = useRef&lt;HTMLVideoElement&gt;(null),</pre></li>
+    <li id="L69"><pre>    audio = useRef&lt;HTMLAudioElement&gt;(null)</pre></li>
+    <li id="L70"><pre>  useEffect(</pre></li>
+    <li id="L71"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L72"><pre>      epoch.current++</pre></li>
+    <li id="L73"><pre>      pending.current?.abort()</pre></li>
+    <li id="L74"><pre>    },</pre></li>
+    <li id="L75"><pre>    [],</pre></li>
+    <li id="L76"><pre>  )</pre></li>
+    <li id="L77"><pre>  useEffect(</pre></li>
+    <li id="L78"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L79"><pre>      if (selected) URL.revokeObjectURL(selected.url)</pre></li>
+    <li id="L80"><pre>    },</pre></li>
+    <li id="L81"><pre>    [selected],</pre></li>
+    <li id="L82"><pre>  )</pre></li>
+    <li id="L83"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L84"><pre>    if (!selected) return</pre></li>
+    <li id="L85"><pre>    const v = video.current,</pre></li>
+    <li id="L86"><pre>      a = audio.current</pre></li>
+    <li id="L87"><pre>    return () =&gt; {</pre></li>
+    <li id="L88"><pre>      v?.pause()</pre></li>
+    <li id="L89"><pre>      a?.pause()</pre></li>
+    <li id="L90"><pre>    }</pre></li>
+    <li id="L91"><pre>  }, [selected])</pre></li>
+    <li id="L92"><pre>  const choose = async (file: File) =&gt; {</pre></li>
+    <li id="L93"><pre>    const started = ++epoch.current</pre></li>
+    <li id="L94"><pre>    pending.current?.abort()</pre></li>
+    <li id="L95"><pre>    setSelected(null)</pre></li>
+    <li id="L96"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L97"><pre>    setWarning(&#x27;&#x27;)</pre></li>
+    <li id="L98"><pre>    setPreparing(true)</pre></li>
+    <li id="L99"><pre>    try {</pre></li>
+    <li id="L100"><pre>      if (!file.size || file.size &gt; PPTX_ASSET_MAX_BYTES)</pre></li>
+    <li id="L101">
+      <pre>        throw new Error(&#x27;请选择不超过32 MiB的非空音视频文件&#x27;)</pre>
+    </li>
+    <li id="L102"><pre>      const bytes = new Uint8Array(await file.arrayBuffer())</pre></li>
+    <li id="L103"><pre>      if (started !== epoch.current) return</pre></li>
+    <li id="L104">
+      <pre>      const info = inspectPptxMedia(bytes, file.name, file.type, kind)</pre>
+    </li>
+    <li id="L105">
+      <pre>
+      const url = URL.createObjectURL(new Blob([bytes], { type: info.previewMime }))</pre>
+    </li>
+    <li id="L106"><pre>      setSelected({ file, url, info })</pre></li>
+    <li id="L107"><pre>      setWarning(info.previewWarning ?? &#x27;&#x27;)</pre></li>
+    <li id="L108"><pre>    } catch (cause) {</pre></li>
+    <li id="L109"><pre>      if (started === epoch.current)</pre></li>
+    <li id="L110">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;媒体读取失败，请重新选择文件&#x27;)</pre>
+    </li>
+    <li id="L111"><pre>    } finally {</pre></li>
+    <li id="L112"><pre>      if (started === epoch.current) setPreparing(false)</pre></li>
+    <li id="L113"><pre>    }</pre></li>
+    <li id="L114"><pre>  }</pre></li>
+    <li id="L115">
+      <pre>  const changeKind = (next: &#x27;video&#x27; | &#x27;audio&#x27;) =&gt; {</pre>
+    </li>
+    <li id="L116"><pre>    epoch.current++</pre></li>
+    <li id="L117"><pre>    pending.current?.abort()</pre></li>
+    <li id="L118"><pre>    setKind(next)</pre></li>
+    <li id="L119"><pre>    setSelected(null)</pre></li>
+    <li id="L120"><pre>    setPreparing(false)</pre></li>
+    <li id="L121"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L122"><pre>    setWarning(&#x27;&#x27;)</pre></li>
+    <li id="L123"><pre>  }</pre></li>
+    <li id="L124"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L125"><pre>    if (!selected || preparing || pending.current) return</pre></li>
+    <li id="L126"><pre>    const controller = new AbortController(),</pre></li>
+    <li id="L127"><pre>      started = epoch.current</pre></li>
+    <li id="L128"><pre>    pending.current = controller</pre></li>
+    <li id="L129"><pre>    setBusy(true)</pre></li>
+    <li id="L130"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L131"><pre>    try {</pre></li>
+    <li id="L132"><pre>      const poster =</pre></li>
+    <li id="L133">
+      <pre>
+        kind === &#x27;video&#x27; ? await pptxVideoPoster(video.current, controller.signal) : undefined</pre>
+    </li>
+    <li id="L134">
+      <pre>      if (controller.signal.aborted || started !== epoch.current) return</pre>
+    </li>
+    <li id="L135"><pre>      const accepted = await upload(</pre></li>
+    <li id="L136"><pre>        { kind: &#x27;media&#x27;, slide, mediaKind: kind },</pre></li>
+    <li id="L137"><pre>        selected.file,</pre></li>
+    <li id="L138"><pre>        poster,</pre></li>
+    <li id="L139"><pre>        controller.signal,</pre></li>
+    <li id="L140"><pre>      )</pre></li>
+    <li id="L141">
+      <pre>
+      if (!controller.signal.aborted &amp;&amp; started === epoch.current &amp;&amp; !accepted)</pre>
+    </li>
+    <li id="L142"><pre>        setError(&#x27;媒体未插入，原文稿已保留；请重试&#x27;)</pre></li>
+    <li id="L143"><pre>    } catch (cause) {</pre></li>
+    <li id="L144">
+      <pre>      if (!controller.signal.aborted &amp;&amp; started === epoch.current)</pre>
+    </li>
+    <li id="L145">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;媒体插入失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L146"><pre>    } finally {</pre></li>
+    <li id="L147"><pre>      if (pending.current === controller) {</pre></li>
+    <li id="L148"><pre>        pending.current = null</pre></li>
+    <li id="L149"><pre>        if (started === epoch.current) setBusy(false)</pre></li>
+    <li id="L150"><pre>      }</pre></li>
+    <li id="L151"><pre>    }</pre></li>
+    <li id="L152"><pre>  }</pre></li>
+    <li id="L153"><pre>  return (</pre></li>
+    <li id="L154"><pre>    &lt;fieldset</pre></li>
+    <li id="L155"><pre>      className=&quot;mimir-pptx-media-insert&quot;</pre></li>
+    <li id="L156"><pre>      disabled={busy}</pre></li>
+    <li id="L157"><pre>      aria-busy={busy || preparing}</pre></li>
+    <li id="L158"><pre>      aria-label=&quot;本地音视频设置&quot;</pre></li>
+    <li id="L159"><pre>    &gt;</pre></li>
+    <li id="L160">
+      <pre>      &lt;div className=&quot;mimir-pptx-media-insert__body&quot;&gt;</pre>
+    </li>
+    <li id="L161"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L162"><pre>          &lt;ToolbarMenuFields label=&quot;本地音视频&quot;&gt;</pre></li>
+    <li id="L163"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L164"><pre>              label=&quot;媒体类型&quot;</pre></li>
+    <li id="L165"><pre>              disabled={busy}</pre></li>
+    <li id="L166"><pre>              value={kind}</pre></li>
+    <li id="L167"><pre>              options={[</pre></li>
+    <li id="L168">
+      <pre>                { value: &#x27;video&#x27;, label: &#x27;视频&#x27; },</pre>
+    </li>
+    <li id="L169">
+      <pre>                { value: &#x27;audio&#x27;, label: &#x27;音频&#x27; },</pre>
+    </li>
+    <li id="L170"><pre>              ]}</pre></li>
+    <li id="L171"><pre>              onChange={changeKind}</pre></li>
+    <li id="L172"><pre>            /&gt;</pre></li>
+    <li id="L173"><pre>            &lt;ToolbarFileButton</pre></li>
+    <li id="L174"><pre>              label=&quot;选择音视频文件&quot;</pre></li>
+    <li id="L175">
+      <pre>
+              accept={kind === &#x27;video&#x27; ? &#x27;.mp4,.webm,.mov,.m4v,.avi&#x27; : &#x27;.mp3,.wav,.ogg,.m4a,.aac&#x27;}</pre>
+    </li>
+    <li id="L176"><pre>              onPick={(file) =&gt; {</pre></li>
+    <li id="L177"><pre>                void choose(file)</pre></li>
+    <li id="L178"><pre>              }}</pre></li>
+    <li id="L179"><pre>            &gt;</pre></li>
+    <li id="L180"><pre>              选择文件</pre></li>
+    <li id="L181"><pre>            &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L182"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L183"><pre>              {kind === &#x27;video&#x27;</pre></li>
+    <li id="L184">
+      <pre>                ? &#x27;MP4、WebM、MOV、M4V、AVI，最多32 MiB。&#x27;</pre>
+    </li>
+    <li id="L185">
+      <pre>                : &#x27;MP3、WAV、Ogg、M4A、AAC，最多32 MiB。&#x27;}</pre>
+    </li>
+    <li id="L186"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L187">
+      <pre>
+            {preparing &amp;&amp; &lt;p role=&quot;status&quot;&gt;正在检查媒体文件…&lt;/p&gt;}</pre>
+    </li>
+    <li id="L188"><pre>            {selected &amp;&amp; (</pre></li>
+    <li id="L189"><pre>              &lt;&gt;</pre></li>
+    <li id="L190"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L191">
+      <pre>
+                  {selected.file.name} · {(selected.file.size / 1024 / 1024).toFixed(1)} MiB</pre>
+    </li>
+    <li id="L192"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L193"><pre>                {kind === &#x27;video&#x27; ? (</pre></li>
+    <li id="L194"><pre>                  &lt;video</pre></li>
+    <li id="L195"><pre>                    key={selected.url}</pre></li>
+    <li id="L196"><pre>                    className=&quot;mimir-pptx-media-preview&quot;</pre></li>
+    <li id="L197"><pre>                    ref={video}</pre></li>
+    <li id="L198"><pre>                    src={selected.url}</pre></li>
+    <li id="L199"><pre>                    controls</pre></li>
+    <li id="L200"><pre>                    preload=&quot;metadata&quot;</pre></li>
+    <li id="L201"><pre>                    style={{</pre></li>
+    <li id="L202"><pre>                      width: &#x27;100%&#x27;,</pre></li>
+    <li id="L203">
+      <pre>
+                      maxWidth: `${220 * (selected.info.naturalSize ? selected.info.naturalSize.width / selected.info.naturalSize.height : 16 / 9)}px`,</pre>
+    </li>
+    <li id="L204"><pre>                      marginInline: &#x27;auto&#x27;,</pre></li>
+    <li id="L205"><pre>                      aspectRatio: selected.info.naturalSize</pre></li>
+    <li id="L206">
+      <pre>
+                        ? `${selected.info.naturalSize.width}/${selected.info.naturalSize.height}`</pre>
+    </li>
+    <li id="L207"><pre>                        : &#x27;16/9&#x27;,</pre></li>
+    <li id="L208"><pre>                      height: &#x27;auto&#x27;,</pre></li>
+    <li id="L209"><pre>                    }}</pre></li>
+    <li id="L210"><pre>                    onError={() =&gt;</pre></li>
+    <li id="L211"><pre>                      setWarning(</pre></li>
+    <li id="L212">
+      <pre>
+                        &#x27;浏览器无法预览此编码；文件结构已验证，仍可插入原文件并使用默认封面。&#x27;,</pre>
+    </li>
+    <li id="L213"><pre>                      )</pre></li>
+    <li id="L214"><pre>                    }</pre></li>
+    <li id="L215"><pre>                  /&gt;</pre></li>
+    <li id="L216"><pre>                ) : (</pre></li>
+    <li id="L217"><pre>                  &lt;audio</pre></li>
+    <li id="L218"><pre>                    key={selected.url}</pre></li>
+    <li id="L219"><pre>                    className=&quot;mimir-pptx-media-preview&quot;</pre></li>
+    <li id="L220"><pre>                    ref={audio}</pre></li>
+    <li id="L221"><pre>                    src={selected.url}</pre></li>
+    <li id="L222"><pre>                    controls</pre></li>
+    <li id="L223"><pre>                    preload=&quot;metadata&quot;</pre></li>
+    <li id="L224"><pre>                    onError={() =&gt;</pre></li>
+    <li id="L225">
+      <pre>
+                      setWarning(&#x27;浏览器无法试听此编码；文件结构已验证，仍可插入原文件。&#x27;)</pre>
+    </li>
+    <li id="L226"><pre>                    }</pre></li>
+    <li id="L227"><pre>                  /&gt;</pre></li>
+    <li id="L228"><pre>                )}</pre></li>
+    <li id="L229"><pre>                &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L230"><pre>                  {kind === &#x27;audio&#x27;</pre></li>
+    <li id="L231"><pre>                    ? &#x27;以64pt方形音频图标插入。&#x27;</pre></li>
+    <li id="L232"><pre>                    : selected.info.naturalSize</pre></li>
+    <li id="L233">
+      <pre>
+                      ? `${selected.info.naturalSize.width} × ${selected.info.naturalSize.height}，按原比例居中插入。`</pre>
+    </li>
+    <li id="L234">
+      <pre>                      : &#x27;无法读取尺寸，将以16:9比例居中插入。&#x27;}</pre>
+    </li>
+    <li id="L235"><pre>                &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L236"><pre>              &lt;/&gt;</pre></li>
+    <li id="L237"><pre>            )}</pre></li>
+    <li id="L238">
+      <pre>
+            {warning &amp;&amp; &lt;p role=&quot;status&quot;&gt;{warning}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L239">
+      <pre>            {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L240">
+      <pre>
+            {busy &amp;&amp; &lt;p role=&quot;status&quot;&gt;正在插入媒体…&lt;/p&gt;}</pre>
+    </li>
+    <li id="L241"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L242"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L243"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L244">
+      <pre>      &lt;div className=&quot;mimir-pptx-media-insert__footer&quot;&gt;</pre>
+    </li>
+    <li id="L245"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L246"><pre>          primary</pre></li>
+    <li id="L247"><pre>          label=&quot;插入音视频&quot;</pre></li>
+    <li id="L248"><pre>          disabled={!selected || preparing || busy}</pre></li>
+    <li id="L249">
+      <pre>
+          disabledReason={preparing ? &#x27;正在检查文件&#x27; : error || &#x27;请先选择有效的音视频文件&#x27;}</pre>
+    </li>
+    <li id="L250"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L251"><pre>            void submit()</pre></li>
+    <li id="L252"><pre>          }}</pre></li>
+    <li id="L253"><pre>        /&gt;</pre></li>
+    <li id="L254"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L255"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L256"><pre>  )</pre></li>
+    <li id="L257"><pre>}</pre></li>
+  </ol>
+</html>

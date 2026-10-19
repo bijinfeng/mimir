@@ -239,6 +239,7 @@ export function PptxAnimationGallery({
           <ToolbarMenuFields label="添加另一项动画">
             <ToolbarSelect
               label="新增动画效果"
+              disabled={busy}
               value={effect}
               options={ANIM_EFFECTS.filter((value) => !value.startsWith('media') || media).map(
                 (value) => ({ value, label: PPTX_ANIMATION_LABELS[value] }),
@@ -250,6 +251,7 @@ export function PptxAnimationGallery({
             />
             <ToolbarSelect
               label="动画开始方式"
+              disabled={busy}
               value={trigger}
               options={triggers}
               onChange={setTrigger}
@@ -273,6 +275,7 @@ export function PptxAnimationGallery({
             {effect === 'motionPath' && (
               <ToolbarSelect
                 label="运动路径方向"
+                disabled={busy}
                 value={motionPath}
                 options={PPTX_MOTION_PRESETS.map((preset) => ({
                   value: preset.path,
@@ -284,6 +287,7 @@ export function PptxAnimationGallery({
             {['flyIn', 'flyOut', 'wipe', 'wipeOut'].includes(effect) && (
               <ToolbarSelect
                 label="新增动画方向"
+                disabled={busy}
                 value={direction}
                 options={[
                   { value: 'top', label: '从上方' },

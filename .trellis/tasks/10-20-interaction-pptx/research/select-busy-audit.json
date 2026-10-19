@@ -1,0 +1,537 @@
+{
+  "date": "2026-10-20",
+  "note": "Candidate audit, not a claim every absent disabled is incorrect; view settings are intentionally read-only. Full baseline Select list in source-inventory.json.",
+  "candidates": [
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 189,
+      "owner": "ChartEditControls",
+      "label": "更改图表类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 195,
+      "owner": "ChartEditControls",
+      "label": "图例位置",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 208,
+      "owner": "ChartEditControls",
+      "label": "数据标签",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 257,
+      "owner": "ChartEditControls",
+      "label": "要编辑的系列",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 694,
+      "owner": "(nested callback)",
+      "label": "{`动画 ${seq + 1} 效果`}",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAdvancedControls.tsx",
+      "line": 711,
+      "owner": "(nested callback)",
+      "label": "{`动画 ${seq + 1} 方向`}",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 240,
+      "owner": "PptxAnimationGallery",
+      "label": "新增动画效果",
+      "disabled": null,
+      "recommendedBusyGate": "busy (prop)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 251,
+      "owner": "PptxAnimationGallery",
+      "label": "动画开始方式",
+      "disabled": null,
+      "recommendedBusyGate": "busy (prop)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 274,
+      "owner": "PptxAnimationGallery",
+      "label": "运动路径方向",
+      "disabled": null,
+      "recommendedBusyGate": "busy (prop)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAnimationGallery.tsx",
+      "line": 285,
+      "owner": "PptxAnimationGallery",
+      "label": "新增动画方向",
+      "disabled": null,
+      "recommendedBusyGate": "busy (prop)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxAssetControls.tsx",
+      "line": 230,
+      "owner": "PptxImportControls",
+      "label": "导入格式",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 131,
+      "owner": "PptxChartAppearance",
+      "label": "图表样式预设",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 149,
+      "owner": "PptxChartAppearance",
+      "label": "图表网格线",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 175,
+      "owner": "PptxChartAppearance",
+      "label": "柱形方向",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 207,
+      "owner": "PptxChartAppearance",
+      "label": "图表配色方案",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 238,
+      "owner": "PptxChartAppearance",
+      "label": "要配色的系列",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 283,
+      "owner": "PptxChartAppearance",
+      "label": "数据点所属系列",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxChartAppearance.tsx",
+      "line": 292,
+      "owner": "PptxChartAppearance",
+      "label": "数据点类别",
+      "disabled": null,
+      "recommendedBusyGate": "new disabled=false prop passed from ChartEditControls busy",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 123,
+      "owner": "PptxCurveControls",
+      "label": "路径闭合",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 132,
+      "owner": "PptxCurveControls",
+      "label": "当前节点",
+      "disabled": "{!segment}",
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxCurveControls.tsx",
+      "line": 185,
+      "owner": "PptxCurveControls",
+      "label": "新节点类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 85,
+      "owner": "PptxPageControls",
+      "label": "选择原件版式",
+      "disabled": "{!metadata.layouts.length}",
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 446,
+      "owner": "PptxHeaderFooterControls",
+      "label": "自动日期",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 455,
+      "owner": "PptxHeaderFooterControls",
+      "label": "显示幻灯片页码",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxDeckControls.tsx",
+      "line": 535,
+      "owner": "PptxReviewControls",
+      "label": "选择分节",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxEditor.tsx",
+      "line": 3630,
+      "owner": "(nested callback)",
+      "label": "使用方式",
+      "disabled": null,
+      "recommendedBusyGate": "editingBusy (format-brush mode may deliberately remain changeable; verify lifecycle before disabling)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 222,
+      "owner": "FillEditor",
+      "label": "填充类型",
+      "disabled": "{unavailable}",
+      "recommendedBusyGate": "busy; preserve unavailable restrictions where applicable",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 361,
+      "owner": "FillEditor",
+      "label": "渐变类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy; preserve unavailable restrictions where applicable",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxFillControls.tsx",
+      "line": 417,
+      "owner": "FillEditor",
+      "label": "当前色标",
+      "disabled": null,
+      "recommendedBusyGate": "busy; preserve unavailable restrictions where applicable",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 54,
+      "owner": "PptxEquationControls",
+      "label": "公式模板",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 71,
+      "owner": "PptxEquationControls",
+      "label": "插入位置",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 144,
+      "owner": "PptxWordArtControls",
+      "label": "艺术字样式",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 223,
+      "owner": "PptxFieldControls",
+      "label": "字段类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxInsertControls.tsx",
+      "line": 283,
+      "owner": "PptxDiagramControls",
+      "label": "图示类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 102,
+      "owner": "PptxMasterControls",
+      "label": "编辑范围",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxMasterControls.tsx",
+      "line": 121,
+      "owner": "PptxMasterControls",
+      "label": "母版对象",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 802,
+      "owner": "PptxEffectsControls",
+      "label": "阴影",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 862,
+      "owner": "PptxEffectsControls",
+      "label": "倒影",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 908,
+      "owner": "PptxLinkControls",
+      "label": "链接类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 929,
+      "owner": "PptxLinkControls",
+      "label": "放映动作",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1016,
+      "owner": "PptxShapeControls",
+      "label": "形状类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1149,
+      "owner": "PptxArrangeControls",
+      "label": "排列参照",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1158,
+      "owner": "PptxArrangeControls",
+      "label": "对齐方式",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1179,
+      "owner": "PptxArrangeControls",
+      "label": "分布方向",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1218,
+      "owner": "PptxArrangeControls",
+      "label": "连接起点对象",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1219,
+      "owner": "PptxArrangeControls",
+      "label": "连接终点对象",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1220,
+      "owner": "PptxArrangeControls",
+      "label": "连接线类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1292,
+      "owner": "PptxFreeformControls",
+      "label": "路径编辑方式",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1397,
+      "owner": "PptxConnectorControls",
+      "label": "端点1连接对象",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxObjectControls.tsx",
+      "line": 1405,
+      "owner": "PptxConnectorControls",
+      "label": "端点2连接对象",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxPictureTools.tsx",
+      "line": 86,
+      "owner": "PptxCutoutControls",
+      "label": "预览",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 290,
+      "owner": "PptxTableControls",
+      "label": "行",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 306,
+      "owner": "PptxTableControls",
+      "label": "列",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 326,
+      "owner": "PptxTableControls",
+      "label": "段落",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 517,
+      "owner": "PptxTableControls",
+      "label": "表格方向",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 542,
+      "owner": "PptxTableControls",
+      "label": "样式应用范围",
+      "disabled": null,
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxTableControls.tsx",
+      "line": 573,
+      "owner": "PptxTableControls",
+      "label": "表格边框",
+      "disabled": "{cellStyleUnavailable}",
+      "recommendedBusyGate": "busy (owning function; nested map refers to outer SlidePlaybackControls busy)",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxViewControls.tsx",
+      "line": 48,
+      "owner": "PptxViewControls",
+      "label": "幻灯片缩放",
+      "disabled": null,
+      "recommendedBusyGate": "none: read-only session zoom; intentionally remains interactive",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    },
+    {
+      "file": "packages/office/src/editors/PptxZoomControls.tsx",
+      "line": 117,
+      "owner": "ZoomEditor",
+      "label": "缩放导航类型",
+      "disabled": null,
+      "recommendedBusyGate": "busy || disabled",
+      "evidence": "source only; interactive trigger behavior must be verified"
+    }
+  ]
+}

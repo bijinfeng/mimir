@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxSelectionGeometryControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxSelectionGeometryControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 4cd5f54640cce378f0864906a835a4dc859f98c7e9e6276abc422f39a372c998
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import { Check, FlipHorizontal2, FlipVertical2, RotateCcw } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>
+import type { SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarButton,</pre></li>
+    <li id="L6"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L7"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L8"><pre>  ToolbarSelect,</pre></li>
+    <li id="L9"><pre>  ToolbarTextField,</pre></li>
+    <li id="L10"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L11"><pre>import {</pre></li>
+    <li id="L12"><pre>  PPTX_SHAPES,</pre></li>
+    <li id="L13"><pre>  isPptxLineKind,</pre></li>
+    <li id="L14"><pre>  pptxShapeLabel,</pre></li>
+    <li id="L15"><pre>  pptxShapePreview,</pre></li>
+    <li id="L16"><pre>} from &#x27;./pptx-shape-presets.js&#x27;</pre></li>
+    <li id="L17"><pre>import {</pre></li>
+    <li id="L18"><pre>  pptxGeometryContext,</pre></li>
+    <li id="L19"><pre>  pptxGeometryPreset,</pre></li>
+    <li id="L20"><pre>  pptxGeometryValue,</pre></li>
+    <li id="L21"><pre>  pptxSelectionGeometryOps,</pre></li>
+    <li id="L22"><pre>  type PptxGeometryField,</pre></li>
+    <li id="L23"><pre>  type PptxSelectionGeometryDraft,</pre></li>
+    <li id="L24"><pre>} from &#x27;./pptx-selection-geometry.js&#x27;</pre></li>
+    <li id="L25">
+      <pre>import type { PptxSelectionContext } from &#x27;./pptx-selection.js&#x27;</pre>
+    </li>
+    <li id="L26"><pre>import &#x27;./pptx-selection-geometry.css&#x27;</pre></li>
+    <li id="L27"><pre></pre></li>
+    <li id="L28"><pre>export interface PptxSelectionGeometryControlsProps {</pre></li>
+    <li id="L29"><pre>  elements: readonly SlideElement[]</pre></li>
+    <li id="L30"><pre>  selectedRefs: readonly string[]</pre></li>
+    <li id="L31"><pre>  slide: number</pre></li>
+    <li id="L32"><pre>  version: number</pre></li>
+    <li id="L33"><pre>  sourceKey?: string</pre></li>
+    <li id="L34"><pre>  disabled?: boolean</pre></li>
+    <li id="L35">
+      <pre>  applyOps: (ops: Record&lt;string, unknown&gt;[]) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L36"><pre>}</pre></li>
+    <li id="L37">
+      <pre>
+export function PptxSelectionGeometryControls(props: PptxSelectionGeometryControlsProps) {</pre>
+    </li>
+    <li id="L38">
+      <pre>
+  const { context, reason } = pptxGeometryContext(props.elements, props.selectedRefs)</pre>
+    </li>
+    <li id="L39">
+      <pre>
+  const binding = JSON.stringify([props.sourceKey, props.slide, props.version, props.selectedRefs])</pre>
+    </li>
+    <li id="L40"><pre>  return context ? (</pre></li>
+    <li id="L41">
+      <pre>    &lt;GeometryDraft key={binding} {...props} context={context} /&gt;</pre>
+    </li>
+    <li id="L42"><pre>  ) : (</pre></li>
+    <li id="L43">
+      <pre>    &lt;div className=&quot;mimir-pptx-selection-geometry__empty&quot;&gt;</pre>
+    </li>
+    <li id="L44"><pre>      &lt;ToolbarMenuNote&gt;{reason}&lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L45"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L46"><pre>  )</pre></li>
+    <li id="L47"><pre>}</pre></li>
+    <li id="L48"><pre>function GeometryDraft({</pre></li>
+    <li id="L49"><pre>  context,</pre></li>
+    <li id="L50"><pre>  selectedRefs,</pre></li>
+    <li id="L51"><pre>  slide,</pre></li>
+    <li id="L52"><pre>  applyOps,</pre></li>
+    <li id="L53"><pre>  disabled = false,</pre></li>
+    <li id="L54">
+      <pre>}: PptxSelectionGeometryControlsProps &amp; { context: PptxSelectionContext }) {</pre>
+    </li>
+    <li id="L55">
+      <pre>  const [draft, setDraft] = useState&lt;PptxSelectionGeometryDraft&gt;({})</pre>
+    </li>
+    <li id="L56"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L57"><pre>  const [status, setStatus] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L58"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L59"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L60"><pre>  useEffect(() =&gt; () =&gt; pending.current?.abort(), [])</pre></li>
+    <li id="L61"><pre>  const locked = disabled || busy</pre></li>
+    <li id="L62"><pre>  const dirty = Object.keys(draft).length &gt; 0</pre></li>
+    <li id="L63"><pre>  const preset = pptxGeometryPreset(context)</pre></li>
+    <li id="L64"><pre>  const selectedPreset = draft.preset ?? preset</pre></li>
+    <li id="L65">
+      <pre>
+  const shapeOptions = PPTX_SHAPES.filter((item) =&gt; !isPptxLineKind(item.kind)).map((item) =&gt; ({</pre>
+    </li>
+    <li id="L66"><pre>    value: item.kind,</pre></li>
+    <li id="L67"><pre>    label: item.label,</pre></li>
+    <li id="L68"><pre>  }))</pre></li>
+    <li id="L69">
+      <pre>  if (preset &amp;&amp; !shapeOptions.some((item) =&gt; item.value === preset))</pre>
+    </li>
+    <li id="L70">
+      <pre>
+    shapeOptions.unshift({ value: preset, label: `${pptxShapeLabel(preset)}（当前）` })</pre>
+    </li>
+    <li id="L71">
+      <pre>  const preview = selectedPreset ? pptxShapePreview(selectedPreset, 44, 32) : null</pre>
+    </li>
+    <li id="L72"><pre>  const change = (patch: PptxSelectionGeometryDraft) =&gt; {</pre></li>
+    <li id="L73"><pre>    if (locked) return</pre></li>
+    <li id="L74"><pre>    setDraft((current) =&gt; ({ ...current, ...patch }))</pre></li>
+    <li id="L75"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L76"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L77"><pre>  }</pre></li>
+    <li id="L78"><pre>  const reset = () =&gt; {</pre></li>
+    <li id="L79"><pre>    if (locked) return</pre></li>
+    <li id="L80"><pre>    setDraft({})</pre></li>
+    <li id="L81"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L82"><pre>    setStatus(&#x27;已恢复当前值&#x27;)</pre></li>
+    <li id="L83"><pre>  }</pre></li>
+    <li id="L84"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L85"><pre>    if (locked || pending.current || !dirty) return</pre></li>
+    <li id="L86"><pre>    let ops: Record&lt;string, unknown&gt;[]</pre></li>
+    <li id="L87"><pre>    try {</pre></li>
+    <li id="L88">
+      <pre>      ops = pptxSelectionGeometryOps(context, selectedRefs[0]!, slide, draft)</pre>
+    </li>
+    <li id="L89"><pre>    } catch (cause) {</pre></li>
+    <li id="L90">
+      <pre>
+      setError(cause instanceof Error ? cause.message : &#x27;草稿无法应用，请检查数值&#x27;)</pre>
+    </li>
+    <li id="L91"><pre>      return</pre></li>
+    <li id="L92"><pre>    }</pre></li>
+    <li id="L93"><pre>    if (!ops.length) {</pre></li>
+    <li id="L94"><pre>      setDraft({})</pre></li>
+    <li id="L95"><pre>      setStatus(&#x27;当前值未改变&#x27;)</pre></li>
+    <li id="L96"><pre>      return</pre></li>
+    <li id="L97"><pre>    }</pre></li>
+    <li id="L98"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L99"><pre>    pending.current = controller</pre></li>
+    <li id="L100"><pre>    setBusy(true)</pre></li>
+    <li id="L101"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L102"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L103"><pre>    try {</pre></li>
+    <li id="L104"><pre>      const ok = await applyOps(ops)</pre></li>
+    <li id="L105"><pre>      if (controller.signal.aborted) return</pre></li>
+    <li id="L106"><pre>      if (ok) {</pre></li>
+    <li id="L107"><pre>        setDraft({})</pre></li>
+    <li id="L108"><pre>        setStatus(&#x27;位置与形状已应用&#x27;)</pre></li>
+    <li id="L109"><pre>      } else setError(&#x27;未能应用，已保留草稿，请重试&#x27;)</pre></li>
+    <li id="L110"><pre>    } catch {</pre></li>
+    <li id="L111">
+      <pre>
+      if (!controller.signal.aborted) setError(&#x27;未能应用，已保留草稿，请重试&#x27;)</pre>
+    </li>
+    <li id="L112"><pre>    } finally {</pre></li>
+    <li id="L113"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L114"><pre>        pending.current = null</pre></li>
+    <li id="L115"><pre>        setBusy(false)</pre></li>
+    <li id="L116"><pre>      }</pre></li>
+    <li id="L117"><pre>    }</pre></li>
+    <li id="L118"><pre>  }</pre></li>
+    <li id="L119"><pre>  const field = (key: PptxGeometryField, label: string) =&gt; (</pre></li>
+    <li id="L120"><pre>    &lt;ToolbarTextField</pre></li>
+    <li id="L121"><pre>      label={label}</pre></li>
+    <li id="L122"><pre>      value={draft[key] ?? pptxGeometryValue(context, key)}</pre></li>
+    <li id="L123"><pre>      onChange={(value) =&gt; change({ [key]: value })}</pre></li>
+    <li id="L124"><pre>      onSubmit={() =&gt; void submit()}</pre></li>
+    <li id="L125"><pre>      onCancel={reset}</pre></li>
+    <li id="L126"><pre>    /&gt;</pre></li>
+    <li id="L127"><pre>  )</pre></li>
+    <li id="L128"><pre>  const flipH = draft.flipH ?? context.element.transform.flipH</pre></li>
+    <li id="L129"><pre>  const flipV = draft.flipV ?? context.element.transform.flipV</pre></li>
+    <li id="L130"><pre>  return (</pre></li>
+    <li id="L131"><pre>    &lt;fieldset</pre></li>
+    <li id="L132"><pre>      className=&quot;mimir-pptx-selection-geometry&quot;</pre></li>
+    <li id="L133"><pre>      disabled={locked}</pre></li>
+    <li id="L134"><pre>      aria-label=&quot;对象位置与形状&quot;</pre></li>
+    <li id="L135"><pre>      aria-busy={busy}</pre></li>
+    <li id="L136"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L137"><pre>        if (</pre></li>
+    <li id="L138"><pre>          event.key === &#x27;Escape&#x27; &amp;&amp;</pre></li>
+    <li id="L139"><pre>          dirty &amp;&amp;</pre></li>
+    <li id="L140"><pre>          !locked &amp;&amp;</pre></li>
+    <li id="L141"><pre>          event.target instanceof HTMLInputElement &amp;&amp;</pre></li>
+    <li id="L142">
+      <pre>          event.target.getAttribute(&#x27;role&#x27;) !== &#x27;combobox&#x27;</pre>
+    </li>
+    <li id="L143"><pre>        ) {</pre></li>
+    <li id="L144"><pre>          event.preventDefault()</pre></li>
+    <li id="L145"><pre>          event.stopPropagation()</pre></li>
+    <li id="L146"><pre>          reset()</pre></li>
+    <li id="L147"><pre>        }</pre></li>
+    <li id="L148"><pre>      }}</pre></li>
+    <li id="L149"><pre>    &gt;</pre></li>
+    <li id="L150">
+      <pre>      &lt;div className=&quot;mimir-pptx-selection-geometry__content&quot;&gt;</pre>
+    </li>
+    <li id="L151">
+      <pre>
+        &lt;section className=&quot;mimir-pptx-selection-geometry__section&quot; aria-label=&quot;位置与大小&quot;&gt;</pre>
+    </li>
+    <li id="L152"><pre>          &lt;strong&gt;位置与大小&lt;/strong&gt;</pre></li>
+    <li id="L153"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L154">
+      <pre>
+            {context.group ? &#x27;父组合局部坐标 · pt&#x27; : &#x27;幻灯片坐标 · pt&#x27;}</pre>
+    </li>
+    <li id="L155"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L156"><pre>          {context.group &amp;&amp; (</pre></li>
+    <li id="L157">
+      <pre>
+            &lt;ToolbarMenuNote&gt;坐标沿父组合缩放、旋转与翻转；数值不是画布绝对位置。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L158"><pre>          )}</pre></li>
+    <li id="L159"><pre>          &lt;ToolbarPropertyForm&gt;</pre></li>
+    <li id="L160"><pre>            {field(&#x27;x&#x27;, &#x27;水平位置（pt）&#x27;)}</pre></li>
+    <li id="L161"><pre>            {field(&#x27;y&#x27;, &#x27;垂直位置（pt）&#x27;)}</pre></li>
+    <li id="L162"><pre>            {field(&#x27;width&#x27;, &#x27;宽度（pt）&#x27;)}</pre></li>
+    <li id="L163"><pre>            {field(&#x27;height&#x27;, &#x27;高度（pt）&#x27;)}</pre></li>
+    <li id="L164"><pre>          &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L165"><pre>        &lt;/section&gt;</pre></li>
+    <li id="L166">
+      <pre>
+        &lt;section className=&quot;mimir-pptx-selection-geometry__section&quot; aria-label=&quot;旋转与翻转&quot;&gt;</pre>
+    </li>
+    <li id="L167"><pre>          &lt;strong&gt;旋转与翻转&lt;/strong&gt;</pre></li>
+    <li id="L168"><pre>          &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L169">
+      <pre>            {field(&#x27;rotation&#x27;, &#x27;旋转角度（°）&#x27;)}</pre>
+    </li>
+    <li id="L170"><pre>          &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L171">
+      <pre>          &lt;div className=&quot;mimir-pptx-selection-geometry__flips&quot;&gt;</pre>
+    </li>
+    <li id="L172"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L173"><pre>              label=&quot;水平翻转&quot;</pre></li>
+    <li id="L174"><pre>              active={flipH}</pre></li>
+    <li id="L175"><pre>              disabled={locked}</pre></li>
+    <li id="L176"><pre>              onClick={() =&gt; change({ flipH: !flipH })}</pre></li>
+    <li id="L177"><pre>            &gt;</pre></li>
+    <li id="L178"><pre>              &lt;FlipHorizontal2 size={14} /&gt;</pre></li>
+    <li id="L179"><pre>              水平翻转</pre></li>
+    <li id="L180"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L181"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L182"><pre>              label=&quot;垂直翻转&quot;</pre></li>
+    <li id="L183"><pre>              active={flipV}</pre></li>
+    <li id="L184"><pre>              disabled={locked}</pre></li>
+    <li id="L185"><pre>              onClick={() =&gt; change({ flipV: !flipV })}</pre></li>
+    <li id="L186"><pre>            &gt;</pre></li>
+    <li id="L187"><pre>              &lt;FlipVertical2 size={14} /&gt;</pre></li>
+    <li id="L188"><pre>              垂直翻转</pre></li>
+    <li id="L189"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L190"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L191">
+      <pre>
+          &lt;ToolbarMenuNote&gt;翻转保持旋转后的中心，位置数值可能随之调整。&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L192"><pre>        &lt;/section&gt;</pre></li>
+    <li id="L193"><pre>        {preset &amp;&amp; (</pre></li>
+    <li id="L194">
+      <pre>
+          &lt;section className=&quot;mimir-pptx-selection-geometry__section&quot; aria-label=&quot;形状预设&quot;&gt;</pre>
+    </li>
+    <li id="L195"><pre>            &lt;strong&gt;形状预设&lt;/strong&gt;</pre></li>
+    <li id="L196">
+      <pre>
+            &lt;div className=&quot;mimir-pptx-selection-geometry__preset-preview&quot;&gt;</pre>
+    </li>
+    <li id="L197"><pre>              {preview &amp;&amp; (</pre></li>
+    <li id="L198">
+      <pre>
+                &lt;svg viewBox=&quot;-4 -4 52 40&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L199">
+      <pre>
+                  &lt;g fill=&quot;none&quot; stroke=&quot;currentColor&quot; strokeWidth=&quot;1.5&quot; strokeLinejoin=&quot;round&quot;&gt;</pre>
+    </li>
+    <li id="L200">
+      <pre>                    {preview.path &amp;&amp; &lt;path d={preview.path} /&gt;}</pre>
+    </li>
+    <li id="L201">
+      <pre>
+                    {preview.fillPath &amp;&amp; &lt;path d={preview.fillPath} /&gt;}{&#x27; &#x27;}</pre>
+    </li>
+    <li id="L202">
+      <pre>
+                    {preview.strokePath &amp;&amp; &lt;path d={preview.strokePath} /&gt;}</pre>
+    </li>
+    <li id="L203"><pre>                  &lt;/g&gt;</pre></li>
+    <li id="L204"><pre>                &lt;/svg&gt;</pre></li>
+    <li id="L205"><pre>              )}</pre></li>
+    <li id="L206">
+      <pre>
+              &lt;span&gt;{pptxShapeLabel(selectedPreset ?? undefined)}&lt;/span&gt;</pre>
+    </li>
+    <li id="L207"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L208"><pre>            &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L209"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L210"><pre>                label=&quot;更改形状&quot;</pre></li>
+    <li id="L211"><pre>                value={selectedPreset}</pre></li>
+    <li id="L212"><pre>                options={shapeOptions}</pre></li>
+    <li id="L213"><pre>                disabled={locked}</pre></li>
+    <li id="L214"><pre>                onChange={(value) =&gt; change({ preset: value })}</pre></li>
+    <li id="L215"><pre>              /&gt;</pre></li>
+    <li id="L216"><pre>            &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L217"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L218">
+      <pre>              更改预设保留文字与样式，形状调节点恢复为新预设默认值。</pre>
+    </li>
+    <li id="L219"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L220"><pre>          &lt;/section&gt;</pre></li>
+    <li id="L221"><pre>        )}</pre></li>
+    <li id="L222"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L223">
+      <pre>      &lt;div className=&quot;mimir-pptx-selection-geometry__actions&quot;&gt;</pre>
+    </li>
+    <li id="L224"><pre>        {error ? (</pre></li>
+    <li id="L225"><pre>          &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;</pre></li>
+    <li id="L226"><pre>        ) : (</pre></li>
+    <li id="L227"><pre>          &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L228"><pre>            {busy</pre></li>
+    <li id="L229"><pre>              ? &#x27;正在应用位置与形状…&#x27;</pre></li>
+    <li id="L230"><pre>              : dirty</pre></li>
+    <li id="L231"><pre>                ? &#x27;草稿未应用；关闭面板会丢弃。&#x27;</pre></li>
+    <li id="L232"><pre>                : status || &#x27;修改数值后应用。&#x27;}</pre></li>
+    <li id="L233"><pre>          &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L234"><pre>        )}</pre></li>
+    <li id="L235"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L236">
+      <pre>
+          label={busy ? &#x27;正在应用位置与形状&#x27; : &#x27;应用位置与形状&#x27;}</pre>
+    </li>
+    <li id="L237"><pre>          primary</pre></li>
+    <li id="L238"><pre>          disabled={locked || !dirty}</pre></li>
+    <li id="L239">
+      <pre>
+          disabledReason={busy ? &#x27;正在应用&#x27; : &#x27;请先修改位置或形状&#x27;}</pre>
+    </li>
+    <li id="L240"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L241"><pre>        &gt;</pre></li>
+    <li id="L242"><pre>          &lt;Check size={14} /&gt;</pre></li>
+    <li id="L243"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L244">
+      <pre>
+        &lt;ToolbarButton label=&quot;取消位置与形状草稿&quot; disabled={locked || !dirty} onClick={reset}&gt;</pre>
+    </li>
+    <li id="L245"><pre>          &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L246"><pre>          取消草稿</pre></li>
+    <li id="L247"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L248"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L249"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L250"><pre>  )</pre></li>
+    <li id="L251"><pre>}</pre></li>
+  </ol>
+</html>

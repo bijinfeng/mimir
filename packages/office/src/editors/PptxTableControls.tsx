@@ -289,6 +289,7 @@ export function PptxTableControls({
             <div className="mimir-pptx-table-cell-selector">
               <ToolbarSelect
                 label="行"
+                disabled={busy}
                 value={String(rowIndex)}
                 options={table.rows.map((_, index) => ({
                   value: String(index),
@@ -305,6 +306,7 @@ export function PptxTableControls({
               />
               <ToolbarSelect
                 label="列"
+                disabled={busy}
                 value={String(colIndex)}
                 options={(table.rows[rowIndex] ?? []).map((_, index) => ({
                   value: String(index),
@@ -325,6 +327,7 @@ export function PptxTableControls({
               {paragraphs.length > 1 && (
                 <ToolbarSelect
                   label="段落"
+                  disabled={busy}
                   value={String(selectedIndex)}
                   options={paragraphs.map((_, index) => ({
                     value: String(index),
@@ -516,6 +519,7 @@ export function PptxTableControls({
                   <ToolbarMenuFields label="表格选项">
                     <ToolbarSelect
                       label="表格方向"
+                      disabled={busy}
                       value={String(stylePatch.rtl ?? table.rtl ?? false)}
                       options={[
                         { value: 'false', label: '从左到右' },
@@ -541,6 +545,7 @@ export function PptxTableControls({
                   <ToolbarMenuFields label="底纹与边框">
                     <ToolbarSelect
                       label="样式应用范围"
+                      disabled={busy}
                       value={scope}
                       options={[
                         {
@@ -572,7 +577,7 @@ export function PptxTableControls({
                     />
                     <ToolbarSelect
                       label="表格边框"
-                      disabled={cellStyleUnavailable}
+                      disabled={busy || cellStyleUnavailable}
                       value={String(
                         stylePatch.borderPreset ??
                           (borderMixed ? 'mixed' : currentBorder?.width ? 'all' : 'none'),

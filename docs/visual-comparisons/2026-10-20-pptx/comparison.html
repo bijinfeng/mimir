@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>PPTX编辑器 · 真实前后对比</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font:
+        14px/1.65 system-ui,
+        sans-serif;
+      color: #262a27;
+      background: #f7f8f8;
+    }
+    header,
+    main {
+      max-width: 1500px;
+      margin: auto;
+      padding: 20px 28px;
+    }
+    header {
+      padding-bottom: 4px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 6px;
+    }
+    p {
+      margin: 6px 0;
+      color: #595f5b;
+    }
+    a {
+      color: #007a45;
+    }
+    nav,
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+    }
+    select,
+    button {
+      font: inherit;
+      padding: 7px 10px;
+      border: 1px solid #d6dad8;
+      border-radius: 6px;
+      background: white;
+      color: inherit;
+    }
+    select {
+      max-width: 100%;
+    }
+    button[aria-pressed='true'] {
+      background: #00834d;
+      color: white;
+      border-color: #00834d;
+    }
+    .views {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin: 16px 0;
+    }
+    figure {
+      margin: 0;
+      min-width: 0;
+    }
+    figcaption {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: white;
+      border: 1px solid #e3e8e5;
+    }
+    .single {
+      grid-template-columns: 1fr;
+      max-width: 1100px;
+      margin-inline: auto;
+    }
+    .hidden {
+      display: none !important;
+    }
+    footer {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #e8e8e8;
+    }
+    button:focus-visible,
+    a:focus-visible,
+    select:focus-visible {
+      outline: 2px solid #00834d;
+      outline-offset: 3px;
+    }
+    @media (max-width: 800px) {
+      header,
+      main {
+        padding: 16px;
+      }
+      .views {
+        grid-template-columns: 1fr;
+      }
+      .controls {
+        gap: 6px;
+      }
+      h1 {
+        font-size: 21px;
+      }
+    }
+  </style>
+  <header>
+    <h1>PPTX编辑器 · 真实前后对比</h1>
+    <p>8组相同原件、主题、编辑区和视口的真实组件渲染。基线3b5d912；2026-10-20精修。</p>
+    <nav>
+      <a href="demo/dist/after/index.html?scene=rich">可操作Demo</a
+      ><a href="demo/dist/before/index.html?scene=rich">基线Demo</a
+      ><a href="interactions.html">完整来源与交互索引</a><a href="acceptance.md">验收记录</a
+      ><a href="capture-manifest.json">截图指纹</a><a href="build-manifest.json">构建指纹</a
+      ><a href="browser-observations.json">交互实测</a><a href="demo/README.md">运行与证据边界</a>
+    </nav>
+    <p>
+      图片可离线查看；可操作Demo需本地HTTP服务。保存为页面内存模拟，原生工具须明确连接隔离Node
+      helper。源码映射不等于逐项GUI验收。
+    </p>
+  </header>
+  <main>
+    <div class="controls">
+      <label
+        >场景
+        <select id="scene">
+          <option value="formula-short">公式 · 短高窄屏</option>
+          <option value="diagram-short">图示 · 短高窄屏</option>
+          <option value="formula-wide">公式 · 宽编辑区</option>
+          <option value="diagram-wide">图示 · 宽编辑区</option>
+          <option value="diagram-medium">图示 · 690栏</option>
+          <option value="import-dark-short">导入 · 深色短高窄屏</option>
+          <option value="import-preview-dark-short">导入预览 · 深色短高窄屏</option>
+          <option value="import-dark-medium">导入 · 深色690栏</option>
+        </select></label
+      ><button data-mode="compare" aria-pressed="true">并排</button
+      ><button data-mode="before" aria-pressed="false">打磨前</button
+      ><button data-mode="after" aria-pressed="false">打磨后</button>
+    </div>
+    <p id="caption"></p>
+    <div class="views">
+      <figure id="before">
+        <figcaption>打磨前</figcaption>
+        <a><img alt="打磨前真实组件截图" /></a>
+      </figure>
+      <figure id="after">
+        <figcaption>打磨后</figcaption>
+        <a><img alt="打磨后真实组件截图" /></a>
+      </figure>
+    </div>
+    <footer>
+      <p>
+        对比只证明截图中可见布局；写入、历史、保护、来源隔离和原件保留须结合回归与实际操作证据。设备权限、外部服务及未验路径在验收记录中单独说明。
+      </p>
+    </footer>
+  </main>
+  <script>
+    const data = {
+      baseline: '3b5d912',
+      date: '2026-10-20',
+      evidence:
+        'Real PptxEditor screenshots; matched native fixture/theme/viewport/editor dimensions; no mockups',
+      pairs: [
+        {
+          key: 'formula-short',
+          title: '公式 · 短高窄屏',
+          theme: 'light',
+          viewport: [390, 400],
+          editorSize: [390, 400],
+          fixture: 'rich',
+          steps: '插入 → 公式 → 插入公式。默认质能方程；不滚动。',
+          selectedFile: null,
+          before: 'captures/before-formula-short.png',
+          after: 'captures/after-formula-short.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+        {
+          key: 'diagram-short',
+          title: '图示 · 短高窄屏',
+          theme: 'light',
+          viewport: [390, 400],
+          editorSize: [390, 400],
+          fixture: 'rich',
+          steps: '插入 → 图示 → 插入图示。默认流程与三节点；不滚动。',
+          selectedFile: null,
+          before: 'captures/before-diagram-short.png',
+          after: 'captures/after-diagram-short.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+        {
+          key: 'formula-wide',
+          title: '公式 · 宽编辑区',
+          theme: 'light',
+          viewport: [1100, 760],
+          editorSize: [1100, 760],
+          fixture: 'rich',
+          steps: '插入 → 公式 → 插入公式。默认质能方程；不滚动。',
+          selectedFile: null,
+          before: 'captures/before-formula-wide.png',
+          after: 'captures/after-formula-wide.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+        {
+          key: 'diagram-wide',
+          title: '图示 · 宽编辑区',
+          theme: 'light',
+          viewport: [1100, 760],
+          editorSize: [1100, 760],
+          fixture: 'rich',
+          steps: '插入 → 图示 → 插入图示。默认流程与三节点；不滚动。',
+          selectedFile: null,
+          before: 'captures/before-diagram-wide.png',
+          after: 'captures/after-diagram-wide.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+        {
+          key: 'diagram-medium',
+          title: '图示 · 690栏',
+          theme: 'light',
+          viewport: [690, 600],
+          editorSize: [690, 600],
+          fixture: 'rich',
+          steps: '插入 → 图示 → 插入图示。默认流程与三节点；不滚动。',
+          selectedFile: null,
+          before: 'captures/before-diagram-medium.png',
+          after: 'captures/after-diagram-medium.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+        {
+          key: 'import-dark-short',
+          title: '导入 · 深色短高窄屏',
+          theme: 'dark',
+          viewport: [390, 400],
+          editorSize: [390, 400],
+          fixture: 'rich',
+          steps:
+            '幻灯片 → 导入。尚未选择源文件。基线具名折叠菜单保持原生打开状态；不手动遮盖或滚动。',
+          selectedFile: null,
+          before: 'captures/before-import-dark-short.png',
+          after: 'captures/after-import-dark-short.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+        {
+          key: 'import-preview-dark-short',
+          title: '导入预览 · 深色短高窄屏',
+          theme: 'dark',
+          viewport: [390, 400],
+          editorSize: [390, 400],
+          fixture: 'rich',
+          steps: '幻灯片 → 导入，原生文件选择title-layout.pptx。基线具名折叠菜单保持原生打开状态。',
+          selectedFile: 'title-layout.pptx',
+          before: 'captures/before-import-preview-dark-short.png',
+          after: 'captures/after-import-preview-dark-short.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+          selectedFileSha256: '6025c25cf082c8c14899cc5f470cfc6d1ed97e8b71beeef4cadc418c47be3b68',
+        },
+        {
+          key: 'import-dark-medium',
+          title: '导入 · 深色690栏',
+          theme: 'dark',
+          viewport: [690, 600],
+          editorSize: [690, 600],
+          fixture: 'rich',
+          steps: '幻灯片 → 导入。尚未选择源文件；不滚动。',
+          selectedFile: null,
+          before: 'captures/before-import-dark-medium.png',
+          after: 'captures/after-import-dark-medium.png',
+          baseline: '3b5d912',
+          sameContentThemeSizeRequired: true,
+          fixtureSha256: '71692b8235798e9921936384ea85a0f6e6db7c7031884ba946fb7b1d3ddc9eba',
+        },
+      ],
+      supplements: [],
+      images: [
+        {
+          path: 'captures/before-formula-short.png',
+          width: 390,
+          height: 400,
+          sha256: 'd562c201a7072acd0c24a7bb00dccf03313b3f0491a04f45357ad4a824609632',
+        },
+        {
+          path: 'captures/after-formula-short.png',
+          width: 390,
+          height: 400,
+          sha256: '03096871ed687a103f1534d0cab347190d8cc77c3e237bdc949d4bb81a016dd4',
+        },
+        {
+          path: 'captures/before-diagram-short.png',
+          width: 390,
+          height: 400,
+          sha256: '5b2023a24741b05e06bfb0a2c579940325334185d7bea7d7d824fb757cc1247e',
+        },
+        {
+          path: 'captures/after-diagram-short.png',
+          width: 390,
+          height: 400,
+          sha256: '060fab63758ccd63a57815a5d4a37ba84bb2a8c213ef2ead3ed761b2b9bbeee4',
+        },
+        {
+          path: 'captures/before-formula-wide.png',
+          width: 1100,
+          height: 760,
+          sha256: '8a49ba00783a0208805cf4e4da708eb441b73e06f4043e56047b4367ddc43014',
+        },
+        {
+          path: 'captures/after-formula-wide.png',
+          width: 1100,
+          height: 760,
+          sha256: 'c15977564bcdb173320e54f42c108c772513b430bbadda9e63e94e2d95d9f920',
+        },
+        {
+          path: 'captures/before-diagram-wide.png',
+          width: 1100,
+          height: 760,
+          sha256: '261fe1f45b31aab9fad815909e54c36b5d9ecc0bfe427f25ed61e650e15631b9',
+        },
+        {
+          path: 'captures/after-diagram-wide.png',
+          width: 1100,
+          height: 760,
+          sha256: 'c17b7e768845a3f4719b4bb47e80e4dcdaf00608bb1748dbaa3bb5b8c52ab7ea',
+        },
+        {
+          path: 'captures/before-diagram-medium.png',
+          width: 690,
+          height: 600,
+          sha256: 'e8f8d75e9dcaaddfc32665a9d59b34bcf919978f5dadfe7cdef69e91c45e45b6',
+        },
+        {
+          path: 'captures/after-diagram-medium.png',
+          width: 690,
+          height: 600,
+          sha256: '3eafa211bbd1d0ba1601fafa89baa0de5ce3c7577b4c11c37c39f4e2c81c2411',
+        },
+        {
+          path: 'captures/before-import-dark-short.png',
+          width: 390,
+          height: 400,
+          sha256: '1aa058d851611f5cbfa5f25faf66dc4004c74f4159c0b12ad90557f6a4b6710f',
+        },
+        {
+          path: 'captures/after-import-dark-short.png',
+          width: 390,
+          height: 400,
+          sha256: 'c4a8d5f34d232950bbaa4a73dd1e7616dd158bde27b94d72bd5bdd37d95f248d',
+        },
+        {
+          path: 'captures/before-import-preview-dark-short.png',
+          width: 390,
+          height: 400,
+          sha256: 'b58d35f2eae66f3ac5e5a8967b08934d51c94683bba5fca3ef106b525f82ff7b',
+        },
+        {
+          path: 'captures/after-import-preview-dark-short.png',
+          width: 390,
+          height: 400,
+          sha256: 'f23b9536ab4994debafe294a35228a70ca16ad96d5017e98e591fda81a25cdc2',
+        },
+        {
+          path: 'captures/before-import-dark-medium.png',
+          width: 690,
+          height: 600,
+          sha256: '9fb71a85c68b8395fb9a65cd883783c61027382bbc492f49eb9205e50894f1d6',
+        },
+        {
+          path: 'captures/after-import-dark-medium.png',
+          width: 690,
+          height: 600,
+          sha256: '91c6fb5f25dac370d2298b45e3fac6feb31a48af1aa14f02077743c34dc7cc2d',
+        },
+      ],
+    }
+    const scene = document.querySelector('#scene')
+    const entries = [...data.pairs, ...data.supplements]
+    let mode = 'compare'
+    function render() {
+      const item = entries.find((x) => x.key === scene.value) || entries[0]
+      scene.value = item.key
+      const paired = data.pairs.some((x) => x.key === item.key)
+      document.querySelector('#caption').textContent = paired
+        ? item.theme + ' · 视口与编辑区' + item.viewport.join('×') + ' · ' + item.steps
+        : item.caption
+      for (const variant of ['before', 'after']) {
+        const figure = document.getElementById(variant)
+        figure.classList.toggle(
+          'hidden',
+          (variant === 'before' && !paired) || (mode !== 'compare' && mode !== variant),
+        )
+        if (item[variant]) {
+          figure.querySelector('img').src = item[variant]
+          figure.querySelector('a').href = item[variant]
+        }
+      }
+      document.querySelector('.views').classList.toggle('single', mode !== 'compare' || !paired)
+      document.querySelectorAll('[data-mode]').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.mode === mode))
+        b.disabled = !paired && b.dataset.mode === 'before'
+      })
+      history.replaceState(null, '', '#' + item.key)
+    }
+    scene.addEventListener('change', () => {
+      if (!data.pairs.some((x) => x.key === scene.value)) mode = 'after'
+      render()
+    })
+    document.querySelectorAll('[data-mode]').forEach((b) =>
+      b.addEventListener('click', () => {
+        mode = b.dataset.mode
+        render()
+      }),
+    )
+    scene.value = location.hash.slice(1) || entries[0].key
+    render()
+  </script>
+</html>

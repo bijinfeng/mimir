@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxAnimationPreview.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxAnimationPreview.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 db2a2f881d45b6db40b49556917e17630318de0394276ef8105defc1334de719
+    </p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { useEffect, useRef, type RefObject } from &#x27;react&#x27;</pre></li>
+    <li id="L2"><pre>import {</pre></li>
+    <li id="L3"><pre>  getSlideAnimations,</pre></li>
+    <li id="L4"><pre>  elementSpid,</pre></li>
+    <li id="L5"><pre>  type SlideAnimation,</pre></li>
+    <li id="L6">
+      <pre>} from &#x27;../../vendor/packages/pptx-engine/src/animation.js&#x27;</pre>
+    </li>
+    <li id="L7">
+      <pre>
+import type { Slide, SlideElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L8"><pre></pre></li>
+    <li id="L9"><pre>export interface PptxAnimationPreviewRequest {</pre></li>
+    <li id="L10"><pre>  token: number</pre></li>
+    <li id="L11"><pre>  items?: SlideAnimation[]</pre></li>
+    <li id="L12"><pre>}</pre></li>
+    <li id="L13"><pre>const entrances = new Set([</pre></li>
+    <li id="L14"><pre>  &#x27;appear&#x27;,</pre></li>
+    <li id="L15"><pre>  &#x27;fade&#x27;,</pre></li>
+    <li id="L16"><pre>  &#x27;flyIn&#x27;,</pre></li>
+    <li id="L17"><pre>  &#x27;wipe&#x27;,</pre></li>
+    <li id="L18"><pre>  &#x27;wipeDown&#x27;,</pre></li>
+    <li id="L19"><pre>  &#x27;splitIn&#x27;,</pre></li>
+    <li id="L20"><pre>  &#x27;bounce&#x27;,</pre></li>
+    <li id="L21"><pre>  &#x27;flipIn&#x27;,</pre></li>
+    <li id="L22"><pre>  &#x27;zoom&#x27;,</pre></li>
+    <li id="L23"><pre>])</pre></li>
+    <li id="L24">
+      <pre>
+/** Same M/L/C/Z subset as pinned GenOffice animation-play; cubic paths are sampled, not collapsed to their endpoint. */</pre>
+    </li>
+    <li id="L25">
+      <pre>export function pptxMotionPoints(path: string): { x: number; y: number }[] {</pre>
+    </li>
+    <li id="L26">
+      <pre>  const tokens = path.match(/[MLCZ]|[-+]?(?:\d*\.\d+|\d+)(?:e[-+]?\d+)?/gi) ?? []</pre>
+    </li>
+    <li id="L27"><pre>  const points: { x: number; y: number }[] = []</pre></li>
+    <li id="L28"><pre>  let i = 0,</pre></li>
+    <li id="L29"><pre>    x = 0,</pre></li>
+    <li id="L30"><pre>    y = 0,</pre></li>
+    <li id="L31"><pre>    sx = 0,</pre></li>
+    <li id="L32"><pre>    sy = 0,</pre></li>
+    <li id="L33"><pre>    command = &#x27;&#x27;</pre></li>
+    <li id="L34"><pre>  const number = () =&gt; Number(tokens[i++])</pre></li>
+    <li id="L35"><pre>  while (i &lt; tokens.length) {</pre></li>
+    <li id="L36">
+      <pre>    if (/^[MLCZ]$/i.test(tokens[i]!)) command = tokens[i++]!.toUpperCase()</pre>
+    </li>
+    <li id="L37"><pre>    if (command === &#x27;Z&#x27;) {</pre></li>
+    <li id="L38"><pre>      points.push({ x: sx, y: sy })</pre></li>
+    <li id="L39"><pre>      x = sx</pre></li>
+    <li id="L40"><pre>      y = sy</pre></li>
+    <li id="L41"><pre>      command = &#x27;&#x27;</pre></li>
+    <li id="L42"><pre>      continue</pre></li>
+    <li id="L43"><pre>    }</pre></li>
+    <li id="L44">
+      <pre>
+    const count = command === &#x27;C&#x27; ? 6 : command === &#x27;M&#x27; || command === &#x27;L&#x27; ? 2 : 0</pre>
+    </li>
+    <li id="L45"><pre>    if (</pre></li>
+    <li id="L46"><pre>      !count ||</pre></li>
+    <li id="L47"><pre>      i + count &gt; tokens.length ||</pre></li>
+    <li id="L48">
+      <pre>
+      tokens.slice(i, i + count).some((token) =&gt; !Number.isFinite(Number(token)))</pre>
+    </li>
+    <li id="L49"><pre>    ) {</pre></li>
+    <li id="L50"><pre>      i++</pre></li>
+    <li id="L51"><pre>      continue</pre></li>
+    <li id="L52"><pre>    }</pre></li>
+    <li id="L53"><pre>    if (command === &#x27;C&#x27;) {</pre></li>
+    <li id="L54"><pre>      const x1 = number(),</pre></li>
+    <li id="L55"><pre>        y1 = number(),</pre></li>
+    <li id="L56"><pre>        x2 = number(),</pre></li>
+    <li id="L57"><pre>        y2 = number(),</pre></li>
+    <li id="L58"><pre>        ex = number(),</pre></li>
+    <li id="L59"><pre>        ey = number()</pre></li>
+    <li id="L60"><pre>      for (let j = 1; j &lt;= 24; j++) {</pre></li>
+    <li id="L61"><pre>        const t = j / 24,</pre></li>
+    <li id="L62"><pre>          u = 1 - t</pre></li>
+    <li id="L63"><pre>        points.push({</pre></li>
+    <li id="L64">
+      <pre>
+          x: u * u * u * x + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * ex,</pre>
+    </li>
+    <li id="L65">
+      <pre>
+          y: u * u * u * y + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * ey,</pre>
+    </li>
+    <li id="L66"><pre>        })</pre></li>
+    <li id="L67"><pre>      }</pre></li>
+    <li id="L68"><pre>      x = ex</pre></li>
+    <li id="L69"><pre>      y = ey</pre></li>
+    <li id="L70"><pre>    } else {</pre></li>
+    <li id="L71"><pre>      x = number()</pre></li>
+    <li id="L72"><pre>      y = number()</pre></li>
+    <li id="L73"><pre>      points.push({ x, y })</pre></li>
+    <li id="L74"><pre>      if (command === &#x27;M&#x27;) {</pre></li>
+    <li id="L75"><pre>        sx = x</pre></li>
+    <li id="L76"><pre>        sy = y</pre></li>
+    <li id="L77"><pre>        command = &#x27;L&#x27;</pre></li>
+    <li id="L78"><pre>      }</pre></li>
+    <li id="L79"><pre>    }</pre></li>
+    <li id="L80"><pre>  }</pre></li>
+    <li id="L81"><pre>  return points.length ? points : [{ x: 0, y: 0 }]</pre></li>
+    <li id="L82"><pre>}</pre></li>
+    <li id="L83"><pre>export function pptxAnimationFrames(</pre></li>
+    <li id="L84"><pre>  item: SlideAnimation,</pre></li>
+    <li id="L85"><pre>  width: number,</pre></li>
+    <li id="L86"><pre>  height: number,</pre></li>
+    <li id="L87"><pre>  reduced = false,</pre></li>
+    <li id="L88"><pre>): Keyframe[] {</pre></li>
+    <li id="L89">
+      <pre>
+  if (reduced) return [{ opacity: entrances.has(item.effect) ? 0.6 : 1 }, { opacity: 1 }]</pre>
+    </li>
+    <li id="L90"><pre>  const side = item.direction ?? &#x27;bottom&#x27;</pre></li>
+    <li id="L91"><pre>  const offset =</pre></li>
+    <li id="L92"><pre>    side === &#x27;left&#x27;</pre></li>
+    <li id="L93"><pre>      ? `${-width}px 0px`</pre></li>
+    <li id="L94"><pre>      : side === &#x27;right&#x27;</pre></li>
+    <li id="L95"><pre>        ? `${width}px 0px`</pre></li>
+    <li id="L96"><pre>        : side === &#x27;top&#x27;</pre></li>
+    <li id="L97"><pre>          ? `0px ${-height}px`</pre></li>
+    <li id="L98"><pre>          : `0px ${height}px`</pre></li>
+    <li id="L99"><pre>  const wipe =</pre></li>
+    <li id="L100"><pre>    side === &#x27;left&#x27;</pre></li>
+    <li id="L101"><pre>      ? &#x27;0 100% 0 0&#x27;</pre></li>
+    <li id="L102"><pre>      : side === &#x27;right&#x27;</pre></li>
+    <li id="L103"><pre>        ? &#x27;0 0 0 100%&#x27;</pre></li>
+    <li id="L104"><pre>        : side === &#x27;top&#x27;</pre></li>
+    <li id="L105"><pre>          ? &#x27;0 0 100% 0&#x27;</pre></li>
+    <li id="L106"><pre>          : &#x27;100% 0 0 0&#x27;</pre></li>
+    <li id="L107"><pre>  switch (item.effect) {</pre></li>
+    <li id="L108"><pre>    case &#x27;appear&#x27;:</pre></li>
+    <li id="L109"><pre>    case &#x27;fade&#x27;:</pre></li>
+    <li id="L110"><pre>      return [{ opacity: 0 }, { opacity: 1 }]</pre></li>
+    <li id="L111"><pre>    case &#x27;disappear&#x27;:</pre></li>
+    <li id="L112"><pre>    case &#x27;fadeOut&#x27;:</pre></li>
+    <li id="L113"><pre>      return [{ opacity: 1 }, { opacity: 0 }]</pre></li>
+    <li id="L114"><pre>    case &#x27;flyIn&#x27;:</pre></li>
+    <li id="L115"><pre>      return [</pre></li>
+    <li id="L116"><pre>        { opacity: 0, translate: offset },</pre></li>
+    <li id="L117"><pre>        { opacity: 1, translate: &#x27;0px 0px&#x27; },</pre></li>
+    <li id="L118"><pre>      ]</pre></li>
+    <li id="L119"><pre>    case &#x27;flyOut&#x27;:</pre></li>
+    <li id="L120"><pre>      return [</pre></li>
+    <li id="L121"><pre>        { opacity: 1, translate: &#x27;0px 0px&#x27; },</pre></li>
+    <li id="L122"><pre>        { opacity: 0, translate: offset },</pre></li>
+    <li id="L123"><pre>      ]</pre></li>
+    <li id="L124"><pre>    case &#x27;wipe&#x27;:</pre></li>
+    <li id="L125">
+      <pre>
+      return [{ clipPath: `inset(${wipe})` }, { clipPath: &#x27;inset(0 0 0 0)&#x27; }]</pre>
+    </li>
+    <li id="L126"><pre>    case &#x27;wipeDown&#x27;:</pre></li>
+    <li id="L127">
+      <pre>
+      return [{ clipPath: &#x27;inset(0 0 100% 0)&#x27; }, { clipPath: &#x27;inset(0 0 0 0)&#x27; }]</pre>
+    </li>
+    <li id="L128"><pre>    case &#x27;wipeOut&#x27;:</pre></li>
+    <li id="L129">
+      <pre>
+      return [{ clipPath: &#x27;inset(0 0 0 0)&#x27; }, { clipPath: `inset(${wipe})` }]</pre>
+    </li>
+    <li id="L130"><pre>    case &#x27;splitIn&#x27;:</pre></li>
+    <li id="L131">
+      <pre>
+      return [{ clipPath: &#x27;inset(50% 0 50% 0)&#x27; }, { clipPath: &#x27;inset(0 0 0 0)&#x27; }]</pre>
+    </li>
+    <li id="L132"><pre>    case &#x27;zoom&#x27;:</pre></li>
+    <li id="L133"><pre>      return [</pre></li>
+    <li id="L134"><pre>        { scale: &#x27;0.01&#x27;, opacity: 0 },</pre></li>
+    <li id="L135"><pre>        { scale: &#x27;1&#x27;, opacity: 1 },</pre></li>
+    <li id="L136"><pre>      ]</pre></li>
+    <li id="L137"><pre>    case &#x27;zoomOut&#x27;:</pre></li>
+    <li id="L138"><pre>      return [</pre></li>
+    <li id="L139"><pre>        { scale: &#x27;1&#x27;, opacity: 1 },</pre></li>
+    <li id="L140"><pre>        { scale: &#x27;0.01&#x27;, opacity: 0 },</pre></li>
+    <li id="L141"><pre>      ]</pre></li>
+    <li id="L142"><pre>    case &#x27;shrink&#x27;:</pre></li>
+    <li id="L143"><pre>      return [</pre></li>
+    <li id="L144">
+      <pre>        { scale: &#x27;1&#x27;, rotate: &#x27;0deg&#x27;, opacity: 1 },</pre>
+    </li>
+    <li id="L145">
+      <pre>        { scale: &#x27;0.01&#x27;, rotate: &#x27;-90deg&#x27;, opacity: 0 },</pre>
+    </li>
+    <li id="L146"><pre>      ]</pre></li>
+    <li id="L147"><pre>    case &#x27;pulse&#x27;:</pre></li>
+    <li id="L148">
+      <pre>
+      return [{ scale: &#x27;1&#x27; }, { scale: &#x27;1.08&#x27;, offset: 0.5 }, { scale: &#x27;1&#x27; }]</pre>
+    </li>
+    <li id="L149"><pre>    case &#x27;spin&#x27;:</pre></li>
+    <li id="L150">
+      <pre>      return [{ rotate: &#x27;0deg&#x27; }, { rotate: &#x27;360deg&#x27; }]</pre>
+    </li>
+    <li id="L151"><pre>    case &#x27;grow&#x27;:</pre></li>
+    <li id="L152">
+      <pre>      return [{ scale: &#x27;1&#x27; }, { scale: &#x27;1.5&#x27; }]</pre>
+    </li>
+    <li id="L153"><pre>    case &#x27;teeter&#x27;:</pre></li>
+    <li id="L154"><pre>      return [</pre></li>
+    <li id="L155"><pre>        { rotate: &#x27;0deg&#x27; },</pre></li>
+    <li id="L156"><pre>        { rotate: &#x27;-8deg&#x27;, offset: 0.25 },</pre></li>
+    <li id="L157"><pre>        { rotate: &#x27;5deg&#x27;, offset: 0.65 },</pre></li>
+    <li id="L158"><pre>        { rotate: &#x27;0deg&#x27; },</pre></li>
+    <li id="L159"><pre>      ]</pre></li>
+    <li id="L160"><pre>    case &#x27;bounce&#x27;:</pre></li>
+    <li id="L161"><pre>      return [</pre></li>
+    <li id="L162"><pre>        { translate: `0px ${-height * 0.25}px` },</pre></li>
+    <li id="L163"><pre>        { translate: &#x27;0px 0px&#x27;, offset: 0.55 },</pre></li>
+    <li id="L164"><pre>        { translate: `0px ${-height * 0.06}px`, offset: 0.72 },</pre></li>
+    <li id="L165"><pre>        { translate: &#x27;0px 0px&#x27;, offset: 0.88 },</pre></li>
+    <li id="L166"><pre>        { translate: `0px ${-height * 0.015}px`, offset: 0.94 },</pre></li>
+    <li id="L167"><pre>        { translate: &#x27;0px 0px&#x27; },</pre></li>
+    <li id="L168"><pre>      ]</pre></li>
+    <li id="L169"><pre>    case &#x27;flipIn&#x27;:</pre></li>
+    <li id="L170"><pre>      return [</pre></li>
+    <li id="L171"><pre>        { scale: &#x27;0.01 1&#x27;, opacity: 0 },</pre></li>
+    <li id="L172"><pre>        { scale: &#x27;1 1&#x27;, opacity: 1 },</pre></li>
+    <li id="L173"><pre>      ]</pre></li>
+    <li id="L174"><pre>    case &#x27;motionPath&#x27;: {</pre></li>
+    <li id="L175">
+      <pre>
+      const points = pptxMotionPoints(item.motionPath ?? &#x27;M 0 0 L 0.25 0&#x27;),</pre>
+    </li>
+    <li id="L176"><pre>        first = points[0]!</pre></li>
+    <li id="L177"><pre>      const lengths = [0]</pre></li>
+    <li id="L178"><pre>      for (let i = 1; i &lt; points.length; i++)</pre></li>
+    <li id="L179"><pre>        lengths.push(</pre></li>
+    <li id="L180"><pre>          lengths[i - 1]! +</pre></li>
+    <li id="L181">
+      <pre>
+            Math.hypot(points[i]!.x - points[i - 1]!.x, points[i]!.y - points[i - 1]!.y),</pre>
+    </li>
+    <li id="L182"><pre>        )</pre></li>
+    <li id="L183"><pre>      const length = lengths.at(-1)!</pre></li>
+    <li id="L184"><pre>      return points.map((point, i) =&gt; ({</pre></li>
+    <li id="L185">
+      <pre>
+        translate: `${(point.x - first.x) * width}px ${(point.y - first.y) * height}px`,</pre>
+    </li>
+    <li id="L186">
+      <pre>        offset: length ? lengths[i]! / length : i / Math.max(1, points.length - 1),</pre>
+    </li>
+    <li id="L187"><pre>      }))</pre></li>
+    <li id="L188"><pre>    }</pre></li>
+    <li id="L189"><pre>    default:</pre></li>
+    <li id="L190"><pre>      return [{ opacity: 1 }, { opacity: 1 }]</pre></li>
+    <li id="L191"><pre>  }</pre></li>
+    <li id="L192"><pre>}</pre></li>
+    <li id="L193"><pre>export function pptxPreviewSchedule(items: SlideAnimation[]) {</pre></li>
+    <li id="L194"><pre>  let stepBase = 0,</pre></li>
+    <li id="L195"><pre>    previousStart = 0,</pre></li>
+    <li id="L196"><pre>    previousEnd = 0,</pre></li>
+    <li id="L197"><pre>    stepEnd = 0</pre></li>
+    <li id="L198"><pre>  return items.map((item, index) =&gt; {</pre></li>
+    <li id="L199"><pre>    if (item.trigger === &#x27;onClick&#x27;) {</pre></li>
+    <li id="L200"><pre>      if (index &gt; 0) stepBase = stepEnd + 180</pre></li>
+    <li id="L201"><pre>      previousStart = 0</pre></li>
+    <li id="L202"><pre>      previousEnd = 0</pre></li>
+    <li id="L203"><pre>    }</pre></li>
+    <li id="L204"><pre>    const start =</pre></li>
+    <li id="L205"><pre>      (item.trigger === &#x27;afterPrev&#x27;</pre></li>
+    <li id="L206"><pre>        ? previousEnd</pre></li>
+    <li id="L207"><pre>        : item.trigger === &#x27;withPrev&#x27;</pre></li>
+    <li id="L208"><pre>          ? previousStart</pre></li>
+    <li id="L209"><pre>          : 0) + item.delayMs</pre></li>
+    <li id="L210"><pre>    previousStart = start</pre></li>
+    <li id="L211"><pre>    previousEnd = start + Math.max(1, item.durationMs)</pre></li>
+    <li id="L212"><pre>    stepEnd = Math.max(stepEnd, stepBase + previousEnd)</pre></li>
+    <li id="L213"><pre>    return { item, startMs: stepBase + start }</pre></li>
+    <li id="L214"><pre>  })</pre></li>
+    <li id="L215"><pre>}</pre></li>
+    <li id="L216">
+      <pre>
+function elementForSpid(elements: readonly SlideElement[], spid: number): SlideElement | undefined {</pre>
+    </li>
+    <li id="L217"><pre>  for (const element of elements) {</pre></li>
+    <li id="L218"><pre>    if (elementSpid(element) === spid) return element</pre></li>
+    <li id="L219"><pre>    if (element.type === &#x27;group&#x27;) {</pre></li>
+    <li id="L220"><pre>      const found = elementForSpid(element.children, spid)</pre></li>
+    <li id="L221"><pre>      if (found) return found</pre></li>
+    <li id="L222"><pre>    }</pre></li>
+    <li id="L223"><pre>  }</pre></li>
+    <li id="L224"><pre>  return undefined</pre></li>
+    <li id="L225"><pre>}</pre></li>
+    <li id="L226">
+      <pre>
+/** Transient playback on the existing editing SVG. Cleanup restores the untouched author DOM. */</pre>
+    </li>
+    <li id="L227"><pre>export function PptxAnimationPreview({</pre></li>
+    <li id="L228"><pre>  host,</pre></li>
+    <li id="L229"><pre>  slide,</pre></li>
+    <li id="L230"><pre>  version,</pre></li>
+    <li id="L231"><pre>  selectionKey,</pre></li>
+    <li id="L232"><pre>  request,</pre></li>
+    <li id="L233"><pre>  onEnd,</pre></li>
+    <li id="L234"><pre>}: {</pre></li>
+    <li id="L235"><pre>  host: RefObject&lt;HTMLElement | null&gt;</pre></li>
+    <li id="L236"><pre>  slide: Slide</pre></li>
+    <li id="L237"><pre>  version: number</pre></li>
+    <li id="L238"><pre>  selectionKey: string</pre></li>
+    <li id="L239"><pre>  request: PptxAnimationPreviewRequest | null</pre></li>
+    <li id="L240"><pre>  onEnd?: () =&gt; void</pre></li>
+    <li id="L241"><pre>}) {</pre></li>
+    <li id="L242"><pre>  const bound = useRef&lt;{</pre></li>
+    <li id="L243"><pre>    request: PptxAnimationPreviewRequest</pre></li>
+    <li id="L244"><pre>    path: string</pre></li>
+    <li id="L245"><pre>    version: number</pre></li>
+    <li id="L246"><pre>    selectionKey: string</pre></li>
+    <li id="L247"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L248"><pre>  const callback = useRef(onEnd)</pre></li>
+    <li id="L249"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L250"><pre>    callback.current = onEnd</pre></li>
+    <li id="L251"><pre>  })</pre></li>
+    <li id="L252"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L253"><pre>    const container = host.current</pre></li>
+    <li id="L254"><pre>    if (!container || !request) {</pre></li>
+    <li id="L255"><pre>      bound.current = null</pre></li>
+    <li id="L256"><pre>      return</pre></li>
+    <li id="L257"><pre>    }</pre></li>
+    <li id="L258"><pre>    if (</pre></li>
+    <li id="L259"><pre>      bound.current?.request === request &amp;&amp;</pre></li>
+    <li id="L260"><pre>      (bound.current.path !== slide.path ||</pre></li>
+    <li id="L261"><pre>        bound.current.version !== version ||</pre></li>
+    <li id="L262"><pre>        bound.current.selectionKey !== selectionKey)</pre></li>
+    <li id="L263"><pre>    ) {</pre></li>
+    <li id="L264"><pre>      callback.current?.()</pre></li>
+    <li id="L265"><pre>      return</pre></li>
+    <li id="L266"><pre>    }</pre></li>
+    <li id="L267">
+      <pre>    bound.current = { request, path: slide.path, version, selectionKey }</pre>
+    </li>
+    <li id="L268"><pre>    const svg = container.querySelector(&#x27;svg&#x27;)</pre></li>
+    <li id="L269"><pre>    if (!svg) return</pre></li>
+    <li id="L270">
+      <pre>    const box = svg.getAttribute(&#x27;viewBox&#x27;)?.split(/[ ,]+/).map(Number)</pre>
+    </li>
+    <li id="L271">
+      <pre>    const width = box?.[2] || Number(svg.getAttribute(&#x27;width&#x27;)) || 1000,</pre>
+    </li>
+    <li id="L272">
+      <pre>      height = box?.[3] || Number(svg.getAttribute(&#x27;height&#x27;)) || 562.5</pre>
+    </li>
+    <li id="L273">
+      <pre>
+    const reduced = window.matchMedia?.(&#x27;(prefers-reduced-motion: reduce)&#x27;).matches ?? false</pre>
+    </li>
+    <li id="L274"><pre>    const animations: Animation[] = [],</pre></li>
+    <li id="L275"><pre>      styles = new Map&lt;SVGElement, string | null&gt;()</pre></li>
+    <li id="L276">
+      <pre>
+    const schedule = pptxPreviewSchedule(request.items ?? getSlideAnimations(slide))</pre>
+    </li>
+    <li id="L277"><pre>    const starts: ReturnType&lt;typeof setTimeout&gt;[] = []</pre></li>
+    <li id="L278"><pre>    const opacity = new Map&lt;SVGElement, string&gt;()</pre></li>
+    <li id="L279"><pre>    let stopped = false,</pre></li>
+    <li id="L280"><pre>      end = 0</pre></li>
+    <li id="L281"><pre>    for (const { item, startMs } of schedule) {</pre></li>
+    <li id="L282"><pre>      if (item.effect.startsWith(&#x27;media&#x27;)) continue</pre></li>
+    <li id="L283"><pre>      const source = elementForSpid(slide.elements, item.spid)</pre></li>
+    <li id="L284"><pre>      const shape =</pre></li>
+    <li id="L285"><pre>        source &amp;&amp;</pre></li>
+    <li id="L286">
+      <pre>
+        [...container.querySelectorAll&lt;SVGElement&gt;(&#x27;[data-element-id]&#x27;)].find(</pre>
+    </li>
+    <li id="L287"><pre>          (node) =&gt; node.dataset.elementId === source.id,</pre></li>
+    <li id="L288"><pre>        )</pre></li>
+    <li id="L289"><pre>      const target =</pre></li>
+    <li id="L290"><pre>        item.paragraph === undefined</pre></li>
+    <li id="L291"><pre>          ? shape</pre></li>
+    <li id="L292">
+      <pre>
+          : shape?.querySelector&lt;SVGElement&gt;(`[data-pptx-paragraph=&quot;${item.paragraph}&quot;]`)</pre>
+    </li>
+    <li id="L293"><pre>      if (!target?.animate) continue</pre></li>
+    <li id="L294"><pre>      if (!styles.has(target)) {</pre></li>
+    <li id="L295"><pre>        styles.set(target, target.getAttribute(&#x27;style&#x27;))</pre></li>
+    <li id="L296"><pre>        opacity.set(target, target.style.opacity)</pre></li>
+    <li id="L297">
+      <pre>        if (entrances.has(item.effect)) target.style.opacity = &#x27;0&#x27;</pre>
+    </li>
+    <li id="L298"><pre>      }</pre></li>
+    <li id="L299"><pre>      target.style.transformBox = &#x27;fill-box&#x27;</pre></li>
+    <li id="L300"><pre>      target.style.transformOrigin = &#x27;center&#x27;</pre></li>
+    <li id="L301">
+      <pre>      const duration = reduced ? 100 : Math.max(1, item.durationMs),</pre>
+    </li>
+    <li id="L302"><pre>        delay = reduced ? Math.min(startMs, 300) : startMs</pre></li>
+    <li id="L303"><pre>      const play = () =&gt; {</pre></li>
+    <li id="L304"><pre>        if (stopped) return</pre></li>
+    <li id="L305"><pre>        const authorOpacity = opacity.get(target)!</pre></li>
+    <li id="L306"><pre>        if (authorOpacity) target.style.opacity = authorOpacity</pre></li>
+    <li id="L307"><pre>        else target.style.removeProperty(&#x27;opacity&#x27;)</pre></li>
+    <li id="L308"><pre>        animations.push(</pre></li>
+    <li id="L309">
+      <pre>          target.animate(pptxAnimationFrames(item, width, height, reduced), {</pre>
+    </li>
+    <li id="L310"><pre>            duration,</pre></li>
+    <li id="L311"><pre>            fill: &#x27;forwards&#x27;,</pre></li>
+    <li id="L312">
+      <pre>
+            easing: item.effect === &#x27;motionPath&#x27; ? &#x27;linear&#x27; : &#x27;ease-out&#x27;,</pre>
+    </li>
+    <li id="L313"><pre>          }),</pre></li>
+    <li id="L314"><pre>        )</pre></li>
+    <li id="L315"><pre>      }</pre></li>
+    <li id="L316">
+      <pre>
+      // Future effects must not apply their backwards fill over an earlier effect on the same shape.</pre>
+    </li>
+    <li id="L317"><pre>      if (delay === 0) play()</pre></li>
+    <li id="L318"><pre>      else starts.push(setTimeout(play, delay))</pre></li>
+    <li id="L319"><pre>      end = Math.max(end, delay + duration)</pre></li>
+    <li id="L320"><pre>    }</pre></li>
+    <li id="L321"><pre>    const restore = () =&gt; {</pre></li>
+    <li id="L322"><pre>      if (stopped) return</pre></li>
+    <li id="L323"><pre>      stopped = true</pre></li>
+    <li id="L324"><pre>      starts.forEach(clearTimeout)</pre></li>
+    <li id="L325"><pre>      animations.forEach((animation) =&gt; animation.cancel())</pre></li>
+    <li id="L326"><pre>      styles.forEach((style, node) =&gt; {</pre></li>
+    <li id="L327">
+      <pre>        if (style === null) node.removeAttribute(&#x27;style&#x27;)</pre>
+    </li>
+    <li id="L328"><pre>        else node.setAttribute(&#x27;style&#x27;, style)</pre></li>
+    <li id="L329"><pre>      })</pre></li>
+    <li id="L330"><pre>    }</pre></li>
+    <li id="L331"><pre>    const stop = () =&gt; {</pre></li>
+    <li id="L332"><pre>      if (stopped) return</pre></li>
+    <li id="L333"><pre>      restore()</pre></li>
+    <li id="L334"><pre>      callback.current?.()</pre></li>
+    <li id="L335"><pre>    }</pre></li>
+    <li id="L336"><pre>    const timer = setTimeout(stop, end + 150)</pre></li>
+    <li id="L337"><pre>    const escape = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L338">
+      <pre>
+      if (!stopped &amp;&amp; event.key === &#x27;Escape&#x27; &amp;&amp; !event.defaultPrevented) {</pre>
+    </li>
+    <li id="L339"><pre>        event.preventDefault()</pre></li>
+    <li id="L340"><pre>        event.stopPropagation()</pre></li>
+    <li id="L341"><pre>        stop()</pre></li>
+    <li id="L342"><pre>      }</pre></li>
+    <li id="L343"><pre>    }</pre></li>
+    <li id="L344"><pre>    container.addEventListener(&#x27;pointerdown&#x27;, stop)</pre></li>
+    <li id="L345"><pre>    window.addEventListener(&#x27;keydown&#x27;, escape, true)</pre></li>
+    <li id="L346"><pre>    window.addEventListener(&#x27;blur&#x27;, stop)</pre></li>
+    <li id="L347"><pre>    return () =&gt; {</pre></li>
+    <li id="L348"><pre>      clearTimeout(timer)</pre></li>
+    <li id="L349"><pre>      container.removeEventListener(&#x27;pointerdown&#x27;, stop)</pre></li>
+    <li id="L350">
+      <pre>      window.removeEventListener(&#x27;keydown&#x27;, escape, true)</pre>
+    </li>
+    <li id="L351"><pre>      window.removeEventListener(&#x27;blur&#x27;, stop)</pre></li>
+    <li id="L352"><pre>      restore()</pre></li>
+    <li id="L353"><pre>    }</pre></li>
+    <li id="L354"><pre>  }, [host, slide, version, selectionKey, request])</pre></li>
+    <li id="L355"><pre>  return null</pre></li>
+    <li id="L356"><pre>}</pre></li>
+  </ol>
+</html>

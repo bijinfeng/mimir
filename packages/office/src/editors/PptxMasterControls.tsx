@@ -101,6 +101,7 @@ export function PptxMasterControls({
       <ToolbarMenuFields label="母版与版式">
         <ToolbarSelect
           label="编辑范围"
+          disabled={busy}
           value={partPath}
           options={parts.map((item) => ({
             value: item.partPath,
@@ -120,6 +121,7 @@ export function PptxMasterControls({
         )}
         <ToolbarSelect
           label="母版对象"
+          disabled={busy}
           value={elementId}
           options={[
             { value: '', label: '请选择对象' },

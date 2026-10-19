@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxZoomControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxZoomControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 7dac1ec05fff94d3f15a1225c53d5e71805de133e6d1ca6154a3f902ec824307
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useMemo, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { ImagePlus, LoaderCircle } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import type { PptxManualZoom, PptxZoomMode } from &#x27;../../../shared/src/pptx-zoom.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import { PPTX_ZOOM_MAX_BASE64, PPTX_ZOOM_MAX_TILES } from &#x27;../../../shared/src/pptx-zoom.js&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>import { renderSlide, type PptxRenderable } from &#x27;../pptx-render.js&#x27;</pre>
+    </li>
+    <li id="L6">
+      <pre>import { pptxZoomGroups, type ZoomSection } from &#x27;../pptx-zoom.js&#x27;</pre>
+    </li>
+    <li id="L7"><pre>import {</pre></li>
+    <li id="L8"><pre>  ToolbarButton,</pre></li>
+    <li id="L9"><pre>  ToolbarMenuFields,</pre></li>
+    <li id="L10"><pre>  ToolbarMenuNote,</pre></li>
+    <li id="L11"><pre>  ToolbarPropertyForm,</pre></li>
+    <li id="L12"><pre>  ToolbarSelect,</pre></li>
+    <li id="L13"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L14">
+      <pre>import { pptxSlideOutline } from &#x27;./PptxWorkspaceViews.js&#x27;</pre>
+    </li>
+    <li id="L15"><pre>import { pptxZoomSnapshot } from &#x27;./pptx-zoom-raster.js&#x27;</pre></li>
+    <li id="L16"><pre>import &#x27;./pptx-zoom-controls.css&#x27;</pre></li>
+    <li id="L17"><pre></pre></li>
+    <li id="L18"><pre>export const pptxZoomModes = [</pre></li>
+    <li id="L19"><pre>  { value: &#x27;slide&#x27;, label: &#x27;幻灯片缩放&#x27; },</pre></li>
+    <li id="L20"><pre>  { value: &#x27;section&#x27;, label: &#x27;节缩放&#x27; },</pre></li>
+    <li id="L21"><pre>  { value: &#x27;summary&#x27;, label: &#x27;摘要缩放&#x27; },</pre></li>
+    <li id="L22"><pre>] as const</pre></li>
+    <li id="L23"><pre>export interface PptxZoomControlsProps {</pre></li>
+    <li id="L24"><pre>  deck: PptxRenderable</pre></li>
+    <li id="L25"><pre>  sections: readonly ZoomSection[]</pre></li>
+    <li id="L26"><pre>  slideIndex: number</pre></li>
+    <li id="L27"><pre>  version: number</pre></li>
+    <li id="L28"><pre>  initialMode?: PptxZoomMode</pre></li>
+    <li id="L29"><pre>  disabled?: boolean</pre></li>
+    <li id="L30">
+      <pre>  applyZoom(input: PptxManualZoom, signal: AbortSignal): Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L31">
+      <pre>
+  /** Injection for focused component tests; production always uses the current-canvas rasterizer. */</pre>
+    </li>
+    <li id="L32"><pre>  snapshot?: typeof pptxZoomSnapshot</pre></li>
+    <li id="L33"><pre>}</pre></li>
+    <li id="L34"><pre>export function PptxZoomControls(props: PptxZoomControlsProps) {</pre></li>
+    <li id="L35">
+      <pre>
+  return &lt;ZoomEditor key={`${props.version}:${props.slideIndex}`} {...props} /&gt;</pre>
+    </li>
+    <li id="L36"><pre>}</pre></li>
+    <li id="L37"><pre>function ZoomEditor({</pre></li>
+    <li id="L38"><pre>  deck,</pre></li>
+    <li id="L39"><pre>  sections,</pre></li>
+    <li id="L40"><pre>  slideIndex,</pre></li>
+    <li id="L41"><pre>  initialMode = &#x27;slide&#x27;,</pre></li>
+    <li id="L42"><pre>  disabled,</pre></li>
+    <li id="L43"><pre>  applyZoom,</pre></li>
+    <li id="L44"><pre>  snapshot = pptxZoomSnapshot,</pre></li>
+    <li id="L45"><pre>}: PptxZoomControlsProps) {</pre></li>
+    <li id="L46"><pre>  const [mode, setMode] = useState&lt;PptxZoomMode&gt;(initialMode)</pre></li>
+    <li id="L47"><pre>  const [selected, setSelected] = useState&lt;string[]&gt;([])</pre></li>
+    <li id="L48"><pre>  const [preview, setPreview] = useState&lt;number | null&gt;(null)</pre></li>
+    <li id="L49"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L50"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L51"><pre>  const operation = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L52"><pre>  useEffect(() =&gt; () =&gt; operation.current?.abort(), [])</pre></li>
+    <li id="L53"><pre>  const slides = deck.slides()</pre></li>
+    <li id="L54">
+      <pre>
+  const titles = useMemo(() =&gt; deck.slides().map((slide) =&gt; pptxSlideOutline(slide).title), [deck])</pre>
+    </li>
+    <li id="L55"><pre>  const entries =</pre></li>
+    <li id="L56"><pre>    mode === &#x27;section&#x27;</pre></li>
+    <li id="L57">
+      <pre>      ? pptxZoomGroups(sections, slides.length).map((group) =&gt; ({</pre>
+    </li>
+    <li id="L58"><pre>          index: group.start,</pre></li>
+    <li id="L59"><pre>          title: group.name || &#x27;默认节&#x27;,</pre></li>
+    <li id="L60"><pre>          detail: `第 ${group.start + 1}–${group.end} 页`,</pre></li>
+    <li id="L61"><pre>        }))</pre></li>
+    <li id="L62">
+      <pre>
+      : slides.map((_, index) =&gt; ({ index, title: titles[index]!, detail: `第 ${index + 1} 页` }))</pre>
+    </li>
+    <li id="L63">
+      <pre>
+  const chosen = entries.filter((entry) =&gt; selected.includes(slides[entry.index]!.path))</pre>
+    </li>
+    <li id="L64"><pre>  const activePreview =</pre></li>
+    <li id="L65">
+      <pre>    preview !== null &amp;&amp; entries.some((entry) =&gt; entry.index === preview)</pre>
+    </li>
+    <li id="L66"><pre>      ? preview</pre></li>
+    <li id="L67"><pre>      : (chosen[0]?.index ?? entries[0]?.index)</pre></li>
+    <li id="L68"><pre>  const rendered =</pre></li>
+    <li id="L69"><pre>    activePreview === undefined</pre></li>
+    <li id="L70"><pre>      ? null</pre></li>
+    <li id="L71">
+      <pre>
+      : renderSlide(deck, activePreview, { fitWidthPx: 320, svgIdPrefix: &#x27;zoom-preview&#x27; })</pre>
+    </li>
+    <li id="L72"><pre>  const select = (index: number) =&gt; {</pre></li>
+    <li id="L73"><pre>    const path = slides[index]!.path</pre></li>
+    <li id="L74"><pre>    setSelected((current) =&gt;</pre></li>
+    <li id="L75"><pre>      current.includes(path)</pre></li>
+    <li id="L76"><pre>        ? current.filter((item) =&gt; item !== path)</pre></li>
+    <li id="L77"><pre>        : current.length &lt; PPTX_ZOOM_MAX_TILES</pre></li>
+    <li id="L78"><pre>          ? [...current, path]</pre></li>
+    <li id="L79"><pre>          : current,</pre></li>
+    <li id="L80"><pre>    )</pre></li>
+    <li id="L81"><pre>    setPreview(index)</pre></li>
+    <li id="L82"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L83"><pre>  }</pre></li>
+    <li id="L84"><pre>  const insert = async () =&gt; {</pre></li>
+    <li id="L85"><pre>    if (operation.current || disabled || !chosen.length) return</pre></li>
+    <li id="L86"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L87"><pre>    operation.current = controller</pre></li>
+    <li id="L88"><pre>    setBusy(true)</pre></li>
+    <li id="L89"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L90"><pre>    try {</pre></li>
+    <li id="L91"><pre>      const targets: PptxManualZoom[&#x27;targets&#x27;] = []</pre></li>
+    <li id="L92"><pre>      for (const entry of chosen) {</pre></li>
+    <li id="L93">
+      <pre>        const png = await snapshot(deck, entry.index, controller.signal)</pre>
+    </li>
+    <li id="L94"><pre>        if (controller.signal.aborted) return</pre></li>
+    <li id="L95"><pre>        targets.push({ slide: entry.index, png })</pre></li>
+    <li id="L96">
+      <pre>
+        if (targets.reduce((sum, item) =&gt; sum + item.png.length, 0) &gt; PPTX_ZOOM_MAX_BASE64)</pre>
+    </li>
+    <li id="L97">
+      <pre>          throw new Error(&#x27;所选快照总大小过大，请减少幻灯片后重试&#x27;)</pre>
+    </li>
+    <li id="L98"><pre>      }</pre></li>
+    <li id="L99">
+      <pre>
+      if (await applyZoom({ mode, slide: slideIndex, targets }, controller.signal)) {</pre>
+    </li>
+    <li id="L100"><pre>        if (!controller.signal.aborted) setSelected([])</pre></li>
+    <li id="L101"><pre>      }</pre></li>
+    <li id="L102"><pre>    } catch (cause) {</pre></li>
+    <li id="L103"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L104">
+      <pre>
+        setError(cause instanceof Error ? cause.message : &#x27;插入缩放导航失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L105"><pre>    } finally {</pre></li>
+    <li id="L106"><pre>      if (operation.current === controller) {</pre></li>
+    <li id="L107"><pre>        operation.current = null</pre></li>
+    <li id="L108"><pre>        if (!controller.signal.aborted) setBusy(false)</pre></li>
+    <li id="L109"><pre>      }</pre></li>
+    <li id="L110"><pre>    }</pre></li>
+    <li id="L111"><pre>  }</pre></li>
+    <li id="L112"><pre>  return (</pre></li>
+    <li id="L113">
+      <pre>
+    &lt;fieldset className=&quot;mimir-pptx-zoom&quot; disabled={busy || disabled} aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L114"><pre>      &lt;div className=&quot;mimir-pptx-zoom__content&quot;&gt;</pre></li>
+    <li id="L115"><pre>        &lt;ToolbarPropertyForm columns={1}&gt;</pre></li>
+    <li id="L116"><pre>          &lt;ToolbarMenuFields label=&quot;缩放导航类型&quot;&gt;</pre></li>
+    <li id="L117"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L118"><pre>              label=&quot;缩放导航类型&quot;</pre></li>
+    <li id="L119"><pre>              disabled={busy || disabled}</pre></li>
+    <li id="L120"><pre>              value={mode}</pre></li>
+    <li id="L121"><pre>              options={[...pptxZoomModes]}</pre></li>
+    <li id="L122"><pre>              onChange={(value) =&gt; {</pre></li>
+    <li id="L123"><pre>                setMode(value as PptxZoomMode)</pre></li>
+    <li id="L124"><pre>                setSelected([])</pre></li>
+    <li id="L125"><pre>                setPreview(null)</pre></li>
+    <li id="L126"><pre>                setError(&#x27;&#x27;)</pre></li>
+    <li id="L127"><pre>              }}</pre></li>
+    <li id="L128"><pre>            /&gt;</pre></li>
+    <li id="L129"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L130"><pre>              {mode === &#x27;summary&#x27;</pre></li>
+    <li id="L131">
+      <pre>                ? &#x27;在首张所选幻灯片前新增摘要页，并为所选页面建立分节。&#x27;</pre>
+    </li>
+    <li id="L132"><pre>                : mode === &#x27;section&#x27;</pre></li>
+    <li id="L133">
+      <pre>
+                  ? &#x27;在当前页插入所选节的首页快照，放映时点击可跳转到该节。&#x27;</pre>
+    </li>
+    <li id="L134">
+      <pre>                  : &#x27;在当前页插入目标页快照，放映时点击快照跳转。&#x27;}</pre>
+    </li>
+    <li id="L135"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L136"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L137">
+      <pre>
+          &lt;ToolbarMenuFields label={mode === &#x27;section&#x27; ? &#x27;选择目标节&#x27; : &#x27;选择目标幻灯片&#x27;}&gt;</pre>
+    </li>
+    <li id="L138"><pre>            &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L139"><pre>              已选 {chosen.length} / {PPTX_ZOOM_MAX_TILES}</pre></li>
+    <li id="L140">
+      <pre>
+              {mode !== &#x27;summary&#x27; ? ` · 插入第 ${slideIndex + 1} 页` : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L141"><pre>            &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L142"><pre>            {entries.length ? (</pre></li>
+    <li id="L143"><pre>              &lt;div</pre></li>
+    <li id="L144"><pre>                className=&quot;mimir-pptx-zoom__list&quot;</pre></li>
+    <li id="L145"><pre>                role=&quot;group&quot;</pre></li>
+    <li id="L146">
+      <pre>
+                aria-label={mode === &#x27;section&#x27; ? &#x27;目标节列表&#x27; : &#x27;目标幻灯片列表&#x27;}</pre>
+    </li>
+    <li id="L147"><pre>              &gt;</pre></li>
+    <li id="L148"><pre>                {entries.map((entry) =&gt; {</pre></li>
+    <li id="L149">
+      <pre>                  const checked = selected.includes(slides[entry.index]!.path)</pre>
+    </li>
+    <li id="L150"><pre>                  return (</pre></li>
+    <li id="L151"><pre>                    &lt;ToolbarButton</pre></li>
+    <li id="L152"><pre>                      key={slides[entry.index]!.path}</pre></li>
+    <li id="L153">
+      <pre>                      label={`选择${entry.detail}：${entry.title}`}</pre>
+    </li>
+    <li id="L154"><pre>                      active={checked}</pre></li>
+    <li id="L155">
+      <pre>
+                      disabled={!checked &amp;&amp; chosen.length &gt;= PPTX_ZOOM_MAX_TILES}</pre>
+    </li>
+    <li id="L156">
+      <pre>                      disabledReason=&quot;每次最多插入24个缩放导航&quot;</pre>
+    </li>
+    <li id="L157"><pre>                      onClick={() =&gt; select(entry.index)}</pre></li>
+    <li id="L158"><pre>                    &gt;</pre></li>
+    <li id="L159">
+      <pre>                      &lt;span className=&quot;mimir-pptx-zoom__entry&quot;&gt;</pre>
+    </li>
+    <li id="L160">
+      <pre>
+                        &lt;span className=&quot;mimir-pptx-zoom__entry-title&quot;&gt;{entry.title}&lt;/span&gt;</pre>
+    </li>
+    <li id="L161">
+      <pre>
+                        &lt;span className=&quot;mimir-pptx-zoom__entry-detail&quot;&gt;</pre>
+    </li>
+    <li id="L162"><pre>                          {entry.detail}</pre></li>
+    <li id="L163">
+      <pre>                          {checked ? &#x27; · 已选&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L164"><pre>                        &lt;/span&gt;</pre></li>
+    <li id="L165"><pre>                      &lt;/span&gt;</pre></li>
+    <li id="L166"><pre>                    &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L167"><pre>                  )</pre></li>
+    <li id="L168"><pre>                })}</pre></li>
+    <li id="L169"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L170"><pre>            ) : (</pre></li>
+    <li id="L171"><pre>              &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L172">
+      <pre>
+                当前演示文稿尚未分节。请先使用“管理分节”添加节，或选择“幻灯片缩放”。</pre>
+    </li>
+    <li id="L173"><pre>              &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L174"><pre>            )}</pre></li>
+    <li id="L175"><pre>          &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L176"><pre>          {rendered &amp;&amp; (</pre></li>
+    <li id="L177">
+      <pre>
+            &lt;ToolbarMenuFields label={`快照预览 · 第 ${activePreview! + 1} 页`}&gt;</pre>
+    </li>
+    <li id="L178"><pre>              &lt;div</pre></li>
+    <li id="L179"><pre>                className=&quot;mimir-pptx-zoom__preview&quot;</pre></li>
+    <li id="L180"><pre>                aria-label={`第 ${activePreview! + 1} 页快照预览`}</pre></li>
+    <li id="L181"><pre>                dangerouslySetInnerHTML={{ __html: rendered.svg }}</pre></li>
+    <li id="L182"><pre>              /&gt;</pre></li>
+    <li id="L183"><pre>            &lt;/ToolbarMenuFields&gt;</pre></li>
+    <li id="L184"><pre>          )}</pre></li>
+    <li id="L185"><pre>          {error &amp;&amp; (</pre></li>
+    <li id="L186"><pre>            &lt;div role=&quot;alert&quot;&gt;</pre></li>
+    <li id="L187">
+      <pre>              &lt;ToolbarMenuNote&gt;{error}&lt;/ToolbarMenuNote&gt;</pre>
+    </li>
+    <li id="L188"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L189"><pre>          )}</pre></li>
+    <li id="L190"><pre>        &lt;/ToolbarPropertyForm&gt;</pre></li>
+    <li id="L191"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L192"><pre>      &lt;div className=&quot;mimir-pptx-zoom__actions&quot;&gt;</pre></li>
+    <li id="L193"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L194"><pre>          primary</pre></li>
+    <li id="L195"><pre>          label=&quot;插入缩放导航&quot;</pre></li>
+    <li id="L196"><pre>          disabled={busy || disabled || chosen.length === 0}</pre></li>
+    <li id="L197">
+      <pre>
+          disabledReason={busy ? &#x27;正在生成快照并插入&#x27; : &#x27;请先选择目标页或节&#x27;}</pre>
+    </li>
+    <li id="L198"><pre>          onClick={() =&gt; void insert()}</pre></li>
+    <li id="L199"><pre>        &gt;</pre></li>
+    <li id="L200"><pre>          {busy ? (</pre></li>
+    <li id="L201">
+      <pre>            &lt;LoaderCircle size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L202"><pre>          ) : (</pre></li>
+    <li id="L203">
+      <pre>            &lt;ImagePlus size={14} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L204"><pre>          )}</pre></li>
+    <li id="L205"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L206"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L207"><pre>          label=&quot;清除缩放目标选择&quot;</pre></li>
+    <li id="L208"><pre>          disabled={busy || chosen.length === 0}</pre></li>
+    <li id="L209"><pre>          onClick={() =&gt; setSelected([])}</pre></li>
+    <li id="L210"><pre>        &gt;</pre></li>
+    <li id="L211"><pre>          清除选择</pre></li>
+    <li id="L212"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L213"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L214"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L215"><pre>  )</pre></li>
+    <li id="L216"><pre>}</pre></li>
+  </ol>
+</html>

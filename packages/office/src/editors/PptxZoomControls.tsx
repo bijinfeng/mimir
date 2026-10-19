@@ -116,6 +116,7 @@ function ZoomEditor({
           <ToolbarMenuFields label="缩放导航类型">
             <ToolbarSelect
               label="缩放导航类型"
+              disabled={busy || disabled}
               value={mode}
               options={[...pptxZoomModes]}
               onChange={(value) => {

@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>packages/office/src/editors/PptxGroupTextControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      color: #252a26;
+      background: #fafbfa;
+      margin: 20px;
+    }
+    header {
+      font-family: system-ui;
+      overflow-wrap: anywhere;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding: 12px 12px 12px 5em;
+      background: white;
+      border: 1px solid #dde3de;
+    }
+    li {
+      padding-left: 12px;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #e0f3e7;
+      outline: 1px solid #55a477;
+    }
+    a {
+      color: #007849;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">返回完整来源索引</a>
+    <h1>packages/office/src/editors/PptxGroupTextControls.tsx</h1>
+    <p>
+      当前真实源码只读存档 · SHA256 12e2ecc3799aec5afcd8b48b2cb25434b8351c12a0b62eb518d80c6d0c59269b
+    </p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { useEffect, useLayoutEffect, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { Check, RotateCcw } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import type { TextElement } from &#x27;../../vendor/packages/pptx-engine/src/types.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import { ToolbarButton, ToolbarMenuNote, ToolbarTextArea } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>import { editPptxTextValue, pptxTextValue } from &#x27;../pptx-text-range.js&#x27;</pre>
+    </li>
+    <li id="L6"><pre></pre></li>
+    <li id="L7"><pre>export interface PptxGroupTextControlsProps {</pre></li>
+    <li id="L8"><pre>  element: TextElement</pre></li>
+    <li id="L9"><pre>  target: { slide: number; el: string }</pre></li>
+    <li id="L10"><pre>  group: string</pre></li>
+    <li id="L11"><pre>  version: number</pre></li>
+    <li id="L12">
+      <pre>  applyOps: (ops: Record&lt;string, unknown&gt;[]) =&gt; Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L13"><pre>  disabled?: boolean</pre></li>
+    <li id="L14"><pre>}</pre></li>
+    <li id="L15"><pre>interface CaretTransfer {</pre></li>
+    <li id="L16"><pre>  text: string</pre></li>
+    <li id="L17"><pre>  start: number</pre></li>
+    <li id="L18"><pre>  end: number</pre></li>
+    <li id="L19">
+      <pre>  direction: &#x27;forward&#x27; | &#x27;backward&#x27; | &#x27;none&#x27;</pre>
+    </li>
+    <li id="L20"><pre>}</pre></li>
+    <li id="L21">
+      <pre>
+/** A property draft stays local until one version-checked native setText transaction. */</pre>
+    </li>
+    <li id="L22">
+      <pre>export function PptxGroupTextControls(props: PptxGroupTextControlsProps) {</pre>
+    </li>
+    <li id="L23">
+      <pre>
+  const currentText = props.element.text ? pptxTextValue(props.element.text.paragraphs) : &#x27;&#x27;</pre>
+    </li>
+    <li id="L24"><pre>  const container = useRef&lt;HTMLElement&gt;(null)</pre></li>
+    <li id="L25">
+      <pre>
+  const transfer = useRef&lt;(CaretTransfer &amp; { sourceVersion: number }) | null&gt;(null)</pre>
+    </li>
+    <li id="L26"><pre>  const acceptedCaret = useRef&lt;CaretTransfer | null&gt;(null)</pre></li>
+    <li id="L27"><pre>  const binding = JSON.stringify([</pre></li>
+    <li id="L28"><pre>    props.target.slide,</pre></li>
+    <li id="L29"><pre>    props.target.el,</pre></li>
+    <li id="L30"><pre>    props.group,</pre></li>
+    <li id="L31"><pre>    props.version,</pre></li>
+    <li id="L32"><pre>    currentText,</pre></li>
+    <li id="L33"><pre>  ])</pre></li>
+    <li id="L34"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L35">
+      <pre>    if (acceptedCaret.current?.text !== currentText) acceptedCaret.current = null</pre>
+    </li>
+    <li id="L36"><pre>    if (</pre></li>
+    <li id="L37"><pre>      transfer.current &amp;&amp;</pre></li>
+    <li id="L38"><pre>      props.version !== transfer.current.sourceVersion &amp;&amp;</pre></li>
+    <li id="L39"><pre>      transfer.current.text !== currentText</pre></li>
+    <li id="L40"><pre>    ) {</pre></li>
+    <li id="L41"><pre>      transfer.current = null</pre></li>
+    <li id="L42"><pre>    }</pre></li>
+    <li id="L43"><pre>    if (props.disabled) return</pre></li>
+    <li id="L44">
+      <pre>    const area = container.current?.querySelector(&#x27;textarea&#x27;)</pre>
+    </li>
+    <li id="L45">
+      <pre>
+    const submitted = transfer.current?.text === currentText ? transfer.current : null</pre>
+    </li>
+    <li id="L46"><pre>    const caret = submitted ?? acceptedCaret.current</pre></li>
+    <li id="L47"><pre>    if (!area || !caret) return</pre></li>
+    <li id="L48"><pre>    if (submitted) {</pre></li>
+    <li id="L49"><pre>      transfer.current = null</pre></li>
+    <li id="L50"><pre>      acceptedCaret.current = caret</pre></li>
+    <li id="L51"><pre>      if (</pre></li>
+    <li id="L52"><pre>        document.activeElement === document.body ||</pre></li>
+    <li id="L53"><pre>        container.current?.contains(document.activeElement)</pre></li>
+    <li id="L54"><pre>      )</pre></li>
+    <li id="L55"><pre>        area.focus()</pre></li>
+    <li id="L56"><pre>    }</pre></li>
+    <li id="L57"><pre>    area.setSelectionRange(caret.start, caret.end, caret.direction)</pre></li>
+    <li id="L58"><pre>  }, [props.disabled, props.version, currentText])</pre></li>
+    <li id="L59"><pre>  const rememberAcceptedCaret = (target: EventTarget) =&gt; {</pre></li>
+    <li id="L60">
+      <pre>
+    if (!(target instanceof HTMLTextAreaElement) || target.value !== currentText) return</pre>
+    </li>
+    <li id="L61"><pre>    acceptedCaret.current = {</pre></li>
+    <li id="L62"><pre>      text: currentText,</pre></li>
+    <li id="L63"><pre>      start: target.selectionStart,</pre></li>
+    <li id="L64"><pre>      end: target.selectionEnd,</pre></li>
+    <li id="L65"><pre>      direction: target.selectionDirection,</pre></li>
+    <li id="L66"><pre>    }</pre></li>
+    <li id="L67"><pre>  }</pre></li>
+    <li id="L68"><pre>  if (!props.element.text) return null</pre></li>
+    <li id="L69"><pre>  return (</pre></li>
+    <li id="L70"><pre>    &lt;section</pre></li>
+    <li id="L71"><pre>      ref={container}</pre></li>
+    <li id="L72">
+      <pre>      className=&quot;mimir-pptx-selection-controls__group-text&quot;</pre>
+    </li>
+    <li id="L73"><pre>      aria-label=&quot;组合成员文字&quot;</pre></li>
+    <li id="L74">
+      <pre>      onBlurCapture={(event) =&gt; rememberAcceptedCaret(event.target)}</pre>
+    </li>
+    <li id="L75">
+      <pre>      onSelectCapture={(event) =&gt; rememberAcceptedCaret(event.target)}</pre>
+    </li>
+    <li id="L76"><pre>    &gt;</pre></li>
+    <li id="L77"><pre>      &lt;GroupTextDraft</pre></li>
+    <li id="L78"><pre>        key={binding}</pre></li>
+    <li id="L79"><pre>        {...props}</pre></li>
+    <li id="L80"><pre>        currentText={currentText}</pre></li>
+    <li id="L81"><pre>        onTransfer={(caret) =&gt; {</pre></li>
+    <li id="L82">
+      <pre>
+          transfer.current = caret ? { ...caret, sourceVersion: props.version } : null</pre>
+    </li>
+    <li id="L83"><pre>        }}</pre></li>
+    <li id="L84"><pre>      /&gt;</pre></li>
+    <li id="L85"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L86"><pre>  )</pre></li>
+    <li id="L87"><pre>}</pre></li>
+    <li id="L88"><pre>function GroupTextDraft({</pre></li>
+    <li id="L89"><pre>  element,</pre></li>
+    <li id="L90"><pre>  target,</pre></li>
+    <li id="L91"><pre>  group,</pre></li>
+    <li id="L92"><pre>  applyOps,</pre></li>
+    <li id="L93"><pre>  disabled = false,</pre></li>
+    <li id="L94"><pre>  currentText,</pre></li>
+    <li id="L95"><pre>  onTransfer,</pre></li>
+    <li id="L96"><pre>}: PptxGroupTextControlsProps &amp; {</pre></li>
+    <li id="L97"><pre>  currentText: string</pre></li>
+    <li id="L98"><pre>  onTransfer: (caret: CaretTransfer | null) =&gt; void</pre></li>
+    <li id="L99"><pre>}) {</pre></li>
+    <li id="L100"><pre>  const [draft, setDraft] = useState(currentText)</pre></li>
+    <li id="L101"><pre>  const [busy, setBusy] = useState(false)</pre></li>
+    <li id="L102"><pre>  const [error, setError] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L103"><pre>  const [status, setStatus] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L104"><pre>  const pending = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L105"><pre>  const fields = useRef&lt;HTMLFieldSetElement&gt;(null)</pre></li>
+    <li id="L106"><pre>  useEffect(() =&gt; () =&gt; pending.current?.abort(), [])</pre></li>
+    <li id="L107"><pre>  const dirty = draft !== currentText</pre></li>
+    <li id="L108"><pre>  const locked = disabled || busy</pre></li>
+    <li id="L109"><pre>  const submit = async () =&gt; {</pre></li>
+    <li id="L110">
+      <pre>    if (locked || pending.current || !dirty || !element.text) return</pre>
+    </li>
+    <li id="L111"><pre>    let paragraphs</pre></li>
+    <li id="L112"><pre>    try {</pre></li>
+    <li id="L113">
+      <pre>      paragraphs = editPptxTextValue(element.text.paragraphs, draft)</pre>
+    </li>
+    <li id="L114"><pre>    } catch (cause) {</pre></li>
+    <li id="L115">
+      <pre>
+      setError(cause instanceof Error ? cause.message : &#x27;文字草稿无法应用，请调整内容&#x27;)</pre>
+    </li>
+    <li id="L116"><pre>      return</pre></li>
+    <li id="L117"><pre>    }</pre></li>
+    <li id="L118">
+      <pre>    const area = fields.current?.querySelector(&#x27;textarea&#x27;)</pre>
+    </li>
+    <li id="L119"><pre>    onTransfer({</pre></li>
+    <li id="L120"><pre>      text: draft,</pre></li>
+    <li id="L121"><pre>      start: area?.selectionStart ?? draft.length,</pre></li>
+    <li id="L122"><pre>      end: area?.selectionEnd ?? draft.length,</pre></li>
+    <li id="L123"><pre>      direction: area?.selectionDirection ?? &#x27;none&#x27;,</pre></li>
+    <li id="L124"><pre>    })</pre></li>
+    <li id="L125"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L126"><pre>    pending.current = controller</pre></li>
+    <li id="L127"><pre>    setBusy(true)</pre></li>
+    <li id="L128"><pre>    setError(&#x27;&#x27;)</pre></li>
+    <li id="L129"><pre>    setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L130"><pre>    try {</pre></li>
+    <li id="L131">
+      <pre>
+      const ok = await applyOps([{ op: &#x27;setText&#x27;, target, group, paragraphs }])</pre>
+    </li>
+    <li id="L132"><pre>      if (controller.signal.aborted) return</pre></li>
+    <li id="L133"><pre>      if (ok) {</pre></li>
+    <li id="L134"><pre>        setStatus(&#x27;文字已应用&#x27;)</pre></li>
+    <li id="L135"><pre>        setDraft(draft)</pre></li>
+    <li id="L136"><pre>      } else {</pre></li>
+    <li id="L137"><pre>        onTransfer(null)</pre></li>
+    <li id="L138"><pre>        setError(&#x27;文字未应用，已保留草稿，请重试&#x27;)</pre></li>
+    <li id="L139"><pre>      }</pre></li>
+    <li id="L140"><pre>    } catch {</pre></li>
+    <li id="L141"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L142"><pre>        onTransfer(null)</pre></li>
+    <li id="L143"><pre>        setError(&#x27;文字未应用，已保留草稿，请重试&#x27;)</pre></li>
+    <li id="L144"><pre>      }</pre></li>
+    <li id="L145"><pre>    } finally {</pre></li>
+    <li id="L146"><pre>      if (!controller.signal.aborted) {</pre></li>
+    <li id="L147"><pre>        pending.current = null</pre></li>
+    <li id="L148"><pre>        setBusy(false)</pre></li>
+    <li id="L149"><pre>      }</pre></li>
+    <li id="L150"><pre>    }</pre></li>
+    <li id="L151"><pre>  }</pre></li>
+    <li id="L152"><pre>  return (</pre></li>
+    <li id="L153"><pre>    &lt;fieldset</pre></li>
+    <li id="L154"><pre>      ref={fields}</pre></li>
+    <li id="L155">
+      <pre>      className=&quot;mimir-pptx-selection-controls__group-text-draft&quot;</pre>
+    </li>
+    <li id="L156"><pre>      disabled={locked}</pre></li>
+    <li id="L157"><pre>      aria-busy={busy}</pre></li>
+    <li id="L158"><pre>    &gt;</pre></li>
+    <li id="L159"><pre>      &lt;strong&gt;组合成员文字&lt;/strong&gt;</pre></li>
+    <li id="L160"><pre>      &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L161"><pre>        {busy</pre></li>
+    <li id="L162"><pre>          ? &#x27;正在应用文字…&#x27;</pre></li>
+    <li id="L163"><pre>          : dirty</pre></li>
+    <li id="L164">
+      <pre>            ? &#x27;文字草稿未应用；保存不包含此草稿。关闭面板会丢弃。&#x27;</pre>
+    </li>
+    <li id="L165">
+      <pre>            : status || &#x27;修改后点击应用，文字格式保持原有来源。&#x27;}</pre>
+    </li>
+    <li id="L166"><pre>      &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L167"><pre>      &lt;ToolbarTextArea</pre></li>
+    <li id="L168"><pre>        label=&quot;文本框文字&quot;</pre></li>
+    <li id="L169"><pre>        rows={3}</pre></li>
+    <li id="L170"><pre>        value={draft}</pre></li>
+    <li id="L171"><pre>        onChange={(value) =&gt; {</pre></li>
+    <li id="L172"><pre>          if (!locked) {</pre></li>
+    <li id="L173"><pre>            setDraft(value)</pre></li>
+    <li id="L174"><pre>            setError(&#x27;&#x27;)</pre></li>
+    <li id="L175"><pre>            setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L176"><pre>          }</pre></li>
+    <li id="L177"><pre>        }}</pre></li>
+    <li id="L178"><pre>      /&gt;</pre></li>
+    <li id="L179">
+      <pre>
+      &lt;div className=&quot;mimir-pptx-selection-controls__selection-actions&quot;&gt;</pre>
+    </li>
+    <li id="L180"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L181">
+      <pre>          label={busy ? &#x27;正在应用成员文字&#x27; : &#x27;应用成员文字&#x27;}</pre>
+    </li>
+    <li id="L182"><pre>          primary</pre></li>
+    <li id="L183"><pre>          disabled={locked || !dirty}</pre></li>
+    <li id="L184">
+      <pre>
+          disabledReason={busy ? &#x27;正在应用文字&#x27; : &#x27;请先修改成员文字&#x27;}</pre>
+    </li>
+    <li id="L185"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L186"><pre>        &gt;</pre></li>
+    <li id="L187"><pre>          &lt;Check size={14} /&gt;</pre></li>
+    <li id="L188"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L189"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L190"><pre>          label=&quot;取消文字草稿&quot;</pre></li>
+    <li id="L191"><pre>          disabled={locked || !dirty}</pre></li>
+    <li id="L192"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L193"><pre>            onTransfer(null)</pre></li>
+    <li id="L194"><pre>            setDraft(currentText)</pre></li>
+    <li id="L195"><pre>            setError(&#x27;&#x27;)</pre></li>
+    <li id="L196"><pre>            setStatus(&#x27;&#x27;)</pre></li>
+    <li id="L197"><pre>          }}</pre></li>
+    <li id="L198"><pre>        &gt;</pre></li>
+    <li id="L199"><pre>          &lt;RotateCcw size={14} /&gt;</pre></li>
+    <li id="L200"><pre>          取消</pre></li>
+    <li id="L201"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L202"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L203">
+      <pre>      {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L204"><pre>    &lt;/fieldset&gt;</pre></li>
+    <li id="L205"><pre>  )</pre></li>
+    <li id="L206"><pre>}</pre></li>
+  </ol>
+</html>
