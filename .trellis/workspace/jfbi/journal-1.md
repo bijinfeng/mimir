@@ -1231,3 +1231,39 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 继续模块10 Markdown笔记编辑器；模块10–16尚未完成
+
+
+## Session 43: Markdown编辑器交互精修与真实前后存档
+<!-- trellis-session: v=2 fp=8d25a6c128c47c9c -->
+
+**Date**: 2026-10-20
+**Task**: Markdown编辑器交互精修与真实前后存档
+**Package**: office
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+模块10完成：选区浮层、字段面板、候选测位/内部滚动、查找焦点与写作反馈精修；74组交互、14组真实配对及实际组件Demo归档。局部原生worker测试预算独立提交，最终全仓pnpm check通过。
+
+### Main Changes
+
+- 真实前后与验收：docs/visual-comparisons/2026-10-20-markdown/comparison.html；明确模拟IO和原生/外部服务未验边界
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `24e9175` | test: allow bounded native worker cold starts in full suite |
+| `3495d52` | fix(markdown): refine editor menus and writing feedback |
+
+### Testing
+
+- [OK] 最终pnpm check exit0；Office2711、Renderer591、Server常规1365/本地10/fnOS4、Desktop50，全部类型/lint/样式/格式及宿主脚本通过
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 继续模块11 HTML页面编辑器，模块12–16随后；总任务与持续目标保持active
