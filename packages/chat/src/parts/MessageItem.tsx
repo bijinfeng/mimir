@@ -1,7 +1,8 @@
 import type { UIMessage } from '@tanstack/ai'
 import { MessageParts } from '../ui/MessageParts.js'
 import { useEffect, useRef, useState } from 'react'
-import { Copy, Download, MoreHorizontal, Pencil, RotateCcw, X } from 'lucide-react'
+import { Copy, Download, MoreHorizontal, Pencil, RotateCcw } from 'lucide-react'
+import { Dropdown } from 'antd'
 import { createStyles } from 'antd-style'
 import { useChatPanelStyles } from '../ChatPanel.style.js'
 import { MessageContext, useChatRuntime } from '../runtime/runtime-context.js'
@@ -13,7 +14,7 @@ import { DocxAgentHistoryNotice } from './DocxAgentHistoryNotice.js'
 import { FailureCard, StreamErrorCard } from './FailureNotice.js'
 import { ImagePart } from './MediaParts.js'
 import { StoppedNotice } from './StoppedNotice.js'
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css, token, prefixCls }) => ({
   actions: css`
     position: relative;
     display: flex;
@@ -59,22 +60,15 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   menu: css`
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 0;
-    z-index: 30;
-    padding: 6px;
-    min-width: 180px;
-    max-width: 100%;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 6px;
-    box-shadow: ${token.boxShadowSecondary};
-    background: ${token.colorBgElevated};
-    color: ${token.colorText};
-    button {
-      width: 100%;
-      justify-content: flex-start;
-      padding: 0 8px;
+    .${prefixCls}-dropdown-menu {
+      min-width: 160px;
+      max-width: calc(100vw - 24px);
+      padding: 0;
+      overflow: hidden;
+    }
+    .${prefixCls}-dropdown-menu-item {
+      min-height: 32px;
+      border-radius: 0;
     }
   `,
   waiting: css`
@@ -129,7 +123,6 @@ export function MessageItem({ message }: { message: UIMessage }) {
   const [edit, setEdit] = useState('')
   const [feedback, setFeedback] = useState('')
   const [more, setMore] = useState(false)
-  const moreRoot = useRef<HTMLDivElement>(null)
   const moreTrigger = useRef<HTMLButtonElement>(null)
   const editInput = useRef<HTMLTextAreaElement>(null)
   const editTrigger = useRef<HTMLButtonElement>(null)
@@ -139,19 +132,6 @@ export function MessageItem({ message }: { message: UIMessage }) {
       editInput.current?.select()
     }
   }, [editing])
-  useEffect(() => {
-    if (!more) return
-    moreRoot.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
-    const outside = (event: PointerEvent) => {
-      if (
-        !moreRoot.current?.contains(event.target as Node) &&
-        !moreTrigger.current?.contains(event.target as Node)
-      )
-        setMore(false)
-    }
-    document.addEventListener('pointerdown', outside)
-    return () => document.removeEventListener('pointerdown', outside)
-  }, [more])
   function closeMore() {
     setMore(false)
     moreTrigger.current?.focus()
@@ -327,56 +307,37 @@ export function MessageItem({ message }: { message: UIMessage }) {
                 >
                   <RotateCcw size={14} />
                 </button>
-                <button
-                  type="button"
-                  aria-label="更多操作"
-                  ref={moreTrigger}
-                  aria-expanded={more}
-                  aria-haspopup="menu"
-                  onClick={() => setMore(!more)}
+                <Dropdown
+                  trigger={['click']}
+                  placement="topLeft"
+                  autoAdjustOverflow
+                  autoFocus
+                  destroyOnHidden
+                  open={more}
+                  onOpenChange={setMore}
+                  classNames={{ root: local.menu }}
+                  menu={{
+                    'aria-label': '回答更多操作',
+                    items: [
+                      {
+                        key: 'export',
+                        label: '导出 Markdown',
+                        icon: <Download size={14} />,
+                        onClick: exportText,
+                      },
+                    ],
+                  }}
                 >
-                  <MoreHorizontal size={16} />
-                </button>
-                {more && (
-                  <div
-                    role="menu"
-                    className={local.menu}
-                    ref={moreRoot}
-                    onKeyDown={(event) => {
-                      const items = [
-                        ...moreRoot.current!.querySelectorAll<HTMLButtonElement>(
-                          '[role="menuitem"]',
-                        ),
-                      ]
-                      if (event.key === 'Escape' || event.key === 'Tab') closeMore()
-                      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
-                        event.preventDefault()
-                        const i = items.indexOf(document.activeElement as HTMLButtonElement)
-                        items[
-                          event.key === 'Home'
-                            ? 0
-                            : event.key === 'End'
-                              ? items.length - 1
-                              : (i + (event.key === 'ArrowUp' ? -1 : 1) + items.length) %
-                                items.length
-                        ]?.focus()
-                      }
-                    }}
+                  <button
+                    type="button"
+                    aria-label="更多操作"
+                    ref={moreTrigger}
+                    aria-expanded={more}
+                    aria-haspopup="menu"
                   >
-                    <button type="button" role="menuitem" onClick={exportText}>
-                      <Download size={14} />
-                      导出 Markdown
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      aria-label="关闭更多操作"
-                      onClick={closeMore}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
+                    <MoreHorizontal size={16} />
+                  </button>
+                </Dropdown>
               </>
             )}
             {feedback && <span role="status">{feedback}</span>}

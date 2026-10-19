@@ -1,0 +1,107 @@
+{
+  "baseline": "0e4d680",
+  "before": {
+    "items": ["导出 Markdown", "关闭更多操作"],
+    "rect": {
+      "bottom": 37.75,
+      "height": 74,
+      "left": 380.5,
+      "right": 560.5,
+      "top": -36.25,
+      "width": 180,
+      "x": 380.5,
+      "y": -36.25
+    },
+    "scrollAncestors": [
+      {
+        "rect": {
+          "bottom": 582,
+          "height": 582,
+          "left": 256,
+          "right": 1280,
+          "top": 0,
+          "width": 1024,
+          "x": 256,
+          "y": 0
+        },
+        "scrollTop": 180
+      }
+    ],
+    "trigger": {
+      "bottom": 73.75,
+      "height": 30,
+      "left": 476.5,
+      "right": 506.5,
+      "top": 43.75,
+      "width": 30,
+      "x": 476.5,
+      "y": 43.75
+    }
+  },
+  "after": {
+    "insideArticle": false,
+    "items": ["导出 Markdown"],
+    "padding": "0px",
+    "rect": {
+      "bottom": 40,
+      "height": 32,
+      "left": 476,
+      "right": 636,
+      "top": 8,
+      "width": 160,
+      "x": 476,
+      "y": 8
+    },
+    "viewport": [1280, 720]
+  },
+  "topEdge": {
+    "insideArticle": false,
+    "rect": {
+      "bottom": 80,
+      "height": 32,
+      "left": 476,
+      "right": 636,
+      "top": 48,
+      "width": 160,
+      "x": 476,
+      "y": 48
+    },
+    "trigger": {
+      "bottom": 44.75,
+      "height": 30,
+      "left": 476.5,
+      "right": 506.5,
+      "top": 14.75,
+      "width": 30,
+      "x": 476.5,
+      "y": 14.75
+    }
+  },
+  "export": {
+    "filename": "回答.md",
+    "contentMatched": true
+  },
+  "keyboard": {
+    "enterOpen": true,
+    "escapeReturnFocus": true,
+    "tabNextControl": true,
+    "outsideClickCloses": true
+  },
+  "sidebarLight": {
+    "clientWidth": 160,
+    "items": ["导出 Markdown"],
+    "padding": "0px",
+    "rect": {
+      "bottom": 517,
+      "height": 32,
+      "left": 613,
+      "right": 773,
+      "top": 485,
+      "width": 160,
+      "x": 613,
+      "y": 485
+    },
+    "scrollWidth": 160,
+    "viewport": [1280, 720]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "baseline": "0e4d680",
+  "source": "packages/chat/src/parts/MessageItem.tsx",
+  "sourceSha256": "8c6d9b43a17549d241233565fca11ab71174ddc452ca235012c4ab4d985db66a",
+  "captures": [
+    {
+      "file": "after.png",
+      "size": [1280, 720],
+      "sha256": "ee6d37faeaa8367bb81e524fd47de55a25d6ad192a90d7544a404e6b0a16683c"
+    },
+    {
+      "file": "before.png",
+      "size": [1280, 720],
+      "sha256": "dd8df5745ab4252ae22b6ff1bb4be242c8c7674ededa8afb0425c45c3833d84c"
+    },
+    {
+      "file": "sidebar-light.png",
+      "size": [1280, 720],
+      "sha256": "250bdc01c35f34f8b8d1ceb633cabb869a57599bd9ca644bcb880ae6152742e5"
+    },
+    {
+      "file": "top-edge.png",
+      "size": [1280, 720],
+      "sha256": "09d0f6188c02697dba2c877d9675369192ac7f49553d0ee0bda983924f5ee1ff"
+    }
+  ]
+}

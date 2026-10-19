@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>回答更多操作 · 前后对比</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f5f7f6;
+      color: #242824;
+      font:
+        14px/1.7 -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        'PingFang SC',
+        sans-serif;
+    }
+    main {
+      max-width: 1000px;
+      margin: auto;
+      padding: 28px 24px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 12px;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 28px 0 12px;
+    }
+    p {
+      color: #57645b;
+    }
+    a {
+      color: #007a45;
+      text-underline-offset: 3px;
+    }
+    a:focus-visible {
+      outline: 2px solid #00894f;
+      outline-offset: 2px;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    figure {
+      margin: 0;
+      background: #fff;
+      border: 1px solid #dde3df;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    figure.single {
+      max-width: 460px;
+    }
+    figcaption {
+      padding: 10px 14px;
+      font-weight: 600;
+    }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    nav {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 650px) {
+      .pair {
+        grid-template-columns: 1fr;
+      }
+      main {
+        padding: 20px 14px;
+      }
+    }
+  </style>
+  <main>
+    <h1>回答“更多操作”</h1>
+    <p>
+      2026-10-19 · 基线 0e4d680。相同真实对话、深色主题、1280×720 截图和消息滚动位置（scrollTop
+      180）。预览仅裁切操作区域，点击查看完整原图。
+    </p>
+    <div class="pair">
+      <figure>
+        <figcaption>修改前 · 头部被裁切，另有关闭项</figcaption>
+        <a href="before.png" target="_blank"
+          ><img src="previews/before.png" alt="修改前：导出项被裁切，只剩关闭项"
+        /></a>
+      </figure>
+      <figure>
+        <figcaption>修改后 · 完整的业务动作</figcaption>
+        <a href="after.png" target="_blank"
+          ><img src="previews/after.png" alt="修改后：完整导出项，无单独关闭按钮"
+        /></a>
+      </figure>
+    </div>
+    <p>
+      原菜单绝对定位在消息滚动区内，top = -36.25px。当前采用 Ant Design Dropdown 的 body
+      浮层，自动边界避让；同一位置的菜单 top = 8px。移除多余关闭项，保留
+      Escape、Tab、点击外部关闭与导出后回焦。
+    </p>
+    <h2>贴近顶部时自动向下展开</h2>
+    <figure class="single">
+      <a href="top-edge.png" target="_blank"
+        ><img src="previews/top-edge.png" alt="菜单在触发器贴近顶部时向下展开"
+      /></a>
+    </figure>
+    <h2>验证记录</h2>
+    <nav>
+      <a href="sidebar-light.png" target="_blank">浅色 280px 侧栏</a
+      ><a href="metrics.json">实际几何与键盘验证</a><a href="verification.md">质量检查结果</a>
+    </nav>
+    <p>
+      主对话来自本地真实产品。280px 场景使用生产 ChatPanel 和固定资料、内存 IO，仅验证布局。原
+      Markdown 下载内容与当前回答逐字一致。
+    </p>
+  </main>
+</html>
