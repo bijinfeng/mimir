@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mimir · 新对话空态前后对比</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+        background: #f5f6f5;
+        color: #252925;
+        font:
+          14px/1.7 system-ui,
+          -apple-system,
+          'PingFang SC',
+          sans-serif;
+      }
+      main {
+        max-width: 1600px;
+        margin: auto;
+      }
+      h1 {
+        font-size: 24px;
+        line-height: 1.4;
+        margin: 0 0 10px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 28px 0 8px;
+      }
+      p {
+        margin: 8px 0;
+        color: #525952;
+      }
+      a {
+        color: #2f6f49;
+        text-underline-offset: 3px;
+      }
+      select,
+      button {
+        font: inherit;
+        color: inherit;
+        background: white;
+        border: 1px solid #c9cfca;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      select:focus-visible {
+        outline: 2px solid #2f6f49;
+        outline-offset: 3px;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 24px 0 14px;
+      }
+      .controls select {
+        max-width: 100%;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 16px;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        padding: 10px 0;
+      }
+      .image-wrap {
+        background: #e9ece9;
+        overflow: auto;
+        border-radius: 6px;
+      }
+      .image-wrap img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      body[data-original] .image-wrap img {
+        width: auto;
+        max-width: none;
+      }
+      aside {
+        margin-top: 24px;
+        padding: 16px 20px;
+        background: #fff;
+        border: 1px solid #e1e5e1;
+        border-radius: 6px;
+      }
+      ul {
+        padding-left: 22px;
+      }
+      small {
+        font-size: 12px;
+        color: #626b62;
+      }
+      @media (max-width: 800px) {
+        body {
+          padding: 20px 14px;
+        }
+        .pair {
+          grid-template-columns: 1fr;
+        }
+        h1 {
+          font-size: 21px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>新对话页面 · 打磨前后渲染对比</h1>
+      <p>
+        2026-10-19 ·
+        基于现有组件直接打磨，保留已确认的工具栏排列。所有图片来自真实浏览器渲染，离线可查看。
+      </p>
+      <div class="controls">
+        <label for="scene">查看场景</label
+        ><select id="scene">
+          <option value="product-dark-1280">真实页面 · 深色 · 1280 × 720</option>
+          <option value="product-dark-1093">真实页面 · 深色 · 1093 × 873</option>
+          <option value="fixture-light-1440">真实组件场景 · 浅色 · 1440 × 900</option>
+          <option value="fixture-light-1100">真实组件场景 · 浅色 · 1100 × 760</option>
+          <option value="fixture-light-880">真实组件场景 · 浅色 · 880 × 720</option>
+          <option value="fixture-light-600">真实组件场景 · 浅色 · 600 × 720</option>
+          <option value="fixture-dark-1093">真实组件场景 · 深色 · 1093 × 873</option></select
+        ><button id="scale" type="button" aria-pressed="false">查看原始尺寸</button>
+      </div>
+      <div class="pair">
+        <figure>
+          <figcaption>
+            打磨前
+            <a id="before-link" target="_blank" rel="noopener" href="before/product-dark-1280.png"
+              >完整截图</a
+            >
+          </figcaption>
+          <div class="image-wrap">
+            <img
+              id="before"
+              src="before/product-dark-1280.png"
+              alt="打磨前：图标底框、较小标题与宽输入框"
+            />
+          </div>
+        </figure>
+        <figure>
+          <figcaption>
+            打磨后
+            <a id="after-link" target="_blank" rel="noopener" href="after/product-dark-1280.png"
+              >完整截图</a
+            >
+          </figcaption>
+          <div class="image-wrap">
+            <img
+              id="after"
+              src="after/product-dark-1280.png"
+              alt="打磨后：线性图标、清晰标题与紧凑输入框"
+            />
+          </div>
+        </figure>
+      </div>
+      <aside>
+        <h2 style="margin-top: 0">这次调整</h2>
+        <ul>
+          <li>居中组最大宽度 856 → 768px，宽屏可见输入框 808 → 720px。</li>
+          <li>去掉图标底框，保持现有线性图标与主题色。</li>
+          <li>标题 19 → 28px，600px 及以下保持 19px；说明 12.5 → 14px。</li>
+          <li>缩短标题区到输入框的间距，保留溢出可滚动的居中结构。</li>
+        </ul>
+        <p>工具栏仍是：左侧「附件 → 知识库范围」，右侧「模型 → 思考强度 → 发送」。</p>
+        <h2>验收与来源</h2>
+        <p>
+          浅深色、四档视口、长草稿和短窗口、模型与范围菜单、换行与禁用状态均已检查。完整记录见
+          <a href="verification.md">验收记录</a>、<a href="layout-metrics.json">布局测量</a>、<a
+            href="manifest.json"
+            >图片来源和哈希</a
+          >、<a href="full-check.txt">全仓检查</a>、<a href="static-check.txt">归档静态检查</a>。
+        </p>
+        <p>
+          <a href="after/long-draft-short-window.png">短窗口长草稿：顶部</a> ·
+          <a href="after/long-draft-short-window-bottom.png">滚动到底部</a> ·
+          <a href="after/filled-scope-and-effort.png">已选范围与思考强度</a>
+        </p>
+        <small
+          >“真实页面”来自本地产品；“真实组件场景”使用同一生产组件和主题、固定模拟资料和内存
+          IO。1280px
+          真实页面的左栏存在异步列表加载差异，主提问区内容一致。未修改运行时或接入新的聊天能力。</small
+        >
+      </aside>
+    </main>
+    <script>
+      const scene = document.getElementById('scene')
+      scene.addEventListener('change', () => {
+        for (const stage of ['before', 'after']) {
+          const file = stage + '/' + scene.value + '.png'
+          document.getElementById(stage).src = file
+          document.getElementById(stage + '-link').href = file
+        }
+      })
+      document.getElementById('scale').addEventListener('click', (event) => {
+        const enabled = document.body.toggleAttribute('data-original')
+        event.currentTarget.setAttribute('aria-pressed', String(enabled))
+        event.currentTarget.textContent = enabled ? '适应页面宽度' : '查看原始尺寸'
+      })
+    </script>
+  </body>
+</html>

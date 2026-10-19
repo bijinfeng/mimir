@@ -22,9 +22,9 @@ export function EmptyStage({ draft }: { draft: ChatDraft | null }) {
   return (
     <div className={styles.empty}>
       <div className={styles.emptyMark} aria-hidden="true">
-        <MessageSquareText size={22} strokeWidth={1.8} />
+        <MessageSquareText size={30} strokeWidth={1.6} />
       </div>
-      <div className={styles.emptyTitle}>{draft?.documentId ? '针对本文提问' : '向知识库提问'}</div>
+      <h1 className={styles.emptyTitle}>{draft?.documentId ? '针对本文提问' : '向知识库提问'}</h1>
       <p className={styles.emptyLead}>
         {draft?.documentId
           ? '围绕这篇文档提问，回答可跳回原文。'

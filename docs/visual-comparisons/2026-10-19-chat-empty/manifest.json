@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-19",
+  "baselineCommit": "0eba673",
+  "productURL": "http://127.0.0.1:5191/chat?scope=all",
+  "fixtureURL": "http://127.0.0.1:5195/?scene=empty&theme=light",
+  "fixtureSource": ".trellis/tasks/archive/2026-10/10-19-chat-rendering-polish/gallery/",
+  "fixtureNotes": "既有真实组件场景的临时副本；通过别名加载当前产品 ChatPanel、TanStack 官方 UI 和宿主主题，固定模拟资料及内存 IO。没有真实模型或聊天附件上传。此次对比只使用 empty 场景。",
+  "captureNotes": "修改前后截图均为真实浏览器捕获，未用 CSS 模拟旧版。PNG 由截图原始字节无缩放转存。product-dark-1280 的左栏收录列表存在异步加载差异，提问区内容、主题及视口一致；预览仅裁取提问区，完整截图同时保留。响应式测试采用浏览器 viewport override，完成后已复原。",
+  "sources": {
+    "packages/chat/src/EmptyStage.tsx": "aeb810a1df9cc5e2e707cee7369bf5d73f749cc13f5e5443b7c5fa351f35af20",
+    "packages/chat/src/ChatPanel.style.ts": "ee893f2b96a02e07b261dbc21b48579b2b9d792375e73c3fbd83c6c7ca90cad4"
+  },
+  "cases": [
+    {
+      "id": "product-dark-1280",
+      "label": "真实页面 · 深色 · 1280 × 720",
+      "size": [1280, 720],
+      "files": {
+        "before": "before/product-dark-1280.png",
+        "after": "after/product-dark-1280.png"
+      },
+      "sha256": {
+        "before": "b38ffe22fb0bb68328f3a4733348535500c43b5157cab30c8690604700cda0f2",
+        "after": "a80de882e63b573997966f06b9476e794621d8dfaf3c39bb8714e2fd2cbb1df1"
+      }
+    },
+    {
+      "id": "product-dark-1093",
+      "label": "真实页面 · 深色 · 1093 × 873",
+      "size": [1093, 873],
+      "files": {
+        "before": "before/product-dark-1093.png",
+        "after": "after/product-dark-1093.png"
+      },
+      "sha256": {
+        "before": "fbdb30b6b78ced78c664abced685606f560233f9695e38e960576b66d6e21148",
+        "after": "823b840cf80c7b36a910a169bf872e45fd0d2b92718e7cf8167e01b8cc185409"
+      }
+    },
+    {
+      "id": "fixture-light-1440",
+      "label": "真实组件场景 · 浅色 · 1440 × 900",
+      "size": [1440, 900],
+      "files": {
+        "before": "before/fixture-light-1440.png",
+        "after": "after/fixture-light-1440.png"
+      },
+      "sha256": {
+        "before": "fdbef528c70dfc4714dcec829c539f2908b0b42e7272d5ab11f5e3dff0c3683c",
+        "after": "53efdae77c8a4a3899f88734eb7146a443e0e835a57f8a2f99f985d439e7a52f"
+      }
+    },
+    {
+      "id": "fixture-light-1100",
+      "label": "真实组件场景 · 浅色 · 1100 × 760",
+      "size": [1100, 760],
+      "files": {
+        "before": "before/fixture-light-1100.png",
+        "after": "after/fixture-light-1100.png"
+      },
+      "sha256": {
+        "before": "4fb1f6f4db0f26b07108f60897ba1bfa0f88105e322326615efae00b46c2fede",
+        "after": "cbca184107f5decba08f1a47cb8337e9db402072bcabe082b842d6ab4efffbe4"
+      }
+    },
+    {
+      "id": "fixture-light-880",
+      "label": "真实组件场景 · 浅色 · 880 × 720",
+      "size": [880, 720],
+      "files": {
+        "before": "before/fixture-light-880.png",
+        "after": "after/fixture-light-880.png"
+      },
+      "sha256": {
+        "before": "81e47b5553b1ed94b12abe29e7273139eff312e24c27f30ed37f0bd5adf2e08f",
+        "after": "1054f3a0d643452acac44af66a3e59ca9e1cb2b1824928a85e73591f28783aea"
+      }
+    },
+    {
+      "id": "fixture-light-600",
+      "label": "真实组件场景 · 浅色 · 600 × 720",
+      "size": [600, 720],
+      "files": {
+        "before": "before/fixture-light-600.png",
+        "after": "after/fixture-light-600.png"
+      },
+      "sha256": {
+        "before": "7065890c2411b48a0b35c618ec7001e0f9753dcb8671ceb5fad0fdebcdd5ec32",
+        "after": "b5dbaebdbce08142aa3152e4010e272f08143d99f7a2b34e3aa7168e87b39069"
+      }
+    },
+    {
+      "id": "fixture-dark-1093",
+      "label": "真实组件场景 · 深色 · 1093 × 873",
+      "size": [1093, 873],
+      "files": {
+        "before": "before/fixture-dark-1093.png",
+        "after": "after/fixture-dark-1093.png"
+      },
+      "sha256": {
+        "before": "0fe6e02bbab1a0904e0f14715aebd9445bfaa574fe64f963c7e2f06f1b45b4f6",
+        "after": "84d4ea2b56b32cd81e913a18eb187162d78c52f44dcf6d19b56d698dc0d8708c"
+      }
+    }
+  ]
+}
