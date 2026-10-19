@@ -1,6 +1,6 @@
 import { createServer } from 'node:http'
 import type { ServerResponse } from 'node:http'
-import { act, createElement, useMemo } from 'react'
+import { act, createElement, useEffect, useMemo } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it } from '/Users/admin/Desktop/mimir/packages/chat/node_modules/vitest/dist/index.js'
 import { AssistantRuntimeProvider, ComposerPrimitive, ThreadPrimitive, SuggestionPrimitive, type AssistantRuntime } from '@assistant-ui/react'
@@ -28,9 +28,9 @@ async function setup(mode:'queue'|'interrupt'='queue', attachmentAdapter?:any) {
  cleanup.push(async()=>{for(const r of opened)r.end();await new Promise<void>(r=>server.close(()=>r()))})
  const agent=new HttpAgent({url:`http://127.0.0.1:${address.port}`});
  let guarded!:AssistantRuntime;let original!:AssistantRuntime;let selected='A';let blocked=false;let pending:any[]=[];let submit!:(r:any[])=>Promise<void>;const frozen:any[]=[];const errors:any[]=[];
- function Observer(){pending=useAgUiInterrupts() as any;submit=useAgUiSubmitInterruptResponses();return null}
- function App(){const raw=useAgUiRuntime({agent,adapters:attachmentAdapter?{attachments:attachmentAdapter}:undefined,unstable_enableMessageQueue:true,suggestions:[{prompt:"suggested"}],logger:{error:()=>{}}});original=raw;
-  const runtime=useMemo(()=>guardRuntime(raw,(intent)=>{if(blocked)throw new Error('stale');const entry={selected,kind:intent.kind,text:raw.thread.composer.getState().text};frozen.push(entry);return {...intent.runConfig,custom:{...intent.runConfig.custom,documentId:'doc',version:1,selection:selected,roundId:`round-${frozen.length}`}}},e=>errors.push(e)),[raw]);guarded=runtime;
+ function Observer(){const active=useAgUiInterrupts() as any;const send=useAgUiSubmitInterruptResponses();useEffect(()=>{pending=active;submit=send},[active,send]);return null}
+ function App(){const raw=useAgUiRuntime({agent,adapters:attachmentAdapter?{attachments:attachmentAdapter}:undefined,unstable_enableMessageQueue:true,suggestions:[{prompt:"suggested"}],logger:{error:()=>{}}});useEffect(()=>{original=raw},[raw]);
+  const runtime=useMemo(()=>guardRuntime(raw,(intent)=>{if(blocked)throw new Error('stale');const entry={selected,kind:intent.kind,text:raw.thread.composer.getState().text};frozen.push(entry);return {...intent.runConfig,custom:{...intent.runConfig.custom,documentId:'doc',version:1,selection:selected,roundId:`round-${frozen.length}`}}},e=>errors.push(e)),[raw]);useEffect(()=>{guarded=runtime},[runtime]);
   return createElement(AssistantRuntimeProvider,{runtime},createElement(Observer),createElement(ComposerPrimitive.Root,null,createElement(ComposerPrimitive.Input,{'data-testid':'input'}),createElement(ComposerPrimitive.Send,{'data-testid':'send'},'Send')),createElement(ThreadPrimitive.Suggestions,null,()=>createElement(SuggestionPrimitive.Trigger,{send:true,'data-testid':'suggest'},'Suggestion')))
  }
  const host=document.createElement('div');document.body.append(host);const root=createRoot(host);await act(async()=>{root.render(createElement(App))});cleanup.push(async()=>{for(const r of opened)r.end();await act(async()=>{await new Promise(r=>setTimeout(r,20));root.unmount()});host.remove()})

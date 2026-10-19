@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@mimir/shared": "workspace:*",
-    "@tanstack/ai": "0.68.0",
-    "@tanstack/ai-openai": "0.22.8"
+    "@tanstack/ai": "0.69.0",
+    "@tanstack/ai-openai": "0.30.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",

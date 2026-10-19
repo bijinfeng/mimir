@@ -92,6 +92,7 @@ function plainTextOf(children: ReactNode): string | null {
 /** 头：语言名 + 复制。单独一个小部件，复制状态与定时器归它自己 */
 function CodeBar({ lang, text }: { lang: string; text: string }) {
   const { styles } = useCodeBlockStyles()
+  const [failed, setFailed] = useState(false)
   const [copied, setCopied] = useState(false)
 
   /* 复制状态 2 秒后自己回去。定时器在卸载时清掉——否则切走会话之后
@@ -102,18 +103,20 @@ function CodeBar({ lang, text }: { lang: string; text: string }) {
     return () => window.clearTimeout(timer)
   }, [copied])
 
-  const copy = () => {
-    /* 剪贴板不可用（无权限 / 非安全上下文）时什么都不做：
-       这里没有「失败了」的出路可言，弹一个提示反而更吵 */
-    void navigator.clipboard
-      .writeText(text)
-      .then(() => setCopied(true))
-      .catch(() => {})
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setFailed(false)
+    } catch {
+      setFailed(true)
+    }
   }
 
   return (
     <div className={styles.bar}>
       <span className={styles.lang}>{lang || '文本'}</span>
+      {failed && <span role="status">复制失败，请重试</span>}
       <button
         type="button"
         className={styles.copy}

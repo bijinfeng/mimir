@@ -1,202 +1,166 @@
-import { ComposerPrimitive, useAui, useAuiState } from '@assistant-ui/react'
-import { Button, Tag } from 'antd'
+import { ArrowUp, Paperclip, Square, X, FileText, Image as ImageIcon } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { createStyles } from 'antd-style'
-import { ArrowUp, Square, X } from 'lucide-react'
-import { useEffect } from 'react'
-import { COMPOSER_ATTACHMENT_COMPONENTS } from '../parts/PptxSnapshotAttachment.js'
-import { useMimirChatApi } from '../runtime/chat-context.js'
-import { snapshotFilename } from '../runtime/pptx-snapshot.js'
-import { CONTENT_WIDTH } from '../ChatPanel.style.js'
+import type { ChatAttachment, ChatModelSelection } from '@mimir/shared'
+import type { RuntimeView } from '../runtime/runtime-context.js'
 import type { ChatIo } from '../runtime/io.js'
 import type { ChatComposerStatus } from '../types.js'
-import type { ContextDoc } from './ComposerMenus.js'
-import {
-  AddContextDropdown,
-  ContextUsageChip,
-  ModelDropdown,
-  StrengthDropdown,
-} from './ComposerMenus.js'
-
-/**
- * 输入区。
- *
- * Codex 式底栏（用户拍板）：上面是输入框（3 行起、自动长高到 8 行），
- * 下面一条工具栏分两组——
- *
- *  - **左**：+ 添加上下文（把本轮检索范围锁到某篇文档）、范围 pill、
- *    上下文容量（usageLog 里该会话最近一次请求的真实 promptTokens）
- *  - **右**：思考强度（标准 / 深入 = 对话角色 / 推理角色）、当前模型、
- *    发送 / 停止
- *
- * ## 状态归引擎，这里只有「这一轮想锁哪一篇」
- *
- * 输入文本、能不能发、能不能停、队列里有几条——全在 composer 的 state 里
- * （`s.composer.text` / `canSend` / `canCancel` / `queue`），这个组件**不持有**
- * 文本的副本。旧实现里 `useState(initialText)` 那一份正是「把文本放回输入框」
- * 要重挂载组件的根源；现在那条路是 `composer.setText()`。
- *
- * ## 生成中不锁输入框（D-098）
- *
- * 生成时输入框**可打字**（Codex 同款）：Enter 不发送而是**排队**——
- * 本轮正常结束后自动发出；停止时还给输入框（在运行时那层的 `onCancel` 里，
- * 见 `runtime/use-mimir-runtime.ts`）。发送键在生成中仍是「停止」。
- *
- * ## 发送 / 停止是一个键位的两种形态
- *
- * 空闲是发送（`ComposerPrimitive.Send`）、生成中是停止
- * （`ComposerPrimitive.Cancel` 换掉它），可用性由引擎算（`canSend` /
- * `canCancel`），不由我们按 `busy` 猜。旧实现里那个 `creating` 补丁
- * （新会话的建会话那趟）在引擎看来也是「还不能发」，自动落在 `canSend` 上。
- */
-const useStyles = createStyles(({ css, token, prefixCls }) => ({
+import { useMimirChatApi } from '../runtime/chat-context.js'
+import { ComposerMenus, ContextUsageChip } from './ComposerMenus.js'
+import { ImagePart } from '../parts/MediaParts.js'
+import { CONTENT_WIDTH } from '../ChatPanel.style.js'
+const useStyles = createStyles(({ css, token }) => ({
   wrap: css`
-    flex: none;
-    padding: 12px 0 22px;
-    /* 与消息列表的界线不在这里画（D-070）：显形开关在 ChatPanel——
-       消息列表的 scrollTop 归它管，线画在包着本组件的 composerLine 上 */
-    background: ${token.colorBgContainer};
-  `,
-  inner: css`
     width: 100%;
     max-width: ${CONTENT_WIDTH}px;
     margin: 0 auto;
-    /* 与消息列（ChatPanel 的 inner）同一个变量——输入框必须与上面的内容
-       对齐，两处各写死一个 40px 就会在侧栏里错开（见那边的说明） */
-    padding: 0 var(--mimir-chat-gutter, 40px);
+    padding: 12px var(--mimir-chat-gutter, 24px) 10px;
   `,
-  /*
-   * 盒子（官方 composer shell）：border-foreground/10（最浅一档描边）、
-   * bg = muted 30% 掺透明（比实色 muted 更轻，换算成
-   * colorFillQuaternary）、rounded-(--composer-radius) = 1rem、p-2（8px）。
-   * 聚焦只把描边提一档（官方 focus-within:border-foreground/25 同款，
-   * 不是主色柔光）。
-   */
   box: css`
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusLG}px;
+    border-radius: 6px;
     background: ${token.colorBgContainer};
-    box-shadow: ${token.boxShadowTertiary};
-    padding: 10px;
-    /* 焦点态只过渡 border-color：加 box-shadow 那一半会让容器「抖」
-       （阴影与边框不同步） */
+    padding: 0;
     transition: border-color 0.12s ease-out;
-
+    &:hover {
+      border-color: ${token.colorBorder};
+    }
     &:focus-within {
-      border-color: ${token.colorPrimaryBorder};
+      border-color: ${token.colorPrimary};
     }
-
-    /*
-     * 输入框不画自己的焦点环——**外层盒子才是容器**（DESIGN §8.8）。
-     * antd v6 给聚焦的输入类控件加了 focusOutline（实测计算样式
-     * outline: rgb(22,119,255) solid 1px），叠在盒子的聚焦边框上就是
-     * 用户看到的两层边框。命令面板当年为同一条关过三处（DESIGN §8.6），
-     * 这里是第四处。
-     */
-    .${prefixCls}-input {
-      &:focus,
-      &:focus-within,
-      &:hover {
-        outline: none;
-        box-shadow: none;
-      }
-    }
-
-    /* 引擎渲染的那个 textarea：透明底、自己不写自动增高
-       （增高归 ComposerPrimitive.Input 的 minRows/maxRows） */
     textarea {
-      border: none;
-      outline: none;
-      background: none;
-      padding: 5px 7px;
-      min-height: 40px; /* 官方 min-h-10 */
-      resize: none;
+      display: block;
+      box-sizing: border-box;
       width: 100%;
-      font-family: inherit;
+      min-height: 64px;
+      max-height: 190px;
+      resize: none;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      padding: 13px 14px 8px;
+      font: inherit;
       font-size: var(--mimir-chat-font-body, 14px);
       line-height: 1.7;
       color: ${token.colorText};
-
-      &::placeholder {
-        color: ${token.colorTextPlaceholder};
-      }
+      caret-color: ${token.colorPrimary};
+    }
+    textarea::placeholder {
+      color: ${token.colorTextPlaceholder};
     }
   `,
   bar: css`
     display: flex;
     align-items: center;
+    gap: 6px;
     flex-wrap: wrap;
-    gap: 6px 10px;
-    margin-top: 9px;
+    padding: 5px 7px 7px;
   `,
-  barGroup: css`
+  tools: css`
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
+    flex: 1;
     min-width: 0;
+    gap: 4px;
+    flex-wrap: wrap;
   `,
-  barLeft: css`
-    flex: 1 1 auto;
-  `,
-  barRight: css`
-    justify-content: flex-end;
-    margin-left: auto;
-  `,
-  pill: css`
-    display: inline-flex;
-    align-items: center;
-    max-width: 160px;
-    /* 关闭图标始终留在可见区域，长标题只截断文字。 */
-    margin-inline-end: 0;
-  `,
-  pillText: css`
-    display: block;
-    max-width: 125px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-  `,
-  /* 发送 / 停止：官方 size-7（28px）rounded-full 深底浅字
-     （variant=default 的换算——shadcn 的 default 是近黑底，这里用
-     colorText 反色）。禁用只降透明度（官方 disabled:opacity-40） */
-  sendButton: css`
+  icon: css`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
     flex: none;
-    border: none;
-    border-radius: ${token.borderRadiusSM}px;
-    background: ${token.colorPrimary};
-    color: ${token.colorTextLightSolid};
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: ${token.colorTextSecondary};
     cursor: pointer;
-    transition:
-      background-color 0.12s ease-out,
-      opacity 0.12s ease-out;
-
     &:hover:not(:disabled) {
-      background: ${token.colorPrimaryHover};
+      background: ${token.colorFillTertiary};
+      color: ${token.colorText};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimaryBorder};
+      outline: 1px solid ${token.colorPrimary};
       outline-offset: 2px;
     }
     &:disabled {
-      opacity: 0.4;
+      opacity: 0.45;
       cursor: not-allowed;
     }
   `,
-  /* 排队中的追问：输入框与工具栏之间的一行。单行省略——它只是
-     「有一条在排队」的提醒，全文等自动发出之后就在回答流里了 */
-  snapshotNotice: css`
+  send: css`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    background: ${token.colorPrimary};
+    color: ${token.colorTextLightSolid};
+    cursor: pointer;
+    &:hover {
+      background: ${token.colorPrimaryHover};
+    }
+    &:focus-visible {
+      outline: 1px solid ${token.colorPrimary};
+      outline-offset: 2px;
+    }
+    &:disabled {
+      background: ${token.colorFillTertiary};
+      color: ${token.colorTextQuaternary};
+      cursor: not-allowed;
+    }
+  `,
+  files: css`
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 10px 12px 0;
+  `,
+  tile: css`
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin: 6px 0;
+    gap: 8px;
+    max-width: 100%;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 6px;
+    padding: 8px;
+    background: ${token.colorFillQuaternary};
+    font-size: var(--mimir-chat-font-meta, 12px);
+    img {
+      width: 48px;
+      height: 42px;
+      object-fit: contain;
+      border-radius: 3px;
+    }
+    a {
+      color: inherit;
+      max-width: 190px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    small {
+      display: block;
+      color: ${token.colorTextSecondary};
+    }
+    button {
+      flex: none;
+    }
+  `,
+  notice: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    font-size: var(--mimir-chat-font-meta, 12px);
+    line-height: 1.6;
     color: ${token.colorTextSecondary};
-    font-size: var(--mimir-chat-font-note, 12.5px);
-    line-height: 1.5;
     span {
       flex: 1;
       min-width: 0;
@@ -206,288 +170,289 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       color: ${token.colorErrorText};
     }
   `,
-  queued: css`
+  queue: css`
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 8px;
-    padding: 4px 8px;
-    border-radius: ${token.borderRadiusSM}px;
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorderSecondary};
-    font-size: var(--mimir-chat-font-badge, 11.5px);
+    margin-bottom: 8px;
+    padding: 5px 8px;
+    background: ${token.colorFillQuaternary};
+    border-radius: 4px;
+    font-size: var(--mimir-chat-font-meta, 12px);
     color: ${token.colorTextSecondary};
-  `,
-  queuedLabel: css`
-    flex: none;
-    color: ${token.colorTextTertiary};
-  `,
-  queuedText: css`
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   `,
 }))
-
-export interface ComposerProps {
-  /** 本轮检索范围（draft 锁定或「+ 添加上下文」所选）；null = 整个知识库 */
-  contextDocument: ContextDoc | null
-  onContextDocumentChange: (doc: ContextDoc | null) => void
-  /** 深入 = 用推理角色回答（随消息的 runConfig 走） */
-  deepReasoning: boolean
-  onDeepReasoningChange: (deep: boolean) => void
-  showReasoningControl?: boolean
-  focusOnMount?: boolean
-  io: ChatIo
-  status: ChatComposerStatus
-  onBeforeSubmit: () => boolean
-  snapshotError: string | null
-  clearSnapshotError: () => void
-  snapshotVisionReady: boolean
-}
-
-export function Composer({
-  contextDocument,
-  onContextDocumentChange,
-  deepReasoning,
-  onDeepReasoningChange,
-  showReasoningControl = true,
-  focusOnMount,
-  io,
-  status,
-  onBeforeSubmit,
-  snapshotError,
-  clearSnapshotError,
-  snapshotVisionReady,
-}: ComposerProps) {
+export function AttachmentTile({
+  file,
+  onRemove,
+}: {
+  file: ChatAttachment
+  onRemove?: () => void
+}) {
   const { styles } = useStyles()
-  const aui = useAui()
-
-  /**
-   * 把「这一轮的参数」同步进 composer 的 runConfig。
-   *
-   * 引擎在发送时读 composer 的 runConfig、并把它挂到**这一条消息**上
-   * （队列里存的是完整 AppendMessage，所以排队那条带着自己那一轮的
-   * 检索范围发出去——实测第二个请求体里带着完整 transcript）。
-   *
-   * 这是「同步到外部系统」的 effect：composer 的 state 归引擎，
-   * 不能在渲染期写它，也不该由每个控件各自记得调一次。
-   */
-  useEffect(() => {
-    aui.composer.setRunConfig({
-      custom: {
-        documentId: contextDocument?.id ?? null,
-        ...(deepReasoning ? { deepReasoning: true } : {}),
-      },
-    })
-  }, [aui, contextDocument, deepReasoning])
-
-  /** 生成中（按钮换成「停止」的相位、占位符也要跟着换） */
-  const canCancel = useAuiState((state) => state.composer.canCancel)
-  const hasSnapshot = useAuiState((state) =>
-    state.composer.attachments.some((item) => snapshotFilename(item.name)),
-  )
-
   return (
-    <div className={styles.wrap}>
-      <div className={styles.inner}>
-        <ComposerPrimitive.Root
-          className={styles.box}
-          onSubmitCapture={(event) => {
-            if (!onBeforeSubmit()) {
-              event.preventDefault()
-              event.stopPropagation()
-            }
-          }}
-          onClickCapture={(event) => {
-            if (
-              (event.target as Element).closest('button[aria-label="发送"]') &&
-              !onBeforeSubmit()
-            ) {
-              event.preventDefault()
-              event.stopPropagation()
-            }
-          }}
-        >
-          <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
-          <ComposerPrimitive.Input
-            autoFocus={focusOnMount}
-            /* 普通文字 3–8 行；截图草稿 2–5 行，给预览与发送留空间。
-               react-textarea-autosize 的 props 直接透传 */
-            minRows={hasSnapshot ? 2 : 3}
-            maxRows={hasSnapshot ? 5 : 8}
-            /* Enter 发送、Shift+Enter 换行是聊天框的通行约定；输入法里的
-               回车由引擎自己按 isComposing 挡掉 */
-            submitMode="enter"
-            /* 引擎默认的 Esc 是「取消输入」（清空草稿），而本仓的 Esc 语义是
-               「生成中停止」（见下面 textarea 的 onKeyDown）。关掉默认的，
-               由这里显式处理，两件事不混在一个键上。 */
-            cancelOnEscape={false}
-            /* 触屏键盘把回车键标成「发送」 */
-            enterKeyHint="send"
-            placeholder={
-              canCancel
-                ? '生成中 · Enter 排队这条，Esc 停止'
-                : contextDocument
-                  ? `就「${contextDocument.title}」提问…`
-                  : '直接向知识库提问…'
-            }
-            onKeyDownCapture={(event) => {
-              if (
-                event.key === 'Enter' &&
-                !event.shiftKey &&
-                !event.nativeEvent.isComposing &&
-                !onBeforeSubmit()
-              ) {
-                event.preventDefault()
-                event.stopPropagation()
-              }
-            }}
-            onKeyDown={(event) => {
-              /**
-               * 生成中按 Esc 停止。
-               *
-               * `isComposing` 守卫不能省：中文输入法里 Esc 是**取消候选词**，
-               * 这时按下去不该把正在生成的回答也停掉。rc-input 对 Enter
-               * 就是这么挡的（`@rc-component/input/es/TextArea.js` 的
-               * `e.key === 'Enter' && !e.nativeEvent.isComposing`），
-               * 这里照同一个判据。
-               */
-              if (event.key === 'Escape' && canCancel && !event.nativeEvent.isComposing) {
-                event.preventDefault()
-                aui.thread.cancelRun()
-              }
-            }}
-          />
-
-          {hasSnapshot && !snapshotVisionReady && !snapshotError && (
-            <div className={styles.snapshotNotice} role="status">
-              <span>可先编辑草稿，发送截图需要聊天模型并启用视觉输入。</span>
-              <Button type="link" size="small" onClick={io.onManageModels}>
-                设置模型
-              </Button>
-            </div>
-          )}
-          {snapshotError && (
-            <div className={styles.snapshotNotice} role="alert">
-              <span>{snapshotError}</span>
-              <Button
-                type="text"
-                size="small"
-                icon={<X size={14} />}
-                aria-label="关闭截图提示"
-                onClick={clearSnapshotError}
-              />
-            </div>
-          )}
-          <QueueRow />
-
-          <div className={styles.bar}>
-            <div className={`${styles.barGroup} ${styles.barLeft}`}>
-              <AddContextDropdown
-                onPick={onContextDocumentChange}
-                documents={status.documents}
-                hasSelection={contextDocument !== null}
-              />
-              {contextDocument && (
-                <Tag
-                  closable
-                  onClose={() => onContextDocumentChange(null)}
-                  className={styles.pill}
-                  title={`本轮检索范围：${contextDocument.title}`}
-                >
-                  <span className={styles.pillText}>范围：{contextDocument.title}</span>
-                </Tag>
-              )}
-              <ContextUsageChip usage={status.usage} />
-            </div>
-            <div className={`${styles.barGroup} ${styles.barRight}`}>
-              {/* 主视图可选思考强度；文档侧栏固定使用标准聊天模型。 */}
-              {showReasoningControl && (
-                <StrengthDropdown value={deepReasoning} onChange={onDeepReasoningChange} />
-              )}
-              <ModelDropdown
-                deepReasoning={deepReasoning}
-                modelRoles={status.modelRoles}
-                onManageModels={io.onManageModels}
-              />
-              {/* 发送 / 停止**共用一个键位**，形态按上游：36px 圆角方块、
-                  深底浅字（`size-10 rounded-xl bg-foreground
-                  text-background` 的换算）、图标 ArrowUp / Square。
-                  两侧都用引擎的按钮——onClick 与 disabled 由引擎算
-                  （`canSend` 管「能不能发」，含排队能力），不手写
-                  「自己 Button + 调 composer.send()」；空闲渲染 Send、
-                  生成中整颗换成 Cancel（条件渲染，两颗都常驻会在空闲
-                  时多一块灰方块，上游也是 AuiIf 条件切换）。 */}
-              {canCancel ? (
-                <ComposerPrimitive.Cancel
-                  render={<button type="button" className={styles.sendButton} aria-label="停止" />}
-                >
-                  <Square size={16} fill="currentColor" />
-                </ComposerPrimitive.Cancel>
-              ) : (
-                <ComposerPrimitive.Send
-                  render={<button type="button" className={styles.sendButton} aria-label="发送" />}
-                >
-                  <ArrowUp size={18} />
-                </ComposerPrimitive.Send>
-              )}
-            </div>
-          </div>
-        </ComposerPrimitive.Root>
+    <div className={styles.tile}>
+      {file.kind === 'image' && file.status === 'ready' ? (
+        <ImagePart image={file.originalUrl} name={file.name} />
+      ) : file.kind === 'image' ? (
+        <ImageIcon size={20} />
+      ) : (
+        <FileText size={20} />
+      )}
+      <div>
+        {file.originalUrl ? (
+          <a href={file.originalUrl} target="_blank" rel="noopener noreferrer" title={file.name}>
+            {file.name}
+          </a>
+        ) : (
+          <span title={file.name}>{file.name}</span>
+        )}
+        <small>
+          {file.status === 'processing'
+            ? '正在处理…'
+            : file.status === 'failed'
+              ? (file.error ?? '处理失败，请移除后重选')
+              : file.status === 'unavailable'
+                ? '附件已不可用'
+                : `${Math.ceil(file.size / 1024)} KB`}
+        </small>
       </div>
+      {onRemove && (
+        <button
+          type="button"
+          className={styles.icon}
+          aria-label={`移除 ${file.name}`}
+          onClick={onRemove}
+        >
+          <X size={14} />
+        </button>
+      )}
     </div>
   )
 }
-
-/**
- * 排队条（D-098 的那条追问）。
- *
- * 数据是 `composer.queue`（引擎在生成中把消息收进来，本轮落定后自动发出
- * —— 实测：队列长度 1 → 本轮结束自动发出 → 第二个请求体里带着完整
- * transcript）。
- *
- * ## 只渲染首条
- *
- * D-098 定的是**单条**排队：界面上显示第一条，多出来的（用户又打了一条）
- * 也照引擎的队列排在后面，但这一行只交代「有一条在排队」——排在后面的
- * 那几条等前一条发出去之后会依次露头（同一个组件，取 `queue[0]`）。
- *
- * ## 取回（×）把那条还回输入框
- *
- * 引擎的 `removeQueueItem` 只管删，所以删之前先把文本写进 composer——
- * **与停止时的处理是同一个动作**（见 `runtime/use-mimir-runtime.ts` 的
- * `onCancel`），只是触发点不同：这里是用户点的。
- */
-function QueueRow() {
-  const api = useMimirChatApi()
+export function Composer({
+  runtime,
+  status,
+  io,
+  documentId,
+  onDocumentIdChange,
+  modelSelection,
+  onModelSelectionChange,
+  focusOnMount,
+}: {
+  runtime: RuntimeView
+  status: ChatComposerStatus
+  io: ChatIo
+  documentId: string | null
+  onDocumentIdChange: (id: string | null) => void
+  modelSelection: ChatModelSelection | undefined
+  onModelSelectionChange: (value: ChatModelSelection) => void
+  focusOnMount?: boolean
+}) {
   const { styles } = useStyles()
-  const aui = useAui()
-  const first = useAuiState((state) => state.composer.queue[0])
-
-  if (!first) return null
-
+  const input = useRef<HTMLTextAreaElement>(null)
+  const chooser = useRef<HTMLInputElement>(null)
+  const composing = useRef(false)
+  const api = useMimirChatApi()
+  useEffect(() => {
+    if (focusOnMount) input.current?.focus()
+  }, [focusOnMount])
+  useEffect(() => {
+    const node = input.current
+    if (node && node.value === runtime.draft) {
+      node.style.height = 'auto'
+      node.style.height = `${Math.min(190, Math.max(64, node.scrollHeight))}px`
+    }
+  }, [runtime.draft])
+  const canSend =
+    !!(runtime.draft.trim() || runtime.files.length || runtime.snapshot) &&
+    !runtime.uploading &&
+    !runtime.loading &&
+    !runtime.loadError
+  const first = runtime.queue[0]
   return (
-    <div className={styles.queued}>
-      <span className={styles.queuedLabel}>已排队</span>
-      <span className={styles.queuedText}>{first.prompt}</span>
-      <Button
-        type="text"
-        size="small"
-        icon={<X size={14} />}
-        aria-label="取回排队的消息"
-        onClick={() => {
-          /* 先把文本放回输入框再删（`remove` 只管删）——与停止时的处理
-             是同一个动作，见 runtime/use-mimir-runtime.ts 的 onCancel */
-          if (api.reclaimQueued) api.reclaimQueued(first.id)
-          else {
-            aui.composer.setText(first.prompt)
-            aui.composer.queueItem({ id: first.id }).remove()
+    <div className={styles.wrap}>
+      <form
+        className={styles.box}
+        onSubmit={(event) => {
+          event.preventDefault()
+          if (!composing.current) runtime.send()
+        }}
+        onDragOver={(event) => {
+          if (event.dataTransfer.types.includes('Files')) event.preventDefault()
+        }}
+        onDrop={(event) => {
+          if (event.dataTransfer.files.length) {
+            event.preventDefault()
+            runtime.addFiles([...event.dataTransfer.files])
           }
         }}
-      />
+      >
+        {!!runtime.files.length && (
+          <div className={styles.files}>
+            {runtime.files.map((file) => (
+              <AttachmentTile
+                key={file.id}
+                file={file}
+                onRemove={() => runtime.removeFile(file.id)}
+              />
+            ))}
+          </div>
+        )}
+        {runtime.snapshot && (
+          <div className={styles.tile}>
+            <ImagePart image={runtime.snapshot.image.dataUrl} name={runtime.snapshot.image.name} />
+            <span>{runtime.snapshot.image.name}</span>
+            <button
+              type="button"
+              className={styles.icon}
+              aria-label="移除截图"
+              onClick={() => runtime.applySnapshotDraft(undefined)}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        {runtime.uploading && (
+          <div className={styles.notice} role="status">
+            正在上传并准备附件…
+          </div>
+        )}
+        <textarea
+          ref={input}
+          aria-label="提问"
+          value={runtime.draft}
+          placeholder={
+            runtime.running
+              ? '生成中 · Enter 排队这条，Esc 停止'
+              : documentId
+                ? '就当前文档提问…'
+                : '直接向知识库提问…'
+          }
+          enterKeyHint="send"
+          onChange={(event) => runtime.setDraft(event.target.value)}
+          onCompositionStart={() => {
+            composing.current = true
+          }}
+          onCompositionEnd={() => {
+            composing.current = false
+          }}
+          onPaste={(event) => {
+            const files = [...event.clipboardData.files]
+            if (files.length) {
+              event.preventDefault()
+              runtime.addFiles(files)
+            }
+          }}
+          onKeyDown={(event) => {
+            if (
+              composing.current ||
+              event.nativeEvent.isComposing ||
+              event.nativeEvent.keyCode === 229
+            )
+              return
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault()
+              runtime.send()
+            }
+            if (event.key === 'Escape' && runtime.running) {
+              event.preventDefault()
+              runtime.stop()
+            }
+          }}
+        />
+        {runtime.error && (
+          <div className={styles.notice} role="alert">
+            <span>{runtime.error}</span>
+            <button
+              type="button"
+              className={styles.icon}
+              aria-label="关闭提示"
+              onClick={runtime.clearError}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        {first && (
+          <div className={styles.queue}>
+            <span title={first.text}>
+              已排队 · {first.text}
+              {runtime.queue.length > 1 ? `（共 ${runtime.queue.length} 条）` : ''}
+            </span>
+            <button
+              type="button"
+              className={styles.icon}
+              aria-label="取回排队的消息"
+              onClick={() => {
+                api.reclaimQueued?.(first.id)
+                input.current?.focus()
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        <div className={styles.bar}>
+          <div className={styles.tools}>
+            <button
+              type="button"
+              className={styles.icon}
+              aria-label="添加附件"
+              title="添加聊天附件"
+              disabled={runtime.uploading || !!runtime.snapshot}
+              onClick={() => chooser.current?.click()}
+            >
+              <Paperclip size={16} />
+            </button>
+            <input
+              ref={chooser}
+              hidden
+              type="file"
+              multiple
+              accept=".txt,.md,.csv,.json,.xml,.html,.css,.js,.jsx,.ts,.tsx,.py,.java,.go,.rs,.sql,.yaml,.yml,.docx,.xlsx,.pptx,.pdf,.png,.jpg,.jpeg,.webp"
+              onChange={(event) => {
+                if (event.target.files) runtime.addFiles([...event.target.files])
+                event.target.value = ''
+                input.current?.focus()
+              }}
+            />
+            <ComposerMenus
+              status={status}
+              selection={modelSelection}
+              onSelection={onModelSelectionChange}
+              documentId={documentId}
+              onDocumentId={onDocumentIdChange}
+              onManageModels={io.onManageModels}
+            />
+            <ContextUsageChip usage={status.usage} />
+          </div>
+          {runtime.running ? (
+            <button
+              type="button"
+              className={styles.send}
+              aria-label="停止"
+              onClick={(event) => {
+                // React may reuse this node as submit before click's default activation.
+                event.preventDefault()
+                runtime.stop()
+              }}
+            >
+              <Square size={14} fill="currentColor" />
+            </button>
+          ) : (
+            <button type="submit" className={styles.send} aria-label="发送" disabled={!canSend}>
+              <ArrowUp size={18} />
+            </button>
+          )}
+        </div>
+      </form>
     </div>
   )
 }

@@ -6,12 +6,7 @@ import { CodeBlock } from './CodeBlock.js'
 /**
  * 消息正文的 Markdown。
  *
- * ## 为什么还是 @tanstack/markdown
- *
- * 官方（assistant-ui）的那份 markdown 组件会带进 react-markdown 与一整套
- * radix 依赖，而本仓现有的**流式解析与样式覆写**都长在 `@tanstack/markdown`
- * 上（`ChatPanel.style.ts` 的 `[data-role='assistant']` 那一大段）。
- * 换掉它等于把那些覆写重写一遍，只为了换一个渲染器。
+ * TanStack Markdown 负责真实流式语法；排版消费 Mimir 主题。
  *
  * ## 组件表必须在模块级
  *

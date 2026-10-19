@@ -1,76 +1,86 @@
-import type { ReasoningMessagePartProps } from '@assistant-ui/react'
-import { useState } from 'react'
-import {
-  LiveSeconds,
-  ReasoningContent,
-  ReasoningRoot,
-  ReasoningTrigger,
-  useReasoningKeyframes,
-} from './reasoning-shell.js'
+import { Brain, ChevronDown } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { createStyles } from 'antd-style'
 import { MarkdownPart } from './MarkdownPart.js'
-
-/**
- * **模型思考**（`reasoning` part）——官方 Reasoning 形态，与检索过程共用
- * `reasoning-shell.tsx` 的皮（用户点名「AG-UI 的消息体类型每一种都按
- * assistant-ui 还原」，这是此前静默丢弃的一类）。
- *
- * ## 它什么时候出现
- *
- * 深思考（`deepReasoning`）时模型流里带 `REASONING_*` 帧；运行时默认
- * `showThinking: false` 会把它们**藏掉**，只有打开后才聚成 reasoning part
- * （`runtime/use-mimir-runtime.ts` 的 `showThinking: true`）。开着而不渲染
- * 等于白开——所以这一件与那个开关必须同批。
- *
- * ## 与检索过程的分工
- *
- * 「思考 N 轮 · 调用 M 次工具」那条是**知识库这一侧**的过程（检索、切词、
- * 命中），label 与 `mimir.trace` 绑定；这一件是**模型那一侧**的思考原文。
- * 两者同一个皮、两个标签，先后由消息里的 part 顺序决定（服务端的帧序是
- * 先 trace 后模型输出）。官方也把它们画成同一种「Reasoning」盒——
- * 用户在视觉上读到的都是「一段可折叠的思考」。
- *
- * ## 与 trace 的差异
- *
- * 模型思考**没有**服务端的轮数 / 工具数 / 总耗时，只有 part 自己的状态
- * （`status.type` 为 running 表示还在流）。所以：
- *  - 标签用「模型思考 (Ns)」，秒数在 live 时走客户端的钟
- *  - 结束后不编耗时——拿不到就只留标签（编的数字比没有更糟）
- */
-export function ReasoningPart({ text, status }: ReasoningMessagePartProps) {
-  const { styles: kf } = useReasoningKeyframes()
-
+const useStyles = createStyles(({ css, token }) => ({
+  root: css`
+    margin: 10px 0;
+    color: ${token.colorTextSecondary};
+    font-size: var(--mimir-chat-font-excerpt, 13px);
+  `,
+  trigger: css`
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 0;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    &:focus-visible {
+      outline: 1px solid ${token.colorPrimary};
+      outline-offset: 2px;
+    }
+    svg:last-child {
+      margin-left: auto;
+      transition: transform 0.15s;
+    }
+    &[aria-expanded='true'] svg:last-child {
+      transform: rotate(180deg);
+    }
+  `,
+  content: css`
+    max-height: 220px;
+    overflow: auto;
+    padding: 0 12px;
+    margin: 8px 0 0 7px;
+    border-left: 1px solid ${token.colorBorderSecondary};
+    font-size: var(--mimir-chat-font-excerpt, 13px);
+    line-height: 1.9;
+  `,
+}))
+/** Streaming follows until the user explicitly takes over disclosure or scroll. */
+export function ReasoningPart({ text, status }: { text: string; status?: { type: string } }) {
+  const { styles } = useStyles()
   const live = status?.type === 'running'
-  const [open, setOpen] = useState(live)
-  const [followedLive, setFollowedLive] = useState(live)
-  if (followedLive !== live) {
-    setFollowedLive(live)
-    setOpen(live)
-  }
-
-  if (text.trim().length === 0 && !live) return null
-
+  const [manual, setManual] = useState<boolean | null>(null)
+  const panel = useRef<HTMLDivElement>(null)
+  const pinned = useRef(true)
+  const open = manual ?? live
+  useEffect(() => {
+    if (!text && !live) return
+    if (pinned.current && live && panel.current)
+      panel.current.scrollTop = panel.current.scrollHeight
+  }, [text, live])
+  if (!text.trim() && !live) return null
   return (
-    <div className={kf.hold}>
-      <ReasoningRoot>
-        <ReasoningTrigger live={live} open={open} onClick={() => setOpen((value) => !value)}>
-          <span>
-            模型思考
-            {live ? (
-              <>
-                {' ('}
-                <LiveSeconds />
-                {')'}
-              </>
-            ) : null}
-          </span>
-        </ReasoningTrigger>
-        {open && (
-          <ReasoningContent>
-            {/* 思考原文可能含 markdown（模型的 reasoning 常带列表/代码） */}
-            <MarkdownPart text={text} />
-          </ReasoningContent>
-        )}
-      </ReasoningRoot>
+    <div className={styles.root}>
+      <button
+        type="button"
+        className={styles.trigger}
+        aria-expanded={open}
+        onClick={() => setManual(!open)}
+      >
+        <Brain size={15} />
+        {live ? '正在思考…' : '思考过程'}
+        <ChevronDown size={13} />
+      </button>
+      {open && (
+        <div
+          ref={panel}
+          className={styles.content}
+          onScroll={() => {
+            if (panel.current)
+              pinned.current =
+                panel.current.scrollHeight - panel.current.scrollTop - panel.current.clientHeight <
+                24
+          }}
+        >
+          <MarkdownPart text={text} />
+        </div>
+      )}
     </div>
   )
 }

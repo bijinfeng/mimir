@@ -185,8 +185,8 @@ describe('会话与问答', () => {
     expect(reloaded.body.title).toContain('React')
   })
 
-  it('检索过程带真实数字，且引用指回真实文档', async () => {
-    await client.post('/api/documents/notes', {
+  it('检索不再生成自定义过程，且响应和历史引用指回真实文档', async () => {
+    const source = await client.post<{ id: string }>('/api/documents/notes', {
       title: 'React 性能优化的三个动作',
       body: '把频繁变化的 state 往下挪，缩小重渲染范围。列表项必须有稳定的 key。',
       tags: ['react'],
@@ -197,7 +197,7 @@ describe('会话与问答', () => {
       messages: {
         id: string
         role: string
-        trace: { steps: { icon: string; meta?: string }[] } | null
+        trace: unknown
         citations: { documentId: string; title: string }[]
       }[]
     }>('/api/conversations/ask', { question: '重渲染范围怎么缩小', scope: 'search' })
@@ -207,10 +207,11 @@ describe('会话与问答', () => {
     const assistant = ask.body.messages.find((m) => m.role === 'assistant')
     expect(assistant).toBeDefined()
 
-    // trace 必须存在：没有它，AI 说「没找到」时用户无法分辨
-    // 是没存过、还是分词没匹配上（.trellis/spec/project/product.md §5.6）
-    expect(assistant?.trace).not.toBeNull()
-    expect(assistant?.trace?.steps.length).toBeGreaterThan(0)
+    // 用户已要求移除自定义检索过程（product.md §5.6）；真实引用仍然保留。
+    expect(assistant?.trace).toBeNull()
+    expect(assistant?.citations.some((citation) => citation.documentId === source.body.id)).toBe(
+      true,
+    )
 
     // 引用必须指向真实存在的文档，否则「点引用跳回原文」是假的。
     // 断言非空是刻意的：条件断言（if (first)）在检索失败时会静默跳过，
@@ -220,6 +221,15 @@ describe('会话与问答', () => {
     if (!first) throw new Error('没有引用，无法验证跳转目标')
     const doc = await client.get(`/api/documents/${first.documentId}`)
     expect(doc.status).toBe(200)
+
+    const reloaded = await client.get<{
+      messages: { id: string; trace: unknown; citations: { documentId: string; title: string }[] }[]
+    }>(`/api/conversations/${ask.body.conversationId}`)
+    expect(reloaded.status).toBe(200)
+    const persisted = reloaded.body.messages.find((message) => message.id === assistant?.id)
+    expect(persisted).toBeDefined()
+    expect(persisted?.trace).toBeNull()
+    expect(persisted?.citations).toEqual(assistant?.citations)
   })
 
   it('未配模型时走「只用检索」路径，并说明没有调模型', async () => {

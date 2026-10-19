@@ -46,9 +46,9 @@
 
 TanStack AI 负责 `RUN_FINISHED.outcome → client_tool_* → resume → parentRunId`。服务端将中断集合、格式、文档、轮次及版本持久化；续轮时校验每个结果和版本推进，并原子消费一次。失败必须以 `ok:false` 进入模型续轮。取消、切文档或后续人工修改不能把旧结果落到当前画布。
 
-续轮 HTTP 失败时，桥接层保留已经计算的完整工具结果，提供“重试续传工具结果”；重试前再次核对当前文档、格式、轮次及画布版本，且不得重新执行画布工具。`@assistant-ui/react-ag-ui` 的项目补丁在失败后恢复同一待处理中断；若首次请求其实已到服务端，服务端原子消费会拒绝重放。版本变化或服务端拒绝时提示重新发送指令，不假称续轮成功。
+续轮 HTTP 失败时，桥接层保留已经计算的完整工具结果，提供“重试续传工具结果”；重试前再次核对当前文档、格式、轮次及画布版本，且不得重新执行画布工具。TanStack 运行桥在失败或 SDK fulfilled false 时保留原中断目标与缓存结果；若首次请求其实已到服务端，服务端原子消费会拒绝重放。版本变化或服务端拒绝时提示重新发送指令，不假称续轮成功。
 
-首轮发出 `POST /api/chat` 前，`packages/chat/src/runtime/agent.ts` 的 `onRunInitialized` 必须经 `ChatIo.createConversation()` 建立真实会话，并将返回的同一个 ID 同时写入 `params.agent.threadId`、请求 `threadId` 和 `forwardedProps.conversationId`；续轮继续沿用该 ID。AG-UI 自行生成的临时线程 ID 不能充当已落库会话。服务端 `docx-agent-stream.ts` 在首轮和续轮都要求 `getConversation(conversationId)` 存在，并校验 `threadId === conversationId`。这样工具首次中断后的续轮可以找到会话，也阻止伪造或已删除会话的写入。
+首轮发出 `POST /api/chat` 前，`packages/chat/src/runtime/transport.ts` 的最终发送边界必须经 `ChatIo.createConversation()` 建立真实会话，并将返回的同一个 ID 同时写入请求 `threadId` 和 `forwardedProps.conversationId`；续轮继续沿用该 ID。AG-UI 自行生成的临时线程 ID 不能充当已落库会话。服务端 `docx-agent-stream.ts` 在首轮和续轮都要求 `getConversation(conversationId)` 存在，并校验 `threadId === conversationId`。这样工具首次中断后的续轮可以找到会话，也阻止伪造或已删除会话的写入。
 
 浏览器、桌面本地模式和桌面远端模式经相同的文档服务合同访问需要 Node、Rust 或 PDFium 的执行器；不能把格式工具只挂在 Electron IPC。各格式编辑器/宿主能力和两端实测另由格式任务证明。
 

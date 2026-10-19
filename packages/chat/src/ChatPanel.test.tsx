@@ -1,6 +1,8 @@
+import { App as AntApp } from 'antd'
 import { createServer } from 'node:http'
 import type { Server } from 'node:http'
-import { act, createElement } from 'react'
+import { act, createElement, StrictMode } from 'react'
+import { flushSync } from 'react-dom'
 import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
@@ -69,6 +71,46 @@ process.on('unhandledRejection', onUnhandled)
 const EMPTY_STATUS: ChatComposerStatus = {
   documents: { items: [], isLoading: false, isError: false, refetch: () => {} },
   modelRoles: { chat: 'test-chat', reasoning: 'test-reasoning' },
+  models: {
+    catalog: {
+      providers: [
+        {
+          providerId: 'test-provider',
+          providerName: '测试供应商',
+          models: [
+            {
+              providerId: 'test-provider',
+              modelId: 'test-chat',
+              label: 'test-chat',
+              reasoning: {
+                status: 'supported',
+                levels: ['low', 'medium', 'high'],
+                default: 'medium',
+              },
+              vision: 'supported',
+              tools: 'supported',
+            },
+            {
+              providerId: 'test-provider',
+              modelId: 'test-reasoning',
+              label: 'test-reasoning',
+              reasoning: { status: 'supported', levels: ['high'], default: 'high' },
+              vision: 'supported',
+              tools: 'supported',
+            },
+          ],
+        },
+      ],
+      defaultSelection: {
+        providerId: 'test-provider',
+        modelId: 'test-chat',
+        reasoningEffort: 'medium',
+      },
+    },
+    isLoading: false,
+    isError: false,
+    refetch: () => {},
+  },
   usage: null,
 }
 
@@ -235,6 +277,11 @@ afterEach(async () => {
   }
 })
 
+function withTestApp(panel: ReactNode, enabled?: boolean, strict?: boolean) {
+  const wrapped = enabled ? createElement(AntApp, null, panel) : panel
+  return strict ? createElement(StrictMode, null, wrapped) : wrapped
+}
+
 async function mount(
   io: ChatIo,
   draft: ChatDraft | null = null,
@@ -242,27 +289,34 @@ async function mount(
   conversationId?: string,
   showReasoningControl?: boolean,
   guideActions?: (ask: (question: string) => void) => ReactNode,
-  snapshotOptions: Pick<ChatPanelProps, 'draftAgent' | 'snapshotVisionReady'> = {},
+  snapshotOptions: Pick<ChatPanelProps, 'draftAgent' | 'snapshotVisionReady'> & {
+    withApp?: boolean
+    strict?: boolean
+  } = {},
 ) {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
   await act(async () => {
     root.render(
-      createElement(ChatPanel, {
-        conversationId,
-        draft,
-        onOpenCitation: () => {},
-        onOpenNote: () => {},
-        io,
-        composerStatus: EMPTY_STATUS,
-        ...snapshotOptions,
-        showReasoningControl,
-        ...(guideActions ? { guide: () => null, guideActions } : {}),
-        ...(docxAgent?.format && docxAgent.format !== 'docx'
-          ? { documentAgent: docxAgent }
-          : { docxAgent }),
-      }),
+      withTestApp(
+        createElement(ChatPanel, {
+          conversationId,
+          draft,
+          onOpenCitation: () => {},
+          onOpenNote: () => {},
+          io,
+          composerStatus: EMPTY_STATUS,
+          ...snapshotOptions,
+          showReasoningControl,
+          ...(guideActions ? { guide: () => null, guideActions } : {}),
+          ...(docxAgent?.format && docxAgent.format !== 'docx'
+            ? { documentAgent: docxAgent }
+            : { docxAgent }),
+        }),
+        snapshotOptions.withApp,
+        snapshotOptions.strict,
+      ),
     )
   })
   mounted = { root, container, io }
@@ -312,111 +366,45 @@ async function send(container: HTMLElement) {
   })
 }
 
-describe('ChatPanel：文档侧栏输入控制', () => {
-  it('隐藏思考强度后仍显示聊天模型和发送按钮，发送不启用深入思考', async () => {
-    const requests: Record<string, unknown>[] = []
-    const server = createServer(async (req, res) => {
-      const chunks: Uint8Array[] = []
-      for await (const chunk of req) chunks.push(chunk as Uint8Array)
-      requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
-      for (const frame of successFrames()) res.write(frame)
-      res.end()
-    })
-    servers.push({ server, drain: () => {} })
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    const port = typeof address === 'object' && address ? address.port : 0
-    const container = await mount(
-      makeIo(`http://127.0.0.1:${port}/api/chat`),
-      null,
-      undefined,
-      undefined,
-      false,
-    )
-
-    expect(container.querySelector('[aria-label^="思考强度："]')).toBeNull()
-    expect(container.querySelector('[aria-label="当前全局模型：test-chat"]')).not.toBeNull()
-    expect(container.querySelector('[aria-label="发送"]')).not.toBeNull()
-
-    await type(container, '总结当前文档')
-    await send(container)
-    await waitFor(container, () => requests.length === 1, '侧栏请求')
-    const forwarded = requests[0]?.forwardedProps as
-      | { runConfig?: Record<string, unknown> }
-      | undefined
-    expect(forwarded?.runConfig?.deepReasoning).toBeUndefined()
+describe('ChatPanel：供应商模型与推理等级', () => {
+  it('主对话和侧栏共用模型、实际等级与范围控件', async () => {
+    const container = await mount(makeIo('/api/chat'), null, undefined, undefined, false)
+    expect(container.querySelector('[aria-label="当前模型：test-chat"]')).not.toBeNull()
+    expect(container.querySelector('[aria-label="推理等级：中"]')).not.toBeNull()
+    expect(container.querySelector('[aria-label="本轮检索范围：全部文档"]')).not.toBeNull()
   })
-
-  it('主视图仍显示思考强度控制', async () => {
-    const container = await mount(makeIo('/api/chat'))
-    expect(container.querySelector('[aria-label="思考强度：标准"]')).not.toBeNull()
-  })
-
-  it('模型菜单只显示名称，当前模型的勾选紧跟名称且绑定项不可切换', async () => {
+  it('供应商分组可切换模型，固定等级不伪造选项，Escape 返回触发器', async () => {
     const container = await mount(makeIo('/api/chat'))
     const trigger = container.querySelector<HTMLButtonElement>(
-      '[aria-label="当前全局模型：test-chat"]',
-    )
-    await act(async () => trigger?.click())
-
-    const chatName = document.querySelector<HTMLElement>('[role="menuitem"] [title="test-chat"]')
-    const reasoningName = document.querySelector<HTMLElement>(
-      '[role="menuitem"] [title="test-reasoning"]',
-    )
-    const chatItem = chatName?.closest('[role="menuitem"]')
-    const reasoningItem = reasoningName?.closest('[role="menuitem"]')
-    expect(chatName?.textContent).toBe('test-chat')
-    expect(reasoningName?.textContent).toBe('test-reasoning')
-    expect(chatName?.nextElementSibling?.tagName.toLowerCase()).toBe('svg')
-    expect(reasoningName?.nextElementSibling).toBeNull()
-    expect(chatItem?.getAttribute('aria-disabled')).toBe('true')
-    expect(reasoningItem?.getAttribute('aria-disabled')).toBe('true')
-    expect(chatItem?.textContent).toContain('当前使用')
+      '[aria-label="当前模型：test-chat"]',
+    )!
+    await act(async () => trigger.click())
+    expect(container.querySelector('[role="group"]')?.getAttribute('aria-label')).toBe('测试供应商')
+    const models = [...container.querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]')]
+    expect(models.map((item) => item.textContent)).toEqual(['test-chat', 'test-reasoning'])
+    await act(async () => models[1]!.click())
+    expect(container.querySelector('[aria-label="当前模型：test-reasoning"]')).not.toBeNull()
     expect(
-      [...document.querySelectorAll('[role="menuitem"]')].some((item) =>
-        item.textContent?.includes('管理模型'),
-      ),
+      container.querySelector<HTMLButtonElement>('[aria-label="推理等级：高"]')?.disabled,
     ).toBe(true)
-  })
-
-  it('未配置模型时仍可区分两种全局绑定及当前使用项', async () => {
-    const io = makeIo('/api/chat')
-    await mount(io)
-    const root = mounted?.root
-    if (!root) throw new Error('对话面板尚未挂载')
+    const next = container.querySelector<HTMLButtonElement>(
+      '[aria-label="当前模型：test-reasoning"]',
+    )!
+    await act(async () => next.click())
     await act(async () =>
-      root.render(
-        createElement(ChatPanel, {
-          conversationId: undefined,
-          draft: null,
-          onOpenCitation: () => {},
-          onOpenNote: () => {},
-          io,
-          composerStatus: { ...EMPTY_STATUS, modelRoles: {} },
-        }),
-      ),
+      container
+        .querySelector('[role="menu"]')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
     )
-    const trigger = mounted?.container.querySelector<HTMLButtonElement>(
-      '[aria-label="当前全局模型：未配置"]',
-    )
-    await act(async () => trigger?.click())
-
-    const names = [...document.querySelectorAll<HTMLElement>('[role="menuitem"] [title="未配置"]')]
-    expect(names).toHaveLength(2)
-    expect(names[0]?.parentElement?.textContent).toContain('对话模型：未配置当前使用')
-    expect(names[1]?.parentElement?.textContent).toContain('深度思考模型：未配置')
-    expect(names[0]?.nextElementSibling?.tagName.toLowerCase()).toBe('svg')
-    expect(names[1]?.nextElementSibling).toBeNull()
+    expect(document.activeElement).toBe(next)
   })
-
-  it('隐藏思考强度后，快捷提问也使用标准强度', async () => {
+  it('快捷提问发送实际模型与等级，旧角色开关不参与路由', async () => {
     const requests: Record<string, unknown>[] = []
     const server = createServer(async (req, res) => {
       const chunks: Uint8Array[] = []
       for await (const chunk of req) chunks.push(chunk as Uint8Array)
       requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' })
       for (const frame of successFrames()) res.write(frame)
       res.end()
     })
@@ -430,77 +418,25 @@ describe('ChatPanel：文档侧栏输入控制', () => {
       undefined,
       undefined,
       false,
-      (ask) => <button onClick={() => ask('速读本文')}>速读本文</button>,
+      (ask) => (
+        <button type="button" onClick={() => ask('速读本文')}>
+          速读本文
+        </button>
+      ),
     )
-
-    const askButton = [...container.querySelectorAll('button')].find(
-      (button) => button.textContent === '速读本文',
+    await act(async () =>
+      [...container.querySelectorAll('button')]
+        .find((button) => button.textContent === '速读本文')!
+        .click(),
     )
-    expect(askButton).toBeDefined()
-    await act(async () => {
-      askButton?.click()
-    })
     await waitFor(container, () => requests.length === 1, '快捷提问请求')
-    const forwarded = requests[0]?.forwardedProps as
-      | { runConfig?: Record<string, unknown> }
-      | undefined
-    expect(forwarded?.runConfig?.deepReasoning).toBeUndefined()
-  })
-
-  it('由主视图切到隐藏强度后，重新显示时恢复标准强度', async () => {
-    const requests: Record<string, unknown>[] = []
-    const server = createServer(async (req, res) => {
-      const chunks: Uint8Array[] = []
-      for await (const chunk of req) chunks.push(chunk as Uint8Array)
-      requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
-      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
-      for (const frame of successFrames()) res.write(frame)
-      res.end()
+    const forwarded = requests[0]!.forwardedProps as Record<string, unknown>
+    expect(forwarded.modelSelection).toEqual({
+      providerId: 'test-provider',
+      modelId: 'test-chat',
+      reasoningEffort: 'medium',
     })
-    servers.push({ server, drain: () => {} })
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
-    const address = server.address()
-    const port = typeof address === 'object' && address ? address.port : 0
-    const io = makeIo(`http://127.0.0.1:${port}/api/chat`)
-    const container = await mount(io)
-    const trigger = container.querySelector<HTMLButtonElement>('[aria-label="思考强度：标准"]')
-    expect(trigger).not.toBeNull()
-    await act(async () => {
-      trigger?.click()
-    })
-    const deepOption = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
-      (item) => item.textContent?.includes('深入（推理模型）'),
-    )
-    expect(deepOption).toBeDefined()
-    await act(async () => {
-      deepOption?.click()
-    })
-    expect(container.querySelector('[aria-label="思考强度：深入"]')).not.toBeNull()
-
-    const root = mounted?.root
-    if (!root) throw new Error('对话面板尚未挂载')
-    const renderWithControl = (showReasoningControl: boolean) =>
-      createElement(ChatPanel, {
-        conversationId: undefined,
-        draft: null,
-        onOpenCitation: () => {},
-        onOpenNote: () => {},
-        io,
-        composerStatus: EMPTY_STATUS,
-        showReasoningControl,
-      })
-    await act(async () => root.render(renderWithControl(false)))
-    expect(container.querySelector('[aria-label^="思考强度："]')).toBeNull()
-    expect(container.querySelector('[aria-label="当前全局模型：test-chat"]')).not.toBeNull()
-    await type(container, '标准强度回答')
-    await send(container)
-    await waitFor(container, () => requests.length === 1, '切换后的发送请求')
-    const forwarded = requests[0]?.forwardedProps as
-      | { runConfig?: Record<string, unknown> }
-      | undefined
-    expect(forwarded?.runConfig?.deepReasoning).toBeUndefined()
-    await act(async () => root.render(renderWithControl(true)))
-    expect(container.querySelector('[aria-label="思考强度：标准"]')).not.toBeNull()
+    expect((forwarded.runConfig as Record<string, unknown>).deepReasoning).toBeUndefined()
   })
 })
 
@@ -787,7 +723,7 @@ describe('ChatPanel：共用格式工具续轮', () => {
     await type(container, '读取工作簿')
     await send(container)
     await waitFor(container, () => firstResponse !== null, '中断帧已发出')
-    await waitFor(container, () => textOf(container).includes('fake_read'), '工具卡已显示')
+    await waitFor(container, () => textOf(container).includes('工具调用'), '工具卡已显示')
     expect(requests).toHaveLength(1)
     expect(executions).toBe(0)
 
@@ -1175,7 +1111,7 @@ describe('ChatPanel：宿主草稿', () => {
     await rerender(second)
     expect(container.querySelector('textarea')?.value).toBe('第二次提问')
     expect(textOf(container)).toContain('针对本文提问')
-    expect(textOf(container)).toContain('范围：当前文档')
+    expect(textOf(container)).toContain('当前文档')
 
     await type(container, '在文档内手动改过的问题')
     await rerender({ ...second })
@@ -1184,17 +1120,17 @@ describe('ChatPanel：宿主草稿', () => {
     await rerender({ text: '回到全库提问' })
     expect(container.querySelector('textarea')?.value).toBe('回到全库提问')
     expect(textOf(container)).toContain('向知识库提问')
-    expect(textOf(container)).not.toContain('范围：当前文档')
+    expect(textOf(container)).not.toContain('当前文档')
   })
 
   it('文档入口的空草稿只锁定范围，不清空已经输入的问题', async () => {
     const container = await mount(io, { text: '', documentId: 'doc-1' })
-    expect(textOf(container)).toContain('范围：当前文档')
+    expect(textOf(container)).toContain('当前文档')
     await type(container, '还没发出的提问')
 
     await rerender({ text: '', documentId: 'doc-1' })
     expect(container.querySelector('textarea')?.value).toBe('还没发出的提问')
-    expect(textOf(container)).toContain('范围：当前文档')
+    expect(textOf(container)).toContain('当前文档')
   })
 
   it('已有一轮回答的对话收到搜索草稿时仍能预填', async () => {
@@ -1228,69 +1164,73 @@ async function enter(container: HTMLElement) {
   })
 }
 
-describe('ChatPanel：检索过程行', () => {
-  it('跑完之后显示服务端给的整轮耗时（最后一份 trace）', async () => {
-    const handle = serve(() => successFrames(1200))
-    servers.push(handle)
-    const url = await handle.listen()
+function commitBeforeActivation() {
+  flushSync(() => {})
+}
 
-    const container = await mount(makeIo(url))
+describe('ChatPanel：取消自定义检索过程', () => {
+  it('忽略旧 trace，成功正文和引用保留', async () => {
+    const handle = serve(() => successFrames())
+    servers.push(handle)
+    const container = await mount(makeIo(await handle.listen()))
     await type(container, '问题')
     await send(container)
-
-    /* 摘要行里的三个数字都来自服务端：最后一份 trace 的 tookMs 是 1200ms。
-       若认了先发那一份，这里会是 0.0s（实测的差异信号） */
-    await waitFor(container, () => textOf(container).includes('1.2s'), '服务端的整轮耗时')
-    expect(textOf(container)).toContain('思考 1 轮')
-    expect(textOf(container)).not.toContain('0.0s')
+    await waitFor(container, () => textOf(container).includes('组件性能优化'), '引用')
+    expect(textOf(container)).not.toContain('思考 1 轮')
+    expect(textOf(container)).not.toContain('次工具')
   })
-
-  it('检索结果还没到时是「正在检索知识库 · Ns」', async () => {
-    /* 只放行 RUN_STARTED——trace 还没到，正是这个相位的定义 */
+  it('首 token 前提供真实等待状态，结束后撤销', async () => {
     const handle = serve(() => successFrames(), { holdAfter: 1 })
     servers.push(handle)
-    const url = await handle.listen()
-
-    const container = await mount(makeIo(url))
+    const container = await mount(makeIo(await handle.listen()))
     await type(container, '问题')
     await send(container)
-
     await waitFor(
       container,
-      () => textOf(container).includes('正在检索知识库'),
-      '正在检索知识库那一行',
+      () => !!container.querySelector('[aria-label="正在生成回答"]'),
+      '等待状态',
     )
-
-    handle.release()
-    /* 结果到了就地展开成摘要行（不再有「正在检索」那一句） */
-    await waitFor(container, () => textOf(container).includes('思考 1 轮'), '检索过程的摘要行')
     expect(textOf(container)).not.toContain('正在检索知识库')
-  })
-
-  it('正文没到时摘要行里的秒数还在走（live 那一口气）', async () => {
-    /* 放行到引用为止：trace 有了、正文没有——摘要行应当是「活着的」 */
-    const handle = serve(() => successFrames(), { holdAfter: 3 })
-    servers.push(handle)
-    const url = await handle.listen()
-
-    const container = await mount(makeIo(url))
-    await type(container, '问题')
-    await send(container)
-
-    await waitFor(container, () => textOf(container).includes('思考 1 轮'), 'trace 到了')
-    /* live 那一份显示的是**客户端的钟**：整数秒（0s 起算），而服务端那份
-       是带一位小数的 3ms → 「0.0s」。两者的格式不同，这就是判据——
-       等的是「秒数在走」，而不是某个具体数字（并行负载下它可能是 1s）。
-       格式按官方 Reasoning：`(Ns)` 括号包秒 */
-    expect(textOf(container)).toMatch(/次工具 \(\d+s\)/)
-    expect(textOf(container)).not.toContain('0.0s')
-
     handle.release()
-    await waitFor(container, () => textOf(container).includes('1.2s'), '服务端的整轮耗时')
+    await waitFor(container, () => !container.querySelector('[aria-label="停止"]'), '流结束')
+    expect(container.querySelector('[aria-label="正在生成回答"]')).toBeNull()
   })
 })
 
 describe('ChatPanel：排队与停止', () => {
+  it('停止点击提交渲染后不触发表单默认发送，队首回填且剩余队列暂停', async () => {
+    const handle = serve(() => successFrames(), { holdAfter: 1 })
+    servers.push(handle)
+    let requests = 0
+    handle.server.on('request', () => {
+      requests++
+    })
+    const container = await mount(makeIo(await handle.listen()))
+    await type(container, '生成中的原问题')
+    await send(container)
+    await type(container, '取回到输入框的队首')
+    await enter(container)
+    await type(container, '仍然暂停的第二条')
+    await enter(container)
+    const stop = container.querySelector<HTMLButtonElement>('button[aria-label="停止"]')!
+    expect(stop.type).toBe('button')
+    // Browsers can commit discrete React updates before click's default action.
+    // Flush at the end of bubbling so happy-dom exercises that same ordering.
+    document.addEventListener('click', commitBeforeActivation, { once: true })
+    try {
+      await act(async () => stop.click())
+    } finally {
+      document.removeEventListener('click', commitBeforeActivation)
+    }
+    handle.release()
+    await waitFor(container, () => !container.querySelector('[aria-label="停止"]'), '停止完成')
+    expect(container.querySelector('textarea')?.value).toBe('取回到输入框的队首')
+    expect(textOf(container)).toContain('仍然暂停的第二条')
+    expect(container.querySelectorAll('article[data-role="user"]')).toHaveLength(1)
+    expect(textOf(container)).toContain('已停止生成')
+    expect(requests).toBe(1)
+  })
+
   it('停止之后排队的那条回到输入框', async () => {
     /* 只放行 RUN_STARTED：流挂着不结束 → 一直处于「生成中」 */
     const handle = serve(() => successFrames(), { holdAfter: 1 })
@@ -1346,7 +1286,11 @@ describe('ChatPanel：停止之后那一行', () => {
     const container = await mount(makeIo(url))
     await type(container, '问题')
     await send(container)
-    await waitFor(container, () => textOf(container).includes('思考 1 轮'), 'trace 到了')
+    await waitFor(
+      container,
+      () => !!container.querySelector('[aria-label="正在生成回答"]'),
+      'trace 到了',
+    )
 
     const stop = [...container.querySelectorAll('button')].find(
       (item) => item.getAttribute('aria-label') === '停止',
@@ -1404,6 +1348,60 @@ describe('ChatPanel：失败轮', () => {
 })
 
 describe('ChatPanel：AG-UI 的其余消息体类型（不许静默丢弃）', () => {
+  it('连续两轮纯工具回答按 parentMessageId 保留各自文档来源与终态', async () => {
+    let turn = 0
+    const handle = serve(() => {
+      turn++
+      return [
+        F({ type: 'RUN_STARTED', runId: `run-${turn}`, threadId: 'c1' }),
+        F({
+          type: 'TOOL_CALL_START',
+          toolCallId: `tool-${turn}`,
+          toolCallName: 'read_document',
+          parentMessageId: `answer-${turn}`,
+        }),
+        F({ type: 'TOOL_CALL_ARGS', toolCallId: `tool-${turn}`, delta: '{}' }),
+        F({ type: 'TOOL_CALL_END', toolCallId: `tool-${turn}` }),
+        F({
+          type: 'TOOL_CALL_RESULT',
+          toolCallId: `tool-${turn}`,
+          messageId: `result-${turn}`,
+          role: 'tool',
+          content: '{}',
+        }),
+        F({
+          type: 'CUSTOM',
+          name: 'mimir.documentAgent',
+          value: {
+            agent: {
+              runId: `run-${turn}`,
+              documentId: `document-${turn}`,
+              format: 'docx',
+              status: turn === 1 ? 'completed' : 'failed',
+              tools: [],
+            },
+          },
+        }),
+        F({ type: 'RUN_FINISHED', runId: `run-${turn}`, threadId: 'c1' }),
+      ]
+    })
+    servers.push(handle)
+    const container = await mount(makeIo(await handle.listen()))
+    await type(container, '第一轮纯工具')
+    await send(container)
+    await waitFor(container, () => !container.querySelector('[aria-label="停止"]'), '首轮完成')
+    expect(textOf(container)).toContain('文档编辑工具 · 已完成')
+    await type(container, '第二轮纯工具')
+    await send(container)
+    await waitFor(container, () => !container.querySelector('[aria-label="停止"]'), '第二轮完成')
+    const assistants = container.querySelectorAll('article[data-role="assistant"]')
+    expect(assistants).toHaveLength(2)
+    expect(assistants[0]?.textContent).toContain('文档编辑工具 · 已完成')
+    expect(assistants[0]?.textContent).not.toContain('文档编辑工具 · 失败')
+    expect(assistants[1]?.textContent).toContain('文档编辑工具 · 失败')
+    expect(turn).toBe(2)
+  })
+
   /**
    * 从**真实 SSE 帧**到界面的一条端到端：模型思考（THINKING / REASONING）
    * 与工具调用（TOOL_CALL_*）此前会被运行时聚成 part、再被「没挂组件」的
@@ -1446,9 +1444,15 @@ describe('ChatPanel：AG-UI 的其余消息体类型（不许静默丢弃）', (
     await send(container)
 
     /* 模型思考：官方 Reasoning 盒的标签（折叠态也要有） */
-    await waitFor(container, () => textOf(container).includes('模型思考'), '模型思考的标签')
+    await waitFor(container, () => textOf(container).includes('思考过程'), '模型思考的标签')
     /* 工具调用：官方 ToolFallback 文案 + 工具名 */
-    await waitFor(container, () => textOf(container).includes('Used tool'), '工具调用行')
+    await waitFor(container, () => textOf(container).includes('工具调用'), '工具调用行')
+    await act(async () => {
+      ;[...container.querySelectorAll('button')]
+        .find((button) => button.textContent?.includes('工具调用'))
+        ?.click()
+    })
+    expect(textOf(container)).toContain('已完成')
     expect(textOf(container)).toContain('search_docs')
     /* 正文照常 */
     expect(textOf(container)).toContain('回答')
@@ -1518,9 +1522,9 @@ describe('ChatPanel：PPTX真实截图草稿', () => {
     handle.release()
     await waitFor(container, () => textOf(container).includes('普通对话连接失败'), '普通连接失败')
     await act(async () =>
-      container.querySelector<HTMLButtonElement>('[aria-label="移除第3页截图"]')?.click(),
+      container.querySelector<HTMLButtonElement>('[aria-label="移除截图"]')?.click(),
     )
-    expect(container.querySelector('form img[alt="第3页截图"]')).toBeNull()
+    expect(container.querySelector('form img[alt="第3页截图-snapshot-1.png"]')).toBeNull()
     expect(container.querySelector('textarea')?.value).toBe('保留这段草稿')
     expect(textOf(container)).toContain('普通对话连接失败')
     expect(container.querySelector('form [role="alert"]')?.textContent).toContain(
@@ -1544,7 +1548,9 @@ describe('ChatPanel：PPTX真实截图草稿', () => {
       undefined,
       { draftAgent: snapshotAgent(), snapshotVisionReady: false },
     )
-    expect(container.querySelector('img[alt="第3页截图"]')?.getAttribute('src')).toBe(SNAPSHOT_PNG)
+    expect(
+      container.querySelector('img[alt="第3页截图-snapshot-1.png"]')?.getAttribute('src'),
+    ).toBe(SNAPSHOT_PNG)
     expect(container.querySelector('textarea')?.value).toBe('美化本页')
     expect(requests).toBe(0)
     await type(container, '请美化布局并保留文字')
@@ -1552,12 +1558,12 @@ describe('ChatPanel：PPTX真实截图草稿', () => {
     expect(textOf(container)).toContain('截图美化需要可用的聊天模型')
     expect(requests).toBe(0)
     await act(async () =>
-      container.querySelector<HTMLButtonElement>('[aria-label="移除第3页截图"]')?.click(),
+      container.querySelector<HTMLButtonElement>('[aria-label="移除截图"]')?.click(),
     )
-    expect(container.querySelector('img[alt="第3页截图"]')).toBeNull()
+    expect(container.querySelector('img[alt="第3页截图-snapshot-1.png"]')).toBeNull()
     expect(container.querySelector('textarea')?.value).toBe('请美化布局并保留文字')
     expect(textOf(container)).not.toContain('截图美化需要可用的聊天模型')
-    expect(container.querySelector('[aria-label="关闭截图提示"]')).toBeNull()
+    expect(container.querySelector('[aria-label="关闭提示"]')).toBeNull()
   })
   it('仅显式发送后将真实PNG内容和冻结的整页选区交给AG-UI', async () => {
     const requests: Record<string, unknown>[] = []
@@ -1611,7 +1617,9 @@ describe('ChatPanel：PPTX真实截图草稿', () => {
       },
     })
     await waitFor(container, () => textOf(container).includes('回答'), '回答')
-    expect(container.querySelector('[data-role="user"] img[alt="第3页截图"]')).not.toBeNull()
+    expect(
+      container.querySelector('[data-role="user"] img[alt="第3页截图-snapshot-1.png"]'),
+    ).not.toBeNull()
   })
   it('画布版本已变时点击和Enter都不发送，也保留用户修改后的文字和图片', async () => {
     let version = 7
@@ -1646,7 +1654,7 @@ describe('ChatPanel：PPTX真实截图草稿', () => {
     )
     expect(created).toBe(0)
     expect(container.querySelector('textarea')?.value).toBe('保留我的新指令')
-    expect(container.querySelector('img[alt="第3页截图"]')).not.toBeNull()
+    expect(container.querySelector('img[alt="第3页截图-snapshot-1.png"]')).not.toBeNull()
     expect(textOf(container)).toContain('页面或版本已变化')
   })
 })
@@ -1695,9 +1703,9 @@ describe('ChatPanel：PPTX截图排队与重试', () => {
         () => container.querySelector('textarea')?.value === '排队美化指令',
         '原PNG草稿取回',
       )
-      expect(container.querySelector('form img[alt="第3页截图"]')?.getAttribute('src')).toBe(
-        SNAPSHOT_PNG,
-      )
+      expect(
+        container.querySelector('form img[alt="第3页截图-snapshot-1.png"]')?.getAttribute('src'),
+      ).toBe(SNAPSHOT_PNG)
       expect(textOf(container)).not.toContain('已排队')
       if (action === 'retrieve')
         await act(async () =>
@@ -1786,8 +1794,12 @@ describe('ChatPanel：PPTX截图排队与重试', () => {
       expect(container.querySelector('textarea')?.value).toBe(
         newDraft ? '用户正在写的新草稿' : stale ? '过期美化指令' : '',
       )
-      expect(Boolean(container.querySelector('form img[alt="第3页截图"]'))).toBe(stale && !newDraft)
-      expect(container.querySelector('[data-role="user"] img[alt="第3页截图"]')).not.toBeNull()
+      expect(Boolean(container.querySelector('form img[alt="第3页截图-snapshot-1.png"]'))).toBe(
+        stale && !newDraft,
+      )
+      expect(
+        container.querySelector('[data-role="user"] img[alt="第3页截图-snapshot-1.png"]'),
+      ).not.toBeNull()
       if (!stale) {
         release?.()
         await waitFor(
@@ -1871,7 +1883,449 @@ describe('ChatPanel：截图失败轮的操作', () => {
     await act(async () => button?.click())
     if (action === '重试') await waitFor(container, () => received === 2, '带PNG重试')
     expect(received).toBe(action === '重试' ? 2 : 1)
-    expect(Boolean(container.querySelector('form img[alt="第3页截图"]'))).toBe(action !== '重试')
+    expect(Boolean(container.querySelector('form img[alt="第3页截图-snapshot-1.png"]'))).toBe(
+      action !== '重试',
+    )
     expect(textOf(container).includes('截图美化需要可用的聊天模型')).toBe(action !== '重试')
   })
+})
+
+const historyBase = {
+  trace: null,
+  citations: [],
+  failure: null,
+  savedNoteId: null,
+  createdAt: '2026-10-19T00:00:00.000Z',
+}
+
+describe('ChatPanel：迁移后的恢复与本地分支', () => {
+  it('历史 Agent 问题的来源标记独立阻止普通重试，即使失败回答缺少 Agent 元数据', async () => {
+    const handle = serve(() => successFrames())
+    servers.push(handle)
+    const container = await mount(
+      makeIo(await handle.listen(), {
+        loadConversation: async () => ({
+          messages: [
+            {
+              ...historyBase,
+              id: 'agent-user',
+              role: 'user',
+              text: '修改原文档',
+              agent: {
+                runId: 'failed-run',
+                documentId: 'doc-original',
+                status: 'cancelled',
+                tools: [],
+              },
+            },
+            {
+              ...historyBase,
+              id: 'failed-answer',
+              role: 'assistant',
+              text: '',
+              failure: 'timeout',
+            },
+          ],
+        }),
+      }),
+      null,
+      undefined,
+      'c1',
+    )
+    await waitFor(container, () => textOf(container).includes('请求超时'), 'Agent 历史失败')
+    await act(async () => {
+      ;[...container.querySelectorAll('button')]
+        .find((button) => button.textContent?.replace(/\s/g, '') === '重试')
+        ?.click()
+    })
+    await waitFor(
+      container,
+      () => textOf(container).includes('这条文档指令需要重新打开原文档'),
+      '原文档重发保护',
+    )
+    expect(container.querySelector('button[aria-label="停止生成"]')).toBeNull()
+  })
+
+  it('缺终态的完整 SSE 行仍视为断流，保留部分正文且不给成功动作', async () => {
+    const handle = serve(() => [
+      F({ type: 'RUN_STARTED', threadId: 'c1', runId: 'r1' }),
+      F({ type: 'TEXT_MESSAGE_START', messageId: 'partial', role: 'assistant' }),
+      F({ type: 'TEXT_MESSAGE_CONTENT', messageId: 'partial', delta: '已经收到的部分正文' }),
+    ])
+    servers.push(handle)
+    const container = await mount(makeIo(await handle.listen()))
+    await type(container, '读取完整回答')
+    await send(container)
+    await waitFor(container, () => textOf(container).includes('连接中断'), '截断流错误')
+    expect(textOf(container)).toContain('已经收到的部分正文')
+    expect(container.querySelector('button[aria-label="存成笔记"]')).toBeNull()
+    expect(textOf(container)).not.toContain('已停止生成')
+  })
+
+  it('编辑历史问题使用原分支前缀，切回旧分支后保存旧回答的持久化 ID', async () => {
+    const requests: Record<string, unknown>[] = []
+    const saved: string[] = []
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>
+      requests.push(body)
+      const messages = body.messages as { id: string; role: string }[]
+      const userId = messages.findLast((message) => message.role === 'user')?.id
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+      res.end(
+        [
+          F({ type: 'RUN_STARTED', threadId: 'c1', runId: String(body.runId) }),
+          F({
+            type: 'CUSTOM',
+            name: 'mimir.message',
+            value: { role: 'user', clientMessageId: userId, messageId: 'db-new-user' },
+          }),
+          F({ type: 'TEXT_MESSAGE_START', messageId: 'sdk-new-answer', role: 'assistant' }),
+          F({
+            type: 'TEXT_MESSAGE_CONTENT',
+            messageId: 'sdk-new-answer',
+            delta: '重新生成后的回答',
+          }),
+          F({ type: 'TEXT_MESSAGE_END', messageId: 'sdk-new-answer' }),
+          F({
+            type: 'CUSTOM',
+            name: 'mimir.message',
+            value: {
+              role: 'assistant',
+              clientMessageId: 'sdk-new-answer',
+              messageId: 'db-new-answer',
+            },
+          }),
+          F({ type: 'RUN_FINISHED', threadId: 'c1', runId: String(body.runId) }),
+        ].join(''),
+      )
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const messages: Message[] = [
+      { ...historyBase, id: 'u0', role: 'user', text: '第一问' },
+      { ...historyBase, id: 'a0', role: 'assistant', text: '第一答' },
+      { ...historyBase, id: 'u1', role: 'user', text: '原来第二问' },
+      { ...historyBase, id: 'a1', role: 'assistant', text: '原来第二答' },
+    ]
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`, {
+        loadConversation: async () => ({ messages }),
+        saveAsNote: async (_conversationId, id) => {
+          saved.push(id ?? 'missing')
+          return { noteId: 'note' }
+        },
+      }),
+      null,
+      undefined,
+      'c1',
+      undefined,
+      undefined,
+      { withApp: true },
+    )
+    await waitFor(container, () => textOf(container).includes('原来第二答'), '历史加载')
+    await act(async () => {
+      ;[...container.querySelectorAll<HTMLButtonElement>('button[aria-label="编辑消息"]')]
+        .at(-1)
+        ?.click()
+    })
+    const editor = container.querySelector<HTMLTextAreaElement>('textarea[aria-label="编辑消息"]')!
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(editor), 'value')!.set!
+      setter.call(editor, '修改后的第二问')
+      editor.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await act(async () => {
+      ;[...container.querySelectorAll('button')]
+        .find((button) => button.textContent === '保存并重新发送')
+        ?.click()
+    })
+    await waitFor(container, () => textOf(container).includes('重新生成后的回答'), '编辑分支回答')
+    const forwarded = requests[0]?.forwardedProps as Record<string, unknown>
+    expect(forwarded.historyMessageIds).toEqual(['u0', 'a0'])
+    expect(forwarded.branchMode).toBe('edit')
+    expect(textOf(container)).not.toContain('原来第二答')
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="上一个分支"]')?.click()
+    })
+    expect(textOf(container)).toContain('原来第二答')
+    expect(textOf(container)).not.toContain('重新生成后的回答')
+    await act(async () => {
+      ;[...container.querySelectorAll<HTMLButtonElement>('button[aria-label="存成笔记"]')]
+        .at(-1)
+        ?.click()
+    })
+    expect(saved).toEqual(['a1'])
+    expect(container.querySelectorAll('button[aria-label="复制回答"]')).toHaveLength(2)
+  })
+
+  it(
+    '历史失败重试携带原模型、推理等级、检索范围与 canonical 附件引用',
+    { timeout: 10000 },
+    async () => {
+      const requests: Record<string, unknown>[] = []
+      const server = createServer(async (req, res) => {
+        const chunks: Uint8Array[] = []
+        for await (const chunk of req) chunks.push(chunk as Uint8Array)
+        requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
+        res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+        res.end(successFrames().join(''))
+      })
+      servers.push({ server, drain: () => {} })
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+      const address = server.address()
+      const port = typeof address === 'object' && address ? address.port : 0
+      const attachment = {
+        id: 'attachment',
+        conversationId: 'c1',
+        name: 'note.txt',
+        mime: 'text/plain',
+        size: 1,
+        sha256: 'a'.repeat(64),
+        kind: 'document' as const,
+        status: 'ready' as const,
+        originalUrl: '/protected/file',
+        createdAt: historyBase.createdAt,
+        bound: true,
+      }
+      const modelSelection = {
+        providerId: 'test-provider',
+        modelId: 'test-chat',
+        reasoningEffort: 'high',
+      }
+      const container = await mount(
+        makeIo(`http://127.0.0.1:${port}/api/chat`, {
+          loadConversation: async () => ({
+            messages: [
+              {
+                ...historyBase,
+                id: 'u1',
+                role: 'user',
+                text: '附件问题',
+                modelSelection,
+                retrievalScope: { type: 'document', documentId: 'doc-original' },
+                attachments: [attachment],
+              },
+              { ...historyBase, id: 'a1', role: 'assistant', text: '', failure: 'timeout' },
+            ],
+          }),
+        }),
+        null,
+        undefined,
+        'c1',
+      )
+      await waitFor(container, () => textOf(container).includes('请求超时'), '历史失败')
+      await act(async () => {
+        ;[...container.querySelectorAll('button')]
+          .find((button) => button.textContent?.replace(/\s/g, '') === '重试')
+          ?.click()
+      })
+      await waitFor(container, () => requests.length === 1, '重试 HTTP')
+      const forwarded = requests[0]?.forwardedProps as Record<string, unknown>
+      expect(forwarded.modelSelection).toEqual(modelSelection)
+      expect(forwarded.attachments).toEqual([{ id: 'attachment', sha256: attachment.sha256 }])
+      expect(forwarded.runConfig).toMatchObject({ documentId: 'doc-original' })
+    },
+  )
+})
+
+it('上传中的每个文件都有名称和独立取消，移除草稿先释放 lease 再删除', async () => {
+  let finishUpload!: (value: import('@mimir/shared').ChatAttachment) => void
+  let uploadSignal: AbortSignal | undefined
+  const calls: string[] = []
+  const attachment = {
+    id: 'ready-file',
+    conversationId: 'c1',
+    name: 'second.txt',
+    mime: 'text/plain',
+    size: 1,
+    sha256: 'b'.repeat(64),
+    kind: 'document' as const,
+    status: 'ready' as const,
+    originalUrl: '/protected/file',
+    createdAt: historyBase.createdAt,
+    bound: false,
+  }
+  let attempt = 0
+  const container = await mount(
+    makeIo('http://127.0.0.1:1/api/chat', {
+      uploadChatAttachment: async (_conversationId, _file, _operation, signal) => {
+        attempt++
+        if (attempt > 1) return attachment
+        uploadSignal = signal
+        return new Promise((resolve) => {
+          finishUpload = resolve
+        })
+      },
+      leaseChatAttachment: async (_conversationId, id) => {
+        calls.push(`lease:${id}`)
+      },
+      releaseChatAttachmentLease: async (_conversationId, id) => {
+        calls.push(`release:${id}`)
+      },
+      deleteChatAttachment: async (_conversationId, id) => {
+        calls.push(`delete:${id}`)
+      },
+    }),
+  )
+  const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
+  function choose(name: string) {
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['x'], name, { type: 'text/plain' })],
+    })
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+  await act(async () => choose('first.txt'))
+  expect(textOf(container)).toContain('first.txt')
+  expect(textOf(container)).toContain('正在处理')
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="移除 first.txt"]')?.click(),
+  )
+  expect(uploadSignal?.aborted).toBe(true)
+  expect(textOf(container)).not.toContain('first.txt')
+  await act(async () => finishUpload({ ...attachment, id: 'cancelled-result', name: 'first.txt' }))
+  await act(async () => choose('second.txt'))
+  await waitFor(container, () => calls.includes('lease:ready-file'), '草稿 lease')
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="移除 second.txt"]')?.click(),
+  )
+  await waitFor(container, () => calls.includes('delete:ready-file'), '草稿删除')
+  expect(calls.indexOf('release:ready-file')).toBeLessThan(calls.indexOf('delete:ready-file'))
+  expect(textOf(container)).not.toContain('second.txt')
+})
+
+it('只检索在模型目录读取失败时仍可派发', async () => {
+  let requests = 0
+  const handle = serve(() => {
+    requests++
+    return successFrames()
+  })
+  servers.push(handle)
+  const io = makeIo(await handle.listen(), {
+    loadConversation: async () => ({
+      messages: [
+        { ...historyBase, id: 'u', role: 'user', text: '只要知识库片段' },
+        { ...historyBase, id: 'a', role: 'assistant', text: '', failure: 'quota' },
+      ],
+    }),
+  })
+  const container = await mount(io, null, undefined, 'c1')
+  await waitFor(container, () => textOf(container).includes('模型请求受限'), '失败卡')
+  await act(async () =>
+    mounted!.root.render(
+      createElement(ChatPanel, {
+        io,
+        conversationId: 'c1',
+        draft: null,
+        onOpenCitation: () => {},
+        onOpenNote: () => {},
+        composerStatus: {
+          ...EMPTY_STATUS,
+          models: { catalog: undefined, isLoading: false, isError: true, refetch: () => {} },
+        },
+      }),
+    ),
+  )
+  await act(async () =>
+    [...container.querySelectorAll('button')]
+      .find((button) => button.textContent?.includes('只检索，不调模型'))
+      ?.click(),
+  )
+  await waitFor(container, () => requests === 1, '不依赖模型的检索请求')
+  expect(textOf(container)).not.toContain('模型列表尚未就绪')
+})
+
+it('停止在途截图后恢复原文、PNG与目标，不需要猜测截图注册名称', async () => {
+  const handle = serve(() => successFrames(), { holdAfter: 1 })
+  servers.push(handle)
+  const snapshot = snapshotFixture()
+  const container = await mount(
+    makeIo(await handle.listen()),
+    { documentId: 'pptx-1', text: snapshot.text, snapshot },
+    snapshotAgent(),
+    undefined,
+    false,
+    undefined,
+    { snapshotVisionReady: true },
+  )
+  await send(container)
+  await waitFor(
+    container,
+    () => Boolean(container.querySelector('button[aria-label="停止"]')),
+    '在途截图',
+  )
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="停止"]')?.click(),
+  )
+  expect(container.querySelector('textarea')?.value).toBe(snapshot.text)
+  expect(container.querySelector('form img')?.getAttribute('src')).toBe(SNAPSHOT_PNG)
+  expect(textOf(container)).toContain('当前文档')
+  handle.release()
+})
+
+it('StrictMode 下上传临时项不请求租约，上传完成后保留并仅租赁真实附件', async () => {
+  let finishUpload!: (value: import('@mimir/shared').ChatAttachment) => void
+  const leases: { conversationId: string; id: string }[] = []
+  const deletes: string[] = []
+  const attachment = {
+    id: 'persisted-attachment',
+    conversationId: 'persisted-conversation',
+    name: 'retained.txt',
+    mime: 'text/plain',
+    size: 8,
+    sha256: 'c'.repeat(64),
+    kind: 'document' as const,
+    status: 'ready' as const,
+    originalUrl: '/protected/retained.txt',
+    createdAt: historyBase.createdAt,
+    bound: false,
+  }
+  const container = await mount(
+    makeIo('http://127.0.0.1:1/api/chat', {
+      createConversation: async () => ({ id: attachment.conversationId }),
+      uploadChatAttachment: async () =>
+        new Promise((resolve) => {
+          finishUpload = resolve
+        }),
+      leaseChatAttachment: async (conversationId, id) => {
+        leases.push({ conversationId, id })
+        if (!conversationId || id.startsWith('upload-')) throw new Error('接口不存在')
+      },
+      deleteChatAttachment: async (_conversationId, id) => {
+        deletes.push(id)
+      },
+    }),
+    null,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    { strict: true },
+  )
+  const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
+  await act(async () => {
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: [new File(['retained'], attachment.name, { type: attachment.mime })],
+    })
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  expect(textOf(container)).toContain(attachment.name)
+  expect(textOf(container)).toContain('正在处理')
+  expect(leases).toEqual([])
+  expect(deletes).toEqual([])
+  await act(async () => finishUpload(attachment))
+  await waitFor(container, () => leases.some((lease) => lease.id === attachment.id), '真实附件租约')
+  expect(leases).toEqual([{ conversationId: attachment.conversationId, id: attachment.id }])
+  expect(deletes).toEqual([])
+  expect(textOf(container)).toContain(attachment.name)
+  expect(textOf(container)).not.toContain('正在处理')
+  expect(textOf(container)).not.toContain('接口不存在')
+  expect(container.querySelector<HTMLButtonElement>('button[aria-label="发送"]')?.disabled).toBe(
+    false,
+  )
 })

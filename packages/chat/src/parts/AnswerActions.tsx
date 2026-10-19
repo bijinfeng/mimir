@@ -1,4 +1,4 @@
-import { useAuiState } from '@assistant-ui/react'
+import { useChatMessage } from '../runtime/runtime-context.js'
 import { SEARCH_ONLY_RESULT_TEXT, type Citation } from '@mimir/shared'
 import { App as AntApp, Tooltip } from 'antd'
 import { Check, Copy, ExternalLink, Save } from 'lucide-react'
@@ -18,36 +18,7 @@ export function copyAnswerText(text: string, citations: Citation[]): string {
     .join('\n\n')
 }
 
-/**
- * 回答下的动作条：「存成笔记」与「复制」。
- *
- * ## 「存成笔记」是闭环的最后一环（`.trellis/spec/project/product.md` §5.7）
- *
- * 对话产出结论，界面上必须有地方把它沉淀下来。服务端把回答与引用写成
- * 站内链接，存出来的笔记自动进双链系统（services/conversations.ts）。
- *
- * 作用对象是**最后一条助手回答**（读完整篇想存下的就是它）。落库消息的 id
- * 与界面消息的 id 不同（引擎会把客户端的乐观 id 换成服务端 id），所以
- * 点击时按会话**现取落库记录**、取「最后一条助手消息」——那段逻辑留在宿主
- * （它手上有 queryClient），包只调 `io.saveAsNote(activeId)`。
- * 服务端按 messageId 幂等：重复点击返回同一篇笔记，按钮转成「打开笔记」。
- *
- * ## 门控只有两条
- *
- * 旧实现是三个（`round.visible` / `!stopped` / `answerText` 非空），因为
- * 「本轮结果」是另一条数据流，得自己判断它在不在。现在动作条是**消息的一部分**
- * （挂在消息根上、只在最后一条渲染），所以只剩：
- *
- *  1. **这条消息的正文非空**——停止生成、或流一开始就断掉时引擎会留下
- *     一个没有正文的助手消息；`saveAsNote` 取的是库里最后一条 assistant，
- *     那时它会是**上一轮**的答案（点一下就把上一轮的答案存成笔记，还提示
- *     「已存为笔记」）。宁可少一个按钮，也不许它说谎
- *  2. **这一轮结束了**（状态不是 running）——生成中不给保存入口：
- *     落库发生在流走完之后
- *
- * 「停止之后不给动作条」那条门控由这两个条件自然覆盖：停止的轮次要么没有
- * 正文、要么状态是 incomplete——两者都不该保存（库里没有这一轮的助手行）。
- */
+/** Copy reads the visible message; saving uses its verified persisted ID, including local branches. */
 const useStyles = createStyles(({ css, token }) => ({
   /*
    * 动作条（assistant-ui 的 AssistantActionBar 形态）：`mt-2` 的一排
@@ -122,12 +93,11 @@ export function AnswerActions() {
    * 「用户看到的正文」——同一条消息里还有 trace / 引用那几个 data part，
    * 它们的 JSON 不该被复制进去。
    */
-  const text = useAuiState((state) =>
-    state.message.parts.map((part) => (part.type === 'text' ? part.text : '')).join(''),
-  )
-  const status = useAuiState((state) => state.message.status?.type)
+  const { message, sidecar, running } = useChatMessage()
+  const text = message.parts.map((part) => (part.type === 'text' ? part.content : '')).join('')
+  const status = running ? 'running' : 'complete'
 
-  const [savedNoteId, setSavedNoteId] = useState<string | null>(null)
+  const [savedNoteId, setSavedNoteId] = useState<string | null>(sidecar.savedNoteId ?? null)
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -158,7 +128,7 @@ export function AnswerActions() {
      * 收尾改成两条路径各写一次，行为不变：无论走哪条，`setSaving(false)` 都会执行。
      */
     try {
-      const result = await api.saveAsNote()
+      const result = await api.saveAsNote(message.id)
       setSavedNoteId(result.noteId)
       antdMessage.success('已存成笔记')
       setSaving(false)
@@ -176,7 +146,7 @@ export function AnswerActions() {
             type="button"
             className={styles.button}
             aria-label="存成笔记"
-            disabled={saving}
+            disabled={saving || api.canSaveMessage?.(message.id) === false}
             onClick={() => void save()}
           >
             <Save size={16} />

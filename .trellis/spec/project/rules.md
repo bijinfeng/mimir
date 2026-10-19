@@ -55,7 +55,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 `openaiCompatible(...)`：三个角色的工厂函数各不相同（chat 走
 `openaiCompatible`，summarize 与 embed 各有自己的 `create*`），
 散着写就会各抄一份——重构前 `assistant.ts` 与 `assistant-stream.ts`
-就是两份拷贝。宿主只问「要哪个角色」（`services/model.ts`）。
+就是两份拷贝。宿主通过 `services/model.ts` 传入角色或明确的 `{providerId, modelId, reasoningEffort}` 选择；聊天显式选择优先，旧角色映射仅作兼容。
 
 理由与实测数据见 `.trellis/spec/project/research.md` §3，协议见 `.trellis/spec/project/architecture.md` §7.4。
 

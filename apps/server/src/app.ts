@@ -1,3 +1,4 @@
+import { chatAttachmentsRoute } from './routes/chat-attachments.js'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
@@ -113,6 +114,7 @@ export function createApp() {
   api.route('/search', searchRoute)
   // 内联改写：文本可能还没保存，所以不挂在某篇文档下（M1-D）
   api.route('/ai', aiTextRoute)
+  api.route('/conversations', chatAttachmentsRoute)
   api.route('/conversations', conversationsRoute)
   api.route('/chat', chatRoute)
   api.route('/capture', captureRoute)

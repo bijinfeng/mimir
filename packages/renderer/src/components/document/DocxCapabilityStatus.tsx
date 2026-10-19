@@ -1,10 +1,9 @@
-import type { DocxAgentCapabilities } from '@mimir/shared'
 import { Button, Switch } from 'antd'
 import { createStyles } from 'antd-style'
 import { DOCUMENT_FONT_SIZE } from './DocumentPanel.style'
 
 export function DocxCapabilityStatus({
-  capabilities,
+  modelStatus,
   loading,
   canvasReady = true,
   error,
@@ -13,7 +12,7 @@ export function DocxCapabilityStatus({
   revisionMode,
   onRevisionModeChange,
 }: {
-  capabilities?: DocxAgentCapabilities
+  modelStatus: 'loading' | 'error' | 'empty' | 'available'
   loading: boolean
   canvasReady?: boolean
   error: boolean
@@ -46,22 +45,31 @@ export function DocxCapabilityStatus({
             重试检测
           </Button>
         </div>
-      ) : capabilities && !capabilities.modelReady ? (
-        <div className={styles.detail}>
-          尚未配置支持工具调用的模型。
-          <Button type="link" size="small" onClick={() => onSettings('models')}>
-            配置模型
-          </Button>
-        </div>
       ) : !canvasReady ? (
         <p className={styles.detail} role="status">
           原件画布尚未就绪，暂时不能编辑。
         </p>
+      ) : modelStatus === 'loading' ? (
+        <p className={styles.detail} role="status">
+          正在读取模型列表…
+        </p>
+      ) : modelStatus === 'error' ? (
+        <p className={styles.detail} role="alert">
+          模型列表读取失败，请在输入框重试。
+        </p>
+      ) : modelStatus === 'empty' ? (
+        <div className={styles.detail}>
+          尚未配置可用的模型。
+          <Button type="link" size="small" onClick={() => onSettings('models')}>
+            配置模型
+          </Button>
+        </div>
       ) : (
         <p className={styles.detail} role="status">
           {revisionMode
             ? '修订模式已开启，DOCX编辑结果保留待审阅。'
             : '修订模式已关闭，编辑会直接更新DOCX原件。'}
+          工具能力以输入框所选模型为准。
         </p>
       )}
     </section>

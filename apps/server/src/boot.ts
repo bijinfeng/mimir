@@ -1,3 +1,4 @@
+import { recoverChatAttachments, collectChatAttachments } from './services/chat-attachments.js'
 import { createApp } from './app.js'
 import { dbDriver, env, assertOwnerConfigComplete } from './env.js'
 import { runMigrations } from './db/migrate.js'
@@ -40,6 +41,13 @@ export async function boot() {
   await ensureDefaultContent()
   if (env.miniappEnabled) await recoverMiniappOperations()
 
+  await recoverChatAttachments()
+  if (env.nodeEnv !== 'test') {
+    const timer = setInterval(() => {
+      void collectChatAttachments().catch((error) => console.warn('会话附件清理失败', error))
+    }, 60_000)
+    timer.unref()
+  }
   return createApp()
 }
 

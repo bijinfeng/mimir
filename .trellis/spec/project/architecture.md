@@ -170,7 +170,7 @@ mimir/
 | `packages/tokenizer` | 分词规则。写入与检索两侧**必须**是同一份 | 无 |
 | `packages/renderer` | **界面与业务代码**。浏览器与桌面渲染进程共用一份源码，平台差异走插槽（D-103） | shared、office、chat |
 | `packages/office` | **编辑器外壳与六种格式的解析/保存**。前端包（见 §15） | shared |
-| `packages/chat` | **对话面板**。消息区 / 检索过程 / 引用 / 输入区 + 状态层（见 §5.5） | shared |
+| `packages/chat` | **对话面板**。消息区 / 模型推理与工具 / 引用 / 输入区 + 状态层（见 §5.5） | shared |
 | `plugins/*` | **实现**。每条接缝的具体做法 | 只有 shared |
 | `apps/server/src/plugins/host.ts` | **装配**。全仓唯一同时知道宿主与插件的地方 | 两边都有 |
 
@@ -554,10 +554,9 @@ effect 之前**。
 
 选型对比与证据见 `research.md`。这里只写结论与用法。
 
-**适用边界（D-099）**：这一章讲的是**服务端怎么调模型**——chat / embed /
-rerank / summarize 与适配器构造都归 TanStack AI，且适配器只在
-`plugins/provider/` 里建。浏览器侧的对话状态层从 `@tanstack/ai-react`
-换成了 assistant-ui（§5.4/§5.5），那是**另一层职责**，不改变这条边界。
+**适用边界**：服务端 chat / embed / rerank / summarize 与适配器构造归 TanStack AI，
+适配器只在 `plugins/provider/` 里建。浏览器对话由 `@tanstack/ai-react` 的 `useChat`
+与 Mimir 自有组件承接（§5.4/§5.5）；宿主继续只提供数据、动作与主题。
 
 ### 5.1 它提供什么
 
@@ -602,87 +601,60 @@ chat / summarize / embed 三个角色，rerank 留到需要它的时候——
 
 ### 5.4 对话的流式接入
 
-对话**不是**「一次请求一次响应」，而是 AG-UI 协议的服务端事件流
-（`toServerSentEventsResponse`），由前端 `@mimir/chat` 里的
-`@assistant-ui/react-ag-ui` 运行时消费（D-099；浏览器侧客户端从
-`@tanstack/ai-react` 的 `useChat` 换到了它，服务端一行没动）。
-
-事件的顺序是刻意的，而且**生命周期括号由服务端拥有**（D-099 的修复）：
+`POST /api/chat` 返回 AG-UI SSE；服务端拥有生命周期括号：
 
 ```
-RUN_STARTED → mimir.conversation → mimir.trace → mimir.citations
-            → 正文 → mimir.trace(整轮耗时) → RUN_FINISHED
+RUN_STARTED → mimir.conversation → mimir.citations
+            → 正文 / 真实 reasoning / 工具事件 → RUN_FINISHED
 ```
 
-- 中间几个在**模型还没开始生成时**就发出去，于是引用卡片与检索过程立刻出现，
-  用户不必对着空白等模型。三个名字与载荷定义在 `packages/shared`
-  （`EVENT_TRACE` 等），前后端共用——两边各写一遍字符串的话，
-  打错一个字母是静默失效
-- **`RUN_STARTED` 必须是第一条、`RUN_FINISHED` 必须是最后一条**：AG-UI 的
-  客户端在流开头就校验「第一条必须是 RUN_STARTED」，整轮结束后不再收任何
-  事件（实测 `@ag-ui/client@0.0.59` 抛 `First event must be 'RUN_STARTED'`
-  与 `Cannot send event type 'CUSTOM': The run has already finished`）。
-  所以模型那一趟的 `RUN_STARTED` / `RUN_FINISHED` 被服务端**剥掉不转发**
-  （叠加会命中 `Cannot send 'RUN_STARTED' while a run is still active`），
-  模型的用量接住转挂到自己那条 `RUN_FINISHED` 的 `metadata` 上
-  （目前没有消费者——上下文容量读的是服务端记的 `usageLog`）；
-  只检索路径（不调模型）同样补一对括号。顺序由
-  `apps/server/src/test/chat-stream.test.ts` 守着——它把真实的响应字节
-  喂给协议客户端跑一遍，而不是断言「流里有 RUN_STARTED」（那条断言在顺序
-  错时照样通过）
+第一条必须是 `RUN_STARTED`；模型内部重复的生命周期帧被服务端剥离，用量归入外层结束帧。
+失败路径保留分类 `mimir.failure` 与协议错误；客户端只展示一次，主动取消不冒充失败。
+`mimir.trace` 已停止生产与展示，旧数据仍可读取但不能还原成模型思考。
 
-**为什么走自定义事件而不是协议原生的 part**：
-`THINKING_*` 只是一个字符串，而 trace 是结构化的分步记录（每步带图标、
-关键词、具体数字）；citations 含文档 id 与字符偏移，协议里没有对应形状。
-自定义事件在客户端那一侧被聚合器变成**消息里的 data part**
-（`mimir.trace` / `mimir.citations` / `mimir.failure`），与历史会话同一个
-形状——见 §5.5。
+浏览器以 `@tanstack/ai-client` 的 `fetchServerSentEvents` 接入；连接 URL 固定，
+真实会话 ID 放在 `threadId` 和 `forwardedProps.conversationId`。任何首轮请求必须先 await
+`ChatIo.createConversation()`，同一初始化 Promise 防止并发创建；新建会话更新 URL 不重挂正在运行的面板。
+`forwardedProps.runConfig` 携带范围和显式 `modelSelection: { providerId, modelId, reasoningEffort? }`。
+旧客户端的角色与 `deepReasoning` 请求继续兼容；新选择优先，不能按强度偷偷切换模型。文档宿主只按 executor/画布就绪提供 Agent 句柄，不能再用旧 chat 角色的 modelReady/mediaKinds 阻塞；发送与截图的工具/视觉能力由所选模型在运行层及服务端再次验证。
 
-**会话 id 放在请求体（`forwardedProps`）而不是 URL**：地址一变，AG-UI 的
-agent 就要重建，重建会切断正在进行的流。代价是新建会话时客户端不知道 id：
-服务端仍用 `mimir.conversation` 事件回传，而前端在请求发出**之前**先建
-会话（`onRunInitialized` 钩子，被 await 且在建连之前执行——D-099 用它替掉
-了 `creating` 那个忙标志）。每轮的参数（检索范围 / 思考强度）走
-`forwardedProps.runConfig`，顶层旧写法仍认、顶层优先。
+正文之外的真实协议事件落库为 `messages.protocol_events`，历史由同版 SDK reducer 重放，
+保留 reasoning、签名及工具事件顺序；不持久化生命周期帧或宿主私有执行句柄。文档 Agent 的 `messages.protocol_events` 同样有界保存真实消息事件与经服务端生成的来源标记，原始画布 context/截图不入库；`docx_agent_runs` 继续只存工具名和状态。无工具轮也保留 Agent 身份，禁止历史改写/普通问答重放；缺少真实终局的 EOF 保留部分正文并记为失败，不能存为成功笔记。
+引用、失败、Agent 元数据和附件作为同一条消息的关联数据恢复，不能按消息位置拼接实时与历史两份状态。
+普通问答和非流式 `POST /api/conversations/:id/ask` 共用检索与模型选择；
+非流式 SDK 结果在 `services/model.ts` 提取 `ChatResult.text` 后才作为正文保存。
 
-非流式的 `POST /api/conversations/:id/ask` 保留：测试与 curl 用它，
-且与流式版**共用同一套检索**（`search()`），所以不会出现「界面看到的引用
-和测试验证的引用不一样」。
+### 5.5 前端：TanStack AI React 与自有组件
 
-### 5.5 前端：用 SDK 的 UI 层，不手搓
+对话整体位于 `packages/chat`：
 
-对话**整体是一个包**（`packages/chat`，D-099）。它只做这一件事，共用的
-界面宿主（`packages/renderer`）提供数据与动作：
+| 层 | 实现 |
+| --- | --- |
+| 流式消息状态、停止、恢复 | `@tanstack/ai-react` / `@tanstack/ai-client` |
+| 独立 FIFO、冻结发送快照、草稿与 Agent 守卫 | `runtime/use-mimir-runtime.ts` 与 transport/bridge |
+| 消息、思考、工具、媒体、动作与输入 UI | Mimir 自有组件，遵循批准稿与宿主主题 |
+| Markdown 与半截流式语法 | `@tanstack/markdown` + `streamingMarkdownExtension` |
 
-| 层 | 用什么 |
-|---|---|
-| 消息状态、流式接收、队列、停止 | `@assistant-ui/react` + `@assistant-ui/react-ag-ui`（内部是 `@ag-ui/client`） |
-| 消息与输入区的 UI 原语 | 同一套包的 primitives，外面套 antd 组件 |
-| 消息正文渲染 | `@tanstack/markdown` 的 `<Markdown>` + `streamingMarkdownExtension` |
+`use-mimir-runtime.ts` 是唯一运行时入口。宿主通过 `ChatIo` 提供建会话、读历史、存笔记、
+跳转与真实附件上传/删除/租约动作，通过 `composerStatus` 提供文档、模型目录和用量。
+包不得 import 宿主的 api/router/queryClient，也不创建另一套主题。
 
-`@tanstack/markdown` 自带**流式 markdown 解析**（处理半截语法）与 HTML 转义，
-所以回答是 Markdown 渲染的，且「`**` 只到了一半」这种中间态不用自己处理。
-**不换**官方那句 `@assistant-ui/react-markdown`：它带进 react-markdown 与
-一整套 radix 依赖，而本仓现有的流式扩展与样式覆写都长在 `@tanstack/markdown`
-上。
+每个发送入口在异步前冻结文字、选择、附件、范围和文档目标。排队逐项验证；停止/失败保稿并取回首项，
+不能覆盖新草稿。Agent 工具执行后仅重传缓存结果；网络失败后的续传仍核对原来源、轮次和画布版本，
+不重新执行工具，不将结果送给新目标。具体合同见[文档 Agent](../shared/contract/document-agent.md)。
 
-`packages/chat/src/runtime/use-mimir-runtime.ts` 是对话状态的唯一入口，
-组件不直接碰运行时。它与宿主之间只有两个口：动作面 `ChatIo`
-（建会话 / 读历史 / 存笔记 / 跳转，宿主实现在 `packages/renderer/src/lib/chat-io.ts`）
-与数据槽 `composerStatus`（文档列表 / 模型角色 / 用量，宿主 `useQuery` 取好）。
-包内 **import 不到**宿主的 api / router / queryClient——这是结构性边界
-（与 `packages/office` 的 `EditorIo` 同一条），不是约定。
-
-**会话切换与历史**：宿主切换到已有会话时重挂对话体，由历史适配器加载；
-新会话收到服务端 id 时**不重挂**，否则会中断正在接收的流。实时与历史
-的 trace / 引用 / 失败统一为消息的 data part，不再按位置拼接两份状态。
-具体生命周期和适配逻辑留在 `packages/chat/src/runtime/` 的代码注释中。
+普通聊天附件使用独立会话资源，不走知识库上传；读取原件需要鉴权。文件、绑定关系、租约、GC 与
+受限解析 worker 的唯一合同见[聊天附件](../shared/contract/chat-attachments.md)。
 
 **包与宿主的样式边界**：颜色 / 间距 / 圆角走 antd token（包内
 `createStyles` 内部就是宿主的 `theme.useToken()`，包不新建主题）；
 字号与栏宽比例走宿主填的 CSS 变量（`--mimir-chat-font-*` 八档来自
-`FONT_SIZE`、`--mimir-chat-gutter` 主视图 40px / 侧栏 16px），包内写
+`FONT_SIZE`、`--mimir-chat-gutter` 主视图 24px / 侧栏 16px），包内写
 `var(…, 回退值)`。细节与坑见 `.trellis/spec/chat/frontend/index.md`。
+
+聊天本地分支请求携带 `historyMessageIds`，服务端验证为原会话的有序子序列并使用库内可信内容，不能让客户端改写历史或引入已放弃尾部。分支选择不持久化为新的后端树。文档 Agent 禁止编辑/重新生成重放，沿用原 run 的缓存续轮。
+
+`CUSTOM mimir.message` 将乐观消息 ID 对应到持久化 ID。普通问答与文档 Agent 都须先持久化和发映射，再发终局事件；保存笔记按当前可见回答的确切 ID，引用和附件来源只取该回答记录，不能使用“库里最新回答”或按时间推断附件。
 
 ### 5.6 编辑器：也用 SDK 的包装
 
@@ -735,7 +707,7 @@ M0 **保留但禁用**并在 tooltip 里说明——直接删掉用户会找不�
 | 角色 | 特点 | 回落规则 |
 |---|---|---|
 | `chat` | 量小、要求高 | 必填 |
-| `reasoning` | 深度思考时切换 | 未绑定时用 `chat` |
+| `reasoning` | 旧客户端的深入请求兼容绑定 | 未绑定时用 `chat`；新聊天按显式模型与实际能力，不用此角色切换 |
 | `summarize` | 量大、要求低 | **留空即回落到 `chat`** |
 | `embed` | 量最大 | **没有回落**——它必须是 embedding 模型 |
 | `rerank` | 未实现 | — |

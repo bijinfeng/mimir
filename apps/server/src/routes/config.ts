@@ -92,6 +92,15 @@ configRoute.get('/', async (c) => {
  * `null` 表示删除覆盖、回落到环境变量或默认值——那是一个真实的动作，
  * 不是「清空输入框」的副作用（`.trellis/spec/project/architecture.md` §7.5）。
  */
+configRoute.get('/chat-models', async (c) => {
+  const provider = activeProvider(assemble().providers)
+  return c.json(
+    provider?.chatCatalog
+      ? await provider.chatCatalog()
+      : { providers: [], defaultSelection: null },
+  )
+})
+
 configRoute.patch('/settings', async (c) => {
   await migrateAiServiceSettings()
   const { settings } = assemble()

@@ -236,7 +236,9 @@ describe('shared document agent lifecycle', () => {
     expect(secondOptions.resume).toEqual(failure)
     const persisted = await getConversation(conversation.id)
     expect(
-      persisted?.messages.find((message) => message.agent?.runId === firstRunId)?.agent,
+      persisted?.messages.find(
+        (message) => message.role === 'assistant' && message.agent?.runId === firstRunId,
+      )?.agent,
     ).toMatchObject({
       format: 'xlsx',
       status: 'failed',

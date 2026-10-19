@@ -15,7 +15,7 @@ import { FONT_SIZE } from '../../theme/tokens'
  *  - **字号八档**：`theme/tokens.ts` 的 `FONT_SIZE` 是**唯一**的字号来源，
  *    包里写死数字会让「同一角色在不同页面用不同值」重新长出来（那正是
  *    阶梯要消灭的，D-017）
- *  - **`--mimir-chat-gutter`**：窄栏传 16px，主视图吃 40px 默认值
+ *  - **`--mimir-chat-gutter`**：窄栏传 16px，主视图默认 24px
  *
  * ## 只挂这一处
  *
@@ -27,7 +27,7 @@ import { FONT_SIZE } from '../../theme/tokens'
  */
 export function ChatThemeBridge({
   children,
-  gutter,
+  gutter = '24px',
 }: {
   children: ReactNode
   /** 文档侧栏那种窄栏传 '16px'；主视图不传 */
@@ -35,7 +35,7 @@ export function ChatThemeBridge({
 }) {
   return (
     <ChatHostVars
-      {...(gutter === undefined ? {} : { gutter })}
+      gutter={gutter}
       fontSize={{
         display: FONT_SIZE.display,
         body: FONT_SIZE.body,

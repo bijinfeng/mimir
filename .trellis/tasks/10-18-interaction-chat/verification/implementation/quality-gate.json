@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-19",
+  "command": "pnpm check",
+  "exit_code": 0,
+  "lint": "passed_with_warnings",
+  "style_templates": "passed",
+  "format": "passed",
+  "workspace_typecheck": "passed",
+  "test_summary": [
+    "apps/miniapp test: ℹ tests 8",
+    "apps/miniapp test: ℹ pass 8",
+    "apps/miniapp test: ℹ fail 0",
+    "plugins/storage test:  Test Files  1 passed | 1 skipped (2)",
+    "plugins/storage test:       Tests  13 passed | 2 skipped (15)",
+    "plugins/provider test:  Test Files  2 passed (2)",
+    "plugins/provider test:       Tests  31 passed (31)",
+    "packages/chat test:  Test Files  7 passed (7)",
+    "packages/chat test:       Tests  84 passed (84)",
+    "packages/office test:  Test Files  230 passed (230)",
+    "packages/office test:       Tests  2709 passed (2709)",
+    "packages/renderer test:  Test Files  75 passed (75)",
+    "packages/renderer test:       Tests  581 passed (581)",
+    "apps/server test:  Test Files  122 passed (122)",
+    "apps/server test:       Tests  1365 passed (1365)",
+    "apps/server test:  Test Files  1 passed (1)",
+    "apps/server test:       Tests  10 passed (10)",
+    "apps/server test:  Test Files  1 passed (1)",
+    "apps/server test:       Tests  4 passed (4)",
+    "apps/server test: ℹ tests 2",
+    "apps/server test: ℹ pass 2",
+    "apps/server test: ℹ fail 0",
+    "apps/desktop test:  Test Files  7 passed (7)",
+    "apps/desktop test:       Tests  50 passed (50)",
+    "ℹ tests 6",
+    "ℹ pass 6",
+    "ℹ fail 0"
+  ],
+  "log_sha256": "68e43c72e492b3080cc6b423f0442052b67b5794154f63fc167edfe8c19b49a0",
+  "postgres_subset": {
+    "files": 6,
+    "tests_passed": 84,
+    "isolated_database": "mimir_test_chat_v7_20261019"
+  },
+  "builds": {
+    "web": 0,
+    "server": 0,
+    "desktop": 0
+  },
+  "frozen_install_exit_code": 0,
+  "gui_record": "browser-qa.md",
+  "independent_review": "independent-review.md",
+  "limitations": [
+    "No paid external provider certification",
+    "No native Electron GUI, system IME or all-platform screen reader certification",
+    "Source coverage counts are not exhaustive GUI pass counts"
+  ]
+}

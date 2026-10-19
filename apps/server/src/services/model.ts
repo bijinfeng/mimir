@@ -1,6 +1,6 @@
 import { chat, embed, summarize } from '@tanstack/ai'
 import type { ChatMiddleware, FinishInfo, StreamChunk } from '@tanstack/ai'
-import type { ModelRole, UsageSource } from '@mimir/shared'
+import type { ChatModelSelection, ModelAdapter, ModelRole, UsageSource } from '@mimir/shared'
 import { assemble } from '../plugins/host.js'
 import { describeModel, effectiveTokens, record, tokenFields } from './usage.js'
 
@@ -39,6 +39,8 @@ type ChatMessages = Parameters<typeof chat>[0]['messages']
 
 export interface ModelCallOptions {
   role: ModelRole
+  modelSelection?: ChatModelSelection
+  accountingModel?: ModelAdapter
   systemPrompts?: string[]
   messages: ChatMessages
   stream: boolean
@@ -68,13 +70,25 @@ export interface ModelCallOptions {
  * 而记账发生在调用之后，在这里取 `performance.now()` 只会得到 0。
  */
 async function account(
-  options: { role: ModelRole; source: UsageSource; refId?: string | null },
+  options: {
+    role: ModelRole
+    source: UsageSource
+    refId?: string | null
+    modelSelection?: ChatModelSelection
+    accountingModel?: ModelAdapter
+  },
   startedAt: number,
   usage: unknown,
   failure: { ok: false; kind: string } | { ok: true } = { ok: true },
 ): Promise<void> {
   const tokens = tokenFields(usage)
-  const described = await describeModel(options.role)
+  const described = options.accountingModel
+    ? {
+        model: options.accountingModel.model,
+        providerId: options.accountingModel.providerId ?? '',
+        baseUrlHost: options.accountingModel.baseUrlHost ?? '',
+      }
+    : await describeModel(options.role)
 
   await record({
     role: options.role,
@@ -184,6 +198,22 @@ async function adapterFor(role: ModelRole): Promise<unknown> {
   return (await provider.impl.adapter(role)).instance
 }
 
+/** Validate exact model identity and effort again at the provider boundary. */
+export async function selectedModel(selection: ChatModelSelection): Promise<ModelAdapter> {
+  const provider = assemble().seams.provider.implementations()[0]?.impl
+  if (!provider?.selectedAdapter) throw new Error('当前供应商不支持按轮次选择模型')
+  return provider.selectedAdapter(selection)
+}
+
+export async function selectedModelCapabilities(selection: ChatModelSelection) {
+  await selectedModel(selection)
+  const provider = assemble().seams.provider.implementations()[0]?.impl
+  const catalog = await provider?.chatCatalog?.()
+  return catalog?.providers
+    .flatMap((item) => item.models)
+    .find((item) => item.providerId === selection.providerId && item.modelId === selection.modelId)
+}
+
 /**
  * 调用 TanStack AI 时的**唯一成本**：一次类型断言。
  *
@@ -215,7 +245,9 @@ function withMiddleware<T extends object>(params: T, middleware: ChatMiddleware[
 
 /** 一次性对话。`role` 由调用方决定用 chat 还是 reasoning */
 export async function callChat(options: ModelCallOptions & { stream: false }): Promise<string> {
-  const adapter = await adapterFor(options.role)
+  const selected = options.modelSelection ? await selectedModel(options.modelSelection) : undefined
+  const adapter = selected?.instance ?? (await adapterFor(options.role))
+  options = { ...options, ...(selected ? { accountingModel: selected } : {}) }
   const startedAt = performance.now()
   const { middleware, state } = usageTracker()
 
@@ -224,7 +256,10 @@ export async function callChat(options: ModelCallOptions & { stream: false }): P
     stream: false,
     ...(options.systemPrompts ? { systemPrompts: options.systemPrompts } : {}),
     messages: options.messages,
-    ...(options.modelOptions ? { modelOptions: options.modelOptions } : {}),
+    ...(options.modelOptions || selected?.modelOptions
+      ? { modelOptions: { ...options.modelOptions, ...selected?.modelOptions } }
+      : {}),
+    ...(selected?.reasoning ? { reasoning: selected.reasoning } : {}),
     ...(options.tools ? { tools: options.tools } : {}),
     ...(options.agentLoopStrategy ? { agentLoopStrategy: options.agentLoopStrategy } : {}),
     ...(options.threadId ? { threadId: options.threadId } : {}),
@@ -236,14 +271,21 @@ export async function callChat(options: ModelCallOptions & { stream: false }): P
   }
 
   try {
-    const text = await chat(withMiddleware(params, middleware))
+    const result: unknown = await chat(withMiddleware(params, middleware))
     await accountIterations(
       options,
       startedAt,
       state,
       state.ok ? { ok: true } : { ok: false, kind: 'unknown' },
     )
-    return text
+    if (
+      !result ||
+      typeof result !== 'object' ||
+      !('text' in result) ||
+      typeof result.text !== 'string'
+    )
+      throw new Error('模型返回了无效的文本结果')
+    return result.text
   } catch (error) {
     // 抛出的失败也要入账——「失败的调用可能已经计费」是失败不能漏记的原因之一
     await accountIterations(options, startedAt, state, { ok: false, kind: classify(error) })
@@ -280,7 +322,9 @@ function classify(error: unknown): string {
  * 而那种缺失看起来像「模型偶尔抽风」。
  */
 export async function streamChat(options: ModelCallOptions & { stream: true }) {
-  const adapter = await adapterFor(options.role)
+  const selected = options.modelSelection ? await selectedModel(options.modelSelection) : undefined
+  const adapter = selected?.instance ?? (await adapterFor(options.role))
+  options = { ...options, ...(selected ? { accountingModel: selected } : {}) }
   const startedAt = performance.now()
   const { middleware, state } = usageTracker()
 
@@ -289,7 +333,10 @@ export async function streamChat(options: ModelCallOptions & { stream: true }) {
     stream: true,
     ...(options.systemPrompts ? { systemPrompts: options.systemPrompts } : {}),
     messages: options.messages,
-    ...(options.modelOptions ? { modelOptions: options.modelOptions } : {}),
+    ...(options.modelOptions || selected?.modelOptions
+      ? { modelOptions: { ...options.modelOptions, ...selected?.modelOptions } }
+      : {}),
+    ...(selected?.reasoning ? { reasoning: selected.reasoning } : {}),
     ...(options.tools ? { tools: options.tools } : {}),
     ...(options.agentLoopStrategy ? { agentLoopStrategy: options.agentLoopStrategy } : {}),
     ...(options.threadId ? { threadId: options.threadId } : {}),

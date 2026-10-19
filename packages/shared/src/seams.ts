@@ -1,3 +1,4 @@
+import type { ChatModelCatalog, ChatModelSelection } from './chat-models.js'
 import type { RetrievalScope } from './retrieval.js'
 import type {
   FetchedModelsResult,
@@ -217,6 +218,10 @@ export interface ModelAdapter {
   role: ModelRole
   model: string
   instance: unknown
+  providerId?: string
+  baseUrlHost?: string
+  modelOptions?: Record<string, unknown>
+  reasoning?: { level: string }
 }
 
 export interface ProviderProbe {
@@ -251,6 +256,9 @@ export interface ModelProvider {
   supports(role: ModelRole): Promise<boolean>
   /** 造适配器。角色不可用时抛错——调用方应当先问 supports */
   adapter(role: ModelRole): Promise<ModelAdapter>
+  /** Explicit selection is validated against configured chat models and capabilities. */
+  chatCatalog?(): Promise<ChatModelCatalog>
+  selectedAdapter?(selection: ChatModelSelection): Promise<ModelAdapter>
   /** 角色级真实调用。只由用户显式触发（`.trellis/spec/project/architecture.md` §7.8） */
   probe(role: ModelRole): Promise<ProviderProbe>
   /**

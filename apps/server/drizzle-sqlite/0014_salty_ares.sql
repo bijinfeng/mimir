@@ -1,0 +1,1 @@
+ALTER TABLE `messages` ADD `protocol_events` text;

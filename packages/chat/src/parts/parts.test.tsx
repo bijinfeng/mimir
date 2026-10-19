@@ -1,9 +1,8 @@
-import type { Citation, Trace } from '@mimir/shared'
+import type { Citation } from '@mimir/shared'
 import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { TraceDisclosure } from './TraceActivity.js'
 import { CitationList } from './CitationList.js'
 import { copyAnswerText } from './AnswerActions.js'
 import { FailureCard } from './FailureNotice.js'
@@ -19,55 +18,6 @@ import { ToolCallPart } from './ToolCallPart.js'
  * `data-parts.ts` / `ChatPanel.test.tsx` 管）。分开的理由是它们各自会变
  * 而原因不同：形状变是因为设计变了，数据路径变是因为架构变了。
  */
-describe('TraceDisclosure', () => {
-  const trace: Trace = {
-    rounds: 2,
-    tools: 3,
-    tookMs: 4210,
-    steps: [
-      { icon: 'think', text: '先把问题拿去知识库里找相关内容' },
-      { icon: 'search', text: '通道召回结果', keywords: ['组件'], meta: '词级召回 3 段' },
-      { icon: 'check', text: '确认没有遗漏，生成回答' },
-    ],
-  }
-
-  it('没有 trace 且不 live 时什么都不渲染', () => {
-    const html = renderToString(createElement(TraceDisclosure, { trace: null }))
-    expect(html).toBe('')
-  })
-
-  it('live 且还没有 trace 时是「正在检索知识库」', () => {
-    const html = renderToString(createElement(TraceDisclosure, { trace: null, live: true }))
-    expect(html).toContain('正在检索知识库')
-    expect(html).toContain('role="status"')
-    expect(html).not.toContain('<button')
-  })
-
-  it('有 trace 时摘要给服务端的真实数字', () => {
-    const html = renderToString(createElement(TraceDisclosure, { trace, live: false }))
-    expect(html).toContain('思考')
-    expect(html).toContain('4.2s')
-    /* 步骤明细在折叠内容里（antd 默认不渲染收起的内容，但 Collapse 的
-       activeKey 由 expanded 驱动——这里只要摘要对得上） */
-    expect(html).toContain('2')
-    expect(html).toContain('3')
-  })
-
-  it('只检索回答不暗示调用模型', () => {
-    const html = renderToString(createElement(TraceDisclosure, { trace, searchOnly: true }))
-    expect(html).toContain('检索 2 轮')
-    expect(html).not.toContain('思考')
-    expect(html).not.toContain('调用')
-  })
-
-  it('live 时摘要里是客户端的秒数而不是服务端的毫秒', () => {
-    const html = renderToString(createElement(TraceDisclosure, { trace, live: true }))
-    /* 0s 起算的客户端钟：服务端那个 4210ms 在这时不该出现 */
-    expect(html).toContain('0s')
-    expect(html).not.toContain('4.2s')
-  })
-})
-
 describe('CitationList', () => {
   const citations: Citation[] = [
     {
@@ -177,8 +127,8 @@ describe('FailureCard', () => {
         onRetry: () => {},
       }),
     )
-    expect(known).not.toContain('历史记录')
-    expect(unknown).toContain('历史记录')
+    expect(known).not.toContain('未保存模型设置')
+    expect(unknown).toContain('未保存模型设置')
   })
 })
 
@@ -244,7 +194,7 @@ describe('AG-UI part 类型（每一种都渲染）', () => {
         index: 0,
       } as never),
     )
-    expect(collapsed).toContain('模型思考')
+    expect(collapsed).toContain('思考过程')
     expect(collapsed).not.toContain('先看检索到的段落')
 
     /* 还在流时默认展开（live）——标签带秒数、正文可读 */
@@ -256,8 +206,7 @@ describe('AG-UI part 类型（每一种都渲染）', () => {
         index: 0,
       } as never),
     )
-    expect(live).toContain('模型思考')
-    expect(live).toContain('0s')
+    expect(live).toContain('正在思考')
     expect(live).toContain('先看检索到的段落')
   })
 
@@ -274,7 +223,7 @@ describe('AG-UI part 类型（每一种都渲染）', () => {
         index: 0,
       } as never),
     )
-    expect(html).toContain('Used tool')
+    expect(html).toContain('已完成')
     expect(html).toContain('search_docs')
   })
 
@@ -316,5 +265,40 @@ describe('AG-UI part 类型（每一种都渲染）', () => {
       } as never),
     )
     expect(html).toContain('<img')
+  })
+})
+
+describe('TanStack native tool completion status', () => {
+  it('a complete native error payload is visibly failed', () => {
+    const html = renderToString(
+      createElement(ToolCallPart, {
+        part: {
+          id: 'tool',
+          type: 'tool-call',
+          name: 'read',
+          arguments: '{}',
+          state: 'complete',
+          output: JSON.stringify({ ok: false, error: '版本已变化' }),
+        },
+      }),
+    )
+    expect(html).toContain('调用失败')
+    expect(html).not.toContain('已完成')
+  })
+  it('a pending call in a stopped run is cancelled rather than still running', () => {
+    const html = renderToString(
+      createElement(ToolCallPart, {
+        part: {
+          id: 'tool',
+          type: 'tool-call',
+          name: 'read',
+          arguments: '{}',
+          state: 'input-complete',
+        },
+        halted: 'cancelled',
+      }),
+    )
+    expect(html).toContain('已取消')
+    expect(html).not.toContain('调用中')
   })
 })

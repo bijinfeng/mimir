@@ -1,0 +1,1435 @@
+{
+  "version": "product-v7-independent-source-review",
+  "date": "2026-10-19",
+  "sourceGroups": 71,
+  "sourceStateReferences": 379,
+  "attachmentStateReferences": 24,
+  "meaning": "Coverage references, not GUI test counts. Independent reviewer reran final chat84 tests, chat/renderer tsc and lint; renderer host followup9 tests passed. Parent owns final full gate/GUI. Agent history metadata/protocol source checked; owner DB tests recorded separately.",
+  "groups": [
+    {
+      "id": "CHAT-001",
+      "title": "主对话空态",
+      "stateIds": [
+        "CHAT-001.idle",
+        "CHAT-001.document",
+        "CHAT-001.overflow",
+        "CHAT-001.sent"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "ChatPanel.tsx; EmptyStage.tsx",
+      "testEvidence": "ChatPanel.test.tsx: 从搜索带来的纯文本草稿预填输入框",
+      "note": "主空态/单篇文案；短高几何待GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-002",
+      "title": "文档侧栏指南与快捷问",
+      "stateIds": [
+        "CHAT-002.guide",
+        "CHAT-002.actions",
+        "CHAT-002.snapshot",
+        "CHAT-002.answered",
+        "CHAT-002.standard"
+      ],
+      "disposition": "修订",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "ChatPanel.tsx; renderer:DocChatGuide.tsx",
+      "testEvidence": "renderer:DocChatGuide.test.tsx",
+      "note": "快捷直接发送保留；侧栏模型/等级按v6/v7不再隐藏",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-003",
+      "title": "宿主草稿一次消费与范围",
+      "stateIds": [
+        "CHAT-003.prefill",
+        "CHAT-003.context",
+        "CHAT-003.repeated",
+        "CHAT-003.replacement",
+        "CHAT-003.snapshot-rejected"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "ChatPanel.tsx:applyIncomingDraft",
+      "testEvidence": "ChatPanel.test.tsx: 已挂载时消费新草稿一次",
+      "note": "同对象不覆盖编辑；新对象一次消费",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-004",
+      "title": "历史加载与适配",
+      "stateIds": [
+        "CHAT-004.loading",
+        "CHAT-004.loaded",
+        "CHAT-004.new",
+        "CHAT-004.missing",
+        "CHAT-004.rejected"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "ChatThread.tsx; runtime/history.ts",
+      "testEvidence": "runtime/history.test.ts: loads an empty new conversation",
+      "note": "骨架、错误重试、新会话分支",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-005",
+      "title": "消息列与回复动作门控",
+      "stateIds": [
+        "CHAT-005.user",
+        "CHAT-005.assistant",
+        "CHAT-005.placeholder",
+        "CHAT-005.empty-settled",
+        "CHAT-005.last",
+        "CHAT-005.blocked"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/MessageItem.tsx",
+      "testEvidence": "ChatPanel.test.tsx: 失败轮不显示; 首 token 前",
+      "note": "成功/失败/停止动作互斥，canonical可存门控",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-006",
+      "title": "消息滚动与回到底部",
+      "stateIds": [
+        "CHAT-006.bottom",
+        "CHAT-006.away",
+        "CHAT-006.return",
+        "CHAT-006.focus",
+        "CHAT-006.divider"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "ChatPanel.tsx:scroll/pinned; ChatPanel.style.ts",
+      "testEvidence": "无独立贴底几何测试，待GUI",
+      "note": "离底不追滚；回底按钮；焦点样式",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-007",
+      "title": "输入框编辑与键盘",
+      "stateIds": [
+        "CHAT-007.empty",
+        "CHAT-007.focus",
+        "CHAT-007.typed",
+        "CHAT-007.multiline",
+        "CHAT-007.enter",
+        "CHAT-007.ime",
+        "CHAT-007.escape-idle",
+        "CHAT-007.narrow"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/Composer.tsx:onKeyDown/onComposition",
+      "testEvidence": "ChatPanel.test.tsx: 画布版本已变时点击和Enter都不发送",
+      "note": "Enter/Shift+Enter/IME229/Escape实现；原生IME待实机",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-008",
+      "title": "发送与建会话",
+      "stateIds": [
+        "CHAT-008.ready",
+        "CHAT-008.creating",
+        "CHAT-008.running",
+        "CHAT-008.completed",
+        "CHAT-008.create-failed",
+        "CHAT-008.guard-rejected"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/transport.ts:ensureConversation; runtime/use-mimir-runtime.ts:dispatch",
+      "testEvidence": "ChatPanel.test.tsx: 缺终态的完整 SSE; backend:chat-model-selection.test.ts",
+      "note": "先建真实ID，固定URL，before-await冻结；迟到onCreated受live守卫",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-009",
+      "title": "本轮范围下拉",
+      "stateIds": [
+        "CHAT-009.all",
+        "CHAT-009.menu",
+        "CHAT-009.loading",
+        "CHAT-009.error",
+        "CHAT-009.empty",
+        "CHAT-009.dismiss",
+        "CHAT-009.keyboard"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/ComposerMenus.tsx",
+      "testEvidence": "ChatPanel.test.tsx: 主对话和侧栏共用模型、实际等级与范围控件",
+      "note": "范围loading/error/empty/选项/键盘菜单",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-010",
+      "title": "单篇范围标签与替换",
+      "stateIds": [
+        "CHAT-010.selected",
+        "CHAT-010.long",
+        "CHAT-010.replace",
+        "CHAT-010.remove",
+        "CHAT-010.queued"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/ComposerMenus.tsx; runtime/use-mimir-runtime.ts:capture",
+      "testEvidence": "ChatPanel.test.tsx: 第二问入队时冻结选区",
+      "note": "单篇/全部、长标题和逐队列项冻结",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-011",
+      "title": "主对话思考强度",
+      "stateIds": [
+        "CHAT-011.standard",
+        "CHAT-011.menu",
+        "CHAT-011.deep",
+        "CHAT-011.hidden",
+        "CHAT-011.dismiss"
+      ],
+      "disposition": "批准替换",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/ComposerMenus.tsx; runtime/model-settings.ts",
+      "testEvidence": "ChatPanel.test.tsx: 供应商分组可切换模型",
+      "note": "旧标准/深入及侧栏隐藏被实际模型支持等级替代",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-012",
+      "title": "全局模型绑定只读菜单",
+      "stateIds": [
+        "CHAT-012.chat",
+        "CHAT-012.reasoning",
+        "CHAT-012.menu",
+        "CHAT-012.missing",
+        "CHAT-012.same-name",
+        "CHAT-012.long",
+        "CHAT-012.manage"
+      ],
+      "disposition": "批准替换",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/ComposerMenus.tsx; provider:chat-models.ts",
+      "testEvidence": "ChatPanel.test.tsx: 快捷提问发送实际模型与等级; provider:chat-models.test.ts",
+      "note": "按供应商实例分组、providerId+modelId；未知能力如实显示",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-013",
+      "title": "上下文容量",
+      "stateIds": [
+        "CHAT-013.hidden",
+        "CHAT-013.known",
+        "CHAT-013.unknown-input",
+        "CHAT-013.popover",
+        "CHAT-013.close"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/ComposerMenus.tsx:ContextUsageChip",
+      "testEvidence": "无新增独立容量交互测试，待GUI",
+      "note": "真实计账、未知值、展开用量，不伪造侧栏容量",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-014",
+      "title": "生成中追问队列",
+      "stateIds": [
+        "CHAT-014.queued",
+        "CHAT-014.multiple",
+        "CHAT-014.auto",
+        "CHAT-014.retrieve",
+        "CHAT-014.stop",
+        "CHAT-014.failed"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/use-mimir-runtime.ts:capture/updateQueue/restoreQueued",
+      "testEvidence": "ChatPanel.test.tsx: 停止之后排队的那条; HTTP失败排队回归",
+      "note": "Mimir一条FIFO；只归还首项，不覆盖新稿",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-015",
+      "title": "停止生成",
+      "stateIds": [
+        "CHAT-015.stop",
+        "CHAT-015.partial",
+        "CHAT-015.empty",
+        "CHAT-015.failure-distinct",
+        "CHAT-015.after"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/use-mimir-runtime.ts:stop; parts/StoppedNotice.tsx",
+      "testEvidence": "ChatPanel.test.tsx: 点停止; 停止在途截图后恢复",
+      "note": "部分内容保留；停止与失败区分；停止click阻止默认submit，真实DOM回归断言队首只回填不发送",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-016",
+      "title": "检索过程折叠",
+      "stateIds": [
+        "CHAT-016.waiting",
+        "CHAT-016.live",
+        "CHAT-016.manual",
+        "CHAT-016.done",
+        "CHAT-016.search",
+        "CHAT-016.scroll",
+        "CHAT-016.absent"
+      ],
+      "disposition": "批准删除",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/history.ts; runtime/use-mimir-runtime.ts:observe",
+      "testEvidence": "ChatPanel.test.tsx: 忽略旧 trace，成功正文和引用保留",
+      "note": "旧检索过程/统计不再生产消费；未换成伪思考条",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-017",
+      "title": "模型思考折叠",
+      "stateIds": [
+        "CHAT-017.live",
+        "CHAT-017.toggle",
+        "CHAT-017.done",
+        "CHAT-017.empty",
+        "CHAT-017.long"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/ReasoningPart.tsx; parts/MessageItem.tsx",
+      "testEvidence": "parts/parts.test.tsx: reasoning; runtime/history.test.ts: round-trips real reasoning",
+      "note": "真实thinking/reasoning帧，live展开、手动接管、长内容滚动",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-018",
+      "title": "流式Markdown与正文长内容",
+      "stateIds": [
+        "CHAT-018.complete",
+        "CHAT-018.partial",
+        "CHAT-018.code",
+        "CHAT-018.links",
+        "CHAT-018.wide"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/MarkdownPart.tsx; parts/CodeBlock.tsx",
+      "testEvidence": "parts/parts.test.tsx: 渲染 markdown; 流式半截; 半截的代码块",
+      "note": "TanStack Markdown，自有code组件；长内容待GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-019",
+      "title": "代码块复制",
+      "stateIds": [
+        "CHAT-019.idle",
+        "CHAT-019.copied",
+        "CHAT-019.failure",
+        "CHAT-019.fallback",
+        "CHAT-019.hover-focus"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/CodeBlock.tsx:CodeBar/plainTextOf",
+      "testEvidence": "parts/parts.test.tsx: 渲染 markdown，代码块带上语言与复制按钮",
+      "note": "成功2秒回位；失败提示；非纯文本退化；系统剪贴板待GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-020",
+      "title": "工具调用消息折叠",
+      "stateIds": [
+        "CHAT-020.running",
+        "CHAT-020.complete",
+        "CHAT-020.failed",
+        "CHAT-020.collapsed",
+        "CHAT-020.expanded",
+        "CHAT-020.long"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/ToolCallPart.tsx; parts/MessageItem.tsx",
+      "testEvidence": "parts/parts.test.tsx: tool-call; a complete native error payload; pending call in stopped run",
+      "note": "native输入状态、ok:false/error、停止取消真实映射；纯工具parentMessageId绑定sidecar，双轮来源及终态隔离回归",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-021",
+      "title": "引用来源与原文跳转",
+      "stateIds": [
+        "CHAT-021.list",
+        "CHAT-021.channels",
+        "CHAT-021.preview",
+        "CHAT-021.hover",
+        "CHAT-021.focus",
+        "CHAT-021.empty"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/CitationList.tsx",
+      "testEvidence": "parts/parts.test.tsx: 命中通道翻成中文; 引用摘要展示 Markdown",
+      "note": "原文定位交宿主；空数组无占位；hover/focus待GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-022",
+      "title": "回答存成笔记",
+      "stateIds": [
+        "CHAT-022.idle",
+        "CHAT-022.saving",
+        "CHAT-022.saved",
+        "CHAT-022.open",
+        "CHAT-022.error",
+        "CHAT-022.hidden"
+      ],
+      "disposition": "保留且纠错",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/AnswerActions.tsx; runtime/use-mimir-runtime.ts:saveAsNote",
+      "testEvidence": "renderer:chat-save-note.test.ts: saves the canonical visible branch answer",
+      "note": "可见回答canonical ID，按消息保存；错误toast；打开笔记",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-023",
+      "title": "复制回答与检索结果",
+      "stateIds": [
+        "CHAT-023.idle",
+        "CHAT-023.success",
+        "CHAT-023.failure",
+        "CHAT-023.search-only",
+        "CHAT-023.ordinary"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/AnswerActions.tsx:copyAnswerText",
+      "testEvidence": "parts/parts.test.tsx: 只检索结果复制原文与来源链接; 普通模型回答",
+      "note": "普通正文复制与只检索原文+链接语义分开",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-024",
+      "title": "模型请求受限失败卡",
+      "stateIds": [
+        "CHAT-024.card",
+        "CHAT-024.recover",
+        "CHAT-024.history",
+        "CHAT-024.unavailable",
+        "CHAT-024.snapshot"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/FailureNotice.tsx:FAILURE_UI.quota",
+      "testEvidence": "parts/parts.test.tsx: 每类失败的出路不同",
+      "note": "可用检索出路；未实现出口真disabled；附件/Agent不错误降级",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-025",
+      "title": "请求超时失败卡",
+      "stateIds": [
+        "CHAT-025.card",
+        "CHAT-025.recover",
+        "CHAT-025.history",
+        "CHAT-025.unavailable",
+        "CHAT-025.snapshot"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/FailureNotice.tsx:FAILURE_UI.timeout",
+      "testEvidence": "parts/parts.test.tsx: 每类失败的出路不同",
+      "note": "真实重试/只检索；缩小范围仍按批准边界disabled",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-026",
+      "title": "回答被截断失败卡",
+      "stateIds": [
+        "CHAT-026.card",
+        "CHAT-026.recover",
+        "CHAT-026.history",
+        "CHAT-026.unavailable",
+        "CHAT-026.snapshot"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/FailureNotice.tsx:FAILURE_UI.truncated",
+      "testEvidence": "parts/parts.test.tsx: 每类失败的出路不同",
+      "note": "部分回答可读；未接续写不假成功",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-027",
+      "title": "网络不可达失败卡",
+      "stateIds": [
+        "CHAT-027.card",
+        "CHAT-027.recover",
+        "CHAT-027.history",
+        "CHAT-027.snapshot"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/FailureNotice.tsx:FAILURE_UI.offline",
+      "testEvidence": "parts/parts.test.tsx: 每类失败的出路不同",
+      "note": "重试/只检索；不声称附件支持search-only",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-028",
+      "title": "连接中断恢复",
+      "stateIds": [
+        "CHAT-028.card",
+        "CHAT-028.retry",
+        "CHAT-028.refill",
+        "CHAT-028.queued",
+        "CHAT-028.zero"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/FailureNotice.tsx:StreamErrorCard; runtime/transport.ts",
+      "testEvidence": "ChatPanel.test.tsx: 缺终态的完整 SSE; 停止之后排队的那条",
+      "note": "网络失败保留原意图、队列先取回；零内容占位",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-029",
+      "title": "历史重试与上一问定位",
+      "stateIds": [
+        "CHAT-029.previous",
+        "CHAT-029.current-config",
+        "CHAT-029.search-scope",
+        "CHAT-029.running",
+        "CHAT-029.history-mode"
+      ],
+      "disposition": "保留且纠错",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/use-mimir-runtime.ts:intentFor/retryTurn/branchFrom",
+      "testEvidence": "ChatPanel.test.tsx: 编辑历史问题使用原分支前缀",
+      "note": "当前/历史意图分开；历史Agent及user-only来源禁止普通重试；无工具历史身份由服务端可信标记保留",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-030",
+      "title": "AG-UI 来源pill",
+      "stateIds": [
+        "CHAT-030.url",
+        "CHAT-030.document",
+        "CHAT-030.fallback",
+        "CHAT-030.hover-focus"
+      ],
+      "disposition": "兼容部件",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/MediaParts.tsx:SourcePart",
+      "testEvidence": "parts/parts.test.tsx: source",
+      "note": "HTTP(S)URL来源pill保留直接部件；AGUI无统一SOURCE事件，不把部件测试冒充服务端生产",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-031",
+      "title": "文件附件chip",
+      "stateIds": [
+        "CHAT-031.file",
+        "CHAT-031.safe",
+        "CHAT-031.unsafe",
+        "CHAT-031.focus"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/MediaParts.tsx:FilePart/safeFileHref; composer/Composer.tsx:AttachmentTile",
+      "testEvidence": "parts/parts.test.tsx: file; backend:chat-attachments.test.ts",
+      "note": "协议document与受保护真实附件分开；危险scheme不提供下载",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-032",
+      "title": "图片part原图链接",
+      "stateIds": [
+        "CHAT-032.image",
+        "CHAT-032.open",
+        "CHAT-032.broken",
+        "CHAT-032.narrow"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/MediaParts.tsx:ImagePart/ImageDialog",
+      "testEvidence": "parts/parts.test.tsx: image",
+      "note": "预览/Escape/关闭回焦/损坏提示；GUI尺寸与原图实读待验",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-033",
+      "title": "音频part与MIME图标",
+      "stateIds": [
+        "CHAT-033.mp3",
+        "CHAT-033.wav",
+        "CHAT-033.other-mime"
+      ],
+      "disposition": "协议兼容",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/MessageItem.tsx:NativePart; parts/MediaParts.tsx:renderMimeIcon",
+      "testEvidence": "无新增真实音频上传回归；协议路径源码核对",
+      "note": "native audio/video用原生播放器；通用上传不含音视频，勿声称转录",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-034",
+      "title": "Agent执行与续轮进度",
+      "stateIds": [
+        "CHAT-034.execute",
+        "CHAT-034.resume",
+        "CHAT-034.failed",
+        "CHAT-034.invalid-round",
+        "CHAT-034.unsupported",
+        "CHAT-034.dedupe"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx; runtime/use-mimir-runtime.ts:submit",
+      "testEvidence": "ChatPanel.test.tsx: 等中断流彻底结束; 工具只执行一次",
+      "note": "执行/缓存续传/无效轮/去重；不新增通用审批后端",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-035",
+      "title": "Agent停止与已改画布",
+      "stateIds": [
+        "CHAT-035.stopping",
+        "CHAT-035.stopped",
+        "CHAT-035.cancel-error",
+        "CHAT-035.draft",
+        "CHAT-035.unmount"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:cancel; runtime/use-mimir-runtime.ts:stop",
+      "testEvidence": "ChatPanel.test.tsx: 点停止; runtime/agent-media.check.test.ts",
+      "note": "终止在途；已改画布保留真实dirty；切文档拒迟到",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-036",
+      "title": "工具结果续传失败与安全重试",
+      "stateIds": [
+        "CHAT-036.failed",
+        "CHAT-036.ready",
+        "CHAT-036.retrying",
+        "CHAT-036.success",
+        "CHAT-036.stale",
+        "CHAT-036.again"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:retrySubmission",
+      "testEvidence": "ChatPanel.test.tsx: 工具只执行一次并用 raw result 续轮",
+      "note": "只重送cached responses到原target；成功false视失败；不再执行工具",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-037",
+      "title": "Agent媒体选择与分析",
+      "stateIds": [
+        "CHAT-037.choose-image",
+        "CHAT-037.choose-audio",
+        "CHAT-037.choose-video",
+        "CHAT-037.document-image",
+        "CHAT-037.processing",
+        "CHAT-037.picker-cancel",
+        "CHAT-037.stale"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:requestMediaSource/executeBridgeTool",
+      "testEvidence": "runtime/agent-media.check.test.ts; runtime/DocxInterruptBridge.test.ts",
+      "note": "本地选择、取消、abort与目标版本；原生选择/解码待平台GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-038",
+      "title": "中断写作的部分草稿",
+      "stateIds": [
+        "CHAT-038.pending",
+        "CHAT-038.keep",
+        "CHAT-038.keep-error",
+        "CHAT-038.discard",
+        "CHAT-038.stale"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:commitInterruptedDraft",
+      "testEvidence": "runtime/DocxInterruptBridge.test.ts: 流式失败时保留画布草稿",
+      "note": "保留/丢弃明确，守卫版本，已保留与回退互斥",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-039",
+      "title": "回退本轮画布修改",
+      "stateIds": [
+        "CHAT-039.available",
+        "CHAT-039.success",
+        "CHAT-039.unsafe",
+        "CHAT-039.failed"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:undoValidatedRound",
+      "testEvidence": "runtime/DocxInterruptBridge.test.ts; 原有守卫源码",
+      "note": "后续人工编辑时拒绝unsafe undo；画布集成待各Office格式验收",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-040",
+      "title": "Agent创建新文档交接",
+      "stateIds": [
+        "CHAT-040.created",
+        "CHAT-040.autoopen",
+        "CHAT-040.open",
+        "CHAT-040.stopped-after",
+        "CHAT-040.invalid",
+        "CHAT-040.parse-error"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:createdDocId/autoOpenedRef",
+      "testEvidence": "runtime/DocxInterruptBridge.test.ts: does not navigate after cancellation",
+      "note": "创建真实文档后交接；失败/停止不伪造自动打开",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-041",
+      "title": "Agent历史中断摘要",
+      "stateIds": [
+        "CHAT-041.pending",
+        "CHAT-041.open",
+        "CHAT-041.cancelling",
+        "CHAT-041.cancel-error",
+        "CHAT-041.completed",
+        "CHAT-041.failed",
+        "CHAT-041.cancelled"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "parts/DocxAgentHistoryNotice.tsx; runtime/history.ts",
+      "testEvidence": "ChatPanel.test.tsx: 重载后显示待处理工具",
+      "note": "pending/open/cancel/status保留；工具元数据来自真实历史",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-042",
+      "title": "PPTX截图草稿与消息附件",
+      "stateIds": [
+        "CHAT-042.draft",
+        "CHAT-042.remove",
+        "CHAT-042.no-model",
+        "CHAT-042.sent",
+        "CHAT-042.other"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "composer/Composer.tsx; parts/MessageItem.tsx; runtime/pptx-snapshot.ts",
+      "testEvidence": "ChatPanel.test.tsx: 无模型仍可预览; 显式发送真实PNG",
+      "note": "草稿/移除/已发截图为真实PNG；非截图attachment独立",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-043",
+      "title": "截图发送校验与错误",
+      "stateIds": [
+        "CHAT-043.valid",
+        "CHAT-043.target",
+        "CHAT-043.vision",
+        "CHAT-043.multiple",
+        "CHAT-043.invalid",
+        "CHAT-043.full",
+        "CHAT-043.dismiss"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/pptx-snapshot.ts:assertSnapshotTarget; runtime/use-mimir-runtime.ts",
+      "testEvidence": "runtime/pptx-snapshot.test.ts; ChatPanel.test.tsx: 替换了原件来源",
+      "note": "真实来源/文档/页path/index/version/bytes/视觉校验；不默降级",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-044",
+      "title": "截图排队/取回与派发",
+      "stateIds": [
+        "CHAT-044.freeze",
+        "CHAT-044.retrieve",
+        "CHAT-044.dispatch",
+        "CHAT-044.stale-empty",
+        "CHAT-044.stale-new",
+        "CHAT-044.tampered"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/use-mimir-runtime.ts:capture/restoreQueued; runtime/pptx-snapshot.ts",
+      "testEvidence": "ChatPanel.test.tsx: 第二问入队; runtime/pptx-snapshot.test.ts",
+      "note": "入队冻结、派发再验；有新稿不覆盖；篡改拒绝",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-045",
+      "title": "截图失败重试与附件错误隔离",
+      "stateIds": [
+        "CHAT-045.retry",
+        "CHAT-045.search",
+        "CHAT-045.refill",
+        "CHAT-045.expired",
+        "CHAT-045.remove-validation",
+        "CHAT-045.remove-transport"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/use-mimir-runtime.ts:retryTurn/refillTurn/applySnapshotDraft",
+      "testEvidence": "ChatPanel.test.tsx: 移除截图不清除; 停止在途截图后恢复",
+      "note": "图文原目标恢复；专用图错误与transport错误隔离",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "CHAT-046",
+      "title": "Agent跨格式工具与媒体原件错误",
+      "stateIds": [
+        "CHAT-046.read-write",
+        "CHAT-046.image-generate",
+        "CHAT-046.original-attachment",
+        "CHAT-046.original-media",
+        "CHAT-046.stream-writing",
+        "CHAT-046.export-sheet",
+        "CHAT-046.invalid"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/chat/src/",
+      "implementation": "runtime/DocxInterruptBridge.tsx:executeBridgeTool; renderer:chat-io.ts",
+      "testEvidence": "runtime/DocxInterruptBridge.test.ts: original PPTX; original audio/video; exports worksheet",
+      "note": "各格式执行器/受控媒体IO；不扩展Office功能和通用音视频附件",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-001",
+      "title": "主对话新建入口与聚焦",
+      "stateIds": [
+        "HOST-001.fresh",
+        "HOST-001.nav",
+        "HOST-001.prefill",
+        "HOST-001.existing"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "routes/_app.chat.tsx; components/NavSidebar.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: 从搜索带来的纯文本草稿",
+      "note": "新建聚焦、已有会话不强聚焦",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-002",
+      "title": "新会话真实ID建立与流保留",
+      "stateIds": [
+        "HOST-002.new",
+        "HOST-002.created",
+        "HOST-002.streaming",
+        "HOST-002.failure"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "routes/_app.chat.tsx:ownedId/panelKey; lib/chat-io.ts",
+      "testEvidence": "chat:ChatPanel.test.tsx; backend:chat-model-selection.test.ts",
+      "note": "真实ID写URL不重挂载；unmount后不迟到导航",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-003",
+      "title": "历史会话加载与切换",
+      "stateIds": [
+        "HOST-003.loading",
+        "HOST-003.loaded",
+        "HOST-003.switch",
+        "HOST-003.refresh"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "routes/_app.chat.tsx; chat:runtime/history.ts",
+      "testEvidence": "chat:runtime/history.test.ts",
+      "note": "ID寻址/历史加载/切换；URL真实恢复待GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-004",
+      "title": "历史读取失败和恢复",
+      "stateIds": [
+        "HOST-004.error",
+        "HOST-004.retry",
+        "HOST-004.recovered",
+        "HOST-004.again"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "chat:ChatThread.tsx; chat:runtime/use-mimir-runtime.ts:reloadHistory",
+      "testEvidence": "chat:runtime/history.test.ts: rejects missing saved conversations",
+      "note": "失败不当空会话，提供读取重试",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-005",
+      "title": "历史导航列表完整状态",
+      "stateIds": [
+        "HOST-005.loading",
+        "HOST-005.empty",
+        "HOST-005.list",
+        "HOST-005.active",
+        "HOST-005.error",
+        "HOST-005.stale",
+        "HOST-005.retry",
+        "HOST-005.long"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/NavSidebar.tsx",
+      "testEvidence": "components/NavSidebar.test.tsx: 对话首次读取; 后台刷新失败",
+      "note": "loading/empty/list/active/error/stale/retry/long",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-006",
+      "title": "窄屏对话导航及未保存离开",
+      "stateIds": [
+        "HOST-006.wide",
+        "HOST-006.narrow",
+        "HOST-006.overlay",
+        "HOST-006.guard",
+        "HOST-006.cancel"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/NavSidebar.tsx; components/layout",
+      "testEvidence": "components/NavSidebar.test.tsx: 窄屏; 未保存导航取消",
+      "note": "窄导航/焦点循环/离开保护，既有文档模块无改动",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-007",
+      "title": "全局搜索问题交接",
+      "stateIds": [
+        "HOST-007.empty",
+        "HOST-007.ready",
+        "HOST-007.blocked",
+        "HOST-007.guard",
+        "HOST-007.draft"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/GlobalSearch.tsx; routes/_app.chat.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: 从搜索带来的纯文本草稿",
+      "note": "只预填不自动发送；搜索模块按钮交接原合同",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-008",
+      "title": "瞬时草稿寿命与清理",
+      "stateIds": [
+        "HOST-008.memory",
+        "HOST-008.created",
+        "HOST-008.refresh",
+        "HOST-008.sidebar"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "store:askDraft; routes/_app.chat.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: 同一草稿重渲染不覆盖",
+      "note": "瞬时草稿；创建真实会话清理；刷新不承诺内存草稿",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-009",
+      "title": "主对话引用与返回入口",
+      "stateIds": [
+        "HOST-009.citation",
+        "HOST-009.document",
+        "HOST-009.return",
+        "HOST-009.plain"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "routes/_app.chat.tsx:onOpenCitation; components/DocumentPanel.tsx",
+      "testEvidence": "components/DocumentPanel.core.test.tsx: cross-document assistant citations",
+      "note": "引用跳路由/原文定位；返回已落库对话",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-010",
+      "title": "保存回答为笔记的宿主IO",
+      "stateIds": [
+        "HOST-010.lookup",
+        "HOST-010.none",
+        "HOST-010.save",
+        "HOST-010.success",
+        "HOST-010.open",
+        "HOST-010.failure"
+      ],
+      "disposition": "保留且纠错",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "lib/chat-io.ts:saveAsNote",
+      "testEvidence": "lib/chat-save-note.test.ts",
+      "note": "可见canonical成员资格验证；兼容无ID旧调用；错误传播",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-011",
+      "title": "输入上下文文档数据三态",
+      "stateIds": [
+        "HOST-011.loading",
+        "HOST-011.empty",
+        "HOST-011.error",
+        "HOST-011.items",
+        "HOST-011.retry"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "lib/use-chat-composer-status.ts; chat:composer/ComposerMenus.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: 主对话和侧栏共用",
+      "note": "文档loading/error/empty/loaded/refetch独立",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-012",
+      "title": "模型绑定与容量数据",
+      "stateIds": [
+        "HOST-012.bound",
+        "HOST-012.missing",
+        "HOST-012.usage",
+        "HOST-012.nousage",
+        "HOST-012.manage"
+      ],
+      "disposition": "批准替换",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "lib/use-chat-composer-status.ts; lib/api.ts; backend:routes/config.ts",
+      "testEvidence": "provider:chat-models.test.ts; backend:chat-model-selection.test.ts",
+      "note": "旧角色绑定改模型目录；真实contextUsage仍仅主对话",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-013",
+      "title": "主侧栏共同主题宿主",
+      "stateIds": [
+        "HOST-013.main",
+        "HOST-013.sidebar",
+        "HOST-013.dark",
+        "HOST-013.narrow"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/chat/ChatThemeBridge.tsx; chat:ChatHostVars.tsx",
+      "testEvidence": "源码核对；浅/深/窄真实GUI由主会话另记",
+      "note": "字体角色与gutter桥，不套新全局主题",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-014",
+      "title": "文档助手入口、范围和空态",
+      "stateIds": [
+        "HOST-014.open",
+        "HOST-014.empty",
+        "HOST-014.scope",
+        "HOST-014.reasoning",
+        "HOST-014.long"
+      ],
+      "disposition": "批准修订",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/document/DocChatSidebar.tsx; chat:composer/ComposerMenus.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: 主对话和侧栏共用",
+      "note": "初始当前文档，可换单篇/全部；等级与主视图一致；Agent目标独立",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-015",
+      "title": "文档快捷问题直接发送",
+      "stateIds": [
+        "HOST-015.idle",
+        "HOST-015.hover",
+        "HOST-015.focus",
+        "HOST-015.ask"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/document/DocChatGuide.tsx",
+      "testEvidence": "components/document/DocChatGuide.test.tsx",
+      "note": "完整问题直接发送；hover/focus几何待GUI",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-016",
+      "title": "文档选区与格式预设预填",
+      "stateIds": [
+        "HOST-016.selection",
+        "HOST-016.preset",
+        "HOST-016.ready",
+        "HOST-016.reopen"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/DocumentPanel.tsx; components/NoteEditor.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: 草稿一次消费",
+      "note": "选区/预设只预填；同文档重开不重设草稿",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-017",
+      "title": "助手关闭、保活与重开",
+      "stateIds": [
+        "HOST-017.opened",
+        "HOST-017.hidden",
+        "HOST-017.streaming",
+        "HOST-017.reopen",
+        "HOST-017.switch",
+        "HOST-017.focus"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/DocumentPanel.tsx:sidebarMounted/sidebarOpen",
+      "testEvidence": "源码核对；真实隐藏继续流/回焦待GUI",
+      "note": "关闭宽0/inert仍挂载；换文档卸载",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-018",
+      "title": "助手窄容器覆盖与键盘",
+      "stateIds": [
+        "HOST-018.wide",
+        "HOST-018.compact",
+        "HOST-018.dialog",
+        "HOST-018.tab",
+        "HOST-018.escape",
+        "HOST-018.dismiss",
+        "HOST-018.motion"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/DocumentPanel.tsx; components/document/DocumentPanel.style.ts",
+      "testEvidence": "既有文档focus/inert源码；无本轮全键盘GUI断言",
+      "note": "实际容器880阈值、dialog焦点/Tab/Escape层级；减少动态",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-019",
+      "title": "侧栏引用定位与跨篇守卫",
+      "stateIds": [
+        "HOST-019.same",
+        "HOST-019.cross",
+        "HOST-019.guard",
+        "HOST-019.cancel"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/DocumentPanel.tsx:onSidebarCitation; DocChatSidebar.tsx",
+      "testEvidence": "components/DocumentPanel.core.test.tsx: cross-document assistant citations",
+      "note": "同篇定位；跨篇必须先runGuarded",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-020",
+      "title": "DOCX宿主能力和AI修订",
+      "stateIds": [
+        "HOST-020.loading",
+        "HOST-020.error",
+        "HOST-020.nomodel",
+        "HOST-020.nocanvas",
+        "HOST-020.off",
+        "HOST-020.on",
+        "HOST-020.fallback"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/document/DocChatSidebar.tsx; DocxCapabilityStatus.tsx",
+      "testEvidence": "lib/docx-agent-availability.test.ts; backend:docx-agent-stream.test.ts",
+      "note": "能力加载/错/无模型/画布及revisionMode；实际选模型再校验tools/vision",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-021",
+      "title": "其他格式宿主Agent能力",
+      "stateIds": [
+        "HOST-021.loading",
+        "HOST-021.error",
+        "HOST-021.unsupported",
+        "HOST-021.nomodel",
+        "HOST-021.nocanvas",
+        "HOST-021.ready",
+        "HOST-021.retry"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/document/DocChatSidebar.tsx",
+      "testEvidence": "backend:document-agent-core.test.ts",
+      "note": "按格式真实executor/model/canvas；不因扩展名假就绪",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-022",
+      "title": "执行句柄匹配与只读主对话边界",
+      "stateIds": [
+        "HOST-022.same",
+        "HOST-022.enabled",
+        "HOST-022.readonly",
+        "HOST-022.draftonly",
+        "HOST-022.main",
+        "HOST-022.stale"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/document/DocChatSidebar.tsx; DocumentPanel.tsx; chat:runtime/transport.ts",
+      "testEvidence": "chat:ChatPanel.test.tsx: 第二问入队; 画布版本; backend:document-agent-core.test.ts",
+      "note": "主chat只读；目标文档/格式/来源/轮次/版本独立守卫",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-023",
+      "title": "PPTX截图草稿Chat交接",
+      "stateIds": [
+        "HOST-023.incoming",
+        "HOST-023.draft",
+        "HOST-023.preview",
+        "HOST-023.blocked",
+        "HOST-023.stale",
+        "HOST-023.restore"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "components/DocumentPanel.tsx; document/DocChatSidebar.tsx; chat:runtime/pptx-snapshot.ts",
+      "testEvidence": "chat:runtime/pptx-snapshot.test.ts; chat:ChatPanel.test.tsx: 停止在途截图",
+      "note": "真实PNG交接/显式发送/原来源恢复；Office准备能力独立验收",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-024",
+      "title": "Agent服务宿主与媒体边界",
+      "stateIds": [
+        "HOST-024.cancel",
+        "HOST-024.image",
+        "HOST-024.media",
+        "HOST-024.invalid",
+        "HOST-024.create",
+        "HOST-024.write"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "lib/chat-io.ts; lib/agent-media.ts",
+      "testEvidence": "lib/agent-media.check.test.ts; chat:runtime/agent-media.check.test.ts",
+      "note": "鉴权/取消/媒体/新文档/写作真实IO；非UI协议演示不能执行外部工具",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    },
+    {
+      "id": "HOST-025",
+      "title": "轮结束失效与外部编辑交替",
+      "stateIds": [
+        "HOST-025.complete",
+        "HOST-025.stop",
+        "HOST-025.failure",
+        "HOST-025.dirty",
+        "HOST-025.manual"
+      ],
+      "disposition": "保留",
+      "implementationRoot": "packages/renderer/src/",
+      "implementation": "lib/chat-io.ts:onTurnSettled; components/document/OfficeSourceEditor.tsx",
+      "testEvidence": "chat:ChatPanel.test.tsx: stop/failure; 各Office版本守卫既有测试",
+      "note": "正常/失败/停止刷新列表；dirty与用户保存保留，不新增自动存原件",
+      "verification": "source-reviewed; named test file is evidence only; not every baseline state individually tested; GUI not certified here"
+    }
+  ],
+  "attachments": [
+    {
+      "id": "ATT-001.ready",
+      "label": "准备完成",
+      "implementation": "composer/Composer.tsx:AttachmentTile; runtime/use-mimir-runtime.ts:addFiles",
+      "testEvidence": "ChatPanel.test.tsx: 上传中的每个文件; chat-attachments.test.ts: auth exact conversation",
+      "note": "真实API canonical ready卡",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.uploading",
+      "label": "准备中",
+      "implementation": "runtime/use-mimir-runtime.ts:addFiles; Composer.tsx",
+      "testEvidence": "ChatPanel.test.tsx: 上传中的每个文件; StrictMode",
+      "note": "逐件命名processing，临时项不lease；最终上传/取消及历史Agent保护随chat84/84独立通过",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.failed",
+      "label": "准备失败",
+      "implementation": "runtime/use-mimir-runtime.ts:addFiles catch; AttachmentTile",
+      "testEvidence": "chat-attachments.test.ts: invalid UTF8/malformed; chat-attachments-api.test.ts",
+      "note": "准备失败保留可移除项，不当ready发送",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.send-pending",
+      "label": "发送前准备",
+      "implementation": "runtime/use-mimir-runtime.ts:send/capture",
+      "testEvidence": "ChatPanel.test.tsx: StrictMode; chat-attachments-api.test.ts",
+      "note": "uploading阻塞发送且保稿",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.send-failed",
+      "label": "发送准备失败",
+      "implementation": "runtime/use-mimir-runtime.ts:dispatch catch/restoreQueued",
+      "testEvidence": "ChatPanel.test.tsx: HTTP失败; chat-model-selection.test.ts: unknown capacity",
+      "note": "服务端prepare失败保稿，队列首项优先",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.unsupported",
+      "label": "不支持的格式",
+      "implementation": "plugins/parser/src/attachment.ts; server:chat-attachments.ts",
+      "testEvidence": "chat-attachments.test.ts: rejects unsupported",
+      "note": "音视频、旧Office等明确拒绝",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.oversize",
+      "label": "超过拟定大小",
+      "implementation": "shared:chat-attachments.ts; server:chat-attachments.ts; parser:attachment.ts",
+      "testEvidence": "chat-attachments.test.ts: multipart bytes; image dimensions",
+      "note": "真实字节+扩展名/MIME/解码；文件限额",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.expired",
+      "label": "临时附件过期",
+      "implementation": "server:chat-attachments.ts:collectChatAttachments/readChatAttachment",
+      "testEvidence": "chat-attachments.test.ts: leases protect queue; missing/tampered",
+      "note": "到期不伪造可读原件",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.image",
+      "label": "图片附件",
+      "implementation": "Composer.tsx:AttachmentTile; parts/MediaParts.tsx:ImageDialog",
+      "testEvidence": "chat-attachments.test.ts: PNG decoding; static WebP",
+      "note": "图片真解码；缩略预览/Escape/回焦源码，GUI待验",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.remove",
+      "label": "移除附件",
+      "implementation": "runtime/use-mimir-runtime.ts:removeFile",
+      "testEvidence": "ChatPanel.test.tsx: 先释放 lease 再删除",
+      "note": "先release再delete；bound已发不能撤销",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.cancel",
+      "label": "取消准备",
+      "implementation": "runtime/use-mimir-runtime.ts:pendingFiles/removeFile",
+      "testEvidence": "ChatPanel.test.tsx: 独立取消; chat-attachments.test.ts: late upload",
+      "note": "逐件AbortController；迟到返回清理",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.multiple",
+      "label": "数量限制",
+      "implementation": "runtime/use-mimir-runtime.ts:addFiles/capture; server:chat-model-input.ts",
+      "testEvidence": "chat-attachments.test.ts: enforces per-round budgets",
+      "note": "最多4件，pending计数；取消状态切换回归",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.sent",
+      "label": "已发送附件",
+      "implementation": "parts/MessageItem.tsx; server:bindChatAttachments",
+      "testEvidence": "chat-attachments.test.ts: binds canonical refs",
+      "note": "用户消息绑定canonical资源；助手不重复卡片",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.policy",
+      "label": "拟定政策",
+      "implementation": "shared:chat-attachments.ts; shared contract chat-attachments.md",
+      "testEvidence": "chat-attachments.test.ts; parser worker checks",
+      "note": "工程政策已批准实施；并非原型本地模拟在生产运行",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.attachment-only",
+      "label": "仅文档附件",
+      "implementation": "runtime/use-mimir-runtime.ts:capture; server:chat-model-input.ts",
+      "testEvidence": "chat-model-selection.test.ts: real uploaded attachment reaches model",
+      "note": "默认问题与真实提取正文，无KB命中亦可",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.image-only",
+      "label": "仅图片附件",
+      "implementation": "runtime/use-mimir-runtime.ts:capture; server:chat-model-input.ts",
+      "testEvidence": "chat-model-selection.test.ts: actual image model input",
+      "note": "默认看图问题、真实图片字节，需visual能力",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.no-vision",
+      "label": "模型无视觉",
+      "implementation": "runtime/use-mimir-runtime.ts:capture; server:chat-model-input.ts",
+      "testEvidence": "provider:chat-models.test.ts; chat-model-selection.test.ts",
+      "note": "未知/不支持vision阻止派发，不降级",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.search-only",
+      "label": "只检索阻止",
+      "implementation": "runtime/use-mimir-runtime.ts:retryTurn/capture; server:assistant-stream.ts",
+      "testEvidence": "chat-model-selection.test.ts: attachment search blocked",
+      "note": "当前或相关历史附件均拒绝只检索，保留草稿",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.total-size",
+      "label": "合计容量限制",
+      "implementation": "shared:chat-attachments.ts; server:chat-model-input.ts/chat-attachments.ts",
+      "testEvidence": "chat-attachments.test.ts: round/conversation budgets",
+      "note": "每条20MiB、每会话200MiB真实服务约束",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.context-limit",
+      "label": "提取文本超限",
+      "implementation": "server:chat-attachment-prepare.ts; parser:attachment.ts",
+      "testEvidence": "chat-attachments.test.ts: excessive text; chat-model-selection.test.ts: unknown capacity",
+      "note": "单件12000/轮24000及上下文预算，超限拒绝不截断",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.ttl",
+      "label": "草稿过期",
+      "implementation": "server:chat-attachments.ts:lease/collect",
+      "testEvidence": "chat-attachments.test.ts: stale candidate renewed; leases protect queue",
+      "note": "draft24h、orphan/failed1h、active lease5min；同会话锁重读",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.history",
+      "label": "历史与生命周期",
+      "implementation": "runtime/history.ts; server:loadMessageAttachments; conversations.ts",
+      "testEvidence": "chat-attachments.test.ts: ordered protocol; selected prefix; saving branch",
+      "note": "原件受保护会话生命周期；回答引用实际使用refs；不导KB",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.audio-demo",
+      "label": "独立WAV媒体模拟",
+      "implementation": "parts/MessageItem.tsx:NativePart audio/video",
+      "testEvidence": "协议兼容源码；无产品通用音视频上传测试",
+      "note": "协议演示专属：不在通用附件支持列表，不声称OCR/转录/视频上传",
+      "verification": "source/test evidence; not individual GUI certification"
+    },
+    {
+      "id": "ATT-001.agent-block",
+      "label": "Agent禁用通用附件",
+      "implementation": "runtime/use-mimir-runtime.ts:addFiles/capture; server:docx-agent-stream.ts",
+      "testEvidence": "chat-attachments.test.ts; docx-agent-stream.test.ts",
+      "note": "通用附件与Agent/专用截图混用拒绝，专用截图仍走独立来源守卫",
+      "verification": "source/test evidence; not individual GUI certification"
+    }
+  ]
+}

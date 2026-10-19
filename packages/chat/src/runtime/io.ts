@@ -33,9 +33,8 @@ export interface ChatIo {
    *
    * 服务端本来也会在「没有会话 id」时自己建一个（`assistant-stream.ts` 的
    * `createConversation`），但那样 URL 上要等流回来才知道 id。前端先建的好处是
-   * 会话一出现就能寻址（刷新、分享链接不丢上下文）——这也是 D-098 里
-   * `creating` 那个补丁存在的原因，现在它落在 `onRunInitialized` 里
-   * （见 `runtime/use-mimir-runtime.ts`）。
+   * 会话一出现就能寻址（刷新、分享链接不丢上下文）。`runtime/transport.ts`
+   * 的 `ensureConversation` 复用同一个创建请求，拿到真实 id 后通知宿主回写 URL。
    */
   createConversation(): Promise<{ id: string }>
   /**
@@ -71,7 +70,7 @@ export interface ChatIo {
    * 与服务端不同（AG-UI 的 optimistic → server id 重指派）。
    * 所以这个动作留在宿主（它手上有 queryClient），包只负责「点了」。
    */
-  saveAsNote(conversationId: string): Promise<{ noteId: string }>
+  saveAsNote(conversationId: string, messageId?: string): Promise<{ noteId: string }>
   /** 「管理模型」菜单项。宿主决定去哪（主视图是 /settings 的 models 分区） */
   onManageModels(): void
   /** Open the original DOCX for a persisted tool turn after history reload. */
@@ -121,6 +120,19 @@ export interface ChatIo {
    * 地址一变，AG-UI 的 agent 就要重建，而重建会切断正在进行的流
    * （这条与旧的 `useChat` 同源，是协议客户端的性质，不是某一版的实现细节）。
    */
+  uploadChatAttachment?: (
+    conversationId: string,
+    file: File,
+    uploadOperationId: string,
+    signal: AbortSignal,
+  ) => Promise<import('@mimir/shared').ChatAttachment>
+  deleteChatAttachment?: (conversationId: string, id: string) => Promise<void>
+  leaseChatAttachment?: (conversationId: string, id: string, leaseId: string) => Promise<void>
+  releaseChatAttachmentLease?: (
+    conversationId: string,
+    id: string,
+    leaseId: string,
+  ) => Promise<void>
   chatUrl?: string
 }
 

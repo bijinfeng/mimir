@@ -1,9 +1,14 @@
 import { createServer } from 'node:http'
 import { HttpAgent } from '@ag-ui/client'
-import { chatParamsFromRequestBody, convertSchemaToJsonSchema } from '@tanstack/ai'
-import { DOCX_ALL_TOOLS, DOCX_OFFICE_TOOLS } from '@mimir/shared'
+import { chatParamsFromRequestBody, convertSchemaToJsonSchema, StreamProcessor } from '@tanstack/ai'
+import type { StreamChunk } from '@tanstack/ai'
+import { DOCX_ALL_TOOLS, DOCX_OFFICE_TOOLS, EVENT_MESSAGE_IDENTITY } from '@mimir/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createConversation, getConversation } from '../services/conversations.js'
+import {
+  createConversation,
+  getConversation,
+  saveMessageAsNote,
+} from '../services/conversations.js'
 import { streamDocxAgent } from '../services/docx-agent-stream.js'
 import { streamChat } from '../services/assistant-stream.js'
 import { app, getAuthCookie } from './helpers.js'
@@ -23,6 +28,9 @@ vi.mock('../services/model.js', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   modelReady: model.ready,
   streamChat: model.stream,
+  selectedModelCapabilities: vi.fn<() => Promise<{ tools: 'supported' }>>(async () => ({
+    tools: 'supported',
+  })),
 }))
 vi.mock('../services/documents.js', async (importOriginal) => ({
   ...(await importOriginal<object>()),
@@ -178,6 +186,290 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       role: 'assistant',
       failure: 'quota',
     })
+    const failedId = (await getConversation(conversation.id))?.messages.at(-1)?.id
+    expect(frames).toContain(
+      JSON.stringify({
+        messageId: failedId,
+        clientMessageId: 'capability-run-model-error',
+        role: 'assistant',
+      }),
+    )
+    expect(frames.lastIndexOf(EVENT_MESSAGE_IDENTITY)).toBeLessThan(frames.indexOf('RUN_ERROR'))
+  })
+
+  it('publishes canonical IDs and makes the answer saveable before the live completion event', async () => {
+    const conversation = await createConversation()
+    const runId = `save-${crypto.randomUUID()}`
+    let releaseTail!: () => void
+    const tail = new Promise<void>((resolve) => {
+      releaseTail = resolve
+    })
+    model.stream.mockResolvedValue(
+      (async function* () {
+        yield* modelEvents(runId, conversation.id, false)
+        // Persistence cannot depend on asking the provider for another chunk after
+        // its terminal: clients already expose save at RUN_FINISHED.
+        await tail
+      })(),
+    )
+    const response = await streamChat(body(conversation.id, runId))
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffered = ''
+    const identities = new Map<string, { messageId: string; role: string }>()
+    let finished = false
+    try {
+      while (!finished) {
+        const next = await reader.read()
+        if (next.done) break
+        buffered += decoder.decode(next.value, { stream: true })
+        let newline: number
+        while ((newline = buffered.indexOf('\n')) >= 0) {
+          const line = buffered.slice(0, newline)
+          buffered = buffered.slice(newline + 1)
+          if (!line.startsWith('data: ')) continue
+          const chunk = JSON.parse(line.slice(6))
+          if (chunk.type === 'CUSTOM' && chunk.name === EVENT_MESSAGE_IDENTITY)
+            identities.set(chunk.value.clientMessageId, chunk.value)
+          if (chunk.type === 'RUN_FINISHED') finished = true
+        }
+      }
+      expect(finished).toBe(true)
+      const messages = (await getConversation(conversation.id))!.messages
+      expect(messages.map((message) => message.role)).toEqual(['user', 'assistant'])
+      expect(identities.get('user-1')).toEqual({
+        messageId: messages[0]!.id,
+        clientMessageId: 'user-1',
+        role: 'user',
+      })
+      expect(identities.get(`${runId}-msg`)).toMatchObject({
+        messageId: messages[1]!.id,
+        role: 'assistant',
+      })
+      expect(await saveMessageAsNote(identities.get(`${runId}-msg`)!.messageId)).toMatchObject({
+        conversationId: conversation.id,
+        noteId: expect.any(String),
+      })
+    } finally {
+      releaseTail()
+      await reader.cancel()
+    }
+  })
+
+  it('keeps the selected model and authenticated Agent source on text-only history', async () => {
+    const conversation = await createConversation()
+    const runId = `history-${crypto.randomUUID()}`
+    const request = body(conversation.id, runId)
+    const selection = {
+      providerId: 'chosen-provider',
+      modelId: 'chosen-model',
+      reasoningEffort: 'high',
+    }
+    model.stream.mockResolvedValue(modelEvents(runId, conversation.id, false))
+    const response = await streamChat({
+      ...request,
+      forwardedProps: {
+        ...request.forwardedProps,
+        modelSelection: selection,
+        retrievalScope: { type: 'all' },
+      },
+    })
+    const frames = await response.text()
+    const reloaded = (await getConversation(conversation.id))!.messages
+    expect(reloaded).toHaveLength(2)
+    expect(reloaded.map((message) => message.modelSelection)).toEqual([selection, selection])
+    expect(reloaded.map((message) => message.retrievalScope)).toEqual([
+      { type: 'document', documentId: 'doc-a' },
+      { type: 'document', documentId: 'doc-a' },
+    ])
+    expect(reloaded.map((message) => message.agent)).toEqual([
+      { runId, documentId: 'doc-a', format: 'docx', status: 'completed', tools: [] },
+      { runId, documentId: 'doc-a', format: 'docx', status: 'completed', tools: [] },
+    ])
+    expect(frames).toContain('mimir.documentAgent')
+    expect(JSON.stringify(reloaded)).not.toContain('Live unsaved text')
+    expect(model.stream.mock.calls[0]?.[0]).toMatchObject({ modelSelection: selection })
+  })
+
+  it('restores real reasoning and tool parts through the SDK without storing run terminals or canvas context', async () => {
+    const conversation = await createConversation()
+    const runId = `parts-${crypto.randomUUID()}`
+    const actual = [
+      { type: 'REASONING_START', messageId: 'agent-parts' },
+      { type: 'REASONING_MESSAGE_START', messageId: 'agent-parts', role: 'assistant' },
+      { type: 'REASONING_MESSAGE_CONTENT', messageId: 'agent-parts', delta: '实际思考' },
+      { type: 'REASONING_MESSAGE_END', messageId: 'agent-parts' },
+      { type: 'REASONING_END', messageId: 'agent-parts' },
+      {
+        type: 'TOOL_CALL_START',
+        toolCallId: 'read-1',
+        toolCallName: 'read_document',
+        parentMessageId: 'agent-parts',
+      },
+      { type: 'TOOL_CALL_ARGS', toolCallId: 'read-1', delta: '{"section":"introduction"}' },
+      { type: 'TOOL_CALL_END', toolCallId: 'read-1' },
+      {
+        type: 'TOOL_CALL_RESULT',
+        toolCallId: 'read-1',
+        messageId: 'read-result',
+        role: 'tool',
+        content: '{"ok":true}',
+      },
+      { type: 'TEXT_MESSAGE_START', messageId: 'agent-parts', role: 'assistant' },
+      { type: 'TEXT_MESSAGE_CONTENT', messageId: 'agent-parts', delta: '读取完成' },
+      { type: 'TEXT_MESSAGE_END', messageId: 'agent-parts' },
+    ] as StreamChunk[]
+    model.stream.mockResolvedValue(
+      (async function* () {
+        for (const chunk of actual) yield chunk
+        yield { type: 'RUN_FINISHED', runId, threadId: conversation.id }
+      })(),
+    )
+    await (await streamChat(body(conversation.id, runId))).text()
+    const answer = (await getConversation(conversation.id))!.messages.at(-1)!
+    expect(answer.text).toBe('读取完成')
+    expect(answer.protocolEvents?.slice(1)).toEqual(actual)
+    expect(answer.protocolEvents?.some((event) => String(event.type).startsWith('RUN_'))).toBe(
+      false,
+    )
+    const processor = new StreamProcessor()
+    for (const event of answer.protocolEvents!)
+      processor.processChunk(event as unknown as StreamChunk)
+    const parts = processor.getMessages().flatMap((message) => message.parts)
+    expect(parts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'thinking', content: '实际思考' }),
+        expect.objectContaining({
+          type: 'tool-call',
+          name: 'read_document',
+          arguments: '{"section":"introduction"}',
+          output: { ok: true },
+        }),
+        expect.objectContaining({ type: 'text', content: '读取完成' }),
+      ]),
+    )
+    expect(answer.agent).toMatchObject({ format: 'docx', status: 'completed', tools: [] })
+  })
+
+  it('bounds retained Agent events and persists the failed source on an oversized event', async () => {
+    const conversation = await createConversation()
+    model.stream.mockResolvedValue(
+      (async function* () {
+        yield { type: 'REASONING_MESSAGE_START', messageId: 'oversized', role: 'assistant' }
+        yield {
+          type: 'REASONING_MESSAGE_CONTENT',
+          messageId: 'oversized',
+          delta: 'x'.repeat(2 * 1024 * 1024),
+        }
+      })(),
+    )
+    const frames = await (
+      await streamChat(body(conversation.id, `limit-${crypto.randomUUID()}`))
+    ).text()
+    const answer = (await getConversation(conversation.id))!.messages.at(-1)!
+    expect(frames).toContain('本轮消息记录超过容量限制')
+    expect(frames).toContain('RUN_ERROR')
+    expect(answer.agent).toMatchObject({ documentId: 'doc-a', status: 'failed' })
+    expect(Buffer.byteLength(JSON.stringify(answer.protocolEvents))).toBeLessThan(2 * 1024 * 1024)
+  })
+
+  it('retains user-only Agent provenance when model creation fails before a response starts', async () => {
+    const conversation = await createConversation()
+    model.stream.mockRejectedValueOnce(new Error('provider unavailable'))
+    const response = await streamChat(body(conversation.id, `startup-${crypto.randomUUID()}`))
+    expect(response.status).toBe(502)
+    const history = (await getConversation(conversation.id))!.messages
+    expect(history).toHaveLength(1)
+    expect(history[0]).toMatchObject({
+      role: 'user',
+      retrievalScope: { type: 'document', documentId: 'doc-a' },
+      agent: { documentId: 'doc-a', format: 'docx', tools: [] },
+    })
+  })
+
+  it('keeps partial EOF as a failed Agent answer that cannot become a saved success after reload', async () => {
+    const conversation = await createConversation()
+    const runId = `eof-${crypto.randomUUID()}`
+    model.stream.mockResolvedValue(
+      (async function* () {
+        yield { type: 'TEXT_MESSAGE_START', messageId: 'partial-agent', role: 'assistant' }
+        yield { type: 'TEXT_MESSAGE_CONTENT', messageId: 'partial-agent', delta: '部分回答' }
+      })(),
+    )
+    const frames = await (await streamChat(body(conversation.id, runId))).text()
+    const answer = (await getConversation(conversation.id))!.messages.at(-1)!
+    expect(answer).toMatchObject({
+      text: '部分回答',
+      failure: 'truncated',
+      agent: { status: 'failed' },
+    })
+    expect(frames).not.toContain('"type":"RUN_FINISHED"')
+    expect(frames).toContain('"type":"RUN_ERROR"')
+    expect(frames.indexOf('mimir.failure')).toBeLessThan(frames.indexOf('"type":"RUN_ERROR"'))
+    await expect(saveMessageAsNote(answer.id)).rejects.toMatchObject({
+      code: 'MESSAGE_NOT_SAVEABLE',
+    })
+  })
+
+  it('keeps explicitly completed tool-only events without inventing saveable answer text', async () => {
+    const conversation = await createConversation()
+    const runId = `tool-final-${crypto.randomUUID()}`
+    model.stream.mockResolvedValue(
+      (async function* () {
+        yield {
+          type: 'TOOL_CALL_START',
+          toolCallId: 'read-1',
+          toolCallName: 'read_document',
+          parentMessageId: 'only-tools',
+        }
+        yield { type: 'TOOL_CALL_ARGS', toolCallId: 'read-1', delta: '{}' }
+        yield { type: 'TOOL_CALL_END', toolCallId: 'read-1' }
+        yield {
+          type: 'TOOL_CALL_RESULT',
+          toolCallId: 'read-1',
+          messageId: 'tool-result',
+          role: 'tool',
+          content: '{"ok":true}',
+        }
+        yield { type: 'RUN_FINISHED', runId, threadId: conversation.id }
+      })(),
+    )
+    const frames = await (await streamChat(body(conversation.id, runId))).text()
+    const answer = (await getConversation(conversation.id))!.messages.at(-1)!
+    expect(answer).toMatchObject({
+      role: 'assistant',
+      text: '',
+      failure: null,
+      agent: { status: 'completed' },
+    })
+    expect(answer.protocolEvents?.some((event) => event.type === 'TOOL_CALL_RESULT')).toBe(true)
+    expect(frames).toContain(
+      JSON.stringify({ messageId: answer.id, clientMessageId: 'only-tools', role: 'assistant' }),
+    )
+    await expect(saveMessageAsNote(answer.id)).rejects.toMatchObject({
+      code: 'MESSAGE_NOT_SAVEABLE',
+    })
+  })
+
+  it('persists a failed Agent source before rejecting an untrusted requested tool', async () => {
+    const conversation = await createConversation()
+    const runId = `untrusted-${crypto.randomUUID()}`
+    model.stream.mockResolvedValue(
+      (async function* () {
+        for await (const chunk of modelEvents(runId, conversation.id, true)) {
+          if (chunk.type === 'RUN_FINISHED' && 'outcome' in chunk && chunk.outcome) {
+            chunk.outcome.interrupts[0]!.metadata.toolName = 'forged_server_tool'
+          }
+          yield chunk
+        }
+      })(),
+    )
+    const frames = await (await streamChat(body(conversation.id, runId))).text()
+    const answer = (await getConversation(conversation.id))!.messages.at(-1)!
+    expect(frames).toContain('模型请求了当前文档不允许的编辑工具')
+    expect(frames.lastIndexOf(EVENT_MESSAGE_IDENTITY)).toBeLessThan(frames.indexOf('RUN_ERROR'))
+    expect(answer.agent).toMatchObject({ status: 'failed', tools: [] })
+    expect(answer.failure).not.toBeNull()
   })
 
   it('shows and saves a provider rejection instead of leaving a blank assistant turn', async () => {
@@ -204,6 +496,40 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       failure: 'quota',
       text: expect.stringContaining('Mimir 无法调用'),
     })
+  })
+
+  it('maps a tool-only interrupted assistant parent before exposing its pending tools', async () => {
+    const conversation = await createConversation()
+    const runId = `tools-${crypto.randomUUID()}`
+    model.stream.mockResolvedValue(
+      (async function* () {
+        yield {
+          type: 'TOOL_CALL_START',
+          toolCallId: 'call-1',
+          toolCallName: 'insert_content',
+          parentMessageId: 'tool-parent',
+        }
+        yield { type: 'TOOL_CALL_END', toolCallId: 'call-1' }
+        for await (const event of modelEvents(runId, conversation.id, true))
+          if (event.type === 'RUN_FINISHED') yield event
+      })(),
+    )
+    const response = await streamChat(body(conversation.id, runId))
+    const frames = await response.text()
+    const pending = (await getConversation(conversation.id))?.messages.at(-1)
+    expect(pending).toMatchObject({
+      role: 'assistant',
+      text: '正在执行文档工具',
+      agent: { status: 'pending' },
+    })
+    expect(frames).toContain(
+      JSON.stringify({
+        messageId: pending!.id,
+        clientMessageId: 'tool-parent',
+        role: 'assistant',
+      }),
+    )
+    expect(frames.lastIndexOf(EVENT_MESSAGE_IDENTITY)).toBeLessThan(frames.indexOf('RUN_FINISHED'))
   })
 
   it('rejects a provisional thread before starting a document tool run', async () => {
@@ -245,8 +571,20 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
     expect(firstFrames).toContain('client_tool_call-1')
     expect(await consumeWithAgUi(firstFrames, conversation.id)).toEqual(['started', 'finished'])
     const pending = await getConversation(conversation.id)
+    expect(firstFrames).toContain(
+      JSON.stringify({
+        messageId: pending?.messages.at(-1)?.id,
+        clientMessageId: `${firstRunId}-msg`,
+        role: 'assistant',
+      }),
+    )
+    expect(firstFrames.lastIndexOf(EVENT_MESSAGE_IDENTITY)).toBeLessThan(
+      firstFrames.indexOf('RUN_FINISHED'),
+    )
     expect(
-      pending?.messages.find((message) => message.agent?.runId === firstRunId)?.agent,
+      pending?.messages.find(
+        (message) => message.role === 'assistant' && message.agent?.runId === firstRunId,
+      )?.agent,
     ).toMatchObject({
       status: 'pending',
       tools: [{ name: 'insert_content', status: 'pending' }],
@@ -272,12 +610,30 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       await chatParamsFromRequestBody(body(conversation.id, secondRunId, resume, 2)),
     )
     expect(second.status).toBe(200)
-    expect(await second.text()).toContain('RUN_FINISHED')
+    const secondFrames = await second.text()
+    expect(secondFrames).toContain('RUN_FINISHED')
     expect(model.stream.mock.calls[1]?.[0].parentRunId).toBe(firstRunId)
     expect(model.stream.mock.calls[1]?.[0].resume).toEqual(resume)
     const settled = await getConversation(conversation.id)
+    expect(settled?.messages.map((message) => message.role)).toEqual([
+      'user',
+      'assistant',
+      'assistant',
+    ])
+    expect(secondFrames).toContain(
+      JSON.stringify({
+        messageId: settled?.messages.at(-1)?.id,
+        clientMessageId: `${secondRunId}-msg`,
+        role: 'assistant',
+      }),
+    )
+    expect(secondFrames.lastIndexOf(EVENT_MESSAGE_IDENTITY)).toBeLessThan(
+      secondFrames.indexOf('RUN_FINISHED'),
+    )
     expect(
-      settled?.messages.find((message) => message.agent?.runId === firstRunId)?.agent,
+      settled?.messages.find(
+        (message) => message.role === 'assistant' && message.agent?.runId === firstRunId,
+      )?.agent,
     ).toMatchObject({
       status: 'completed',
       tools: [{ name: 'insert_content', status: 'completed', changed: true }],
@@ -351,6 +707,8 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       'TEXT_MESSAGE_CONTENT',
       'TEXT_MESSAGE_END',
       'CUSTOM',
+      'CUSTOM',
+      'CUSTOM',
       'RUN_ERROR',
     ])
     expect(chunks.at(-1)?.message).toContain('unknown interrupt client_tool_call-1')
@@ -403,6 +761,8 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       'TEXT_MESSAGE_START',
       'TEXT_MESSAGE_CONTENT',
       'TEXT_MESSAGE_END',
+      'CUSTOM',
+      'CUSTOM',
       'RUN_FINISHED',
     ])
     expect(chunks.find((chunk) => chunk.type === 'TEXT_MESSAGE_CONTENT')?.delta).toBe(

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import {
   createSecretCipher,
   createSeamHost,
@@ -342,3 +343,11 @@ export function executeRaw<T = unknown>(query: unknown): Promise<T[]> {
 export type { Assembled }
 export type LegRegistry = ReturnType<typeof createSeamHost>['leg']
 export type { Capturer, ModelProvider, Parser, RetrievalLeg, StorageBackend }
+
+/** Pure parser module for a terminable worker, resolved only by host assembly. */
+export function attachmentParserModuleUrl(): string {
+  const compiled = new URL('./attachment-parser.js', import.meta.url)
+  return existsSync(compiled)
+    ? compiled.href
+    : new URL('./attachment-parser.ts', import.meta.url).href
+}

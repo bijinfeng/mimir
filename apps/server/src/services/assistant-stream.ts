@@ -1,13 +1,31 @@
 import type { StreamChunk } from '@tanstack/ai'
 import { chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai'
-import type { FailureKind, Trace, RetrievalScope } from '@mimir/shared'
+import type {
+  ChatAttachmentRef,
+  ChatModelSelection,
+  FailureKind,
+  RetrievalScope,
+} from '@mimir/shared'
 import {
   EVENT_CITATIONS,
   EVENT_CONVERSATION,
   EVENT_FAILURE,
-  EVENT_TRACE,
   retrievalScopeSchema,
+  chatModelSelectionSchema,
+  chatHistoryMessageIdsSchema,
+  EVENT_MESSAGE_IDENTITY,
+  chatAttachmentRefSchema,
 } from '@mimir/shared'
+import { z } from 'zod'
+import { selectedConversationMessages } from './chat-history-selection.js'
+import { prepareChatAttachmentContext, bindChatAttachments } from './chat-attachments.js'
+import {
+  attachmentSystemPrompts,
+  attachmentModelInput,
+  attachmentQuestion,
+  validateAttachmentModel,
+  validateAttachmentWindow,
+} from './chat-model-input.js'
 import { nanoid } from 'nanoid'
 import {
   prepareRetrieval,
@@ -24,56 +42,11 @@ import {
   getConversation,
 } from './conversations.js'
 import { hasImageInput } from './pptx-snapshot-input.js'
-import { streamChat as streamModelChat, modelReady } from './model.js'
+import { streamChat as streamModelChat, modelReady, selectedModel } from './model.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
 import { streamDocxAgent } from './docx-agent-stream.js'
 import { classifyFailure } from './chat-failure.js'
 export { classifyFailure } from './chat-failure.js'
-
-/**
- * 流式问答（AG-UI 协议）。
- *
- * 请求由前端的 AG-UI 运行时生成（`@assistant-ui/react-ag-ui`）：body 是
- * AG-UI 的 `RunAgentInput`，mimir 自己的参数走 `forwardedProps`
- * （运行时的 `runConfig.custom` 会挂到 `forwardedProps.runConfig` 下）。
- *
- * ## 为什么会话 id 在 body 里而不是 URL 里
- *
- * 连接地址一旦跟着会话变化，客户端就会**重建 agent**，
- * 而重建会把正在进行的流切断。让地址固定、把 id 放进 forwardedProps，
- * 这个问题就不存在了。代价是新建会话时客户端不知道 id，
- * 所以服务端用 `mimir.conversation` 事件回传——客户端那一侧则在请求发出
- * 之前先建会话（`onRunInitialized` 里，见 apps/web 的 chat-io）。
- *
- * ## 事件顺序
- *
- *   RUN_STARTED → conversation → trace → citations → 正文 → trace(整轮耗时) → RUN_FINISHED
- *
- * 前几个在**模型还没开始生成时**就发出去，于是引用卡片与检索过程
- * 立刻出现，用户不会对着空白等模型。
- *
- * **生命周期括号由服务端拥有。** 这一条是 2026-10 的修复（D-099）：
- * 在这之前这条流里**没有**服务端自己的 RUN_STARTED / RUN_FINISHED——
- * 只有模型那一趟的（顺着 `for await` 转发出来），于是：
- *
- *  - 流的第一条事件往往是 `CUSTOM`（会话 id / 检索过程），而 AG-UI 的
- *    客户端在**流开头**就校验「第一条必须是 RUN_STARTED」——实测
- *    `@ag-ui/client@0.0.59` 直接抛 `AGUIError: First event must be 'RUN_STARTED'`，
- *    整轮问答一个字节都到不了界面
- *  - 终局那份「整轮耗时」的 trace 发在模型的 RUN_FINISHED **之后**，
- *    同样被拒：`Cannot send event type 'CUSTOM': The run has already finished`
- *  - 只检索那条路径（`textOnlyStream`）一条生命周期事件都没有
- *
- * 所以现在：函数第一件事发自己的 RUN_STARTED，模型流里的 RUN_STARTED /
- * RUN_FINISHED 当作**模型那一趟的内部事件**不转发（叠加会命中
- * `Cannot send 'RUN_STARTED' while a run is still active`），终局 trace
- * 抢在自己的 RUN_FINISHED 之前。写成一条测试守着
- * （`src/test/chat-stream.test.ts`，它把真实响应字节喂给 @ag-ui/client）。
- *
- * 为什么用自定义事件而不是协议原生的 part：trace 是结构化的分步记录
- * （每步带图标、关键词、具体数字），而原生 thinking part 只是一个字符串；
- * citations 含文档 id 与字符偏移，协议里也没有对应形状。
- */
 
 /** forwardedProps 里 mimir 自己的字段 */
 interface MimirProps {
@@ -81,6 +54,9 @@ interface MimirProps {
   conversationId?: string
   documentId?: string
   deepReasoning?: boolean
+  modelSelection?: ChatModelSelection
+  attachments?: ChatAttachmentRef[]
+  historyMessageIds?: string[]
   /**
    * 只用检索，不调模型（与 `/ask` 的 `scope` 语义对齐）。
    *
@@ -104,8 +80,10 @@ interface MimirProps {
  * **它的生命周期括号由 `createStream` 补**（这里的 RUN_STARTED / RUN_FINISHED
  * 由外层统一发，见文件头的事件顺序一节）：这一段只负责正文本身。
  */
-async function* textOnlyStream(text: string): AsyncGenerator<StreamChunk> {
-  const messageId = `msg-${Date.now()}`
+async function* textOnlyStream(
+  text: string,
+  messageId = `msg-${Date.now()}`,
+): AsyncGenerator<StreamChunk> {
   yield { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' } as StreamChunk
   yield { type: 'TEXT_MESSAGE_CONTENT', messageId, delta: text } as StreamChunk
   yield { type: 'TEXT_MESSAGE_END', messageId } as StreamChunk
@@ -140,6 +118,28 @@ function mimirProps(forwarded: Record<string, unknown> | undefined): MimirProps 
   const retrievalScope = rawScope === undefined ? undefined : retrievalScopeSchema.parse(rawScope)
   return {
     ...(retrievalScope ? { retrievalScope } : {}),
+    ...((props.historyMessageIds ?? runConfig.historyMessageIds) !== undefined
+      ? {
+          historyMessageIds: chatHistoryMessageIdsSchema.parse(
+            props.historyMessageIds ?? runConfig.historyMessageIds,
+          ),
+        }
+      : {}),
+    ...((props.attachments ?? runConfig.attachments) !== undefined
+      ? {
+          attachments: z
+            .array(chatAttachmentRefSchema)
+            .max(4)
+            .parse(props.attachments ?? runConfig.attachments),
+        }
+      : {}),
+    ...((props.modelSelection ?? runConfig.modelSelection) !== undefined
+      ? {
+          modelSelection: chatModelSelectionSchema.parse(
+            props.modelSelection ?? runConfig.modelSelection,
+          ),
+        }
+      : {}),
     ...(typeof pick('conversationId') === 'string'
       ? { conversationId: pick('conversationId') as string }
       : {}),
@@ -179,7 +179,7 @@ function errorResponse(status: number, code: string, message: string): Response 
     headers: { 'Content-Type': 'application/json' },
   })
 }
-export async function streamChat(requestBody: unknown): Promise<Response> {
+export async function streamChat(requestBody: unknown, signal?: AbortSignal): Promise<Response> {
   const parsed = await chatParamsFromRequestBody(requestBody).catch(() => null)
   if (!parsed) {
     return errorResponse(400, 'AGUI_INVALID', '请求体不符合 AG-UI 协议')
@@ -194,7 +194,7 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
       ((agentProps as Record<string, unknown>).documentAgent === true ||
         (agentProps as Record<string, unknown>).docxAgent === true))
   ) {
-    return streamDocxAgent(parsed)
+    return streamDocxAgent(parsed, undefined, signal)
   }
 
   if (hasImageInput(parsed.messages))
@@ -208,15 +208,26 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
   try {
     props = mimirProps(parsed.forwardedProps)
   } catch {
-    return errorResponse(400, 'INVALID_SCOPE', '检索范围不合法')
+    return errorResponse(400, 'INVALID_SCOPE', '检索范围或模型选择不合法')
+  }
+  if (props.modelSelection) {
+    try {
+      await selectedModel(props.modelSelection)
+    } catch (error) {
+      return errorResponse(
+        422,
+        'MODEL_SELECTION_INVALID',
+        error instanceof Error ? error.message : '模型选择已失效',
+      )
+    }
   }
   const retrievalScope = await normalizeRetrievalScope(
     props.retrievalScope ??
       (props.documentId ? { type: 'document', documentId: props.documentId } : { type: 'all' }),
   )
-  const question = lastUserQuestion(parsed.messages as { role: string; content?: unknown }[]).trim()
+  let question = lastUserQuestion(parsed.messages as { role: string; content?: unknown }[]).trim()
 
-  if (!question) {
+  if (!question && !props.attachments?.length) {
     return errorResponse(400, 'INVALID_INPUT', '没有找到用户消息')
   }
 
@@ -228,24 +239,112 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
   if (conversationId) {
     const existing = await getConversation(conversationId)
     if (!existing) return errorResponse(404, 'CONVERSATION_NOT_FOUND', '会话不存在')
+    try {
+      selectedConversationMessages(existing.messages, props.historyMessageIds)
+    } catch (error) {
+      return errorResponse(
+        409,
+        'CHAT_HISTORY_INVALID',
+        error instanceof Error ? error.message : '所选历史已失效',
+      )
+    }
     verifySources = verifySources || existing.retrievalScope !== undefined
     if (props.retrievalScope || existing.retrievalScope)
       await ensureConversationScope(conversationId, retrievalScope)
   }
   if (!conversationId) {
+    if (props.historyMessageIds?.length)
+      return errorResponse(409, 'CHAT_HISTORY_INVALID', '新会话不能引用其他会话的历史')
     conversationId = (
       await createConversation('', props.retrievalScope ? retrievalScope : undefined)
     ).id
     isNew = true
   }
 
-  const retrieval = await prepareRetrieval(question, retrievalScope, { verifySources })
-  await ensureTitle(conversationId, question)
-  // 用户消息先落库：即使模型调用失败，提问本身不会丢
-  await appendMessage({ conversationId, role: 'user', text: question })
+  let attachments: Awaited<ReturnType<typeof prepareChatAttachmentContext>>
+  try {
+    attachments = await prepareChatAttachmentContext({
+      conversationId,
+      refs: props.attachments,
+      includeHistory: true,
+      historyMessageIds: props.historyMessageIds,
+      signal,
+    })
+    await validateAttachmentModel(attachments, props.modelSelection, props.scope === 'search')
+    question ||= attachmentQuestion(
+      attachments.attachments.filter((item) =>
+        props.attachments?.some((ref) => ref.id === item.id),
+      ),
+    )
+  } catch (error) {
+    if (attachments!) await attachments.release()
+    return errorResponse(
+      422,
+      'ATTACHMENT_INVALID',
+      error instanceof Error ? error.message : '附件不可用',
+    )
+  }
+  let retrieval: Retrieval
+  try {
+    retrieval = await prepareRetrieval(question, retrievalScope, { verifySources })
+  } catch (error) {
+    await attachments.release()
+    throw error
+  }
+  let userMessageId = ''
+  // Capacity validation precedes message/attachment binding, so invalid drafts remain removable.
+  try {
+    const previous = await getConversation(conversationId)
+    await validateAttachmentWindow(
+      attachments,
+      props.modelSelection,
+      [
+        ...selectedConversationMessages(previous?.messages ?? [], props.historyMessageIds)
+          .slice(-6)
+          .map((message) => ({ role: message.role, content: message.text.slice(0, 1500) })),
+        {
+          role: 'user',
+          content: attachmentModelInput(
+            { ...attachments, images: [] },
+            `【资料】\n${retrieval.context}\n\n【问题】\n${question}`,
+          ),
+        },
+      ],
+      [SYSTEM_PROMPT],
+    )
+    await ensureTitle(conversationId, question)
+    const userMessage = await appendMessage({
+      conversationId,
+      role: 'user',
+      text: question,
+      ...(props.modelSelection ? { modelSelection: props.modelSelection } : {}),
+      retrievalScope,
+    })
+    userMessageId = userMessage.id
+    if (props.attachments?.length)
+      await bindChatAttachments(conversationId, userMessage.id, props.attachments)
+  } catch (error) {
+    await attachments.release()
+    return errorResponse(
+      422,
+      'CHAT_INPUT_INVALID',
+      error instanceof Error ? error.message : '发送内容无效',
+    )
+  }
 
   return toServerSentEventsResponse(
-    createStream({ conversationId, question, props, retrieval, isNew, requestBody }),
+    leasedStream({
+      conversationId,
+      question,
+      props,
+      retrieval,
+      isNew,
+      requestBody,
+      attachments,
+      signal,
+      userMessageId,
+      clientUserMessageId: parsed.messages.findLast((message) => message.role === 'user')?.id ?? '',
+    }),
   )
 }
 
@@ -256,18 +355,22 @@ interface StreamParams {
   retrieval: Retrieval
   isNew: boolean
   requestBody: unknown
+  signal?: AbortSignal
+  userMessageId: string
+  clientUserMessageId: string
+  attachments: Awaited<ReturnType<typeof prepareChatAttachmentContext>>
+}
+
+async function* leasedStream(params: StreamParams): AsyncGenerator<StreamChunk> {
+  try {
+    yield* createStream(params)
+  } finally {
+    await params.attachments.release()
+  }
 }
 
 async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> {
   const { conversationId, question, props, retrieval, isNew } = params
-  /**
-   * 整轮耗时从这里开始算。
-   *
-   * `retrieval.trace.tookMs` 只量了检索那一段（常常是几毫秒），而用户在
-   * 「思考 N 轮 · 耗时 Xs」里想看的是**这次提问总共等了多久**——包括模型。
-   * 用检索的时间会让失败时显示「耗时 0.0s」，看起来像什么都没做。
-   */
-  const turnStartedAt = performance.now()
 
   /**
    * **这一轮问答的生命周期括号由服务端拥有**（见文件头的事件顺序一节）。
@@ -279,6 +382,9 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   const runId = `run_${nanoid(16)}`
   yield { type: 'RUN_STARTED', runId, threadId: conversationId } as StreamChunk
 
+  if (params.clientUserMessageId)
+    yield messageIdentity(params.userMessageId, params.clientUserMessageId, 'user')
+
   // 让前端拿到会话 id（新会话时它还不知道）
   if (isNew) {
     yield {
@@ -288,15 +394,6 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     } as StreamChunk
   }
 
-  /**
-   * 检索过程**先发一次**（只有检索耗时）。
-   *
-   * 必须抢在模型之前发：它就是用来告诉用户「正在检索、检索完了什么」的，
-   * 等模型结束再发就失去了意义。代价是此刻还量不到模型的耗时，
-   * 所以这一份的 tookMs 只是检索那一段——下面在整轮结束后会**再发一次**
-   * 带完整耗时的版本覆盖它。
-   */
-  yield { type: 'CUSTOM', name: EVENT_TRACE, value: { trace: retrieval.trace } } as StreamChunk
   yield {
     type: 'CUSTOM',
     name: EVENT_CITATIONS,
@@ -306,12 +403,24 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   // 只检索：用户显式选了这条出路，或没配模型。两条走同一条分支——
   // 两种原因共用同一个结果状态，原文由引用卡展示。
   // 它同样要收一对生命周期括号：没有模型不等于「没有这一轮」。
-  // （这一条路径**不补发**终局那份整轮耗时的 trace：它没有模型那一趟，
-  //  检索耗时就是全部，先发的那份已经是对的）
-  if (props.scope === 'search' || retrieval.citations.length === 0 || !(await modelReady('chat'))) {
+  if (
+    props.scope === 'search' ||
+    (retrieval.citations.length === 0 && !params.attachments.attachments.length) ||
+    (!props.modelSelection && !(await modelReady('chat')))
+  ) {
     const text = searchOnlyAnswer(retrieval.citations)
-    for await (const chunk of textOnlyStream(text)) yield chunk
-    await persistAssistant(conversationId, text, retrieval, null, turnStartedAt)
+    const clientMessageId = `msg-${nanoid(16)}`
+    for await (const chunk of textOnlyStream(text, clientMessageId)) yield chunk
+    const savedId = await persistAssistant(
+      conversationId,
+      text,
+      retrieval,
+      null,
+      undefined,
+      props.modelSelection,
+      params.attachments.attachments,
+    )
+    yield messageIdentity(savedId, clientMessageId, 'assistant')
     yield runFinished(runId, conversationId, undefined)
     return
   }
@@ -322,20 +431,48 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     conversationId,
     retrieval.scope,
     retrieval.verifySources,
+    params.attachments.attachments.length > 0,
+    props.historyMessageIds,
   )
 
+  const protocolEvents: Record<string, unknown>[] = []
+  let eventBytes = 0
+  let clientAssistantMessageId = ''
   try {
     // 适配器由 provider 接缝提供——这里只说「要哪个角色」。
     // 记账在 model.ts 里完成（它包住了整条流），这里只声明这次是哪个功能的调用
+    await validateAttachmentWindow(
+      params.attachments,
+      props.modelSelection,
+      [
+        ...history,
+        {
+          role: 'user',
+          content: attachmentModelInput(
+            { ...params.attachments, images: [] },
+            `【资料】\n${retrieval.context}\n\n【问题】\n${question}`,
+          ),
+        },
+      ],
+      [SYSTEM_PROMPT],
+    )
     const stream = await streamModelChat({
-      role: props.deepReasoning ? 'reasoning' : 'chat',
+      role: props.modelSelection ? 'chat' : props.deepReasoning ? 'reasoning' : 'chat',
+      ...(props.modelSelection ? { modelSelection: props.modelSelection } : {}),
       stream: true,
-      systemPrompts: [SYSTEM_PROMPT],
+      ...(params.signal ? { abortSignal: params.signal } : {}),
+      systemPrompts: [SYSTEM_PROMPT, ...attachmentSystemPrompts(params.attachments)],
       source: 'chat',
       refId: conversationId,
       messages: [
         ...history,
-        { role: 'user', content: `【资料】\n${retrieval.context}\n\n【问题】\n${question}` },
+        {
+          role: 'user',
+          content: attachmentModelInput(
+            params.attachments,
+            `【资料】\n${retrieval.context}\n\n【问题】\n${question}`,
+          ),
+        },
       ],
     })
 
@@ -349,11 +486,24 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
 
     for await (const chunk of stream) {
       const type = (chunk as { type?: string }).type
+      if (
+        type === 'TEXT_MESSAGE_START' &&
+        'messageId' in chunk &&
+        typeof chunk.messageId === 'string'
+      )
+        clientAssistantMessageId ||= chunk.messageId
+      if (type && /^(TEXT_MESSAGE_|REASONING_|THINKING_|TOOL_CALL_)/.test(type)) {
+        const snapshot = JSON.parse(JSON.stringify(chunk)) as Record<string, unknown>
+        eventBytes += Buffer.byteLength(JSON.stringify(snapshot), 'utf8')
+        if (eventBytes > 2 * 1024 * 1024)
+          throw new Error('本轮消息记录超过容量限制，请缩小问题后重试')
+        protocolEvents.push(snapshot)
+      }
 
       // 累积正文用于落库：模型的文本以 TEXT_MESSAGE_CONTENT 的 delta 到达，
       // 而落库要的是完整文本
       const delta = (chunk as { delta?: unknown }).delta
-      if (typeof delta === 'string') answer += delta
+      if (type === 'TEXT_MESSAGE_CONTENT' && typeof delta === 'string') answer += delta
 
       /**
        * 失败的两种到达方式，都要处理。
@@ -370,20 +520,6 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
         streamError = (chunk as { message?: string }).message ?? '模型调用失败'
       }
 
-      /**
-       * **模型那一趟的 RUN_STARTED / RUN_FINISHED 不转发。**
-       *
-       * 它们说的是「模型调用开始了/结束了」，而这一轮问答的生命周期由
-       * 上面那条 RUN_STARTED 拥有——叠加会命中 AG-UI 客户端的
-       * `Cannot send 'RUN_STARTED' while a run is still active`，
-       * 而 RUN_FINISHED 更糟：它之后再有 CUSTOM（下面那份整轮耗时的 trace）
-       * 就发不出去了（`Cannot send event type 'CUSTOM': The run has already
-       * finished`），用户永远看不到真实耗时。
-       *
-       * 两条都在本机用 @ag-ui/client@0.0.59 复现过。
-       * 失败时 `RUN_ERROR` 仍然透传——它是「这一轮坏了」的事实，
-       * 由客户端的 run 状态机收尾；分类信息另有 mimir.failure。
-       */
       const isModelLifecycle = type === 'RUN_STARTED' || type === 'RUN_FINISHED'
 
       // 模型那一趟的用量随它的 RUN_FINISHED 到，剥掉事件本身之前先接住
@@ -404,17 +540,18 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
       throw new Error(streamError)
     }
 
-    // 整轮结束：再发一次带完整耗时的检索过程，覆盖掉先发的那一份。
-    // 这样实时看到的数字与落库的、刷新后重放的数字是同一个。
-    // **必须在自己的 RUN_FINISHED 之前**——之后发的 CUSTOM 客户端不收
-    yield {
-      type: 'CUSTOM',
-      name: EVENT_TRACE,
-      value: { trace: withTurnDuration(retrieval.trace, turnStartedAt) },
-    } as StreamChunk
+    const savedId = await persistAssistant(
+      conversationId,
+      answer,
+      retrieval,
+      null,
+      protocolEvents,
+      props.modelSelection,
+      params.attachments.attachments,
+    )
 
-    await persistAssistant(conversationId, answer, retrieval, null, turnStartedAt)
-
+    if (clientAssistantMessageId)
+      yield messageIdentity(savedId, clientAssistantMessageId, 'assistant')
     yield runFinished(runId, conversationId, modelUsage)
   } catch (error) {
     // 失败路径每类给不同出路（.trellis/spec/project/product.md §5.8）。分类是**服务端的知识**：
@@ -424,16 +561,18 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
 
     // 失败也留一条助手消息，而不是只在流里报错——刷新之后这条记录还在，
     // 用户能回头查「当时为什么失败」
-    await persistAssistant(conversationId, text, retrieval, failure, turnStartedAt)
+    const savedId = await persistAssistant(
+      conversationId,
+      text,
+      retrieval,
+      failure,
+      protocolEvents,
+      props.modelSelection,
+      params.attachments.attachments,
+    )
 
-    // 失败也是「这一轮结束了」，同样要把完整耗时补上——
-    // 否则实时看到的永远是先发那份的「耗时 0.0s」
-    yield {
-      type: 'CUSTOM',
-      name: EVENT_TRACE,
-      value: { trace: withTurnDuration(retrieval.trace, turnStartedAt) },
-    } as StreamChunk
-
+    if (clientAssistantMessageId)
+      yield messageIdentity(savedId, clientAssistantMessageId, 'assistant')
     // 先推自定义事件（带分类），再推协议层的 RUN_ERROR（带原文）。
     // 前端按前者选出路、按后者显示原因，所以两者都要。
     //
@@ -476,31 +615,37 @@ function runFinished(runId: string, threadId: string, usage: unknown): StreamChu
   } as StreamChunk
 }
 
-/**
- * 把检索过程的耗时换成整轮耗时。
- *
- * `retrieval.trace.tookMs` 只量了检索那一段（常常几毫秒），而用户看
- * 「思考 N 轮 · 耗时 Xs」时想知道的是**这次提问总共等了多久**。
- * 用检索的时间会让失败时显示「耗时 0.0s」，看起来像什么都没做。
- */
-function withTurnDuration(trace: Trace, turnStartedAt: number): Trace {
-  return { ...trace, tookMs: Math.round(performance.now() - turnStartedAt) }
-}
-
 async function persistAssistant(
   conversationId: string,
   text: string,
   retrieval: Retrieval,
   failure: FailureKind | null,
-  turnStartedAt: number,
-): Promise<void> {
-  await appendMessage({
+  protocolEvents?: Record<string, unknown>[],
+  modelSelection?: ChatModelSelection,
+  usedAttachmentRefs?: readonly ChatAttachmentRef[],
+): Promise<string> {
+  const saved = await appendMessage({
     conversationId,
     role: 'assistant',
+    usedAttachmentRefs,
     text,
-    // 与上面推给前端的那一份用同一个函数：两处的耗时必须是同一个数
-    trace: withTurnDuration(retrieval.trace, turnStartedAt),
     citations: retrieval.citations,
     failure,
+    ...(protocolEvents?.length ? { protocolEvents } : {}),
+    ...(modelSelection ? { modelSelection } : {}),
+    retrievalScope: retrieval.scope,
   })
+  return saved.id
+}
+
+function messageIdentity(
+  messageId: string,
+  clientMessageId: string,
+  role: 'user' | 'assistant',
+): StreamChunk {
+  return {
+    type: 'CUSTOM',
+    name: EVENT_MESSAGE_IDENTITY,
+    value: { messageId, clientMessageId, role },
+  } as StreamChunk
 }

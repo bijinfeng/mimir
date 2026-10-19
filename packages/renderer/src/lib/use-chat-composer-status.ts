@@ -25,16 +25,15 @@ export function useChatComposerStatus(conversationId: string | undefined): ChatC
     queryKey: ['documents', 'composer'],
     queryFn: () => api.documents.list({}),
   })
-  const config = useQuery({ queryKey: ['config'], queryFn: api.config })
+  const models = useQuery({
+    queryKey: ['config', 'chat-models'],
+    queryFn: api.conversations.models,
+  })
   const usage = useQuery({
     queryKey: ['context-usage', conversationId],
     queryFn: () => api.conversationContext(conversationId as string),
     enabled: conversationId !== undefined,
   })
-
-  const roles = config.data?.modelConfig.roles ?? []
-  const chatModel = roles.find((role) => role.role === 'chat')?.model
-  const reasoningModel = roles.find((role) => role.role === 'reasoning')?.model
 
   /**
    * 直接返回新对象，**不手写 `useMemo`**（React Compiler 会在编译期做，
@@ -51,7 +50,14 @@ export function useChatComposerStatus(conversationId: string | undefined): ChatC
         void documents.refetch()
       },
     },
-    modelRoles: { chat: chatModel, reasoning: reasoningModel },
+    models: {
+      catalog: models.data,
+      isLoading: models.isLoading,
+      isError: models.isError,
+      refetch: () => {
+        void models.refetch()
+      },
+    },
     usage: usage.data ?? null,
   }
 }

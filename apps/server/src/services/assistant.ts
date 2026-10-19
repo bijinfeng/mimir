@@ -1,6 +1,6 @@
 import type { AskInput, AskResponse, FailureKind } from '@mimir/shared'
 import { appendMessage, ensureConversationScope, getConversation } from './conversations.js'
-import { callChat, modelReady } from './model.js'
+import { callChat, modelReady, selectedModel } from './model.js'
 import { HttpError } from '../lib/http.js'
 import {
   prepareRetrieval,
@@ -8,6 +8,14 @@ import {
   SYSTEM_PROMPT,
   type Retrieval,
 } from './retrieval-preparation.js'
+import { prepareChatAttachmentContext, bindChatAttachments } from './chat-attachments.js'
+import {
+  attachmentSystemPrompts,
+  attachmentModelInput,
+  attachmentQuestion,
+  validateAttachmentModel,
+  validateAttachmentWindow,
+} from './chat-model-input.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
 
 export interface AskParams extends AskInput {
@@ -15,6 +23,17 @@ export interface AskParams extends AskInput {
 }
 
 export async function ask(params: AskParams): Promise<AskResponse> {
+  if (params.modelSelection) {
+    try {
+      await selectedModel(params.modelSelection)
+    } catch (error) {
+      throw new HttpError(
+        422,
+        'MODEL_SELECTION_INVALID',
+        error instanceof Error ? error.message : '模型选择已失效',
+      )
+    }
+  }
   const conversation = await getConversation(params.conversationId)
   if (!conversation) throw new HttpError(404, 'CONVERSATION_NOT_FOUND', '会话不存在')
   if (params.scope === 'document' && !params.documentId && !params.retrievalScope)
@@ -26,70 +45,147 @@ export async function ask(params: AskParams): Promise<AskResponse> {
       : { type: 'all' as const })
   if (params.retrievalScope || conversation.retrievalScope)
     await ensureConversationScope(params.conversationId, scope)
-  const retrieval = await prepareRetrieval(params.question, scope, {
-    verifySources: !!(params.retrievalScope || conversation.retrievalScope),
-  })
-  // 先落用户消息：即使后面模型调用失败，用户的提问也不会丢
-  const userMessage = await appendMessage({
+  params = { ...params, question: params.question.trim() }
+  const attachments = await prepareChatAttachmentContext({
     conversationId: params.conversationId,
-    role: 'user',
-    text: params.question,
+    refs: params.attachments,
+    includeHistory: true,
   })
-
-  const wantsSearchOnly =
-    params.scope === 'search' || retrieval.citations.length === 0 || !(await modelReady('chat'))
-  if (wantsSearchOnly) {
-    const assistant = await appendMessage({
-      conversationId: params.conversationId,
-      role: 'assistant',
-      text: searchOnlyAnswer(retrieval.citations),
-      trace: retrieval.trace,
-      citations: retrieval.citations,
-    })
-    return { conversationId: params.conversationId, messages: [userMessage, assistant] }
-  }
-
   try {
-    const answer = await callModel(params, retrieval)
-    const assistant = await appendMessage({
-      conversationId: params.conversationId,
-      role: 'assistant',
-      text: answer,
-      // 耗时在这里才完整（包含模型调用），所以回来补上
-      trace: { ...retrieval.trace, tookMs: Math.round(performance.now() - retrieval.startedAt) },
-      citations: retrieval.citations,
-    })
-    return { conversationId: params.conversationId, messages: [userMessage, assistant] }
+    await validateAttachmentModel(attachments, params.modelSelection, params.scope === 'search')
+    params.question ||= attachmentQuestion(
+      attachments.attachments.filter((item) =>
+        params.attachments?.some((ref) => ref.id === item.id),
+      ),
+    )
   } catch (error) {
-    // 失败路径每类给不同出路（.trellis/spec/project/product.md §5.8）。这里把异常映射成
-    // 前端能识别的一类，前端据此渲染对应的出路按钮，而不是统一一个「重试」。
-    const assistant = await appendMessage({
-      conversationId: params.conversationId,
-      role: 'assistant',
-      text: error instanceof Error ? error.message : String(error),
-      trace: { ...retrieval.trace, tookMs: Math.round(performance.now() - retrieval.startedAt) },
-      citations: retrieval.citations,
-      failure: classifyFailure(error),
+    await attachments.release()
+    throw error
+  }
+  try {
+    const retrieval = await prepareRetrieval(params.question, scope, {
+      verifySources: !!(params.retrievalScope || conversation.retrievalScope),
     })
-    return { conversationId: params.conversationId, messages: [userMessage, assistant] }
+    await validateAttachmentWindow(
+      attachments,
+      params.modelSelection,
+      [
+        ...conversation.messages
+          .slice(-6)
+          .map((message) => ({ role: message.role, content: message.text.slice(0, 1500) })),
+        {
+          role: 'user',
+          content: attachmentModelInput(
+            { ...attachments, images: [] },
+            `【资料】\n${retrieval.context}\n\n【问题】\n${params.question}`,
+          ),
+        },
+      ],
+      [SYSTEM_PROMPT],
+    )
+    // 先落用户消息：即使后面模型调用失败，用户的提问也不会丢
+    const userMessage = await appendMessage({
+      conversationId: params.conversationId,
+      role: 'user',
+      ...(params.modelSelection ? { modelSelection: params.modelSelection } : {}),
+      retrievalScope: scope,
+      text: params.question,
+    })
+
+    if (params.attachments?.length) {
+      await bindChatAttachments(params.conversationId, userMessage.id, params.attachments)
+      userMessage.attachments = attachments.attachments
+        .filter((item) => params.attachments?.some((ref) => ref.id === item.id))
+        .map((item) => Object.assign({}, item, { bound: true, expiresAt: undefined }))
+    }
+    const wantsSearchOnly =
+      params.scope === 'search' ||
+      (retrieval.citations.length === 0 && !attachments.attachments.length) ||
+      (!params.modelSelection && !(await modelReady('chat')))
+    if (wantsSearchOnly) {
+      const assistant = await appendMessage({
+        conversationId: params.conversationId,
+        role: 'assistant',
+        usedAttachmentRefs: attachments.attachments.map(({ id, sha256 }) => ({ id, sha256 })),
+        ...(params.modelSelection ? { modelSelection: params.modelSelection } : {}),
+        retrievalScope: scope,
+        text: searchOnlyAnswer(retrieval.citations),
+
+        citations: retrieval.citations,
+      })
+      return { conversationId: params.conversationId, messages: [userMessage, assistant] }
+    }
+
+    try {
+      const answer = await callModel(params, retrieval, attachments)
+      const assistant = await appendMessage({
+        conversationId: params.conversationId,
+        role: 'assistant',
+        usedAttachmentRefs: attachments.attachments.map(({ id, sha256 }) => ({ id, sha256 })),
+        ...(params.modelSelection ? { modelSelection: params.modelSelection } : {}),
+        retrievalScope: scope,
+        text: answer,
+
+        citations: retrieval.citations,
+      })
+      return { conversationId: params.conversationId, messages: [userMessage, assistant] }
+    } catch (error) {
+      // 失败路径每类给不同出路（.trellis/spec/project/product.md §5.8）。这里把异常映射成
+      // 前端能识别的一类，前端据此渲染对应的出路按钮，而不是统一一个「重试」。
+      const assistant = await appendMessage({
+        conversationId: params.conversationId,
+        role: 'assistant',
+        usedAttachmentRefs: attachments.attachments.map(({ id, sha256 }) => ({ id, sha256 })),
+        ...(params.modelSelection ? { modelSelection: params.modelSelection } : {}),
+        retrievalScope: scope,
+        text: error instanceof Error ? error.message : String(error),
+
+        citations: retrieval.citations,
+        failure: classifyFailure(error),
+      })
+      return { conversationId: params.conversationId, messages: [userMessage, assistant] }
+    }
+  } finally {
+    await attachments.release()
   }
 }
 
-async function callModel(params: AskParams, retrieval: Retrieval): Promise<string> {
+async function callModel(
+  params: AskParams,
+  retrieval: Retrieval,
+  attachments: Awaited<ReturnType<typeof prepareChatAttachmentContext>>,
+): Promise<string> {
   // 对话历史作为上下文带上，让追问能接住上文。
   // 截断到最近若干轮：更早的内容对当前问题帮助有限，却会挤掉检索到的原文。
   const history = await verifiedRetrievalHistory(
     params.conversationId,
     retrieval.scope,
     retrieval.verifySources,
+    attachments.attachments.length > 0,
   )
 
   // 适配器不再在这里构造——它在 provider 接缝里（plugins/provider/）。
   // 宿主只知道「要哪个角色」，不知道用的是哪个工厂、模型名怎么断言
+  await validateAttachmentWindow(
+    attachments,
+    params.modelSelection,
+    [
+      ...history,
+      {
+        role: 'user',
+        content: attachmentModelInput(
+          { ...attachments, images: [] },
+          `【资料】\n${retrieval.context}\n\n【问题】\n${params.question}`,
+        ),
+      },
+    ],
+    [SYSTEM_PROMPT],
+  )
   return callChat({
-    role: params.deepReasoning ? 'reasoning' : 'chat',
+    role: params.modelSelection ? 'chat' : params.deepReasoning ? 'reasoning' : 'chat',
+    ...(params.modelSelection ? { modelSelection: params.modelSelection } : {}),
     stream: false,
-    systemPrompts: [SYSTEM_PROMPT],
+    systemPrompts: [SYSTEM_PROMPT, ...attachmentSystemPrompts(attachments)],
     // 非流式那条问答路径。与流式的 'chat' 分开记：
     // 「命令面板里随手问的一句」与「认真聊了一轮」在账上不是同一件事
     source: 'ask',
@@ -98,7 +194,10 @@ async function callModel(params: AskParams, retrieval: Retrieval): Promise<strin
       ...history,
       {
         role: 'user',
-        content: `【资料】\n${retrieval.context}\n\n【问题】\n${params.question}`,
+        content: attachmentModelInput(
+          attachments,
+          `【资料】\n${retrieval.context}\n\n【问题】\n${params.question}`,
+        ),
       },
     ],
   })

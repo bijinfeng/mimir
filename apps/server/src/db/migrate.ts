@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+import { readFile } from 'node:fs/promises'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 import { sql as rawSql } from 'drizzle-orm'
 import { migrate as migrateSqlite } from 'drizzle-orm/better-sqlite3/migrator'
@@ -21,6 +23,77 @@ import { closeDb, db } from './client.js'
 const migrationsFolder = (name: string): string =>
   fileURLToPath(new URL(`../../${name}`, import.meta.url))
 
+/** Repair only known already-applied out-of-order journal rows, by exact SQL hash.
+ * Otherwise a timestamp correction would replay non-idempotent CREATE/ALTER SQL.
+ */
+async function normalizeLegacyMigrationTime(): Promise<void> {
+  const postgres = dbDriver === 'postgres'
+  const filename = postgres ? '0014_strange_mastermind.sql' : '0012_cuddly_namora.sql'
+  const oldTime = postgres ? 1792311284208 : 1792311287590
+  const file = await readFile(
+    `${migrationsFolder(postgres ? 'drizzle' : 'drizzle-sqlite')}/${filename}`,
+  )
+  const hash = createHash('sha256').update(file).digest('hex')
+  try {
+    const fixedTime = 1792311600001
+    if (postgres) {
+      const present = await db.execute(
+        rawSql`SELECT hash, created_at FROM drizzle.__drizzle_migrations`,
+      )
+      const rows = [...present] as Array<{ hash: string; created_at: string | number }>
+      if (rows.some((row) => row.hash === hash)) {
+        await db.execute(
+          rawSql`UPDATE drizzle.__drizzle_migrations SET created_at = ${fixedTime} WHERE hash = ${hash} AND created_at = ${oldTime}`,
+        )
+      } else if (rows.some((row) => Number(row.created_at) >= fixedTime)) {
+        // A later migration may already be installed while this one was skipped.
+        // Replay exactly this missing migration in a transaction, not the others.
+        await db.transaction(async (tx) => {
+          for (const statement of file.toString('utf8').split('--> statement-breakpoint')) {
+            if (statement.trim()) await tx.execute(rawSql.raw(statement))
+          }
+          await tx.execute(
+            rawSql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES (${hash}, ${fixedTime})`,
+          )
+        })
+      }
+    } else {
+      type SqliteMigrationDb = {
+        all(query: unknown): Array<{ hash: string; created_at: number }>
+        run(query: unknown): unknown
+        transaction(fn: (tx: SqliteMigrationDb) => void): void
+      }
+      const sqliteDb = db as never as SqliteMigrationDb
+      const rows = sqliteDb.all(rawSql`SELECT hash, created_at FROM __drizzle_migrations`)
+      if (rows.some((row) => row.hash === hash)) {
+        sqliteDb.run(
+          rawSql`UPDATE __drizzle_migrations SET created_at = ${fixedTime} WHERE hash = ${hash} AND created_at = ${oldTime}`,
+        )
+      } else if (rows.some((row) => row.created_at >= fixedTime)) {
+        sqliteDb.transaction((tx) => {
+          for (const statement of file.toString('utf8').split('--> statement-breakpoint')) {
+            if (statement.trim()) tx.run(rawSql.raw(statement))
+          }
+          tx.run(
+            rawSql`INSERT INTO __drizzle_migrations (hash, created_at) VALUES (${hash}, ${fixedTime})`,
+          )
+        })
+      }
+    }
+  } catch (error) {
+    // A brand new database has no migration journal yet. All other failures matter.
+    const cause = error as {
+      code?: string
+      message?: string
+      cause?: { code?: string; message?: string }
+    }
+    const code = cause.cause?.code ?? cause.code
+    const message = cause.cause?.message ?? cause.message ?? ''
+    if (code === '42P01' || (code === 'SQLITE_ERROR' && message.includes('no such table'))) return
+    throw error
+  }
+}
+
 export async function runMigrations(): Promise<void> {
   if (dbDriver === 'postgres') {
     /**
@@ -31,10 +104,12 @@ export async function runMigrations(): Promise<void> {
     // M1 做向量检索时会用到；现在建好，避免以后改镜像和初始化流程
     await db.execute(rawSql`create extension if not exists vector`)
 
+    await normalizeLegacyMigrationTime()
     await migratePostgres(db, { migrationsFolder: migrationsFolder('drizzle') })
     return
   }
 
+  await normalizeLegacyMigrationTime()
   await migrateSqlite(db as never, {
     migrationsFolder: migrationsFolder('drizzle-sqlite'),
   })

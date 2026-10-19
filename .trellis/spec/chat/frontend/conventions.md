@@ -1,251 +1,90 @@
-# packages/chat —— 对话面板
+# packages/chat — 对话面板
 
-会话面板（消息区、检索过程、引用、失败卡、输入区）。**状态层在这个包里**
-（`@assistant-ui/react` 的运行时 + AG-UI 客户端），宿主只提供「数据」与
-「动作」。
+`@tanstack/ai-react` 的 `useChat` 管理消息与流；Mimir 自有组件管理展示与交互。宿主只通过 `ChatIo` 和 `ChatComposerStatus` 提供动作、目录与状态。组件不得 import renderer 的 api、router 或 queryClient。
 
-DOCX 对话编辑仍使用这一消息运行时。`runtime/DocxInterruptBridge.tsx` 负责把
-TanStack AI 的 `RUN_FINISHED.outcome=interrupt` 转成客户端工具执行和显式
-`resume`；普通 `addToolResult` 不是这个协议的续轮入口。桥按中断 ID 去重，
-工具执行前后验证当前画布版本，停止时中止挂起的工具。历史只保留工具名与
-结果状态，详见[跨层合同](../../../shared/contract/docx-agent.md)。
+## 运行与展示入口
 
-**动手前先读这一页。** 它讲的都是「不知道就会踩第二次」的事。
+- `runtime/use-mimir-runtime.ts`：唯一运行入口；草稿、FIFO、发送快照、附件租约与取消。
+- `runtime/transport.ts`：固定 SSE URL、真实会话 ID、最终 HTTP 参数与 Agent 目标守卫。
+- `runtime/history.ts`：旧消息兼容和 `protocolEvents` 经同版 SDK reducer 重放。
+- `runtime/DocxInterruptBridge.tsx`：原中断目标、画布工具执行和缓存续传。
+- `runtime/runtime-context.tsx`：原生 `UIMessage`、以消息 ID 关联的 `MessageSidecar`、发送意图与中断目标。
+- `ChatPanel` / `ChatThread`：历史加载、空态、消息列表、滚动与输入布局。
+- `parts/MessageItem.tsx`：按原生 parts 顺序展示正文、真实 reasoning、工具和媒体；引用、失败、停止、附件和动作从该消息 sidecar 读取。
+- `composer/Composer.tsx` / `ComposerMenus.tsx`：原生输入、IME、附件，以及框内模型、等级、范围菜单。
 
----
+## 主题与几何
 
-## 目录形状
+使用宿主 antd token 和 `createStyles`，不创建额外主题 provider。字号消费 `var(--mimir-chat-font-*, fallback)`，值由 renderer `ChatThemeBridge` 从 `FONT_SIZE` 注入；gutter 主视图 24px、侧栏 16px，消息列上限 808px、输入区域上限 856px。
 
-```
-src/
-  index.ts              公开面。只有 ChatPanel / ChatHostVars 与类型
-  types.ts              ChatPanelProps / ChatComposerStatus / ChatDraft / ChatIo
-  ChatPanel.tsx         面板：组装 + 两块本轮设置（范围 / 强度）+ 两种空态分派
-  ChatThread.tsx        滚动区里的三态：加载骨架 / 空态 / 消息列
-  EmptyStage.tsx        主视图空态的问候语
-  ChatHostVars.tsx      宿主填主题变量的兜底层（字号八档 + gutter）
-  ChatPanel.style.ts    面板级样式（字号走 var(--mimir-chat-font-*)）
-  custom-token.d.ts     这个包消费的宿主自定义 token（tintList / tintHover / inlineCodeFg / surfaceContent）
-  runtime/
-    io.ts               宿主动作面（ChatIo）与它的默认实现（全抛错）
-    agent.ts            HttpAgent 的包装：建会话 + 参数注入
-    history.ts          落库 Message → parts（历史与实时同一个形状）
-    chat-context.tsx    包内的动作 context（重试 / 取回 / 引用跳转）
-    use-mimir-runtime.ts 运行时的唯一入口（组件不直接碰引擎）
-  parts/
-    MessageItem.tsx     消息根：顺序在这里，见下
-    MarkdownPart.tsx    markdown 正文（@tanstack/markdown）
-    CodeBlock.tsx       代码块的两头（语言名 + 复制）
-    TraceActivity.tsx   检索过程行（D-097/D-098 的形态）
-    CitationList.tsx    引用块
-    FailureNotice.tsx   失败卡 + 连接中断
-    StoppedNotice.tsx   已停止那一行
-    AnswerActions.tsx   存成笔记 / 复制
-    data-parts.ts       从消息 parts 里读 trace / citations / failure
-  composer/
-    Composer.tsx        输入区（引擎的 composer 原语）
-    ComposerMenus.tsx   底栏三个菜单与指示器
-  hooks/use-scrolled.ts 滚动显形开关（对话区自己的那份）
-  test-dom.ts           测试垫片（ResizeObserver / IntersectionObserver / rAF / matchMedia / act 环境）
-```
+`createStyles` 中消费 `var(...)`，不要声明 `--*` 自定义属性；变量声明由 `ChatHostVars` 承担。样式类必须挂到实际祖先节点，不能只定义而漏掉消费点。
 
----
+遵守宿主 React Compiler 约定：不手写 memo/useMemo/useCallback、不关闭 hooks 规则、不在 render-prop 中定义内联组件。异步状态等待真实完成信号，测试不靠固定延时。
 
-## 四条不能违反的
+## 1. 发送、队列与历史
 
-### 1. 主题变量由宿主填，包不自己定义
+### Scope / Trigger
 
-包内的 `createStyles` 读 `var(--mimir-chat-font-*, <回退值>)` 与
-`var(--mimir-chat-gutter, 40px)`。**值由宿主挂**（`ChatHostVars`，宿主侧是
-`packages/renderer/src/components/chat/ChatThemeBridge.tsx`）。
+主对话与文档助手共用，按钮、Enter、建议问题、重试和队列派发遵守同一条发送合同。
 
-- 字号来自宿主的 `FONT_SIZE`（`packages/renderer/src/theme/tokens.ts`）——包不认识
-  宿主，写死数字会让「同一角色在不同页面用不同值」重新长出来
-- 回退值**不是装饰**：不挂也能渲染（包内测试与独立预览靠它）
+### Signatures
 
-颜色仍继承同一宿主 provider。主消息面与输入区外层用宿主 `surfaceContent`
-（缺失时回退 `colorBgContainer`），输入盒和菜单继续用各自容器角色；深色主面
-`#18191a` 与输入盒 `#202225` 分开。`ChatThemeBridge` 只传字号与 gutter，
-不得为换色额外增加 Chat provider 或把颜色另抄进桥。
+`SendIntent` 包含 `id/text/documentId/modelSelection/scope/attachments/snapshot/config`。`ChatIo.createConversation()` 返回真实 `{id}`；`loadConversation(id)` 返回落库消息或 null。
 
-CSS 自定义属性**只在声明它的元素及其子树上生效**。挂错位置的表现是
-「样式全都退回回退值」——界面能用、字号差半个像素，**不报错**。
-`packages/renderer/src/theme/editor-theme-bridge.ts` 记过同一条。
+### Contracts
 
-### 2. `createStyles` 的样式体里**不能声明 `--*` 自定义属性**
+1. 任何 await 之前冻结文字、模型、实际推理等级、范围、附件和文档目标。FIFO 每项独立，不在真正派发时读取新菜单或新草稿。
+2. 原生输入在 IME composition 期间不提交；Shift+Enter 换行。生成期间可继续输入与排队。
+3. 停止/失败保稿并取回队首，不覆盖用户已经输入的新稿；失败意图仍可显式重试或取回。
+4. 首次请求先 await 真实会话创建。最终 HTTP 的 `threadId` 和 `forwardedProps.conversationId` 相同；新建 URL 更新不重挂，主动切换到另一会话才重挂。
+5. 历史加载与失败分开，null 不能解释成空会话；原生协议事件经 SDK 重放，引用/失败/Agent/附件以消息 ID 关联。旧 trace 忽略。
+6. 复制和存笔记只对实际成功回答可用；停止、失败及连接中断不能误存上一轮回答。`CUSTOM mimir.message` 将客户端消息 ID 映射到真实落库 ID，收到映射才允许保存，宿主按当前可见回答的确切 ID 读取。
+7. 编辑与重新生成的分支只保存在当前内存中。最终请求传当前分支的 `historyMessageIds` 有序前缀，由服务端核对原会话消息并读取可信内容，不能带入已放弃尾部。文档 Agent 不开放分支重放，仍走原目标工具缓存续轮。
+8. `STATE_SNAPSHOT/STATE_DELTA` 通过 `protocol-state.ts` 保留非视觉共享状态；RFC 6902 在私有副本上整批验证、原子提交，失败保留上次状态并记录诊断，不执行任何 payload。
 
-消费宿主变量（`var(--mimir-chat-font-note, 12.5px)`）没问题；**声明新的**
-（`--trace-label: ${token.colorTextSecondary}` 这种，哪怕只是想拿它当
-hover 变量）会让 antd-style 把自定义属性的**值**拼进类名——类名长成
-`acss-s5fzfa-#5c6570-rgba(31,35,41,0.88)`，`#` 与括号使整个选择器非法，
-浏览器整条丢弃，元素裸奔成浏览器默认样式（实测：原生 button 灰底、
-Arial 13px，界面能用但丑了一圈，不报错）。hover 态的传值走属性选择器
-（`&:hover [data-label]`）或让颜色随 trigger 的 `color` 继承。
+### Validation & Error Matrix
 
-### 3. 不新建主题、不传 theme 的 ConfigProvider
+| 条件 | 行为 |
+| --- | --- |
+| 模型目录未就绪、模型删除、推理等级失效 | 阻止普通模型发送并保留草稿；给可操作原因 |
+| 仅检索 | 不调用模型，查询仍用原问题；不得混入聊天附件或专用截图 |
+| 新会话创建或 HTTP 失败 | 显示连接中断和重试/取回；不伪造成功 |
+| 主动停止 | 停止态；不得同时显示模型失败卡 |
+| 历史失败 | 显示加载失败与重试，不落入空态 |
 
-包消费宿主的 antd token（`createStyles` 内部就是 `theme.useToken()`）。
-内层再传一次 `theme` 会让 antd 重算 `cssVar` 的 key、`--ant-*` 变量名跟着换，
-所有引用处**静默失效**（`.trellis/spec/renderer/frontend/conventions.md` 第 5 条 / `.trellis/spec/office/engine/index.md`
-的 D-064）。
+### Good / Base / Bad
 
-### 4. React Compiler 的三条红线（与宿主同）
+Good：先选 A 模型发问，等待期间切到 B，第一轮和队列中的旧快照仍使用 A。Base：旧无协议元数据历史正常展示文本。Bad：发送前清空草稿，异步失败后无法找回，或新会话 URL 更新导致 SSE 中断。
 
-- 不写 `useMemo` / `useCallback` / `memo`
-- 不 `eslint-disable` 任何 React 规则（会让编译器**静默跳过**整个组件）
-- **render-prop 不能写内联箭头**：`react(no-unstable-nested-components)` 判它是
-  「渲染期定义组件」→ 编译器跳过宿主组件 → 不报错，只是不再优化。
-  `ChatThread` 里 `ThreadPrimitive.Messages` 收的是**模块级组件表**
-  （`MESSAGE_COMPONENTS`），`MessageItem` 里 Parts 的 `components` 也是模块级
-  常量——都是这条规则的落点
-- `try … finally` 会让编译器跳过整个组件（`AnswerActions.tsx` 里两条路径
-  各写一次收尾，不是啰嗦）
+### Tests Required
 
----
+真实 HTTP/SSE 测试断言请求体、真实 ID、快照/队列/停止/失败与历史往返；不能 mock 掉 SDK 再声称验证运行时。展示测试检查 reasoning、工具、媒体、引用、失败互斥及动作状态。
 
-## 两条数据路径：一切都在消息的 parts 里
+### Wrong vs Correct
 
-**trace / citations / failure 不是 props**，是消息里的 data part。这是本次
-架构的支点（D-099）：
-
-| | 从哪来 |
-|---|---|
-| 实时 | 服务端 CUSTOM 事件 → 引擎把它们变成 canonical data part |
-| 历史 | `runtime/history.ts` 把落库字段转成**同名**的 data part |
-
-于是搬迁前那套「实时份与落库份按位置对齐」（旧 `RoundResult.tsx` 的
-`resolveRound`）整体退役了——消息在哪，它的依据就在哪。
-
-读它们只有一条路：`parts/data-parts.ts` 的三个 hook（`useTracePart` /
-`useCitationsPart` / `useFailurePart`）。**不要**在别处再遍历一次 parts。
-
-### 为什么不用 `makeAssistantDataUI` 注册渲染器
-
-引擎提供了那个机制（按 part 名注册），但它渲染在 **parts 顺序**里，而服务端
-先发 trace / 引用、后发正文——那样引用块会落到回答**上方**。本仓的版式是
-「过程在上、引用与失败在下」（`.trellis/spec/project/product.md` §5.2/§5.6）。
-
-想把位置摆回来就得让消息根变 flex 再用 `order` 重排，而 flex 会**取消外边距
-折叠**——正文里 `p { margin: 12px 0 }` 的段间距会从 12px 变 24px，整块
-markdown 的节奏都变。那是一次看不见的排版改动。
-
-所以 `parts/MessageItem.tsx` 里顺序是**显式**的（过程 → 正文 → 引用 → 失败
-→ 停止 → 动作条），而 `MessagePrimitive.Parts` 的 `data` 槽被显式关掉
-（`{ Fallback: NoPart }`——不关的话注册渲染器与我们的显式渲染会各画一次）。
-
----
-
-## AG-UI 的每一种消息体类型都必须有渲染件（不许静默丢弃）
-
-引擎的 `MessagePrimitive.Parts` **平台默认组件在 react 上是 `() => null`**
-——`MessageItem` 的 parts 组件表漏掉哪一种，那一种就在界面上消失（不报错）。
-所以每一类都有对应件与测试（`parts/parts.test.tsx` 的「AG-UI part 类型」
-一组 + `ChatPanel.test.tsx` 的端到端一条）：
-
-| part | 渲染件 |
-|---|---|
-| `text` | `MarkdownPart`（@tanstack/markdown） |
-| `reasoning` | `parts/ReasoningPart.tsx`（官方 Reasoning 盒，与 `TraceActivity` 共用 `reasoning-shell.tsx`；运行时需 `showThinking: true`） |
-| `tool-call` | `parts/ToolCallPart.tsx`（官方 ToolFallback 换算） |
-| `source` / `file` / `image` / `audio` | `parts/MediaParts.tsx`（官方 Sources pill / file chip / 缩略图） |
-| `data` | 三个显式读取口（`data-parts.ts`），`data: { Fallback: NoPart }` 跳过 |
-
-**不接线的两类**（记录在案）：`generative-ui`（需要组件白名单作安全边界）
-与 `quote`（metadata 槽）。加新类型时：在 `MessageItem.tsx` 的 parts 组件表
-挂号 + `parts.test.tsx` 补一条「渲染出官方形态」的断言。
-
-## 宿主边界
-
-### PPTX 美化截图草稿
-
-`ChatDraft.snapshot` 仅接收当前侧栏内存中的真实 PNG 草稿；`draftAgent` 只读句柄只用于无模型时核对来源、页和版本，不能接入工具执行桥。PNG 作为 assistant-ui complete attachment 发送，不放进提示词或 Agent context。宿主的 `sourceIsCurrent` 函数仅为运行时来源寿命校验，绝不序列化到请求。
-
-发送、Enter、排队真实派发与重试须验证原文档/源寿命/页/版本及可执行 Agent/视觉能力；截图存在时禁止只检索降级。停止、失败和取回队列时文字、PNG、目标一起恢复，校验失败保留草稿并显示原因。派发校验失败仅向空输入区自动恢复；用户已经开始新草稿时保留新输入，原截图仍在失败消息中供显式重试或取回。registry 至多保留 4 份，保护排队和在途截图；移除 composer 附件清除本次绑定，已发截图可在有界会话内用于重试。卸载释放引用，不扩数据库或刷新后图片恢复。
-
-包内 **import 不到** `apps/web` 的任何东西（相对路径也够不着——这是结构性的，
-不是约定）。需要宿主的东西一律走两个口：
-
-| 口 | 是什么 | 谁实现 |
-|---|---|---|
-| `io: ChatIo` | **动作**：建会话、读历史、存笔记、跳转 | `packages/renderer/src/lib/chat-io.ts` |
-| `composerStatus` | **数据**：文档列表、模型角色、用量 | `packages/renderer/src/lib/use-chat-composer-status.ts` |
-
-三态（加载中 / 失败 / 空）必须**如实传过来**：「读取失败」与「还没有文档」
-是两件事，混成一支会让用户以为内容没了。
-
-### 文档侧栏的思考强度入口
-
-1. **Scope / Trigger**：`DocChatSidebar` 嵌入同一个 `ChatPanel`，但窄栏不显示思考强度按钮。
-2. **Signature**：`ChatPanelProps.showReasoningControl?: boolean`；缺省为 `true`，文档侧栏显式传 `false`。
-3. **Contract**：隐藏时普通发送和快捷提问都写入标准强度（`deepReasoning: false`）；模型指示、发送与停止仍显示。主对话保持原切换入口。
-4. **Validation / Error**：即使组件曾选择“深入”后收到 `false`，也要按标准发送；模型缺失与发送失败仍走原有反馈。
-5. **Good / Base / Bad**：文档侧栏只见当前模型 / 主对话可见强度与模型 / 不可只用 CSS 隐藏按钮而继续发送 `deepReasoning: true`。
-6. **Tests**：`ChatPanel.test.tsx` 分别断言侧栏无强度按钮、主视图有按钮、侧栏请求参数为标准强度。
-7. **Wrong vs Correct**：错误是仅把 `<StrengthDropdown>` 设为 `display: none`；正确是 `showReasoningControl={false}` 同时将该入口的有效强度固定为 `false`。
-
-### 模型菜单的显示合同
-
-`ComposerMenus.tsx` 的 `ModelDropdown` 在文档侧栏和主对话共用。菜单项可见文本只显示 `modelRoles.chat` / `modelRoles.reasoning` 的模型名（缺失时显示“未配置”）；当前强度所用模型的勾选图标紧跟名称。角色与“当前使用”保留为屏幕阅读器文案，以便同名模型仍可区分。两条模型绑定项保持不可点击，全局配置由“管理模型”入口修改；这里没有会话级模型切换。`ChatPanel.test.tsx` 应断言名称、勾选相邻顺序、禁用状态和管理入口，避免调整布局时重新出现可见的角色前缀或前置勾选。
-
----
-
-## 引擎的三个「与直觉不同」的地方
-
-### 1. `composer.send()` 才是唯一的发送路径
-
-按钮与键盘都走它。**不要自己写一个 `<Button onClick={composer.send()}>`**：
-`canSend` 只管「有没有内容、能不能发」，而**生成中能不能排队**是另一条规则
-（引擎的 `composerSendDisabled` 把 `capabilities.queue` 也算进去了）。
-手写那一版会在生成中禁掉按钮，于是「生成中 Enter 排队」在鼠标路径上到不了
-——键盘那条却通着，两个入口行为不一致且不报错。
-
-用 `ComposerPrimitive.Send/Cancel` + `render={<antd Button/>}`，且
-**发送 / 停止是一个键位的两种形态**（`canCancel ? Cancel : Send`）：
-两颗都常驻的话空闲时停止键是一块灰方块；上游 registry 的 `thread.tsx`
-也是 `AuiIf` 条件渲染同一套（实测修过）。
-
-### 2. 停止时队列**不会**还回输入框
-
-引擎的取消只 `notifyCancelled()` → 暂停队列（`message-queue.js`）。
-而 mimir 的语义是「停止 / 失败 → 还给输入框」（D-098）。所以
-`runtime/use-mimir-runtime.ts` 的 `onCancel` 里显式做「取队列首条 →
-`setText` → `removeQueueItem`」。漏了它的症状是**用户的字不见了**。
-
-### 3. `useAuiState` 的选择器必须返回**store 里已有的引用**；`incomplete` 分两种
-
-`useAuiState` 建立在 `useSyncExternalStore` 上，快照比较是 `Object.is`。
-选择器里 `return { kind, detail }` 这种**新对象字面量**每次调用都是新引用，
-状态没变快照却「变了」→ React 进入订阅-重渲染循环，报
-`Maximum update depth exceeded` 并把整页交给错误边界（实测：带失败 part 的
-会话一渲染就白屏）。选择器只取 `part.data` 这类已存在的引用，展示用的
-对象在选择器**外**组装（`parts/data-parts.ts` 的 `useFailurePart`）。
-
-`incomplete` 被**停止与失败共用**：`reason: 'cancelled'` 才是用户按了停止
-（显示「已停止生成」），`reason: 'error'` 是流断了（由失败卡 / 连接中断卡
-交代）。只判 `status.type` 会把「已停止生成」挂到失败卡下面（实测踩过，
-`ChatPanel.test.tsx` 的失败轮用例守着）。同理，动作条（存成笔记 / 复制）
-在失败 / 中断轮**不渲染**——失败轮的正文是错误原文，存进知识库或复制报错
-都是错（旧的明确决定，PRD §5.7/§5.8）。
-
----
-
-## 测试
-
-```bash
-pnpm --filter @mimir/chat test
+```ts
+// Wrong: 异步后从当前菜单读取，污染已经点击发送的那一轮。
+await createConversation()
+const selection = currentSelection
+// Correct: 先冻结意图，再进行异步准备和最终目标复核。
+const intent = structuredClone(sendIntent)
+await prepare(intent)
 ```
 
-- `src/runtime/history.test.ts` —— 落库消息 → parts（历史保真的唯一落点）
-- `src/parts/parts.test.tsx` —— 展示件的形状（静态渲染）
-- `src/ChatPanel.test.tsx` —— 端到端挂载：**起一个真的 HTTP 服务**推真实帧
-  （顺序、live 相位、排队取回）。不要 mock 引擎——那等于把要验的东西验没了
+## 2. 模型、推理与附件
 
-测试文件顶部要 `installDomShims()`（`./test-dom.js`），它补四样
-happy-dom 缺的东西 + `IS_REACT_ACT_ENVIRONMENT`。**必须在 import 组件之前**
-（模块顶层）——放 `beforeAll` 里太晚。
+模型以 `{providerId, modelId}` 寻址，按配置供应商分组，不显示“对话模型/思考模型”分区。等级只读取所选模型 `reasoning` 能力；不支持或未知时不造 low/high 等选项、不按角色换模型。设置入口与会话内选择分开，主视图与侧栏都保留框内控件。
 
-`vitest.config.ts` 里关掉了 happy-dom 的同源策略（端到端那条要连
-`127.0.0.1` 的随机端口）。注意它在 `settings.fetch` 这一层下面——写成顶层会被
-happy-dom 直接拒绝（`Unknown browser setting`，测试**起不来**）。
+附件动作从 `ChatIo` 注入。上传/解析状态如实呈现，成功取得的 `{id,sha256}` 进入冻结意图；队列与在途期间维持租约并续约，删除/取消/卸载正确释放。重载历史的原件链接经宿主 transport 映射，携带真实鉴权。限额与服务端合同只维护在[聊天附件合同](../../shared/contract/chat-attachments.md)。
 
----
+## 3. 文档 Agent 与专用截图
+
+文档格式、来源寿命、文档 ID、页、画布版本和轮次在读取、真正派发、执行与续轮前后复核。不能将通用聊天附件冒充文档编辑输入。
+
+`RUN_FINISHED.outcome=interrupt` 走显式 resume；普通 `addToolResult` 不能代替续轮。执行后续传 HTTP 失败，桥保留完整缓存结果及原 `threadId/runId`，只重传缓存，绝不重执行画布工具。SDK 返回 fulfilled false 也按失败处理。版本变化、来源切换或服务端拒绝需重新发指令。详见[文档 Agent 合同](../../shared/contract/document-agent.md)。
+
+`ChatDraft.snapshot` 仍是有界内存中的真实 PNG，来源校验函数不能序列化；发送时转为原生图片 content part，bytes 不放入提示词或 Agent context。失败或停止保留文字、图片和目标；恢复不得覆盖新草稿。截图不是通用持久化聊天附件，刷新后不冒充可恢复。
+
+## 测试入口
+
+`pnpm --filter @mimir/chat test`。`history.test.ts` 验证真实 SDK 历史重放，`parts.test.tsx` 验证展示，`ChatPanel.test.tsx` 使用本地真实 HTTP/SSE 服务验证行为。DOM 垫片在组件 import 前安装；异步测试必须结算自身创建的链再卸载。

@@ -1,3 +1,5 @@
+import { chatAttachmentSchema, chatAttachmentRefSchema } from './chat-attachments.js'
+import { chatModelSelectionSchema } from './chat-models.js'
 import { z } from 'zod'
 import { retrievalScopeSchema } from './retrieval.js'
 import { documentKindSchema } from './documents.js'
@@ -96,6 +98,10 @@ export const messageSchema = z.object({
   /** 「存成笔记」之后置位，界面据此显示「已存为笔记」 */
   savedNoteId: z.string().nullable(),
   agent: docxAgentHistorySchema.optional(),
+  attachments: z.array(chatAttachmentSchema).optional(),
+  protocolEvents: z.array(z.record(z.string(), z.unknown())).optional(),
+  modelSelection: chatModelSelectionSchema.optional(),
+  retrievalScope: retrievalScopeSchema.optional(),
   createdAt: z.string(),
 })
 export type Message = z.infer<typeof messageSchema>
@@ -128,17 +134,24 @@ export type ConversationDetail = z.infer<typeof conversationDetailSchema>
 export const askScopeSchema = z.enum(['all', 'document', 'search'])
 export type AskScope = z.infer<typeof askScopeSchema>
 
-export const askInputSchema = z.object({
-  question: z.string().trim().min(1, '问题不能为空').max(2000),
-  /** 不传表示新开一个会话 */
-  conversationId: z.string().optional(),
-  scope: askScopeSchema.default('all'),
-  retrievalScope: retrievalScopeSchema.optional(),
-  /** scope 为 document 时必填 */
-  documentId: z.string().optional(),
-  /** 深度思考：打开时用推理模型 */
-  deepReasoning: z.boolean().default(false),
-})
+export const askInputSchema = z
+  .object({
+    modelSelection: chatModelSelectionSchema.optional(),
+    attachments: z.array(chatAttachmentRefSchema).max(4).optional(),
+    question: z.string().trim().max(2000).default(''),
+    /** 不传表示新开一个会话 */
+    conversationId: z.string().optional(),
+    scope: askScopeSchema.default('all'),
+    retrievalScope: retrievalScopeSchema.optional(),
+    /** scope 为 document 时必填 */
+    documentId: z.string().optional(),
+    /** 深度思考：打开时用推理模型 */
+    deepReasoning: z.boolean().default(false),
+  })
+  .refine((input) => !!input.question || !!input.attachments?.length, {
+    path: ['question'],
+    message: '问题不能为空',
+  })
 export type AskInput = z.infer<typeof askInputSchema>
 
 export const askResponseSchema = z.object({
@@ -154,20 +167,11 @@ export const saveNoteInputSchema = z.object({
 export type SaveNoteInput = z.infer<typeof saveNoteInputSchema>
 
 /**
- * 流式回答里 mimir 自己的自定义事件。
- *
- * 前后端共用这些字面量：服务端 `services/assistant-stream.ts` 发，
- * 前端 `lib/use-mimir-chat.ts` 收。写成共享常量而不是两边各写一遍字符串——
- * 打错一个字母的后果是**静默不生效**（事件被忽略，界面就是不显示检索过程），
- * 而这类 bug 很难从现象反推原因。
- *
- * 为什么走自定义事件而不是协议原生的 part：
- *  - trace 是**结构化的分步记录**（每步有图标、关键词、具体数字），
- *    而协议原生的 thinking part 只是一个字符串，塞进去就丢了结构
- *  - citations 是引用卡片，含文档 id 与字符偏移，协议里没有对应形状
- *
- * 三个事件都**先于**模型开始生成发出，所以引用卡片与检索过程会立刻出现，
- * 用户不必对着空白等模型。
+ * Mimir 宿主元数据事件；正文、推理和工具继续使用 TanStack 原生 AG-UI。
+ * citations 携带文档 ID 与字符偏移，failure 提供产品恢复入口。
+ * EVENT_TRACE 和 TraceEventPayload 只为旧调用方与持久化历史兼容保留，
+ * 新聊天入口不生产、也不展示检索 trace。
+ * 元数据及消息身份必须在 RUN_FINISHED/RUN_ERROR 之前发出。
  */
 export const EVENT_CONVERSATION = 'mimir.conversation'
 export const EVENT_TRACE = 'mimir.trace'

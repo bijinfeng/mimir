@@ -25,6 +25,7 @@ import {
 } from './instances.js'
 import { runLegacyMigration } from './migrate-runner.js'
 import { PROVIDER_PRESETS } from './presets.js'
+import { describeChatModel, selectedChatAdapter } from './chat-models.js'
 
 /**
  * OpenAI 兼容的模型提供方。**一套适配器接住 DeepSeek / 通义 / 智谱 / Kimi /
@@ -252,6 +253,54 @@ export function createOpenAiCompatibleProvider(
         roles,
         presets: [...PROVIDER_PRESETS],
       }
+    },
+
+    async chatCatalog() {
+      const config = await loadConfig()
+      const providers = config.providers.flatMap((instance) => {
+        try {
+          decryptKey(instance)
+        } catch {
+          return []
+        }
+        const models = instance.models
+          .filter((model) => model.purposes.includes('chat'))
+          .map((model) => describeChatModel(instance, model))
+        return models.length
+          ? [{ providerId: instance.id, providerName: instance.name, models }]
+          : []
+      })
+      const bound = config.roles.chat
+      const preferred =
+        bound &&
+        providers
+          .flatMap((provider) => provider.models)
+          .find((model) => model.providerId === bound.providerId && model.modelId === bound.model)
+      const initial = preferred || providers[0]?.models[0]
+      return {
+        providers,
+        defaultSelection: initial
+          ? {
+              providerId: initial.providerId,
+              modelId: initial.modelId,
+              ...(initial.reasoning.status === 'supported' && initial.reasoning.default
+                ? { reasoningEffort: initial.reasoning.default }
+                : {}),
+            }
+          : null,
+      }
+    },
+
+    async selectedAdapter(selection) {
+      const { instance, apiKey } = await resolveInstance(selection.providerId)
+      if (instance.family !== 'openai-compatible') throw new Error('该供应商协议尚未接入')
+      const model = instance.models.find(
+        (item) => item.id === selection.modelId && item.purposes.includes('chat'),
+      )
+      if (!model) throw new Error('所选模型已被删除或不可用于对话，请重新选择')
+      return selectedChatAdapter(instance, model, apiKey, selection, () =>
+        buildChat(instance.baseUrl, apiKey, model.id),
+      )
     },
 
     async supports(role) {

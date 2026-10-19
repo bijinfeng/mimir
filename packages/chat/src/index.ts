@@ -4,7 +4,7 @@
  * ## 这个包是什么
  *
  * 对话面板：消息区、检索过程、引用、失败卡、输入区。它自带**状态层**
- * （`@assistant-ui/react` 的运行时 + AG-UI 客户端），宿主只提供
+ * （TanStack AI React 运行时与 AG-UI 传输），宿主只提供
  * 「数据」与「动作」（`ChatIo` + `composerStatus`）。
  *
  * ## 只导出下面这些

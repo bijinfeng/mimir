@@ -1484,4 +1484,4 @@ conversationsRoute.post('/:id/ask', async (c) => {
  */
 export const chatRoute = new Hono<AppEnv>()
 
-chatRoute.post('/', async (c) => streamChat(await c.req.json().catch(() => null)))
+chatRoute.post('/', async (c) => streamChat(await c.req.json().catch(() => null), c.req.raw.signal))

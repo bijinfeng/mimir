@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   MODEL_PURPOSES,
+  configuredModelCapabilitiesSchema,
   MODEL_ROLE_PURPOSES,
   inferModelPurposes,
   type ModelRole,
@@ -224,6 +225,7 @@ function normalizeModels(raw: unknown): ProviderModel[] {
       id: trimmed,
       source: normalizeSource((item as { source?: unknown }).source),
       purposes: normalizePurposes((item as { purposes?: unknown }).purposes, trimmed),
+      ...normalizeCapabilities(item),
     })
   }
 
@@ -384,3 +386,14 @@ export function fromPreset(
 }
 
 export { findPreset, inferPresetId }
+
+function normalizeCapabilities(item: unknown): Pick<ProviderModel, 'capabilities'> {
+  if (
+    typeof item !== 'object' ||
+    item === null ||
+    !('capabilities' in item) ||
+    item.capabilities === undefined
+  )
+    return {}
+  return { capabilities: configuredModelCapabilitiesSchema.parse(item.capabilities) }
+}

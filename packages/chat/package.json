@@ -2,7 +2,7 @@
   "name": "@mimir/chat",
   "version": "0.1.0",
   "private": true,
-  "description": "对话面板：消息区、检索过程、引用、输入区。状态层是 @assistant-ui/react，宿主注入动作与数据",
+  "description": "Mimir 对话面板：TanStack AI React 运行时与主题组件",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -13,12 +13,13 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@ag-ui/client": "0.0.59",
-    "@assistant-ui/react": "0.15.28",
-    "@assistant-ui/react-ag-ui": "0.0.68",
     "@mimir/shared": "workspace:*",
+    "@tanstack/ai": "0.69.0",
+    "@tanstack/ai-client": "0.39.3",
+    "@tanstack/ai-react": "0.30.4",
     "@tanstack/markdown": "0.0.13",
     "@tanstack/react-query": "^5.103.1",
+    "fast-json-patch": "3.1.1",
     "lucide-react": "^1.48.0"
   },
   "devDependencies": {

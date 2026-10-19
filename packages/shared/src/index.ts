@@ -48,3 +48,6 @@ export * from './pptx-deck-progress.js'
 export * from './miniapp.js'
 
 export * from './retrieval.js'
+
+export * from './chat-models.js'
+export * from './chat-attachments.js'

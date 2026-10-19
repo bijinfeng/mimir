@@ -1,11 +1,23 @@
-import type {
-  FileMessagePartProps,
-  ImageMessagePartProps,
-  SourceMessagePartProps,
-} from '@assistant-ui/react'
+type SourceMessagePartProps = {
+  sourceType: 'url' | 'document'
+  url?: string
+  title?: string
+  filename?: string
+  [key: string]: unknown
+}
+type FileMessagePartProps = {
+  data: string
+  mimeType: string
+  filename?: string
+  [key: string]: unknown
+}
+type ImageMessagePartProps = { image: string; name?: string; [key: string]: unknown }
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createStyles } from 'antd-style'
 import {
   Download,
+  X,
   File as FileIcon,
   FileText,
   Image as ImageIcon,
@@ -13,29 +25,7 @@ import {
   Video,
 } from 'lucide-react'
 
-/**
- * **来源**（`source` part）与**文件 / 图片**（`file` / `image` part）——
- * 官方 `sources.tsx`、`file.tsx`、`image.tsx` 的换算（用户点名「AG-UI 的
- * 消息体类型每一种都按 assistant-ui 还原」；这三类此前同样静默丢弃——
- * 引擎的默认组件在 react 平台上是 `() => null`）。
- *
- * ## 它们什么时候出现
- *
- *  - `source`：`MESSAGES_SNAPSHOT` 带回的引用来源（未来接网页检索 /
- *    外部工具时是主路径；mimir 自己的引用走 `mimir.citations` data part，
- *    两者并存不冲突）
- *  - `file` / `image`：用户带附件或工具产物（M0 无附件上传，同样为
- *    「引擎会聚、界面要认」的一类）
- *
- * ## 形态（官方逐条）
- *
- * - **source pill**：域名首字母徽标（`size-4 rounded text-[8px]`、
- *   `foreground/8` 底）+ 标题；点击经安全 href 新开
- * - **file chip**：`inline-flex items-center gap-3 rounded-lg border
- *   px-3 py-2`，左侧按 mime 取图标（image / pdf / text / json / audio /
- *   video / 默认），右侧文件名与**下载钮**（官方 DownloadIcon）
- * - **image**：圆角缩略图（最大 320px 宽），点击原图新开
- */
+/** Native TanStack media parts, using the same host theme as the rest of the thread. */
 const useStyles = createStyles(({ css, token }) => ({
   /* —— source pill —— */
   source: css`
@@ -134,6 +124,50 @@ const useStyles = createStyles(({ css, token }) => ({
       outline-offset: 2px;
     }
   `,
+  imageButton: css`
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    max-width: 100%;
+    cursor: zoom-in;
+    border-radius: 6px;
+    &:focus-visible {
+      outline: 1px solid ${token.colorPrimary};
+      outline-offset: 2px;
+    }
+  `,
+  overlay: css`
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.82);
+    padding: 44px;
+    color: white;
+    > button {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      color: inherit;
+      cursor: pointer;
+    }
+    > img {
+      max-width: 100%;
+      max-height: calc(100vh - 88px);
+      object-fit: contain;
+      cursor: zoom-out;
+    }
+  `,
   image: css`
     display: block;
     max-width: 320px;
@@ -173,7 +207,13 @@ function renderMimeIcon(mimeType: string, className: string) {
 
 /** 安全 href：只放行 data: / http(s) / blob（官方同款白名单） */
 function safeFileHref(data: string, mimeType: string): string | null {
-  if (/^data:/i.test(data) || /^https?:\/\//i.test(data) || /^blob:/i.test(data)) return data
+  if (
+    /^data:(?:image\/(?:png|jpeg|webp)|audio\/|video\/|application\/pdf)/i.test(data) ||
+    /^https?:\/\//i.test(data) ||
+    /^blob:/i.test(data) ||
+    /^\/(?!\/)/.test(data)
+  )
+    return data
   if (/^[a-z][a-z\d+.-]*:/i.test(data)) return null
   return `data:${mimeType};base64,${data}`
 }
@@ -190,7 +230,8 @@ function hostOf(url: string | undefined): string | null {
 
 export function SourcePart(props: SourceMessagePartProps) {
   const { styles } = useStyles()
-  const href = props.sourceType === 'url' ? (props.url ?? null) : null
+  const href =
+    props.sourceType === 'url' && props.url && /^https?:\/\//i.test(props.url) ? props.url : null
   const domain = hostOf(href ?? undefined)
   const fallbackName = props.sourceType === 'document' ? props.filename : undefined
   const label = props.title ?? fallbackName ?? domain ?? '来源'
@@ -259,12 +300,76 @@ export function AudioPart({ audio }: { audio: { data: string; format: 'mp3' | 'w
   return <FileChip data={audio.data} mimeType={`audio/${audio.format}`} />
 }
 
-export function ImagePart({ image }: ImageMessagePartProps) {
+export function ImageDialog({
+  url,
+  name,
+  onClose,
+}: {
+  url: string
+  name: string
+  onClose: () => void
+}) {
   const { styles } = useStyles()
-
+  const close = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null
+    const overflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    close.current?.focus()
+    return () => {
+      document.body.style.overflow = overflow
+      previous?.focus()
+    }
+  }, [])
+  return createPortal(
+    <div
+      className={styles.overlay}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`预览 ${name}`}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          onClose()
+        }
+        if (event.key === 'Tab') {
+          event.preventDefault()
+          close.current?.focus()
+        }
+      }}
+    >
+      <button type="button" ref={close} aria-label="关闭图片预览" onClick={onClose}>
+        <X size={18} />
+      </button>
+      <img src={url} alt={name} onClick={onClose} />
+    </div>,
+    document.body,
+  )
+}
+export function ImagePart({ image, name = '对话图片' }: ImageMessagePartProps) {
+  const { styles } = useStyles()
+  const [failed, setFailed] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+  const href = safeFileHref(image, 'image/png')
+  if (!href) return <span>图片地址不可用</span>
   return (
-    <a href={image} target="_blank" rel="noopener noreferrer" aria-label="查看原图">
-      <img className={styles.image} src={image} alt="" />
-    </a>
+    <>
+      <button
+        type="button"
+        className={styles.imageButton}
+        onClick={() => setExpanded(true)}
+        aria-label={`预览 ${name}`}
+      >
+        {failed ? (
+          '图片加载失败，打开原图'
+        ) : (
+          <img className={styles.image} src={href} alt={name} onError={() => setFailed(true)} />
+        )}
+      </button>
+      {expanded && <ImageDialog url={href} name={name} onClose={() => setExpanded(false)} />}
+    </>
   )
 }

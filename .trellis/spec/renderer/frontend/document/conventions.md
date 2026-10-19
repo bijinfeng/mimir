@@ -96,6 +96,9 @@ PPTX、HTML、PDF 的执行器均经这个宿主适配层连接；各格式只�
 操作，未接入的上游工具仍须保持不可用。句柄随文档切换失效，不能交给
 主视图或其他文档。跨层合同见[文档 Agent 通道](../../../shared/contract/document-agent.md)，
 DOCX 专有工具见 [DOCX 对话编辑](../../../shared/contract/docx-agent.md)。
+
+侧栏宿主就绪与所选模型能力分别判断：DOCX 句柄须匹配能力响应的 documentId 和格式；其他格式还须 executorReady。旧能力响应中的 modelReady 和 mediaKinds 来自全局角色，不能阻断输入框明确选择的模型或让 Agent 请求静默退成普通问答。状态文案只依据真实画布、能力读取及模型目录的加载/失败/空状态，不因旧角色未配置而声称没有模型。PPTX 的 snapshotVisionReady 仅表示宿主具备截图传输能力，每轮发送仍由聊天运行层按冻结的所选模型校验工具与视觉能力。回归：docx-agent-availability、DocxCapabilityStatus、DocChatSidebar 测试覆盖旧角色未配置时的句柄、状态及截图接线。
+
 **加第七种格式时不要新建组件**
 ——在 `viewerFor` 加一个 kind、在 `OfficeSourceEditor` 加一个分支就是全部改动。
 

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { configuredModelCapabilitiesSchema } from './chat-models.js'
 
 /**
  * 运行时配置的传输契约：设置、插件、模型配置、数据库事实。
@@ -262,6 +263,7 @@ export const providerModelSchema = z.object({
    * 服务端归一化（`instances.ts` 的 `normalizePurposes`）会按模型名回填。
    */
   purposes: z.array(modelPurposeSchema),
+  capabilities: configuredModelCapabilitiesSchema.optional(),
 })
 export type ProviderModel = z.infer<typeof providerModelSchema>
 

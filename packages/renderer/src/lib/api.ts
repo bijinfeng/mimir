@@ -9,6 +9,8 @@ import type {
   ApiError,
   AuthSetupState,
   CaptureResponse,
+  ChatModelCatalog,
+  ChatAttachment,
   ConversationDetail,
   ConversationSummary,
   DocumentCounts,
@@ -134,6 +136,15 @@ let transport: RpcConfig = {}
 /** 指向别的宿主时调用（CLI / 扩展 / 跨源载体）。必须在第一次请求前完成 */
 export function configureApiTransport(config: RpcConfig): void {
   transport = { ...transport, ...config }
+}
+
+function chatAttachmentFromServer(attachment: ChatAttachment): ChatAttachment {
+  return {
+    ...attachment,
+    originalUrl: attachment.originalUrl.startsWith('/api/')
+      ? `${transport.baseUrl ?? appBasePath}${attachment.originalUrl}`
+      : attachment.originalUrl,
+  }
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -897,11 +908,69 @@ export const api = {
   },
 
   conversations: {
+    models() {
+      return request<ChatModelCatalog>('/api/config/chat-models')
+    },
     list() {
       return request<{ items: ConversationSummary[] }>('/api/conversations')
     },
-    get(id: string) {
-      return request<ConversationDetail>(`/api/conversations/${encodeURIComponent(id)}`)
+    async get(id: string) {
+      const detail = await request<ConversationDetail>(
+        `/api/conversations/${encodeURIComponent(id)}`,
+      )
+      return {
+        ...detail,
+        messages: detail.messages.map((message) => ({
+          ...message,
+          ...(message.attachments
+            ? { attachments: message.attachments.map(chatAttachmentFromServer) }
+            : {}),
+        })),
+      }
+    },
+    async uploadAttachment(
+      conversationId: string,
+      file: File,
+      uploadOperationId: string,
+      signal: AbortSignal,
+    ) {
+      const form = new FormData()
+      form.set('file', file)
+      form.set('uploadOperationId', uploadOperationId)
+      return chatAttachmentFromServer(
+        await sendMultipart<ChatAttachment>(
+          `/api/conversations/${encodeURIComponent(conversationId)}/attachments`,
+          'POST',
+          form,
+          signal,
+        ),
+      )
+    },
+    async attachment(conversationId: string, attachmentId: string, signal?: AbortSignal) {
+      return chatAttachmentFromServer(
+        await request<ChatAttachment>(
+          `/api/conversations/${encodeURIComponent(conversationId)}/attachments/${encodeURIComponent(attachmentId)}`,
+          { signal },
+        ),
+      )
+    },
+    deleteAttachment(conversationId: string, attachmentId: string) {
+      return request<void>(
+        `/api/conversations/${encodeURIComponent(conversationId)}/attachments/${encodeURIComponent(attachmentId)}`,
+        { method: 'DELETE' },
+      )
+    },
+    leaseAttachment(conversationId: string, attachmentId: string, leaseId: string) {
+      return request<void>(
+        `/api/conversations/${encodeURIComponent(conversationId)}/attachments/${encodeURIComponent(attachmentId)}/lease`,
+        { method: 'POST', body: JSON.stringify({ leaseId }) },
+      )
+    },
+    releaseAttachmentLease(conversationId: string, attachmentId: string, leaseId: string) {
+      return request<void>(
+        `/api/conversations/${encodeURIComponent(conversationId)}/attachments/${encodeURIComponent(attachmentId)}/lease/${encodeURIComponent(leaseId)}`,
+        { method: 'DELETE' },
+      )
     },
     docxAgentCapabilities(documentId: string) {
       return request<DocxAgentCapabilities>(

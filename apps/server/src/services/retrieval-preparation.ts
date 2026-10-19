@@ -1,3 +1,5 @@
+import { StreamProcessor } from '@tanstack/ai'
+import type { ModelMessage, StreamChunk } from '@tanstack/ai'
 import type { Citation, Trace, TraceStep, RetrievalScope } from '@mimir/shared'
 import { queryTokens, toQueryText } from '@mimir/tokenizer'
 import { assemble } from '../plugins/host.js'
@@ -5,6 +7,7 @@ import { assembleCitations, searchChunks, type AssembledCitation } from '../sear
 import { getConversation } from './conversations.js'
 import { requireFreshSources } from '../search/source-freshness.js'
 import { normalizeRetrievalScope } from './retrieval-scope.js'
+import { selectedConversationMessages } from './chat-history-selection.js'
 
 const CONTEXT_CHAR_BUDGET = 6000
 const PER_CITATION_CHARS = 1200
@@ -176,13 +179,17 @@ export async function verifiedRetrievalHistory(
   conversationId: string,
   scope: RetrievalScope,
   verifySources = true,
+  allowAttachmentHistory = false,
+  historyMessageIds?: string[],
 ) {
   const conversation = await getConversation(conversationId)
-  const history: { role: 'user' | 'assistant'; content: string }[] = []
-  for (const message of (conversation?.messages ?? []).slice(-7, -1)) {
+  const history: ModelMessage[] = []
+  const selected = selectedConversationMessages(conversation?.messages ?? [], historyMessageIds)
+  const prior = historyMessageIds === undefined ? selected.slice(-7, -1) : selected.slice(-6)
+  for (const message of prior) {
     if (message.failure || !message.text.trim()) continue
     if (verifySources && message.role === 'assistant') {
-      if (!message.citations.length) continue
+      if (!message.citations.length && !allowAttachmentHistory) continue
       try {
         const sources = await requireFreshSources(
           message.citations.map((citation) => citation.documentId),
@@ -199,6 +206,16 @@ export async function verifiedRetrievalHistory(
         }
         if (!unchanged) continue
       } catch {
+        continue
+      }
+    }
+    if (message.role === 'assistant' && message.protocolEvents?.length) {
+      const processor = new StreamProcessor()
+      for (const event of message.protocolEvents)
+        processor.processChunk(event as unknown as StreamChunk)
+      const canonical = processor.toModelMessages()
+      if (canonical.length) {
+        history.push(...canonical)
         continue
       }
     }

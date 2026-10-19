@@ -18,3 +18,5 @@ paths:
 
 - 按[项目完成定义](../../project/quality.md)运行 `pnpm check`；涉及检索或解析时再核对真实结果。
 - 检查新增实现是否仍遵守上述边界与 `@mimir/shared` 中的接口。
+
+对话按轮次选择与能力合同见 [conventions](./conventions.md)。

@@ -1,297 +1,489 @@
-import { MessagePrimitive, useAuiState } from '@assistant-ui/react'
-import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
-import type { ComponentType, ReactNode } from 'react'
+import type { UIMessage, MessagePart } from '@tanstack/ai'
+import { useEffect, useRef, useState } from 'react'
+import { Copy, Download, MoreHorizontal, Pencil, RotateCcw, X } from 'lucide-react'
+import { createStyles } from 'antd-style'
 import { useChatPanelStyles } from '../ChatPanel.style.js'
-import {
-  askOptionsFor,
-  questionBefore,
-  snapshotBefore,
-  useMimirChatApi,
-} from '../runtime/chat-context.js'
-import { MESSAGE_ATTACHMENT_COMPONENTS } from './PptxSnapshotAttachment.js'
+import { MessageContext, useChatRuntime } from '../runtime/runtime-context.js'
+import { useMimirChatApi } from '../runtime/chat-context.js'
+import { AttachmentTile } from '../composer/Composer.js'
 import { AnswerActions } from './AnswerActions.js'
 import { CitationList } from './CitationList.js'
 import { DocxAgentHistoryNotice } from './DocxAgentHistoryNotice.js'
 import { FailureCard, StreamErrorCard } from './FailureNotice.js'
 import { MarkdownPart } from './MarkdownPart.js'
-import { AudioPart, FilePart, ImagePart, SourcePart } from './MediaParts.js'
+import { FilePart, ImagePart } from './MediaParts.js'
 import { ReasoningPart } from './ReasoningPart.js'
-import { ToolCallPart } from './ToolCallPart.js'
+import { ToolCallPart, ToolGroup } from './ToolCallPart.js'
 import { StoppedNotice } from './StoppedNotice.js'
-import { TraceDisclosure } from './TraceActivity.js'
-import { useCitationsPart, useDocxAgentPart, useFailurePart, useTracePart } from './data-parts.js'
-
-/**
- * 消息根：一条消息的骨架。
- *
- * ## 顺序是**显式**的，不靠 parts 顺序
- *
- * ```
- * 检索过程（回答的依据，PRD §5.6）
- * 正文（Markdown）
- * 引用块（回答的出处，PRD §5.2）
- * 失败卡 / 连接中断
- * 已停止那一行
- * 动作条（常驻但不占视觉重量）
- * ```
- *
- * 为什么不让 parts 顺序说了算：服务端**先发**检索过程与引用、**后发**正文
- * （那是有意的——引用与过程要让用户立刻看到，不要对着空白等模型），
- * 所以 parts 的顺序是 `trace → citations → 正文`，而设计要的版式是
- * 「过程在上、引用在下」。见 `data-parts.ts` 里那一节（还有为什么不用
- * flex + order 重排：那会取消正文的段间距折叠，是一次看不见的排版改动）。
- *
- * ## 消息形态
- *
- * 1. 用户消息右对齐、使用浅色气泡；助手回答以 mimir 名称引出正文。
- * 2. **一条 part 都没有的助手消息不渲染**。停止生成或流一开始就断掉时，
- *    引擎会留下 `[user, assistant(0 parts)]`（实测：一个字都没到时就是这个
- *    形状），而空盒子仍然占着 `thread` 的 `gap: 20px`——用户看到的是
- *    「提问下面莫名多出一段空白」，看起来像空气泡
- *
- * ## 动作条只出现在最后一条
- *
- * `s.message.isLast`——不是「最后一条助手消息」而是「消息列的最后一条」。
- * 追问已发、回答未到时最后一条是用户消息，上一轮的动作条因此自然撤掉
- * （那是旧实现里 `round.visible` 要判的三件事之一）。
- */
-export function MessageItem() {
-  const role = useAuiState((state) => state.message.role)
-  if (role === 'user') return <UserMessage />
-  return <AssistantMessage />
-}
-
-function UserMessage() {
-  return (
-    <MessagePrimitive.Root data-role="user">
-      <MessagePrimitive.Attachments components={MESSAGE_ATTACHMENT_COMPONENTS} />
-      <MessagePrimitive.Parts
-        components={{
-          /* 用户消息的文本：自己打的字不需要流式光标那种装饰，
-             也不需要 markdown（用户写什么就显示什么） */
-          Text: UserText,
-          /* 附件（将来带图/文件提问时会出现；同样不许静默丢弃） */
-          File: FilePart,
-          Image: ImagePart,
-        }}
-      />
-    </MessagePrimitive.Root>
-  )
-}
-
-function UserText() {
-  const text = useAuiState((state) => (state.part.type === 'text' ? state.part.text : ''))
-  return <div>{text}</div>
-}
-
-function AssistantMessage() {
-  const { styles } = useChatPanelStyles()
+const useStyles = createStyles(({ css, token }) => ({
+  actions: css`
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 30px;
+    margin-top: 8px;
+    font-size: var(--mimir-chat-font-meta, 12px);
+    color: ${token.colorTextTertiary};
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      height: 30px;
+      min-width: 30px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: ${token.colorFillTertiary};
+      color: ${token.colorText};
+    }
+    &[data-older] {
+      opacity: 0;
+    }
+    article:hover &,
+    article:focus-within & {
+      opacity: 1;
+    }
+    @media (hover: none) {
+      &[data-older] {
+        opacity: 1;
+      }
+    }
+    button:focus-visible {
+      outline: 1px solid ${token.colorPrimary};
+      outline-offset: 2px;
+    }
+  `,
+  menu: css`
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 60px;
+    z-index: 30;
+    padding: 6px;
+    min-width: 180px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 6px;
+    box-shadow: ${token.boxShadowSecondary};
+    background: ${token.colorBgElevated};
+    color: ${token.colorText};
+    button {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 0 8px;
+    }
+  `,
+  waiting: css`
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    color: ${token.colorPrimary};
+    animation: mimir-wait 1.2s ease-in-out infinite;
+    @keyframes mimir-wait {
+      50% {
+        opacity: 0.35;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  `,
+  files: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  `,
+  edit: css`
+    textarea {
+      width: 100%;
+      min-height: 80px;
+      font: inherit;
+      color: inherit;
+      background: ${token.colorBgContainer};
+      border: 1px solid ${token.colorBorder};
+      border-radius: 6px;
+      padding: 8px;
+    }
+  `,
+}))
+export function MessageItem({ message, index }: { message: UIMessage; index: number }) {
+  const runtime = useChatRuntime()
   const api = useMimirChatApi()
-  const trace = useTracePart()
-  const citations = useCitationsPart()
-  const failure = useFailurePart()
-  const docxAgent = useDocxAgentPart()
-  const parts = useAuiState((state) => state.message.parts.length)
-  const searchOnly = useAuiState((state) =>
-    state.message.parts.some(
-      (part) => part.type === 'text' && part.text === SEARCH_ONLY_RESULT_TEXT,
-    ),
+  const { styles } = useChatPanelStyles()
+  const { styles: local } = useStyles()
+  const [editing, setEditing] = useState(false)
+  const [edit, setEdit] = useState('')
+  const [feedback, setFeedback] = useState('')
+  const [more, setMore] = useState(false)
+  const moreRoot = useRef<HTMLDivElement>(null)
+  const moreTrigger = useRef<HTMLButtonElement>(null)
+  const editInput = useRef<HTMLTextAreaElement>(null)
+  const editTrigger = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (editing) {
+      editInput.current?.focus()
+      editInput.current?.select()
+    }
+  }, [editing])
+  useEffect(() => {
+    if (!more) return
+    moreRoot.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus()
+    const outside = (event: PointerEvent) => {
+      if (
+        !moreRoot.current?.contains(event.target as Node) &&
+        !moreTrigger.current?.contains(event.target as Node)
+      )
+        setMore(false)
+    }
+    document.addEventListener('pointerdown', outside)
+    return () => document.removeEventListener('pointerdown', outside)
+  }, [more])
+  function closeMore() {
+    setMore(false)
+    moreTrigger.current?.focus()
+  }
+  function closeEdit() {
+    setEditing(false)
+    editTrigger.current?.focus()
+  }
+  const sidecar = runtime.sidecars[message.id] ?? {}
+  const isLast = index === runtime.messages.length - 1
+  const running = isLast && runtime.running
+  const text = message.parts
+    .filter((part) => part.type === 'text')
+    .map((part) => part.content)
+    .join('')
+  const user = message.role === 'user'
+  const successful =
+    !running &&
+    !sidecar.error &&
+    !sidecar.stopped &&
+    !sidecar.failure &&
+    !['failed', 'cancelled', 'pending'].includes(sidecar.agent?.status ?? '')
+  function previousQuestion() {
+    for (let i = index - (user ? 0 : 1); i >= 0; i--) {
+      const item = runtime.messages[i]
+      if (item?.role === 'user')
+        return item.parts
+          .filter((part) => part.type === 'text')
+          .map((part) => part.content)
+          .join('')
+    }
+    return ''
+  }
+  function previousUserId() {
+    for (let i = index - (user ? 0 : 1); i >= 0; i--) {
+      const entry = runtime.messages[i]
+      if (entry?.role === 'user') return entry.id
+    }
+    return ''
+  }
+  function retry(searchOnly = false) {
+    if (!api.retryTurn?.(previousUserId(), searchOnly))
+      api.ask(previousQuestion(), searchOnly ? { scope: 'search' } : undefined)
+  }
+  function refill() {
+    if (!api.refillTurn?.(previousUserId())) api.refill(previousQuestion())
+  }
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text)
+      setFeedback('已复制')
+    } catch {
+      setFeedback('复制失败，请重试')
+    }
+  }
+  function exportText() {
+    try {
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown;charset=utf-8' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = '回答.md'
+      anchor.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setFeedback('已导出')
+    } catch {
+      setFeedback('导出失败，请重试')
+    }
+    closeMore()
+  }
+  return (
+    <MessageContext value={{ message, sidecar, running }}>
+      <article data-role={user ? 'user' : 'assistant'}>
+        <div className={styles.assistantHeading}>{user ? '你' : 'mimir'}</div>
+        {!!sidecar.attachments?.length && (
+          <div className={local.files}>
+            {sidecar.attachments.map((file) => (
+              <AttachmentTile file={file} key={file.id} />
+            ))}
+          </div>
+        )}
+        {sidecar.snapshot && (
+          <ImagePart image={sidecar.snapshot.image.dataUrl} name={sidecar.snapshot.image.name} />
+        )}
+        {editing ? (
+          <div className={local.edit}>
+            <textarea
+              ref={editInput}
+              value={edit}
+              aria-label="编辑消息"
+              onChange={(event) => setEdit(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') closeEdit()
+              }}
+            />
+            <div className={local.actions}>
+              <button
+                type="button"
+                onClick={() => {
+                  api.editTurn?.(message.id, edit)
+                  closeEdit()
+                }}
+                disabled={!edit.trim()}
+              >
+                保存并重新发送
+              </button>
+              <button type="button" onClick={closeEdit}>
+                取消
+              </button>
+            </div>
+          </div>
+        ) : (
+          keyedParts(message.parts, message.id).map(({ part, position: partIndex, key }) =>
+            user && part.type === 'text' ? (
+              <div key={key}>{part.content}</div>
+            ) : sidecar.snapshot && part.type === 'image' ? null : part.type === 'tool-call' ? (
+              message.parts[partIndex - 1]?.type === 'tool-call' ? null : (
+                <ToolGroup
+                  halted={
+                    sidecar.stopped
+                      ? 'cancelled'
+                      : sidecar.error || sidecar.failure
+                        ? 'error'
+                        : undefined
+                  }
+                  key={part.id}
+                  parts={message.parts
+                    .slice(
+                      partIndex,
+                      message.parts.findIndex(
+                        (next, i) => i > partIndex && next.type !== 'tool-call',
+                      ) < 0
+                        ? undefined
+                        : message.parts.findIndex(
+                            (next, i) => i > partIndex && next.type !== 'tool-call',
+                          ),
+                    )
+                    .filter(
+                      (next): next is Extract<MessagePart, { type: 'tool-call' }> =>
+                        next.type === 'tool-call',
+                    )}
+                />
+              )
+            ) : (
+              <NativePart
+                key={key}
+                part={part}
+                reasoningRunning={sidecar.reasoningRunning ?? running}
+              />
+            ),
+          )
+        )}
+        {!user &&
+          running &&
+          !message.parts.some(
+            (part) =>
+              (part.type === 'text' && part.content) || (part.type === 'thinking' && part.content),
+          ) && (
+            <span role="status" aria-label="正在生成回答" className={local.waiting}>
+              ●
+            </span>
+          )}
+        {!user && sidecar.agent && <DocxAgentHistoryNotice agent={sidecar.agent} />}
+        {!user && <CitationList citations={sidecar.citations ?? []} onOpen={api.onOpenCitation} />}
+        {!user && sidecar.failure ? (
+          <FailureCard
+            failure={sidecar.failure.kind}
+            detail={sidecar.failure.detail}
+            deepReasoningKnown={
+              api.sentHere || Boolean(runtime.sidecars[previousUserId()]?.modelSelection)
+            }
+            onSearchOnly={() => retry(true)}
+            onRetry={() => retry()}
+          />
+        ) : !user && sidecar.error ? (
+          <StreamErrorCard detail={sidecar.error} onRetry={() => retry()} onRefill={refill} />
+        ) : null}
+        {!user && sidecar.stopped && <StoppedNotice />}
+        {text && !running && (user || successful) && !editing && (
+          <div className={local.actions} data-older={!isLast || undefined}>
+            {user ? (
+              <>
+                <button type="button" aria-label="复制消息" onClick={() => void copy()}>
+                  <Copy size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="编辑消息"
+                  ref={editTrigger}
+                  disabled={runtime.running || !runtime.canEditBranch}
+                  onClick={() => {
+                    setEdit(text)
+                    setEditing(true)
+                  }}
+                >
+                  <Pencil size={14} />
+                </button>
+              </>
+            ) : (
+              <>
+                <AnswerActions />
+                <button
+                  type="button"
+                  aria-label="重新生成"
+                  disabled={runtime.running || !runtime.canEditBranch}
+                  onClick={() => api.regenerateTurn?.(previousUserId())}
+                >
+                  <RotateCcw size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="更多操作"
+                  ref={moreTrigger}
+                  aria-expanded={more}
+                  aria-haspopup="menu"
+                  onClick={() => setMore(!more)}
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+                {more && (
+                  <div
+                    role="menu"
+                    className={local.menu}
+                    ref={moreRoot}
+                    onKeyDown={(event) => {
+                      const items = [
+                        ...moreRoot.current!.querySelectorAll<HTMLButtonElement>(
+                          '[role="menuitem"]',
+                        ),
+                      ]
+                      if (event.key === 'Escape' || event.key === 'Tab') closeMore()
+                      if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+                        event.preventDefault()
+                        const i = items.indexOf(document.activeElement as HTMLButtonElement)
+                        items[
+                          event.key === 'Home'
+                            ? 0
+                            : event.key === 'End'
+                              ? items.length - 1
+                              : (i + (event.key === 'ArrowUp' ? -1 : 1) + items.length) %
+                                items.length
+                        ]?.focus()
+                      }
+                    }}
+                  >
+                    <button type="button" role="menuitem" onClick={exportText}>
+                      <Download size={14} />
+                      导出 Markdown
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      aria-label="关闭更多操作"
+                      onClick={closeMore}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+            {feedback && <span role="status">{feedback}</span>}
+          </div>
+        )}
+      </article>
+    </MessageContext>
   )
-  /**
-   * 消息状态**取整个对象**，不是 `.type`：停止与失败都是 `incomplete`，
-   * 区分靠 `reason`（`cancelled` 才是用户按了停止；`error` 是流断了，
-   * 由失败卡/连接中断卡交代）。取对象本身是安全的——它在 store 里是同一个
-   * 不可变引用；在 selector 里拼 `{ type, reason }` 字面量会让
-   * useSyncExternalStore 误判变化（实测：无限渲染、整页白屏）。
-   */
-  const status = useAuiState((state) => state.message.status)
-  const isLast = useAuiState((state) => state.message.isLast)
-  const isRunning = useAuiState((state) => state.thread.isRunning)
-  /** 这条消息在消息列里的位置（失败卡要按它回溯「上一问」） */
-  const index = useAuiState((state) => state.message.index)
-  const threadMessages = useAuiState((state) => state.thread.messages)
-
-  /**
-   * 「这一轮还在跑」= 这条消息的状态是 running，或整条 thread 在跑且它是最后一条。
-   *
-   * 后者兜住「检索刚开始、正文一个字都还没到」的那一刻：那时消息已经存在
-   * （服务端的 trace 事件让它出现，实测 `user/text, assistant/data+data`），
-   * 而它的状态在引擎眼里已经不再是 running 了吗？——不，它在跑。
-   * 两个判据取或，是因为不同阶段下哪一个先亮不完全一致。
-   */
-  const running = status?.type === 'running' || (isRunning && isLast)
-
-  /**
-   * 0 part 的助手消息。
-   *
-   * 平时**不渲染**（见文件头第 3 条）：停止生成或流一开始就断掉时，
-   * 引擎会留下这样一条空消息，而空盒子仍然占着 `thread` 的 `gap: 20px`
-   * ——用户看到的是「提问下面莫名多出一段空白」。
-   *
-   * 但**还在跑的时候**它正是「正在检索知识库 · Ns」该出现的位置：
-   * 消息在 `composer.send()` 那一刻就已经存在（乐观占位），而第一个
-   * part 要到服务端发来事件才有。这段窗口（几十毫秒到几秒）里如果
-   * 什么都不显示，用户对着一个按了发送却没反应的界面——而那正是
-   * 他刚做完一个动作、最需要反馈的时候。
-   *
-   * 所以这一支不是「空消息渲染成空盒子」，而是「空消息在跑的时候
-   * 是那条检索过程行的载体」。
-   */
-  if (parts === 0) {
-    if (!running || !isLast) return null
+}
+function NativePart({ part, reasoningRunning }: { part: MessagePart; reasoningRunning: boolean }) {
+  if (part.type === 'text') return <MarkdownPart text={part.content} />
+  if (part.type === 'thinking' && part.redacted) return <p>加密思考内容不展示</p>
+  if (part.type === 'thinking')
     return (
-      <MessagePrimitive.Root data-role="assistant">
-        <TraceDisclosure trace={null} live expanded />
-      </MessagePrimitive.Root>
+      <ReasoningPart
+        text={part.content}
+        status={{ type: reasoningRunning ? 'running' : 'complete' }}
+      />
+    )
+  if (part.type === 'tool-call') return <ToolCallPart part={part} />
+  if (part.type === 'tool-result')
+    return (
+      <details>
+        <summary>工具结果</summary>
+        <pre>
+          {typeof part.content === 'string' ? part.content : JSON.stringify(part.content, null, 2)}
+        </pre>
+      </details>
+    )
+  if (
+    part.type === 'image' ||
+    part.type === 'document' ||
+    part.type === 'audio' ||
+    part.type === 'video'
+  ) {
+    const source = part.source
+    const mime = source.type === 'data' ? source.mimeType : 'application/octet-stream'
+    const value =
+      source.type === 'url'
+        ? source.value
+        : source.type === 'data'
+          ? `data:${mime};base64,${source.value}`
+          : ''
+    if (part.type === 'image') return <ImagePart image={value} />
+    if (part.type === 'audio') return <audio controls src={value} aria-label="音频附件" />
+    if (part.type === 'video')
+      return <video controls src={value} aria-label="视频附件" style={{ maxWidth: '100%' }} />
+    const metadata = part.metadata as Record<string, unknown> | undefined
+    return (
+      <FilePart
+        data={value}
+        mimeType={mime}
+        filename={typeof metadata?.filename === 'string' ? metadata.filename : '附件'}
+      />
     )
   }
-
-  return (
-    <MessagePrimitive.Root data-role="assistant">
-      <div className={styles.assistantHeading}>
-        <span>mimir</span>
-      </div>
-      {/* 检索过程行。干活时（running）无条件在——检索结果没到时它是
-          「正在检索知识库 · Ns」，到了就地展开成步骤。
-          `expanded` 跟着 `running`：正文一出翻 false → 自动折叠
-          （折叠摘要里秒数继续走，那是服务端那条整轮 trace 补上的） */}
-      <TraceDisclosure trace={trace} live={running} expanded={running} searchOnly={searchOnly} />
-
-      <MessagePrimitive.Parts
-        components={{
-          Text: AssistantText,
-          /* data part 由上面的三个读取口显式渲染（顺序见文件头），
-             这里跳过它们 */
-          data: { Fallback: NoPart },
-          /* —— AG-UI 的其余消息体类型（每一种都按官方件渲染，D-099）——
-             引擎的平台默认组件是 `() => null`：不挂这些槽位，对应类型的
-             part 会**静默消失**（模型思考、工具调用、来源、附件）。
-             Reasoning 与检索过程共用官方 Reasoning 外壳（两张皮同一件） */
-          Reasoning: ReasoningPart,
-          Source: SourcePart,
-          File: FilePart,
-          Image: ImagePart,
-          /* audio 是引擎里已废弃的类型（提示经 File 槽），但类型在就接线
-             ——漏掉的表现同样是「静默消失」 */
-          Unstable_Audio: AudioPart,
-          /* 工具调用没有注册表（mimir 服务端今天不产 TOOL_CALL_*，将来
-             子代理 / MCP 才会），一律走官方 ToolFallback 的换算 */
-          tools: { Fallback: ToolCallPart },
-        }}
-      />
-
-      {docxAgent && <DocxAgentHistoryNotice agent={docxAgent} />}
-
-      <CitationList citations={citations} onOpen={api.onOpenCitation} />
-
-      {/* 失败卡与「连接中断」互斥：有 `mimir.failure` part 说明服务端已经
-          分过类（PRD §5.8 的四类出路），否则才是真·中断 */}
-      {failure !== null ? (
-        <FailureCard
-          failure={failure.kind}
-          detail={failure.detail}
-          deepReasoningKnown={api.sentHere}
-          onSearchOnly={() => {
-            const question = questionBefore(threadMessages, index - 1)
-            if (question)
-              api.ask(question, {
-                ...askOptionsFor(failure.kind, null),
-                scope: 'search',
-                snapshotName: snapshotBefore(threadMessages, index - 1),
-              })
-          }}
-          onRetry={() => {
-            const question = questionBefore(threadMessages, index - 1)
-            if (question)
-              api.ask(question, { snapshotName: snapshotBefore(threadMessages, index - 1) })
-          }}
-        />
-      ) : (
-        <MessagePrimitive.Error>
-          <StreamErrorLine />
-        </MessagePrimitive.Error>
-      )}
-
-      {/* 「已停止生成」：**只有用户按了停止才显示**——`incomplete` 被停止与
-          失败共用，停止是 `reason: 'cancelled'`，失败是 `reason: 'error'`
-          （那一支由上面的失败卡交代）。只看 `incomplete` 会把这一行挂到
-          失败卡下面：界面同时说「请求超时」与「已停止生成」，互相打架
-          （实测踩过） */}
-      {status?.type === 'incomplete' && status.reason === 'cancelled' ? <StoppedNotice /> : null}
-
-      {/* 动作条（存成笔记 / 复制）**与失败互斥**（旧实现的决定，PRD §5.7/
-          §5.8）：失败轮的正文是错误原文，存成笔记会把一句 400 存进知识库、
-          复制也只会复制报错——那时用户要的是出路，不是沉淀。有
-          `mimir.failure` part（或状态是 incomplete/error）都不给 */}
-      {isLast &&
-      failure === null &&
-      status?.type !== 'incomplete' &&
-      docxAgent?.status !== 'pending' &&
-      docxAgent?.status !== 'cancelled' &&
-      docxAgent?.status !== 'failed' ? (
-        <AnswerActions />
-      ) : null}
-    </MessagePrimitive.Root>
-  )
+  if (part.type === 'activity')
+    return (
+      <details>
+        <summary>{part.activityType}</summary>
+        <pre>{JSON.stringify(part.content, null, 2)}</pre>
+      </details>
+    )
+  if (part.type === 'structured-output')
+    return <pre>{JSON.stringify(part.data ?? part.partial, null, 2)}</pre>
+  if (part.type === 'subagent')
+    return (
+      <details>
+        <summary>子任务 · {part.subagent.status}</summary>
+        <pre>{JSON.stringify(part.subagent.messages, null, 2)}</pre>
+      </details>
+    )
+  return null
 }
 
-function AssistantText() {
-  const text = useAuiState((state) => (state.part.type === 'text' ? state.part.text : ''))
-  return <MarkdownPart text={text} />
-}
-
-/** 显式渲染之外的一切 part 都不渲染（引用卡与检索过程已单独渲染） */
-const NoPart = () => null
-
-/**
- * 连接中断卡。
- *
- * 它是 `MessagePrimitive.Error` 的 children——错误态是消息状态的一部分
- * （`incomplete` + `reason: 'error'`），不是外挂的一行。`role="alert"`
- * 由这张卡自己带（见 `FailureNotice.tsx`）。
- */
-function StreamErrorLine(): ReactNode {
-  const api = useMimirChatApi()
-  const detail = useAuiState((state) => {
-    const status = state.message.status
-    if (status?.type !== 'incomplete') return null
-    if (status.error instanceof Error) return status.error.message
-    if (status.reason === 'error') return '连接中断'
-    return null
-  })
-  const question = useAuiState((state) => {
-    let text = ''
-    for (let i = state.message.index - 1; i >= 0; i -= 1) {
-      const message = state.thread.messages[i]
-      if (message?.role !== 'user') continue
-      for (const part of message.parts) {
-        if (part.type === 'text' && typeof part.text === 'string') text += part.text
-      }
-      break
-    }
-    return text
-  })
-
-  const snapshotName = useAuiState((state) =>
-    snapshotBefore(state.thread.messages, state.message.index - 1),
-  )
-
-  if (detail === null) return null
-  return (
-    <StreamErrorCard
-      detail={detail}
-      onRetry={() => {
-        if (question) api.ask(question, { snapshotName })
-      }}
-      onRefill={() => {
-        if (question) api.refill(question, snapshotName)
-      }}
-    />
-  )
-}
-
-/** 消息部件的组件表。提到模块级：每次渲染新建对象会让引擎那层
-    记忆化判断失效（等于每次都重挂载整棵消息子树） */
-export const MESSAGE_COMPONENTS: { Message: ComponentType } = {
-  Message: MessageItem,
+function keyedParts(parts: MessagePart[], messageId: string) {
+  const counts = new Map<string, number>()
+  const result = []
+  let position = 0
+  for (const part of parts) {
+    const number = counts.get(part.type) ?? 0
+    counts.set(part.type, number + 1)
+    result.push({ part, position: position++, key: `${messageId}:${part.type}:${number}` })
+  }
+  return result
 }

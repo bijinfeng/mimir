@@ -1,121 +1,67 @@
+import { ChatClient } from '@tanstack/ai-client'
+import type { StreamChunk } from '@tanstack/ai'
 import type { Message } from '@mimir/shared'
-import type { ThreadMessageLike } from '@assistant-ui/react'
-import type { ExportedMessageRepository } from '@assistant-ui/react'
-import { ExportedMessageRepository as Repository } from '@assistant-ui/react'
+import type { UIMessage } from '@tanstack/ai'
 import type { ChatIo } from './io.js'
+import type { MessageSidecar } from './runtime-context.js'
 
-/**
- * 落库的 `Message` → 对话引擎的消息形状。
- *
- * ## 这是本次架构的核心改动
- *
- * 在这之前，「本轮结果」（检索过程 / 引用 / 失败）是**另一条数据流**：
- * 服务端推自定义事件 → 收进 state（`use-mimir-chat-events.ts`）→
- * 渲染层按**位置**把实时那份与落库那份对齐（`RoundResult.tsx` 的
- * `resolveRound`，那 80 行注释就是在解释为什么要按位置而不是按 id）。
- *
- * 现在它们都是**消息里的 data part**，两条路径同一个形状：
- *
- *  - 实时：服务端 CUSTOM 事件 → 运行时把它们变成 canonical data part
- *  - 历史：这里把落库字段转成同名的 data part
- *
- * 于是「同一轮的结果」与「这条消息」不再是两套对齐逻辑——
- * 消息在哪，它的依据就在哪。
- *
- * ## 顺序是刻意的：trace → citations → failure → 正文
- *
- * data part 按这个顺序排，正文在最后。历史会话里「检索过程在回答上方、
- * 引用在回答下方」那种版式靠 CSS 的 order 与独立渲染块实现，不靠 part 顺序；
- * 但 part 顺序仍然照实时那条流来排（先发的在前），这样读代码时两条路径
- * 是一致的。
- *
- * ## 失败那条的 `message`
- *
- * 落库只存分类（`packages/shared/src/conversations.ts` 的 messageSchema
- * 只有 text / trace / citations / failure），原始错误文本没有存。
- * 所以历史里的失败卡**没有 detail**，用 `FAILURE_UI` 的预设说明
- * （这与今天的行为一致：`resolveRound` 的 `failureDetail` 只在实时那份存在时给）。
- */
-/**
- * 一条消息里可以出现的 part。
- *
- * 从 `ThreadMessageLike['content']` 里取出来而不是 import `@assistant-ui/core`
- * 的类型：那个包是这个包的依赖的依赖（`@assistant-ui/react` 转发的），
- * 直接 import 等于多声明一条依赖，而这里要的只是同一个形状。
- */
-type ThreadMessageLikePart = Extract<ThreadMessageLike['content'], readonly unknown[]>[number]
-
-export function toThreadMessage(message: Message): ThreadMessageLike {
-  /* 局部是可变的数组，最后一次性交给 content（`ThreadMessageLike['content']`
-     是只读的——引擎那边把它当不可变数据） */
-  const parts: ThreadMessageLikePart[] = []
-
-  if (message.role === 'assistant') {
-    if (message.trace) {
-      parts.push({ type: 'data', name: 'mimir.trace', data: { trace: message.trace } })
-    }
-    if (message.citations && message.citations.length > 0) {
-      parts.push({
-        type: 'data',
-        name: 'mimir.citations',
-        data: { citations: message.citations },
-      })
-    }
-    if (message.failure) {
-      parts.push({
-        type: 'data',
-        name: 'mimir.failure',
-        data: { failure: message.failure, message: '' },
-      })
-    }
-    if (message.agent) {
-      parts.push({
-        type: 'data',
-        name:
-          message.agent.format && message.agent.format !== 'docx'
-            ? 'mimir.documentAgent'
-            : 'mimir.docxAgent',
-        data: { agent: message.agent },
-      })
-    }
-  }
-
-  parts.push({ type: 'text', text: message.text })
-
+/** History and live streams share native TanStack parts; legacy trace is deliberately ignored. */
+export function toThreadMessage(message: Message): UIMessage {
   return {
     id: message.id,
     role: message.role === 'user' ? 'user' : 'assistant',
-    content: parts,
+    parts: [{ type: 'text', content: message.text }],
+  }
+}
+export function historySidecar(message: Message): MessageSidecar {
+  return {
+    ...(message.savedNoteId ? { savedNoteId: message.savedNoteId } : {}),
+    ...(message.modelSelection ? { modelSelection: message.modelSelection } : {}),
+    ...(message.retrievalScope ? { retrievalScope: message.retrievalScope } : {}),
+    ...(message.citations?.length ? { citations: message.citations } : {}),
+    ...(message.failure ? { failure: { kind: message.failure, detail: '' } } : {}),
+    ...(message.agent ? { agent: message.agent } : {}),
+    ...(message.attachments?.length ? { attachments: message.attachments } : {}),
+  }
+}
+export function createHistoryAdapter(io: ChatIo, conversationId: string | undefined) {
+  return {
+    async load() {
+      if (!conversationId)
+        return { messages: [] as UIMessage[], sidecars: {} as Record<string, MessageSidecar> }
+      const conversation = await io.loadConversation(conversationId)
+      if (!conversation) throw new Error('会话不存在或已被删除')
+      return {
+        messages: await Promise.all(conversation.messages.map(replayThreadMessage)),
+        sidecars: Object.fromEntries(
+          conversation.messages.map((message) => [message.id, historySidecar(message)]),
+        ),
+      }
+    },
   }
 }
 
-/**
- * 历史适配器（对话引擎的 `adapters.history`）。
- *
- * ## 它替掉的是「initialMessages 只在挂载那一刻生效」
- *
- * 旧实现里历史必须**数据到位之后**才挂载对话体（`useChat` 内部把客户端建在
- * `useMemo(..., [])` 里，之后传的变化不生效），所以宿主有一个硬契约
- * （`messagesLoading` 分支 + `key` 重挂载）。有了 `load()`，宿主可以在数据
- * 没到位时就挂载，运行时自己出加载态（`thread.isLoading`，实测 true→false）
- * ——「换会话时白屏一下」也一并变成骨架屏。
- *
- * ## append / update 是空实现，这是对的
- *
- * **落库是服务端的职责**：服务端的 `persistAssistant` 在流走完时写
- * （`assistant-stream.ts`），而 AG-UI 运行时自己的 `unstable_persistsHistory`
- * 也是 true——两处都写会造出重复记录，且客户端那份没有服务端的 trace 与引用。
- */
-export function createHistoryAdapter(io: ChatIo, conversationId: string | undefined) {
-  return {
-    async load(): Promise<ExportedMessageRepository> {
-      if (!conversationId) return Repository.fromArray([])
-      const conversation = await io.loadConversation(conversationId)
-      if (!conversation) return Repository.fromArray([])
-      return Repository.fromArray(conversation.messages.map(toThreadMessage))
+/** Replay actual stored protocol events through the same SDK reducer as live rendering. */
+export async function replayThreadMessage(message: Message): Promise<UIMessage> {
+  const events = message.protocolEvents
+  if (message.role !== 'assistant' || !events?.length) return toThreadMessage(message)
+  const threadId = `history-${message.id}`
+  const runId = `history-run-${message.id}`
+  const client = new ChatClient({
+    connection: {
+      async *connect() {
+        yield { type: 'RUN_STARTED', threadId, runId } as StreamChunk
+        for (const event of events) yield event as unknown as StreamChunk
+        yield { type: 'RUN_FINISHED', threadId, runId } as StreamChunk
+      },
     },
-    async append(): Promise<void> {
-      /* 落库归服务端（见上） */
-    },
+  })
+  try {
+    await client.sendMessage('restore history')
+    const messages = client.getMessages().filter((entry) => entry.role === 'assistant')
+    const parts = messages.flatMap((entry) => entry.parts)
+    return parts.length ? { ...messages[0]!, id: message.id, parts } : toThreadMessage(message)
+  } finally {
+    client.dispose()
   }
 }

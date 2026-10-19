@@ -9,6 +9,8 @@ paths:
 
 API 请求/响应 schema 与插件接缝接口的唯一契约包；前后端都从这里取类型。
 
+会话临时附件、受保护原件、寿命/队列 lease 和消息协议历史见 [chat-attachments](./chat-attachments.md)。
+
 微信小程序设备凭证、范围、文档版本及操作回执见 [miniapp](./miniapp.md)。
 
 知识库/文件夹改名、描述更新与失败恢复见 [folder-update](./folder-update.md)。

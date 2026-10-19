@@ -119,7 +119,7 @@
     {
       "id": "chat",
       "name": "AI对话与生成交互",
-      "status": "approved_awaiting_phase_transition",
+      "status": "in_progress",
       "proposal": "../10-18-interaction-chat/prototype/v7/review.html",
       "version": "chat-review-v7",
       "approved_at": "2026-10-19",
@@ -160,7 +160,7 @@
         "removed": 7,
         "boundary": 122
       },
-      "implementation_phase_started": false,
+      "implementation_phase_started": true,
       "approval_summary": "../10-18-interaction-chat/implementation-review-v7.md"
     },
     {

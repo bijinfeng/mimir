@@ -199,6 +199,13 @@ export const messages = sqliteTable(
     /**
      * 检索过程。存 JSON 而不是拆成表：一次生成的快照，只随消息整体读写。
      */
+    modelSelection: text('model_selection', { mode: 'json' }).$type<
+      import('@mimir/shared').ChatModelSelection
+    >(),
+    retrievalScope: text('retrieval_scope', { mode: 'json' }).$type<
+      import('@mimir/shared').RetrievalScope
+    >(),
+    protocolEvents: text('protocol_events', { mode: 'json' }).$type<Record<string, unknown>[]>(),
     trace: text('trace', { mode: 'json' }),
     /** 引用卡片数组，同上 */
     citations: text('citations', { mode: 'json' })
@@ -417,3 +424,66 @@ export const miniappOperations = sqliteTable(
     index('miniapp_operations_status_idx').on(t.status),
   ],
 )
+
+/** Private, temporary conversation resources. No document/vault relationship. */
+export const conversationAttachments = sqliteTable(
+  'conversation_attachments',
+  {
+    id: text('id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    ownerId: text('owner_id').notNull(),
+    operationId: text('operation_id').notNull(),
+    name: text('name').notNull(),
+    mime: text('mime').notNull(),
+    kind: text('kind').notNull(),
+    size: integer('size').notNull(),
+    sha256: text('sha256').notNull(),
+    objectKey: text('object_key').notNull(),
+    extractedText: text('extracted_text'),
+    status: text('status').notNull(),
+    error: text('error'),
+    revision: integer('revision').notNull().default(0),
+    parserVersion: text('parser_version').notNull().default('mimir-attachment-preparation-v1'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    boundAt: integer('bound_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [
+    index('conversation_attachments_conversation_idx').on(t.conversationId),
+    uniqueIndex('conversation_attachments_operation_idx').on(t.conversationId, t.operationId),
+  ],
+)
+
+export const messageAttachments = sqliteTable(
+  'message_attachments',
+  {
+    messageId: text('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    attachmentId: text('attachment_id')
+      .notNull()
+      .references(() => conversationAttachments.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.messageId, t.attachmentId] })],
+)
+
+/** Durable bounded leases protect queued and in-flight resources across restarts. */
+export const attachmentLeases = sqliteTable(
+  'attachment_leases',
+  {
+    attachmentId: text('attachment_id')
+      .notNull()
+      .references(() => conversationAttachments.id, { onDelete: 'cascade' }),
+    leaseId: text('lease_id').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.attachmentId, t.leaseId] })],
+)
+
+/** Retained after conversation cascade, allowing idempotent storage cleanup retries. */
+export const attachmentGarbage = sqliteTable('attachment_garbage', {
+  objectKey: text('object_key').primaryKey(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+})

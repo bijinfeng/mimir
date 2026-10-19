@@ -189,7 +189,7 @@ export function FailureCard({
         })}
       </div>
       {!deepReasoningKnown && (
-        <div className={styles.note}>历史记录未保存思考模式；重试将使用标准模式。</div>
+        <div className={styles.note}>这条旧记录未保存模型设置；重试使用输入框当前设置。</div>
       )}
     </div>
   )

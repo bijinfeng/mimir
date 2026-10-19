@@ -13,13 +13,12 @@ import type { CSSProperties, ReactNode } from 'react'
  *
  * ## 两个变量组，各自的理由
  *
- * - **字号八档**：`.trellis/spec/project/design.md` 的阶梯是宿主的决策（`FONT_SIZE` 九档，
+ * - **字号九档**：`.trellis/spec/project/design.md` 的阶梯是宿主的决策（`FONT_SIZE` 九档，
  *   每档一个角色），包里写死数字会让「同一角色在不同页面用不同值」重新
  *   长出来——那正是阶梯要消灭的。所以值由宿主填。
- * - **`--mimir-chat-gutter`**：内容列宽 → 左右边距的比例。860px 的主视图用
- *   40px、400px 的侧栏用 16px；消息列 / 引用块 / 输入框**共用同一个变量**，
- *   所以它是三者对齐的唯一保证（各写一份必然漂移，实测过侧栏只剩 320px
- *   可用宽度）。
+ * - **`--mimir-chat-gutter`**：主视图左右边距 24px，侧栏 16px；消息列上限
+ *   808px、输入区域上限 856px。消息列 / 引用块 / 输入框共用边距变量，
+ *   由宿主统一控制主视图与窄栏的留白。
  *
  * ## 必须挂在**祖先**上
  *
@@ -62,9 +61,9 @@ export interface ChatHostFontSize {
 
 export interface ChatHostVarsProps {
   children: ReactNode
-  /** 窄栏（文档侧栏）传 16px；主视图不传（吃 40px 的默认值） */
+  /** 窄栏（文档侧栏）传 16px；主视图不传（吃 24px 的默认值） */
   gutter?: string
-  /** 宿主的字号阶梯（九档里对话用得到的那八档）。缺省用回退值 */
+  /** 宿主的字号阶梯（对话使用的九档）。缺省用回退值 */
   fontSize?: ChatHostFontSize
 }
 

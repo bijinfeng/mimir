@@ -29,17 +29,7 @@ export interface MimirChatApi {
   onOpenDocument?: (documentId: string) => void
   cancelDocxAgentRun?: (runId: string) => Promise<void>
   docxDocumentId?: string
-  /**
-   * 把一条问题作为新一轮发出。
-   *
-   * 生成中调用会**排队**（与用户在输入框里按 Enter 是同一条路）——
-   * 这是失败卡「重试」在生成中按下时的正确行为。
-   *
-   * 这一轮的参数 = **输入区当前的设置**（思考强度、范围）+ 这里给的覆盖。
-   * 与旧实现的差异要说明白：从前「重试」用的是**原来那一轮记下的**
-   * 思考强度；现在用输入区里那个可见的开关——用户看到什么就用什么，
-   * 不需要相信一个看不见的历史值。
-   */
+  /** Send a fresh question using the currently visible model and retrieval controls. */
   ask(question: string, options?: AskOptions): void
   /**
    * 把这一轮的回答存成笔记（PRD §5.7 的闭环）。
@@ -47,7 +37,8 @@ export interface MimirChatApi {
    * 由宿主实现（它要现取落库记录、按「最后一条助手消息」对齐——
    * 界面消息的 id 与服务端的不同），包只负责「点了」。
    */
-  saveAsNote(): Promise<{ noteId: string }>
+  canSaveMessage?: (id: string) => boolean
+  saveAsNote(messageId?: string): Promise<{ noteId: string }>
   /** 停止当前这一轮。排队的那条会**还回输入框**（D-098 的语义） */
   stop(): void
   /**
@@ -58,18 +49,14 @@ export interface MimirChatApi {
    * 这就是一条普通的 setText——那个补丁与它的三个调用点一并退役。
    */
   refill(text: string, snapshotName?: string): void
+  editTurn?: (userMessageId: string, text: string) => void
+  regenerateTurn?: (userMessageId: string) => void
+  retryTurn?: (userMessageId: string, searchOnly?: boolean) => boolean
+  refillTurn?: (userMessageId: string) => boolean
   reclaimQueued?: (id: string) => void
   /** Removing a screenshot dismisses its validation notice, never a transport error. */
   clearSnapshotAttachmentError?: () => void
-  /**
-   * 「这一轮的思考强度」是不是**这一块面板自己发过的**。
-   *
-   * 打开历史会话时，库里没有存那一轮的开关（`packages/shared/src/
-   * conversations.ts` 的 messageSchema 只有 text / trace / citations /
-   * failure），所以失败卡上要说清「重试按你现在的设置来」。
-   * 面板自己发过至少一轮之后，输入区里那个开关就是用户自己设的，
-   * 不必再解释。
-   */
+  /** Whether this panel has sent a turn; old histories may lack exact settings. */
   sentHere: boolean
 }
 

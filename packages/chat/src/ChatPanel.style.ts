@@ -31,7 +31,7 @@ import { createStyles } from 'antd-style'
  */
 
 /** 内容列宽（原型实测过的中文阅读宽度）。**只在这里写一次** */
-export const CONTENT_WIDTH = 850
+export const CONTENT_WIDTH = 856
 
 export const useChatPanelStyles = createStyles(({ css, token }) => ({
   /* 存成笔记 / 打开笔记的行：跟在引用卡之后，弱化成一条次级动作 */
@@ -58,7 +58,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 38px 0 24px;
+    padding: 16px 0 32px;
 
     /* 空态：整列变成居中舞台——问候语与输入框成一组、在可视区里垂直居中
        （Notion / ChatGPT 的新对话形态，用户拍板）。开始对话后输入部落回
@@ -81,20 +81,19 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
      的边距；阴影走浮层档（DESIGN §5.3）——它浮在内容之上。
      显隐不靠条件渲染：`ScrollToBottom` 在贴底时把自己置为 disabled，
      这里把它隐掉（`visibility` 而不是 `display`，位置不跳） */
-  /* 回到底部（官方 ThreadScrollToBottom 的换算）：圆形 outline 钮、
-   **居中**悬在 composer 上方（-top-12 的语义），不再是右下角 */
+  /* v7：在滚动区右下角保留固定位置，hover 不改变几何。 */
   backToBottom: css`
     position: absolute;
-    left: 50%;
-    bottom: 10px;
-    transform: translateX(-50%);
+    right: 24px;
+    bottom: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 9999px;
+    border-radius: 6px;
+    box-shadow: ${token.boxShadowSecondary};
     background: ${token.colorBgContainer};
     color: ${token.colorTextSecondary};
     cursor: pointer;
@@ -140,37 +139,35 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     /* 下内边距为 0：与输入框之间的那口气由 Composer 自己的上内边距给
        （12px）。这里再垫一层会叠成两段空隙——D-093 收尾时实测过
        34px 的间隔，就是三层边距累加出来的 */
-    padding: 0 var(--mimir-chat-gutter, 40px);
+    padding: 0 var(--mimir-chat-gutter, 24px);
   `,
 
   inner: css`
     width: 100%;
-    max-width: ${CONTENT_WIDTH}px;
+    max-width: 808px;
     margin: 0 auto;
     /*
-     * 左右内边距走变量：主视图是 860px 的宽列，40px 是那里的比例；
-     * 侧栏只有 400px，同样的 40px 会吃掉五分之一宽度，内容被压成一条
-     * （实测指南在 400px 面板里只剩 320px 宽）。侧栏把它覆写成 16px
-     * ——同一个「栏宽 → 边距」的比例关系，两种宽度下都成立。
+     * 消息列上限 808px，输入区域上限 856px；左右内边距统一走变量，
+     * 主视图为 24px，窄侧栏由宿主覆写为 16px。
      */
-    padding: 0 var(--mimir-chat-gutter, 40px);
+    padding: 0 var(--mimir-chat-gutter, 24px);
   `,
 
   /* 用户问题靠右，回答沿阅读列展开；正文里的表格与代码块保留宽度。 */
   thread: css`
     display: flex;
     flex-direction: column;
-    gap: 36px;
-    padding-bottom: 28px;
+    gap: 24px;
+    padding-bottom: 0;
 
     /* 气泡控制最大宽度，长中文问题不会挤成窄列。 */
     [data-role='user'] {
       align-self: flex-end;
-      max-width: min(85%, 620px);
+      max-width: 90%;
       background: ${token.colorFillQuaternary};
-      border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadiusLG}px;
-      padding: 11px 15px;
+      border: 0;
+      border-radius: 6px;
+      padding: 12px 16px;
       font-size: var(--mimir-chat-font-body, 14px);
       line-height: 1.7;
       white-space: pre-wrap;
@@ -186,8 +183,8 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
 
     [data-role='assistant'] {
       min-width: 0;
-      font-size: var(--mimir-chat-font-body, 14px);
-      line-height: 1.8;
+      font-size: var(--mimir-chat-font-reading, 15px);
+      line-height: 1.85;
       color: ${token.colorText};
 
       /* 渲染性能：长会话里每一条都参与布局是浪费。contain-intrinsic-size
@@ -268,14 +265,14 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
   assistantHeading: css`
     display: flex;
     align-items: center;
-    margin-bottom: 15px;
-    color: ${token.colorText};
+    margin-bottom: 8px;
+    color: ${token.colorTextSecondary};
     font-size: var(--mimir-chat-font-note, 12.5px);
     font-weight: 600;
   `,
 
   empty: css`
-    padding: 0 var(--mimir-chat-gutter, 40px) 28px;
+    padding: 0 var(--mimir-chat-gutter, 24px) 28px;
     text-align: center;
   `,
   emptyMark: css`

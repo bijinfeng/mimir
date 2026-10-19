@@ -7,7 +7,6 @@ packages:
   - plugins/*
 
 patchedDependencies:
-  '@assistant-ui/react-ag-ui@0.0.68': patches/@assistant-ui__react-ag-ui@0.0.68.patch
   cfb@1.2.2: patches/cfb@1.2.2.patch
 
 # NutUI declarations import React but omit its type peer. Without this local

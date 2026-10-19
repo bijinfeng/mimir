@@ -119,7 +119,7 @@ describe('对话流的事件顺序（AG-UI 合规）', () => {
 
     const seen = await feed(frames, created.body.id)
 
-    expect(seen.custom).toContain('mimir.trace')
+    expect(seen.custom).not.toContain('mimir.trace')
     expect(seen.finished, '整轮跑完没有收到 RUN_FINISHED').toBe(true)
     expect(seen.failure).toBeNull()
     expect(seen.text).toContain('未找到相关内容，未调用模型')
@@ -186,7 +186,7 @@ describe('对话流的事件顺序（AG-UI 合规）', () => {
     expect(seen.text.length).toBeGreaterThan(0)
   })
 
-  it('第一件事是 RUN_STARTED，终局 trace 在 RUN_FINISHED 之前', async () => {
+  it('第一件事是 RUN_STARTED，结束前保留业务事件但不生产 trace', async () => {
     const created = await client.post<{ id: string }>('/api/conversations', {})
     const frames = await chat({
       threadId: created.body.id,

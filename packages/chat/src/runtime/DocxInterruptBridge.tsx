@@ -1,5 +1,5 @@
-import { useAgUiInterrupts, useAgUiSubmitInterruptResponses } from '@assistant-ui/react-ag-ui'
-import { useAuiState } from '@assistant-ui/react'
+import { useChatRuntime } from './runtime-context.js'
+import type { ResumeTarget } from './runtime-context.js'
 import {
   agentAttachmentName,
   pptxMediaAnalysisSchema,
@@ -29,6 +29,7 @@ type PendingSubmission = {
   version: number
   responses: ToolResponse[]
   createdDocumentId: string | null
+  target: ResumeTarget
 }
 
 function clientToolOf(interrupt: ClientInterrupt): { name: string; input: unknown } | null {
@@ -445,9 +446,9 @@ async function undoValidatedRound(agent: ChatDocxAgent, roundId: string): Promis
 }
 
 /**
- * TanStack's client tool completes with RUN_FINISHED/outcome=interrupt. assistant-ui's
- * ordinary addToolResult path resumes a different AG-UI state, so these requests
- * are executed here and answered through the explicit interrupt API exactly once.
+ * TanStack client tools complete with RUN_FINISHED/outcome=interrupt.
+ * Execute against the original canvas once, then submit cached results through
+ * the explicit resume API; ordinary addToolResult does not resume this run.
  */
 export function DocxInterruptBridge({
   agent,
@@ -474,9 +475,10 @@ export function DocxInterruptBridge({
   onOpenDocument?: ChatIo['onOpenDocument']
   revisionMode: boolean
 }) {
-  const interrupts = useAgUiInterrupts()
-  const running = useAuiState((state) => state.thread.isRunning)
-  const submit = useAgUiSubmitInterruptResponses()
+  const runtime = useChatRuntime()
+  const interrupts = runtime.interrupts
+  const running = runtime.running
+  const submit = runtime.submit
   const submitRef = useRef(submit)
   const interruptsRef = useRef(interrupts)
   const registerRef = useRef(registerToolCancel)
@@ -517,8 +519,8 @@ export function DocxInterruptBridge({
   useEffect(() => {
     const key = `${agent.documentId}:${interrupts.map((item) => item.id).join(',')}`
     // RUN_FINISHED can publish interrupts before the SSE body has drained.
-    // assistant-ui rejects submitInterruptResponses while that run is still
-    // active, so wait for the runtime to finish it before executing tools.
+    // Wait for the active transport to settle before executing tools and
+    // submitting the explicit resume, preserving its original target.
     if (running || interrupts.length === 0 || completedRef.current.has(key)) return
     if (activeRef.current?.key === key && !activeRef.current.controller.signal.aborted) return
 
@@ -623,6 +625,11 @@ export function DocxInterruptBridge({
       completedRef.current.add(key)
       if (changed) setUndoRound(round.id)
       setProgress('正在继续生成回答')
+      const target = runtime.resumeTarget
+      if (!target) {
+        setFailure('工具结果续轮目标已失效')
+        return
+      }
       const submission: PendingSubmission = {
         key,
         documentId: agent.documentId,
@@ -631,9 +638,10 @@ export function DocxInterruptBridge({
         version: expectedVersion,
         responses,
         createdDocumentId,
+        target,
       }
       try {
-        await submitRef.current(responses)
+        await submitRef.current(responses, target)
         if (!controller.signal.aborted) setProgress(null)
         if (activeRef.current?.key === key) activeRef.current = null
         activeRoundRef.current = null
@@ -661,6 +669,7 @@ export function DocxInterruptBridge({
     createDocxDocument,
     revisionMode,
     running,
+    runtime.resumeTarget,
   ])
 
   useEffect(() => {
@@ -708,11 +717,9 @@ export function DocxInterruptBridge({
     const pending = pendingSubmission
     if (!pending || retryingRef.current || running) return
     const round = getRound()
-    const currentKey = `${agent.documentId}:${interrupts.map((item) => item.id).join(',')}`
     if (
       agent.documentId !== pending.documentId ||
       (agent.format ?? 'docx') !== pending.format ||
-      currentKey !== pending.key ||
       round?.id !== pending.roundId ||
       round.version !== pending.version ||
       agent.getVersion() !== pending.version
@@ -727,7 +734,7 @@ export function DocxInterruptBridge({
     try {
       // Reuse the computed payload. The server atomically rejects replay if
       // the first request arrived despite the client seeing an error.
-      await submitRef.current(pending.responses)
+      await submitRef.current(pending.responses, pending.target)
       setPendingSubmission(null)
       if (pending.createdDocumentId) setCreatedDocId(pending.createdDocumentId)
     } catch (error) {

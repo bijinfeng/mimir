@@ -43,3 +43,8 @@ export const verification = pick('verification')
 
 export const miniappDevices = pick('miniappDevices')
 export const miniappOperations = pick('miniappOperations')
+
+export const conversationAttachments = pick('conversationAttachments')
+export const messageAttachments = pick('messageAttachments')
+export const attachmentLeases = pick('attachmentLeases')
+export const attachmentGarbage = pick('attachmentGarbage')

@@ -5,10 +5,17 @@
 
 | 症状 | 原因 |
 |---|---|
-| 截图排队后发成普通检索，或第二轮缺少真实会话/当前文档上下文 | AG-UI 排队构造的实际 HTTP body 可能保留 composer 的冻结 marker，却缺少 subscriber 注入的路由字段。PPTX 截图须在 fetch 边界检查真实 body，缺失时复用同一初始化函数补齐并再次校验目标；测试必须检查第二个真实 HTTP 请求，不能只检查 onRunInitialized 或队列状态 |
-| 文档 Agent 工具已改画布，续轮 HTTP 失败后再点提交提示 `no pending interrupts` | `@assistant-ui/react-ag-ui@0.0.68` 在请求发出前清掉中断；`patches/@assistant-ui__react-ag-ui@0.0.68.patch` 在失败且当前分支仍是该中断的子轮时恢复中断。补丁须登记在 `pnpm-workspace.yaml` 的 `patchedDependencies` 并更新 `pnpm-lock.yaml`；升级依赖时同步重做补丁，运行 `pnpm install --frozen-lockfile` 和 ChatPanel 续轮测试。桥接层只重送缓存结果，先核对文档、轮次和画布版本，不能重新执行工具；画布确实变化时仍须拒绝旧结果 |
+| 点停止后队首自动发送、输入框又清空 | React 复用停止/发送按钮 DOM，停止处理器回填队首并把按钮更新成 submit 后，浏览器才执行 click 默认动作。停止 click 须 preventDefault；DOM 测试要覆盖事件冒泡结束前提交 React 更新的顺序，不能只依赖 act 延后渲染 |
+| 截图排队后发成普通检索，或第二轮缺少真实会话/当前文档上下文 | 排队构造的实际 HTTP body 必须保留该项冻结参数及真实路由字段。PPTX 截图须在 fetch 边界检查真实 body，缺失时复用同一初始化函数补齐并再次校验目标；测试必须检查第二个真实 HTTP 请求，不能只检查内部初始化函数或队列状态 |
+| 文档 Agent 工具已改画布，续轮失败后重试却重复执行或丢中断 | 续传必须绑定原 `threadId/runId` 和完整缓存工具结果；SDK fulfilled false 也属失败。桥保留缓存，重试前复核来源、轮次、画布版本，只重传结果。不要重新执行工具，也不再依赖已移除的 assistant-ui 补丁 |
 | **消息排版整批失灵（标记消失、正文回退浏览器默认），但类都定义着** | 样式类**定义了却没有人挂**：整组后代选择器（`[data-role='user'] …`）全靠一个容器类作祖先，容器类漏挂（重构时只渲染了 `<Messages/>` 忘了包壳）它们整批静默失配——界面能用、丑一圈、不报错（实测：抽包后 `ChatThread` 漏挂 `styles.thread`，`›` 标记与 markdown 规范全没了）。样式类必须有消费点，抽完壳 grep 一次 |
-| 打开历史会话右栏空白，而中栏的「本次引用」正常 | `useChat` 的 `initialMessages` 只在挂载时生效（旧引擎）。D-099 后由包的历史适配器 + `thread.isLoading` 骨架屏承担：数据没到位也能挂载。这条现在只剩历史价值——它解释了为什么 `ChatPanel` 曾有一个 `messagesLoading` 硬契约 |
+| 打开历史会话空白或真实思考丢失 | SDK 初始消息不是异步历史加载器。先显示加载状态，完成后显式安装历史；`protocolEvents` 经同版 SDK reducer 重放，sidecar 按消息 ID 恢复。失败不能落成空会话 |
 | 发送中切换会话，正在进行的流被切断 | 客户端连接的地址跟着会话变（AG-UI 客户端与 `useChat` 同一条性质）。会话 id 放请求体（`forwardedProps`），不进 URL；切换会话靠宿主的 `key` 重挂载（D-099 的重挂载契约） |
 | 新会话提问后右栏空白，而消息已落库 | 建会话后写 URL 触发重挂载——要区分「自己刚创建的 id」与「切换过去的会话」，前者不重挂载 |
 | 点「问 AI」没反应 | 只存了草稿没导航。设置草稿后必须一起 `navigate` |
+| UI 显示新模型，但已排队问题也换了模型或附件 | 在 await 之后读取当前设置；发送意图必须在异步前冻结，每项 FIFO 独立，派发只复核该快照有效性 |
+| 新版非流式 SDK 回答变成对象或 `[object Object]` | ai 0.69 的 `chat({stream:false})` 返回 `ChatResult`；统一服务边界取 `.text`，不能把宽泛 adapter 断言当成字符串保证 |
+
+## 上传占位与 StrictMode
+
+上传卡的 `upload-*` ID 和空 `conversationId` 只是本地占位，不能发 lease 请求；仅服务端返回 ready 且 hash/会话齐全的资源参与续租。生命周期 effect 的 setup 必须恢复 live 状态，不能只在 cleanup 置 false，否则 React StrictMode 重放后会误删真实上传结果。

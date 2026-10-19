@@ -1,7 +1,7 @@
-import { ThreadPrimitive, useAuiState } from '@assistant-ui/react'
+import { useChatRuntime } from './runtime/runtime-context.js'
 import type { ReactNode } from 'react'
 import { useChatPanelStyles } from './ChatPanel.style.js'
-import { MESSAGE_COMPONENTS } from './parts/MessageItem.js'
+import { MessageItem } from './parts/MessageItem.js'
 
 /**
  * 消息区（滚动容器里的那一列）。
@@ -50,8 +50,18 @@ export function ChatThread({
   composer: ReactNode
 }) {
   const { styles } = useChatPanelStyles()
-  const isEmpty = useAuiState((state) => state.thread.isEmpty)
-  const isLoading = useAuiState((state) => state.thread.isLoading)
+  const runtime = useChatRuntime()
+  const isEmpty = runtime.messages.length === 0
+  const isLoading = runtime.loading
+  if (runtime.loadError)
+    return (
+      <div role="alert">
+        {runtime.loadError}{' '}
+        <button type="button" onClick={runtime.reloadHistory}>
+          重新加载
+        </button>
+      </div>
+    )
 
   if (isLoading) {
     /* 官方 ThreadHistorySkeleton 的形状：右侧的提问气泡 + 两组递减的
@@ -94,7 +104,32 @@ export function ChatThread({
      不报错。第一版就漏了它）。 */
   return (
     <div className={styles.thread}>
-      <ThreadPrimitive.Messages components={MESSAGE_COMPONENTS} />
+      {runtime.branch.count > 1 && (
+        <nav aria-label="本地会话分支" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button
+            type="button"
+            aria-label="上一个分支"
+            disabled={runtime.running || runtime.branch.index === 0}
+            onClick={() => runtime.branch.select(runtime.branch.index - 1)}
+          >
+            ‹
+          </button>
+          <span>
+            {runtime.branch.index + 1} / {runtime.branch.count}
+          </span>
+          <button
+            type="button"
+            aria-label="下一个分支"
+            disabled={runtime.running || runtime.branch.index === runtime.branch.count - 1}
+            onClick={() => runtime.branch.select(runtime.branch.index + 1)}
+          >
+            ›
+          </button>
+        </nav>
+      )}
+      {runtime.messages.map((message, index) => (
+        <MessageItem key={message.id} message={message} index={index} />
+      ))}
     </div>
   )
 }

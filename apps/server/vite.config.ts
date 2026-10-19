@@ -61,6 +61,11 @@ export default defineConfig(({ mode }) => {
       devServer({ entry: 'src/dev.ts', injectClientScript: false }),
     ],
 
+    // Canvas contains platform .node binaries; only the isolated Node worker loads it.
+    // Vite's browser dependency optimizer must never parse those binaries.
+    optimizeDeps: { exclude: ['@napi-rs/canvas'] },
+    ssr: { external: ['@napi-rs/canvas'] },
+
     server: {
       // 与前端 dev 代理的默认目标对齐（前端的 vite.config.ts 也读这个 PORT）。
       // strictPort：占用时报错而不是悄悄换端口——换了端口，前端代理就指向一个
@@ -83,6 +88,8 @@ export default defineConfig(({ mode }) => {
           // 名字自带一层目录：配合 preserveModules 产出 dist/db/migrate.js，
           // 与源码同深度——`../../drizzle` 才能指到 apps/server/drizzle
           'db/migrate': 'src/db/migrate.ts',
+          'services/chat-attachment-worker': 'src/services/chat-attachment-worker.ts',
+          'plugins/attachment-parser': 'src/plugins/attachment-parser.ts',
         },
         output: {
           // 见本文件开头契约 1

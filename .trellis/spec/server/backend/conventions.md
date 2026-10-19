@@ -15,7 +15,7 @@ src/
 ├── env.ts          环境变量集中校验。不要在其他地方直接读 process.env
 ├── db/             schema + 迁移
 ├── lib/            无状态的纯工具（文本、vault、HTTP 辅助）
-├── plugins/        **装配层**：host.ts（唯一的跨边界文件）+ settings-store.ts
+├── plugins/        **装配层**：host.ts（正常宿主装配）+ attachment-parser.ts（隔离 worker 的纯 parser 装配）+ settings-store.ts
 ├── search/         检索的宿主适配层（注入 snippet 端口；编排在 @mimir/core）
 ├── services/       业务逻辑。文件与数据库的一致性在这一层保证
 └── routes/         只做参数校验与调用 service，不写业务逻辑
@@ -25,8 +25,8 @@ src/
 
 **这一层是「宿主」，不是「核心」。** 插件实现在仓库根的 `plugins/*`
 （独立 workspace 包），核心骨架在 `packages/core`。宿主只负责：路由、鉴权、
-业务逻辑、数据库，以及**装配**（`src/plugins/host.ts`——全仓唯一同时 import
-宿主与插件的文件）。
+业务逻辑、数据库，以及**装配**（`src/plugins/host.ts`——正常应用的唯一宿主/插件装配文件；
+`src/plugins/attachment-parser.ts` 仅作为独立 worker 入口导出纯 parser，不能引入模型、数据库或应用启动）。
 
 ---
 

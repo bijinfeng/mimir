@@ -1,299 +1,135 @@
-import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState } from '@assistant-ui/react'
-import { Button } from 'antd'
 import { ArrowDown } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import type { ChatModelSelection } from '@mimir/shared'
 import { useChatPanelStyles } from './ChatPanel.style.js'
 import { ChatThread } from './ChatThread.js'
 import { Composer } from './composer/Composer.js'
-import type { ContextDoc } from './composer/ComposerMenus.js'
 import { EmptyStage } from './EmptyStage.js'
-import { useScrolled } from './hooks/use-scrolled.js'
-import { MimirChatProvider, useMimirChatApi } from './runtime/chat-context.js'
+import { MimirChatProvider } from './runtime/chat-context.js'
+import { RuntimeContext } from './runtime/runtime-context.js'
 import { useMimirRuntime } from './runtime/use-mimir-runtime.js'
-import { snapshotFilename } from './runtime/pptx-snapshot.js'
 import { DocxInterruptBridge } from './runtime/DocxInterruptBridge.js'
-import type { ChatDraft, ChatPanelProps, ChatPptxSnapshot } from './types.js'
+import type { ChatPanelProps } from './types.js'
 
-/**
- * 对话面板。
- *
- * 会话优先意味着对话是**主视图**，不是侧边面板（`.trellis/spec/project/product.md` §5.2）。
- * 它有两个宿主：对话页（860px 宽列）与文档页的「问 AI」侧栏（400px 窄栏）
- * ——宿主通过 `draft`（锁范围）、`guide`（空态布局）和
- * `showReasoningControl`（文档侧栏隐藏强度）配置入口，消息运行时共用，
- * 所以是**同一个组件**而不是两份实现（D-087「复用而不是另写一套」）。
- *
- * ## 这个文件只剩四件事
- *
- * 1. **组装**：滚动区（消息）+ 底部输入线（或空态里与问候语成组）
- * 2. **两块本轮设置**：检索范围（`contextDocument`）与思考强度
- *    （`deepReasoning`）——它们每轮写进 composer 的 runConfig
- * 3. **两个滚动的可见结果**：「回到底部」（贴底即隐形）与 `data-scrolled`
- *    （输入区上方的界线，D-070）
- * 4. **空态两种形态的分派**（居中舞台 / 侧栏指南）
- *
- * 流式状态、消息、队列、停止——全在 `useMimirRuntime` 与引擎里。
- * 组件不碰流式状态，这条纪律与旧实现一致，只是引擎换了。
- */
-export function ChatPanel({
-  conversationId,
-  draft,
-  onOpenCitation,
-  onOpenNote,
-  io,
-  docxAgent,
-  documentAgent,
-  draftAgent,
-  snapshotVisionReady,
-  docxRevisionMode = false,
-  ...rest
-}: ChatPanelProps) {
-  const activeAgent = documentAgent ?? docxAgent
-  const {
-    runtime,
-    api,
-    getDocxRound,
-    advanceDocxVersion,
-    registerToolCancel,
-    prepareDocxSend,
-    applySnapshotDraft,
-    snapshotError,
-    clearSnapshotError,
-  } = useMimirRuntime({
-    io,
-    conversationId,
-    onOpenCitation,
-    onOpenNote,
+export function ChatPanel(props: ChatPanelProps) {
+  const { styles } = useChatPanelStyles()
+  const [modelSelection, setModelSelection] = useState<ChatModelSelection>()
+  const [documentId, setDocumentId] = useState<string | null>(props.draft?.documentId ?? null)
+  const activeAgent = props.documentAgent ?? props.docxAgent
+  const { runtime, api } = useMimirRuntime({
+    io: props.io,
+    conversationId: props.conversationId,
+    onOpenCitation: props.onOpenCitation,
+    onOpenNote: props.onOpenNote,
     docxAgent: activeAgent,
-    draftAgent,
-    snapshotVisionReady,
+    draftAgent: props.draftAgent,
+    snapshotVisionReady: props.snapshotVisionReady,
+    composerStatus: props.composerStatus,
+    modelSelection:
+      modelSelection ?? props.composerStatus.models?.catalog?.defaultSelection ?? undefined,
+    setModelSelection,
+    documentId,
+    setDocumentId,
   })
-
+  const scroll = useRef<HTMLDivElement>(null)
+  const pinned = useRef(true)
+  const [away, setAway] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+  const applied = useRef<ChatPanelProps['draft']>(null)
+  const effectiveSelection =
+    modelSelection ?? props.composerStatus.models?.catalog?.defaultSelection ?? undefined
+  const applyIncomingDraft = useEffectEvent((incoming: ChatPanelProps['draft']) => {
+    if (incoming && applied.current !== incoming) {
+      applied.current = incoming
+      if (incoming.text !== undefined && (incoming.text || !incoming.documentId))
+        runtime.setDraft(incoming.text)
+      setDocumentId(incoming.documentId ?? null)
+      runtime.applySnapshotDraft(incoming.snapshot)
+    }
+  })
+  useEffect(() => {
+    applyIncomingDraft(props.draft)
+  }, [props.draft])
+  useEffect(() => {
+    if (pinned.current && scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight
+  })
+  const empty = !runtime.messages.length && !runtime.loading
+  const centered = empty && !props.guide
+  const composer = (
+    <Composer
+      runtime={runtime}
+      status={props.composerStatus}
+      io={props.io}
+      documentId={documentId}
+      onDocumentIdChange={setDocumentId}
+      modelSelection={effectiveSelection}
+      onModelSelectionChange={setModelSelection}
+      focusOnMount={props.focusComposer}
+    />
+  )
   return (
-    <AssistantRuntimeProvider runtime={runtime}>
+    <RuntimeContext value={runtime}>
       <MimirChatProvider api={api}>
         {activeAgent && (
           <DocxInterruptBridge
             agent={activeAgent}
-            getRound={getDocxRound}
-            advanceVersion={advanceDocxVersion}
-            registerToolCancel={registerToolCancel}
-            generateDocxImage={io.generateDocxImage}
-            fetchDocxImage={io.fetchDocxImage}
-            writeDocxDocument={io.writeDocxDocument}
-            analyzeDocxMedia={io.analyzeDocxMedia}
-            createDocxDocument={io.createDocxDocument}
-            onOpenDocument={io.onOpenDocument}
-            revisionMode={docxRevisionMode}
+            getRound={runtime.getRound}
+            advanceVersion={runtime.advanceVersion}
+            registerToolCancel={runtime.registerToolCancel}
+            generateDocxImage={props.io.generateDocxImage}
+            fetchDocxImage={props.io.fetchDocxImage}
+            writeDocxDocument={props.io.writeDocxDocument}
+            analyzeDocxMedia={props.io.analyzeDocxMedia}
+            createDocxDocument={props.io.createDocxDocument}
+            onOpenDocument={props.io.onOpenDocument}
+            revisionMode={props.docxRevisionMode ?? false}
           />
         )}
-        <ChatPanelBody
-          {...rest}
-          draft={draft}
-          onOpenCitation={onOpenCitation}
-          onOpenNote={onOpenNote}
-          io={io}
-          onBeforeSubmit={prepareDocxSend}
-          applySnapshotDraft={applySnapshotDraft}
-          snapshotError={snapshotError}
-          clearSnapshotError={clearSnapshotError}
-          snapshotVisionReady={Boolean(activeAgent && snapshotVisionReady)}
-        />
-      </MimirChatProvider>
-    </AssistantRuntimeProvider>
-  )
-}
-
-function ChatPanelBody({
-  draft,
-  guide,
-  guideActions,
-  focusComposer,
-  showReasoningControl = true,
-  io,
-  composerStatus,
-  onBeforeSubmit,
-  applySnapshotDraft,
-  snapshotError,
-  clearSnapshotError,
-  snapshotVisionReady,
-}: Pick<
-  ChatPanelProps,
-  | 'draft'
-  | 'guide'
-  | 'guideActions'
-  | 'focusComposer'
-  | 'showReasoningControl'
-  | 'io'
-  | 'composerStatus'
-  | 'onOpenCitation'
-  | 'onOpenNote'
-> & {
-  onBeforeSubmit: () => boolean
-  applySnapshotDraft: (snapshot?: ChatPptxSnapshot) => boolean
-  snapshotError: string | null
-  clearSnapshotError: () => void
-  snapshotVisionReady: boolean
-}) {
-  const { styles } = useChatPanelStyles()
-  const aui = useAui()
-  const api = useMimirChatApi()
-  const empty = useAuiState((state) => state.thread.isEmpty)
-  const hasSnapshot = useAuiState((state) =>
-    state.composer.attachments.some((item) => snapshotFilename(item.name)),
-  )
-  const scrollRef = useRef<HTMLDivElement | null>(null)
-  /* 输入区上方的界线随滚动显形（D-070）。滚动容器是引擎的 viewport，
-     ref 挂在它上面；`useScrolled` 同时监听 document 的捕获，所以
-     它晚挂载也能接上 */
-  const scrolled = useScrolled(scrollRef)
-
-  /**
-   * 本轮检索范围（「+ 添加上下文」所选，或从文档工具条带进来的 draft 锁定）。
-   *
-   * `Composer` 每轮把它写进 composer 的 runConfig，于是排队的那条也带着
-   * 自己那一轮的范围（引擎存的是完整 AppendMessage）。null = 整个知识库。
-   *
-   * 范围锁定的来源**只有 `draft`**：空态里点选的那一篇随收件箱退役了
-   * （D-054），再留一个永远为 undefined 的 state 会让「范围为什么锁在
-   * 这一篇」多一条不存在的路径。
-   */
-  const [contextDoc, setContextDoc] = useState<ContextDoc | null>(
-    draft?.documentId ? { id: draft.documentId, title: '当前文档' } : null,
-  )
-  const [scopeDraft, setScopeDraft] = useState(draft)
-  if (scopeDraft !== draft) {
-    setScopeDraft(draft)
-    if (draft)
-      setContextDoc(
-        draft.documentId
-          ? contextDoc?.id === draft.documentId
-            ? contextDoc
-            : { id: draft.documentId, title: '当前文档' }
-          : null,
-      )
-  }
-  const appliedDraft = useRef<ChatDraft | null>(null)
-
-  /** 新的宿主草稿只消费一次；普通重渲染不能覆盖用户在输入框里的修改。 */
-  useEffect(() => {
-    if (!draft) {
-      appliedDraft.current = null
-      return
-    }
-    if (appliedDraft.current === draft) return
-    appliedDraft.current = draft
-    if (!applySnapshotDraft(draft.snapshot)) return
-
-    if (draft.text) aui.composer.setText(draft.text)
-    if (draft.snapshot)
-      scrollRef.current
-        ?.closest('[data-mimir-chat]')
-        ?.querySelector<HTMLTextAreaElement>('textarea')
-        ?.focus({ preventScroll: true })
-  }, [aui, draft, applySnapshotDraft])
-  /** 深入 = 用推理角色回答（这一轮的设置，随消息的 runConfig 走）。 */
-  const [reasoningSelection, setReasoningSelection] = useState({
-    deep: false,
-    controlVisible: showReasoningControl,
-  })
-  if (reasoningSelection.controlVisible !== showReasoningControl) {
-    setReasoningSelection({
-      deep: showReasoningControl ? reasoningSelection.deep : false,
-      controlVisible: showReasoningControl,
-    })
-  }
-  const activeDeepReasoning = showReasoningControl ? reasoningSelection.deep : false
-  const setDeepReasoning = (deep: boolean) => setReasoningSelection({ deep, controlVisible: true })
-
-  /**
-   * 「一句话直接发出去」的入口——指南里的建议问题、输入框上方的快捷提问
-   * 胶囊都收它。
-   *
-   * 走 `api.ask`（= composer 的 setText + send）而不是 `thread.append`：
-   * 服务端收到的消息与用户手打的完全一致，包括那一轮的 runConfig。
-   */
-  const ask = (question: string) => {
-    api.ask(question, { documentId: contextDoc?.id ?? null, deepReasoning: activeDeepReasoning })
-  }
-
-  /**
-   * 指南模式（D-090/D-093）：空态且宿主给了 `guide` 时，空态不再是居中
-   * 舞台——指南占滚动区、输入框固定底部（语雀的阅读助手同形）。
-   * 判据只看「空 + 有指南」：一旦开始对话这一块就恢复成消息列
-   * （指南的使命是「第一次打开时告诉他这面板能干什么」，对话开始后
-   * 它不该再占位置）。
-   */
-  const guideMode = empty && guide !== undefined
-  /** 居中舞台：主视图的空态（问候语与输入框成一组，ChatGPT / Notion 形态） */
-  const centered = empty && !guideMode
-
-  const composer = (
-    <Composer
-      contextDocument={contextDoc}
-      onContextDocumentChange={setContextDoc}
-      deepReasoning={activeDeepReasoning}
-      onDeepReasoningChange={setDeepReasoning}
-      showReasoningControl={showReasoningControl}
-      focusOnMount={focusComposer}
-      io={io}
-      status={composerStatus}
-      onBeforeSubmit={onBeforeSubmit}
-      snapshotError={snapshotError}
-      clearSnapshotError={clearSnapshotError}
-      snapshotVisionReady={snapshotVisionReady}
-    />
-  )
-
-  return (
-    <ThreadPrimitive.Root className={styles.wrap} data-mimir-chat="">
-      <div className={styles.scrollWrap}>
-        <ThreadPrimitive.Viewport
-          ref={scrollRef}
-          className={styles.scroll}
-          data-empty={centered ? '' : undefined}
-        >
-          <div className={centered ? styles.innerEmpty : styles.inner}>
-            <ChatThread
-              /* 空态舞台：指南（侧栏）或问候语（主视图）。两者都由宿主
-                 拍板，这一层只负责落位与顺序 */
-              stage={guideMode ? guide(ask) : <EmptyStage draft={draft} />}
-              /* 居中舞台时输入区与问候语成一组；指南模式下它在下面的底栏 */
-              composer={centered ? composer : null}
-            />
-          </div>
-        </ThreadPrimitive.Viewport>
-
-        {/* 离底时才出现、到底即隐形——`ScrollToBottom` 在贴底时把自己置为
-            disabled，样式里 `visibility: hidden`（不是条件渲染：那会让按钮
-            在出现/消失时改变布局，而它是浮层，不该参与布局）。
-            它浮在滚动区之上，所以不能放进滚动容器里 */}
-        <ThreadPrimitive.ScrollToBottom
-          render={
-            <Button
+        <div className={styles.wrap} data-mimir-chat="">
+          <div className={styles.scrollWrap}>
+            <div
+              ref={scroll}
+              className={styles.scroll}
+              data-empty={centered ? '' : undefined}
+              onScroll={() => {
+                const node = scroll.current
+                if (!node) return
+                pinned.current = node.scrollHeight - node.scrollTop - node.clientHeight < 64
+                setAway(!pinned.current)
+                setScrolled(node.scrollTop > 0)
+              }}
+            >
+              <div className={centered ? styles.innerEmpty : styles.inner}>
+                <ChatThread
+                  stage={props.guide ? props.guide(api.ask) : <EmptyStage draft={props.draft} />}
+                  composer={centered ? composer : null}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
               className={styles.backToBottom}
-              size="small"
-              shape="circle"
-              icon={<ArrowDown size={16} />}
               aria-label="回到底部"
-            />
-          }
-        />
-      </div>
-
-      {/* 空态（且非指南模式）时输入区在居中组里（ChatThread 渲染），
-          底部这条不渲染——否则同一个输入框会出现两份。
-          指南模式下反过来：输入框**固定在这条底部线上**，指南自己占滚动区 */}
-      {(!empty || guideMode) && (
-        <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
-          {/* 快捷提问贴着输入框（D-093）。放在 composerLine 里面而不是
-              滚动区：它要一直看得见，且与输入框同一条对齐线 */}
-          {guideMode && !hasSnapshot && guideActions !== undefined ? (
-            <div className={styles.composerTop}>{guideActions(ask)}</div>
-          ) : null}
-          {composer}
+              disabled={!away}
+              onClick={() => {
+                pinned.current = true
+                setAway(false)
+                scroll.current?.scrollTo({ top: scroll.current.scrollHeight, behavior: 'smooth' })
+              }}
+            >
+              <ArrowDown size={16} />
+            </button>
+          </div>
+          {(!empty || props.guide) && (
+            <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
+              {empty && props.guideActions && !runtime.snapshot && (
+                <div className={styles.composerTop}>{props.guideActions(api.ask)}</div>
+              )}
+              {composer}
+            </div>
+          )}
         </div>
-      )}
-    </ThreadPrimitive.Root>
+      </MimirChatProvider>
+    </RuntimeContext>
   )
 }

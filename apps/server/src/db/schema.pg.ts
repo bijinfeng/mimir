@@ -213,6 +213,9 @@ export const messages = pgTable(
      * 检索过程。存 jsonb 而不是拆成表：它是**一次生成的快照**，
      * 只随消息整体读写，从不单独查询。拆表会引入一个只为可读性服务的连接。
      */
+    modelSelection: jsonb('model_selection').$type<import('@mimir/shared').ChatModelSelection>(),
+    retrievalScope: jsonb('retrieval_scope').$type<import('@mimir/shared').RetrievalScope>(),
+    protocolEvents: jsonb('protocol_events').$type<Record<string, unknown>[]>(),
     trace: jsonb('trace'),
     /** 引用卡片数组，同上 */
     citations: jsonb('citations')
@@ -534,3 +537,66 @@ export const miniappOperations = pgTable(
     index('miniapp_operations_status_idx').on(t.status),
   ],
 )
+
+/** Private, temporary conversation resources. No document/vault relationship. */
+export const conversationAttachments = pgTable(
+  'conversation_attachments',
+  {
+    id: text('id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    ownerId: text('owner_id').notNull(),
+    operationId: text('operation_id').notNull(),
+    name: text('name').notNull(),
+    mime: text('mime').notNull(),
+    kind: text('kind').notNull(),
+    size: integer('size').notNull(),
+    sha256: text('sha256').notNull(),
+    objectKey: text('object_key').notNull(),
+    extractedText: text('extracted_text'),
+    status: text('status').notNull(),
+    error: text('error'),
+    revision: integer('revision').notNull().default(0),
+    parserVersion: text('parser_version').notNull().default('mimir-attachment-preparation-v1'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    boundAt: timestamp('bound_at', { withTimezone: true }),
+  },
+  (t) => [
+    index('conversation_attachments_conversation_idx').on(t.conversationId),
+    uniqueIndex('conversation_attachments_operation_idx').on(t.conversationId, t.operationId),
+  ],
+)
+
+export const messageAttachments = pgTable(
+  'message_attachments',
+  {
+    messageId: text('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    attachmentId: text('attachment_id')
+      .notNull()
+      .references(() => conversationAttachments.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.messageId, t.attachmentId] })],
+)
+
+/** Durable bounded leases protect queued and in-flight resources across restarts. */
+export const attachmentLeases = pgTable(
+  'attachment_leases',
+  {
+    attachmentId: text('attachment_id')
+      .notNull()
+      .references(() => conversationAttachments.id, { onDelete: 'cascade' }),
+    leaseId: text('lease_id').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.attachmentId, t.leaseId] })],
+)
+
+/** Retained after conversation cascade, allowing idempotent storage cleanup retries. */
+export const attachmentGarbage = pgTable('attachment_garbage', {
+  objectKey: text('object_key').primaryKey(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+})

@@ -1,7 +1,15 @@
+import {
+  loadMessageAttachments,
+  recordAssistantAttachmentContext,
+  revokeConversationAttachments,
+  drainAttachmentGarbage,
+} from './chat-attachments.js'
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import type {
   Citation,
+  ChatModelSelection,
+  ChatAttachmentRef,
   ConversationDetail,
   ConversationSummary,
   DocxAgentHistory,
@@ -10,7 +18,11 @@ import type {
   Trace,
   RetrievalScope,
 } from '@mimir/shared'
-import { SEARCH_ONLY_RESULT_TEXT, retrievalScopeSchema } from '@mimir/shared'
+import {
+  SEARCH_ONLY_RESULT_TEXT,
+  docxAgentHistorySchema,
+  retrievalScopeSchema,
+} from '@mimir/shared'
 import { db } from '../db/client.js'
 import { conversationRefs, conversations, documents, messages } from '../db/schema.js'
 import { createNote } from './documents.js'
@@ -47,15 +59,30 @@ function toSummary(row: ConversationRow, refs: string[]): ConversationSummary {
  * 写入路径生成的形状由我们自己控制，所以转换只需保证「老数据缺字段时不炸」。
  */
 function toMessage(row: MessageRow, agent?: DocxAgentHistory): Message {
+  // Text-only Agent runs have no client-tool interrupt row. Their server-owned
+  // source marker still prevents a reloaded instruction becoming ordinary chat.
+  // A real interrupt row always wins so settled/cancelled tool state stays fresh.
+  const source = row.protocolEvents?.findLast(
+    (event) => event.type === 'CUSTOM' && event.name === 'mimir.documentAgent',
+  )?.value
+  const sourceAgent = docxAgentHistorySchema.safeParse(
+    source && typeof source === 'object' && 'agent' in source ? source.agent : undefined,
+  )
+  const agentHistory = agent ?? (sourceAgent.success ? sourceAgent.data : undefined)
   return {
     id: row.id,
     role: row.role === 'user' ? 'user' : 'assistant',
     text: row.text,
+    ...(row.protocolEvents ? { protocolEvents: row.protocolEvents } : {}),
+    ...(row.modelSelection ? { modelSelection: row.modelSelection } : {}),
+    ...(row.retrievalScope
+      ? { retrievalScope: retrievalScopeSchema.parse(row.retrievalScope) }
+      : {}),
     trace: (row.trace as Trace | null) ?? null,
     citations: (row.citations as Citation[] | null) ?? [],
     failure: (row.failure as FailureKind | null) ?? null,
     savedNoteId: row.savedNoteId,
-    ...(agent ? { agent } : {}),
+    ...(agentHistory ? { agent: agentHistory } : {}),
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -111,9 +138,15 @@ export async function getConversation(id: string): Promise<ConversationDetail | 
 
   const refs = await loadRefs([id])
   const agentHistory = await loadDocxAgentHistory(id)
+  const attachmentHistory = await loadMessageAttachments(id)
   return {
     ...toSummary(row, refs.get(id) ?? []),
-    messages: messageRows.map((message) => toMessage(message, agentHistory.get(message.id))),
+    messages: messageRows.map((message) => {
+      const item = toMessage(message, agentHistory.get(message.id))
+      const attached = attachmentHistory.get(message.id)
+      if (attached) item.attachments = attached
+      return item
+    }),
   }
 }
 
@@ -175,6 +208,11 @@ export interface AppendMessageInput {
   trace?: Trace | null
   citations?: Citation[]
   failure?: FailureKind | null
+  protocolEvents?: Record<string, unknown>[]
+  modelSelection?: ChatModelSelection
+  retrievalScope?: RetrievalScope
+  /** Internal, server-prepared context only; never accepted from the append-message route. */
+  usedAttachmentRefs?: readonly ChatAttachmentRef[]
 }
 
 /**
@@ -202,6 +240,9 @@ export async function appendMessage(input: AppendMessageInput): Promise<Message>
       conversationId: input.conversationId,
       role: input.role,
       text: input.text,
+      protocolEvents: input.protocolEvents ?? null,
+      modelSelection: input.modelSelection ?? null,
+      retrievalScope: input.retrievalScope ?? null,
       trace: input.trace ?? null,
       citations: input.citations ?? [],
       failure: input.failure ?? null,
@@ -210,6 +251,8 @@ export async function appendMessage(input: AppendMessageInput): Promise<Message>
     .returning()
 
   if (!row) throw new Error('写入消息失败：数据库未返回记录')
+  if (input.usedAttachmentRefs?.length)
+    await recordAssistantAttachmentContext(input.conversationId, row.id, input.usedAttachmentRefs)
 
   const documentIds = [...new Set((input.citations ?? []).map((item) => item.documentId))]
   if (documentIds.length > 0) {
@@ -246,10 +289,12 @@ export async function ensureTitle(conversationId: string, question: string): Pro
 }
 
 export async function deleteConversation(id: string): Promise<boolean> {
+  await revokeConversationAttachments(id)
   const rows = await db
     .delete(conversations)
     .where(eq(conversations.id, id))
     .returning({ id: conversations.id })
+  await drainAttachmentGarbage()
   return rows.length > 0
 }
 
@@ -293,8 +338,24 @@ async function saveMessageAsNoteOnce(
             ]
           : []),
       ].join('\n')
+  const attachmentSources =
+    (
+      await loadMessageAttachments(row.conversationId, { messageId: row.id, role: 'assistant' })
+    ).get(row.id) ?? []
+  const attachmentNotice = attachmentSources.length
+    ? '\n\n## 会话附件\n\n' +
+      [...new Set(attachmentSources.map((item) => item.name))]
+        .map((name) => '- ' + name.replace(/[[\]\\`*_<>]/g, '\\$&'))
+        .join('\n') +
+      '\n\n附件保存在原会话中，随会话删除；本笔记未导入附件原件。'
+    : ''
   const title = noteTitleFrom(isSearchOnly ? `检索摘录：${citations[0]?.title ?? ''}` : row.text)
-  const note = await createNote({ title, body, tags: ['对话沉淀'], ...(folder ? { folder } : {}) })
+  const note = await createNote({
+    title,
+    body: body + attachmentNotice,
+    tags: ['对话沉淀'],
+    ...(folder ? { folder } : {}),
+  })
 
   await db.update(messages).set({ savedNoteId: note.id }).where(eq(messages.id, messageId))
 

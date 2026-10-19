@@ -1,3 +1,4 @@
+import type { ChatModelCatalog } from '@mimir/shared'
 import type { AgentMediaAttachment } from '@mimir/shared'
 import type { Citation, DocumentAgentFormat } from '@mimir/shared'
 import type { ReactNode } from 'react'
@@ -48,7 +49,14 @@ export interface ChatComposerStatus {
     isError: boolean
     refetch: () => void
   }
-  modelRoles: { chat?: string | undefined; reasoning?: string | undefined }
+  /** Legacy labels retained for host migration; never used to route new sends. */
+  modelRoles?: { chat?: string | undefined; reasoning?: string | undefined }
+  models?: {
+    catalog: ChatModelCatalog | undefined
+    isLoading: boolean
+    isError: boolean
+    refetch: () => void
+  }
   usage: {
     model: string
     promptTokens: number | null
@@ -110,7 +118,7 @@ export interface ChatPanelProps {
   draft: ChatDraft | null
   /** 新建对话时直接把焦点放进提问框；文档侧栏保持原有焦点 */
   focusComposer?: boolean
-  /** 文档侧栏隐藏思考强度；此时始终使用标准聊天模型。 */
+  /** Deprecated: main and sidebar now share model capability controls. */
   showReasoningControl?: boolean
   /** 引用卡片被点击 → 跳回原文 */
   onOpenCitation: (documentId: string, citation: Citation) => void

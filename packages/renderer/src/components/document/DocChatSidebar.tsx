@@ -12,7 +12,7 @@ import { DocQuickAsks } from './DocChatGuide'
 import { useAppShell } from '../../lib/app-shell-context'
 import { createChatIo } from '../../lib/chat-io'
 import { api } from '../../lib/api'
-import { availableDocxAgent } from '../../lib/docx-agent-availability'
+import { availableDocumentAgent, availableDocxAgent } from '../../lib/docx-agent-availability'
 import { useUnsaved } from '../../lib/unsaved'
 import type { AskDraft } from '../../lib/app-shell-context'
 import { useChatComposerStatus } from '../../lib/use-chat-composer-status'
@@ -32,11 +32,11 @@ import { DocxCapabilityStatus } from './DocxCapabilityStatus'
  *
  * ## 复用而不是另写一套
  *
- * 对话体是**整个 `ChatPanel`**：流式、检索过程、引用卡、失败卡、
+ * 对话体是**整个 `ChatPanel`**：流式、真实思考与工具、引用卡、失败卡、
  * 停止、存为笔记——主视图有的它都有。差异只有三个 prop：
  *
- * - `draft.documentId` 锁定单篇：后端的检索只在这一篇里做
- *   （`assistant-stream.ts` 的单篇模式），composer 上显示「当前文档」
+ * - `draft.documentId` 初始选择当前篇，输入框可更换检索范围；
+ *   Agent 执行目标始终由独立的当前画布句柄限定
  * - `onConversationCreated` 是 no-op：会话 id 由 hook 内部持有，
  *   侧栏不进 URL、不进左侧会话历史的高亮
  * - `onOpenCitation` 由父级决定：同一篇 → 原地滚动高亮；
@@ -59,13 +59,13 @@ export interface DocChatSidebarProps {
   documentAgent?: ChatDocumentAgent | null
 }
 
-/** The guide describes the current document scope; sending remains in ChatPanel. */
+/** Retrieval starts at this document; its scope control is independent of Agent targeting. */
 function DocumentChatGuide() {
   const { styles } = useStyles()
   return (
     <div className={styles.assistantGuide}>
       <h3>围绕这篇文档提问</h3>
-      <p>回答限定在本文，可回到原文查看依据。</p>
+      <p>默认检索本文，可在输入框调整检索范围。</p>
     </div>
   )
 }
@@ -103,12 +103,8 @@ export function DocChatSidebar({
     queryFn: () => api.conversations.documentAgentCapabilities(doc.id),
     enabled: Boolean(format) && !isDocx,
   })
-  const activeAgent =
-    documentCapabilities.data?.executorReady &&
-    documentCapabilities.data.modelReady &&
-    (documentAgent?.format ?? 'docx') === documentCapabilities.data.format
-      ? documentAgent
-      : null
+  const activeDocxAgent = availableDocxAgent(documentAgent, capabilities.data)
+  const activeAgent = availableDocumentAgent(documentAgent, documentCapabilities.data)
   const openSettings = (section: 'models' | 'network-search') => {
     runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all', section } }))
   }
@@ -119,6 +115,13 @@ export function DocChatSidebar({
      传 undefined 时那一支查询是 disabled 的（它会显示「没有记账就不渲染」，
      与侧栏的定位一致：这里不看上下文开销） */
   const composerStatus = useChatComposerStatus(undefined)
+  const modelStatus = composerStatus.models?.isLoading
+    ? 'loading'
+    : composerStatus.models?.isError
+      ? 'error'
+      : composerStatus.models?.catalog?.providers.some((provider) => provider.models.length)
+        ? 'available'
+        : 'empty'
 
   const io = createChatIo({
     invalidate: (keys) => {
@@ -156,9 +159,9 @@ export function DocChatSidebar({
       </div>
       {isDocx ? (
         <DocxCapabilityStatus
-          capabilities={capabilities.data}
+          modelStatus={modelStatus}
           loading={Boolean(documentAgent) && capabilities.isPending}
-          canvasReady={Boolean(documentAgent)}
+          canvasReady={Boolean(activeDocxAgent)}
           error={capabilities.isError}
           onRetry={() => void capabilities.refetch()}
           onSettings={openSettings}
@@ -179,17 +182,21 @@ export function DocChatSidebar({
                 ? '读取编辑能力失败。'
                 : !documentCapabilities.data?.executorReady
                   ? '当前格式未提供可执行编辑工具。'
-                  : !documentCapabilities.data.modelReady
-                    ? '尚未配置支持工具调用的模型。'
-                    : !activeAgent
-                      ? '原件画布尚未就绪，暂时不能编辑。'
-                      : '当前文档已连接可执行编辑工具。'}
+                  : !activeAgent
+                    ? '原件画布尚未就绪，暂时不能编辑。'
+                    : modelStatus === 'loading'
+                      ? '正在读取模型列表…'
+                      : modelStatus === 'error'
+                        ? '模型列表读取失败，请在输入框重试。'
+                        : modelStatus === 'empty'
+                          ? '尚未配置可用的模型。'
+                          : '当前画布已就绪，工具能力以输入框所选模型为准。'}
           </p>
           {documentCapabilities.isError ? (
             <Button type="link" size="small" onClick={() => void documentCapabilities.refetch()}>
               重试检测
             </Button>
-          ) : documentCapabilities.data?.executorReady && !documentCapabilities.data.modelReady ? (
+          ) : documentCapabilities.data?.executorReady && modelStatus === 'empty' ? (
             <Button type="link" size="small" onClick={() => openSettings('models')}>
               配置模型
             </Button>
@@ -198,13 +205,13 @@ export function DocChatSidebar({
       ) : null}
       {/*
         侧栏的内容边距。`--mimir-chat-gutter` 是 ChatPanel 与 Composer
-        共用的「栏宽 → 左右边距」比例：主视图 860px 列用 40px（默认值），
+        共用的「栏宽 → 左右边距」比例：主视图 856px 输入列用 24px（默认值），
         400px 的面板用 16px。设在这里而不是改两个 style 文件——那样会
         把主视图一起改窄。
       */}
       <div className={styles.aiSidebarBody}>
         {/* 边距与字号由这个桥填给包（`--mimir-chat-gutter: 16px` 是
-            400px 窄栏的比例；主视图吃 40px 的默认值）。它必须包住面板 */}
+            400px 窄栏的比例；主视图吃 24px 的默认值）。它必须包住面板 */}
         <ChatThemeBridge gutter="16px">
           <ChatPanel
             conversationId={undefined}
@@ -213,11 +220,10 @@ export function DocChatSidebar({
             onOpenNote={(noteId) => runGuarded(() => openDocument(noteId))}
             io={io}
             composerStatus={composerStatus}
-            showReasoningControl={false}
-            docxAgent={isDocx ? availableDocxAgent(documentAgent, capabilities.data) : null}
+            docxAgent={isDocx ? activeDocxAgent : null}
             documentAgent={isDocx ? null : activeAgent}
             draftAgent={documentAgent}
-            snapshotVisionReady={documentCapabilities.data?.mediaKinds?.includes('image') ?? false}
+            snapshotVisionReady={activeAgent?.format === 'pptx'}
             docxRevisionMode={revisionMode}
             /* Empty conversation keeps the composer and actionable suggestions at the bottom. */
             guide={renderEmptyGuide}

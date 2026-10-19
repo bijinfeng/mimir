@@ -52,6 +52,10 @@ export function createChatIo({
   onOpenDocument,
 }: ChatIoDeps): ChatIo {
   return {
+    uploadChatAttachment: api.conversations.uploadAttachment,
+    deleteChatAttachment: api.conversations.deleteAttachment,
+    leaseChatAttachment: api.conversations.leaseAttachment,
+    releaseChatAttachmentLease: api.conversations.releaseAttachmentLease,
     async createConversation() {
       return api.conversations.create()
     },
@@ -77,21 +81,19 @@ export function createChatIo({
       if (id !== undefined) invalidate([['conversation', id]])
     },
 
-    async saveAsNote(conversationId) {
+    async saveAsNote(conversationId, canonicalMessageId) {
       /**
-       * **现取落库记录**，按「最后一条助手消息」对齐。
-       *
-       * 不能按界面消息的 id 找：引擎会把客户端的乐观 id 换成服务端 id，
-       * 而服务端按 messageId 幂等（重复点击返回同一篇笔记）。
-       * 这段逻辑原在 `AnswerActionsRow.tsx` 里，搬到这里是因为它需要
-       * queryClient（包没有）。
+       * 现取落库记录校验会话归属。新运行时传可见回答映射的真实消息 ID，
+       * 避免切回旧分支时误存数据库最后一条；旧调用保留末条回答兼容。
        */
       const conversation = await api.conversations.get(conversationId)
-      const lastAssistant = conversation.messages
-        .toReversed()
-        .find((item) => item.role === 'assistant')
-      if (!lastAssistant) throw new Error('没有可保存的回答')
-      const result = await api.conversations.saveAsNote({ messageId: lastAssistant.id })
+      const answer = canonicalMessageId
+        ? conversation.messages.find((item) => item.id === canonicalMessageId)
+        : conversation.messages.toReversed().find((item) => item.role === 'assistant')
+      if (!answer || answer.role !== 'assistant' || answer.failure || !answer.text.trim()) {
+        throw new Error('没有可保存的回答，请刷新会话后重试')
+      }
+      const result = await api.conversations.saveAsNote({ messageId: answer.id })
       // 存成笔记会在消息里记一条 ref，回读一次让界面拿到
       invalidate([['conversation', conversationId]])
       return { noteId: result.noteId }
