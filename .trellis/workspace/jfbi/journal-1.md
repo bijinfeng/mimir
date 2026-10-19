@@ -1004,3 +1004,38 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 用户认可具体chat-review-v5后，再start父子任务并实施产品迁移。
+
+
+## Session 36: Chat v6 供应商模型与推理等级 Demo
+<!-- trellis-session: v=2 fp=0ff89a2c650fe192 -->
+
+**Date**: 2026-10-19
+**Task**: Chat v6 供应商模型与推理等级 Demo
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户反馈另存冻结 v6 HTML：供应商分组选择模型，推理等级依模型能力；保留旧稿和产品代码，等待具体版本认可。
+
+### Main Changes
+
+- 同步父子任务规划、独立交互UI-013/014、发送与队列模型快照、WeKnora固定版本研究。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6c98025` | docs(chat): freeze provider-grouped model and reasoning v6 demo |
+
+### Testing
+
+- [OK] 构建/类型/格式/产物通过；lint 0错误40警告；5组运行探针、58协议序列89变体8检查、独立9模型矩阵；4张最终截图及316个保护文件哈希。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 用户审阅v6后才进入产品实施；真实provider能力、HTTP参数校验和Agent/附件全链尚待验证。
