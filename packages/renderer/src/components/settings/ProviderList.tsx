@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { App, Button, Popconfirm, Tooltip } from 'antd'
 import { ChevronDown, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { type ModelRoleStatus, type ProviderInstance, type ProviderPreset } from '@mimir/shared'
 import { api } from '../../lib/api'
 import {
@@ -56,12 +56,12 @@ export function ProviderList({
   return (
     <Panel
       title={
-        <>
+        <span className={styles.providerTitle}>
           供应商
           {providers.length > 0 ? (
             <span className={styles.seamTag}>{providers.length} 个</span>
           ) : null}
-        </>
+        </span>
       }
       desc="添加 OpenAI、Anthropic 或自定义兼容接口"
       extra={
@@ -128,6 +128,8 @@ function ProviderCard({
 }) {
   const { styles } = useStyles()
   const { message } = App.useApp()
+  const modelsId = useId()
+  const disclosureId = `${modelsId}-trigger`
 
   /** 供应商级探测：不依赖角色绑定，所以新建之后立刻能验 */
   const probe = useMutation({
@@ -173,11 +175,17 @@ function ProviderCard({
       */}
       <div className={styles.providerActions}>
         <Tooltip title="会发起真实模型调用，可能产生用量">
-          <Button size="small" loading={probe.isPending} onClick={() => probe.mutate()}>
+          <Button
+            size="small"
+            type="text"
+            aria-label={`测试连接：${provider.name}`}
+            loading={probe.isPending}
+            onClick={() => probe.mutate()}
+          >
             测试连接
           </Button>
         </Tooltip>
-        <Button size="small" onClick={onEdit}>
+        <Button size="small" type="text" aria-label={`编辑：${provider.name}`} onClick={onEdit}>
           编辑
         </Button>
         <Popconfirm
@@ -188,7 +196,7 @@ function ProviderCard({
             onDraft(withProviderRemoved({ providers: providersSnapshot, roles: {} }, provider.id))
           }
         >
-          <Button size="small" danger>
+          <Button size="small" type="text" danger aria-label={`删除：${provider.name}`}>
             删除
           </Button>
         </Popconfirm>
@@ -201,10 +209,19 @@ function ProviderCard({
         「这一行的展开入口」。箭头在文字之后，展开时翻转。
       */}
       <div className={styles.providerExpander}>
-        <button type="button" className={styles.expanderLink} onClick={onToggle}>
+        <button
+          id={disclosureId}
+          type="button"
+          className={styles.expanderLink}
+          aria-label={`${expanded ? '收起模型' : `查看模型（${provider.models.length}）`}：${provider.name}`}
+          aria-expanded={expanded}
+          aria-controls={modelsId}
+          onClick={onToggle}
+        >
           {expanded ? '收起模型' : `查看模型（${provider.models.length}）`}
           <ChevronDown
             size={12}
+            aria-hidden
             style={{
               transform: expanded ? 'rotate(180deg)' : undefined,
               transition: 'transform .15s',
@@ -213,29 +230,33 @@ function ProviderCard({
         </button>
       </div>
 
-      {expanded ? (
-        <div className={styles.readonlyModels}>
-          {provider.models.length === 0 ? (
-            <div className={styles.blockDesc}>暂无模型。</div>
-          ) : (
-            provider.models.map((model) => (
-              <div key={model.id} className={styles.modelRowRead}>
-                <span className={styles.modelId} title={model.id}>
-                  {model.id}
-                </span>
-                <span className={styles.chipGroup}>
-                  {model.purposes.map((purpose) => (
-                    <span key={purpose} className={styles.chipStatic}>
-                      {modelPurposeLabel(purpose)}
-                    </span>
-                  ))}
-                </span>
-                <span className={styles.sourceTag}>{SOURCE_TEXT[model.source]}</span>
-              </div>
-            ))
-          )}
-        </div>
-      ) : null}
+      <div
+        id={modelsId}
+        role="region"
+        aria-labelledby={disclosureId}
+        className={styles.readonlyModels}
+        hidden={!expanded}
+      >
+        {provider.models.length === 0 ? (
+          <div className={styles.blockDesc}>暂无模型。</div>
+        ) : (
+          provider.models.map((model) => (
+            <div key={model.id} className={styles.modelRowRead}>
+              <span className={styles.modelId} title={model.id}>
+                {model.id}
+              </span>
+              <span className={styles.chipGroup}>
+                {model.purposes.map((purpose) => (
+                  <span key={purpose} className={styles.chipStatic}>
+                    {modelPurposeLabel(purpose)}
+                  </span>
+                ))}
+              </span>
+              <span className={styles.sourceTag}>{SOURCE_TEXT[model.source]}</span>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }

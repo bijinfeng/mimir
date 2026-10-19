@@ -1,0 +1,94 @@
+{
+  "url": "https://raw.githubusercontent.com/Tencent/WeKnora/v0.8.3/frontend/src/views/settings/Settings.vue",
+  "version": "v0.8.3",
+  "evidence": [
+    {
+      "line": 9,
+      "text": "'active': currentSection === item.key,"
+    },
+    {
+      "line": 53,
+      "text": ":class=\"['submenu-item', { 'active': currentSubSection === child.key }]\""
+    },
+    {
+      "line": 197,
+      "text": "import { useRoute, useRouter } from 'vue-router'"
+    },
+    {
+      "line": 198,
+      "text": "import type { LocationQueryRaw } from 'vue-router'"
+    },
+    {
+      "line": 251,
+      "text": "const router = useRouter()"
+    },
+    {
+      "line": 285,
+      "text": "// internal/router/router.go 的守卫矩阵对齐。"
+    },
+    {
+      "line": 290,
+      "text": "// key 是 owner-only。改这张表前请在 router.go 里复核对应路由组。"
+    },
+    {
+      "line": 309,
+      "text": "void router.replace({"
+    },
+    {
+      "line": 470,
+      "text": "element.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+    },
+    {
+      "line": 483,
+      "text": "if (document.activeElement instanceof HTMLElement) {"
+    },
+    {
+      "line": 484,
+      "text": "document.activeElement.blur()"
+    },
+    {
+      "line": 491,
+      "text": "router.push('/platform/knowledge-bases')"
+    },
+    {
+      "line": 493,
+      "text": "router.back()"
+    },
+    {
+      "line": 503,
+      "text": "void router.push(toolboxLocation(section, subSection || undefined))"
+    },
+    {
+      "line": 530,
+      "text": "element.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+    },
+    {
+      "line": 615,
+      "text": "if (document.activeElement instanceof HTMLElement) {"
+    },
+    {
+      "line": 616,
+      "text": "document.activeElement.blur()"
+    },
+    {
+      "line": 647,
+      "text": "overflow: hidden;"
+    },
+    {
+      "line": 665,
+      "text": "&.active {"
+    },
+    {
+      "line": 677,
+      "text": ".submenu-enter-active,"
+    },
+    {
+      "line": 678,
+      "text": ".submenu-leave-active {"
+    },
+    {
+      "line": 721,
+      "text": "overflow: hidden;"
+    }
+  ]
+}

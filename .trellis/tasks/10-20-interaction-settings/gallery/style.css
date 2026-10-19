@@ -1,0 +1,37 @@
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+.fixture-header {
+  box-sizing: border-box;
+  padding: 14px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  font: 13px/1.5 system-ui;
+  background: #f4f5f6;
+  color: #1f2329;
+}
+.fixture-header nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+}
+.fixture-header a {
+  color: inherit;
+}
+.fixture-header select,
+.fixture-header button {
+  font: inherit;
+}
+.fixture-content {
+  box-sizing: content-box;
+  width: var(--fixture-width, 760px);
+  max-width: calc(100vw - 64px);
+  height: calc(100vh - 250px);
+  margin: 0 auto;
+}

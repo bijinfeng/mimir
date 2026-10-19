@@ -1,0 +1,3108 @@
+{
+  "config": {
+    "settings": [
+      {
+        "key": "capture.fetchTimeoutMs",
+        "label": "抓取超时",
+        "group": "capture",
+        "type": "number",
+        "value": 20000,
+        "configured": false,
+        "source": "default",
+        "envName": "CAPTURE_FETCH_TIMEOUT_MS",
+        "defaultValue": 20000,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "capture.githubToken",
+        "label": "GitHub Token",
+        "description": "密钥会加密保存",
+        "group": "capture",
+        "type": "secret",
+        "value": null,
+        "configured": false,
+        "source": "default",
+        "envName": "GITHUB_TOKEN",
+        "defaultValue": null,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "capture.maxBytes",
+        "label": "单次抓取体积上限",
+        "group": "capture",
+        "type": "number",
+        "value": 8388608,
+        "configured": false,
+        "source": "default",
+        "envName": "CAPTURE_MAX_BYTES",
+        "defaultValue": 8388608,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.config",
+        "label": "模型配置",
+        "group": "models",
+        "type": "json",
+        "value": null,
+        "configured": true,
+        "source": "settings",
+        "envName": null,
+        "defaultValue": null,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.embed.dimensions",
+        "label": "向量维度",
+        "description": "必须与 embedding 模型实际的输出维度一致。可以用「测试连接」核对——不一致时它会告诉你实际维度",
+        "group": "models",
+        "type": "number",
+        "value": 1024,
+        "configured": false,
+        "source": "default",
+        "envName": "MODEL_EMBED_DIMENSIONS",
+        "defaultValue": 1024,
+        "writable": true,
+        "rebuild": "embeddings",
+        "problem": null
+      },
+      {
+        "key": "model.image.apiKey",
+        "label": "图片生成 API 密钥",
+        "group": "models",
+        "type": "secret",
+        "value": null,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": null,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.image.baseUrl",
+        "label": "图片生成接口地址",
+        "group": "models",
+        "type": "string",
+        "value": "https://api.openai.com/v1",
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": "https://api.openai.com/v1",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.image.model",
+        "label": "图片生成模型",
+        "group": "models",
+        "type": "string",
+        "value": "gpt-image-1",
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": "gpt-image-1",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.transcription.apiKey",
+        "label": "音频转录 API 密钥",
+        "group": "models",
+        "type": "secret",
+        "value": null,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": null,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.transcription.baseUrl",
+        "label": "音频转录接口地址",
+        "group": "models",
+        "type": "string",
+        "value": "https://api.openai.com/v1",
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": "https://api.openai.com/v1",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.transcription.model",
+        "label": "音频转录模型",
+        "group": "models",
+        "type": "string",
+        "value": "whisper-1",
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": "whisper-1",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "model.vision.enabled",
+        "label": "视觉输入",
+        "description": "需聊天模型支持图片输入",
+        "group": "models",
+        "type": "boolean",
+        "value": false,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": false,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "parser.chunk.overlap",
+        "label": "分块重叠",
+        "description": "修改后需重建分块",
+        "group": "parser",
+        "type": "number",
+        "value": 80,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": 80,
+        "writable": true,
+        "rebuild": "chunks",
+        "problem": null
+      },
+      {
+        "key": "parser.chunk.size",
+        "label": "分块大小",
+        "description": "修改后需重建分块",
+        "group": "parser",
+        "type": "number",
+        "value": 500,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": 500,
+        "writable": true,
+        "rebuild": "chunks",
+        "problem": null
+      },
+      {
+        "key": "retrieval.keyword.weight",
+        "label": "关键词通道权重",
+        "description": "提高后，关键词匹配的结果更容易排在前面",
+        "group": "retrieval",
+        "type": "number",
+        "value": 1,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": 1,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "retrieval.maxChunksPerDoc",
+        "label": "每篇最多引用块数",
+        "group": "retrieval",
+        "type": "number",
+        "value": 3,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": 3,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "retrieval.perLegLimit",
+        "label": "每通道候选数",
+        "group": "retrieval",
+        "type": "number",
+        "value": 50,
+        "configured": false,
+        "source": "default",
+        "envName": "RETRIEVAL_PER_LEG_LIMIT",
+        "defaultValue": 50,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "retrieval.rrfK",
+        "label": "RRF k",
+        "description": "数值越大，各通道的排名差异越小",
+        "group": "retrieval",
+        "type": "number",
+        "value": 60,
+        "configured": false,
+        "source": "default",
+        "envName": "RETRIEVAL_RRF_K",
+        "defaultValue": 60,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "retrieval.substring.weight",
+        "label": "子串兜底权重",
+        "description": "提高后，包含查询片段的结果更容易排在前面",
+        "group": "retrieval",
+        "type": "number",
+        "value": 0.6,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": 0.6,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "retrieval.vector.weight",
+        "label": "向量通道权重",
+        "description": "提高后，语义相近的结果更容易排在前面",
+        "group": "retrieval",
+        "type": "number",
+        "value": 1.2,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": 1.2,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "search.web.brave.apiKey",
+        "label": "Brave Search API 密钥",
+        "group": "search",
+        "type": "secret",
+        "value": null,
+        "configured": false,
+        "source": "default",
+        "envName": null,
+        "defaultValue": null,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "stats.timezone",
+        "label": "统计时区",
+        "description": "影响用量按哪一天统计",
+        "group": "stats",
+        "type": "string",
+        "value": "Asia/Shanghai",
+        "configured": false,
+        "source": "default",
+        "envName": "TZ",
+        "defaultValue": "Asia/Shanghai",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.backend",
+        "label": "存储后端",
+        "group": "storage",
+        "type": "string",
+        "value": "local",
+        "configured": false,
+        "source": "default",
+        "envName": "STORAGE_BACKEND",
+        "defaultValue": "local",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.accessKeyId",
+        "label": "Access Key ID",
+        "group": "storage",
+        "type": "string",
+        "value": "",
+        "configured": false,
+        "source": "default",
+        "envName": "S3_ACCESS_KEY_ID",
+        "defaultValue": "",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.bucket",
+        "label": "桶名",
+        "description": "填写已有桶名，不会自动创建",
+        "group": "storage",
+        "type": "string",
+        "value": "",
+        "configured": false,
+        "source": "default",
+        "envName": "S3_BUCKET",
+        "defaultValue": "",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.endpoint",
+        "label": "端点地址",
+        "description": "自建 S3 服务填写地址；使用 AWS S3 时留空",
+        "group": "storage",
+        "type": "string",
+        "value": "",
+        "configured": false,
+        "source": "default",
+        "envName": "S3_ENDPOINT",
+        "defaultValue": "",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.pathStyle",
+        "label": "路径风格寻址",
+        "description": "自建 S3 服务通常需要开启",
+        "group": "storage",
+        "type": "boolean",
+        "value": true,
+        "configured": false,
+        "source": "default",
+        "envName": "S3_PATH_STYLE",
+        "defaultValue": true,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.prefix",
+        "label": "桶内前缀",
+        "description": "选填；留空则保存到桶根",
+        "group": "storage",
+        "type": "string",
+        "value": "mimir",
+        "configured": false,
+        "source": "default",
+        "envName": "S3_PREFIX",
+        "defaultValue": "mimir",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.region",
+        "label": "区域",
+        "description": "桶所在区域；自建服务通常填 us-east-1",
+        "group": "storage",
+        "type": "string",
+        "value": "us-east-1",
+        "configured": false,
+        "source": "default",
+        "envName": "S3_REGION",
+        "defaultValue": "us-east-1",
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      },
+      {
+        "key": "storage.s3.secretAccessKey",
+        "label": "Secret Access Key",
+        "group": "storage",
+        "type": "secret",
+        "value": null,
+        "configured": false,
+        "source": "default",
+        "envName": "S3_SECRET_ACCESS_KEY",
+        "defaultValue": null,
+        "writable": true,
+        "rebuild": "none",
+        "problem": null
+      }
+    ],
+    "plugins": [
+      {
+        "seam": "capturer",
+        "id": "wechat",
+        "name": "微信公众号",
+        "description": "图片保留原链接，正文可离线阅读",
+        "file": "plugins/capturer/src/wechat.ts",
+        "configKeys": ["capture.fetchTimeoutMs", "capture.maxBytes"],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "capturer",
+        "id": "github",
+        "name": "GitHub 仓库",
+        "description": "收集仓库信息和 README",
+        "file": "plugins/capturer/src/github.ts",
+        "configKeys": ["capture.fetchTimeoutMs", "capture.maxBytes", "capture.githubToken"],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "capturer",
+        "id": "web",
+        "name": "通用网页（兜底）",
+        "description": "提取网页正文",
+        "file": "plugins/capturer/src/web.ts",
+        "configKeys": ["capture.fetchTimeoutMs", "capture.maxBytes"],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "markdown",
+        "name": "Markdown 直通",
+        "description": "内容本来就是 Markdown 时原样保留",
+        "file": "plugins/parser/src/markdown.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "html",
+        "name": "HTML 正文提取",
+        "description": "提取网页正文，保留代码块和表格",
+        "file": "plugins/parser/src/html.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "html-fragment",
+        "name": "HTML 片段直转",
+        "description": "转换 RSS 等来源提供的正文片段",
+        "file": "plugins/parser/src/html-fragment.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "text",
+        "name": "纯文本直通",
+        "description": "txt / csv / json / 代码等文本文件，按 UTF-8 读取（非 UTF-8 会如实报错）",
+        "file": "plugins/parser/src/text.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "docx",
+        "name": "Word 文本提取",
+        "description": "按段落提取文字与标题层级。不还原字体、颜色、页眉页脚与批注",
+        "file": "plugins/parser/src/docx.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "xlsx",
+        "name": "Excel 文本提取",
+        "description": "每个工作表转成一张表格，含共享字符串。日期显示为序列号，不猜格式",
+        "file": "plugins/parser/src/xlsx.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "pptx",
+        "name": "PowerPoint 文本提取",
+        "description": "按页提取文字与分块。读不到演讲者备注，顺序按形状定义顺序",
+        "file": "plugins/parser/src/pptx.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "parser",
+        "id": "pdf",
+        "name": "PDF 文本提取",
+        "description": "提取 PDF 的文字层，按页分段（多页文档每页一个小标题）。扫描件没有文字层，那种文件会如实报错，不做 OCR",
+        "file": "plugins/parser/src/pdf.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "leg",
+        "id": "keyword",
+        "name": "关键词匹配",
+        "description": "按词匹配，适合查找明确的名称或术语",
+        "file": "plugins/leg/src/keyword.ts",
+        "configKeys": ["retrieval.keyword.weight"],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "leg",
+        "id": "substring",
+        "name": "文本片段匹配",
+        "description": "按文字片段匹配，可补足关键词未命中的内容",
+        "file": "plugins/leg/src/substring.ts",
+        "configKeys": ["retrieval.substring.weight"],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "leg",
+        "id": "vector",
+        "name": "语义匹配",
+        "description": "按意思相近程度匹配，需先配置向量化模型",
+        "file": "plugins/leg/src/vector.ts",
+        "configKeys": ["retrieval.vector.weight", "model.embed.dimensions"],
+        "status": {
+          "kind": "unavailable",
+          "reason": "还没有给「向量化」角色绑定模型（设置 › 模型 › 任务分配）"
+        }
+      },
+      {
+        "seam": "provider",
+        "id": "openai-compatible",
+        "name": "OpenAI 兼容端点",
+        "description": "一套适配器接住 8 家预设供应商（DeepSeek / 通义 / 智谱 / 硅基流动 / Ollama …）",
+        "file": "plugins/provider/src/provider.ts",
+        "configKeys": ["model.config", "model.embed.dimensions"],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "storage",
+        "id": "local",
+        "name": "本地磁盘",
+        "description": "文件保存在本机",
+        "file": "plugins/storage/src/local.ts",
+        "configKeys": [],
+        "status": {
+          "kind": "active"
+        }
+      },
+      {
+        "seam": "storage",
+        "id": "s3",
+        "name": "S3 / 对象存储",
+        "description": "文件保存在 S3 兼容服务",
+        "file": "plugins/storage/src/s3.ts",
+        "configKeys": [
+          "storage.s3.endpoint",
+          "storage.s3.region",
+          "storage.s3.bucket",
+          "storage.s3.accessKeyId",
+          "storage.s3.secretAccessKey",
+          "storage.s3.pathStyle",
+          "storage.s3.prefix"
+        ],
+        "status": {
+          "kind": "needs-config",
+          "reason": "还差：桶名、Access Key ID、Secret Access Key"
+        }
+      }
+    ],
+    "modelConfig": {
+      "providers": [
+        {
+          "id": "qa-a",
+          "preset": "custom",
+          "name": "本地验收服务",
+          "family": "openai-compatible",
+          "baseUrl": "http://127.0.0.1:3044/v1",
+          "hasKey": true,
+          "models": [
+            {
+              "id": "qa-model",
+              "source": "manual",
+              "purposes": ["chat"],
+              "capabilities": {
+                "reasoning": {
+                  "status": "supported",
+                  "levels": ["off", "low", "medium", "high"],
+                  "default": "medium"
+                },
+                "reasoningParameter": "reasoning_effort",
+                "vision": "supported",
+                "tools": "supported",
+                "contextWindowTokens": 32768
+              }
+            }
+          ],
+          "modelsFetchedAt": null
+        },
+        {
+          "id": "qa-b",
+          "preset": "custom",
+          "name": "另一供应商",
+          "family": "openai-compatible",
+          "baseUrl": "http://127.0.0.1:3044/v1",
+          "hasKey": true,
+          "models": [
+            {
+              "id": "qa-model",
+              "source": "manual",
+              "purposes": ["chat"],
+              "capabilities": {
+                "reasoning": {
+                  "status": "unsupported"
+                },
+                "reasoningParameter": "reasoning_effort",
+                "vision": "supported",
+                "tools": "supported",
+                "contextWindowTokens": 32768
+              }
+            }
+          ],
+          "modelsFetchedAt": null
+        }
+      ],
+      "roles": [
+        {
+          "role": "chat",
+          "label": "对话",
+          "providerId": "qa-a",
+          "providerName": "本地验收服务",
+          "model": "qa-model",
+          "ready": true,
+          "reason": null
+        },
+        {
+          "role": "reasoning",
+          "label": "深度思考",
+          "providerId": null,
+          "providerName": null,
+          "model": "",
+          "ready": false,
+          "reason": "还没有选择模型"
+        },
+        {
+          "role": "summarize",
+          "label": "摘要",
+          "providerId": null,
+          "providerName": null,
+          "model": "",
+          "ready": false,
+          "reason": "留空时回落到对话模型"
+        },
+        {
+          "role": "embed",
+          "label": "向量化",
+          "providerId": null,
+          "providerName": null,
+          "model": "",
+          "ready": false,
+          "reason": "还没有选择模型"
+        }
+      ],
+      "presets": [
+        {
+          "id": "deepseek",
+          "name": "DeepSeek",
+          "family": "openai-compatible",
+          "baseUrl": "https://api.deepseek.com/v1",
+          "models": ["deepseek-chat", "deepseek-reasoner"],
+          "canFetchModels": true,
+          "note": "对话便宜且质量稳。它没有 embedding 模型，向量化要另配一家",
+          "popular": true
+        },
+        {
+          "id": "siliconflow",
+          "name": "硅基流动",
+          "family": "openai-compatible",
+          "baseUrl": "https://api.siliconflow.cn/v1",
+          "models": ["Qwen/Qwen3-8B", "BAAI/bge-m3"],
+          "canFetchModels": true,
+          "note": "聚合了多家开源模型，embedding 与 rerank 都有。模型名带斜杠，是它的命名方式",
+          "popular": true
+        },
+        {
+          "id": "dashscope",
+          "name": "通义千问",
+          "family": "openai-compatible",
+          "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "models": ["qwen-plus", "qwen-turbo", "text-embedding-v4"],
+          "canFetchModels": true,
+          "note": "阿里云。它要求用「兼容模式」的路径，直连 dashscope.aliyuncs.com 是不通的",
+          "popular": true
+        },
+        {
+          "id": "zhipu",
+          "name": "智谱 GLM",
+          "family": "openai-compatible",
+          "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+          "models": ["glm-4-plus", "glm-4-flash", "embedding-3"],
+          "canFetchModels": true,
+          "note": "glm-4-flash 有免费额度，适合放在摘要这种量大的角色上",
+          "popular": true
+        },
+        {
+          "id": "moonshot",
+          "name": "月之暗面 Kimi",
+          "family": "openai-compatible",
+          "baseUrl": "https://api.moonshot.cn/v1",
+          "models": ["moonshot-v1-8k", "moonshot-v1-32k"],
+          "canFetchModels": true,
+          "note": "长上下文见长。它没有 embedding 模型",
+          "popular": false
+        },
+        {
+          "id": "openai",
+          "name": "OpenAI",
+          "family": "openai-compatible",
+          "baseUrl": "https://api.openai.com/v1",
+          "models": ["gpt-4o-mini", "gpt-4o", "text-embedding-3-small"],
+          "canFetchModels": true,
+          "note": "需要能直连。embedding 维度记得与「向量维度」对上",
+          "popular": false
+        },
+        {
+          "id": "ollama",
+          "name": "Ollama（本地）",
+          "family": "openai-compatible",
+          "baseUrl": "http://localhost:11434/v1",
+          "models": [],
+          "canFetchModels": true,
+          "note": "本机运行，不花钱。Ollama 的密钥随便填一个非空值即可，它不校验。容器里跑要改成宿主机地址",
+          "popular": true
+        },
+        {
+          "id": "lmstudio",
+          "name": "LM Studio（本地）",
+          "family": "openai-compatible",
+          "baseUrl": "http://localhost:1234/v1",
+          "models": [],
+          "canFetchModels": true,
+          "note": "本机运行，不花钱。要在界面里先把模型加载进内存，端点才有模型可列",
+          "popular": false
+        },
+        {
+          "id": "custom",
+          "name": "自定义（OpenAI 兼容）",
+          "family": "openai-compatible",
+          "baseUrl": "",
+          "models": [],
+          "canFetchModels": true,
+          "note": "任何提供 OpenAI 兼容端点的服务都行。填它的 baseURL（通常以 /v1 结尾）",
+          "popular": true
+        }
+      ]
+    },
+    "database": {
+      "driver": "sqlite",
+      "file": "/private/tmp/mimir-official-ui-qa-20261019/qa.db"
+    },
+    "localMode": false,
+    "probes": []
+  },
+  "session": {
+    "session": {},
+    "user": {
+      "name": "admin",
+      "email": "admin@example.com",
+      "emailVerified": false,
+      "image": null,
+      "createdAt": "2026-10-19T11:19:10.160Z",
+      "updatedAt": "2026-10-19T11:19:10.160Z",
+      "id": "settings-demo-user"
+    }
+  },
+  "stats": {
+    "timezone": "Asia/Shanghai",
+    "from": "2025-10-16",
+    "to": "2026-10-20",
+    "days": [
+      {
+        "date": "2025-10-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-10-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-11-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2025-12-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-01-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-02-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-03-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-04-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-05-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-06-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-07-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-08-31",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-19",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-21",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-22",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-23",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-24",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-25",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-26",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-27",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-28",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-29",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-09-30",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-01",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-02",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-03",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-04",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-05",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-06",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-07",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-08",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-09",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-10",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-11",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-12",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-13",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-14",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-15",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-16",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-17",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-18",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      },
+      {
+        "date": "2026-10-19",
+        "tokens": 0,
+        "calls": 20,
+        "unknownCount": 20
+      },
+      {
+        "date": "2026-10-20",
+        "tokens": 0,
+        "calls": 0,
+        "unknownCount": 0
+      }
+    ],
+    "byRole": [
+      {
+        "role": "chat",
+        "model": "qa-model",
+        "calls": 20,
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "failed": 0,
+        "unknownCount": 20,
+        "avgMs": 6042.25
+      }
+    ],
+    "totals": {
+      "today": 0,
+      "week": 0,
+      "month": 0,
+      "all": 0,
+      "calls": 20,
+      "unknownCount": 20,
+      "probeCalls": 0
+    },
+    "thresholds": []
+  },
+  "exportStats": {
+    "documents": 5,
+    "notes": 5,
+    "files": 0,
+    "conversations": 5,
+    "bytes": 4330
+  },
+  "chunks": {
+    "total": 16,
+    "documents": 5,
+    "pending": null
+  },
+  "feeds": {
+    "items": []
+  }
+}

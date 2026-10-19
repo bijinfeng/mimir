@@ -224,6 +224,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   rowValue: css`
     min-width: 0;
+    overflow-wrap: anywhere;
     font-size: ${FONT_SIZE.excerpt}px;
     line-height: 1.7;
     color: ${token.colorText};
@@ -246,7 +247,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 24px;
     padding: 4px 20px 16px;
-    @media (max-width: 600px) {
+    @container settings-content (max-width: 620px) {
       grid-template-columns: minmax(0, 1fr);
     }
   `,
@@ -269,6 +270,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorText};
   `,
   blockDesc: css`
+    overflow-wrap: anywhere;
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorTextSecondary};
@@ -330,7 +332,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     padding: 8px 20px 20px;
-    @media (max-width: 680px) {
+    @container settings-content (max-width: 620px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   `,
@@ -375,6 +377,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   /* ── 供应商卡片 ─────────────────────────────────────── */
+  providerTitle: css`
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  `,
   providerEmpty: css`
     display: flex;
     align-items: center;
@@ -400,23 +407,23 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
-    @media (max-width: 680px) {
+    @container settings-content (max-width: 620px) {
       grid-template-columns: minmax(0, 1fr);
       padding-inline: 16px;
     }
   `,
-  /** 右上角的动作组。`flex-start` 让它们贴着这一行的上缘（与名字同高） */
+  /** 动作组贴在信息行上缘，内部按钮保持同一中线。 */
   providerActions: css`
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding-top: 2px;
+    align-self: start;
+    align-items: center;
+    gap: 4px;
     flex-wrap: wrap;
   `,
   /** 展开入口所在的行：跨两列、与上方信息隔一点距离 */
   providerExpander: css`
     grid-column: 1 / -1;
-    margin-top: 9px;
+    margin-top: 4px;
   `,
   /**
    * 「查看模型」的链接样式。
@@ -433,6 +440,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    min-height: 30px;
     padding: 0;
     border: none;
     background: none;
@@ -459,6 +467,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   /** 卡片上的供应商名。比正文重一档，它是这一块的标题 */
   providerName: css`
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-size: ${FONT_SIZE.body}px;
     font-weight: 600;
     line-height: 1.5;
@@ -471,9 +481,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.meta}px;
     line-height: 1.7;
     color: ${token.colorTextTertiary};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   `,
   /**
    * 密钥状态徽标。
@@ -577,6 +585,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /* 路径、seam 标识：等宽且比正文弱 */
   file: css`
     margin-top: 5px;
+    overflow-wrap: anywhere;
     font-family: ${token.fontFamilyCode};
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};

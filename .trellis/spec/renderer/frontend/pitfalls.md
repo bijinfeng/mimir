@@ -29,3 +29,11 @@
 | 热力图有时一格都不画 | antd `Tabs` 切走的面板是 `display: none`，`clientWidth` 为 0 → 列数为 0；且只在挂载时量一次，恢复与否全靠凑巧（实测同一页面来回切，有时 376 格、有时 0 格）。宽度为 0 时**不挂载**该库，用 `ResizeObserver` 等它有位置了再挂（`WhenVisible`）。见 §12.8 |
 | 干净检出直接跑 `typecheck` 找不到 `routeTree.gen.ts` | 路由树是生成物。用 `tsr generate` 显式生成，已写进 typecheck/build 脚本 |
 | antd 按钮 hover 时「边框一闪 + 内容抖一下」 | 我们给按钮写 `border: none` 而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，白边一闪；border-box 重算让内容内移 1px（实测头像 x 14 → 14.8）。修法是**留一个恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡）。裸 `<button>` 不受影响（没有变体样式），只有 antd `Button` 需要（D-083） |
+
+## 设置分区与路由滚动恢复
+
+设置的 `main` 是独立滚动区；在同一路由内切换 `?section=` 时，仅给它 `key={section}` 仍不足以回顶。TanStack Router 的 `onRendered` 会按元素 selector 回放旧缓存，可能把长分区的滚动位置复制到短分区。
+
+`_app.settings.tsx` 的分区导航保持 `replace: true` 和原 `scope`，同时用 `resetScroll: false` 关闭该次路由回放；`main` 以 `section` 作 key，并提供 `data-scroll-restoration-id={`settings-${section}`}` 区分缓存目标。同分区重渲染保留节点与位置，换分区重建节点回到顶部；不要在整个应用关闭滚动恢复。
+
+回归入口：`routes/-settings-scroll.test.tsx` 验证节点身份、旧 selector 不命中新分区、导航参数和焦点；浏览器还须先滚动模型页再切换支持能力，等待路由渲染完成后断言 `main.scrollTop === 0` 且标题在可视区。只在首次渲染读取位置会漏掉 SDK 后置回放。

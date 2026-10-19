@@ -1,0 +1,122 @@
+[
+  {
+    "section": "models",
+    "label": "模型",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=models&scope=all\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 0 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=models&scope=all",
+    "geometry": {
+      "clientWidth": 833,
+      "scrollTop": 0,
+      "scrollWidth": 833,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "network-search",
+    "label": "网络搜索",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=network-search&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=network-search&scope=all\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=network-search&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "retrieval",
+    "label": "检索",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=retrieval&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=retrieval&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 container\n\t\t\t\t11 text 知识库\n\t\t\t\t12 button 创建知识库\n\t\t\t\t13 button\n\t\t\t\t14 button\n\t\t\t\t15 menu\n\t\t\t\t\t16 text 对话\n\t\t\t\t\t17 container\n\t\t\t\t\t\t18 如何让收集的资料真正成为可以复用的知识？请给出步骤、对比表和代码示例。 2 小时前\n\t\t\t\t\t\t19 请概括附件内容 2 小时前\n\t\t\t\t\t\t20 官方封装验收：请说明 mimir 的模型选择、附件和知识库。 2 小时前\n\t\t\t\t\t\t21 请概括附件内容 4 小时前\n\t\t\t\t\t\t22 请展示一段 Markdown 和代码，验证对话渲染。 5 小时前\n\t\t\t\t23 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t\t24 text 正在读取最近笔记…\n\t\t\t25 button admin，账号菜单\n\t\t\t26 button 设置\n\t\t27 container 设置分区\n\t\t\t28 heading 设置, Value: 1\n\t\t\t\t29 text 设置\n\t\t\t30 menu\n\t\t\t\t31 模型\n\t\t\t\t32 网络搜索\n\t\t\t\t33 检索\n\t\t\t\t34 订阅\n\t\t\t\t35 存储\n\t\t\t\t36 支持能力\n\t\t\t\t37 统计\n\t\t\t\t38 数据与备份\n\t\t\t\t39 外观\n\t\t\t\t40 账号\n\t\t41 container\n\t\t\t42 heading 检索, Value: 2\n\t\t\t\t43 text 检索\n\t\t\t44 text 搜索内容 查看已收录文档并补全语义搜索索引 已收录 5 篇文档 语义搜索 未启用。请在「模型」中配置语义搜索模型。\n\t\t\t45 button (disabled) 补全语义搜索\n\t\t\t46 button 重新整理搜索内容\n\t\t\t47 text 测试搜索 输入关键词验证检索结果是否符合预期\n\t\t\t48 search text field (settable) 测试检索词\n\t\t\t49 button 搜 索\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=retrieval&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "feeds",
+    "label": "订阅",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=feeds&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=feeds&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 container\n\t\t\t\t11 text 知识库\n\t\t\t\t12 button 创建知识库\n\t\t\t\t13 button\n\t\t\t\t14 button\n\t\t\t\t15 menu\n\t\t\t\t\t16 text 对话\n\t\t\t\t\t17 container\n\t\t\t\t\t\t18 如何让收集的资料真正成为可以复用的知识？请给出步骤、对比表和代码示例。 2 小时前\n\t\t\t\t\t\t19 请概括附件内容 2 小时前\n\t\t\t\t\t\t20 官方封装验收：请说明 mimir 的模型选择、附件和知识库。 2 小时前\n\t\t\t\t\t\t21 请概括附件内容 4 小时前\n\t\t\t\t\t\t22 请展示一段 Markdown 和代码，验证对话渲染。 5 小时前\n\t\t\t\t23 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t\t24 text 正在读取最近笔记…\n\t\t\t25 button admin，账号菜单\n\t\t\t26 button 设置\n\t\t27 container 设置分区\n\t\t\t28 heading 设置, Value: 1\n\t\t\t\t29 text 设置\n\t\t\t30 menu\n\t\t\t\t31 模型\n\t\t\t\t32 网络搜索\n\t\t\t\t33 检索\n\t\t\t\t34 订阅\n\t\t\t\t35 存储\n\t\t\t\t36 支持能力\n\t\t\t\t37 统计\n\t\t\t\t38 数据与备份\n\t\t\t\t39 外观\n\t\t\t\t40 账号\n\t\t41 container\n\t\t\t42 heading 订阅, Value: 2\n\t\t\t\t43 text 订阅\n\t\t\t44 text RSS / Atom 来源 订阅网站 RSS / Atom 源，自动收录新内容\n\t\t\t45 text field (settable) RSS 或 Atom 地址\n\t\t\t46 button 订阅\n\t\t\t47 button (disabled) 全部更新\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=feeds&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "storage",
+    "label": "存储",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=storage&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=storage&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 container\n\t\t\t\t11 text 知识库\n\t\t\t\t12 button 创建知识库\n\t\t\t\t13 button\n\t\t\t\t14 button\n\t\t\t\t15 menu\n\t\t\t\t\t16 text 对话\n\t\t\t\t\t17 container\n\t\t\t\t\t\t18 如何让收集的资料真正成为可以复用的知识？请给出步骤、对比表和代码示例。 2 小时前\n\t\t\t\t\t\t19 请概括附件内容 2 小时前\n\t\t\t\t\t\t20 官方封装验收：请说明 mimir 的模型选择、附件和知识库。 2 小时前\n\t\t\t\t\t\t21 请概括附件内容 4 小时前\n\t\t\t\t\t\t22 请展示一段 Markdown 和代码，验证对话渲染。 5 小时前\n\t\t\t\t23 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t\t24 text 正在读取最近笔记…\n\t\t\t25 button admin，账号菜单\n\t\t\t26 button 设置\n\t\t27 container 设置分区\n\t\t\t28 heading 设置, Value: 1\n\t\t\t\t29 text 设置\n\t\t\t30 menu\n\t\t\t\t31 模型\n\t\t\t\t32 网络搜索\n\t\t\t\t33 检索\n\t\t\t\t34 订阅\n\t\t\t\t35 存储\n\t\t\t\t36 支持能力\n\t\t\t\t37 统计\n\t\t\t\t38 数据与备份\n\t\t\t\t39 外观\n\t\t\t\t40 账号\n\t\t41 container\n\t\t\t42 heading 存储, Value: 2\n\t\t\t\t43 text 存储\n\t\t\t44 text 文件存储 选择文件存储后端（本地磁盘或 S3 兼容存储）\n\t\t\t45 文件存储方式\n\t\t\t\t46 container\n\t\t\t\t\t47 radio button 1\n\t\t\t\t48 container\n\t\t\t\t\t49 radio button 0\n\t\t\t50 button 测试连接\n\t\t\t51 text S3 配置 填写 Access Key、Bucket 等参数\n\t\t\t52 button 预先配置\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=storage&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "plugins",
+    "label": "支持能力",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=plugins&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=plugins&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 container\n\t\t\t\t11 text 知识库\n\t\t\t\t12 button 创建知识库\n\t\t\t\t13 button\n\t\t\t\t14 button\n\t\t\t\t15 menu\n\t\t\t\t\t16 text 对话\n\t\t\t\t\t17 container\n\t\t\t\t\t\t18 如何让收集的资料真正成为可以复用的知识？请给出步骤、对比表和代码示例。 2 小时前\n\t\t\t\t\t\t19 请概括附件内容 2 小时前\n\t\t\t\t\t\t20 官方封装验收：请说明 mimir 的模型选择、附件和知识库。 2 小时前\n\t\t\t\t\t\t21 请概括附件内容 4 小时前\n\t\t\t\t\t\t22 请展示一段 Markdown 和代码，验证对话渲染。 5 小时前\n\t\t\t\t23 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t\t24 text 正在读取最近笔记…\n\t\t\t25 button admin，账号菜单\n\t\t\t26 button 设置\n\t\t27 container 设置分区\n\t\t\t28 heading 设置, Value: 1\n\t\t\t\t29 text 设置\n\t\t\t30 menu\n\t\t\t\t31 模型\n\t\t\t\t32 网络搜索\n\t\t\t\t33 检索\n\t\t\t\t34 订阅\n\t\t\t\t35 存储\n\t\t\t\t36 支持能力\n\t\t\t\t37 统计\n\t\t\t\t38 数据与备份\n\t\t\t\t39 外观\n\t\t\t\t40 账号\n\t\t41 container\n\t\t\t42 heading 支持能力, Value: 2\n\t\t\t\t43 text 支持能力\n\t\t\t44 text 支持的来源 微信公众号 可用\n\t\t\t45 text GitHub 仓库 可用\n\t\t\t46 text 网页 可用\n\t\t\t47 text 支持的文件 Markdown HTML 纯文本 Word Excel PowerPoint PDF 搜索方式 关键词匹配 可用\n\t\t\t48 text 文本片段匹配 可用\n\t\t\t49 text 语义匹配 不可用\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=plugins&scope=all",
+    "geometry": {
+      "clientWidth": 833,
+      "scrollTop": 0,
+      "scrollWidth": 833,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "stats",
+    "label": "统计",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=stats&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=stats&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 text 知识库\n\t\t\t11 button 创建知识库\n\t\t\t12 container\n\t\t\t\t13 text 对话\n\t\t\t14 text 正在读取对话…\n\t\t\t15 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t16 text 正在读取最近笔记…\n\t\t\t17 button admin，账号菜单\n\t\t\t18 button 设置\n\t\t19 container 设置分区\n\t\t\t20 heading 设置, Value: 1\n\t\t\t\t21 text 设置\n\t\t\t22 menu\n\t\t\t\t23 模型\n\t\t\t\t24 网络搜索\n\t\t\t\t25 检索\n\t\t\t\t26 订阅\n\t\t\t\t27 存储\n\t\t\t\t28 支持能力\n\t\t\t\t29 统计\n\t\t\t\t30 数据与备份\n\t\t\t\t31 外观\n\t\t\t\t32 账号\n\t\t33 container\n\t\t\t34 heading 统计, Value: 2\n\t\t\t\t35 text 统计\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=stats&scope=all",
+    "geometry": {
+      "clientWidth": 833,
+      "scrollTop": 0,
+      "scrollWidth": 833,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "data",
+    "label": "数据与备份",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=data&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=data&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 container\n\t\t\t\t11 text 知识库\n\t\t\t\t12 button 创建知识库\n\t\t\t\t13 button\n\t\t\t\t14 button\n\t\t\t\t15 menu\n\t\t\t\t\t16 text 对话\n\t\t\t\t\t17 container\n\t\t\t\t\t\t18 如何让收集的资料真正成为可以复用的知识？请给出步骤、对比表和代码示例。 2 小时前\n\t\t\t\t\t\t19 请概括附件内容 2 小时前\n\t\t\t\t\t\t20 官方封装验收：请说明 mimir 的模型选择、附件和知识库。 2 小时前\n\t\t\t\t\t\t21 请概括附件内容 4 小时前\n\t\t\t\t\t\t22 请展示一段 Markdown 和代码，验证对话渲染。 5 小时前\n\t\t\t\t23 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t\t24 text 正在读取最近笔记…\n\t\t\t25 button admin，账号菜单\n\t\t\t26 button 设置\n\t\t27 container 设置分区\n\t\t\t28 heading 设置, Value: 1\n\t\t\t\t29 text 设置\n\t\t\t30 menu\n\t\t\t\t31 模型\n\t\t\t\t32 网络搜索\n\t\t\t\t33 检索\n\t\t\t\t34 订阅\n\t\t\t\t35 存储\n\t\t\t\t36 支持能力\n\t\t\t\t37 统计\n\t\t\t\t38 数据与备份\n\t\t\t\t39 外观\n\t\t\t\t40 账号\n\t\t41 container\n\t\t\t42 heading 数据与备份, Value: 2\n\t\t\t\t43 text 数据与备份\n\t\t\t44 text 维护 重新扫描本地文件以恢复笔记和附件\n\t\t\t45 button 重新扫描本地文件\n\t\t\t46 text 导出 将文档、对话和附件导出为 Markdown 或 JSON\n\t\t\t47 button 导出文档与附件\n\t\t\t48 button 导出完整记录\n\t\t\t49 text 导出文件不能代替完整备份。请同时备份应用数据与密钥。\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=data&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "appearance",
+    "label": "外观",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=appearance&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=appearance&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 text 知识库\n\t\t\t11 button 创建知识库\n\t\t\t12 container\n\t\t\t\t13 text 对话\n\t\t\t14 text 正在读取对话…\n\t\t\t15 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t16 text 还没有最近打开的笔记\n\t\t\t17 button (disabled) 正在读取账号…\n\t\t\t\t18 container loading\n\t\t\t\t19 text 正在读取账号…\n\t\t\t20 button 设置\n\t\t21 container 设置分区\n\t\t\t22 heading 设置, Value: 1\n\t\t\t\t23 text 设置\n\t\t\t24 menu\n\t\t\t\t25 模型\n\t\t\t\t26 网络搜索\n\t\t\t\t27 检索\n\t\t\t\t28 订阅\n\t\t\t\t29 存储\n\t\t\t\t30 支持能力\n\t\t\t\t31 统计\n\t\t\t\t32 数据与备份\n\t\t\t\t33 外观\n\t\t\t\t34 账号\n\t\t35 container\n\t\t\t36 heading 外观, Value: 2\n\t\t\t\t37 text 外观\n\t\t\t38 text 界面颜色 选择浅色、深色或跟随系统 颜色模式\n\t\t\t39 界面外观\n\t\t\t\t40 container\n\t\t\t\t\t41 radio button (settable, integer) Description: 跟随系统, Value: 1\n\t\t\t\t\t42 text 跟随系统\n\t\t\t\t\t43 radio button (settable, integer) Description: 浅色, Value: 0\n\t\t\t\t\t44 text 浅色\n\t\t\t\t\t45 radio button (settable, integer) Description: 深色, Value: 0\n\t\t\t\t\t46 text 深色\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=appearance&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  },
+  {
+    "section": "account",
+    "label": "账号",
+    "ax": "Browser tab: 49, Title: \"mimir\", URL: \"http://127.0.0.1:5191/settings?section=account&scope=all\".\n1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=account&scope=all\n\t2 container root\n\t\t3 container 主导航\n\t\t\t4 text Mimir\n\t\t\t5 button 折叠侧边栏\n\t\t\t6 button 快速搜索…\n\t\t\t7 button 知识库\n\t\t\t8 button 新建对话\n\t\t\t9 button 收集\n\t\t\t10 text 知识库\n\t\t\t11 button 创建知识库\n\t\t\t12 container\n\t\t\t\t13 text 对话\n\t\t\t14 text 正在读取对话…\n\t\t\t15 button (expanded) 最近笔记, Secondary Actions: Collapse\n\t\t\t16 text 正在读取最近笔记…\n\t\t\t17 button admin，账号菜单\n\t\t\t18 button 设置\n\t\t19 container 设置分区\n\t\t\t20 heading 设置, Value: 1\n\t\t\t\t21 text 设置\n\t\t\t22 menu\n\t\t\t\t23 模型\n\t\t\t\t24 网络搜索\n\t\t\t\t25 检索\n\t\t\t\t26 订阅\n\t\t\t\t27 存储\n\t\t\t\t28 支持能力\n\t\t\t\t29 统计\n\t\t\t\t30 数据与备份\n\t\t\t\t31 外观\n\t\t\t\t32 账号\n\t\t33 container\n\t\t\t34 heading 账号, Value: 2\n\t\t\t\t35 text 账号\n\t\t\t36 text 个人资料 修改头像、名称等基本信息\n\t\t\t37 button 更换头像\n\t\t\t\t38 text A\n\t\t\t39 text 名称\n\t\t\t40 text field (settable) 名称\n\t\t\t41 button (disabled) 保 存\n\t\t\t42 text 邮箱 admin@example.com\n\t\t\t43 button 登 出\n\nThe focused UI element is 1 AXWebArea mimir, URL: 127.0.0.1:5191/settings?section=account&scope=all",
+    "geometry": {
+      "clientWidth": 848,
+      "scrollTop": 0,
+      "scrollWidth": 848,
+      "titleY": 40,
+      "viewport": [1280, 720]
+    }
+  }
+]

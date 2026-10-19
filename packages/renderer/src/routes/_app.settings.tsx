@@ -156,6 +156,9 @@ function SettingsPage() {
       to: '/settings',
       search: { scope: search.scope, section: resolveSection(key) },
       replace: true,
+      // The keyed main owns section scroll reset. Router element restoration
+      // can otherwise reapply a previous section's cached scroll after render.
+      resetScroll: false,
     })
   }
 
@@ -184,7 +187,11 @@ function SettingsPage() {
           />
         </aside>
       )}
-      <main className={styles.content}>
+      <main
+        key={section}
+        className={styles.content}
+        data-scroll-restoration-id={`settings-${section}`}
+      >
         <div className={styles.inner}>
           {section !== 'models' ? (
             <h2 className={styles.contentTitle}>

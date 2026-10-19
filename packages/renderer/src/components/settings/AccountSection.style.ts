@@ -18,7 +18,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     display: flex;
     gap: 20px;
     align-items: flex-start;
-    @media (max-width: 520px) {
+    @container settings-content (max-width: 480px) {
       flex-direction: column;
       gap: 14px;
     }
@@ -82,7 +82,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 9px;
     min-width: 0;
-    @media (max-width: 520px) {
+    @container settings-content (max-width: 480px) {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 7px 9px;
@@ -119,7 +119,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     min-width: 0;
     max-width: 260px;
     width: 100%;
-    @media (max-width: 520px) {
+    @container settings-content (max-width: 480px) {
       max-width: none;
     }
   `,

@@ -1,0 +1,886 @@
+{
+  "date": "2026-10-20",
+  "baseline": "7b61836",
+  "scenes": [
+    {
+      "id": "models",
+      "label": "模型与供应商 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/models-dark-1280.png",
+      "after": "after/models-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "network-search",
+      "label": "网络搜索 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/network-search-dark-1280.png",
+      "after": "after/network-search-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "retrieval",
+      "label": "检索 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/retrieval-dark-1280.png",
+      "after": "after/retrieval-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "feeds",
+      "label": "订阅 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/feeds-dark-1280.png",
+      "after": "after/feeds-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "storage",
+      "label": "存储 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/storage-dark-1280.png",
+      "after": "after/storage-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "plugins",
+      "label": "支持能力 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/plugins-dark-1280.png",
+      "after": "after/plugins-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "stats",
+      "label": "统计 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/stats-dark-1280.png",
+      "after": "after/stats-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "data",
+      "label": "数据与备份 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/data-dark-1280.png",
+      "after": "after/data-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "appearance",
+      "label": "外观 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/appearance-dark-1280.png",
+      "after": "after/appearance-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "account",
+      "label": "账号 · 深色1280",
+      "kind": "真实应用",
+      "before": "before/account-dark-1280.png",
+      "after": "after/account-dark-1280.png",
+      "note": "实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。"
+    },
+    {
+      "id": "models-dark-1100",
+      "label": "模型 · 1100窄内容列",
+      "kind": "真实应用",
+      "before": "before/models-dark-1100.png",
+      "after": "after/models-dark-1100.png",
+      "note": "两侧导航占宽时，供应商动作按实际内容列适配。"
+    },
+    {
+      "id": "models-dark-600",
+      "label": "模型 · 600小窗口",
+      "kind": "真实应用",
+      "before": "before/models-dark-600.png",
+      "after": "after/models-dark-600.png",
+      "note": "设置分区使用Select，供应商和字段按实际容器宽度堆叠。"
+    },
+    {
+      "id": "models-light-1280",
+      "label": "模型 · 浅色1280",
+      "kind": "真实应用",
+      "before": "before/models-light-1280.png",
+      "after": "after/models-light-1280.png",
+      "note": "与深色使用同一组件与令牌。"
+    },
+    {
+      "id": "section-switch-dark-1100",
+      "label": "切换分区 · 滚动修复",
+      "kind": "真实应用",
+      "before": "before/section-switch-dark-1100.png",
+      "after": "after/section-switch-dark-1100.png",
+      "note": "修改前切换后标题位于屏外；最终验证：模型scrollTop1181 → 支持能力0，标题y40，焦点留在导航。"
+    },
+    {
+      "id": "fixture-models-long",
+      "label": "供应商长名称/地址",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-models-long.png",
+      "after": "after/fixture-models-long.png",
+      "note": "局部换行，供应商操作在窄容器中形成单独一行。"
+    },
+    {
+      "id": "fixture-plugins-container",
+      "label": "能力 · 520内容列",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-plugins-container.png",
+      "after": "after/fixture-plugins-container.png",
+      "note": "按settings-content实际宽度将两列调整为一列。"
+    },
+    {
+      "id": "fixture-stats-container",
+      "label": "统计 · 520内容列",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-stats-container.png",
+      "after": "after/fixture-stats-container.png",
+      "note": "统计格按实际容器从四列调整为两列。"
+    },
+    {
+      "id": "fixture-account-container",
+      "label": "账号 · 520内容列",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-account-container.png",
+      "after": "after/fixture-account-container.png",
+      "note": "头像与表单按实际内容列堆叠。"
+    },
+    {
+      "id": "fixture-client-long",
+      "label": "客户端长地址",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-client-long.png",
+      "after": "after/fixture-client-long.png",
+      "note": "长URL局部换行；Desktop桥全部模拟，未证明原生模式切换。"
+    },
+    {
+      "id": "fixture-provider-edit",
+      "label": "编辑供应商 · 520内容列",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-provider-edit.png",
+      "after": "after/fixture-provider-edit.png",
+      "note": "真实ProviderForm，模拟IO；保留表单语义与连接/用途配置。"
+    },
+    {
+      "id": "fixture-provider-create",
+      "label": "新增供应商 · 520内容列",
+      "kind": "真实组件 / 模拟IO",
+      "before": "before/fixture-provider-create.png",
+      "after": "after/fixture-provider-create.png",
+      "note": "创建与编辑沿用真实表单，未做产品新能力扩展。"
+    },
+    {
+      "id": "models-dark-1440",
+      "label": "补充 · models-dark-1440",
+      "kind": "真实应用",
+      "after": "after/models-dark-1440.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "models-dark-880",
+      "label": "补充 · models-dark-880",
+      "kind": "真实应用",
+      "after": "after/models-dark-880.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "provider-delete-confirm",
+      "label": "补充 · provider-delete-confirm",
+      "kind": "真实应用",
+      "after": "after/provider-delete-confirm.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "provider-edit",
+      "label": "补充 · provider-edit",
+      "kind": "真实应用",
+      "after": "after/provider-edit.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "provider-expanded",
+      "label": "补充 · provider-expanded",
+      "kind": "真实应用",
+      "after": "after/provider-expanded.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "provider-presets",
+      "label": "补充 · provider-presets",
+      "kind": "真实应用",
+      "after": "after/provider-presets.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "role-cascader",
+      "label": "补充 · role-cascader",
+      "kind": "真实应用",
+      "after": "after/role-cascader.png",
+      "note": "实施后交互或额外窗口证据，未伪造对应before。"
+    },
+    {
+      "id": "state-account-error",
+      "label": "状态 · account-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/account-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-account-loading",
+      "label": "状态 · account-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/account-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-account-local",
+      "label": "状态 · account-local",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/account-local.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-account-save-error",
+      "label": "状态 · account-save-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/account-save-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-account-saved",
+      "label": "状态 · account-saved",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/account-saved.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-account-saving",
+      "label": "状态 · account-saving",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/account-saving.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-avatar-crop",
+      "label": "状态 · avatar-crop",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/avatar-crop.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-client-error",
+      "label": "状态 · client-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/client-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-client-loading",
+      "label": "状态 · client-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/client-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-client-local",
+      "label": "状态 · client-local",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/client-local.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-data-error",
+      "label": "状态 · data-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/data-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-data-loading",
+      "label": "状态 · data-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/data-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-feeds-empty",
+      "label": "状态 · feeds-empty",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/feeds-empty.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-feeds-error",
+      "label": "状态 · feeds-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/feeds-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-feeds-invalid-url",
+      "label": "状态 · feeds-invalid-url",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/feeds-invalid-url.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-feeds-loading",
+      "label": "状态 · feeds-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/feeds-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-feeds-long",
+      "label": "状态 · feeds-long",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/feeds-long.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-feeds-unsubscribe-confirm",
+      "label": "状态 · feeds-unsubscribe-confirm",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/feeds-unsubscribe-confirm.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-models-empty",
+      "label": "状态 · models-empty",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/models-empty.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-models-error",
+      "label": "状态 · models-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/models-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-models-loading",
+      "label": "状态 · models-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/models-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-network-search-error",
+      "label": "状态 · network-search-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/network-search-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-network-search-loading",
+      "label": "状态 · network-search-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/network-search-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-plugins-error",
+      "label": "状态 · plugins-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/plugins-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-plugins-loading",
+      "label": "状态 · plugins-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/plugins-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-retrieval-error",
+      "label": "状态 · retrieval-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/retrieval-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-retrieval-loading",
+      "label": "状态 · retrieval-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/retrieval-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-stats-error",
+      "label": "状态 · stats-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/stats-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-stats-loading",
+      "label": "状态 · stats-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/stats-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-storage-error",
+      "label": "状态 · storage-error",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/storage-error.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-storage-loading",
+      "label": "状态 · storage-loading",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/storage-loading.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    },
+    {
+      "id": "state-storage-s3-expanded",
+      "label": "状态 · storage-s3-expanded",
+      "kind": "真实组件 / 模拟IO",
+      "after": "states/storage-s3-expanded.png",
+      "note": "固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。"
+    }
+  ],
+  "images": [
+    {
+      "path": "after/account-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "d934a1ed0f25f843cd830cccaf8ee587014d54a4e4f02a3a36c5696c1b5de39e"
+    },
+    {
+      "path": "after/appearance-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "f18508807ce55ac91e0eb2619ae54f5e3eeffc831ad952ff09121ea32a5cdee7"
+    },
+    {
+      "path": "after/data-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "f1748cc1b5567788921235ddb466c2f153cf175e9eda45fe531edade475fb7c8"
+    },
+    {
+      "path": "after/feeds-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "c0ce138882f3b4c44fd9c8ae128354d54a109e7aad42990ffa99456d91a50a83"
+    },
+    {
+      "path": "after/fixture-account-container.png",
+      "size": [1280, 720],
+      "sha256": "abaf67480db9b4afc384ba81978860148b70a58b70f29131ade910f245851308"
+    },
+    {
+      "path": "after/fixture-client-long.png",
+      "size": [1280, 720],
+      "sha256": "90eed3d35137d1b2bd18a08e928626563ea3d6d259fe664ddec5e5a833c27d99"
+    },
+    {
+      "path": "after/fixture-models-long.png",
+      "size": [1280, 720],
+      "sha256": "5221c86cb1817ca8662ff18162a9ba4b88809d5bdfb5839f6331a04e4d73df81"
+    },
+    {
+      "path": "after/fixture-plugins-container.png",
+      "size": [1280, 720],
+      "sha256": "8c490c5c796fcbb15fa7a272a2755e58f5a2985efd4e05fab55efcd46b6fa114"
+    },
+    {
+      "path": "after/fixture-provider-create.png",
+      "size": [1280, 720],
+      "sha256": "6749f211b3cd2befbbcc1b4840c0775caab4b1611c86978e7f2c1eea535715fa"
+    },
+    {
+      "path": "after/fixture-provider-edit.png",
+      "size": [1280, 720],
+      "sha256": "f45575671726139ec6e8c06c80928ecc66b18afee836f77cf137b05201666431"
+    },
+    {
+      "path": "after/fixture-stats-container.png",
+      "size": [1280, 720],
+      "sha256": "889e85d1370d865b5415f2f3b553d90ddffed371cfaf7cd6cc627fad60ab81f5"
+    },
+    {
+      "path": "after/models-dark-1100.png",
+      "size": [1100, 760],
+      "sha256": "af242aa584d50408ca62b7c07182a5346387fdf267ee3a3d154b30aa916899f0"
+    },
+    {
+      "path": "after/models-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "b587ed9e19a928575ae14aecbef77c40b3e3e6999e32aa041946177c6b8e5612"
+    },
+    {
+      "path": "after/models-dark-1440.png",
+      "size": [1440, 900],
+      "sha256": "382dd9b1c1a75c8f6dfab8e4ba33dae787a067a2f57fa94790b9db256886d591"
+    },
+    {
+      "path": "after/models-dark-600.png",
+      "size": [600, 760],
+      "sha256": "c15cefa4f087ca95a25d6d2ae8609ff37bfb8aed19b912b9e1928bb45bef239e"
+    },
+    {
+      "path": "after/models-dark-880.png",
+      "size": [880, 760],
+      "sha256": "d9c58c4e180e491c4b02aa53bf67e2fe38c9eee9b21fe380a55914e4aadf6b5c"
+    },
+    {
+      "path": "after/models-light-1280.png",
+      "size": [1280, 720],
+      "sha256": "823d6ad4214c8d954f8b467c97588ed982488824fe357067f9ce1fc54034080a"
+    },
+    {
+      "path": "after/network-search-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "c6998eaa94d8e56b67e231d4df51cc49315bc2efe558415bfb410f7e32f18fc5"
+    },
+    {
+      "path": "after/plugins-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "cbc8b335eda52fa5326c49696883ac9748eb359f75468023f22d96607ed62ce6"
+    },
+    {
+      "path": "after/provider-delete-confirm.png",
+      "size": [1280, 720],
+      "sha256": "f1ca18925efda9059e7e27e1fcb7efa1e9b2215e5e87199c12b17ba87219f10d"
+    },
+    {
+      "path": "after/provider-edit.png",
+      "size": [1280, 720],
+      "sha256": "385bbbb5800154371465c636cf8ac528e3a78b5e6ef56fb3b847c553fcb83529"
+    },
+    {
+      "path": "after/provider-expanded.png",
+      "size": [1280, 720],
+      "sha256": "a84fe94b3d73d5031e3138a48a80e26d1eb1d9d584f3c3635356dc091ca3623f"
+    },
+    {
+      "path": "after/provider-presets.png",
+      "size": [1280, 720],
+      "sha256": "12f036d3aa484d42dd4e5002094bbc5b13ed0a9ddf13222b11aa3cb40124e4fc"
+    },
+    {
+      "path": "after/retrieval-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "2beaf0b5223ea54f69fcff54383dca138870048dfc3844cf4786b02705923c24"
+    },
+    {
+      "path": "after/role-cascader.png",
+      "size": [1280, 720],
+      "sha256": "b35be02e87552ab04af3751ca5492d3550e1eb558e54adfe3f54cc95c34fe2f7"
+    },
+    {
+      "path": "after/section-switch-dark-1100.png",
+      "size": [1100, 760],
+      "sha256": "bc05a988e7e8bbe20a2ad7f29534e7c1072c27ff7f5e4b928415f629e8a83991"
+    },
+    {
+      "path": "after/stats-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "5e545687b288e59612d33c3bf9cfb375f9bc9377c6a17c53d8a8afb043d42c6f"
+    },
+    {
+      "path": "after/storage-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "f6727ba7e0b98f257a71ae378c06d7e8b8ec4f3473e58256d72c37162a33f4a1"
+    },
+    {
+      "path": "before/account-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "57eb760ae5a3df4138ca032ac52535af7a37c101f0a6a1b64f0e805c566198f4"
+    },
+    {
+      "path": "before/appearance-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "52c995e6b8e7f0b43c4dad9be54c9040cde39b78240b1ea5b52a796bf48793ad"
+    },
+    {
+      "path": "before/data-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "160c66c48ad3ee007978def45480175ca06d43e72b706ab6535f3e0aade0f40a"
+    },
+    {
+      "path": "before/feeds-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "b774a313b193899d8f1860f7af8fea04a5b91d8a434014a53b73b0bb24e1caa9"
+    },
+    {
+      "path": "before/fixture-account-container.png",
+      "size": [1280, 720],
+      "sha256": "abaf67480db9b4afc384ba81978860148b70a58b70f29131ade910f245851308"
+    },
+    {
+      "path": "before/fixture-client-long.png",
+      "size": [1280, 720],
+      "sha256": "21955e4bd8b36c7afb25b071af91fb05c222357a4aa280c9a73b2057115715c4"
+    },
+    {
+      "path": "before/fixture-models-long.png",
+      "size": [1280, 720],
+      "sha256": "fd090ca73b3c44372cf38cea906456b48af2c235f0c53ee9ceb0eaa60e1df3f8"
+    },
+    {
+      "path": "before/fixture-plugins-container.png",
+      "size": [1280, 720],
+      "sha256": "6da66685228fe2f111628cdc6e949b92674ac088f3eea14e60fbec4771e1a66d"
+    },
+    {
+      "path": "before/fixture-provider-create.png",
+      "size": [1280, 720],
+      "sha256": "6749f211b3cd2befbbcc1b4840c0775caab4b1611c86978e7f2c1eea535715fa"
+    },
+    {
+      "path": "before/fixture-provider-edit.png",
+      "size": [1280, 720],
+      "sha256": "45779d6467d1fec90235588a263921a48dd7c8bed21909b46137cd8b29ccee4f"
+    },
+    {
+      "path": "before/fixture-stats-container.png",
+      "size": [1280, 720],
+      "sha256": "597cb0884ea8f0ada7ea66309e5d676f0e9ea2236254f378db10c656aea85145"
+    },
+    {
+      "path": "before/models-dark-1100.png",
+      "size": [1100, 760],
+      "sha256": "f8b927c931a8713fec87d01c2e95b4668d8b821dff1c1508dc4628ba0ed3eb7d"
+    },
+    {
+      "path": "before/models-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "64344b8791c567420154a27d8a49b1d28ee28cc345bbc42f3921e0dad5e2279d"
+    },
+    {
+      "path": "before/models-dark-600.png",
+      "size": [600, 760],
+      "sha256": "75994252e0c3369d909c299ba3f1d9dd803b1f12466ed67644967ce297aafdc1"
+    },
+    {
+      "path": "before/models-light-1280.png",
+      "size": [1280, 720],
+      "sha256": "9376b1a5f4cc528d56f7b3b7e1615caf7d2c1501b186277f1b3096eec1a9b6dd"
+    },
+    {
+      "path": "before/network-search-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "b697b97973fb572be3c0c31cd6884522f4d56e902a7469d9643dfaea00b1de1a"
+    },
+    {
+      "path": "before/plugins-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "926f4c068ef230cabe70fbaabc1d5c3e48f9dccdc38d5dffabe9408f2ce14d0e"
+    },
+    {
+      "path": "before/retrieval-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "c0afb3a62c8200fd053b2ebfa3fadd618c102c07c61603448c98a6b0ab426c7e"
+    },
+    {
+      "path": "before/section-switch-dark-1100.png",
+      "size": [1100, 760],
+      "sha256": "8548bc7736b89308034028f86a0c25c409bd2db0193de317040653bf904667ab"
+    },
+    {
+      "path": "before/stats-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "845a912c0aaf5cb9b8eb97dfe8b0c82e6263fd9f614258ccfb0dd068224de345"
+    },
+    {
+      "path": "before/storage-dark-1280.png",
+      "size": [1280, 720],
+      "sha256": "44da633ac5429e091b4a39dece05196c43671c31f77d08964504db35446c228b"
+    },
+    {
+      "path": "states/account-error.png",
+      "size": [1280, 720],
+      "sha256": "d1c4f8da9251fd50010fedd8695efd2118de6bf5903937077bf24e8fa6d0b1e3"
+    },
+    {
+      "path": "states/account-loading.png",
+      "size": [1280, 720],
+      "sha256": "207ac69e4fbe28d24281a9c45c45838c972ed7f27618791f6399b5acdab85e70"
+    },
+    {
+      "path": "states/account-local.png",
+      "size": [1280, 720],
+      "sha256": "6552c61ccb4a99af6bc8e05d04ff107d66f16119f47b434201489129bad7f384"
+    },
+    {
+      "path": "states/account-save-error.png",
+      "size": [1280, 720],
+      "sha256": "d6d82fc088471db47824193773717b4ac9ce41600241cbbae6df9629e8d74a2b"
+    },
+    {
+      "path": "states/account-saved.png",
+      "size": [1280, 720],
+      "sha256": "7cb5fa011d06aae226349b1a41337a55f8994d06f4d72cc8462ef1328a0adaa5"
+    },
+    {
+      "path": "states/account-saving.png",
+      "size": [1280, 720],
+      "sha256": "23e1fc8fc5a3395646cf1fcb4a3cdb268c3f0cf5a0e0cd423a65f41b0453c7e2"
+    },
+    {
+      "path": "states/avatar-crop.png",
+      "size": [1280, 720],
+      "sha256": "d063313d5c35ee41df8354cbb295ce108d6f4af4efabaca8300735d40bf8589e"
+    },
+    {
+      "path": "states/client-error.png",
+      "size": [1280, 720],
+      "sha256": "a27532e4a50e24145ebbd437b7094b1bb18b1574917abb03ffcbea6d45d16d73"
+    },
+    {
+      "path": "states/client-loading.png",
+      "size": [1280, 720],
+      "sha256": "3b5e5389531b88b092183a93465a95cf0c21f7da602102af2a2cb540066b6c46"
+    },
+    {
+      "path": "states/client-local.png",
+      "size": [1280, 720],
+      "sha256": "d82122060d0875ab51c6c2b46878fcaad7431b6b8558a31c15b0d4c0378ecacf"
+    },
+    {
+      "path": "states/data-error.png",
+      "size": [1280, 720],
+      "sha256": "19af4b6de67710666f13e075ab0e8b157ad37af9eb2ac63715a6b1d485d1a58d"
+    },
+    {
+      "path": "states/data-loading.png",
+      "size": [1280, 720],
+      "sha256": "3ce1deb3c69b2d1bfd9bb083b75f8fda533e75429a027f99ddd32e22c20a6f7a"
+    },
+    {
+      "path": "states/feeds-empty.png",
+      "size": [1280, 720],
+      "sha256": "2668de23948c00ee6e39b57d4234f0b364170765420109a0e73d34e42b0783b5"
+    },
+    {
+      "path": "states/feeds-error.png",
+      "size": [1280, 720],
+      "sha256": "41829a8e5c718319a1e2f90223b46a4745524c0e7557a57bbc06c20b3f086276"
+    },
+    {
+      "path": "states/feeds-invalid-url.png",
+      "size": [1280, 720],
+      "sha256": "de16cb39d46fa9c4eb14517a39fb88b905849adca57b25d4df84a94fa3000dee"
+    },
+    {
+      "path": "states/feeds-loading.png",
+      "size": [1280, 720],
+      "sha256": "61a88a2154d42cf44008995d0882554ae072d397708fc03371bbc1ebe01baa20"
+    },
+    {
+      "path": "states/feeds-long.png",
+      "size": [1280, 720],
+      "sha256": "c889de5fd59d11b86a24a39e49de97741247cfda59edc6fb37a34567a5380d63"
+    },
+    {
+      "path": "states/feeds-unsubscribe-confirm.png",
+      "size": [1280, 720],
+      "sha256": "75a32cc2d6e858e5cb979e51c7bb0602d7fbca55c2f22e6718f5dc6f5b5b8012"
+    },
+    {
+      "path": "states/models-empty.png",
+      "size": [1280, 720],
+      "sha256": "9da6227850a70471d28c9d9ee826be545302ac872bc6c7adc7c811ab859df3ac"
+    },
+    {
+      "path": "states/models-error.png",
+      "size": [1280, 720],
+      "sha256": "f271bd6825c27a5295721167d43a9e8275a4a5425e6307639c603943757fc98f"
+    },
+    {
+      "path": "states/models-loading.png",
+      "size": [1280, 720],
+      "sha256": "126c450498115ebf3e2f2beede7de7889fb5ec07bbb2efc37acf58e399bb3d85"
+    },
+    {
+      "path": "states/network-search-error.png",
+      "size": [1280, 720],
+      "sha256": "4eed0269ca3af0de976a9c0a9916f00ac0524c203d0554314c51ab76f944abc7"
+    },
+    {
+      "path": "states/network-search-loading.png",
+      "size": [1280, 720],
+      "sha256": "635e054a2da0061ae91db36ad6da60d91e466adc89cbd9719f6fac819a7ee7b9"
+    },
+    {
+      "path": "states/plugins-error.png",
+      "size": [1280, 720],
+      "sha256": "8143ecd8e18eb5ed0f0572cd2ec9debe642d9d612d82a27fc4aef8a13d581550"
+    },
+    {
+      "path": "states/plugins-loading.png",
+      "size": [1280, 720],
+      "sha256": "ca5880b5983f08c67f2e29072221def0bd6ae2a5ad6d8cf30ca87c2dde9adf62"
+    },
+    {
+      "path": "states/retrieval-error.png",
+      "size": [1280, 720],
+      "sha256": "2313e218b2430ac4155f51a8671a0016abf19099d826e7d1b37e7d5c9b073d24"
+    },
+    {
+      "path": "states/retrieval-loading.png",
+      "size": [1280, 720],
+      "sha256": "11f371fe6b6e9eb741817adc3fa1473f495b15471491926231ed36b6b0a876d5"
+    },
+    {
+      "path": "states/stats-error.png",
+      "size": [1280, 720],
+      "sha256": "3d1ff0362a0d04d98aef2824503a75870954a95782870459ad6583f0b9ab0c87"
+    },
+    {
+      "path": "states/stats-loading.png",
+      "size": [1280, 720],
+      "sha256": "ca5880b5983f08c67f2e29072221def0bd6ae2a5ad6d8cf30ca87c2dde9adf62"
+    },
+    {
+      "path": "states/storage-error.png",
+      "size": [1280, 720],
+      "sha256": "f271bd6825c27a5295721167d43a9e8275a4a5425e6307639c603943757fc98f"
+    },
+    {
+      "path": "states/storage-loading.png",
+      "size": [1280, 720],
+      "sha256": "ca5880b5983f08c67f2e29072221def0bd6ae2a5ad6d8cf30ca87c2dde9adf62"
+    },
+    {
+      "path": "states/storage-s3-expanded.png",
+      "size": [1280, 720],
+      "sha256": "76d84fff6c41d9753b3886b76e011d04b1ce1780f6c803867f907df7f9390c32"
+    }
+  ],
+  "sources": [
+    {
+      "path": "packages/renderer/src/routes/_app.settings.tsx",
+      "beforeCommit": "7b61836",
+      "beforeSha256": "23555dd3a634d522529510cd27fb0de752843173bbfe2846f0831c381775548a",
+      "afterSha256": "05498cf7637b9ba94ac8f7b36cb544891fbb8e22876e5a76f04b54705c2e0f45"
+    },
+    {
+      "path": "packages/renderer/src/components/settings/settings.style.ts",
+      "beforeCommit": "7b61836",
+      "beforeSha256": "9b7fec97517881124e65845092b22ae2d4a923c1d89dc96bac56c91e7f7a3f3d",
+      "afterSha256": "4e39be2dcaf809abc2b8fc5edb19c8a5b1822a1abe401ce8767c851da7c74edd"
+    },
+    {
+      "path": "packages/renderer/src/components/settings/ProviderList.tsx",
+      "beforeCommit": "7b61836",
+      "beforeSha256": "9e98dd8a5cbd4f6dacf9933c28e26342bc6b4e33c3272efad42cf2fbb50231a5",
+      "afterSha256": "b2d52f31cf34904d4b629f51476f025a63c9a437783923750d46728bbc9be2d8"
+    },
+    {
+      "path": "packages/renderer/src/components/settings/AccountSection.style.ts",
+      "beforeCommit": "7b61836",
+      "beforeSha256": "d7cb67bf2651ccae4e360d20fcb2b068b93404476e7775ec6072641605141fb2",
+      "afterSha256": "b2dca022727c68f24e7789aa01cd4ded7ca7af64c8d50ef4478d41798f399cdc"
+    }
+  ],
+  "verification": "pnpm check exit 0; renderer 77 files / 583 tests; storage 2 pre-existing skipped tests",
+  "limits": [
+    "所有Web正常页来自真实产品与隔离测试服务。",
+    "固定数据场景的全部IO、Desktop桥、头像上传与导出均为模拟。",
+    "未验证实际供应商计费调用、S3写入/迁移、原生文件选择器、实际头像上传、真实备份文件内容及Electron模式切换。"
+  ]
+}

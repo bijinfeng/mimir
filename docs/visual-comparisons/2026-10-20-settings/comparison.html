@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>设置交互精修 · 渲染存档</title>
+    <style>
+      :root {
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+        color: #242824;
+        background: #f5f6f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        padding: 24px 28px 16px;
+        border-bottom: 1px solid #dfe3df;
+        background: #fff;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 8px 0;
+        color: #555f57;
+        max-width: 95ch;
+      }
+      a {
+        color: #236648;
+      }
+      main {
+        padding: 20px 28px 40px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      select,
+      button {
+        font: inherit;
+        background: #fff;
+        color: inherit;
+        border: 1px solid #c8d0c9;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      select {
+        max-width: 100%;
+      }
+      button {
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #e7f0e9;
+        color: #1d5f38;
+        border-color: #8aa992;
+      }
+      :focus-visible {
+        outline: 2px solid #277d49;
+        outline-offset: 3px;
+      }
+      .scene-meta {
+        margin: 0 0 16px;
+      }
+      .kind {
+        font-weight: 600;
+        color: #2b6942;
+      }
+      .frames {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+      .frames.single {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      figcaption a {
+        font-weight: 400;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d8ded8;
+        background: #fff;
+      }
+      .hidden {
+        display: none;
+      }
+      footer {
+        border-top: 1px solid #dfe3df;
+        padding: 18px 28px;
+        background: #fff;
+      }
+      details {
+        margin-top: 18px;
+      }
+      summary {
+        cursor: pointer;
+      }
+      ul {
+        padding-left: 22px;
+      }
+      @media (max-width: 760px) {
+        header,
+        main,
+        footer {
+          padding-inline: 16px;
+        }
+        .frames {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>设置交互精修 · 渲染存档</h1>
+      <p>2026-10-20 · 基线 7b61836 · 11个设置分区 · 实际截图与隔离模拟分开标注。</p>
+      <p>
+        重点：分区切换回顶、供应商操作与展开语义、按实际内容宽度适配、长内容换行。截图按原始尺寸保存，可打开原图检查。
+      </p>
+    </header>
+    <main>
+      <div class="toolbar">
+        <label
+          >场景
+          <select id="scene"></select
+        ></label>
+        <div role="group" aria-label="对比模式">
+          <button data-mode="compare" aria-pressed="true">前后并排</button>
+          <button data-mode="before" aria-pressed="false">修改前</button>
+          <button data-mode="after" aria-pressed="false">修改后</button>
+        </div>
+      </div>
+      <div class="scene-meta">
+        <span id="kind" class="kind"></span>
+        <p id="note"></p>
+      </div>
+      <div id="frames" class="frames">
+        <figure id="before">
+          <figcaption>修改前 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改前真实渲染" />
+        </figure>
+        <figure id="after">
+          <figcaption>修改后 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改后真实渲染" />
+        </figure>
+      </div>
+      <details>
+        <summary>验收与边界</summary>
+        <ul>
+          <li>真实产品10个Web分区、浅深色、600/880/1100/1440窗口；滚动从1181回到0，标题y40。</li>
+          <li>供应商独立展开、键盘操作、编辑与创建、删除确认取消、模型级联菜单。</li>
+          <li>
+            隔离组件覆盖加载/失败/空态、长内容、保存中/成功/失败保稿、S3展开、订阅确认/校验、头像裁切取消、Desktop本地/云端呈现。
+          </li>
+          <li>
+            没有执行真实供应商计费调用、S3写入/迁移、原生文件选择器、真实头像上传、备份文件验收或Electron模式切换。
+          </li>
+          <li>全仓pnpm check通过；既有storage两项集成测试跳过保留。</li>
+        </ul>
+      </details>
+    </main>
+    <footer>
+      <a href="acceptance.md">完整验收记录</a> · <a href="manifest.json">尺寸/来源/哈希</a> ·
+      <a href="checks/pnpm-check.log">全仓检查日志</a>
+      <p>
+        此页可离线打开，不依赖开发服务器。模拟演示源码随Trellis任务归档，运行方式见任务gallery/README.md。
+      </p>
+    </footer>
+    <script>
+      const scenes = [
+        {
+          id: 'models',
+          label: '模型与供应商 · 深色1280',
+          kind: '真实应用',
+          before: 'before/models-dark-1280.png',
+          after: 'after/models-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'network-search',
+          label: '网络搜索 · 深色1280',
+          kind: '真实应用',
+          before: 'before/network-search-dark-1280.png',
+          after: 'after/network-search-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'retrieval',
+          label: '检索 · 深色1280',
+          kind: '真实应用',
+          before: 'before/retrieval-dark-1280.png',
+          after: 'after/retrieval-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'feeds',
+          label: '订阅 · 深色1280',
+          kind: '真实应用',
+          before: 'before/feeds-dark-1280.png',
+          after: 'after/feeds-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'storage',
+          label: '存储 · 深色1280',
+          kind: '真实应用',
+          before: 'before/storage-dark-1280.png',
+          after: 'after/storage-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'plugins',
+          label: '支持能力 · 深色1280',
+          kind: '真实应用',
+          before: 'before/plugins-dark-1280.png',
+          after: 'after/plugins-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'stats',
+          label: '统计 · 深色1280',
+          kind: '真实应用',
+          before: 'before/stats-dark-1280.png',
+          after: 'after/stats-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'data',
+          label: '数据与备份 · 深色1280',
+          kind: '真实应用',
+          before: 'before/data-dark-1280.png',
+          after: 'after/data-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'appearance',
+          label: '外观 · 深色1280',
+          kind: '真实应用',
+          before: 'before/appearance-dark-1280.png',
+          after: 'after/appearance-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'account',
+          label: '账号 · 深色1280',
+          kind: '真实应用',
+          before: 'before/account-dark-1280.png',
+          after: 'after/account-dark-1280.png',
+          note: '实际产品、本地隔离测试服务。保留相同内容与尺寸；未为制造差异而修改已合适的分区。',
+        },
+        {
+          id: 'models-dark-1100',
+          label: '模型 · 1100窄内容列',
+          kind: '真实应用',
+          before: 'before/models-dark-1100.png',
+          after: 'after/models-dark-1100.png',
+          note: '两侧导航占宽时，供应商动作按实际内容列适配。',
+        },
+        {
+          id: 'models-dark-600',
+          label: '模型 · 600小窗口',
+          kind: '真实应用',
+          before: 'before/models-dark-600.png',
+          after: 'after/models-dark-600.png',
+          note: '设置分区使用Select，供应商和字段按实际容器宽度堆叠。',
+        },
+        {
+          id: 'models-light-1280',
+          label: '模型 · 浅色1280',
+          kind: '真实应用',
+          before: 'before/models-light-1280.png',
+          after: 'after/models-light-1280.png',
+          note: '与深色使用同一组件与令牌。',
+        },
+        {
+          id: 'section-switch-dark-1100',
+          label: '切换分区 · 滚动修复',
+          kind: '真实应用',
+          before: 'before/section-switch-dark-1100.png',
+          after: 'after/section-switch-dark-1100.png',
+          note: '修改前切换后标题位于屏外；最终验证：模型scrollTop1181 → 支持能力0，标题y40，焦点留在导航。',
+        },
+        {
+          id: 'fixture-models-long',
+          label: '供应商长名称/地址',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-models-long.png',
+          after: 'after/fixture-models-long.png',
+          note: '局部换行，供应商操作在窄容器中形成单独一行。',
+        },
+        {
+          id: 'fixture-plugins-container',
+          label: '能力 · 520内容列',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-plugins-container.png',
+          after: 'after/fixture-plugins-container.png',
+          note: '按settings-content实际宽度将两列调整为一列。',
+        },
+        {
+          id: 'fixture-stats-container',
+          label: '统计 · 520内容列',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-stats-container.png',
+          after: 'after/fixture-stats-container.png',
+          note: '统计格按实际容器从四列调整为两列。',
+        },
+        {
+          id: 'fixture-account-container',
+          label: '账号 · 520内容列',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-account-container.png',
+          after: 'after/fixture-account-container.png',
+          note: '头像与表单按实际内容列堆叠。',
+        },
+        {
+          id: 'fixture-client-long',
+          label: '客户端长地址',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-client-long.png',
+          after: 'after/fixture-client-long.png',
+          note: '长URL局部换行；Desktop桥全部模拟，未证明原生模式切换。',
+        },
+        {
+          id: 'fixture-provider-edit',
+          label: '编辑供应商 · 520内容列',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-provider-edit.png',
+          after: 'after/fixture-provider-edit.png',
+          note: '真实ProviderForm，模拟IO；保留表单语义与连接/用途配置。',
+        },
+        {
+          id: 'fixture-provider-create',
+          label: '新增供应商 · 520内容列',
+          kind: '真实组件 / 模拟IO',
+          before: 'before/fixture-provider-create.png',
+          after: 'after/fixture-provider-create.png',
+          note: '创建与编辑沿用真实表单，未做产品新能力扩展。',
+        },
+        {
+          id: 'models-dark-1440',
+          label: '补充 · models-dark-1440',
+          kind: '真实应用',
+          after: 'after/models-dark-1440.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'models-dark-880',
+          label: '补充 · models-dark-880',
+          kind: '真实应用',
+          after: 'after/models-dark-880.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'provider-delete-confirm',
+          label: '补充 · provider-delete-confirm',
+          kind: '真实应用',
+          after: 'after/provider-delete-confirm.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'provider-edit',
+          label: '补充 · provider-edit',
+          kind: '真实应用',
+          after: 'after/provider-edit.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'provider-expanded',
+          label: '补充 · provider-expanded',
+          kind: '真实应用',
+          after: 'after/provider-expanded.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'provider-presets',
+          label: '补充 · provider-presets',
+          kind: '真实应用',
+          after: 'after/provider-presets.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'role-cascader',
+          label: '补充 · role-cascader',
+          kind: '真实应用',
+          after: 'after/role-cascader.png',
+          note: '实施后交互或额外窗口证据，未伪造对应before。',
+        },
+        {
+          id: 'state-account-error',
+          label: '状态 · account-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/account-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-account-loading',
+          label: '状态 · account-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/account-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-account-local',
+          label: '状态 · account-local',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/account-local.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-account-save-error',
+          label: '状态 · account-save-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/account-save-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-account-saved',
+          label: '状态 · account-saved',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/account-saved.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-account-saving',
+          label: '状态 · account-saving',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/account-saving.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-avatar-crop',
+          label: '状态 · avatar-crop',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/avatar-crop.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-client-error',
+          label: '状态 · client-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/client-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-client-loading',
+          label: '状态 · client-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/client-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-client-local',
+          label: '状态 · client-local',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/client-local.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-data-error',
+          label: '状态 · data-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/data-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-data-loading',
+          label: '状态 · data-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/data-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-feeds-empty',
+          label: '状态 · feeds-empty',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/feeds-empty.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-feeds-error',
+          label: '状态 · feeds-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/feeds-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-feeds-invalid-url',
+          label: '状态 · feeds-invalid-url',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/feeds-invalid-url.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-feeds-loading',
+          label: '状态 · feeds-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/feeds-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-feeds-long',
+          label: '状态 · feeds-long',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/feeds-long.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-feeds-unsubscribe-confirm',
+          label: '状态 · feeds-unsubscribe-confirm',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/feeds-unsubscribe-confirm.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-models-empty',
+          label: '状态 · models-empty',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/models-empty.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-models-error',
+          label: '状态 · models-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/models-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-models-loading',
+          label: '状态 · models-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/models-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-network-search-error',
+          label: '状态 · network-search-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/network-search-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-network-search-loading',
+          label: '状态 · network-search-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/network-search-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-plugins-error',
+          label: '状态 · plugins-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/plugins-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-plugins-loading',
+          label: '状态 · plugins-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/plugins-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-retrieval-error',
+          label: '状态 · retrieval-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/retrieval-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-retrieval-loading',
+          label: '状态 · retrieval-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/retrieval-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-stats-error',
+          label: '状态 · stats-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/stats-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-stats-loading',
+          label: '状态 · stats-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/stats-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-storage-error',
+          label: '状态 · storage-error',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/storage-error.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-storage-loading',
+          label: '状态 · storage-loading',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/storage-loading.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+        {
+          id: 'state-storage-s3-expanded',
+          label: '状态 · storage-s3-expanded',
+          kind: '真实组件 / 模拟IO',
+          after: 'states/storage-s3-expanded.png',
+          note: '固定测试数据，IO全部模拟。用于检查加载、失败、空态、保存反馈与浮层呈现，不代表真实外部服务或原生动作已验收。',
+        },
+      ]
+      const select = document.getElementById('scene')
+      let mode = 'compare'
+      for (const scene of scenes) {
+        const o = document.createElement('option')
+        o.value = scene.id
+        o.textContent = scene.label
+        select.append(o)
+      }
+      function render() {
+        const scene = scenes.find((s) => s.id === select.value) || scenes[0]
+        if (mode === 'before' && !scene.before) mode = 'after'
+        document.getElementById('kind').textContent = scene.kind
+        document.getElementById('note').textContent = scene.note
+        for (const side of ['before', 'after']) {
+          const figure = document.getElementById(side)
+          const path = scene[side]
+          figure.classList.toggle('hidden', !path || (mode !== 'compare' && mode !== side))
+          if (path) {
+            figure.querySelector('img').src = path
+            figure.querySelector('a').href = path
+          }
+        }
+        document
+          .getElementById('frames')
+          .classList.toggle('single', mode !== 'compare' || !scene.before)
+        for (const button of document.querySelectorAll('[data-mode]')) {
+          button.setAttribute('aria-pressed', String(button.dataset.mode === mode))
+          button.disabled = button.dataset.mode === 'before' && !scene.before
+        }
+        history.replaceState(null, '', '#' + scene.id)
+      }
+      select.onchange = render
+      for (const button of document.querySelectorAll('[data-mode]'))
+        button.onclick = () => {
+          mode = button.dataset.mode
+          render()
+        }
+      const initial = location.hash.slice(1)
+      if (scenes.some((s) => s.id === initial)) select.value = initial
+      render()
+    </script>
+  </body>
+</html>
