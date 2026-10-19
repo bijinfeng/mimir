@@ -1,0 +1,25 @@
+{
+  "version": "chat-review-v3",
+  "sourceGroups": 71,
+  "sourceStates": 379,
+  "additionalAttachmentStates": 24,
+  "totalRoutes": 403,
+  "dispositions": {
+    "official-default": 71,
+    "external-host": 179,
+    "removed": 7,
+    "boundary": 122
+  },
+  "officialSourceFiles": 35,
+  "officialRender": "Direct complete Thread; no renderer/components/theme/style overrides; original registry CSS + Tailwind4.3.3 in isolated document",
+  "sdk": "0.15.29",
+  "core": "0.3.29",
+  "react": "19.3.0",
+  "reactInstancesPerDocument": 1,
+  "productChanges": false,
+  "businessRequests": false,
+  "localAttachmentMock": true,
+  "htmlSha256": "2bfbfd2cd62fefca351297ec03d0d3bfde7f64e9eed123a7372e5ef0bcabd920",
+  "threadHtmlSha256": "e49deaad771175b871bb4674a0def6bafd09c77c3359df7dab89e5357f442df2",
+  "scope": "Static source mapping, original-byte and standalone artifact checks; not 403 GUI tests or proof of product adapters/services."
+}

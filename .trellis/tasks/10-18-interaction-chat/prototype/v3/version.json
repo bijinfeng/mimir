@@ -1,0 +1,25 @@
+{
+  "version": "chat-review-v3",
+  "frozen_on": "2026-10-19",
+  "html": "review.html",
+  "sha256": "2bfbfd2cd62fefca351297ec03d0d3bfde7f64e9eed123a7372e5ef0bcabd920",
+  "thread_html": "thread.review.html",
+  "thread_html_sha256": "e49deaad771175b871bb4674a0def6bafd09c77c3359df7dab89e5357f442df2",
+  "preview_url": "http://127.0.0.1:5189/v3/review.html?mode=proposed#scene=CHAT-005.user",
+  "groups": 72,
+  "source_groups": 71,
+  "source_states": 379,
+  "additional_attachment_states": 24,
+  "total_routes": 403,
+  "dispositions": {
+    "official-default": 71,
+    "external-host": 179,
+    "removed": 7,
+    "boundary": 122
+  },
+  "status": "awaiting_exact_version_approval",
+  "product_implementation_approved": false,
+  "immutable": true,
+  "supersedes": "../v2/version.json",
+  "revision_policy": "冻结后不覆盖；实质修改另存版本并重新审阅。"
+}

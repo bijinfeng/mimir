@@ -1,0 +1,2 @@
+Local attachment QA fixture. This contains no private data.
+The review adapter only prepares this file in memory; it does not call a server or model.

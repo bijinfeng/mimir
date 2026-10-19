@@ -1,0 +1,256 @@
+{
+  "checked_date": "2026-10-19",
+  "reference_commit": "2c0d8384398ca756ee414eef01b71caf91e2caa6",
+  "results": [
+    {
+      "name": "website",
+      "url": "https://weknora.weixin.qq.com/",
+      "http": 200,
+      "bytes": 113529,
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+      "title": [
+        "WeKnora — 帮你找到答案，并将知识付诸实践"
+      ],
+      "v083_present": true
+    },
+    {
+      "name": "package",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/contents/frontend/package.json?ref=2c0d8384398ca756ee414eef01b71caf91e2caa6",
+      "http": 200,
+      "bytes": 2229,
+      "sha256": "22a673ec3715689f3f1cc308625d618db2defcc1d6a12a7b0eb65b1179f72e13",
+      "version": "0.8.3"
+    },
+    {
+      "name": "agent",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/contents/frontend/src/views/chat/components/AgentStreamDisplay.vue?ref=2c0d8384398ca756ee414eef01b71caf91e2caa6",
+      "http": 200,
+      "bytes": 159403,
+      "sha256": "7d20b094fb912beab810ba1ad603873276827fd5275a463d56f60eff38bc6a88",
+      "thinking_evidence": [
+        {
+          "line": 61,
+          "text": ""
+        },
+        {
+          "line": 62,
+          "text": "              <!-- Thinking Event (streaming / merged). When a round's retracted"
+        },
+        {
+          "line": 63,
+          "text": "                   preamble was folded in, it becomes the card title and the"
+        },
+        {
+          "line": 64,
+          "text": "                   reasoning is the expandable body. -->"
+        },
+        {
+          "line": 65,
+          "text": "              <div v-if=\"event.type === 'thinking'\" class=\"tool-event\">"
+        },
+        {
+          "line": 66,
+          "text": "                <div class=\"action-card thinking-event-card\""
+        },
+        {
+          "line": 67,
+          "text": "                  :class=\"{ 'action-pending': isThinkingActive(event.event_id) }\">"
+        },
+        {
+          "line": 68,
+          "text": "                  <div class=\"action-header\" @click=\"toggleEvent(event.event_id)\">"
+        },
+        {
+          "line": 69,
+          "text": "                    <div class=\"action-title\" :class=\"{"
+        },
+        {
+          "line": 70,
+          "text": "                      'thinking-inline-title': !event.title && isEventExpanded(event.event_id),"
+        },
+        {
+          "line": 71,
+          "text": "                    }\">"
+        },
+        {
+          "line": 72,
+          "text": "                      <span class=\"action-title-icon icon-mask\" :style=\"maskIconStyle(thinkingIcon)\""
+        },
+        {
+          "line": 73,
+          "text": "                        aria-hidden=\"true\" />"
+        },
+        {
+          "line": 74,
+          "text": "                      <span v-if=\"event.title\" class=\"action-name action-preamble-title\">{{ event.title }}</span>"
+        },
+        {
+          "line": 75,
+          "text": "                      <div v-else-if=\"event.content && isEventExpanded(event.event_id)\""
+        },
+        {
+          "line": 76,
+          "text": "                        class=\"thinking-inline-content markdown-content\">"
+        },
+        {
+          "line": 77,
+          "text": "                        <div class=\"thinking-inline-markdown\" v-html=\"renderMarkdownContent(event.content)\"></div>"
+        },
+        {
+          "line": 78,
+          "text": "                      </div>"
+        },
+        {
+          "line": 79,
+          "text": "                      <span v-else-if=\"getThinkingSummary(event)\" class=\"action-summary\">{{ getThinkingSummary(event)"
+        },
+        {
+          "line": 80,
+          "text": "                        }}</span>"
+        }
+      ],
+      "toolbar_evidence": [
+        {
+          "line": 421,
+          "text": "              <div v-if=\"answerFullyRendered && event.done && event.content && event.content.trim()\""
+        },
+        {
+          "line": 422,
+          "text": "                class=\"answer-toolbar\">"
+        },
+        {
+          "line": 423,
+          "text": "                <t-tooltip v-if=\"canFork\" :content=\"forkTooltip\">"
+        },
+        {
+          "line": 424,
+          "text": "                  <t-button size=\"small\" variant=\"outline\" shape=\"round\" @click.stop=\"emitFork\">"
+        },
+        {
+          "line": 425,
+          "text": "                    <ChatActionIcon name=\"git-branch\" />"
+        },
+        {
+          "line": 426,
+          "text": "                  </t-button>"
+        },
+        {
+          "line": 427,
+          "text": "                </t-tooltip>"
+        },
+        {
+          "line": 428,
+          "text": "                <t-popconfirm"
+        },
+        {
+          "line": 429,
+          "text": "                  v-if=\"canRewind\""
+        },
+        {
+          "line": 430,
+          "text": "                  :confirm-btn=\"{ content: t('chat.rewind.confirmButton'), theme: 'danger', size: 'small' }\""
+        },
+        {
+          "line": 431,
+          "text": "                  :cancel-btn=\"{ content: t('chat.rewind.cancelButton'), size: 'small' }\""
+        },
+        {
+          "line": 432,
+          "text": "                  theme=\"warning\""
+        },
+        {
+          "line": 433,
+          "text": "                  placement=\"top\""
+        },
+        {
+          "line": 434,
+          "text": "                  :show-arrow=\"false\""
+        },
+        {
+          "line": 435,
+          "text": "                  overlay-class-name=\"wk-popover chat-rewind-popconfirm\""
+        },
+        {
+          "line": 436,
+          "text": "                  @confirm=\"emitRewind\""
+        },
+        {
+          "line": 437,
+          "text": "                >"
+        },
+        {
+          "line": 438,
+          "text": "                  <template #content>"
+        },
+        {
+          "line": 439,
+          "text": "                    <div class=\"chat-rewind-confirm__title\">{{ t('chat.rewind.confirmTitle') }}</div>"
+        },
+        {
+          "line": 440,
+          "text": "                    <div class=\"chat-rewind-confirm__body\">{{ t('chat.rewind.confirmBody') }}</div>"
+        },
+        {
+          "line": 441,
+          "text": "                  </template>"
+        },
+        {
+          "line": 442,
+          "text": "                  <t-tooltip :content=\"rewindTooltip\">"
+        },
+        {
+          "line": 443,
+          "text": "                    <t-button size=\"small\" variant=\"outline\" shape=\"round\" @click.stop>"
+        },
+        {
+          "line": 444,
+          "text": "                      <ChatActionIcon name=\"rollback\" />"
+        },
+        {
+          "line": 445,
+          "text": "                    </t-button>"
+        },
+        {
+          "line": 446,
+          "text": "                  </t-tooltip>"
+        },
+        {
+          "line": 447,
+          "text": "                </t-popconfirm>"
+        },
+        {
+          "line": 448,
+          "text": "                <t-button size=\"small\" variant=\"outline\" shape=\"round\" @click.stop=\"handleCopyAnswer(event)\""
+        },
+        {
+          "line": 449,
+          "text": "                  :title=\"$t('agent.copy')\" :aria-label=\"$t('agent.copy')\">"
+        },
+        {
+          "line": 450,
+          "text": "                  <ChatActionIcon name=\"copy\" />"
+        },
+        {
+          "line": 451,
+          "text": "                </t-button>"
+        },
+        {
+          "line": 452,
+          "text": "                <t-button v-if=\"!embeddedMode\" size=\"small\" variant=\"outline\" shape=\"round\" @click.stop=\"handleAddToKnowledge(event)\""
+        },
+        {
+          "line": 453,
+          "text": "                  :title=\"$t('agent.addToKnowledgeBase')\">"
+        },
+        {
+          "line": 454,
+          "text": "                  <ChatActionIcon name=\"bookmark-add\" />"
+        },
+        {
+          "line": 455,
+          "text": "                </t-button>"
+        }
+      ]
+    }
+  ]
+}

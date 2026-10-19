@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2023","module":"ESNext","moduleResolution":"Bundler","strict":true,"noEmit":true,"skipLibCheck":true,"paths":{"@assistant-ui/react":["/Users/admin/Desktop/mimir/packages/chat/node_modules/@assistant-ui/react/dist/index.d.ts"]}},"include":["runtime-facade.ts"]}

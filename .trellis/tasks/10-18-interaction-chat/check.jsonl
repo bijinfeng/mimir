@@ -9,3 +9,12 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/research/chat-package-inventory.md", "reason": "对话包全部现行分支和源码缺口"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/weknora-reference.md", "reason": "固定版本外部参考和应用边界"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/official-message-ui-contract.md", "reason": "v2完全移除自定义trace、官方registry固定版本/许可/依赖/等待与真实reasoning工具合同"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-thread-contract.md", "reason": "v3完整官方Thread/25运行源闭包、默认CSS、禁止覆盖与真实能力边界"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-feature-mapping-summary.md", "reason": "71组379来源状态逐项official/host-external/removed/boundary分类，非GUI次数"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-planning.md", "reason": "用户已同意附件规划：独立临时资源/模型与历史/生命周期/官方adapter"}
+{"file": ".trellis/tasks/10-18-interaction-chat/design.md", "reason": "v3全官方与宿主业务分工及兼容/回滚"}
+{"file": ".trellis/tasks/10-18-interaction-chat/implement.md", "reason": "认可具体v3后实施顺序与附件集成依赖"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-adapter-roundtrip.md", "reason": "真实已装AGUI转换往返：绝对图片URL/canonicalID/file引用，非真实HTTP能力"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/agui-official-thread-pre-send-seam.md", "reason": "公开runtime动作冻结与唯一AGUI bridge的最小隔离验证；非完整Thread/产品验收"}
+{"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v3.md", "reason": "冻结完整官方v3、附件方案、质量证据及未验边界；产品实施仍需本版认可"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/independent-v3-review.md", "reason": "独立源码复核结果与产品集成剩余边界，非GUI或产品端到端验收"}

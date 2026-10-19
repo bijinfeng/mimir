@@ -1,0 +1,41 @@
+{
+  "extends": "../../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": [],
+    "paths": {
+      "react": ["../../../../../packages/renderer/node_modules/@types/react/index.d.ts"],
+      "react/*": ["../../../../../packages/renderer/node_modules/@types/react/*"],
+      "react-dom/*": ["../../../../../packages/renderer/node_modules/@types/react-dom/*"],
+      "antd": ["../../../../../apps/web/node_modules/antd"],
+      "antd-style": ["../../../../../apps/web/node_modules/antd-style"],
+      "lucide-react": ["../../../../../packages/renderer/node_modules/lucide-react"],
+      "react-dom": ["../../../../../packages/renderer/node_modules/@types/react-dom/index.d.ts"],
+      "@assistant-ui/react": ["/tmp/mimir-chat-official-v3/deps/node_modules/@assistant-ui/react"],
+      "@/lib/utils": ["./vendor/packages/ui/src/lib/utils.ts"],
+      "@/components/ui/button": ["./vendor/packages/ui/src/components/react/ui/base/button.tsx"],
+      "@/components/ui/textarea": [
+        "./vendor/packages/ui/src/components/react/ui/base/textarea.tsx"
+      ],
+      "@base-ui/react/*": ["/tmp/mimir-chat-official-v3/deps/node_modules/@base-ui/react/*"],
+      "class-variance-authority": [
+        "/tmp/mimir-chat-official-v3/deps/node_modules/class-variance-authority"
+      ],
+      "cn": ["/tmp/mimir-chat-official-v3/deps/node_modules/cn"],
+      "@/components/assistant-ui/*": ["./vendor/packages/ui/src/components/react/assistant-ui/*"],
+      "@/components/ui/*": ["./vendor/packages/ui/src/components/react/ui/base/*"],
+      "@/hooks/*": ["./vendor/packages/ui/src/hooks/*"],
+      "@/lib/*": ["./vendor/packages/ui/src/lib/*"],
+      "@assistant-ui/react-markdown": [
+        "/tmp/mimir-chat-official-v3/deps/node_modules/@assistant-ui/react-markdown"
+      ],
+      "remark-gfm": ["/tmp/mimir-chat-official-v3/deps/node_modules/remark-gfm"],
+      "zustand/*": ["/tmp/mimir-chat-official-v3/deps/node_modules/zustand/*"]
+    },
+    "resolveJsonModule": true,
+    "declaration": false
+  },
+  "include": ["*.tsx", "*.ts", "env.d.ts", "scenes.json"]
+}

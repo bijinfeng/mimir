@@ -1,0 +1,54 @@
+{
+  "reviewed_at": "2026-10-19T11:55:59.533815+08:00",
+  "scope": "independent read-only source/artifact review; not browser or product end-to-end tests; hashes identify observed candidate and are not final freeze",
+  "official": {
+    "commit": "a587b2838f2d644549d216098d54cfbeedfac522",
+    "sourceFiles": 35,
+    "runtimeSourceFiles": 25,
+    "sourceMismatches": [],
+    "unresolved": [],
+    "licenseEmbedded": {
+      "review.html": true,
+      "thread.review.html": true
+    }
+  },
+  "baselines": {
+    "v2-product-baseline-hashes.json": {
+      "files": 51,
+      "mismatches": []
+    },
+    "v3-frozen-prototype-hashes.json": {
+      "files": 57,
+      "mismatches": []
+    }
+  },
+  "mapping": {
+    "sourceGroups": 71,
+    "sourceStates": 379,
+    "authorityStates": 379,
+    "baselineScenes": 379,
+    "counts": {
+      "official-default": 71,
+      "external-host": 179,
+      "boundary": 122,
+      "removed": 7
+    },
+    "classificationMismatches": [],
+    "sourceProjectionMismatches": [],
+    "additionalAttachmentStates": 24,
+    "additionalExcludedFromBaseline": true,
+    "totalRoutes": 403,
+    "duplicateRoutes": 0
+  },
+  "artifacts": {
+    "reviewHtml": "2bfbfd2cd62fefca351297ec03d0d3bfde7f64e9eed123a7372e5ef0bcabd920",
+    "threadHtml": "e49deaad771175b871bb4674a0def6bafd09c77c3359df7dab89e5357f442df2",
+    "matchesCurrentChecks": true,
+    "singleReactRootPerDocument": true,
+    "runtime": {
+      "assistantUi": "0.15.29",
+      "core": "0.3.29",
+      "react": "19.3.0"
+    }
+  }
+}

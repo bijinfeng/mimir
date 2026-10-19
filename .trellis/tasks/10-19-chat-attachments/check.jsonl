@@ -1,0 +1,15 @@
+{"file": ".trellis/spec/chat/frontend/conventions.md", "reason": "runtime/队列/历史/宿主IO与官方组件接线"}
+{"file": ".trellis/spec/chat/frontend/pitfalls.md", "reason": "PNG/Agent/队列冻结与恢复合同"}
+{"file": ".trellis/spec/server/backend/conventions.md", "reason": "服务层/存储/迁移/一致错误"}
+{"file": ".trellis/spec/server/backend/auth.md", "reason": "受保护路由与归属授权"}
+{"file": ".trellis/spec/server/backend/tests.md", "reason": "真实HTTP与数据库测试方法"}
+{"file": ".trellis/spec/shared/contract/document-agent.md", "reason": "专用Agent来源/版本/中断不能旁路"}
+{"file": ".trellis/spec/plugin-parser/backend/index.md", "reason": "纯解析接缝不写库"}
+{"file": ".trellis/spec/plugin-storage/backend/index.md", "reason": "统一activeStorage及相对key"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-planning.md", "reason": "附件全链事实、官方adapter与拟定政策"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-thread-contract.md", "reason": "固定官方全闭包与默认CSS禁止覆盖"}
+{"file": ".trellis/tasks/10-19-chat-attachments/prd.md", "reason": "最新拟定范围与AA1-AA8验收"}
+{"file": ".trellis/tasks/10-19-chat-attachments/design.md", "reason": "独立资源/上下文/生命周期/父子依赖"}
+{"file": ".trellis/tasks/10-19-chat-attachments/research/attachment-planning-review.md", "reason": "独立复核附件方案/默认UI/保留策略与边界"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-adapter-roundtrip.md", "reason": "AGUI转换实测与产品接线约束"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/agui-official-thread-pre-send-seam.md", "reason": "公开runtime动作冻结与唯一AGUI bridge的最小隔离验证；非完整Thread/产品验收"}

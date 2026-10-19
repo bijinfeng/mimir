@@ -1,0 +1,571 @@
+{
+  "date": "2026-10-19",
+  "version": "chat-review-v3",
+  "review_html_sha256": "2bfbfd2cd62fefca351297ec03d0d3bfde7f64e9eed123a7372e5ef0bcabd920",
+  "thread_html_sha256": "e49deaad771175b871bb4674a0def6bafd09c77c3359df7dab89e5357f442df2",
+  "baselines": {
+    "v2-product-baseline-hashes.json": {
+      "files": 51,
+      "mismatches": [],
+      "entries": [
+        {
+          "path": "packages/chat/src/ChatThread.tsx",
+          "expected_sha256": "f7eb026d4e4c4db5bc4b05e34b5d6c77b71631a0dfaf89737b18fc641398b46a",
+          "actual_sha256": "f7eb026d4e4c4db5bc4b05e34b5d6c77b71631a0dfaf89737b18fc641398b46a"
+        },
+        {
+          "path": "packages/chat/src/types.ts",
+          "expected_sha256": "9806ee8481a1c9205bb07ced4833bb5c9afe26849edb942a91be3710af1a91c1",
+          "actual_sha256": "9806ee8481a1c9205bb07ced4833bb5c9afe26849edb942a91be3710af1a91c1"
+        },
+        {
+          "path": "packages/chat/src/ChatPanel.style.ts",
+          "expected_sha256": "5737a70e0dd77e2a96ee62aa98e00c424271c11fb7c1661809465db4bc611d2a",
+          "actual_sha256": "5737a70e0dd77e2a96ee62aa98e00c424271c11fb7c1661809465db4bc611d2a"
+        },
+        {
+          "path": "packages/chat/src/ChatHostVars.tsx",
+          "expected_sha256": "c5249191a809199288668b27d9b27f9f459b8daee07c2ddcba30566796cfe009",
+          "actual_sha256": "c5249191a809199288668b27d9b27f9f459b8daee07c2ddcba30566796cfe009"
+        },
+        {
+          "path": "packages/chat/src/EmptyStage.tsx",
+          "expected_sha256": "19dd9b751190954971d0a08ead07d5e9d5a3a59cf7b7d49b840654f530f563ae",
+          "actual_sha256": "19dd9b751190954971d0a08ead07d5e9d5a3a59cf7b7d49b840654f530f563ae"
+        },
+        {
+          "path": "packages/chat/src/ChatPanel.tsx",
+          "expected_sha256": "8ba3ff9c6d1e40d9edae867af811b58dd0995e4aeba36de7668c34b9ee4deb12",
+          "actual_sha256": "8ba3ff9c6d1e40d9edae867af811b58dd0995e4aeba36de7668c34b9ee4deb12"
+        },
+        {
+          "path": "packages/chat/src/index.ts",
+          "expected_sha256": "eeaca3e2eacaa3e0da955cead385ebd9e2df870ed3cfd9048ae025bc260bfc65",
+          "actual_sha256": "eeaca3e2eacaa3e0da955cead385ebd9e2df870ed3cfd9048ae025bc260bfc65"
+        },
+        {
+          "path": "packages/chat/src/custom-token.d.ts",
+          "expected_sha256": "e4fe01f35687377c65f4883993b569292f447d60f1b0f1405c190c19ca098fe3",
+          "actual_sha256": "e4fe01f35687377c65f4883993b569292f447d60f1b0f1405c190c19ca098fe3"
+        },
+        {
+          "path": "packages/chat/src/ChatPanel.test.tsx",
+          "expected_sha256": "f1e7c48746ced29baab5621892c6682503eb124cbc0f5023a993d388728b688b",
+          "actual_sha256": "f1e7c48746ced29baab5621892c6682503eb124cbc0f5023a993d388728b688b"
+        },
+        {
+          "path": "packages/chat/src/test-dom.ts",
+          "expected_sha256": "9f40a8228bce219934bb49eeb81f2dd390343526ca47dd88e9519fc1213020a3",
+          "actual_sha256": "9f40a8228bce219934bb49eeb81f2dd390343526ca47dd88e9519fc1213020a3"
+        },
+        {
+          "path": "packages/chat/src/composer/ComposerMenus.tsx",
+          "expected_sha256": "11d4fe87ad07c92fff799ee7046964b5549eda0790bd2df4bc9e031b6aec02c2",
+          "actual_sha256": "11d4fe87ad07c92fff799ee7046964b5549eda0790bd2df4bc9e031b6aec02c2"
+        },
+        {
+          "path": "packages/chat/src/composer/Composer.tsx",
+          "expected_sha256": "707d5c78ba1bd2990d0626412cf895dcb9d3a61abdbc83577f2878633af91af7",
+          "actual_sha256": "707d5c78ba1bd2990d0626412cf895dcb9d3a61abdbc83577f2878633af91af7"
+        },
+        {
+          "path": "packages/chat/src/runtime/history.ts",
+          "expected_sha256": "949a1eff5d98b369f6e2be9f6fad388e7d2d0ceec4d695eaf3a4426e09280190",
+          "actual_sha256": "949a1eff5d98b369f6e2be9f6fad388e7d2d0ceec4d695eaf3a4426e09280190"
+        },
+        {
+          "path": "packages/chat/src/runtime/use-mimir-runtime.ts",
+          "expected_sha256": "27794b9ef09c1af2993c9a7c3c861ff418c9a77a6de81fddf265a3ff334f0840",
+          "actual_sha256": "27794b9ef09c1af2993c9a7c3c861ff418c9a77a6de81fddf265a3ff334f0840"
+        },
+        {
+          "path": "packages/chat/src/runtime/history.test.ts",
+          "expected_sha256": "78916356db548797868536a7c4034f76f4df70dbef646831cd8a27d174441c3b",
+          "actual_sha256": "78916356db548797868536a7c4034f76f4df70dbef646831cd8a27d174441c3b"
+        },
+        {
+          "path": "packages/chat/src/runtime/agent.ts",
+          "expected_sha256": "d948f2b64248861acc0ed6b38820af2989bddee58842239a8c9bbfc70f07c0f2",
+          "actual_sha256": "d948f2b64248861acc0ed6b38820af2989bddee58842239a8c9bbfc70f07c0f2"
+        },
+        {
+          "path": "packages/chat/src/runtime/DocxInterruptBridge.tsx",
+          "expected_sha256": "f90a19e760ae7d83683ccb8ac6751a0ac5bca969c3298c90c0df2026017af04e",
+          "actual_sha256": "f90a19e760ae7d83683ccb8ac6751a0ac5bca969c3298c90c0df2026017af04e"
+        },
+        {
+          "path": "packages/chat/src/runtime/chat-context.tsx",
+          "expected_sha256": "b14a6618e63aa58e17775b538349827f7134304b58e3a7174f819195a997f86f",
+          "actual_sha256": "b14a6618e63aa58e17775b538349827f7134304b58e3a7174f819195a997f86f"
+        },
+        {
+          "path": "packages/chat/src/runtime/io.ts",
+          "expected_sha256": "f1ed5ea108e5e127caf82ca8560735501b0452e46bad3a96287625a586909319",
+          "actual_sha256": "f1ed5ea108e5e127caf82ca8560735501b0452e46bad3a96287625a586909319"
+        },
+        {
+          "path": "packages/chat/src/runtime/pptx-snapshot.test.ts",
+          "expected_sha256": "cb4899ad024fd910dc5ec207d276f3ba591788faf4fe607590747077888dfc74",
+          "actual_sha256": "cb4899ad024fd910dc5ec207d276f3ba591788faf4fe607590747077888dfc74"
+        },
+        {
+          "path": "packages/chat/src/runtime/pptx-snapshot.ts",
+          "expected_sha256": "4a4232bed9d1df0cdca6cf1720b5ab984a611af178c4897bceb33f24e7cb74ab",
+          "actual_sha256": "4a4232bed9d1df0cdca6cf1720b5ab984a611af178c4897bceb33f24e7cb74ab"
+        },
+        {
+          "path": "packages/chat/src/runtime/agent-media.check.test.ts",
+          "expected_sha256": "1d883452a33e6cc26e3514642aba1bdb40db8c8b6ac067fb7c1bf57eeab85f78",
+          "actual_sha256": "1d883452a33e6cc26e3514642aba1bdb40db8c8b6ac067fb7c1bf57eeab85f78"
+        },
+        {
+          "path": "packages/chat/src/runtime/DocxInterruptBridge.test.ts",
+          "expected_sha256": "f58cf25533983432b3b95ab64bcf2ff25f930f9123ad4b44d59ef97c6a2a12eb",
+          "actual_sha256": "f58cf25533983432b3b95ab64bcf2ff25f930f9123ad4b44d59ef97c6a2a12eb"
+        },
+        {
+          "path": "packages/chat/src/hooks/use-scrolled.ts",
+          "expected_sha256": "88236b6b5cb0a8eb61a77dcdf15e2a347d596fb87e5fad24683d93237b3e28fa",
+          "actual_sha256": "88236b6b5cb0a8eb61a77dcdf15e2a347d596fb87e5fad24683d93237b3e28fa"
+        },
+        {
+          "path": "packages/chat/src/parts/MediaParts.tsx",
+          "expected_sha256": "70ae3b8331a07d7ce7e6b62c05c5120a1b2cd7b51c091b5d24dc663ffca31dba",
+          "actual_sha256": "70ae3b8331a07d7ce7e6b62c05c5120a1b2cd7b51c091b5d24dc663ffca31dba"
+        },
+        {
+          "path": "packages/chat/src/parts/MarkdownPart.tsx",
+          "expected_sha256": "2d6c7f68b84e0e78468921f87aba5713e3dd48b777bf87c2b0c5e9db9feab5f1",
+          "actual_sha256": "2d6c7f68b84e0e78468921f87aba5713e3dd48b777bf87c2b0c5e9db9feab5f1"
+        },
+        {
+          "path": "packages/chat/src/parts/MessageItem.tsx",
+          "expected_sha256": "494c4ff65e51819d48f5b50f626567c47bec5179df4d4a83557962eb59611fad",
+          "actual_sha256": "494c4ff65e51819d48f5b50f626567c47bec5179df4d4a83557962eb59611fad"
+        },
+        {
+          "path": "packages/chat/src/parts/parts.test.tsx",
+          "expected_sha256": "4ba028a269823b351fbb509f2109d471139ca618db7cb8db119ee1a0e7fa3ee4",
+          "actual_sha256": "4ba028a269823b351fbb509f2109d471139ca618db7cb8db119ee1a0e7fa3ee4"
+        },
+        {
+          "path": "packages/chat/src/parts/FailureNotice.tsx",
+          "expected_sha256": "20f37cde3e1ce1a25be1fa9a65c55699ec6ef39bb77732f0a290bd0a60c052f1",
+          "actual_sha256": "20f37cde3e1ce1a25be1fa9a65c55699ec6ef39bb77732f0a290bd0a60c052f1"
+        },
+        {
+          "path": "packages/chat/src/parts/StoppedNotice.tsx",
+          "expected_sha256": "4875ab3260f98d07885570d95bb53226c869b29a983f029c741586bee9f443c2",
+          "actual_sha256": "4875ab3260f98d07885570d95bb53226c869b29a983f029c741586bee9f443c2"
+        },
+        {
+          "path": "packages/chat/src/parts/PptxSnapshotAttachment.tsx",
+          "expected_sha256": "6cd418472fd938a3def93459129d69125fd571234a626c1e0afb77f07830bc03",
+          "actual_sha256": "6cd418472fd938a3def93459129d69125fd571234a626c1e0afb77f07830bc03"
+        },
+        {
+          "path": "packages/chat/src/parts/reasoning-shell.tsx",
+          "expected_sha256": "d0b1d1f9d4400ef044a29f7449f3c61e21a6d55583ef7f25fe8136327f9eff94",
+          "actual_sha256": "d0b1d1f9d4400ef044a29f7449f3c61e21a6d55583ef7f25fe8136327f9eff94"
+        },
+        {
+          "path": "packages/chat/src/parts/TraceActivity.tsx",
+          "expected_sha256": "ac3fd5058cc2e02ca4a3f382ade9168a5e42751465221c790eef511ced167e25",
+          "actual_sha256": "ac3fd5058cc2e02ca4a3f382ade9168a5e42751465221c790eef511ced167e25"
+        },
+        {
+          "path": "packages/chat/src/parts/ReasoningPart.tsx",
+          "expected_sha256": "d7b38e08151cbe9ca94aae2e78d514a01249bd4d523cd226dd01d50d499972fc",
+          "actual_sha256": "d7b38e08151cbe9ca94aae2e78d514a01249bd4d523cd226dd01d50d499972fc"
+        },
+        {
+          "path": "packages/chat/src/parts/AnswerActions.tsx",
+          "expected_sha256": "b99109814180dcd51787d53dbcbbe4160eb8b1dc0b8098ab6b27ac1635398524",
+          "actual_sha256": "b99109814180dcd51787d53dbcbbe4160eb8b1dc0b8098ab6b27ac1635398524"
+        },
+        {
+          "path": "packages/chat/src/parts/data-parts.ts",
+          "expected_sha256": "2f2b8109402bcf743672044e8dd64f98a0109a416182e3585937fcbebfe2392e",
+          "actual_sha256": "2f2b8109402bcf743672044e8dd64f98a0109a416182e3585937fcbebfe2392e"
+        },
+        {
+          "path": "packages/chat/src/parts/DocxAgentHistoryNotice.tsx",
+          "expected_sha256": "e2c0c66cbfe0b12db94cda4f98fdcdbdaa42256c0d5c549326dec59b6976323e",
+          "actual_sha256": "e2c0c66cbfe0b12db94cda4f98fdcdbdaa42256c0d5c549326dec59b6976323e"
+        },
+        {
+          "path": "packages/chat/src/parts/CodeBlock.style.ts",
+          "expected_sha256": "a81c007573231cc4222680476c1f06ac73517bbe64001c15d979ecdf85dea92a",
+          "actual_sha256": "a81c007573231cc4222680476c1f06ac73517bbe64001c15d979ecdf85dea92a"
+        },
+        {
+          "path": "packages/chat/src/parts/CitationList.tsx",
+          "expected_sha256": "1f90a741841aa9fa5acc6de57ee677291c4a5f6d75d48b31c2a3c009c7d0ee3c",
+          "actual_sha256": "1f90a741841aa9fa5acc6de57ee677291c4a5f6d75d48b31c2a3c009c7d0ee3c"
+        },
+        {
+          "path": "packages/chat/src/parts/CodeBlock.tsx",
+          "expected_sha256": "e1b00972bdea7f97dbb5c0e9caa518fc483254933ff18e492103e679363e0b82",
+          "actual_sha256": "e1b00972bdea7f97dbb5c0e9caa518fc483254933ff18e492103e679363e0b82"
+        },
+        {
+          "path": "packages/chat/src/parts/ToolCallPart.tsx",
+          "expected_sha256": "92fd948a862c21fd1ccec2ad46aa1a2452953556b628806e4795ea81eb6b6bc7",
+          "actual_sha256": "92fd948a862c21fd1ccec2ad46aa1a2452953556b628806e4795ea81eb6b6bc7"
+        },
+        {
+          "path": "packages/renderer/src/routes/_app.chat.tsx",
+          "expected_sha256": "bab242f8975a31e35e58ecb5bcad273a6748e6cd71b708f851216962ca446efa",
+          "actual_sha256": "bab242f8975a31e35e58ecb5bcad273a6748e6cd71b708f851216962ca446efa"
+        },
+        {
+          "path": "packages/renderer/src/lib/chat-io.ts",
+          "expected_sha256": "42402b787285be7e4baa4fddae3ca24e1be6a46a17718e9c1cc7beacc52d2fc4",
+          "actual_sha256": "42402b787285be7e4baa4fddae3ca24e1be6a46a17718e9c1cc7beacc52d2fc4"
+        },
+        {
+          "path": "packages/renderer/src/lib/use-chat-composer-status.ts",
+          "expected_sha256": "4289b15a8d77197923038070e6af5795f0763abe6f69c970b08034f88733d4d9",
+          "actual_sha256": "4289b15a8d77197923038070e6af5795f0763abe6f69c970b08034f88733d4d9"
+        },
+        {
+          "path": "packages/renderer/src/components/chat/ChatThemeBridge.tsx",
+          "expected_sha256": "b7cbca7aba7d8bbb9e63526b996373c950d7e2de43877a87509dbf6725f7b11d",
+          "actual_sha256": "b7cbca7aba7d8bbb9e63526b996373c950d7e2de43877a87509dbf6725f7b11d"
+        },
+        {
+          "path": "packages/renderer/src/components/document/DocChatSidebar.tsx",
+          "expected_sha256": "22cb088936f1a5d371f5c3a34f06778111fc5da4fecd605095bdbe1c0820c1f3",
+          "actual_sha256": "22cb088936f1a5d371f5c3a34f06778111fc5da4fecd605095bdbe1c0820c1f3"
+        },
+        {
+          "path": "packages/renderer/src/components/document/DocChatGuide.tsx",
+          "expected_sha256": "9d56175a865b1166b5a057ff17799ef4f2fc53cb4aeadb7066f1589c12db8fb6",
+          "actual_sha256": "9d56175a865b1166b5a057ff17799ef4f2fc53cb4aeadb7066f1589c12db8fb6"
+        },
+        {
+          "path": "apps/server/src/services/assistant-stream.ts",
+          "expected_sha256": "1f3d3c7010ecd9cae250eda24ec6d8e90e42487b52827338281e468da407e1c5",
+          "actual_sha256": "1f3d3c7010ecd9cae250eda24ec6d8e90e42487b52827338281e468da407e1c5"
+        },
+        {
+          "path": "apps/server/src/services/assistant.ts",
+          "expected_sha256": "3dbcf78b7581b2e39ea29a13e161595ffee3ec325a73f847ac822c7fb77a2e60",
+          "actual_sha256": "3dbcf78b7581b2e39ea29a13e161595ffee3ec325a73f847ac822c7fb77a2e60"
+        },
+        {
+          "path": "apps/server/src/services/retrieval-preparation.ts",
+          "expected_sha256": "20145af265af05e0a47a0f2f33221a111769fa5b866f9fa282d75973e786a91e",
+          "actual_sha256": "20145af265af05e0a47a0f2f33221a111769fa5b866f9fa282d75973e786a91e"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "expected_sha256": "97bc49811b39b9635f33be15cc0937d79775573371e00230607b031f553f08e6",
+          "actual_sha256": "97bc49811b39b9635f33be15cc0937d79775573371e00230607b031f553f08e6"
+        }
+      ]
+    },
+    "v3-frozen-prototype-hashes.json": {
+      "files": 57,
+      "mismatches": [],
+      "entries": [
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/README.md",
+          "expected_sha256": "6b4166ad3034d8e40840c761b38339bfdd485e094875f80544bed2fee40a1f9b",
+          "actual_sha256": "6b4166ad3034d8e40840c761b38339bfdd485e094875f80544bed2fee40a1f9b"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/assets/phosphor/LICENSE.txt",
+          "expected_sha256": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2",
+          "actual_sha256": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/assets/phosphor/file-audio-duotone.svg",
+          "expected_sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f",
+          "actual_sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/assets/phosphor/file-doc-duotone.svg",
+          "expected_sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5",
+          "actual_sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/assets/phosphor/file-pdf-duotone.svg",
+          "expected_sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb",
+          "actual_sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/build.mjs",
+          "expected_sha256": "a59553b73133a0ee4b6662f54384575ec950ca80ee953441db802224135d9495",
+          "actual_sha256": "a59553b73133a0ee4b6662f54384575ec950ca80ee953441db802224135d9495"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/check-artifact.mjs",
+          "expected_sha256": "26f081b9a525071cfceabe7dd9e58a743358742aec1ab2ef7a2161b2466044b2",
+          "actual_sha256": "26f081b9a525071cfceabe7dd9e58a743358742aec1ab2ef7a2161b2466044b2"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/checks.json",
+          "expected_sha256": "ab2f3904dddf09d2f2ea8844107a0c60a725013166b5f7b461d18973a303ccb4",
+          "actual_sha256": "ab2f3904dddf09d2f2ea8844107a0c60a725013166b5f7b461d18973a303ccb4"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/coverage.json",
+          "expected_sha256": "abb9c0abac8bc2ca2449c92bf35e99ed1cc2a1eba12af6f9ce0477769315e219",
+          "actual_sha256": "abb9c0abac8bc2ca2449c92bf35e99ed1cc2a1eba12af6f9ce0477769315e219"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/env.d.ts",
+          "expected_sha256": "7a2c4773b5ef874a92028294bbcf904325788d020b799824a3f07cf8a1c8d731",
+          "actual_sha256": "7a2c4773b5ef874a92028294bbcf904325788d020b799824a3f07cf8a1c8d731"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/format.json",
+          "expected_sha256": "6d0e1b360c0b208cdb10db15f58b7ec83807fb22de642a9ce64e7cecb395b2cf",
+          "actual_sha256": "6d0e1b360c0b208cdb10db15f58b7ec83807fb22de642a9ce64e7cecb395b2cf"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/generate-manifest.py",
+          "expected_sha256": "17bd77f850f25685beca1e2ce49d2ba82e21f5ca1c7acc257f83c1b47c601978",
+          "actual_sha256": "17bd77f850f25685beca1e2ce49d2ba82e21f5ca1c7acc257f83c1b47c601978"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/index.html",
+          "expected_sha256": "c48ed4150b99a15eca481270afa9b76c1b96f27017a9e15cf8d01205e162959a",
+          "actual_sha256": "c48ed4150b99a15eca481270afa9b76c1b96f27017a9e15cf8d01205e162959a"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/main.tsx",
+          "expected_sha256": "54c200e07cb2d4086fc31c2c8a74d40006c73cf7ce4ccbe0d3567516720acdd7",
+          "actual_sha256": "54c200e07cb2d4086fc31c2c8a74d40006c73cf7ce4ccbe0d3567516720acdd7"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/review.css",
+          "expected_sha256": "7cc9f78140386c02a85b316f8113c27365392426a3f95ccb6b4be6541484ef06",
+          "actual_sha256": "7cc9f78140386c02a85b316f8113c27365392426a3f95ccb6b4be6541484ef06"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/review.html",
+          "expected_sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
+          "actual_sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/scenes.json",
+          "expected_sha256": "18682d4097263acfc47f43fa8bb242700c33001c49b31644c82e294addbc1ae3",
+          "actual_sha256": "18682d4097263acfc47f43fa8bb242700c33001c49b31644c82e294addbc1ae3"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/tsconfig.json",
+          "expected_sha256": "0f2c93d5b6d8ea861df576a73f3bf68a1a06bace2a3d2d2c41446d5623c8632f",
+          "actual_sha256": "0f2c93d5b6d8ea861df576a73f3bf68a1a06bace2a3d2d2c41446d5623c8632f"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/.gitignore",
+          "expected_sha256": "4a98cd9c3035a905efb53459184845c200081e3fe5966fb4b8f22f7959e16cd7",
+          "actual_sha256": "4a98cd9c3035a905efb53459184845c200081e3fe5966fb4b8f22f7959e16cd7"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/README.md",
+          "expected_sha256": "a5ccd8b221cc556db948bb4b74143e8b8e3e12db89bf8ebce83e36abbb57ae9a",
+          "actual_sha256": "a5ccd8b221cc556db948bb4b74143e8b8e3e12db89bf8ebce83e36abbb57ae9a"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/assets/phosphor/LICENSE.txt",
+          "expected_sha256": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2",
+          "actual_sha256": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/assets/phosphor/file-audio-duotone.svg",
+          "expected_sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f",
+          "actual_sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/assets/phosphor/file-doc-duotone.svg",
+          "expected_sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5",
+          "actual_sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/assets/phosphor/file-pdf-duotone.svg",
+          "expected_sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb",
+          "actual_sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/build.mjs",
+          "expected_sha256": "8a6ae154f55a3439022941e40c371a7a24a075d4e7ad9bd129a62aa0c7306d93",
+          "actual_sha256": "8a6ae154f55a3439022941e40c371a7a24a075d4e7ad9bd129a62aa0c7306d93"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/check-artifact.mjs",
+          "expected_sha256": "23ba12620c20e693014c6d9a960094059366d13e5291e6d716543644a01b4fc8",
+          "actual_sha256": "23ba12620c20e693014c6d9a960094059366d13e5291e6d716543644a01b4fc8"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/checks.json",
+          "expected_sha256": "72e7b624f7714f7089ce601082ed6ef6a9f5305e95c5af61a5d944a870e606de",
+          "actual_sha256": "72e7b624f7714f7089ce601082ed6ef6a9f5305e95c5af61a5d944a870e606de"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/coverage.json",
+          "expected_sha256": "7d57ec60b9acc927e0b4fb0bdd26f45ce158dfbe87e05c950d0fad277a91bdef",
+          "actual_sha256": "7d57ec60b9acc927e0b4fb0bdd26f45ce158dfbe87e05c950d0fad277a91bdef"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/dependencies/package-lock.json",
+          "expected_sha256": "8a51b291cdbf61a55fe9828fb52588378a32aa46dc0d4a296d08bb76d482b68e",
+          "actual_sha256": "8a51b291cdbf61a55fe9828fb52588378a32aa46dc0d4a296d08bb76d482b68e"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/dependencies/package.json",
+          "expected_sha256": "2217c0e4d90e7ec1230c420d9df85f743c01024c50a410977223dc9db33bcfbc",
+          "actual_sha256": "2217c0e4d90e7ec1230c420d9df85f743c01024c50a410977223dc9db33bcfbc"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/env.d.ts",
+          "expected_sha256": "7a2c4773b5ef874a92028294bbcf904325788d020b799824a3f07cf8a1c8d731",
+          "actual_sha256": "7a2c4773b5ef874a92028294bbcf904325788d020b799824a3f07cf8a1c8d731"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/format.json",
+          "expected_sha256": "6d0e1b360c0b208cdb10db15f58b7ec83807fb22de642a9ce64e7cecb395b2cf",
+          "actual_sha256": "6d0e1b360c0b208cdb10db15f58b7ec83807fb22de642a9ce64e7cecb395b2cf"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/generate-manifest.py",
+          "expected_sha256": "db6a6cb85394da64edbd7f529ec6275367d3187dfe1ffb4196f57b4b8713b80c",
+          "actual_sha256": "db6a6cb85394da64edbd7f529ec6275367d3187dfe1ffb4196f57b4b8713b80c"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/index.html",
+          "expected_sha256": "c48ed4150b99a15eca481270afa9b76c1b96f27017a9e15cf8d01205e162959a",
+          "actual_sha256": "c48ed4150b99a15eca481270afa9b76c1b96f27017a9e15cf8d01205e162959a"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/main.tsx",
+          "expected_sha256": "12e54ad2fa5c284aa663457fdb27211f814a2b7d547405faac5c9fea11af9108",
+          "actual_sha256": "12e54ad2fa5c284aa663457fdb27211f814a2b7d547405faac5c9fea11af9108"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/official-message.tsx",
+          "expected_sha256": "316ace74ada293de5f04df40b3c2ff5d1b1e8b7d59140202516af83c5d3d786f",
+          "actual_sha256": "316ace74ada293de5f04df40b3c2ff5d1b1e8b7d59140202516af83c5d3d786f"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/official.css",
+          "expected_sha256": "54325fb41b24e1f13f7b505828dfd9d75125c71dba1ba44c29d26cac52d3a93a",
+          "actual_sha256": "54325fb41b24e1f13f7b505828dfd9d75125c71dba1ba44c29d26cac52d3a93a"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/provenance.json",
+          "expected_sha256": "53799f7f4d36a847498771c19207f9e26ba4d7fff90293fc49f8f138dbf37cc6",
+          "actual_sha256": "53799f7f4d36a847498771c19207f9e26ba4d7fff90293fc49f8f138dbf37cc6"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/review.css",
+          "expected_sha256": "0c04ff43beafa75c21d2654493085f2a768f150c44dd27f044d8570d8c5b585b",
+          "actual_sha256": "0c04ff43beafa75c21d2654493085f2a768f150c44dd27f044d8570d8c5b585b"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/review.html",
+          "expected_sha256": "6c18bbd2d936e7b706b7ed3375a6234b82670b961e6be10ba7b81eac306a3af8",
+          "actual_sha256": "6c18bbd2d936e7b706b7ed3375a6234b82670b961e6be10ba7b81eac306a3af8"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/runtime-resolution.json",
+          "expected_sha256": "b4a901ee49e7efbd4cb411c4922584fe4e388d1d311fc047134dec4a58bf0051",
+          "actual_sha256": "b4a901ee49e7efbd4cb411c4922584fe4e388d1d311fc047134dec4a58bf0051"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/scenes.json",
+          "expected_sha256": "c7c7528aa46b428dc17dd63c5f78c4e1d90027228f22e6152770576957cfc8f2",
+          "actual_sha256": "c7c7528aa46b428dc17dd63c5f78c4e1d90027228f22e6152770576957cfc8f2"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/tsconfig.json",
+          "expected_sha256": "5be66491412da69e72c22e90cf01ccf43df6befe7ddb425c57153822db59673d",
+          "actual_sha256": "5be66491412da69e72c22e90cf01ccf43df6befe7ddb425c57153822db59673d"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/LICENSE",
+          "expected_sha256": "eafb05991a572efa34097474b31fef45b14a8879ed1d1a8fd77de62e6fa7d275",
+          "actual_sha256": "eafb05991a572efa34097474b31fef45b14a8879ed1d1a8fd77de62e6fa7d275"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/apps/registry/app/globals.css",
+          "expected_sha256": "95859cc13d07f9c1b1306aa0e6ebfccbc9ff480ce596b5d97e9fb8e0d1db380a",
+          "actual_sha256": "95859cc13d07f9c1b1306aa0e6ebfccbc9ff480ce596b5d97e9fb8e0d1db380a"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/apps/registry/src/registry.ts",
+          "expected_sha256": "86409f797d56d9fc05b3995d85d3025dd06e7d88c18e754ce3c2160dc16252c9",
+          "actual_sha256": "86409f797d56d9fc05b3995d85d3025dd06e7d88c18e754ce3c2160dc16252c9"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/tw-shimmer/src/index.css",
+          "expected_sha256": "827e798063a2c03906c83b469ffbb0d5ffc880055176fbd12cdb8f11c24a24c9",
+          "actual_sha256": "827e798063a2c03906c83b469ffbb0d5ffc880055176fbd12cdb8f11c24a24c9"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+          "expected_sha256": "6d3e6d9a776ac9db13448606627c2ef51e5605cacb2f805379ada9b58abe4565",
+          "actual_sha256": "6d3e6d9a776ac9db13448606627c2ef51e5605cacb2f805379ada9b58abe4565"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+          "expected_sha256": "02c42a1cad5fd56f4479fe65c779e9f9934c03a6e935ac92ebf98cbb46ef3cc7",
+          "actual_sha256": "02c42a1cad5fd56f4479fe65c779e9f9934c03a6e935ac92ebf98cbb46ef3cc7"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+          "expected_sha256": "31720ad79fe332a5999cc1873108da740e63c05f4b8f322bde75f8d495cbf853",
+          "actual_sha256": "31720ad79fe332a5999cc1873108da740e63c05f4b8f322bde75f8d495cbf853"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+          "expected_sha256": "8db117d730e640655e5099e086af4e00d545c283839d9ef5885ca93419d51893",
+          "actual_sha256": "8db117d730e640655e5099e086af4e00d545c283839d9ef5885ca93419d51893"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/ui/base/button.tsx",
+          "expected_sha256": "de5e06ef482e702cc56abe8fbe0b1dfcfee9c30db4eafad24a38b5360188c42f",
+          "actual_sha256": "de5e06ef482e702cc56abe8fbe0b1dfcfee9c30db4eafad24a38b5360188c42f"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/ui/base/textarea.tsx",
+          "expected_sha256": "abab274474743d7b6d30e67848e4341c2fbd491a8a300010e5da1176c7f9624f",
+          "actual_sha256": "abab274474743d7b6d30e67848e4341c2fbd491a8a300010e5da1176c7f9624f"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/lib/utils.ts",
+          "expected_sha256": "55bbdc94cef3e0c8a8bba386e94f97228dd2c967fe61466fc565378890550c08",
+          "actual_sha256": "55bbdc94cef3e0c8a8bba386e94f97228dd2c967fe61466fc565378890550c08"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/vendor/thread.aui.tsx.source.txt",
+          "expected_sha256": "a5c2a4655a90a4e24df4e1223bbe4eb4f4f1b58f95fe868ce7b1fc9894f60dc7",
+          "actual_sha256": "a5c2a4655a90a4e24df4e1223bbe4eb4f4f1b58f95fe868ce7b1fc9894f60dc7"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/v2/version.json",
+          "expected_sha256": "87d1f3c33bfcf4fa4b89c89db742ccf39d089b67c37959f2d0019aee454db9c4",
+          "actual_sha256": "87d1f3c33bfcf4fa4b89c89db742ccf39d089b67c37959f2d0019aee454db9c4"
+        },
+        {
+          "path": ".trellis/tasks/10-18-interaction-chat/prototype/version.json",
+          "expected_sha256": "a6f569b287cb58b174926c5f2866ea73e662e887c6612366d9c18c80f396a438",
+          "actual_sha256": "a6f569b287cb58b174926c5f2866ea73e662e887c6612366d9c18c80f396a438"
+        }
+      ]
+    }
+  },
+  "tracked_changes_before_final_freeze": [
+    ".trellis/tasks/10-18-interaction-chat/check.jsonl",
+    ".trellis/tasks/10-18-interaction-chat/design.md",
+    ".trellis/tasks/10-18-interaction-chat/implement.jsonl",
+    ".trellis/tasks/10-18-interaction-chat/implement.md",
+    ".trellis/tasks/10-18-interaction-chat/prd.md",
+    ".trellis/tasks/10-18-interaction-chat/task.json",
+    ".trellis/tasks/10-18-modular-interaction-polish/approval-ledger.json"
+  ],
+  "product_manifest_lock_changes": [],
+  "scope": "Planning artifacts only; baseline checks do not prove product integration or end-to-end behavior."
+}

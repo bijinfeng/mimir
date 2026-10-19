@@ -1,39 +1,37 @@
-# 第七模块执行计划
+# 第七模块执行计划（v3）
 
-## 当前阶段：规划与HTML
+## 当前阶段：规划与完整官方HTML
 
-1. 已完成两份源码清单与固定版本WeKnora证据；71组379状态为来源枚举，真实基线有主对话/范围/强度/模型、浅深/390px、文档侧栏。
-2. 独立HTML逐一绑定全部来源状态，呈现当前/提案、专项组件与操作路径。内部合同只关联可观察结果及边界，不伪造新产品调试控件。
-3. 独立核查源码及HTML合同、来源/覆盖、可操作恢复，主会话实际浏览器抽验代表路径。修复本次发现后一次确认，记录未验证的原生/API能力。
-4. 原型类型/lint/格式/build/artifact检查；核对51个产品源文件散列，冻结版本与SHA256。
-5. 更新台账、限定提交并交付本地预览。此阶段不执行task.py start、不改产品代码；等待用户认可具体本版。
+1. 记录用户最新全盘官方/无自定义组件/无样式覆盖要求。保留v1/v2完整，不将其作为新实施标准。
+2. 研究固定官方完整Thread及闭包、默认样式、依赖/许可/运行时兼容；对照71/379来源逐项分类official / host-external / removed / boundary，记录真实产品冲突，不静默删除业务能力。
+3. prototype/v3独立生成：完整未改Thread，无components/part/tool/data renderer覆盖，官方默认CSS。用独立文档隔离旧样式；scope/model/save/citations/Agent等只在Thread外应用宿主区，不冒称官方内置。fixture不执行业务。
+4. 代表路径GUI、原型构建/类型/lint/first-party格式、来源/覆盖/许可/样式与依赖检查，独立复核。核对51产品hash及v1/v2源码/HTML完全不变。
+5. 冻结v3版本/hash，更新台账、限定提交和日志，交付完整对比稿。等待用户认可这个具体新版后再task.py start；现在不改产品。
 
 ## 认可后的实施顺序
 
-1. 加载trellis-before-dev及Chat/Renderer/共享Agent规范；重新检查同期工作树与清单，确定变动是否要求更新HTML重审。只实施本版认可的视觉、R7恢复修正与R8/R9自定义trace清理及官方件接线。
-2. 输入与菜单：ChatHostVars/宿主字号与gutter保留，局部样式遵循已认可角色；范围三态/标签、只读模型、强度、容量、生成/队列/快问/IME与截图草稿逐项还原。
-3. 消息与证据：空态/骨架/用户问题/正文层级、删除自定义检索过程，真实reasoning/工具采用官方组件、引用、代码、来源/文件/图片/音频chip；主对话与侧栏分别验证。不新增图片音频编辑器或通用上传。
-4. 错误与笔记：四类失败与StreamError互斥、零内容恢复、标准历史重试/提示一致、代码复制失败、图片错误占位和容器适配、成功回答保存与打开笔记；不可用动作保持禁用。
-5. Agent桥：区分消息fallback与live桥区域；媒体选择/分析停止、部分草稿保留丢弃、回退等待互斥与错误留稿；续传仅重送缓存，不重做工具。截图校验/队列/取回与新输入冲突保持原合同。
-6. 宿主联动：新建真实ID保流，历史切换/失败、搜索预填、快捷问直接发送、关闭保活、文档引用/模型设置/打开笔记与未保存守卫、按实际容器宽度的覆盖布局。
-7. 按最新获准冻结版来源状态建立逐项实施映射；截图并测量关键尺寸/颜色、hover/focus稳定几何。新增R7行为必须有真实交互/HTTP帧与可控异步回归测试，不以原型成功替代业务验证。
-8. 受影响包和全仓质量门、独立复查、限定提交与记录。存在外部阻断时如实记失败范围，不声称通过、不混入他会话改动。
+1. 加载trellis-before-dev及Chat/Renderer/server/shared Agent规范，重新盘点工作树和来源清单，检查最新HTML批准范围。源码事实变化或业务迁移差异须先更新方案。
+2. 固定完整官方源码/依赖/许可，以官方默认Thread替换本地消息/Composer/Markdown/思考/工具/附件/动作/错误组件，删除失去用途的自绘渲染与样式。避免全局CSS/antd/Mimir token污染官方内部，不用选择器覆盖修补。
+3. 先按research/agui-official-thread-pre-send-seam.md的公开runtime facade接通composer.send/thread.append及threads.main/getById，保留唯一AGUI所有权，复核异步附件/队列前同步冻结；现有AGUI默认onEdit/onReload须落实真实capability门控，不能依赖不存在的reload:false。仅在运行时/业务adapter接线：真实AG-UI数据、历史、发送/取消/安全重试、队列/附件能力；官方不支持的能力如实关闭，不能用自定义renderer伪造。最小SDK升级须保留本地中断补丁并回归。
+4. 宿主业务保真：引用定位、只读模型/范围/强度/容量、笔记保存/复制检索资料、队列取回、截图校验、Agent媒体/部分草稿/回退等待互斥与失败留稿，路由及未保存守卫。行为差异与位置按具体v3呈现核对。
+5. 移除自定义mimir.trace的UI挂载/消费/历史转接与server发送/新增生产链，盘点流式/非流式入口；shared及数据库旧字段保留兼容，不把trace映射为reasoning/tool。保留citations/failure/conversation/documentAgent事件及缓存结果安全重送。
+6. 主/侧栏与全来源状态逐项实施映射，验证官方默认布局及实际容器、生命周期/动作能力、真实HTTP参数/错误恢复。若官方UI默认行为与源业务不等价，按已批准映射处理，不静默放宽。
+7. 受影响包及全仓质量门、独立检查、真实GUI；限定提交与规范/日志更新，不混入其他会话。产品尚未通过前不声称任务完成。
 
-## 验证命令与边界
+## 验证与边界
 
-- 原型：`node .trellis/tasks/10-18-interaction-chat/prototype/v2/build.mjs`、独立tsconfig、oxlint、指定format.json的oxfmt、artifact脚本、task.py validate。
-- 认可后：`pnpm --filter @mimir/chat test`、`pnpm --filter @mimir/renderer test`、两包typecheck、`pnpm check`，`@mimir/server`相关流事件/检索单测及共享协议类型检查，以及实际GUI和Agent/队列的真实请求参数检查。
-- IME/剪贴板权限/原生文件与媒体、实际模型计费、原件修改/保存/Electron只记完成的验证，不能以HTML模拟冒充。
+- 原型：v3自己的build、独立tsconfig、direct oxlint/oxfmt（不改vendor原件）、artifact/来源/默认CSS完整性和task.py validate；不重建冻结v1/v2。
+- 未来产品：Chat/Renderer测试和类型；server流事件/检索/历史相关测试、shared类型；pnpm check及AG-UI/Agent/队列真实参数与可控异步回归。
+- 源码/构建检查不代替GUI；HTML fixture不代替真实API、Agent写原件、原生剪贴板/文件/媒体/PNG/IME/读屏/Electron。
 
-## 回滚与风险文件
+## 风险与回滚
 
-所有产品改动待批准；届时范围包括packages/chat、renderer Chat宿主、apps/server的trace发送/检索准备链及packages/shared相关常量与兼容类型，按R8/R9逐处核对；避免改全局token及Office内部工具。运行时改动尤其use-mimir-runtime/DocxInterruptBridge须保留真实HTTP与版本/异步测试；失败后先修窄模块，不能削弱校验或修改未批准业务合同。冻结HTML不覆盖；实质变更另存版本并重新审阅。
+预计产品范围为packages/chat渲染/样式/runtime、renderer Chat宿主、server trace链与shared兼容类型；不改Office内部工具栏或业务写原件算法。UI按用户要求采用官方默认，不以此前Yuque对话样式为验收准绳；宿主业务安全不得因换UI降低。
 
-## v2修订与认可后的额外实施项
+v3规划用临时依赖、真实完整Thread闭包验证；产品react0.15.28与registry0.15.29等兼容差异在research中留证，未来升级只做必要最小范围。回滚不破坏旧会话数据，冻结稿始终本地保留；实质变更另存版本重审。
 
-- 规划：只创建prototype/v2/**，保留v1；清单仍71/379，删除项显式removed；与官方源码版本核对原型组件和依赖，禁止自绘近似。先构建和独立复核，再主会话GUI检查、冻结新版、更新台账供用户验收。
-- 新版获准后：停止mimir.trace的服务端发送、运行时/历史part消费与消息渲染，旧记录只做兼容，不迁移为reasoning/tool-call。更新实际HTTP帧和历史回归测试，同时保证正常等待/发送/停止/失败仍由官方运行状态与现有恢复入口表达。
-- 复用官方reasoning/tool-call组件和支持的primitive；语言与主题适配独立列明。不要把官方示例的可选审批/新工具能力加入现有Agent桥。
-- 保留R7其他五类修正及所有文档业务守卫。最终产品验收逐项比对v2，不能使用被拒绝的v1过程设计作为标准。
+## 子任务依赖
 
-- 版本风险：v2原型的官方registry需react SDK 0.15.29；产品当前0.15.28有responseDeliveryStatus类型差异。实施将最小SDK升级列入接线变更，保留本地AG-UI中断补丁，并完整验证适配器、历史、队列与Agent；本轮只装临时隔离依赖，不改仓库manifest/lockfile。
+- 10-19-chat-attachments与本任务同处planning；用户已同意一并规划。子任务负责真实上传/提取/模型输入/存储关联/过期清理及官方AttachmentAdapter，父任务负责完整Thread/宿主和统一HTML场景。
+- 可以并行做原型与协议研究；产品切换/完整验收必须在子任务附件链路可用且队列/Agent发送前冻结接缝证明之后。不得用现有KB永久导入替代聊天附件，不得把完整官方默认+号选后unsupported当最终通过。
+- 子任务具体设计和新附件场景一并纳入本版审阅；没有获得最新具体HTML认可前两任务都不start、不改产品。

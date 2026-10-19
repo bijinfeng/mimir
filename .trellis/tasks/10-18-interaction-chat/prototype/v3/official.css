@@ -1,0 +1,4 @@
+/* Official registry default CSS and registered shimmer import, without overrides. */
+@import './vendor/apps/registry/app/globals.css';
+@import './vendor/packages/tw-shimmer/src/index.css';
+@source './vendor/packages/ui/src';

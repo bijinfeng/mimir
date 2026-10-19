@@ -1,0 +1,3846 @@
+{
+  "checked_date": "2026-10-19",
+  "environment": "Actual isolated dependency installation used for official prototype; no package mutation by researcher",
+  "packages": {
+    "react": "0.15.29",
+    "core": "0.3.29"
+  },
+  "files": [
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/react/src/primitives/composer/ComposerAddAttachment.ts",
+      "sha256": "b2c76b7d6d6229352e350920a30067a8a70ad1b0ee4dc3af81a26b42bf9fda7b",
+      "excerpts": [
+        {
+          "line": 9,
+          "text": "import { useAui } from \"@assistant-ui/store\";"
+        },
+        {
+          "line": 10,
+          "text": "import { useComposerAddAttachment as useComposerAddAttachmentBehavior } from \"@assistant-ui/core/react\";"
+        },
+        {
+          "line": 11,
+          "text": ""
+        },
+        {
+          "line": 12,
+          "text": "const useComposerAddAttachment = ({"
+        },
+        {
+          "line": 13,
+          "text": "  multiple = true,"
+        },
+        {
+          "line": 14,
+          "text": "}: {"
+        },
+        {
+          "line": 17,
+          "text": "} = {}) => {"
+        },
+        {
+          "line": 18,
+          "text": "  const { disabled, addAttachment } = useComposerAddAttachmentBehavior();"
+        },
+        {
+          "line": 19,
+          "text": "  const aui = useAui();"
+        },
+        {
+          "line": 20,
+          "text": "  const scopeGenerationRef = useRef(0);"
+        },
+        {
+          "line": 35,
+          "text": ""
+        },
+        {
+          "line": 36,
+          "text": "    const attachmentAccept = aui.composer.getState().attachmentAccept;"
+        },
+        {
+          "line": 37,
+          "text": "    if (attachmentAccept !== \"*\") {"
+        },
+        {
+          "line": 38,
+          "text": "      input.accept = attachmentAccept;"
+        },
+        {
+          "line": 39,
+          "text": "    }"
+        },
+        {
+          "line": 40,
+          "text": ""
+        },
+        {
+          "line": 46,
+          "text": ""
+        },
+        {
+          "line": 47,
+          "text": "      const attachmentPromises = Array.from(fileList, async (file) => {"
+        },
+        {
+          "line": 48,
+          "text": "        try {"
+        },
+        {
+          "line": 49,
+          "text": "          if (scopeGenerationRef.current !== scopeGeneration) return;"
+        },
+        {
+          "line": 50,
+          "text": "          await addAttachment(file);"
+        },
+        {
+          "line": 51,
+          "text": "        } catch {"
+        },
+        {
+          "line": 52,
+          "text": "          // The composer runtime emits composer.attachmentAddError before rejecting."
+        },
+        {
+          "line": 53,
+          "text": "        }"
+        },
+        {
+          "line": 54,
+          "text": "      });"
+        },
+        {
+          "line": 56,
+          "text": "      document.body.removeChild(input);"
+        },
+        {
+          "line": 57,
+          "text": "      await Promise.all(attachmentPromises);"
+        },
+        {
+          "line": 58,
+          "text": "    };"
+        },
+        {
+          "line": 59,
+          "text": ""
+        },
+        {
+          "line": 66,
+          "text": "    input.click();"
+        },
+        {
+          "line": 67,
+          "text": "  }, [aui, multiple, addAttachment]);"
+        },
+        {
+          "line": 68,
+          "text": ""
+        },
+        {
+          "line": 69,
+          "text": "  if (disabled) return null;"
+        },
+        {
+          "line": 70,
+          "text": "  return callback;"
+        },
+        {
+          "line": 71,
+          "text": "};"
+        },
+        {
+          "line": 72,
+          "text": ""
+        },
+        {
+          "line": 73,
+          "text": "export namespace ComposerPrimitiveAddAttachment {"
+        },
+        {
+          "line": 74,
+          "text": "  export type Element = ActionButtonElement;"
+        },
+        {
+          "line": 75,
+          "text": "  export type Props = ActionButtonProps<typeof useComposerAddAttachment>;"
+        },
+        {
+          "line": 76,
+          "text": "}"
+        },
+        {
+          "line": 77,
+          "text": ""
+        },
+        {
+          "line": 78,
+          "text": "export const ComposerPrimitiveAddAttachment = createActionButton("
+        },
+        {
+          "line": 79,
+          "text": "  \"ComposerPrimitive.AddAttachment\","
+        },
+        {
+          "line": 80,
+          "text": "  useComposerAddAttachment,"
+        },
+        {
+          "line": 81,
+          "text": "  [\"multiple\"],"
+        },
+        {
+          "line": 82,
+          "text": ");"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/react/src/utils/createActionButton.tsx",
+      "sha256": "ee7f0ceaabdb63fb2ee6909cf942d49b1a9dc392a36079f896d6bcd6a22031ae",
+      "excerpts": [
+        {
+          "line": 41,
+          "text": "    const callback = useActionButton(forwardedProps as TProps) ?? undefined;"
+        },
+        {
+          "line": 42,
+          "text": "    return ("
+        },
+        {
+          "line": 43,
+          "text": "      <Primitive.button"
+        },
+        {
+          "line": 44,
+          "text": "        type=\"button\""
+        },
+        {
+          "line": 46,
+          "text": "        ref={forwardedRef}"
+        },
+        {
+          "line": 47,
+          "text": "        disabled={primitiveProps.disabled || !callback}"
+        },
+        {
+          "line": 48,
+          "text": "        onClick={composeEventHandlers(primitiveProps.onClick, callback)}"
+        },
+        {
+          "line": 49,
+          "text": "      />"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/react/src/primitives/actionBar/ActionBarExportMarkdown.tsx",
+      "sha256": "dd2f86ea3ef343fb23b41a074d4b96b5bd08af2d602d4727bc3f2801c3c4cb72",
+      "excerpts": [
+        {
+          "line": 17,
+          "text": "  const hasExportableContent = useAuiState((s) => {"
+        },
+        {
+          "line": 18,
+          "text": "    return ("
+        },
+        {
+          "line": 19,
+          "text": "      (s.message.role !== \"assistant\" ||"
+        },
+        {
+          "line": 20,
+          "text": "        s.message.status?.type !== \"running\") &&"
+        },
+        {
+          "line": 46,
+          "text": ""
+        },
+        {
+          "line": 47,
+          "text": "  if (!hasExportableContent) return null;"
+        },
+        {
+          "line": 48,
+          "text": "  return callback;"
+        },
+        {
+          "line": 49,
+          "text": "};"
+        },
+        {
+          "line": 58,
+          "text": "  ActionBarPrimitiveExportMarkdown.Props"
+        },
+        {
+          "line": 59,
+          "text": ">(({ filename, onExport, onClick, disabled, ...props }, forwardedRef) => {"
+        },
+        {
+          "line": 60,
+          "text": "  const callback = useActionBarExportMarkdown({ filename, onExport });"
+        },
+        {
+          "line": 61,
+          "text": "  return ("
+        },
+        {
+          "line": 62,
+          "text": "    <Primitive.button"
+        },
+        {
+          "line": 63,
+          "text": "      type=\"button\""
+        },
+        {
+          "line": 65,
+          "text": "      ref={forwardedRef}"
+        },
+        {
+          "line": 66,
+          "text": "      disabled={disabled || !callback}"
+        },
+        {
+          "line": 67,
+          "text": "      onClick={composeEventHandlers(onClick, () => {"
+        },
+        {
+          "line": 68,
+          "text": "        void callback?.().catch((error: unknown) => {"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/react/src/primitives/actionBar/ActionBarCopy.tsx",
+      "sha256": "c342acaf56f00f63fcbfe300d8b80aa9019fb6ee166e502e518c220a550d8ec3",
+      "excerpts": [
+        {
+          "line": 18,
+          "text": " * @param options.copiedDuration Duration in milliseconds to show the copied state"
+        },
+        {
+          "line": 19,
+          "text": " * @returns A copy callback function, or null if copying is disabled"
+        },
+        {
+          "line": 20,
+          "text": " *"
+        },
+        {
+          "line": 21,
+          "text": " * @example"
+        },
+        {
+          "line": 25,
+          "text": " *"
+        },
+        {
+          "line": 26,
+          "text": " *   return ("
+        },
+        {
+          "line": 27,
+          "text": " *     <button onClick={copy} disabled={!copy}>"
+        },
+        {
+          "line": 28,
+          "text": " *       {copy ? \"Copy\" : \"Cannot Copy\"}"
+        },
+        {
+          "line": 29,
+          "text": " *     </button>"
+        },
+        {
+          "line": 38,
+          "text": "} = {}) => {"
+        },
+        {
+          "line": 39,
+          "text": "  const { copy, disabled } = useActionBarCopy({"
+        },
+        {
+          "line": 40,
+          "text": "    copiedDuration,"
+        },
+        {
+          "line": 41,
+          "text": "    copyToClipboard: (text) => {"
+        },
+        {
+          "line": 47,
+          "text": "  });"
+        },
+        {
+          "line": 48,
+          "text": "  if (disabled) return null;"
+        },
+        {
+          "line": 49,
+          "text": "  return copy;"
+        },
+        {
+          "line": 50,
+          "text": "};"
+        },
+        {
+          "line": 64,
+          "text": " * This component automatically handles copying message text to the clipboard"
+        },
+        {
+          "line": 65,
+          "text": " * and provides visual feedback through the data-copied attribute. It's disabled"
+        },
+        {
+          "line": 66,
+          "text": " * when there's no copyable content available."
+        },
+        {
+          "line": 67,
+          "text": " *"
+        },
+        {
+          "line": 77,
+          "text": "  ActionBarPrimitiveCopy.Props"
+        },
+        {
+          "line": 78,
+          "text": ">(({ copiedDuration, onClick, disabled, ...props }, forwardedRef) => {"
+        },
+        {
+          "line": 79,
+          "text": "  const isCopied = useAuiState((s) => s.message.isCopied);"
+        },
+        {
+          "line": 80,
+          "text": "  const callback = useActionBarPrimitiveCopy({ copiedDuration });"
+        },
+        {
+          "line": 81,
+          "text": "  return ("
+        },
+        {
+          "line": 82,
+          "text": "    <Primitive.button"
+        },
+        {
+          "line": 83,
+          "text": "      type=\"button\""
+        },
+        {
+          "line": 86,
+          "text": "      ref={forwardedRef}"
+        },
+        {
+          "line": 87,
+          "text": "      disabled={disabled || !callback}"
+        },
+        {
+          "line": 88,
+          "text": "      onClick={composeEventHandlers(onClick, () => {"
+        },
+        {
+          "line": 89,
+          "text": "        callback?.();"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/core/src/react/primitive-hooks/useComposerAddAttachment.ts",
+      "sha256": "3288a8331a906ad6bc8df899f7c22c27ebf919b47c8e81405a2f43d01bf0c0f8",
+      "excerpts": [
+        {
+          "line": 2,
+          "text": "import { useAui, useAuiState } from \"@assistant-ui/store\";"
+        },
+        {
+          "line": 3,
+          "text": "import type { CreateAttachment } from \"../../types/attachment\";"
+        },
+        {
+          "line": 4,
+          "text": ""
+        },
+        {
+          "line": 5,
+          "text": "export const useComposerAddAttachment = () => {"
+        },
+        {
+          "line": 6,
+          "text": "  const aui = useAui();"
+        },
+        {
+          "line": 7,
+          "text": "  const disabled = useAuiState("
+        },
+        {
+          "line": 8,
+          "text": "    (s) => s.thread.isDisabled || !s.composer.isEditing,"
+        },
+        {
+          "line": 9,
+          "text": "  );"
+        },
+        {
+          "line": 10,
+          "text": ""
+        },
+        {
+          "line": 11,
+          "text": "  const addAttachment = useCallback("
+        },
+        {
+          "line": 12,
+          "text": "    (file: File | CreateAttachment) => {"
+        },
+        {
+          "line": 13,
+          "text": "      return aui.composer.addAttachment(file);"
+        },
+        {
+          "line": 14,
+          "text": "    },"
+        },
+        {
+          "line": 15,
+          "text": "    [aui],"
+        },
+        {
+          "line": 17,
+          "text": ""
+        },
+        {
+          "line": 18,
+          "text": "  return { addAttachment, disabled };"
+        },
+        {
+          "line": 19,
+          "text": "};"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/core/src/runtime/base/base-composer-runtime-core.ts",
+      "sha256": "5d5b1325eed8268ce7e5feb3b3841c9ae85f098185a2f3009dc8a01f2b9c4429",
+      "excerpts": [
+        {
+          "line": 1,
+          "text": "import {"
+        },
+        {
+          "line": 2,
+          "text": "  isAttachmentComplete,"
+        },
+        {
+          "line": 3,
+          "text": "  isCreateAttachment,"
+        },
+        {
+          "line": 4,
+          "text": "  type Attachment,"
+        },
+        {
+          "line": 5,
+          "text": "  type CompleteAttachment,"
+        },
+        {
+          "line": 6,
+          "text": "  type CreateAttachment,"
+        },
+        {
+          "line": 7,
+          "text": "  type PendingAttachment,"
+        },
+        {
+          "line": 8,
+          "text": "} from \"../../types/attachment\";"
+        },
+        {
+          "line": 9,
+          "text": "import type { MessageRole, AppendMessage } from \"../../types/message\";"
+        },
+        {
+          "line": 10,
+          "text": "import { isMessageNotSentError } from \"../../types/error\";"
+        },
+        {
+          "line": 14,
+          "text": "import {"
+        },
+        {
+          "line": 15,
+          "text": "  type AttachmentAdapter,"
+        },
+        {
+          "line": 16,
+          "text": "  fileMatchesAccept,"
+        },
+        {
+          "line": 17,
+          "text": "} from \"../../adapters/attachment\";"
+        },
+        {
+          "line": 18,
+          "text": "import type {"
+        },
+        {
+          "line": 19,
+          "text": "  AttachmentAddErrorReason,"
+        },
+        {
+          "line": 20,
+          "text": "  ComposerRuntimeCore,"
+        },
+        {
+          "line": 21,
+          "text": "  ComposerSubmission,"
+        },
+        {
+          "line": 33,
+          "text": "import {"
+        },
+        {
+          "line": 34,
+          "text": "  AttachmentAddOperations,"
+        },
+        {
+          "line": 35,
+          "text": "  drainAttachmentAdd,"
+        },
+        {
+          "line": 36,
+          "text": "} from \"../utils/attachment-add-operations\";"
+        },
+        {
+          "line": 37,
+          "text": "import { AttachmentSendOperations } from \"../utils/attachment-send-operations\";"
+        },
+        {
+          "line": 38,
+          "text": "import { DictationSessionController } from \"./dictation-session\";"
+        },
+        {
+          "line": 39,
+          "text": ""
+        },
+        {
+          "line": 48,
+          "text": "{"
+        },
+        {
+          "line": 49,
+          "text": "  public readonly isEditing = true;"
+        },
+        {
+          "line": 50,
+          "text": ""
+        },
+        {
+          "line": 51,
+          "text": "  protected abstract getAttachmentAdapter(): AttachmentAdapter | undefined;"
+        },
+        {
+          "line": 52,
+          "text": "  protected abstract getDictationAdapter(): DictationAdapter | undefined;"
+        },
+        {
+          "line": 53,
+          "text": ""
+        },
+        {
+          "line": 66,
+          "text": ""
+        },
+        {
+          "line": 67,
+          "text": "  public get attachmentAccept(): string {"
+        },
+        {
+          "line": 68,
+          "text": "    return this.getAttachmentAdapter()?.accept ?? \"*\";"
+        },
+        {
+          "line": 69,
+          "text": "  }"
+        },
+        {
+          "line": 70,
+          "text": ""
+        },
+        {
+          "line": 71,
+          "text": "  private _attachments: readonly Attachment[] = [];"
+        },
+        {
+          "line": 72,
+          "text": "  public get attachments() {"
+        },
+        {
+          "line": 73,
+          "text": "    return this._attachments;"
+        },
+        {
+          "line": 74,
+          "text": "  }"
+        },
+        {
+          "line": 75,
+          "text": ""
+        },
+        {
+          "line": 76,
+          "text": "  protected setAttachments(value: readonly Attachment[]) {"
+        },
+        {
+          "line": 77,
+          "text": "    this._attachments = value;"
+        },
+        {
+          "line": 78,
+          "text": "    this._notifySubscribers();"
+        },
+        {
+          "line": 79,
+          "text": "  }"
+        },
+        {
+          "line": 84,
+          "text": "  public get isEmpty() {"
+        },
+        {
+          "line": 85,
+          "text": "    return !this.text.trim() && !this.sendableAttachments.length;"
+        },
+        {
+          "line": 86,
+          "text": "  }"
+        },
+        {
+          "line": 87,
+          "text": ""
+        },
+        {
+          "line": 88,
+          "text": "  protected get sendableAttachments() {"
+        },
+        {
+          "line": 89,
+          "text": "    return this.attachments.filter("
+        },
+        {
+          "line": 90,
+          "text": "      (attachment) => !this._attachmentSends.isRemoved(attachment),"
+        },
+        {
+          "line": 91,
+          "text": "    );"
+        },
+        {
+          "line": 92,
+          "text": "  }"
+        },
+        {
+          "line": 172,
+          "text": "  private _draftEpoch = 0;"
+        },
+        {
+          "line": 173,
+          "text": "  private _attachmentAddOperations = new AttachmentAddOperations();"
+        },
+        {
+          "line": 174,
+          "text": "  private _attachmentSends = new AttachmentSendOperations();"
+        },
+        {
+          "line": 175,
+          "text": ""
+        },
+        {
+          "line": 176,
+          "text": "  public get submission() {"
+        },
+        {
+          "line": 245,
+          "text": ""
+        },
+        {
+          "line": 246,
+          "text": "  private _cancelAttachmentAdd(attachmentId: string) {"
+        },
+        {
+          "line": 247,
+          "text": "    this._attachmentAddOperations.cancel(attachmentId);"
+        },
+        {
+          "line": 248,
+          "text": "  }"
+        },
+        {
+          "line": 249,
+          "text": ""
+        },
+        {
+          "line": 250,
+          "text": "  private _cancelAllAttachmentAdds() {"
+        },
+        {
+          "line": 251,
+          "text": "    this._attachmentAddOperations.cancelAll();"
+        },
+        {
+          "line": 252,
+          "text": "  }"
+        },
+        {
+          "line": 253,
+          "text": ""
+        },
+        {
+          "line": 254,
+          "text": "  private _emptyTextAndAttachments() {"
+        },
+        {
+          "line": 255,
+          "text": "    this._attachments = [];"
+        },
+        {
+          "line": 256,
+          "text": "    this._text = \"\";"
+        },
+        {
+          "line": 257,
+          "text": "    this._rebaseDictation(\"\");"
+        },
+        {
+          "line": 261,
+          "text": "  private _draftUploadsToRemove() {"
+        },
+        {
+          "line": 262,
+          "text": "    return this._attachments.filter("
+        },
+        {
+          "line": 263,
+          "text": "      (a) =>"
+        },
+        {
+          "line": 264,
+          "text": "        !isAttachmentComplete(a) &&"
+        },
+        {
+          "line": 265,
+          "text": "        this._attachmentSends.shouldRemoveOnClear(a),"
+        },
+        {
+          "line": 266,
+          "text": "    );"
+        },
+        {
+          "line": 267,
+          "text": "  }"
+        },
+        {
+          "line": 268,
+          "text": ""
+        },
+        {
+          "line": 269,
+          "text": "  private async _onClearAttachments(pending: readonly Attachment[]) {"
+        },
+        {
+          "line": 270,
+          "text": "    const adapter = this.getAttachmentAdapter();"
+        },
+        {
+          "line": 271,
+          "text": "    if (!adapter) return;"
+        },
+        {
+          "line": 272,
+          "text": "    await Promise.all("
+        },
+        {
+          "line": 273,
+          "text": "      pending.map((attachment) => {"
+        },
+        {
+          "line": 274,
+          "text": "        this._attachmentSends.beginRemoval(attachment);"
+        },
+        {
+          "line": 275,
+          "text": "        return this._attachmentSends.remove(attachment, adapter);"
+        },
+        {
+          "line": 276,
+          "text": "      }),"
+        },
+        {
+          "line": 277,
+          "text": "    );"
+        },
+        {
+          "line": 280,
+          "text": "  public async reset() {"
+        },
+        {
+          "line": 281,
+          "text": "    this._cancelAllAttachmentAdds();"
+        },
+        {
+          "line": 282,
+          "text": "    this._draftEpoch++;"
+        },
+        {
+          "line": 283,
+          "text": ""
+        },
+        {
+          "line": 291,
+          "text": "    if ("
+        },
+        {
+          "line": 292,
+          "text": "      this._attachments.length === 0 &&"
+        },
+        {
+          "line": 293,
+          "text": "      this._text === \"\" &&"
+        },
+        {
+          "line": 294,
+          "text": "      this._role === \"user\" &&"
+        },
+        {
+          "line": 305,
+          "text": ""
+        },
+        {
+          "line": 306,
+          "text": "    const task = this._onClearAttachments(this._draftUploadsToRemove());"
+        },
+        {
+          "line": 307,
+          "text": "    this._emptyTextAndAttachments();"
+        },
+        {
+          "line": 308,
+          "text": "    await Promise.all([task, discarded]);"
+        },
+        {
+          "line": 309,
+          "text": "  }"
+        },
+        {
+          "line": 310,
+          "text": ""
+        },
+        {
+          "line": 311,
+          "text": "  public async clearAttachments() {"
+        },
+        {
+          "line": 312,
+          "text": "    this._draftEpoch++;"
+        },
+        {
+          "line": 313,
+          "text": "    // A send that detached the draft holds the submission's attachments, so"
+        },
+        {
+          "line": 314,
+          "text": "    // their uploads keep going for it."
+        },
+        {
+          "line": 315,
+          "text": "    this._attachmentAddOperations.cancelAll("
+        },
+        {
+          "line": 316,
+          "text": "      this.detachesDraftOnSend"
+        },
+        {
+          "line": 317,
+          "text": "        ? new Set("
+        },
+        {
+          "line": 318,
+          "text": "            this._submission?.attachments.map((attachment) => attachment.id),"
+        },
+        {
+          "line": 319,
+          "text": "          )"
+        },
+        {
+          "line": 320,
+          "text": "        : undefined,"
+        },
+        {
+          "line": 324,
+          "text": "    if (this.isSubmitting) {"
+        },
+        {
+          "line": 325,
+          "text": "      for (const attachment of this._attachments)"
+        },
+        {
+          "line": 326,
+          "text": "        this._attachmentSends.beginRemoval(attachment);"
+        },
+        {
+          "line": 327,
+          "text": "    }"
+        },
+        {
+          "line": 328,
+          "text": "    const task = this._onClearAttachments(pending);"
+        },
+        {
+          "line": 329,
+          "text": "    this.setAttachments([]);"
+        },
+        {
+          "line": 330,
+          "text": ""
+        },
+        {
+          "line": 331,
+          "text": "    await task;"
+        },
+        {
+          "line": 338,
+          "text": ""
+        },
+        {
+          "line": 339,
+          "text": "    // An attachment whose removal is still awaiting the adapter is excluded"
+        },
+        {
+          "line": 340,
+          "text": "    // up front, or a send started mid-removal would upload and dispatch it."
+        },
+        {
+          "line": 341,
+          "text": "    const attachments = this.sendableAttachments;"
+        },
+        {
+          "line": 342,
+          "text": "    if (!this.text.trim() && attachments.length === 0) return;"
+        },
+        {
+          "line": 343,
+          "text": ""
+        },
+        {
+          "line": 344,
+          "text": "    const draft: ComposerSubmission = {"
+        },
+        {
+          "line": 348,
+          "text": "      quote: this._quote,"
+        },
+        {
+          "line": 349,
+          "text": "      attachments,"
+        },
+        {
+          "line": 350,
+          "text": "    };"
+        },
+        {
+          "line": 351,
+          "text": "    const context = { options, runConfig: this.runConfig };"
+        },
+        {
+          "line": 352,
+          "text": "    // Only a send whose attachments still need the adapter becomes a"
+        },
+        {
+          "line": 353,
+          "text": "    // submission; one with nothing left to prepare goes out right away, as it"
+        },
+        {
+          "line": 354,
+          "text": "    // always has, and never shows up as a row of its own."
+        },
+        {
+          "line": 355,
+          "text": "    const complete = attachments.filter(isAttachmentComplete);"
+        },
+        {
+          "line": 356,
+          "text": "    const ready = complete.length === attachments.length;"
+        },
+        {
+          "line": 357,
+          "text": "    if (!ready) {"
+        },
+        {
+          "line": 358,
+          "text": "      this._submission = draft;"
+        },
+        {
+          "line": 361,
+          "text": "    if (this.detachesDraftOnSend) {"
+        },
+        {
+          "line": 362,
+          "text": "      const detached = new Set(attachments);"
+        },
+        {
+          "line": 363,
+          "text": "      this._attachments = this._attachments.filter((a) => !detached.has(a));"
+        },
+        {
+          "line": 364,
+          "text": "      this._text = \"\";"
+        },
+        {
+          "line": 365,
+          "text": "      this._rebaseDictation(\"\");"
+        },
+        {
+          "line": 378,
+          "text": "  private async _prepareSubmission(generation: number) {"
+        },
+        {
+          "line": 379,
+          "text": "    const adapter = this.getAttachmentAdapter();"
+        },
+        {
+          "line": 380,
+          "text": "    const uploads = (this._submission?.attachments ?? []).flatMap("
+        },
+        {
+          "line": 381,
+          "text": "      (attachment) => {"
+        },
+        {
+          "line": 382,
+          "text": "        const upload = this._attachmentAddOperations.whenSendable("
+        },
+        {
+          "line": 383,
+          "text": "          attachment.id,"
+        },
+        {
+          "line": 384,
+          "text": "        );"
+        },
+        {
+          "line": 385,
+          "text": "        return upload ? [upload] : [];"
+        },
+        {
+          "line": 388,
+          "text": "    if (uploads.length > 0) {"
+        },
+        {
+          "line": 389,
+          "text": "      // An attachment still uploading in `add()` cannot be finalized yet, so"
+        },
+        {
+          "line": 390,
+          "text": "      // the submission waits for its latest state."
+        },
+        {
+          "line": 391,
+          "text": "      await Promise.all(uploads);"
+        },
+        {
+          "line": 398,
+          "text": ""
+        },
+        {
+          "line": 399,
+          "text": "    const sent = submission.attachments.filter("
+        },
+        {
+          "line": 400,
+          "text": "      (attachment) => !this._attachmentSends.isRemoved(attachment),"
+        },
+        {
+          "line": 401,
+          "text": "    );"
+        },
+        {
+          "line": 402,
+          "text": "    for (const attachment of sent) this._cancelAttachmentAdd(attachment.id);"
+        },
+        {
+          "line": 403,
+          "text": ""
+        },
+        {
+          "line": 404,
+          "text": "    const settled = await Promise.allSettled("
+        },
+        {
+          "line": 405,
+          "text": "      sent.map((attachment) =>"
+        },
+        {
+          "line": 406,
+          "text": "        this._attachmentSends.send("
+        },
+        {
+          "line": 407,
+          "text": "          attachment,"
+        },
+        {
+          "line": 408,
+          "text": "          adapter,"
+        },
+        {
+          "line": 409,
+          "text": "          context.controller.signal,"
+        },
+        {
+          "line": 420,
+          "text": ""
+        },
+        {
+          "line": 421,
+          "text": "    // An attachment removed mid-upload can't be cancelled, but it can still be"
+        },
+        {
+          "line": 422,
+          "text": "    // dropped from the outgoing message instead of silently being sent anyway."
+        },
+        {
+          "line": 423,
+          "text": "    const finalAttachments = settled.flatMap((result, index) =>"
+        },
+        {
+          "line": 424,
+          "text": "      this._attachmentSends.isRemoved(sent[index]!) ||"
+        },
+        {
+          "line": 425,
+          "text": "      result.status === \"rejected\""
+        },
+        {
+          "line": 426,
+          "text": "        ? []"
+        },
+        {
+          "line": 429,
+          "text": "    const submitted = this._submission ?? submission;"
+        },
+        {
+          "line": 430,
+          "text": "    if (!submitted.text.trim() && finalAttachments.length === 0) {"
+        },
+        {
+          "line": 431,
+          "text": "      this._endSubmission();"
+        },
+        {
+          "line": 432,
+          "text": "      this._returnToDraft(submitted);"
+        },
+        {
+          "line": 434,
+          "text": "    }"
+        },
+        {
+          "line": 435,
+          "text": "    this._dispatch(generation, submitted, finalAttachments, context, true);"
+        },
+        {
+          "line": 436,
+          "text": "  }"
+        },
+        {
+          "line": 437,
+          "text": ""
+        },
+        {
+          "line": 440,
+          "text": "    draft: ComposerSubmission,"
+        },
+        {
+          "line": 441,
+          "text": "    attachments: readonly CompleteAttachment[],"
+        },
+        {
+          "line": 442,
+          "text": "    context: { options: SendOptions | undefined; runConfig: RunConfig },"
+        },
+        {
+          "line": 443,
+          "text": "    isSubmission: boolean,"
+        },
+        {
+          "line": 448,
+          "text": "      content: draft.text ? [{ type: \"text\", text: draft.text }] : [],"
+        },
+        {
+          "line": 449,
+          "text": "      attachments,"
+        },
+        {
+          "line": 450,
+          "text": "      runConfig: context.runConfig,"
+        },
+        {
+          "line": 451,
+          "text": "      metadata: {"
+        },
+        {
+          "line": 455,
+          "text": ""
+        },
+        {
+          "line": 456,
+          "text": "    const sent: ComposerSubmission = { ...draft, attachments };"
+        },
+        {
+          "line": 457,
+          "text": "    const queued = this.queue.length;"
+        },
+        {
+          "line": 458,
+          "text": "    if (isSubmission) {"
+        },
+        {
+          "line": 462,
+          "text": "      this._submissionSend = undefined;"
+        },
+        {
+          "line": 463,
+          "text": "      // A composer that kept its draft holds the same attachments, which are"
+        },
+        {
+          "line": 464,
+          "text": "      // the delivered ones now, so clearing that draft (an edit ending) must"
+        },
+        {
+          "line": 465,
+          "text": "      // not remove their uploads."
+        },
+        {
+          "line": 467,
+          "text": "        const delivered = new Map("
+        },
+        {
+          "line": 468,
+          "text": "          attachments.map((attachment) => [attachment.id, attachment]),"
+        },
+        {
+          "line": 469,
+          "text": "        );"
+        },
+        {
+          "line": 470,
+          "text": "        this._attachments = this._attachments.map("
+        },
+        {
+          "line": 471,
+          "text": "          (attachment) => delivered.get(attachment.id) ?? attachment,"
+        },
+        {
+          "line": 472,
+          "text": "        );"
+        },
+        {
+          "line": 473,
+          "text": "      }"
+        },
+        {
+          "line": 502,
+          "text": "    if (isSubmission)"
+        },
+        {
+          "line": 503,
+          "text": "      for (const attachment of draft.attachments)"
+        },
+        {
+          "line": 504,
+          "text": "        if (!isAttachmentComplete(attachment))"
+        },
+        {
+          "line": 505,
+          "text": "          this._attachmentSends.dispatchRemoval("
+        },
+        {
+          "line": 506,
+          "text": "            attachment,"
+        },
+        {
+          "line": 507,
+          "text": "            () =>"
+        },
+        {
+          "line": 508,
+          "text": "              void this._retrySubmittedRemoval("
+        },
+        {
+          "line": 509,
+          "text": "                attachment as PendingAttachment,"
+        },
+        {
+          "line": 510,
+          "text": "                cleanupOwner,"
+        },
+        {
+          "line": 511,
+          "text": "                cleanupEpoch,"
+        },
+        {
+          "line": 516,
+          "text": "      chars: draft.text.length,"
+        },
+        {
+          "line": 517,
+          "text": "      attachments: attachments.length,"
+        },
+        {
+          "line": 518,
+          "text": "    });"
+        },
+        {
+          "line": 519,
+          "text": ""
+        },
+        {
+          "line": 527,
+          "text": "  private _returnSubmissionToDraft("
+        },
+        {
+          "line": 528,
+          "text": "    sent: readonly Attachment[],"
+        },
+        {
+          "line": 529,
+          "text": "    settled: readonly PromiseSettledResult<CompleteAttachment>[],"
+        },
+        {
+          "line": 530,
+          "text": "    reason: unknown,"
+        },
+        {
+          "line": 531,
+          "text": "  ) {"
+        },
+        {
+          "line": 539,
+          "text": "    });"
+        },
+        {
+          "line": 540,
+          "text": "    const attachments = submission.attachments.map((attachment) => {"
+        },
+        {
+          "line": 541,
+          "text": "      if ("
+        },
+        {
+          "line": 542,
+          "text": "        !failures.has(attachment.id) ||"
+        },
+        {
+          "line": 543,
+          "text": "        isAttachmentComplete(attachment) ||"
+        },
+        {
+          "line": 544,
+          "text": "        this._attachmentSends.isRemoved(attachment)"
+        },
+        {
+          "line": 545,
+          "text": "      )"
+        },
+        {
+          "line": 546,
+          "text": "        return attachment;"
+        },
+        {
+          "line": 547,
+          "text": "      const failure = failures.get(attachment.id);"
+        },
+        {
+          "line": 548,
+          "text": "      return this._attachmentSends.transfer(attachment, {"
+        },
+        {
+          "line": 549,
+          "text": "        ...attachment,"
+        },
+        {
+          "line": 550,
+          "text": "        status: {"
+        },
+        {
+          "line": 551,
+          "text": "          type: \"incomplete\","
+        },
+        {
+          "line": 557,
+          "text": "    this._endSubmission();"
+        },
+        {
+          "line": 558,
+          "text": "    this._returnToDraft({ ...submission, attachments });"
+        },
+        {
+          "line": 559,
+          "text": "    console.error(\"[assistant-ui] Failed to send attachments\", reason);"
+        },
+        {
+          "line": 560,
+          "text": "  }"
+        },
+        {
+          "line": 561,
+          "text": ""
+        },
+        {
+          "line": 570,
+          "text": "  public __internal_dispose() {"
+        },
+        {
+          "line": 571,
+          "text": "    this._cancelAllAttachmentAdds();"
+        },
+        {
+          "line": 572,
+          "text": "    if (!this._submission) return;"
+        },
+        {
+          "line": 573,
+          "text": "    this._submissionSend?.controller.abort();"
+        },
+        {
+          "line": 592,
+          "text": "   * since. A composer that kept its draft only takes back the state the"
+        },
+        {
+          "line": 593,
+          "text": "   * attachments came back in, such as the reason one failed, and leaves an"
+        },
+        {
+          "line": 594,
+          "text": "   * attachment being removed to its removal."
+        },
+        {
+          "line": 595,
+          "text": "   */"
+        },
+        {
+          "line": 596,
+          "text": "  private _returnToDraft(submission: ComposerSubmission) {"
+        },
+        {
+          "line": 597,
+          "text": "    if (this.detachesDraftOnSend) {"
+        },
+        {
+          "line": 598,
+          "text": "      const returned = submission.attachments.map((attachment) =>"
+        },
+        {
+          "line": 599,
+          "text": "        this._attachmentSends.restore(attachment),"
+        },
+        {
+          "line": 600,
+          "text": "      );"
+        },
+        {
+          "line": 601,
+          "text": "      this._attachments = [...returned, ...this._attachments];"
+        },
+        {
+          "line": 602,
+          "text": "      const text = [submission.text, this._text].filter(Boolean).join(\"\\n\");"
+        },
+        {
+          "line": 603,
+          "text": "      this._text = text;"
+        },
+        {
+          "line": 607,
+          "text": "      const returned = new Map("
+        },
+        {
+          "line": 608,
+          "text": "        submission.attachments"
+        },
+        {
+          "line": 609,
+          "text": "          .filter((attachment) => !this._attachmentSends.isRemoved(attachment))"
+        },
+        {
+          "line": 610,
+          "text": "          .map((attachment) => [attachment.id, attachment]),"
+        },
+        {
+          "line": 611,
+          "text": "      );"
+        },
+        {
+          "line": 612,
+          "text": "      this._attachments = this._attachments.map((attachment) =>"
+        },
+        {
+          "line": 613,
+          "text": "        this._attachmentSends.isRemoved(attachment)"
+        },
+        {
+          "line": 614,
+          "text": "          ? this._attachmentSends.restore(attachment)"
+        },
+        {
+          "line": 615,
+          "text": "          : this._attachmentSends.restore("
+        },
+        {
+          "line": 616,
+          "text": "              returned.get(attachment.id) ?? attachment,"
+        },
+        {
+          "line": 617,
+          "text": "            ),"
+        },
+        {
+          "line": 618,
+          "text": "      );"
+        },
+        {
+          "line": 630,
+          "text": ""
+        },
+        {
+          "line": 631,
+          "text": "    const adapter = this.getAttachmentAdapter();"
+        },
+        {
+          "line": 632,
+          "text": "    if (!adapter) return;"
+        },
+        {
+          "line": 633,
+          "text": "    // An attachment the draft still holds is removed along with the draft."
+        },
+        {
+          "line": 634,
+          "text": "    const drafted = new Set("
+        },
+        {
+          "line": 635,
+          "text": "      this._attachments.map((attachment) => attachment.id),"
+        },
+        {
+          "line": 636,
+          "text": "    );"
+        },
+        {
+          "line": 637,
+          "text": "    await Promise.all("
+        },
+        {
+          "line": 638,
+          "text": "      submission.attachments"
+        },
+        {
+          "line": 639,
+          "text": "        .filter("
+        },
+        {
+          "line": 640,
+          "text": "          (attachment) =>"
+        },
+        {
+          "line": 641,
+          "text": "            !isAttachmentComplete(attachment) &&"
+        },
+        {
+          "line": 642,
+          "text": "            !drafted.has(attachment.id) &&"
+        },
+        {
+          "line": 643,
+          "text": "            !this._attachmentSends.isRemovalPending(attachment),"
+        },
+        {
+          "line": 644,
+          "text": "        )"
+        },
+        {
+          "line": 645,
+          "text": "        .map(async (attachment) => adapter.remove(attachment)),"
+        },
+        {
+          "line": 646,
+          "text": "    );"
+        },
+        {
+          "line": 647,
+          "text": "  }"
+        },
+        {
+          "line": 659,
+          "text": "    quote?: QuoteInfo | undefined;"
+        },
+        {
+          "line": 660,
+          "text": "    attachments?: readonly Attachment[] | undefined;"
+        },
+        {
+          "line": 661,
+          "text": "  }): boolean {"
+        },
+        {
+          "line": 662,
+          "text": "    if ("
+        },
+        {
+          "line": 664,
+          "text": "      this._quote !== undefined ||"
+        },
+        {
+          "line": 665,
+          "text": "      this._attachments.length > 0"
+        },
+        {
+          "line": 666,
+          "text": "    )"
+        },
+        {
+          "line": 667,
+          "text": "      return false;"
+        },
+        {
+          "line": 671,
+          "text": "    this._quote = draft.quote;"
+        },
+        {
+          "line": 672,
+          "text": "    this._attachments = draft.attachments ?? [];"
+        },
+        {
+          "line": 673,
+          "text": "    this._notifySubscribers();"
+        },
+        {
+          "line": 674,
+          "text": "    return true;"
+        },
+        {
+          "line": 684,
+          "text": "    quote?: QuoteInfo | undefined;"
+        },
+        {
+          "line": 685,
+          "text": "    attachments?: readonly Attachment[] | undefined;"
+        },
+        {
+          "line": 686,
+          "text": "  }): void {"
+        },
+        {
+          "line": 687,
+          "text": "    const attachmentsUntouched ="
+        },
+        {
+          "line": 688,
+          "text": "      draft.attachments !== undefined"
+        },
+        {
+          "line": 689,
+          "text": "        ? this._attachments === draft.attachments"
+        },
+        {
+          "line": 690,
+          "text": "        : this._attachments.length === 0;"
+        },
+        {
+          "line": 691,
+          "text": "    if ("
+        },
+        {
+          "line": 692,
+          "text": "      this._text !== draft.text ||"
+        },
+        {
+          "line": 693,
+          "text": "      this._quote !== draft.quote ||"
+        },
+        {
+          "line": 694,
+          "text": "      !attachmentsUntouched"
+        },
+        {
+          "line": 695,
+          "text": "    )"
+        },
+        {
+          "line": 696,
+          "text": "      return;"
+        },
+        {
+          "line": 700,
+          "text": "    this._quote = undefined;"
+        },
+        {
+          "line": 701,
+          "text": "    this._attachments = [];"
+        },
+        {
+          "line": 702,
+          "text": "    this._notifySubscribers();"
+        },
+        {
+          "line": 703,
+          "text": "  }"
+        },
+        {
+          "line": 731,
+          "text": ""
+        },
+        {
+          "line": 732,
+          "text": "  async addAttachment(fileOrAttachment: File | CreateAttachment) {"
+        },
+        {
+          "line": 733,
+          "text": "    if (isCreateAttachment(fileOrAttachment)) {"
+        },
+        {
+          "line": 734,
+          "text": "      const adapter = this.getAttachmentAdapter();"
+        },
+        {
+          "line": 735,
+          "text": "      if ("
+        },
+        {
+          "line": 736,
+          "text": "        adapter &&"
+        },
+        {
+          "line": 738,
+          "text": "          {"
+        },
+        {
+          "line": 739,
+          "text": "            name: fileOrAttachment.name,"
+        },
+        {
+          "line": 740,
+          "text": "            type: fileOrAttachment.contentType ?? \"\","
+        },
+        {
+          "line": 741,
+          "text": "          },"
+        },
+        {
+          "line": 742,
+          "text": "          adapter.accept,"
+        },
+        {
+          "line": 744,
+          "text": "      ) {"
+        },
+        {
+          "line": 745,
+          "text": "        const message = `File type ${fileOrAttachment.contentType || \"unknown\"} is not accepted. Accepted types: ${adapter.accept}`;"
+        },
+        {
+          "line": 746,
+          "text": "        const err = new Error(message);"
+        },
+        {
+          "line": 747,
+          "text": "        this._safeEmitAttachmentAddError("
+        },
+        {
+          "line": 748,
+          "text": "          \"not-accepted\","
+        },
+        {
+          "line": 749,
+          "text": "          message,"
+        },
+        {
+          "line": 751,
+          "text": "          err,"
+        },
+        {
+          "line": 752,
+          "text": "          fileOrAttachment.contentType,"
+        },
+        {
+          "line": 753,
+          "text": "        );"
+        },
+        {
+          "line": 754,
+          "text": "        throw err;"
+        },
+        {
+          "line": 756,
+          "text": ""
+        },
+        {
+          "line": 757,
+          "text": "      const a: CompleteAttachment = {"
+        },
+        {
+          "line": 758,
+          "text": "        id: fileOrAttachment.id ?? generateId(),"
+        },
+        {
+          "line": 759,
+          "text": "        type: fileOrAttachment.type ?? \"document\","
+        },
+        {
+          "line": 760,
+          "text": "        name: fileOrAttachment.name,"
+        },
+        {
+          "line": 761,
+          "text": "        contentType: fileOrAttachment.contentType,"
+        },
+        {
+          "line": 762,
+          "text": "        content: fileOrAttachment.content,"
+        },
+        {
+          "line": 763,
+          "text": "        status: { type: \"complete\" },"
+        },
+        {
+          "line": 764,
+          "text": "      };"
+        },
+        {
+          "line": 765,
+          "text": "      this._attachments = [...this._attachments, a];"
+        },
+        {
+          "line": 766,
+          "text": "      this._notifySubscribers();"
+        },
+        {
+          "line": 767,
+          "text": "      this._notifyEventSubscribers(\"attachmentAdd\", {"
+        },
+        {
+          "line": 768,
+          "text": "        ...(a.contentType ? { contentType: a.contentType } : undefined),"
+        },
+        {
+          "line": 769,
+          "text": "      });"
+        },
+        {
+          "line": 772,
+          "text": ""
+        },
+        {
+          "line": 773,
+          "text": "    const adapter = this.getAttachmentAdapter();"
+        },
+        {
+          "line": 774,
+          "text": "    if (!adapter) {"
+        },
+        {
+          "line": 775,
+          "text": "      const message = \"Attachments are not supported\";"
+        },
+        {
+          "line": 776,
+          "text": "      const err = new Error(message);"
+        },
+        {
+          "line": 777,
+          "text": "      this._safeEmitAttachmentAddError("
+        },
+        {
+          "line": 778,
+          "text": "        \"no-adapter\","
+        },
+        {
+          "line": 779,
+          "text": "        message,"
+        },
+        {
+          "line": 781,
+          "text": "        err,"
+        },
+        {
+          "line": 782,
+          "text": "        fileOrAttachment.type,"
+        },
+        {
+          "line": 783,
+          "text": "      );"
+        },
+        {
+          "line": 784,
+          "text": "      throw err;"
+        },
+        {
+          "line": 788,
+          "text": "      !fileMatchesAccept("
+        },
+        {
+          "line": 789,
+          "text": "        { name: fileOrAttachment.name, type: fileOrAttachment.type },"
+        },
+        {
+          "line": 790,
+          "text": "        adapter.accept,"
+        },
+        {
+          "line": 791,
+          "text": "      )"
+        },
+        {
+          "line": 792,
+          "text": "    ) {"
+        },
+        {
+          "line": 793,
+          "text": "      const message = `File type ${fileOrAttachment.type || \"unknown\"} is not accepted. Accepted types: ${adapter.accept}`;"
+        },
+        {
+          "line": 794,
+          "text": "      const err = new Error(message);"
+        },
+        {
+          "line": 795,
+          "text": "      this._safeEmitAttachmentAddError("
+        },
+        {
+          "line": 796,
+          "text": "        \"not-accepted\","
+        },
+        {
+          "line": 797,
+          "text": "        message,"
+        },
+        {
+          "line": 799,
+          "text": "        err,"
+        },
+        {
+          "line": 800,
+          "text": "        fileOrAttachment.type,"
+        },
+        {
+          "line": 801,
+          "text": "      );"
+        },
+        {
+          "line": 802,
+          "text": "      throw err;"
+        },
+        {
+          "line": 804,
+          "text": ""
+        },
+        {
+          "line": 805,
+          "text": "    const operation = this._attachmentAddOperations.start();"
+        },
+        {
+          "line": 806,
+          "text": "    const upsertAttachment = (a: PendingAttachment) => {"
+        },
+        {
+          "line": 807,
+          "text": "      if (!this._attachmentAddOperations.accept(operation, a)) return false;"
+        },
+        {
+          "line": 808,
+          "text": ""
+        },
+        {
+          "line": 809,
+          "text": "      // An attachment the composer sent lives on the submission, so its"
+        },
+        {
+          "line": 810,
+          "text": "      // remaining upload updates follow it there instead of coming back as a"
+        },
+        {
+          "line": 811,
+          "text": "      // new draft entry."
+        },
+        {
+          "line": 813,
+          "text": "      const submitted ="
+        },
+        {
+          "line": 814,
+          "text": "        submission?.attachments.some((attachment) => attachment.id === a.id) ??"
+        },
+        {
+          "line": 815,
+          "text": "        false;"
+        },
+        {
+          "line": 816,
+          "text": "      if (submission && submitted) {"
+        },
+        {
+          "line": 818,
+          "text": "          ...submission,"
+        },
+        {
+          "line": 819,
+          "text": "          attachments: submission.attachments.map((attachment) =>"
+        },
+        {
+          "line": 820,
+          "text": "            attachment.id === a.id"
+        },
+        {
+          "line": 821,
+          "text": "              ? this._attachmentSends.transfer(attachment, a)"
+        },
+        {
+          "line": 822,
+          "text": "              : attachment,"
+        },
+        {
+          "line": 823,
+          "text": "          ),"
+        },
+        {
+          "line": 824,
+          "text": "        };"
+        },
+        {
+          "line": 826,
+          "text": ""
+        },
+        {
+          "line": 827,
+          "text": "      const idx = this._attachments.findIndex("
+        },
+        {
+          "line": 828,
+          "text": "        (attachment) => attachment.id === a.id,"
+        },
+        {
+          "line": 829,
+          "text": "      );"
+        },
+        {
+          "line": 830,
+          "text": "      if (idx !== -1)"
+        },
+        {
+          "line": 831,
+          "text": "        this._attachments = ["
+        },
+        {
+          "line": 832,
+          "text": "          ...this._attachments.slice(0, idx),"
+        },
+        {
+          "line": 833,
+          "text": "          a,"
+        },
+        {
+          "line": 834,
+          "text": "          ...this._attachments.slice(idx + 1),"
+        },
+        {
+          "line": 835,
+          "text": "        ];"
+        },
+        {
+          "line": 836,
+          "text": "      else if (!submitted) {"
+        },
+        {
+          "line": 837,
+          "text": "        this._attachments = [...this._attachments, a];"
+        },
+        {
+          "line": 838,
+          "text": "      }"
+        },
+        {
+          "line": 839,
+          "text": ""
+        },
+        {
+          "line": 842,
+          "text": "    };"
+        },
+        {
+          "line": 843,
+          "text": "    let lastAttachment: PendingAttachment | undefined;"
+        },
+        {
+          "line": 844,
+          "text": "    try {"
+        },
+        {
+          "line": 845,
+          "text": "      await drainAttachmentAdd("
+        },
+        {
+          "line": 846,
+          "text": "        adapter.add({ file: fileOrAttachment }),"
+        },
+        {
+          "line": 847,
+          "text": "        (attachment) => {"
+        },
+        {
+          "line": 848,
+          "text": "          lastAttachment = attachment;"
+        },
+        {
+          "line": 849,
+          "text": "          return upsertAttachment(attachment);"
+        },
+        {
+          "line": 850,
+          "text": "        },"
+        },
+        {
+          "line": 851,
+          "text": "      );"
+        },
+        {
+          "line": 852,
+          "text": "    } catch (e) {"
+        },
+        {
+          "line": 853,
+          "text": "      if (this._attachmentAddOperations.isCancelled(operation)) return;"
+        },
+        {
+          "line": 854,
+          "text": "      if (lastAttachment) {"
+        },
+        {
+          "line": 855,
+          "text": "        upsertAttachment({"
+        },
+        {
+          "line": 856,
+          "text": "          ...lastAttachment,"
+        },
+        {
+          "line": 857,
+          "text": "          status: {"
+        },
+        {
+          "line": 858,
+          "text": "            type: \"incomplete\","
+        },
+        {
+          "line": 863,
+          "text": "      }"
+        },
+        {
+          "line": 864,
+          "text": "      this._safeEmitAttachmentAddError("
+        },
+        {
+          "line": 865,
+          "text": "        \"adapter-error\","
+        },
+        {
+          "line": 866,
+          "text": "        e instanceof Error ? e.message : String(e),"
+        },
+        {
+          "line": 867,
+          "text": "        lastAttachment?.id,"
+        },
+        {
+          "line": 868,
+          "text": "        e instanceof Error ? e : undefined,"
+        },
+        {
+          "line": 869,
+          "text": "        lastAttachment?.contentType || fileOrAttachment.type,"
+        },
+        {
+          "line": 870,
+          "text": "      );"
+        },
+        {
+          "line": 871,
+          "text": "      throw e;"
+        },
+        {
+          "line": 872,
+          "text": "    } finally {"
+        },
+        {
+          "line": 873,
+          "text": "      this._attachmentAddOperations.finish(operation);"
+        },
+        {
+          "line": 874,
+          "text": "    }"
+        },
+        {
+          "line": 875,
+          "text": ""
+        },
+        {
+          "line": 876,
+          "text": "    if (this._attachmentAddOperations.isCancelled(operation)) return;"
+        },
+        {
+          "line": 877,
+          "text": "    if ("
+        },
+        {
+          "line": 878,
+          "text": "      lastAttachment?.status.type === \"incomplete\" &&"
+        },
+        {
+          "line": 879,
+          "text": "      lastAttachment.status.reason === \"error\""
+        },
+        {
+          "line": 880,
+          "text": "    ) {"
+        },
+        {
+          "line": 881,
+          "text": "      this._safeEmitAttachmentAddError("
+        },
+        {
+          "line": 882,
+          "text": "        \"adapter-error\","
+        },
+        {
+          "line": 883,
+          "text": "        lastAttachment.status.message ??"
+        },
+        {
+          "line": 884,
+          "text": "          \"Attachment upload did not complete successfully.\","
+        },
+        {
+          "line": 885,
+          "text": "        lastAttachment.id,"
+        },
+        {
+          "line": 886,
+          "text": "        undefined,"
+        },
+        {
+          "line": 887,
+          "text": "        lastAttachment.contentType || fileOrAttachment.type,"
+        },
+        {
+          "line": 888,
+          "text": "      );"
+        },
+        {
+          "line": 889,
+          "text": "    } else {"
+        },
+        {
+          "line": 890,
+          "text": "      this._notifyEventSubscribers(\"attachmentAdd\", {"
+        },
+        {
+          "line": 891,
+          "text": "        ...(lastAttachment?.contentType"
+        },
+        {
+          "line": 892,
+          "text": "          ? { contentType: lastAttachment.contentType }"
+        },
+        {
+          "line": 893,
+          "text": "          : fileOrAttachment.type"
+        },
+        {
+          "line": 894,
+          "text": "            ? { contentType: fileOrAttachment.type }"
+        },
+        {
+          "line": 895,
+          "text": "            : undefined),"
+        },
+        {
+          "line": 896,
+          "text": "      });"
+        },
+        {
+          "line": 899,
+          "text": ""
+        },
+        {
+          "line": 900,
+          "text": "  private _safeEmitAttachmentAddError("
+        },
+        {
+          "line": 901,
+          "text": "    reason: AttachmentAddErrorReason,"
+        },
+        {
+          "line": 902,
+          "text": "    message: string,"
+        },
+        {
+          "line": 903,
+          "text": "    attachmentId?: string,"
+        },
+        {
+          "line": 904,
+          "text": "    error?: Error,"
+        },
+        {
+          "line": 905,
+          "text": "    contentType?: string,"
+        },
+        {
+          "line": 907,
+          "text": "    try {"
+        },
+        {
+          "line": 908,
+          "text": "      this._notifyEventSubscribers(\"attachmentAddError\", {"
+        },
+        {
+          "line": 909,
+          "text": "        reason,"
+        },
+        {
+          "line": 910,
+          "text": "        message,"
+        },
+        {
+          "line": 911,
+          "text": "        ...(attachmentId !== undefined && { attachmentId }),"
+        },
+        {
+          "line": 912,
+          "text": "        ...(error !== undefined && { error }),"
+        },
+        {
+          "line": 913,
+          "text": "        ...(contentType ? { contentType } : undefined),"
+        },
+        {
+          "line": 916,
+          "text": "      console.error("
+        },
+        {
+          "line": 917,
+          "text": "        \"[assistant-ui] attachmentAddError subscriber threw:\","
+        },
+        {
+          "line": 918,
+          "text": "        subscriberError,"
+        },
+        {
+          "line": 919,
+          "text": "      );"
+        },
+        {
+          "line": 922,
+          "text": ""
+        },
+        {
+          "line": 923,
+          "text": "  async removeAttachment(attachmentId: string) {"
+        },
+        {
+          "line": 924,
+          "text": "    const attachment ="
+        },
+        {
+          "line": 925,
+          "text": "      this._attachments.find((candidate) => candidate.id === attachmentId) ??"
+        },
+        {
+          "line": 926,
+          "text": "      this._submission?.attachments.find("
+        },
+        {
+          "line": 927,
+          "text": "        (candidate) => candidate.id === attachmentId,"
+        },
+        {
+          "line": 928,
+          "text": "      );"
+        },
+        {
+          "line": 929,
+          "text": "    if (!attachment) throw new Error(\"Attachment not found\");"
+        },
+        {
+          "line": 930,
+          "text": "    const adapter = this.getAttachmentAdapter();"
+        },
+        {
+          "line": 931,
+          "text": "    if (!isAttachmentComplete(attachment) && !adapter)"
+        },
+        {
+          "line": 932,
+          "text": "      throw new Error(\"Attachments are not supported\");"
+        },
+        {
+          "line": 933,
+          "text": "    if (!this._attachmentSends.beginRemoval(attachment)) return;"
+        },
+        {
+          "line": 934,
+          "text": ""
+        },
+        {
+          "line": 935,
+          "text": "    this._cancelAttachmentAdd(attachmentId);"
+        },
+        {
+          "line": 936,
+          "text": "    this._notifySubscribers();"
+        },
+        {
+          "line": 937,
+          "text": ""
+        },
+        {
+          "line": 938,
+          "text": "    await this._attachmentSends.remove("
+        },
+        {
+          "line": 939,
+          "text": "      attachment,"
+        },
+        {
+          "line": 940,
+          "text": "      adapter,"
+        },
+        {
+          "line": 941,
+          "text": "      (_error, message) => {"
+        },
+        {
+          "line": 942,
+          "text": "        const fail = (candidate: PendingAttachment) =>"
+        },
+        {
+          "line": 943,
+          "text": "          this._attachmentSends.transfer(candidate, {"
+        },
+        {
+          "line": 944,
+          "text": "            ...candidate,"
+        },
+        {
+          "line": 945,
+          "text": "            status: { type: \"incomplete\", reason: \"error\", message },"
+        },
+        {
+          "line": 950,
+          "text": "            ...submission,"
+        },
+        {
+          "line": 951,
+          "text": "            attachments: submission.attachments.map((candidate) =>"
+        },
+        {
+          "line": 952,
+          "text": "              !isAttachmentComplete(candidate) &&"
+        },
+        {
+          "line": 953,
+          "text": "              this._attachmentSends.isSameRemoval(candidate, attachment)"
+        },
+        {
+          "line": 954,
+          "text": "                ? fail(candidate)"
+        },
+        {
+          "line": 955,
+          "text": "                : candidate,"
+        },
+        {
+          "line": 958,
+          "text": "        if ("
+        },
+        {
+          "line": 959,
+          "text": "          this._attachments.some((candidate) =>"
+        },
+        {
+          "line": 960,
+          "text": "            this._attachmentSends.isSameRemoval(candidate, attachment),"
+        },
+        {
+          "line": 961,
+          "text": "          )"
+        },
+        {
+          "line": 962,
+          "text": "        ) {"
+        },
+        {
+          "line": 963,
+          "text": "          this._attachments = this._attachments.map((candidate) =>"
+        },
+        {
+          "line": 964,
+          "text": "            !isAttachmentComplete(candidate) &&"
+        },
+        {
+          "line": 965,
+          "text": "            this._attachmentSends.isSameRemoval(candidate, attachment)"
+        },
+        {
+          "line": 966,
+          "text": "              ? fail(candidate)"
+        },
+        {
+          "line": 967,
+          "text": "              : candidate,"
+        },
+        {
+          "line": 969,
+          "text": "          if (!this._submission)"
+        },
+        {
+          "line": 970,
+          "text": "            this._attachments = this._attachments.map((candidate) =>"
+        },
+        {
+          "line": 971,
+          "text": "              this._attachmentSends.isSameRemoval(candidate, attachment)"
+        },
+        {
+          "line": 972,
+          "text": "                ? this._attachmentSends.restore(candidate)"
+        },
+        {
+          "line": 973,
+          "text": "                : candidate,"
+        },
+        {
+          "line": 974,
+          "text": "            );"
+        },
+        {
+          "line": 982,
+          "text": "        ...submission,"
+        },
+        {
+          "line": 983,
+          "text": "        attachments: submission.attachments.filter("
+        },
+        {
+          "line": 984,
+          "text": "          (candidate) =>"
+        },
+        {
+          "line": 985,
+          "text": "            !this._attachmentSends.isSameRemoval(candidate, attachment),"
+        },
+        {
+          "line": 986,
+          "text": "        ),"
+        },
+        {
+          "line": 987,
+          "text": "      };"
+        },
+        {
+          "line": 988,
+          "text": "    if ("
+        },
+        {
+          "line": 989,
+          "text": "      this._attachments.some((candidate) =>"
+        },
+        {
+          "line": 990,
+          "text": "        this._attachmentSends.isSameRemoval(candidate, attachment),"
+        },
+        {
+          "line": 991,
+          "text": "      )"
+        },
+        {
+          "line": 992,
+          "text": "    )"
+        },
+        {
+          "line": 993,
+          "text": "      this._attachments = this._attachments.filter("
+        },
+        {
+          "line": 994,
+          "text": "        (candidate) =>"
+        },
+        {
+          "line": 995,
+          "text": "          !this._attachmentSends.isSameRemoval(candidate, attachment),"
+        },
+        {
+          "line": 996,
+          "text": "      );"
+        },
+        {
+          "line": 997,
+          "text": "    this._notifySubscribers();"
+        },
+        {
+          "line": 1004,
+          "text": "  private _adoptCleanupFailure("
+        },
+        {
+          "line": 1005,
+          "text": "    source: AttachmentSendOperations,"
+        },
+        {
+          "line": 1006,
+          "text": "    failed: PendingAttachment,"
+        },
+        {
+          "line": 1007,
+          "text": "    epoch: number,"
+        },
+        {
+          "line": 1008,
+          "text": "  ) {"
+        },
+        {
+          "line": 1009,
+          "text": "    if (this._draftEpoch !== epoch) return;"
+        },
+        {
+          "line": 1010,
+          "text": "    if (this._attachments.some((attachment) => attachment.id === failed.id))"
+        },
+        {
+          "line": 1011,
+          "text": "      return;"
+        },
+        {
+          "line": 1012,
+          "text": "    this._attachmentSends.adoptFrom(source, failed);"
+        },
+        {
+          "line": 1013,
+          "text": "    this._attachments = [failed, ...this._attachments];"
+        },
+        {
+          "line": 1014,
+          "text": "    this._notifySubscribers();"
+        },
+        {
+          "line": 1015,
+          "text": "  }"
+        },
+        {
+          "line": 1017,
+          "text": "  private async _retrySubmittedRemoval("
+        },
+        {
+          "line": 1018,
+          "text": "    submitted: PendingAttachment,"
+        },
+        {
+          "line": 1019,
+          "text": "    owner: BaseComposerRuntimeCore,"
+        },
+        {
+          "line": 1020,
+          "text": "    epoch: number,"
+        },
+        {
+          "line": 1021,
+          "text": "  ) {"
+        },
+        {
+          "line": 1022,
+          "text": "    this._attachmentSends.beginRemoval(submitted);"
+        },
+        {
+          "line": 1023,
+          "text": "    await this._attachmentSends"
+        },
+        {
+          "line": 1024,
+          "text": "      .remove(submitted, this.getAttachmentAdapter(), (error, message) => {"
+        },
+        {
+          "line": 1025,
+          "text": "        console.error(\"[assistant-ui] Failed to remove sent attachment\", error);"
+        },
+        {
+          "line": 1026,
+          "text": "        const failed = this._attachmentSends.transfer(submitted, {"
+        },
+        {
+          "line": 1027,
+          "text": "          ...submitted,"
+        },
+        {
+          "line": 1028,
+          "text": "          status: { type: \"incomplete\", reason: \"error\", message },"
+        },
+        {
+          "line": 1029,
+          "text": "        });"
+        },
+        {
+          "line": 1030,
+          "text": "        owner._adoptCleanupFailure(this._attachmentSends, failed, epoch);"
+        },
+        {
+          "line": 1031,
+          "text": "      })"
+        },
+        {
+          "line": 1032,
+          "text": "      .catch(() => {});"
+        },
+        {
+          "line": 1074,
+          "text": ""
+        },
+        {
+          "line": 1075,
+          "text": "    return () => {"
+        },
+        {
+          "line": 1076,
+          "text": "      this._eventSubscribers.get(event)?.delete(wrapped);"
+        },
+        {
+          "line": 1077,
+          "text": "    };"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/core/src/store/primitive-predicates.ts",
+      "sha256": "4a8c993bad82ce37f7067fc25145f38ceb54884a7ac67cc0e9d5bbbaa19ff561",
+      "excerpts": [
+        {
+          "line": 8,
+          "text": " * Disabled predicates shared by every binding's primitive layer. Each binding"
+        },
+        {
+          "line": 9,
+          "text": " * consumes these as state selectors so the disabled semantics of a primitive"
+        },
+        {
+          "line": 10,
+          "text": " * cannot drift between frameworks."
+        },
+        {
+          "line": 11,
+          "text": " */"
+        },
+        {
+          "line": 16,
+          "text": "  (s.thread.isRunning &&"
+        },
+        {
+          "line": 17,
+          "text": "    !s.thread.capabilities.queue &&"
+        },
+        {
+          "line": 18,
+          "text": "    s.thread.voice === undefined);"
+        },
+        {
+          "line": 19,
+          "text": ""
+        },
+        {
+          "line": 26,
+          "text": "export const actionBarEditDisabled = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 27,
+          "text": "  s.composer.isEditing ||"
+        },
+        {
+          "line": 28,
+          "text": "  s.optional.message?.submission !== undefined ||"
+        },
+        {
+          "line": 29,
+          "text": "  s.optional.thread?.isDisabled === true ||"
+        },
+        {
+          "line": 30,
+          "text": "  s.optional.thread?.voice !== undefined ||"
+        },
+        {
+          "line": 31,
+          "text": "  s.optional.thread?.capabilities.edit === false;"
+        },
+        {
+          "line": 32,
+          "text": ""
+        },
+        {
+          "line": 33,
+          "text": "export const actionBarReloadDisabled = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 34,
+          "text": "  s.thread.isRunning ||"
+        },
+        {
+          "line": 35,
+          "text": "  s.thread.isDisabled ||"
+        },
+        {
+          "line": 37,
+          "text": "  s.message.role !== \"assistant\" ||"
+        },
+        {
+          "line": 38,
+          "text": "  !s.thread.capabilities.reload;"
+        },
+        {
+          "line": 39,
+          "text": ""
+        },
+        {
+          "line": 40,
+          "text": "const messageHasSettledText = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 41,
+          "text": "  (s.message.role !== \"assistant\" || s.message.status?.type !== \"running\") &&"
+        },
+        {
+          "line": 42,
+          "text": "  s.message.parts.some((part) => part.type === \"text\" && part.text.length > 0);"
+        },
+        {
+          "line": 43,
+          "text": ""
+        },
+        {
+          "line": 44,
+          "text": "export const actionBarCopyDisabled = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 45,
+          "text": "  !messageHasSettledText(s);"
+        },
+        {
+          "line": 46,
+          "text": ""
+        },
+        {
+          "line": 47,
+          "text": "export const actionBarSpeakDisabled = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 48,
+          "text": "  s.optional.thread?.capabilities.speech !== true || !messageHasSettledText(s);"
+        },
+        {
+          "line": 49,
+          "text": ""
+        },
+        {
+          "line": 50,
+          "text": "export const branchPickerPreviousDisabled = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 51,
+          "text": "  s.message.branchNumber <= 1 ||"
+        },
+        {
+          "line": 52,
+          "text": "  !s.thread.capabilities.switchToBranch ||"
+        },
+        {
+          "line": 53,
+          "text": "  (s.thread.isRunning && !s.thread.capabilities.switchBranchDuringRun);"
+        },
+        {
+          "line": 54,
+          "text": ""
+        },
+        {
+          "line": 55,
+          "text": "export const branchPickerNextDisabled = (s: AssistantState): boolean =>"
+        },
+        {
+          "line": 56,
+          "text": "  s.message.branchNumber >= s.message.branchCount ||"
+        },
+        {
+          "line": 57,
+          "text": "  !s.thread.capabilities.switchToBranch ||"
+        },
+        {
+          "line": 58,
+          "text": "  (s.thread.isRunning && !s.thread.capabilities.switchBranchDuringRun);"
+        },
+        {
+          "line": 59,
+          "text": ""
+        },
+        {
+          "line": 60,
+          "text": "export const suggestionSendMode = ("
+        },
+        {
+          "line": 66,
+          "text": "  if (!thread.isRunning) return \"now\";"
+        },
+        {
+          "line": 67,
+          "text": "  return thread.capabilities.queue ? \"queued\" : \"blocked\";"
+        },
+        {
+          "line": 68,
+          "text": "};"
+        },
+        {
+          "line": 69,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/core/src/runtimes/external-store/external-store-adapter.ts",
+      "sha256": "d375053fed1c70883d8bfd6e498b6e2ab0c2f2139f81d9c9abd5d1a872c8b527",
+      "excerpts": [
+        {
+          "line": 6,
+          "text": "import type { ThreadMessageLike } from \"../../runtime/utils/thread-message-like\";"
+        },
+        {
+          "line": 7,
+          "text": "import type { AttachmentAdapter } from \"../../adapters/attachment\";"
+        },
+        {
+          "line": 8,
+          "text": "import type {"
+        },
+        {
+          "line": 9,
+          "text": "  SpeechSynthesisAdapter,"
+        },
+        {
+          "line": 95,
+          "text": "  /**"
+        },
+        {
+          "line": 96,
+          "text": "   * Whether the entire thread is disabled. When `true`, the composer input"
+        },
+        {
+          "line": 97,
+          "text": "   * cannot be typed into, attachments cannot be added, sends (including direct"
+        },
+        {
+          "line": 98,
+          "text": "   * `composer.send()` calls) are blocked, and messages cannot be edited. For a"
+        },
+        {
+          "line": 99,
+          "text": "   * narrower gate that keeps the input usable but blocks only sending, use"
+        },
+        {
+          "line": 103,
+          "text": "  /**"
+        },
+        {
+          "line": 104,
+          "text": "   * Whether sending new messages is currently disabled. When `true`, the"
+        },
+        {
+          "line": 105,
+          "text": "   * thread composer's input remains usable but `send()` becomes a no-op"
+        },
+        {
+          "line": 106,
+          "text": "   * and the thread composer's `canSend` is `false`. Use this to gate"
+        },
+        {
+          "line": 194,
+          "text": "  onLoadExternalState?: ((state: any) => void) | undefined;"
+        },
+        {
+          "line": 195,
+          "text": "  onNew: (message: AppendMessage) => Promise<void>;"
+        },
+        {
+          "line": 196,
+          "text": "  /** Opt in to message queuing. Typically produced by `createMessageQueue`. */"
+        },
+        {
+          "line": 197,
+          "text": "  queue?: ExternalThreadQueueAdapter | undefined;"
+        },
+        {
+          "line": 198,
+          "text": "  onEdit?: ((message: AppendMessage) => Promise<void>) | undefined;"
+        },
+        {
+          "line": 199,
+          "text": "  /**"
+        },
+        {
+          "line": 200,
+          "text": "   * Removes a message from the host's store. The runtime drops the message"
+        },
+        {
+          "line": 210,
+          "text": "  onDelete?: ((messageId: string) => Promise<void> | void) | undefined;"
+        },
+        {
+          "line": 211,
+          "text": "  onReload?: // TODO: remove parentId in 0.12.0"
+        },
+        {
+          "line": 212,
+          "text": "    | ((parentId: string | null, config: StartRunConfig) => Promise<void>)"
+        },
+        {
+          "line": 213,
+          "text": "    | undefined;"
+        },
+        {
+          "line": 214,
+          "text": "  onResume?: ((config: ResumeRunConfig) => Promise<void>) | undefined;"
+        },
+        {
+          "line": 215,
+          "text": "  onCancel?: (() => Promise<void>) | undefined;"
+        },
+        {
+          "line": 216,
+          "text": "  /**"
+        },
+        {
+          "line": 217,
+          "text": "   * Re-fetches the thread's state from the backing store, in place; a"
+        },
+        {
+          "line": 218,
+          "text": "   * rejection reaches the `threads.reloadMainThread()` caller. Unrelated to"
+        },
+        {
+          "line": 219,
+          "text": "   * `onReload`, which re-generates an assistant message."
+        },
+        {
+          "line": 220,
+          "text": "   *"
+        },
+        {
+          "line": 221,
+          "text": "   * The caller does not stop a run in progress first, so an adapter that can"
+        },
+        {
+          "line": 246,
+          "text": "    | {"
+        },
+        {
+          "line": 247,
+          "text": "        attachments?: AttachmentAdapter | undefined;"
+        },
+        {
+          "line": 248,
+          "text": "        speech?: SpeechSynthesisAdapter | undefined;"
+        },
+        {
+          "line": 249,
+          "text": "        dictation?: DictationAdapter | undefined;"
+        },
+        {
+          "line": 258,
+          "text": "  /** @deprecated Experimental since 2024-09-01. Not scheduled for removal; the API may change in any release. */"
+        },
+        {
+          "line": 259,
+          "text": "  unstable_capabilities?:"
+        },
+        {
+          "line": 260,
+          "text": "    | {"
+        },
+        {
+          "line": 261,
+          "text": "        copy?: boolean | undefined;"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/core/src/runtimes/external-store/external-store-thread-runtime-core.ts",
+      "sha256": "e4418810eb37485fe6e45acef26ef76b24bd145fbfbf073491fb6ae9950a9846",
+      "excerpts": [
+        {
+          "line": 6,
+          "text": "} from \"../../types/message\";"
+        },
+        {
+          "line": 7,
+          "text": "import type { Attachment } from \"../../types/attachment\";"
+        },
+        {
+          "line": 8,
+          "text": "import type {"
+        },
+        {
+          "line": 9,
+          "text": "  AddToolResultOptions,"
+        },
+        {
+          "line": 108,
+          "text": "const observeAdapterCallback = ("
+        },
+        {
+          "line": 109,
+          "text": "  name: \"onAddToolResult\" | \"onCancel\","
+        },
+        {
+          "line": 110,
+          "text": "  result: Promise<void> | void,"
+        },
+        {
+          "line": 111,
+          "text": ") => {"
+        },
+        {
+          "line": 130,
+          "text": "{"
+        },
+        {
+          "line": 131,
+          "text": "  private _capabilities: RuntimeCapabilities = {"
+        },
+        {
+          "line": 132,
+          "text": "    switchToBranch: false,"
+        },
+        {
+          "line": 133,
+          "text": "    switchBranchDuringRun: false,"
+        },
+        {
+          "line": 142,
+          "text": "    voice: false,"
+        },
+        {
+          "line": 143,
+          "text": "    attachments: false,"
+        },
+        {
+          "line": 144,
+          "text": "    feedback: false,"
+        },
+        {
+          "line": 145,
+          "text": "    queue: false,"
+        },
+        {
+          "line": 148,
+          "text": ""
+        },
+        {
+          "line": 149,
+          "text": "  public get capabilities() {"
+        },
+        {
+          "line": 150,
+          "text": "    return this._capabilities;"
+        },
+        {
+          "line": 151,
+          "text": "  }"
+        },
+        {
+          "line": 152,
+          "text": ""
+        },
+        {
+          "line": 159,
+          "text": "  public get hasEarlier() {"
+        },
+        {
+          "line": 160,
+          "text": "    return ("
+        },
+        {
+          "line": 161,
+          "text": "      this._store.hasEarlier === true && this._store.onLoadEarlier !== undefined"
+        },
+        {
+          "line": 162,
+          "text": "    );"
+        },
+        {
+          "line": 209,
+          "text": "    if (!this._store.onRefetchThread) return undefined;"
+        },
+        {
+          "line": 210,
+          "text": "    return () => this._store.onRefetchThread!();"
+        },
+        {
+          "line": 211,
+          "text": "  }"
+        },
+        {
+          "line": 212,
+          "text": ""
+        },
+        {
+          "line": 297,
+          "text": "          text: string;"
+        },
+        {
+          "line": 298,
+          "text": "          attachments: readonly Attachment[];"
+        },
+        {
+          "line": 299,
+          "text": "          quote: QuoteInfo | undefined;"
+        },
+        {
+          "line": 300,
+          "text": "        };"
+        },
+        {
+          "line": 456,
+          "text": "  private _getEffectiveIsRunning(store: ExternalStoreAdapter<any>): boolean {"
+        },
+        {
+          "line": 457,
+          "text": "    return (store.isRunning ?? false) || this._hasExecutingTools(store);"
+        },
+        {
+          "line": 458,
+          "text": "  }"
+        },
+        {
+          "line": 459,
+          "text": ""
+        },
+        {
+          "line": 460,
+          "text": "  public override beginEdit(messageId: string) {"
+        },
+        {
+          "line": 461,
+          "text": "    if (!this._store.onEdit)"
+        },
+        {
+          "line": 462,
+          "text": "      throw new Error(\"Runtime does not support editing.\");"
+        },
+        {
+          "line": 463,
+          "text": ""
+        },
+        {
+          "line": 542,
+          "text": "      switchBranchDuringRun: false,"
+        },
+        {
+          "line": 543,
+          "text": "      edit: this._store.onEdit !== undefined,"
+        },
+        {
+          "line": 544,
+          "text": "      delete:"
+        },
+        {
+          "line": 545,
+          "text": "        this._store.onDelete !== undefined ||"
+        },
+        {
+          "line": 546,
+          "text": "        this._store.setMessages !== undefined,"
+        },
+        {
+          "line": 547,
+          "text": "      reload: this._store.onReload !== undefined,"
+        },
+        {
+          "line": 548,
+          "text": "      refetchThread: this._store.onRefetchThread !== undefined,"
+        },
+        {
+          "line": 549,
+          "text": "      cancel: this._store.onCancel !== undefined,"
+        },
+        {
+          "line": 550,
+          "text": "      speech: this._store.adapters?.speech !== undefined,"
+        },
+        {
+          "line": 551,
+          "text": "      dictation: this._store.adapters?.dictation !== undefined,"
+        },
+        {
+          "line": 552,
+          "text": "      voice: this._store.adapters?.voice !== undefined,"
+        },
+        {
+          "line": 553,
+          "text": "      unstable_copy: this._store.unstable_capabilities?.copy !== false,"
+        },
+        {
+          "line": 554,
+          "text": "      attachments: !!this._store.adapters?.attachments,"
+        },
+        {
+          "line": 555,
+          "text": "      feedback: !!this._store.adapters?.feedback,"
+        },
+        {
+          "line": 556,
+          "text": "      queue: this._store.queue !== undefined,"
+        },
+        {
+          "line": 562,
+          "text": "    };"
+        },
+        {
+          "line": 563,
+          "text": "    if (!shallowEqual(this._capabilities, newCapabilities)) {"
+        },
+        {
+          "line": 564,
+          "text": "      this._capabilities = newCapabilities;"
+        },
+        {
+          "line": 565,
+          "text": "    }"
+        },
+        {
+          "line": 566,
+          "text": ""
+        },
+        {
+          "line": 1171,
+          "text": "    // The optimistic insert lives inside the adapter's dispatch, so holding"
+        },
+        {
+          "line": 1172,
+          "text": "    // `onNew` on initialization would keep the message off screen for the"
+        },
+        {
+          "line": 1173,
+          "text": "    // whole roundtrip. Seams that need the remote identity await"
+        },
+        {
+          "line": 1174,
+          "text": "    // `threadListItem.initialize()` themselves, and a rejection surfaces"
+        },
+        {
+          "line": 1196,
+          "text": "    if (isEdit) {"
+        },
+        {
+          "line": 1197,
+          "text": "      if (!this._store.onEdit)"
+        },
+        {
+          "line": 1198,
+          "text": "        throw new Error(\"Runtime does not support editing messages.\");"
+        },
+        {
+          "line": 1199,
+          "text": "      const window = this._openDeleteWindow(message.parentId);"
+        },
+        {
+          "line": 1200,
+          "text": "      try {"
+        },
+        {
+          "line": 1201,
+          "text": "        await this._store.onEdit(message);"
+        },
+        {
+          "line": 1202,
+          "text": "      } catch (error) {"
+        },
+        {
+          "line": 1203,
+          "text": "        this._pendingDeleteWindows.delete(window);"
+        },
+        {
+          "line": 1206,
+          "text": "    } else {"
+        },
+        {
+          "line": 1207,
+          "text": "      await this._store.onNew(message);"
+        },
+        {
+          "line": 1208,
+          "text": "    }"
+        },
+        {
+          "line": 1209,
+          "text": "  }"
+        },
+        {
+          "line": 1387,
+          "text": "  public async startRun(config: StartRunConfig): Promise<void> {"
+        },
+        {
+          "line": 1388,
+          "text": "    if (!this._store.onReload)"
+        },
+        {
+          "line": 1389,
+          "text": "      throw new Error(\"Runtime does not support reloading messages.\");"
+        },
+        {
+          "line": 1390,
+          "text": "    if (this.voice)"
+        },
+        {
+          "line": 1412,
+          "text": "      }"
+        },
+        {
+          "line": 1413,
+          "text": "      await this._store.onReload(config.parentId, config);"
+        },
+        {
+          "line": 1414,
+          "text": "    } catch (error) {"
+        },
+        {
+          "line": 1415,
+          "text": "      this._pendingDeleteWindows.delete(window);"
+        },
+        {
+          "line": 1465,
+          "text": "   * Clears session-scoped tool-invocation state and parks queued work,"
+        },
+        {
+          "line": 1466,
+          "text": "   * without run-cancel semantics (`onCancel`, composer draft restoration)."
+        },
+        {
+          "line": 1467,
+          "text": "   *"
+        },
+        {
+          "line": 1468,
+          "text": "   * @deprecated Experimental since 2026-08-14. Not scheduled for removal; the API may change in any release."
+        },
+        {
+          "line": 1478,
+          "text": "  public cancelRun(): void {"
+        },
+        {
+          "line": 1479,
+          "text": "    if (!this._store.onCancel)"
+        },
+        {
+          "line": 1480,
+          "text": "      throw new Error(\"Runtime does not support cancelling runs.\");"
+        },
+        {
+          "line": 1481,
+          "text": ""
+        },
+        {
+          "line": 1515,
+          "text": ""
+        },
+        {
+          "line": 1516,
+          "text": "    observeAdapterCallback(\"onCancel\", this._store.onCancel());"
+        },
+        {
+          "line": 1517,
+          "text": ""
+        },
+        {
+          "line": 1518,
+          "text": "    this.dropEmptyOptimisticHead();"
+        },
+        {
+          "line": 1540,
+          "text": "        text: getThreadMessageText(trailingUserLeaf),"
+        },
+        {
+          "line": 1541,
+          "text": "        attachments: trailingUserLeaf.attachments,"
+        },
+        {
+          "line": 1542,
+          "text": "        quote: trailingUserLeaf.metadata.custom.quote as QuoteInfo | undefined,"
+        },
+        {
+          "line": 1543,
+          "text": "      };"
+        }
+      ]
+    },
+    {
+      "path": "/private/tmp/mimir-chat-official-v2/official-deps/node_modules/@assistant-ui/react/src/primitives/composer/ComposerInput.tsx",
+      "sha256": "65226050631f0478d653f344c38b4a337225aae1f7db8732d02418c0660a8d1f",
+      "excerpts": [
+        {
+          "line": 239,
+          "text": "      if (composer.getState().canCancel) {"
+        },
+        {
+          "line": 240,
+          "text": "        cancel(textareaRef.current);"
+        },
+        {
+          "line": 241,
+          "text": "        e.preventDefault();"
+        },
+        {
+          "line": 242,
+          "text": "      }"
+        },
+        {
+          "line": 243,
+          "text": "    });"
+        },
+        {
+          "line": 244,
+          "text": ""
+        },
+        {
+          "line": 245,
+          "text": "    const handleKeyPress = (e: KeyboardEvent) => {"
+        },
+        {
+          "line": 246,
+          "text": "      if (isDisabled) return;"
+        },
+        {
+          "line": 247,
+          "text": ""
+        },
+        {
+          "line": 248,
+          "text": "      // ignore IME composition events"
+        },
+        {
+          "line": 249,
+          "text": "      if (isCompositionKey(e.nativeEvent)) return;"
+        },
+        {
+          "line": 250,
+          "text": ""
+        },
+        {
+          "line": 251,
+          "text": "      // Let registered plugins (mention, slash command, etc.) handle keyboard events first"
+        },
+        {
+          "line": 252,
+          "text": "      if (pluginRegistry) {"
+        },
+        {
+          "line": 253,
+          "text": "        for (const plugin of pluginRegistry.getPlugins()) {"
+        },
+        {
+          "line": 254,
+          "text": "          if (plugin.handleKeyDown(e)) return;"
+        },
+        {
+          "line": 255,
+          "text": "        }"
+        },
+        {
+          "line": 256,
+          "text": "      }"
+        },
+        {
+          "line": 257,
+          "text": ""
+        },
+        {
+          "line": 258,
+          "text": "      if (e.key === \"Enter\") {"
+        },
+        {
+          "line": 259,
+          "text": "        const threadState = aui.thread.getState();"
+        },
+        {
+          "line": 260,
+          "text": "        const hasQueue = threadState.capabilities.queue;"
+        },
+        {
+          "line": 261,
+          "text": ""
+        },
+        {
+          "line": 262,
+          "text": "        // Steer hotkey: Cmd/Ctrl+Shift+Enter (respects submitMode=\"none\" and canSend)"
+        },
+        {
+          "line": 263,
+          "text": "        if ("
+        },
+        {
+          "line": 264,
+          "text": "          e.shiftKey &&"
+        },
+        {
+          "line": 265,
+          "text": "          (e.ctrlKey || e.metaKey) &&"
+        },
+        {
+          "line": 266,
+          "text": "          hasQueue &&"
+        },
+        {
+          "line": 267,
+          "text": "          declaredSubmitMode !== \"none\" &&"
+        },
+        {
+          "line": 268,
+          "text": "          aui.composer.getState().canSend"
+        },
+        {
+          "line": 269,
+          "text": "        ) {"
+        },
+        {
+          "line": 270,
+          "text": "          e.preventDefault();"
+        },
+        {
+          "line": 271,
+          "text": "          aui.composer.send({ steer: true });"
+        },
+        {
+          "line": 272,
+          "text": "          return;"
+        },
+        {
+          "line": 273,
+          "text": "        }"
+        },
+        {
+          "line": 274,
+          "text": ""
+        },
+        {
+          "line": 275,
+          "text": "        // Regular newline: Shift+Enter"
+        },
+        {
+          "line": 276,
+          "text": "        if (e.shiftKey) return;"
+        },
+        {
+          "line": 277,
+          "text": ""
+        },
+        {
+          "line": 278,
+          "text": "        // Block submission when running unless queue is supported; a voice"
+        },
+        {
+          "line": 279,
+          "text": "        // session leaves the decision to canSend"
+        },
+        {
+          "line": 280,
+          "text": "        if ("
+        },
+        {
+          "line": 281,
+          "text": "          threadState.isRunning &&"
+        },
+        {
+          "line": 282,
+          "text": "          !hasQueue &&"
+        },
+        {
+          "line": 283,
+          "text": "          threadState.voice === undefined"
+        },
+        {
+          "line": 284,
+          "text": "        )"
+        },
+        {
+          "line": 285,
+          "text": "          return;"
+        },
+        {
+          "line": 286,
+          "text": ""
+        },
+        {
+          "line": 287,
+          "text": "        let shouldSubmit = false;"
+        },
+        {
+          "line": 288,
+          "text": "        if (effectiveSubmitMode === \"ctrlEnter\") {"
+        },
+        {
+          "line": 289,
+          "text": "          shouldSubmit = e.ctrlKey || e.metaKey;"
+        },
+        {
+          "line": 290,
+          "text": "        } else if (effectiveSubmitMode === \"enter\") {"
+        },
+        {
+          "line": 291,
+          "text": "          shouldSubmit = true;"
+        },
+        {
+          "line": 292,
+          "text": "        }"
+        },
+        {
+          "line": 293,
+          "text": ""
+        },
+        {
+          "line": 294,
+          "text": "        if (shouldSubmit) {"
+        },
+        {
+          "line": 295,
+          "text": "          e.preventDefault();"
+        },
+        {
+          "line": 296,
+          "text": "          textareaRef.current?.closest(\"form\")?.requestSubmit();"
+        },
+        {
+          "line": 297,
+          "text": "        }"
+        },
+        {
+          "line": 298,
+          "text": "      }"
+        },
+        {
+          "line": 299,
+          "text": "    };"
+        }
+      ]
+    }
+  ]
+}

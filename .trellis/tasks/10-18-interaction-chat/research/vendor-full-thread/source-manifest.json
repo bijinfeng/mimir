@@ -1,0 +1,796 @@
+{
+  "repository": "https://github.com/assistant-ui/assistant-ui",
+  "commit": "a587b2838f2d644549d216098d54cfbeedfac522",
+  "retrieved_date": "2026-10-19",
+  "license": "MIT, see LICENSE",
+  "retrieval": "GitHub Contents API ref fixed; raw base64 decoded bytes; prior identical source reused",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "eafb05991a572efa34097474b31fef45b14a8879ed1d1a8fd77de62e6fa7d275",
+      "bytes": 1073,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/LICENSE",
+      "imports": []
+    },
+    {
+      "path": "apps/registry/app/globals.css",
+      "sha256": "95859cc13d07f9c1b1306aa0e6ebfccbc9ff480ce596b5d97e9fb8e0d1db380a",
+      "bytes": 5072,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/apps/registry/app/globals.css",
+      "imports": [
+        {
+          "import": "tailwindcss",
+          "resolved": null
+        },
+        {
+          "import": "tw-animate-css",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "apps/registry/package.json",
+      "sha256": "d84ec8702d336549104f93ca728c90cfe7e8b132b10352b8ef898e0bda228d04",
+      "bytes": 1616,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/apps/registry/package.json",
+      "imports": []
+    },
+    {
+      "path": "apps/registry/src/registry.ts",
+      "sha256": "86409f797d56d9fc05b3995d85d3025dd06e7d88c18e754ce3c2160dc16252c9",
+      "bytes": 91337,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/apps/registry/src/registry.ts",
+      "imports": [
+        {
+          "import": "./schema",
+          "resolved": "apps/registry/src/schema.ts"
+        },
+        {
+          "import": "@assistant-ui/ui/lib/generative-ui-vocabulary-css.ts",
+          "resolved": null
+        },
+        {
+          "import": "tw-shimmer",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "apps/registry/src/schema.ts",
+      "sha256": "41ef797bb61c2d18e712910de6ee36c2b434982e9685841b0f457f7d1a6fafd2",
+      "bytes": 1856,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/apps/registry/src/schema.ts",
+      "imports": [
+        {
+          "import": "zod",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/react-markdown/package.json",
+      "sha256": "f0d59f9de4fe60efe5f80dc6425bd4feeb083102044a432976cfa6c5cea5e048",
+      "bytes": 2567,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/react-markdown/package.json",
+      "imports": []
+    },
+    {
+      "path": "packages/react/package.json",
+      "sha256": "19d03f5c90cd01fc84253d313672240b4be705eb8c7b440f6ba74e6e54a6b72e",
+      "bytes": 2958,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/react/package.json",
+      "imports": []
+    },
+    {
+      "path": "packages/tw-shimmer/package.json",
+      "sha256": "0c832447c1505381f22b369c5bf06739af6459ac0826ad4aab08f028d0c57288",
+      "bytes": 977,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/tw-shimmer/package.json",
+      "imports": []
+    },
+    {
+      "path": "packages/tw-shimmer/src/index.css",
+      "sha256": "827e798063a2c03906c83b469ffbb0d5ffc880055176fbd12cdb8f11c24a24c9",
+      "bytes": 9150,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/tw-shimmer/src/index.css",
+      "imports": []
+    },
+    {
+      "path": "packages/ui/package.json",
+      "sha256": "9d7a16a368bcc51c01d2b61b6bf59a8628d11f3262a2e640a7b0a19ada9f0241",
+      "bytes": 3366,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/package.json",
+      "imports": []
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/attachment.aui.tsx",
+      "sha256": "a2ed2525844b0f2f1a07416ac2a2f63de1c7ee23066a06d4af333d391ed5a897",
+      "bytes": 9416,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/attachment.aui.tsx",
+      "imports": [
+        {
+          "import": "@/components/assistant-ui/elements/tooltip-icon-button",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/tooltip-icon-button.tsx"
+        },
+        {
+          "import": "@/components/ui/avatar",
+          "resolved": "packages/ui/src/components/react/ui/base/avatar.tsx"
+        },
+        {
+          "import": "@/components/ui/dialog",
+          "resolved": "packages/ui/src/components/react/ui/base/dialog.tsx"
+        },
+        {
+          "import": "@/components/ui/tooltip",
+          "resolved": "packages/ui/src/components/react/ui/base/tooltip.tsx"
+        },
+        {
+          "import": "@/hooks/use-attachment-src",
+          "resolved": "packages/ui/src/hooks/use-attachment-src.ts"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+      "sha256": "6d3e6d9a776ac9db13448606627c2ef51e5605cacb2f805379ada9b58abe4565",
+      "bytes": 691,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+      "imports": [
+        {
+          "import": "@base-ui/react/collapsible",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/file.tsx",
+      "sha256": "af6c5c38b0409f168e1bcebacffa9efaf7ff17ecc3cc0b5fab8d4770df0454a0",
+      "bytes": 10446,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/file.tsx",
+      "imports": [
+        {
+          "import": "./media-player",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/media-player.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "class-variance-authority",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/follow-up-suggestions.aui.tsx",
+      "sha256": "f0db1e9cfc5f648adeb57c8ac61fbeca4ebbb4d55267a9c107709af01b73abb4",
+      "bytes": 3163,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/follow-up-suggestions.aui.tsx",
+      "imports": [
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/image.tsx",
+      "sha256": "93eaf85070e3a0199ae345b63b80d1ddc13ab37e11a0cda4795e54847a82ebea",
+      "bytes": 18405,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/image.tsx",
+      "imports": [
+        {
+          "import": "../utils/href",
+          "resolved": "packages/ui/src/components/react/assistant-ui/utils/href.ts"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "class-variance-authority",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        },
+        {
+          "import": "react-dom",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/markdown-text.tsx",
+      "sha256": "7d20bd8fe709a1a6aeee24ba82531309e374740ba6181e092592275ffd6ff8ac",
+      "bytes": 7554,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/markdown-text.tsx",
+      "imports": [
+        {
+          "import": "@/components/assistant-ui/elements/tooltip-icon-button",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/tooltip-icon-button.tsx"
+        },
+        {
+          "import": "@/hooks/use-copy-to-clipboard",
+          "resolved": "packages/ui/src/hooks/use-copy-to-clipboard.ts"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "@assistant-ui/react-markdown",
+          "resolved": null
+        },
+        {
+          "import": "@assistant-ui/react-markdown/styles/dot.css",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        },
+        {
+          "import": "remark-gfm",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/media-player.tsx",
+      "sha256": "c1d92c3b7eeb21adac5052ff12ae1ac53b9e036340d58a4a80f84db1414ca538",
+      "bytes": 8161,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/media-player.tsx",
+      "imports": [
+        {
+          "import": "./surfaces",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/surfaces.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/reasoning.aui.tsx",
+      "sha256": "3ae8bcf0d84fcb9ac37a40c2046abbf46d7b8f3967b482eec84f0a743aefce65",
+      "bytes": 3550,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/reasoning.aui.tsx",
+      "imports": [
+        {
+          "import": "./reasoning",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/markdown-text",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/markdown-text.tsx"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+      "sha256": "02c42a1cad5fd56f4479fe65c779e9f9934c03a6e935ac92ebf98cbb46ef3cc7",
+      "bytes": 10311,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+      "imports": [
+        {
+          "import": "../utils/useIsomorphicLayoutEffect",
+          "resolved": "packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts"
+        },
+        {
+          "import": "./collapsible-root",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "class-variance-authority",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/surfaces.tsx",
+      "sha256": "5d81fbb669e67ae20026cd30ed57efc51a5e3ee0f4f5d265e1723de75359b8fa",
+      "bytes": 4462,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/surfaces.tsx",
+      "imports": [
+        {
+          "import": "../utils/useIsomorphicLayoutEffect",
+          "resolved": "packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/thread.aui.tsx",
+      "sha256": "a5c2a4655a90a4e24df4e1223bbe4eb4f4f1b58f95fe868ce7b1fc9894f60dc7",
+      "bytes": 33258,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/thread.aui.tsx",
+      "imports": [
+        {
+          "import": "@/components/assistant-ui/elements/attachment.aui",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/attachment.aui.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/file",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/file.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/follow-up-suggestions.aui",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/follow-up-suggestions.aui.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/image",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/image.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/markdown-text",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/markdown-text.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/reasoning.aui",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/reasoning.aui.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/tool-fallback.aui",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/tool-group.aui",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/tool-group.aui.tsx"
+        },
+        {
+          "import": "@/components/assistant-ui/elements/tooltip-icon-button",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/tooltip-icon-button.tsx"
+        },
+        {
+          "import": "@/components/ui/button",
+          "resolved": "packages/ui/src/components/react/ui/base/button.tsx"
+        },
+        {
+          "import": "@/components/ui/skeleton",
+          "resolved": "packages/ui/src/components/react/ui/base/skeleton.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+      "sha256": "31720ad79fe332a5999cc1873108da740e63c05f4b8f322bde75f8d495cbf853",
+      "bytes": 39400,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+      "imports": [
+        {
+          "import": "./collapsible-root",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx"
+        },
+        {
+          "import": "@/components/ui/button",
+          "resolved": "packages/ui/src/components/react/ui/base/button.tsx"
+        },
+        {
+          "import": "@/components/ui/textarea",
+          "resolved": "packages/ui/src/components/react/ui/base/textarea.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/tool-group.aui.tsx",
+      "sha256": "757caf28ee232d4f500c8af7d6837fe7d6d2b144774a6a0bcdaff8c0c517bd9e",
+      "bytes": 7398,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/tool-group.aui.tsx",
+      "imports": [
+        {
+          "import": "./collapsible-root",
+          "resolved": "packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "class-variance-authority",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/elements/tooltip-icon-button.tsx",
+      "sha256": "98580531a6f5a213cccd6964c0c75fd097d97b77bcca05f904df562512273363",
+      "bytes": 1250,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/tooltip-icon-button.tsx",
+      "imports": [
+        {
+          "import": "@/components/ui/button",
+          "resolved": "packages/ui/src/components/react/ui/base/button.tsx"
+        },
+        {
+          "import": "@/components/ui/tooltip",
+          "resolved": "packages/ui/src/components/react/ui/base/tooltip.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/utils/href.ts",
+      "sha256": "3a8038d038b1918ae3f58a61dcd30933633131dda341eb5bea5b6a650b31a912",
+      "bytes": 1398,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/utils/href.ts",
+      "imports": []
+    },
+    {
+      "path": "packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+      "sha256": "8db117d730e640655e5099e086af4e00d545c283839d9ef5885ca93419d51893",
+      "bytes": 250,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+      "imports": [
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/ui/base/avatar.tsx",
+      "sha256": "56acc1c16834672164b7d1d920ef939bc4d5330640059bf0ec0f81cbdc7c168e",
+      "bytes": 3056,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/avatar.tsx",
+      "imports": [
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@base-ui/react/avatar",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/ui/base/button.tsx",
+      "sha256": "de5e06ef482e702cc56abe8fbe0b1dfcfee9c30db4eafad24a38b5360188c42f",
+      "bytes": 3225,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/button.tsx",
+      "imports": [
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@base-ui/react/button",
+          "resolved": null
+        },
+        {
+          "import": "class-variance-authority",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/ui/base/dialog.tsx",
+      "sha256": "662c25e6d4873ba41c12db62a378a1cb873d6c3846e855fc85039793823cd903",
+      "bytes": 4040,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/dialog.tsx",
+      "imports": [
+        {
+          "import": "@/components/ui/button",
+          "resolved": "packages/ui/src/components/react/ui/base/button.tsx"
+        },
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@base-ui/react/dialog",
+          "resolved": null
+        },
+        {
+          "import": "lucide-react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/ui/base/skeleton.tsx",
+      "sha256": "a61009cda0a56be88eb94bfecad0fdeb7a895611e87049ee1f2617fc25cd6620",
+      "bytes": 278,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/skeleton.tsx",
+      "imports": [
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/ui/base/textarea.tsx",
+      "sha256": "abab274474743d7b6d30e67848e4341c2fbd491a8a300010e5da1176c7f9624f",
+      "bytes": 891,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/textarea.tsx",
+      "imports": [
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/components/react/ui/base/tooltip.tsx",
+      "sha256": "43cf8405ec5856165c2e7543d9e07c7bdf186c0b9f39270141a42de3dc11d0cc",
+      "bytes": 2953,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/tooltip.tsx",
+      "imports": [
+        {
+          "import": "@/lib/utils",
+          "resolved": "packages/ui/src/lib/utils.ts"
+        },
+        {
+          "import": "@base-ui/react/tooltip",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/hooks/use-attachment-src.ts",
+      "sha256": "dfb621f1a18f4013994aa29815beddb436020105164526ab7c86b0b0a32040a1",
+      "bytes": 1355,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/hooks/use-attachment-src.ts",
+      "imports": [
+        {
+          "import": "@assistant-ui/react",
+          "resolved": null
+        },
+        {
+          "import": "react",
+          "resolved": null
+        },
+        {
+          "import": "zustand/react/shallow",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/hooks/use-copy-to-clipboard.ts",
+      "sha256": "1f3b8a1bab79cef961f62eb25d6b58a0d16c957d63ba1faf086ad09c99712c0a",
+      "bytes": 1407,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/hooks/use-copy-to-clipboard.ts",
+      "imports": [
+        {
+          "import": "react",
+          "resolved": null
+        }
+      ]
+    },
+    {
+      "path": "packages/ui/src/lib/utils.ts",
+      "sha256": "55bbdc94cef3e0c8a8bba386e94f97228dd2c967fe61466fc565378890550c08",
+      "bytes": 25,
+      "source_url": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/lib/utils.ts",
+      "imports": [
+        {
+          "import": "cn",
+          "resolved": null
+        }
+      ]
+    }
+  ],
+  "unresolved": [],
+  "external_imports": [
+    "@assistant-ui/react",
+    "@assistant-ui/react-markdown",
+    "@assistant-ui/react-markdown/styles/dot.css",
+    "@assistant-ui/ui/lib/generative-ui-vocabulary-css.ts",
+    "@base-ui/react/avatar",
+    "@base-ui/react/button",
+    "@base-ui/react/collapsible",
+    "@base-ui/react/dialog",
+    "@base-ui/react/tooltip",
+    "class-variance-authority",
+    "cn",
+    "lucide-react",
+    "react",
+    "react-dom",
+    "remark-gfm",
+    "tailwindcss",
+    "tw-animate-css",
+    "tw-shimmer",
+    "zod",
+    "zustand/react/shallow"
+  ],
+  "runtime_source_files": [
+    "packages/ui/src/components/react/assistant-ui/elements/attachment.aui.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/file.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/follow-up-suggestions.aui.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/image.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/markdown-text.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/media-player.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/reasoning.aui.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/surfaces.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/thread.aui.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/tool-group.aui.tsx",
+    "packages/ui/src/components/react/assistant-ui/elements/tooltip-icon-button.tsx",
+    "packages/ui/src/components/react/assistant-ui/utils/href.ts",
+    "packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+    "packages/ui/src/components/react/ui/base/avatar.tsx",
+    "packages/ui/src/components/react/ui/base/button.tsx",
+    "packages/ui/src/components/react/ui/base/dialog.tsx",
+    "packages/ui/src/components/react/ui/base/skeleton.tsx",
+    "packages/ui/src/components/react/ui/base/textarea.tsx",
+    "packages/ui/src/components/react/ui/base/tooltip.tsx",
+    "packages/ui/src/hooks/use-attachment-src.ts",
+    "packages/ui/src/hooks/use-copy-to-clipboard.ts",
+    "packages/ui/src/lib/utils.ts"
+  ],
+  "runtime_external_imports": [
+    "@assistant-ui/react",
+    "@assistant-ui/react-markdown",
+    "@assistant-ui/react-markdown/styles/dot.css",
+    "@base-ui/react/avatar",
+    "@base-ui/react/button",
+    "@base-ui/react/collapsible",
+    "@base-ui/react/dialog",
+    "@base-ui/react/tooltip",
+    "class-variance-authority",
+    "cn",
+    "lucide-react",
+    "react",
+    "react-dom",
+    "remark-gfm",
+    "zustand/react/shallow"
+  ]
+}
