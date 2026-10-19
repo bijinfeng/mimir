@@ -1074,3 +1074,53 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 用户审阅v7后实施server/provider/renderer/chat/shared与附件联动迁移，重核latest并完成真实服务和全仓检查。
+
+
+## Session 38: 完成 v7 TanStack 对话与临时附件实施验收
+<!-- trellis-session: v=2 fp=80dd14f61b69c880 -->
+
+**Date**: 2026-10-19
+**Task**: 完成 v7 TanStack 对话与临时附件实施验收
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成批准的 v7 对话迁移、真实临时附件及全仓工程修复；全仓检查、PG 子集、构建与真实浏览器抽验通过，归档并保留全部 HTML 预览。
+
+### Main Changes
+
+### Delivered
+
+- Implemented approved v7 TanStack AI React + Mimir chat, provider-grouped model selection and actual reasoning levels, immutable FIFO/send/stop recovery, canonical answer saving and guarded Agent continuation.
+- Added protected temporary attachments with real worker parsing, persistence, provenance, leases and GC, separate from knowledge-base import. Exact ai/client/react/openai SDKs: 0.69.0 / 0.39.3 / 0.30.4 / 0.30.0.
+- Fixed authorized Office archive/save asynchronous checks and miniapp/workspace engineering blockers. Source was independently reviewed; no product changes remain uncommitted.
+
+### Verification
+
+- Final full pnpm check exit 0: Server 1365, Office 2709, Renderer 581, Chat 84; local 10, fnOS 4, SQLite backup 2, Desktop 50, Provider 31, Storage 13 (2 skipped), Miniapp 8 and root scripts 6 passed. Fifteen workspace typechecks, lint/style/format passed, with permitted warnings retained.
+- Isolated PostgreSQL subset: 6 files / 84 passed. Web/Server/Desktop production builds and frozen offline install passed.
+- Real Web main/sidebar QA includes actual attachments/image preview, code/reasoning/copy, history, visible branch saving, citations, normal FIFO continuation and stopped queue draft retention, menu/preview focus, light/dark and narrow layouts.
+- No paid-provider or native Electron/IME/all-platform screen-reader certification. Source 71 groups / 379 states + 24 attachment mappings are not 403 GUI passes.
+
+### Local archive and preview
+
+- Archived only 10-19-chat-attachments and 10-18-interaction-chat under .trellis/tasks/archive/2026-10/; all other tasks preserved.
+- Acceptance: .trellis/tasks/archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md; machine quality gate, independent review, parity and actual screenshots alongside it.
+- Restarted only known task-owned Python 5189 preview against archived prototype. Root review.html (v1), v2-v7 review.html all return HTTP 200 and identical local bytes; three v7 frozen hashes unchanged, including separate interactions.html.
+- Existing URLs remain http://127.0.0.1:5189/v7/review.html and http://127.0.0.1:5189/v7/interactions.html .
+- Post-archive lint, format and git diff checks passed. No push.
+
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `25f5ca6` | fix(office): preserve archive entries and await save completion |
+| `57c24e3` | fix(quality): restore workspace checks and miniapp artifact validation |
+| `c497002` | feat(chat): migrate to TanStack and add temporary attachments |
+| `87cfa96` | docs(chat): record verified v7 implementation commits |
+
+### Status
+
+[OK] **Completed**
