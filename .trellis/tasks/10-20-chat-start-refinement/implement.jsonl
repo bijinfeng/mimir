@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "项目边界"}
+{"file": ".trellis/spec/project/design.md", "reason": "沿用视觉及更新主空态合同"}
+{"file": ".trellis/spec/project/quality.md", "reason": "质量门"}
+{"file": ".trellis/spec/chat/frontend/conventions.md", "reason": "官方UI/发送/主题归属"}
+{"file": ".trellis/spec/chat/frontend/pitfalls.md", "reason": "避免重挂载和样式丢失"}

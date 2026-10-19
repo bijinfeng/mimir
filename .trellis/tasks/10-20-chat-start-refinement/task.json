@@ -1,0 +1,32 @@
+{
+  "id": "chat-start-refinement",
+  "name": "chat-start-refinement",
+  "title": "新对话起始页二次精修",
+  "description": "响应用户最新截图，精修主对话起始页的标题、说明与输入区关系，保持运行和工具交互，保存真实前后HTML对比。",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": "chat",
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-20",
+  "completedAt": null,
+  "branch": "codex/all-pages-polish",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-18-modular-interaction-polish",
+  "relatedFiles": [
+    "packages/chat/src/EmptyStage.tsx",
+    "packages/chat/src/ChatPanel.style.ts",
+    "packages/chat/src/ChatPanel.tsx",
+    ".trellis/spec/project/design.md",
+    "docs/visual-comparisons/2026-10-20-chat-start"
+  ],
+  "notes": "已完成真实前后6组截图、菜单/短窗口/换行浏览器验证及独立review；pnpm check exit0，Office2711/Renderer591/Chat88通过。用户可见对比存档docs/visual-comparisons/2026-10-20-chat-start。HTML模块11仍在planning，未计作完成。",
+  "meta": {}
+}

@@ -1,0 +1,222 @@
+{
+  "before": [
+    {
+      "id": "light-1440",
+      "form": {
+        "bottom": 596.921875,
+        "height": 115,
+        "left": 360,
+        "right": 1080,
+        "top": 481.921875,
+        "width": 720,
+        "x": 360,
+        "y": 481.921875
+      },
+      "heading": {
+        "bottom": 422.125,
+        "height": 39.1875,
+        "left": 360,
+        "right": 1080,
+        "top": 382.9375,
+        "width": 720,
+        "x": 360,
+        "y": 382.9375
+      },
+      "height": 900,
+      "scrollWidth": 1440,
+      "width": 1440
+    },
+    {
+      "id": "light-1100",
+      "form": {
+        "bottom": 526.921875,
+        "height": 115,
+        "left": 190,
+        "right": 910,
+        "top": 411.921875,
+        "width": 720,
+        "x": 190,
+        "y": 411.921875
+      },
+      "heading": {
+        "bottom": 352.125,
+        "height": 39.1875,
+        "left": 190,
+        "right": 910,
+        "top": 312.9375,
+        "width": 720,
+        "x": 190,
+        "y": 312.9375
+      },
+      "height": 760,
+      "scrollWidth": 1100,
+      "width": 1100
+    },
+    {
+      "id": "light-880",
+      "form": {
+        "bottom": 506.921875,
+        "height": 115,
+        "left": 80,
+        "right": 800,
+        "top": 391.921875,
+        "width": 720,
+        "x": 80,
+        "y": 391.921875
+      },
+      "heading": {
+        "bottom": 332.125,
+        "height": 39.1875,
+        "left": 80,
+        "right": 800,
+        "top": 292.9375,
+        "width": 720,
+        "x": 80,
+        "y": 292.9375
+      },
+      "height": 720,
+      "scrollWidth": 880,
+      "width": 880
+    },
+    {
+      "id": "light-600",
+      "form": {
+        "bottom": 500.625,
+        "height": 115,
+        "left": 24,
+        "right": 576,
+        "top": 385.625,
+        "width": 552,
+        "x": 24,
+        "y": 385.625
+      },
+      "heading": {
+        "bottom": 325.828125,
+        "height": 26.59375,
+        "left": 24,
+        "right": 576,
+        "top": 299.234375,
+        "width": 552,
+        "x": 24,
+        "y": 299.234375
+      },
+      "height": 720,
+      "scrollWidth": 600,
+      "width": 600
+    }
+  ],
+  "after": [
+    {
+      "id": "light-1440",
+      "form": {
+        "bottom": 560.71875,
+        "height": 115,
+        "left": 360,
+        "right": 1080,
+        "top": 445.71875,
+        "width": 720,
+        "x": 360,
+        "y": 445.71875
+      },
+      "gap": 24,
+      "heading": {
+        "bottom": 389.921875,
+        "height": 39.1875,
+        "left": 360,
+        "right": 1080,
+        "top": 350.734375,
+        "width": 720,
+        "x": 360,
+        "y": 350.734375
+      },
+      "height": 900,
+      "scrollWidth": 1440,
+      "titleSize": "28px",
+      "width": 1440
+    },
+    {
+      "id": "light-1100",
+      "form": {
+        "bottom": 490.71875,
+        "height": 115,
+        "left": 190,
+        "right": 910,
+        "top": 375.71875,
+        "width": 720,
+        "x": 190,
+        "y": 375.71875
+      },
+      "gap": 24,
+      "heading": {
+        "bottom": 319.921875,
+        "height": 39.1875,
+        "left": 190,
+        "right": 910,
+        "top": 280.734375,
+        "width": 720,
+        "x": 190,
+        "y": 280.734375
+      },
+      "height": 760,
+      "scrollWidth": 1100,
+      "titleSize": "28px",
+      "width": 1100
+    },
+    {
+      "id": "light-880",
+      "form": {
+        "bottom": 470.71875,
+        "height": 115,
+        "left": 80,
+        "right": 800,
+        "top": 355.71875,
+        "width": 720,
+        "x": 80,
+        "y": 355.71875
+      },
+      "gap": 24,
+      "heading": {
+        "bottom": 299.921875,
+        "height": 39.1875,
+        "left": 80,
+        "right": 800,
+        "top": 260.734375,
+        "width": 720,
+        "x": 80,
+        "y": 260.734375
+      },
+      "height": 720,
+      "scrollWidth": 880,
+      "titleSize": "28px",
+      "width": 880
+    },
+    {
+      "id": "light-600",
+      "form": {
+        "bottom": 464.421875,
+        "height": 115,
+        "left": 24,
+        "right": 576,
+        "top": 349.421875,
+        "width": 552,
+        "x": 24,
+        "y": 349.421875
+      },
+      "gap": 24,
+      "heading": {
+        "bottom": 293.625,
+        "height": 26.59375,
+        "left": 24,
+        "right": 576,
+        "top": 267.03125,
+        "width": 552,
+        "x": 24,
+        "y": 267.03125
+      },
+      "height": 720,
+      "scrollWidth": 600,
+      "titleSize": "19px",
+      "width": 600
+    }
+  ]
+}

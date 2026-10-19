@@ -1,0 +1,112 @@
+{
+  "date": "2026-10-20",
+  "baselineCommit": "0c44cde",
+  "productURL": "http://127.0.0.1:5191/chat?scope=all",
+  "fixtureSource": ".trellis/tasks/archive/2026-10/10-19-chat-rendering-polish/gallery",
+  "fixtureNotes": "复用已存档真实ChatPanel场景；相同fixture分别编译冻结HEAD源码和本轮最终源码。真实TanStack官方Headless UI与宿主主题；固定演示资料和内存IO，不连接模型。",
+  "captureNotes": "浏览器真实JPEG，未模拟旧样式、未缩放截图。每对主题/尺寸/内容一致；真实产品侧栏相对时间为动态内容。after中的短窗/菜单图为补充验收，没有对应before。",
+  "cases": [
+    {
+      "id": "product-dark",
+      "label": "真实页面 · 深色 · 1093 × 873",
+      "files": {
+        "before": "before/product-dark.jpg",
+        "after": "after/product-dark.jpg"
+      },
+      "size": [1093, 873],
+      "sha256": {
+        "before": "722f58b1d095f7fabede707d3031aa1ea7572c3b416bc6ed4112f0cbefb41136",
+        "after": "2916b45d5a07fbcb54fd48be86d5060704da18ed861c455adb5bc0a52cd66b4c"
+      }
+    },
+    {
+      "id": "light-1440",
+      "label": "真实组件 · 浅色 · 1440 × 900",
+      "files": {
+        "before": "before/light-1440.jpg",
+        "after": "after/light-1440.jpg"
+      },
+      "size": [1440, 900],
+      "sha256": {
+        "before": "f52859ac5579f338ad27c2fa9662359b27280a024b2b45906de699603e574cbc",
+        "after": "ab1004bddc3ca718e2e1cd528d51fa6ebaee30304fa69952f1f73a4681f6f1b2"
+      }
+    },
+    {
+      "id": "light-1100",
+      "label": "真实组件 · 浅色 · 1100 × 760",
+      "files": {
+        "before": "before/light-1100.jpg",
+        "after": "after/light-1100.jpg"
+      },
+      "size": [1100, 760],
+      "sha256": {
+        "before": "011219e2024fa940f41c988f1c8bc5443610a880395dc0dbba0358a625ace2ba",
+        "after": "a3f9c0433fad6f003da517661faaa505628141b7389a0667d4e426c8c1decd6b"
+      }
+    },
+    {
+      "id": "light-880",
+      "label": "真实组件 · 浅色 · 880 × 720",
+      "files": {
+        "before": "before/light-880.jpg",
+        "after": "after/light-880.jpg"
+      },
+      "size": [880, 720],
+      "sha256": {
+        "before": "f6d15cea1411b1cf3d7dfcfde0b9abe91d564f10be567e08f9011e01294ac413",
+        "after": "08843805a4f0356f5cc450dd4a4eb956ef0c60c7403d9982b040f1adf16999d1"
+      }
+    },
+    {
+      "id": "light-600",
+      "label": "真实组件 · 浅色 · 600 × 720",
+      "files": {
+        "before": "before/light-600.jpg",
+        "after": "after/light-600.jpg"
+      },
+      "size": [600, 720],
+      "sha256": {
+        "before": "822ea259d6d33b4e49a735bdadec6d70a466ab192920c1ff0a27617e403ade8b",
+        "after": "f0b86579d51bd32869ce267909774b13af29103849e09bb2b4fe3671d1cf46ab"
+      }
+    },
+    {
+      "id": "dark-1093",
+      "label": "真实组件 · 深色 · 1093 × 873",
+      "files": {
+        "before": "before/dark-1093.jpg",
+        "after": "after/dark-1093.jpg"
+      },
+      "size": [1093, 873],
+      "sha256": {
+        "before": "b2d35abe030c9e3fe96584e6b48593724a43643385c81e6397a9f0735e2afb9c",
+        "after": "05771a55e97fd616abcba94f48589d5abc8bec12d0e66d1637917d2d9eba894f"
+      }
+    }
+  ],
+  "sources": {
+    "packages/chat/src/ChatPanel.style.ts": {
+      "before": "ee893f2b96a02e07b261dbc21b48579b2b9d792375e73c3fbd83c6c7ca90cad4",
+      "after": "ce2494ac6a5a93652e700e56ad57d567fb709ecf8b63c918ccc62873cc727e5e"
+    },
+    "packages/chat/src/ChatPanel.tsx": {
+      "before": "d3ec075a98316a8b0c6fc23afba92db19f900ddc640d404db78cd8f0c98d0ef7",
+      "after": "90da6ec4fc7f42bbf996bb223fbb91bf8dbb9f131e524f867f10c14ad10584cd"
+    },
+    "packages/chat/src/EmptyStage.tsx": {
+      "before": "aeb810a1df9cc5e2e707cee7369bf5d73f749cc13f5e5443b7c5fa351f35af20",
+      "after": "2e78f677fde756d74455487ca2696e3b03d304d279e7f87be6785c01a97a8d6b"
+    }
+  },
+  "bundles": {
+    "before": {
+      "index-DHEo5YIj.js": "c61795cc1d3e50c4c685ce177d678592d5ff29f11439665e3b784f47221388a9",
+      "index-D5djFOZM.css": "3d716c59b76796f1a8be0ea8425fd19bab7162a87a2b5e95eda2642e303a34e1"
+    },
+    "after": {
+      "index-CuBoEC1P.js": "b9b574c70f8ce8d0fe979218a5a984f719acc0587c0e75a4c33fec3969f303b7",
+      "index-D5djFOZM.css": "3d716c59b76796f1a8be0ea8425fd19bab7162a87a2b5e95eda2642e303a34e1"
+    }
+  }
+}

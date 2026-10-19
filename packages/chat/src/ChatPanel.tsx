@@ -108,7 +108,21 @@ export function ChatPanel(props: ChatPanelProps) {
                       stage={
                         props.guide ? props.guide(api.ask) : <EmptyStage draft={props.draft} />
                       }
-                      composer={centered ? composer : null}
+                      composer={
+                        centered ? (
+                          <>
+                            {composer}
+                            <p className={styles.emptyKeyboardHint}>
+                              <span>
+                                <kbd>Enter</kbd> 发送
+                              </span>
+                              <span>
+                                <kbd>Shift + Enter</kbd> 换行
+                              </span>
+                            </p>
+                          </>
+                        ) : null
+                      }
                     />
                   </div>
                 </div>

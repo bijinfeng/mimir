@@ -72,6 +72,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
   `,
   /* 空态的内容组：水平居中在内容列上、垂直由滚动列的 auto 边距居中 */
   innerEmpty: css`
+    flex-shrink: 0;
     width: 100%;
     max-width: 768px;
     margin: auto;
@@ -251,19 +252,20 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
   `,
 
   empty: css`
-    padding: 0 var(--mimir-chat-gutter, 24px) 16px;
-    text-align: center;
+    padding: 0 var(--mimir-chat-gutter, 24px) 12px;
+    text-align: left;
   `,
   emptyMark: css`
-    display: inline-grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    margin-bottom: 16px;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
     color: ${token.colorLink};
   `,
   emptyTitle: css`
-    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
     font-size: var(--mimir-chat-font-display, 28px);
     font-weight: 600;
     letter-spacing: -0.025em;
@@ -275,10 +277,25 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     }
   `,
   emptyLead: css`
-    margin: 0;
+    margin: 8px 0 0;
     color: ${token.colorTextSecondary};
     font-size: var(--mimir-chat-font-body, 14px);
     line-height: 1.7;
+  `,
+  emptyKeyboardHint: css`
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px 12px;
+    margin: 0;
+    padding: 0 var(--mimir-chat-gutter, 24px);
+    color: ${token.colorTextSecondary};
+    font-size: var(--mimir-chat-font-meta, 12px);
+    line-height: 1.7;
+
+    kbd {
+      font: inherit;
+    }
   `,
   /* 空态里的发送失败行：组的其它内容都居中，它也居中
      （会话里那条 stopped 靠左是对的——它跟的是消息列） */

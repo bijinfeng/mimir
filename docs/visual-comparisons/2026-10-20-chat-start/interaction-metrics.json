@@ -1,0 +1,38 @@
+{
+  "short": {
+    "form": {
+      "bottom": 265.234375,
+      "height": 236,
+      "left": 24,
+      "right": 561,
+      "top": 29.234375,
+      "width": 537,
+      "x": 24,
+      "y": 29.234375
+    },
+    "heading": {
+      "bottom": -26.5625,
+      "height": 26.59375,
+      "left": 24,
+      "right": 561,
+      "top": -53.15625,
+      "width": 537,
+      "x": 24,
+      "y": -53.15625
+    },
+    "overflow": false,
+    "scroll": [
+      {
+        "height": 270,
+        "scrollHeight": 429,
+        "top": 159
+      }
+    ]
+  },
+  "top": {
+    "headingTop": 105.84375,
+    "top": 0
+  },
+  "shiftEnter": "保留换行，仍在空态",
+  "settings": "知识整理指南 / 中"
+}

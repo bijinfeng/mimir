@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>新对话起始页 · 前后对比</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f7f8f8;
+        color: #262626;
+        font:
+          14px/1.7 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          'PingFang SC',
+          sans-serif;
+      }
+      main {
+        max-width: 1680px;
+        margin: auto;
+        padding: 24px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      p {
+        margin: 8px 0 16px;
+        color: #595959;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 20px 0;
+      }
+      button,
+      a {
+        font: inherit;
+      }
+      button {
+        padding: 5px 12px;
+        border: 1px solid #dedfdf;
+        border-radius: 6px;
+        background: #fff;
+        color: inherit;
+        cursor: pointer;
+      }
+      button[aria-current='true'] {
+        border-color: #00834d;
+        color: #007a45;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid #00834d;
+        outline-offset: 2px;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+      }
+      a {
+        color: #007a45;
+      }
+      details {
+        margin-top: 24px;
+      }
+      summary {
+        cursor: pointer;
+      }
+      details figure {
+        margin: 20px 0;
+        max-width: 900px;
+      }
+      footer {
+        margin-top: 24px;
+        color: #595959;
+      }
+      @media (max-width: 900px) {
+        .pair {
+          grid-template-columns: 1fr;
+        }
+        main {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>新对话起始页 · 前后对比</h1>
+      <p>
+        标题、说明与输入框收拢对齐，图标并入标题行，保留轻边框与既有工具布局，补充换行提示。以下为真实浏览器截图，可离线查看。
+      </p>
+      <nav aria-label="对比场景"></nav>
+      <p id="scene" aria-live="polite"></p>
+      <section class="pair" aria-label="修改前后截图">
+        <figure>
+          <figcaption>
+            修改前 <a id="original-before" target="_blank" rel="noopener">原尺寸</a>
+          </figcaption>
+          <img id="before" alt="" />
+        </figure>
+        <figure>
+          <figcaption>
+            修改后 <a id="original-after" target="_blank" rel="noopener">原尺寸</a>
+          </figcaption>
+          <img id="after" alt="" />
+        </figure>
+      </section>
+      <details>
+        <summary>补充验收：短窗口、菜单、范围和长草稿</summary>
+        <figure>
+          <figcaption>600 × 360：模型菜单自动避让（仅修改后）</figcaption>
+          <img src="after/short-model-menu.jpg" alt="600 × 360：模型菜单自动避让" loading="lazy" />
+        </figure>
+        <figure>
+          <figcaption>600 × 360：当前文档范围与思考强度（仅修改后）</figcaption>
+          <img
+            src="after/selected-settings.jpg"
+            alt="600 × 360：当前文档范围与思考强度"
+            loading="lazy"
+          />
+        </figure>
+        <figure>
+          <figcaption>600 × 360：24行草稿，可达输入工具（仅修改后）</figcaption>
+          <img
+            src="after/short-long-draft.jpg"
+            alt="600 × 360：24行草稿，可达输入工具"
+            loading="lazy"
+          />
+        </figure>
+        <figure>
+          <figcaption>600 × 360：可滚回标题（仅修改后）</figcaption>
+          <img src="after/short-long-draft-top.jpg" alt="600 × 360：可滚回标题" loading="lazy" />
+        </figure>
+      </details>
+      <footer>
+        基线：0c44cde。组件场景使用固定模拟资料与内存 IO；真实产品截图另列，未向真实模型发送问题。<a
+          href="verification.md"
+          >验收记录</a
+        >
+        · <a href="manifest.json">来源与哈希</a> · <a href="full-check.txt">全仓检查日志</a>
+      </footer>
+    </main>
+    <script>
+      const scenes = [
+        {
+          id: 'product-dark',
+          label: '真实页面 · 深色 · 1093 × 873',
+          files: { before: 'before/product-dark.jpg', after: 'after/product-dark.jpg' },
+          size: [1093, 873],
+          sha256: {
+            before: '722f58b1d095f7fabede707d3031aa1ea7572c3b416bc6ed4112f0cbefb41136',
+            after: '2916b45d5a07fbcb54fd48be86d5060704da18ed861c455adb5bc0a52cd66b4c',
+          },
+        },
+        {
+          id: 'light-1440',
+          label: '真实组件 · 浅色 · 1440 × 900',
+          files: { before: 'before/light-1440.jpg', after: 'after/light-1440.jpg' },
+          size: [1440, 900],
+          sha256: {
+            before: 'f52859ac5579f338ad27c2fa9662359b27280a024b2b45906de699603e574cbc',
+            after: 'ab1004bddc3ca718e2e1cd528d51fa6ebaee30304fa69952f1f73a4681f6f1b2',
+          },
+        },
+        {
+          id: 'light-1100',
+          label: '真实组件 · 浅色 · 1100 × 760',
+          files: { before: 'before/light-1100.jpg', after: 'after/light-1100.jpg' },
+          size: [1100, 760],
+          sha256: {
+            before: '011219e2024fa940f41c988f1c8bc5443610a880395dc0dbba0358a625ace2ba',
+            after: 'a3f9c0433fad6f003da517661faaa505628141b7389a0667d4e426c8c1decd6b',
+          },
+        },
+        {
+          id: 'light-880',
+          label: '真实组件 · 浅色 · 880 × 720',
+          files: { before: 'before/light-880.jpg', after: 'after/light-880.jpg' },
+          size: [880, 720],
+          sha256: {
+            before: 'f6d15cea1411b1cf3d7dfcfde0b9abe91d564f10be567e08f9011e01294ac413',
+            after: '08843805a4f0356f5cc450dd4a4eb956ef0c60c7403d9982b040f1adf16999d1',
+          },
+        },
+        {
+          id: 'light-600',
+          label: '真实组件 · 浅色 · 600 × 720',
+          files: { before: 'before/light-600.jpg', after: 'after/light-600.jpg' },
+          size: [600, 720],
+          sha256: {
+            before: '822ea259d6d33b4e49a735bdadec6d70a466ab192920c1ff0a27617e403ade8b',
+            after: 'f0b86579d51bd32869ce267909774b13af29103849e09bb2b4fe3671d1cf46ab',
+          },
+        },
+        {
+          id: 'dark-1093',
+          label: '真实组件 · 深色 · 1093 × 873',
+          files: { before: 'before/dark-1093.jpg', after: 'after/dark-1093.jpg' },
+          size: [1093, 873],
+          sha256: {
+            before: 'b2d35abe030c9e3fe96584e6b48593724a43643385c81e6397a9f0735e2afb9c',
+            after: '05771a55e97fd616abcba94f48589d5abc8bec12d0e66d1637917d2d9eba894f',
+          },
+        },
+      ]
+      const nav = document.querySelector('nav')
+      for (const scene of scenes) {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.textContent = scene.label
+        button.dataset.id = scene.id
+        button.addEventListener('click', () => {
+          location.hash = scene.id
+        })
+        nav.append(button)
+      }
+      function show() {
+        const scene = scenes.find((s) => s.id === location.hash.slice(1)) ?? scenes[0]
+        document.querySelector('#scene').textContent = scene.label
+        for (const side of ['before', 'after']) {
+          const img = document.getElementById(side)
+          img.src = scene.files[side]
+          img.alt = scene.label + (side === 'before' ? '：修改前' : '：修改后')
+          document.getElementById('original-' + side).href = scene.files[side]
+        }
+        for (const button of nav.children) {
+          button.setAttribute('aria-current', String(button.dataset.id === scene.id))
+        }
+      }
+      addEventListener('hashchange', show)
+      show()
+    </script>
+  </body>
+</html>
