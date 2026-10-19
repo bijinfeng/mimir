@@ -1,0 +1,63 @@
+.fixture-tools {
+  padding: 12px 18px;
+  font: 12px/1.6 system-ui;
+  background: var(--ant-color-fill-quaternary);
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+.fixture-tools h1 {
+  font: 600 15px/1.5 system-ui;
+  margin: 0 0 6px;
+}
+.fixture-tools p {
+  margin: 6px 0;
+}
+.fixture-tools nav,
+.fixture-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 8px 0;
+}
+.fixture-tools button,
+.fixture-tools select {
+  font: inherit;
+  padding: 4px 8px;
+}
+.fixture-tools a[aria-current='page'] {
+  font-weight: 700;
+}
+.fixture-frame {
+  width: min(var(--fixture-width, 1100px), 100%);
+  height: var(--fixture-height, 760px);
+  margin: auto;
+  overflow: hidden;
+}
+.fixture-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+.fixture-shell-body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.fixture-controls-strip {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 44px;
+}
+.fixture-log {
+  padding: 8px 18px;
+  margin: 0;
+  max-height: 150px;
+  overflow: auto;
+  white-space: pre-wrap;
+  font: 11px/1.5 monospace;
+}
+body[data-capture='true'] .fixture-tools,
+body[data-capture='true'] .fixture-log {
+  display: none;
+}

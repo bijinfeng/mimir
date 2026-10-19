@@ -1,0 +1,9 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "不可变项目规则"}
+{"file": ".trellis/spec/project/design.md", "reason": "当前语雀主题/密度/焦点/高度链"}
+{"file": ".trellis/spec/project/quality.md", "reason": "完整质量门和真实效果证据"}
+{"file": ".trellis/spec/desktop/runtime/conventions.md", "reason": "Desktop载体/桥/构建合同"}
+{"file": ".trellis/spec/desktop/runtime/pitfalls.md", "reason": "Session及原生drag边界"}
+{"file": ".trellis/spec/renderer/frontend/forms.md", "reason": "共享Ant Design字段与键盘约定"}
+{"file": ".trellis/tasks/10-20-interaction-desktop/research/desktop-interaction-map.md", "reason": "desktop-interaction-map.md"}
+{"file": ".trellis/tasks/10-20-interaction-desktop/research/desktop-polish-recommendations.md", "reason": "desktop-polish-recommendations.md"}
+{"file": ".trellis/tasks/10-20-interaction-desktop/research/desktop-reference-evidence.md", "reason": "desktop-reference-evidence.md"}

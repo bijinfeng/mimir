@@ -1,0 +1,178 @@
+[
+  {
+    "key": "setup-first-wide",
+    "title": "首次选择 · 宽屏",
+    "scene": "setup-first",
+    "theme": "light",
+    "platform": "win32",
+    "viewport": [
+      1100,
+      760
+    ],
+    "componentSize": [
+      1100,
+      760
+    ],
+    "steps": "载入首次选择，保持默认本地使用；不提交。",
+    "query": "?scene=setup-first&theme=light&platform=win32&width=1100&height=760&capture=1",
+    "before": "captures/before-setup-first-wide.png",
+    "after": "captures/after-setup-first-wide.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "setup-loading-wide",
+    "title": "读取配置 · 宽屏",
+    "scene": "setup-loading",
+    "theme": "light",
+    "platform": "win32",
+    "viewport": [
+      1100,
+      760
+    ],
+    "componentSize": [
+      1100,
+      760
+    ],
+    "steps": "载入后保持 mode.get 未结算；不操作演示结算按钮。",
+    "query": "?scene=setup-loading&theme=light&platform=win32&width=1100&height=760&capture=1",
+    "before": "captures/before-setup-loading-wide.png",
+    "after": "captures/after-setup-loading-wide.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "setup-cloud-short",
+    "title": "服务器地址 · 短高",
+    "scene": "setup-cloud",
+    "theme": "light",
+    "platform": "win32",
+    "viewport": [
+      800,
+      480
+    ],
+    "componentSize": [
+      800,
+      480
+    ],
+    "steps": "载入已有云端配置，保持固定长地址；保持初始滚动位置。",
+    "query": "?scene=setup-cloud&theme=light&platform=win32&width=800&height=480&capture=1",
+    "before": "captures/before-setup-cloud-short.png",
+    "after": "captures/after-setup-cloud-short.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "choose-failure-narrow",
+    "title": "连接失败 · 窄屏",
+    "scene": "choose-failure",
+    "theme": "light",
+    "platform": "win32",
+    "viewport": [
+      390,
+      400
+    ],
+    "componentSize": [
+      390,
+      400
+    ],
+    "steps": "载入后点击切换；等待模拟 choose 返回失败；点击「切换使用方式」标题使局部滚动回顶部，显示失败反馈。",
+    "query": "?scene=choose-failure&theme=light&platform=win32&width=390&height=400&capture=1",
+    "before": "captures/before-choose-failure-narrow.png",
+    "after": "captures/after-choose-failure-narrow.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "setup-read-error-narrow",
+    "title": "读取失败 · 暗色窄屏",
+    "scene": "setup-read-error",
+    "theme": "dark",
+    "platform": "linux",
+    "viewport": [
+      390,
+      400
+    ],
+    "componentSize": [
+      390,
+      400
+    ],
+    "steps": "首个 mode.get 读取失败；不点重试，保持失败状态。",
+    "query": "?scene=setup-read-error&theme=dark&platform=linux&width=390&height=400&capture=1",
+    "before": "captures/before-setup-read-error-narrow.png",
+    "after": "captures/after-setup-read-error-narrow.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "choose-pending-short",
+    "title": "连接处理中 · 暗色短高",
+    "scene": "choose-pending",
+    "theme": "dark",
+    "platform": "win32",
+    "viewport": [
+      800,
+      480
+    ],
+    "componentSize": [
+      800,
+      480
+    ],
+    "steps": "载入后点击切换；保持 choose promise 未结算。",
+    "query": "?scene=choose-pending&theme=dark&platform=win32&width=800&height=480&capture=1",
+    "before": "captures/before-choose-pending-short.png",
+    "after": "captures/after-choose-pending-short.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "about-long-narrow",
+    "title": "长版本号 · 暗色窄屏",
+    "scene": "about-long",
+    "theme": "dark",
+    "platform": "win32",
+    "viewport": [
+      390,
+      400
+    ],
+    "componentSize": [
+      390,
+      400
+    ],
+    "steps": "载入关于客户端，等待 boot 成功；保持固定长版本号。",
+    "query": "?scene=about-long&theme=dark&platform=win32&width=390&height=400&capture=1",
+    "before": "captures/before-about-long-narrow.png",
+    "after": "captures/after-about-long-narrow.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  },
+  {
+    "key": "titlebar-focus",
+    "title": "标题栏键盘焦点",
+    "scene": "titlebar",
+    "theme": "light",
+    "platform": "win32",
+    "viewport": [
+      800,
+      480
+    ],
+    "componentSize": [
+      800,
+      480
+    ],
+    "steps": "聚焦最小化按钮后按 Shift+Tab，使真实折叠侧边栏按钮获得键盘焦点。",
+    "query": "?scene=titlebar&theme=light&platform=win32&width=800&height=480&capture=1",
+    "before": "captures/before-titlebar-focus.png",
+    "after": "captures/after-titlebar-focus.png",
+    "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+    "sameContentThemeSizeRequired": true,
+    "nativeVerified": false
+  }
+]

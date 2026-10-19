@@ -1409,3 +1409,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 49: PDF交互精修完成
+<!-- trellis-session: v=2 fp=18b8d8b75efc3d28 -->
+
+**Date**: 2026-10-20
+**Task**: PDF交互精修完成
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+模块15完成：菜单收起、批注固定底栏及本地导航滚动/真实busy；8组真实前后与原生绘图、批注、属性保存重开存档。独立135项回归及全仓check通过；内存IO与原生外部未验边界保留。继续Desktop16。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `51c9e96` | fix(office): refine PDF inspector interactions |
+
+### Status
+
+[OK] **Completed**
