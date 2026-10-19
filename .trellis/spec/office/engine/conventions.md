@@ -461,6 +461,8 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 
 ### 保存与编辑的静默坑
 
+DOCX 上游 writer 的 `JSZip.file` 会默认补建原件没有的父目录条目（如仅有 `docProps/custom.xml` 时新增 `docProps/`）。最终自有保存边界须保留原目录清单；只删除新增目录记录，不能调用递归的 `zip.remove(directory)`，否则连同部件一起丢失。无目录差异直接返回候选原字节。
+
 补丁式保存、pptx 的 run 边界、xlsx 的共享字符串与公式格、docx 的列宽与
 样式 id、pdf 的 cmaps 与并发渲染——**见 [编辑器坑表](../frontend/editors/pitfalls.md)**
 （与编辑器代码同目录，最近者优先）。外壳（工具条 / 高度链 / 弹层）的坑在

@@ -18,6 +18,10 @@ export function nativeEncryptionWorker() {
     ready = false
     queued: { request: DocxEncryptionRequest; transfers: ArrayBuffer[] } | null = null
     terminated = false
+    resolveResponse!: () => void
+    readonly response = new Promise<void>((resolve) => {
+      this.resolveResponse = resolve
+    })
     constructor() {
       super()
       BrowserWorkerBridge.instances.push(this)
@@ -28,9 +32,15 @@ export function nativeEncryptionWorker() {
             this.native.postMessage(this.queued.request, this.queued.transfers)
             this.queued = null
           }
-        } else this.dispatchEvent(new MessageEvent('message', { data }))
+        } else {
+          this.dispatchEvent(new MessageEvent('message', { data }))
+          this.resolveResponse()
+        }
       })
-      this.native.on('error', () => this.dispatchEvent(new Event('error')))
+      this.native.on('error', () => {
+        this.dispatchEvent(new Event('error'))
+        this.resolveResponse()
+      })
     }
     postMessage(request: DocxEncryptionRequest, transfers: ArrayBuffer[]) {
       if (this.ready) this.native.postMessage(request, transfers)
@@ -39,6 +49,7 @@ export function nativeEncryptionWorker() {
     terminate() {
       this.terminated = true
       this.queued = null
+      this.resolveResponse()
       void this.native.terminate()
     }
   }

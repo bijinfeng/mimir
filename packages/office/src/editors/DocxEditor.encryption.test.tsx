@@ -153,6 +153,7 @@ for (const format of ['standard', 'agile'])
   it(`external ${format} body replacement saves through the actual encryption worker`, async () => {
     const app = await boot(fixture(`office-${format}-password.docx`), 'external-edited', false)
     await open(app, 'Password1234_')
+    await act(async () => Bridge.instances.at(-1)!.response)
     await settle(() => !!app.host.querySelector('.ProseMirror'))
     await act(async () => {
       app.editor().commands.selectAll()

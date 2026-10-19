@@ -27,6 +27,7 @@ import {
 import { initializeDocxInk, docxInkSaveOptions, preserveDocxInk } from './docx-ink-save.js'
 import { docxChartSaveOptions } from './docx-chart-save.js'
 import { docxImageSaveBaselines } from './docx-image-save.js'
+import { preserveDocxDirectoryEntries } from './docx-archive-save.js'
 import { docxListSavePlan } from './docx-list-plan.js'
 import { docxOutlineSavePlan } from './docx-outline-save.js'
 import { docxListSaveOptions, docxListSaveResult } from './docx-list-save.js'
@@ -337,6 +338,7 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
           if (result !== beforePrivacy && (!access.writable || access.mandatoryTracking))
             throw new Error('原件编辑限制不允许清理个人信息，原件保持不变')
         }
+        result = await preserveDocxDirectoryEntries(protectedOriginal, result)
         if (protection.getAccess().epoch !== protectionEpoch)
           throw new Error('文档保护状态已变化，请重新保存')
         protection.assertSave(edited, originalOptions)

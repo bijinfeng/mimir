@@ -792,21 +792,14 @@ async function entryOf(bytes: Uint8Array, name: string): Promise<string | null> 
  */
 async function save(host: HTMLElement, saved: () => Uint8Array | null): Promise<void> {
   const previous = saved()
-  for (let i = 0; i < 50; i += 1) {
-    if (!(byLabel(host, '保存到库') as HTMLButtonElement).disabled) break
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
-  }
+  await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
   click(byLabel(host, '保存到库'))
-  for (let i = 0; i < 50; i += 1) {
-    if (saved() !== null && saved() !== previous) return
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
-  }
-  throw new Error(
-    `保存没写出字节。状态行现在说：${host.querySelector('.mimir-editor__status')?.textContent ?? ''}`,
+  await waitForGrid(
+    host,
+    () =>
+      saved() !== null &&
+      saved() !== previous &&
+      host.querySelector('.mimir-editor__status .me-label')?.textContent === '已保存',
   )
 }
 
