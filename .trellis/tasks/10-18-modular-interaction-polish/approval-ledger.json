@@ -119,7 +119,7 @@
     {
       "id": "chat",
       "name": "AI对话与生成交互",
-      "status": "awaiting_exact_version_approval",
+      "status": "revision_requested",
       "proposal": "../10-18-interaction-chat/prototype/review.html",
       "version": "chat-review-v1",
       "approved_at": null,
@@ -133,7 +133,9 @@
       "coverage_groups": 71,
       "coverage_states": 379,
       "render_tracks": 52,
-      "verification": "../10-18-interaction-chat/planning-acceptance.md"
+      "verification": "../10-18-interaction-chat/planning-acceptance.md",
+      "revision_user_quote": "这个我觉得很丑，是 ag-ui 协议里的交互吗，assistant-ui 有提供这种交互吗",
+      "revision_notes": "CHAT-005.user检索过程外观待修订；v1冻结保留，来源研究已记录，尚无实施批准。"
     },
     {
       "id": "settings",

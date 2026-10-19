@@ -21,17 +21,18 @@
   "children": [],
   "parent": "10-18-modular-interaction-polish",
   "relatedFiles": [],
-  "notes": "第七模块源码盘点、WeKnora固定版本证据与chat-review-v1独立HTML已完成；等待用户认可具体版本后才实施，仍为planning。",
+  "notes": "v1已冻结保存，用户2026-10-19反馈检索过程块不好看；研究AG-UI/assistant-ui来源后待视觉方向收敛，未获得产品实施批准。",
   "meta": {
     "planning_user_quote": "继续",
     "product_implementation_approved": false,
-    "planning_delivery": "ready_for_user_review",
+    "planning_delivery": "revision_pending_design_choice",
     "version": "chat-review-v1",
     "html_sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
     "coverage_groups": 71,
     "coverage_states": 379,
     "render_tracks": 52,
     "preview_url": "http://127.0.0.1:5189/review.html?mode=compare",
-    "planning_acceptance": "planning-acceptance.md"
+    "planning_acceptance": "planning-acceptance.md",
+    "trace_visual_feedback": "CHAT-005.user: 用户不认可过程块；来源已核查，待选轻量折叠行或步骤面板。"
   }
 }
