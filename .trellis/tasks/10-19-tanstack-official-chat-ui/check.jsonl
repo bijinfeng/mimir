@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "跨包硬约束、现行规范及适配器边界"}
+{"file": ".trellis/spec/project/quality.md", "reason": "全仓检查、真实GUI与证据口径"}
+{"file": ".trellis/spec/chat/frontend/conventions.md", "reason": "发送快照、单FIFO、历史与Agent/附件所有权"}
+{"file": ".trellis/spec/chat/frontend/pitfalls.md", "reason": "停止DOM默认动作、StrictMode、缓存续传与主题祖先"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "宿主React Compiler与状态/生命周期约束"}
+{"file": ".trellis/spec/shared/contract/document-agent.md", "reason": "Agent执行与中断缓存守卫"}
+{"file": ".trellis/spec/shared/contract/chat-attachments.md", "reason": "临时附件隔离、租约与保稿"}
+{"file": ".trellis/tasks/10-19-tanstack-official-chat-ui/research/official-ui-boundary.md", "reason": "已安装官方UI API与Mimir最小接入边界"}

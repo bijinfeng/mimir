@@ -1,0 +1,40 @@
+{
+  "id": "tanstack-official-chat-ui",
+  "name": "tanstack-official-chat-ui",
+  "title": "接入 TanStack 官方 Headless UI",
+  "description": "采用 @tanstack/ai-react/ui 官方封装组织消息、内容与中断，保留批准的 Mimir 视觉、发送队列、临时附件和文档 Agent 行为；本阶段规划",
+  "status": "planning",
+  "dev_type": "frontend",
+  "scope": "chat",
+  "package": "chat",
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-19",
+  "completedAt": null,
+  "branch": "codex/all-pages-polish",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "prd.md",
+    "design.md",
+    "implement.md",
+    "research/official-ui-boundary.md",
+    "research/evidence.json"
+  ],
+  "notes": "本轮仅规划；官方UI接现有唯一useChat host，保留批准v7外观与业务合同。最新完整规划摘要待用户确认。",
+  "meta": {
+    "creation_approved_on": "2026-10-19",
+    "creation_user_quote": "可以，创建并规划",
+    "implementation_approved": false,
+    "target": "@tanstack/ai-react/ui createChatUI",
+    "preserved_visual_baseline": "chat-review-v7",
+    "previous_implementation_commit": "c497002",
+    "planning_status": "research_and_artifacts_ready_for_final_review"
+  }
+}
