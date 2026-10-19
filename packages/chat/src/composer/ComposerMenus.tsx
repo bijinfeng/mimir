@@ -10,11 +10,18 @@ export interface ContextDoc {
 }
 const useStyles = createStyles(({ css, token }) => ({
   root: css`
+    position: relative;
     display: flex;
+    flex: 1 1 180px;
     align-items: center;
     gap: 4px;
     flex-wrap: wrap;
     min-width: 0;
+    @container mimir-composer (max-width: 560px) {
+      flex: 1 1 0;
+      flex-wrap: nowrap;
+      gap: 2px;
+    }
     button {
       font: inherit;
       cursor: pointer;
@@ -24,20 +31,51 @@ const useStyles = createStyles(({ css, token }) => ({
       opacity: 0.55;
     }
     button:focus-visible {
-      outline: 1px solid ${token.colorPrimary};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
     }
   `,
   selector: css`
-    position: relative;
     min-width: 0;
     max-width: 100%;
+    @container mimir-composer (max-width: 560px) {
+      flex: 0 1 auto;
+      &:first-child {
+        flex: 1 1 0;
+        min-width: 32px;
+      }
+      &:last-child {
+        max-width: 100px;
+      }
+    }
+  `,
+  fullLabel: css`
+    @container mimir-composer (max-width: 560px) {
+      display: none;
+    }
+  `,
+  compactLabel: css`
+    display: none;
+    @container mimir-composer (max-width: 560px) {
+      display: inline;
+    }
+    @container mimir-composer (max-width: 340px) {
+      &[data-scope] {
+        display: none;
+      }
+    }
+  `,
+  shortestScope: css`
+    display: none;
+    @container mimir-composer (max-width: 340px) {
+      display: inline;
+    }
   `,
   trigger: css`
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    max-width: 160px;
+    max-width: 140px;
     height: 30px;
     border: 0;
     background: transparent;
@@ -45,6 +83,23 @@ const useStyles = createStyles(({ css, token }) => ({
     border-radius: 6px;
     padding: 0 7px;
     font-size: var(--mimir-chat-font-note, 12.5px) !important;
+    > svg {
+      flex: none;
+    }
+    @container mimir-composer (max-width: 560px) {
+      width: 100%;
+      max-width: 100%;
+      gap: 3px;
+      padding-inline: 3px;
+    }
+    @container mimir-composer (max-width: 300px) {
+      &[data-setting='effort'] > svg:first-child {
+        display: none;
+      }
+    }
+    @media (pointer: coarse) {
+      height: 40px;
+    }
     &:hover:not(:disabled) {
       background: ${token.colorFillTertiary};
       color: ${token.colorText};
@@ -61,7 +116,11 @@ const useStyles = createStyles(({ css, token }) => ({
     left: 0;
     z-index: 50;
     width: 258px;
-    max-width: calc(100vw - 48px);
+    min-width: 0;
+    max-width: min(258px, calc(100vw - 48px));
+    @container mimir-composer (max-width: 560px) {
+      max-width: min(258px, calc(100cqi - 48px));
+    }
     max-height: 340px;
     overflow: auto;
     background: ${token.colorBgElevated};
@@ -159,6 +218,24 @@ export function ComposerMenus({
     close()
   }
   const fixed = reasoning?.status === 'supported' && reasoning.levels.length === 1
+  const reasoningLabel = !model
+    ? '未选模型'
+    : reasoning?.status === 'unsupported'
+      ? '不可调节'
+      : reasoning?.status === 'unknown'
+        ? '等级未知'
+        : selection?.reasoningEffort
+          ? effortLabel(selection.reasoningEffort)
+          : '模型默认'
+  const compactReasoningLabel = !model
+    ? '未选'
+    : reasoning?.status === 'unsupported'
+      ? '不支持'
+      : reasoning?.status === 'unknown'
+        ? '未知'
+        : selection?.reasoningEffort
+          ? effortLabel(selection.reasoningEffort)
+          : '默认'
   return (
     <div
       ref={root}
@@ -193,6 +270,7 @@ export function ComposerMenus({
           type="button"
           className={styles.trigger}
           aria-label={`当前模型：${model?.label ?? '选择模型'}`}
+          title={model?.label ?? '选择模型'}
           aria-haspopup="menu"
           aria-expanded={menu === 'model'}
           onClick={(event) => toggle('model', event)}
@@ -255,6 +333,7 @@ export function ComposerMenus({
         <button
           type="button"
           className={styles.trigger}
+          data-setting="effort"
           disabled={reasoning?.status !== 'supported' || fixed}
           title={
             fixed
@@ -271,15 +350,12 @@ export function ComposerMenus({
           onClick={(event) => toggle('effort', event)}
         >
           <Zap size={14} />
-          {!model
-            ? '未选模型'
-            : reasoning?.status === 'unsupported'
-              ? '不可调节'
-              : reasoning?.status === 'unknown'
-                ? '等级未知'
-                : selection?.reasoningEffort
-                  ? effortLabel(selection.reasoningEffort)
-                  : '模型默认'}
+          <span className={styles.fullLabel} aria-hidden>
+            {reasoningLabel}
+          </span>
+          <span className={styles.compactLabel} aria-hidden>
+            {compactReasoningLabel}
+          </span>
           {reasoning?.status === 'supported' && !fixed && <ChevronDown size={13} />}
         </button>
         {menu === 'effort' && reasoning?.status === 'supported' && (
@@ -321,13 +397,20 @@ export function ComposerMenus({
           type="button"
           className={styles.trigger}
           aria-label={`本轮检索范围：${document?.title ?? (documentId ? '当前文档' : '全部文档')}`}
+          title={document?.title ?? (documentId ? '当前文档' : '全部文档')}
           aria-haspopup="menu"
           aria-expanded={menu === 'scope'}
           onClick={(event) => toggle('scope', event)}
         >
           <Library size={14} />
-          <span title={document?.title}>
+          <span className={styles.fullLabel} aria-hidden>
             {document?.title ?? (documentId ? '当前文档' : '全部文档')}
+          </span>
+          <span className={styles.compactLabel} data-scope="" aria-hidden>
+            {documentId ? '当前文档' : '全部文档'}
+          </span>
+          <span className={styles.shortestScope} aria-hidden>
+            {documentId ? '本篇' : '全部'}
           </span>
           <ChevronDown size={13} />
         </button>

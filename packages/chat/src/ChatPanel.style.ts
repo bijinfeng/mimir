@@ -153,119 +153,98 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     padding: 0 var(--mimir-chat-gutter, 24px);
   `,
 
-  /* 用户问题靠右，回答沿阅读列展开；正文里的表格与代码块保留宽度。 */
   thread: css`
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding-bottom: 0;
+    gap: 32px;
+    min-width: 0;
 
-    /* 气泡控制最大宽度，长中文问题不会挤成窄列。 */
     [data-role='user'] {
       align-self: flex-end;
+      width: fit-content;
       max-width: 90%;
-      background: ${token.colorFillQuaternary};
-      border: 0;
-      border-radius: 6px;
-      padding: 12px 16px;
-      font-size: var(--mimir-chat-font-body, 14px);
-      line-height: 1.7;
-      white-space: pre-wrap;
-      word-break: break-word;
+      min-width: 0;
       color: ${token.colorText};
-
-      /* 正文是 <div><p>；p 有全局 reset 兜着，
-         这里再压一次保险（气泡里多出一段 margin 会把文字推离内边距） */
-      p {
-        margin: 0;
-      }
+      font-size: var(--mimir-chat-font-body, 14px);
+      line-height: 1.75;
     }
-
+    [data-role='user'] > [data-message-body] {
+      padding: 12px 16px;
+      border-radius: ${token.borderRadius}px;
+      background: ${token.colorFillQuaternary};
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    [data-role='user'] > [data-message-actions] {
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+    [data-role='user'] > [data-message-heading] {
+      justify-content: flex-end;
+    }
     [data-role='assistant'] {
       min-width: 0;
       font-size: var(--mimir-chat-font-reading, 15px);
       line-height: 1.85;
       color: ${token.colorText};
-
-      /* 渲染性能：长会话里每一条都参与布局是浪费。contain-intrinsic-size
-         给出占位高度，滚动条不会因为「还没渲染的条目」而乱跳
-         （200px 是普通一条回答的高度量级） */
       content-visibility: auto;
       contain-intrinsic-size: auto 200px;
     }
-
-    /* 助手回答是 Markdown（由 parts/MarkdownPart 渲染），
-       所以这里要覆盖它的元素样式以符合 mimir 的正文规范 */
-    [data-role='assistant'] {
-      p {
-        margin: 12px 0;
-
-        /* 首尾归零：中文正文里最容易多出的一段空白——第一条与最后一个
-           段落各多 12px，整块看起来「飘」 */
-        &:first-child {
-          margin-top: 0;
-        }
-        &:last-child {
-          margin-bottom: 0;
-        }
-      }
-      h1,
-      h2,
-      h3 {
-        margin: 20px 0 10px;
-        line-height: 1.5;
-      }
-      h1 {
-        font-size: var(--mimir-chat-font-page-title, 19px);
-      }
-      h2 {
-        font-size: var(--mimir-chat-font-section, 16px);
-      }
-      ul,
-      ol {
-        margin: 12px 0;
-        padding-left: 22px;
-      }
-      code {
-        font-family: ${token.fontFamilyCode};
-        font-size: var(--mimir-chat-font-excerpt, 13px);
-        background: ${token.colorFillSecondary};
-        color: ${token.inlineCodeFg};
-        padding: 1.5px 5px;
-        border-radius: ${token.borderRadiusSM}px;
-      }
-      /* 代码块的「头」（语言名 + 复制）在 CodeBlock 里；这里只管 pre 的
-         底与段落级排版，块内的 code 不再重复上底色 */
-      pre {
-        background: ${token.colorFillTertiary};
-        border: 1px solid ${token.colorBorderSecondary};
-        border-radius: ${token.borderRadius}px;
-        padding: 14px 16px;
-        overflow-x: auto;
-        font-size: var(--mimir-chat-font-excerpt, 13px);
-        margin: 12px 0;
-
-        code {
-          background: none;
-          color: ${token.colorText};
-          padding: 0;
-        }
-      }
-      a {
-        color: ${token.colorLink};
-        text-decoration: underline;
-        text-underline-offset: 2px;
-      }
-      /* 代码块自己的那一组覆盖（头与 pre 的接缝）在
-         parts/CodeBlock.style.ts 里——那边用「属性 + 属性 + 元素」的选择器
-         压过这里的 pre 规则，靠的是特异性而不是注入顺序。见那边的说明。 */
+    [data-message-body] {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
+  `,
+  branch: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    align-self: center;
+    color: ${token.colorTextSecondary};
+    font-size: var(--mimir-chat-font-meta, 12px);
+    font-variant-numeric: tabular-nums;
+    button {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 0;
+      border-radius: ${token.borderRadius}px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) {
+      background: ${token.colorFillTertiary};
+    }
+    button:disabled {
+      color: ${token.colorTextDisabled};
+      cursor: not-allowed;
+    }
+    button:focus-visible {
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
+      outline-offset: 2px;
+    }
+  `,
+  historyError: css`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid ${token.colorErrorBorder};
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorErrorBg};
+    color: ${token.colorErrorText};
+    font-size: var(--mimir-chat-font-body, 14px);
+    line-height: 1.7;
   `,
 
   assistantHeading: css`
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    line-height: 1.5;
     color: ${token.colorTextSecondary};
     font-size: var(--mimir-chat-font-note, 12.5px);
     font-weight: 600;
@@ -318,7 +297,9 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    line-height: 1.6;
     font-size: var(--mimir-chat-font-note, 12.5px);
     color: ${token.colorTextTertiary};
   `,
@@ -327,13 +308,12 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    border-radius: 9999px;
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorFillQuaternary};
-    font-family: ${token.fontFamilyCode};
-    color: ${token.colorTextTertiary};
+    color: ${token.colorTextSecondary};
   `,
   stoppedNote: css`
-    color: ${token.colorTextQuaternary};
+    color: ${token.colorTextSecondary};
   `,
 
   /* 历史加载骨架屏（官方 ThreadHistorySkeleton 的换算）：右侧 h-9 的
@@ -345,6 +325,12 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     gap: 24px;
     padding-top: 4px;
     animation: me-chat-fade-in 0.2s ease-out both;
+    @media (prefers-reduced-motion: reduce) {
+      &,
+      * {
+        animation: none;
+      }
+    }
 
     @keyframes me-chat-fade-in {
       from {

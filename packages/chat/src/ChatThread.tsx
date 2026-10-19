@@ -1,3 +1,5 @@
+import { Button } from 'antd'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useChatRuntime } from './runtime/runtime-context.js'
 import { useContext } from 'react'
 import type { ReactNode } from 'react'
@@ -57,17 +59,16 @@ export function ChatThread({
   const isLoading = runtime.loading
   if (runtime.loadError)
     return (
-      <div role="alert">
+      <div role="alert" className={styles.historyError}>
         {runtime.loadError}{' '}
-        <button type="button" onClick={runtime.reloadHistory}>
+        <Button size="small" onClick={runtime.reloadHistory}>
           重新加载
-        </button>
+        </Button>
       </div>
     )
 
   if (isLoading) {
-    /* 官方 ThreadHistorySkeleton 的形状：右侧的提问气泡 + 两组递减的
-       文本条（组内 8px、组间 24px），入场 fade-in */
+    /* Keep history loading distinct from an empty conversation. */
     return (
       <div className={styles.skeleton} role="status" aria-live="polite">
         <span className={styles.srOnly}>正在加载会话</span>
@@ -95,26 +96,17 @@ export function ChatThread({
     )
   }
 
-  /* 消息列。组件表是**模块级常量**（见 parts/MessageItem.tsx 的说明）——
-     写成 `children` 渲染函数的话那个内联箭头会被判成「渲染期定义组件」，
-     React Compiler 随即跳过宿主组件（铁律 1 的静默退化）。
-
-     外面这层 `styles.thread` 不能省：全部消息排版（用户消息的 › 标记与
-     字重、助手的行高与 markdown 元素规范）都是 thread 里
-     `[data-role=…]` 的**后代选择器**——没有这个祖先类它们整批静默失配
-     （实测：› 消失、正文回到浏览器默认，界面能用但「丑了一圈」，
-     不报错。第一版就漏了它）。 */
   return (
     <div className={styles.thread}>
       {runtime.branch.count > 1 && (
-        <nav aria-label="本地会话分支" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <nav aria-label="本地会话分支" className={styles.branch}>
           <button
             type="button"
             aria-label="上一个分支"
             disabled={runtime.running || runtime.branch.index === 0}
             onClick={() => runtime.branch.select(runtime.branch.index - 1)}
           >
-            ‹
+            <ChevronLeft size={14} />
           </button>
           <span>
             {runtime.branch.index + 1} / {runtime.branch.count}
@@ -125,7 +117,7 @@ export function ChatThread({
             disabled={runtime.running || runtime.branch.index === runtime.branch.count - 1}
             onClick={() => runtime.branch.select(runtime.branch.index + 1)}
           >
-            ›
+            <ChevronRight size={14} />
           </button>
         </nav>
       )}

@@ -1,57 +1,8 @@
 import { Check, ChevronDown, Loader, XCircle, Wrench } from 'lucide-react'
 import type { ToolCallPart as NativeToolCall } from '@tanstack/ai'
-import { createStyles } from 'antd-style'
-import { useState } from 'react'
+import { useProcessStyles } from './Process.style.js'
+import { useId, useState } from 'react'
 import type { ReactNode } from 'react'
-const useStyles = createStyles(({ css, token }) => ({
-  root: css`
-    margin: 8px 0;
-    border: 0;
-    background: ${token.colorFillQuaternary};
-    border-radius: 6px;
-    font-size: var(--mimir-chat-font-meta, 12px);
-    overflow: hidden;
-  `,
-  trigger: css`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    min-height: 34px;
-    padding: 4px 12px;
-    border: 0;
-    background: ${token.colorFillQuaternary};
-    text-align: left;
-    font: inherit;
-    color: ${token.colorTextSecondary};
-    cursor: pointer;
-    &:hover {
-      color: ${token.colorText};
-    }
-    &:focus-visible {
-      outline: 1px solid ${token.colorPrimary};
-      outline-offset: -2px;
-    }
-    small {
-      margin-left: auto;
-      color: ${token.colorTextTertiary};
-    }
-    svg:last-child {
-      flex: none;
-    }
-  `,
-  content: css`
-    padding: 10px 12px;
-    pre {
-      margin: 4px 0 10px !important;
-      max-height: 240px;
-      overflow: auto;
-    }
-    small {
-      color: ${token.colorTextTertiary};
-    }
-  `,
-}))
 export function ToolCallPart({
   part,
   toolName,
@@ -68,7 +19,8 @@ export function ToolCallPart({
   status?: { type: string }
   [key: string]: unknown
 }) {
-  const { styles } = useStyles()
+  const { styles } = useProcessStyles()
+  const contentId = useId()
   const [open, setOpen] = useState(false)
   const name = part?.name ?? toolName ?? '工具'
   const state = part?.state ?? status?.type
@@ -92,6 +44,7 @@ export function ToolCallPart({
         type="button"
         className={styles.trigger}
         aria-expanded={open}
+        aria-controls={open ? contentId : undefined}
         onClick={() => setOpen(!open)}
       >
         {running || waiting ? (
@@ -103,7 +56,7 @@ export function ToolCallPart({
         ) : (
           <Wrench size={14} />
         )}
-        <span>{name}</span>
+        <span title={name}>{name}</span>
         <small>
           {running
             ? '调用中…'
@@ -118,13 +71,17 @@ export function ToolCallPart({
         <ChevronDown size={13} />
       </button>
       {open && (
-        <div className={styles.content}>
+        <div id={contentId} className={styles.content}>
           <small>参数</small>
-          <pre>{part?.arguments ?? argsText ?? '{}'}</pre>
+          <pre tabIndex={0} aria-label="工具参数">
+            {part?.arguments ?? argsText ?? '{}'}
+          </pre>
           {output !== undefined && (
             <>
               <small>结果</small>
-              <pre>{typeof output === 'string' ? output : JSON.stringify(output, null, 2)}</pre>
+              <pre tabIndex={0} aria-label="工具结果">
+                {typeof output === 'string' ? output : JSON.stringify(output, null, 2)}
+              </pre>
             </>
           )}
         </div>
@@ -143,7 +100,8 @@ export function ToolGroup({
   children?: ReactNode
   halted?: 'cancelled' | 'error' | undefined
 }) {
-  const { styles } = useStyles()
+  const { styles } = useProcessStyles()
+  const contentId = useId()
   const [open, setOpen] = useState(false)
   const running =
     !halted &&
@@ -154,12 +112,12 @@ export function ToolGroup({
         part.state === 'input-complete',
     )
   return (
-    <section style={{ margin: '8px 0' }}>
+    <section className={styles.root}>
       <button
         type="button"
         className={styles.trigger}
         aria-expanded={open}
-        style={{ background: 'transparent', paddingLeft: 0 }}
+        aria-controls={open ? contentId : undefined}
         onClick={() => setOpen(!open)}
       >
         <Wrench size={15} />
@@ -176,9 +134,12 @@ export function ToolGroup({
         </small>
         <ChevronDown size={13} />
       </button>
-      {open &&
-        (children ??
-          parts.map((part) => <ToolCallPart key={part.id} part={part} halted={halted} />))}
+      {open && (
+        <div id={contentId} className={styles.group}>
+          {children ??
+            parts.map((part) => <ToolCallPart key={part.id} part={part} halted={halted} />)}
+        </div>
+      )}
     </section>
   )
 }

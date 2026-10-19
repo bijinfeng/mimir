@@ -20,62 +20,52 @@ export function copyAnswerText(text: string, citations: Citation[]): string {
 
 /** Copy reads the visible message; saving uses its verified persisted ID, including local branches. */
 const useStyles = createStyles(({ css, token }) => ({
-  /*
-   * 动作条（assistant-ui 的 AssistantActionBar 形态）：`mt-2` 的一排
-   * **图标幽灵钮**，`muted-foreground/70` → hover 提到 foreground，
-   * 不铺底色、不带文字标签——它是次级动作，扫一眼有、读起来不吵。
-   * 左对齐跟在回答下面（上游同款），不靠右。
-   */
   row: css`
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 2px;
   `,
-  /*
-   * 单颗钮 = 官方 TooltipIconButton 的换算：size-6（24px）p-1、
-   * ghost（hover 浅底）、**按下缩 0.9**（active:scale-90，官方那枚
-   * 按钮的「按下去」手感）、tooltip 包在外层。
-   */
   button: css`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    padding: 4px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
     border: none;
-    background: none;
-    border-radius: ${token.borderRadiusSM}px;
-    color: ${token.colorTextQuaternary};
+    background: transparent;
+    border-radius: ${token.borderRadius}px;
+    color: ${token.colorTextTertiary};
     cursor: pointer;
     transition:
       color 0.12s ease-out,
-      background-color 0.12s ease-out,
-      transform 0.12s ease-out;
-
-    &:hover,
+      background-color 0.12s ease-out;
+    &:hover:not(:disabled),
     &:focus-visible {
       color: ${token.colorText};
       background: ${token.colorFillTertiary};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimaryBorder};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
-    }
-    &:active {
-      transform: scale(0.9);
     }
     &:disabled {
       cursor: not-allowed;
-      opacity: 0.5;
+      color: ${token.colorTextDisabled};
+    }
+    @media (pointer: coarse) {
+      width: 40px;
+      height: 40px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
     }
   `,
   saved: css`
-    color: ${token.colorLink};
-
-    &:hover,
-    &:focus-visible {
+    /* Keep the persisted-note state above the containing action row's buttons. */
+    &&,
+    &&&:hover,
+    &&&:focus-visible {
       color: ${token.colorLink};
     }
   `,

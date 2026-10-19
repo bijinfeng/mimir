@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-19",
+  "results": [
+    {
+      "name": "weknora_site",
+      "url": "https://weknora.weixin.qq.com/",
+      "http": 200,
+      "bytes": 113529,
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe"
+    },
+    {
+      "name": "weknora_package",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/contents/frontend/package.json?ref=2c0d8384398ca756ee414eef01b71caf91e2caa6",
+      "http": 200,
+      "bytes": 4074,
+      "sha256": "d6467ca2fbda356d0d1cbb55e7a7b16d142c91f63174fe3374fcb063330eefb9",
+      "version": "0.8.3"
+    },
+    {
+      "name": "obsidian_help",
+      "url": "https://help.obsidian.md/",
+      "http": 200,
+      "bytes": 2743,
+      "sha256": "f1852f7b260ae97615c38ffaa4f6613e8ef8639c81daa315eec08de5c4a42ebb"
+    }
+  ],
+  "source_commit": "2c0d8384398ca756ee414eef01b71caf91e2caa6",
+  "same_day_agent_source_evidence": ".trellis/tasks/archive/2026-10/10-18-interaction-chat/research/vendor-full-thread/weknora-reference-recheck.json",
+  "application": "Incumbent Yuque-derived Mimir tokens remain authoritative. Obsidian is the layout/readability reference, not a new palette. WeKnora 0.8.3 AgentStreamDisplay source lines 62-80 and 421-454 in same-day pinned evidence support separating process disclosures and answer actions; its event model and visual cards are not copied into TanStack or Office."
+}

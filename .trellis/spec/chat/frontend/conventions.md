@@ -18,6 +18,12 @@
 
 使用宿主 antd token 和 `createStyles`，不创建额外主题 provider。字号消费 `var(--mimir-chat-font-*, fallback)`，值由 renderer `ChatThemeBridge` 从 `FONT_SIZE` 注入；gutter 主视图 24px、侧栏 16px，消息列上限 808px、输入区域上限 856px。
 
+正文使用 `reading` 字号角色。`MarkdownPart` 只在官方 `TextPart` 根上提供标题、列表、表格与行内代码排版；不要在消息壳上对所有 `p/pre/code` 写后代规则，否则思考、工具 JSON、提示和动作会被正文样式污染。代码框自行管理头部与正文边框，表格和长代码提供带可访问名称、可键盘聚焦的局部滚动区。
+
+思考与工具折叠共用 `parts/Process.style.ts`，披露按钮以稳定 `aria-controls` 关联详情；只读协议内容使用 `ProtocolData`，不将载荷执行为页面。消息动作统一为 30px，间距由外层动作条管理，`AnswerActions` 不重复增加上边距；hover/focus 不改变几何。已存笔记的颜色须在常态、hover 和 focus 保持宿主链接角色，不能被外层 `button` 规则覆盖。
+
+输入框边界读取宿主 `fieldBorder/fieldBorderHover/fieldBorderFocus`，renderer 的这些角色复用同一 `FIELD_COLOR`，与基础表单保持一致；不要在对话包再造绿色或聚焦粗边。输入工具区按Composer容器宽度适配窄栏：附件、模型、实际等级、范围、发送保持单行，长名称截断但保留完整title/aria，范围可缩成“当前文档/本篇”；不要因窗口宽而忽略文档侧栏的真实容器宽。上下文用量独立为辅助信息行。
+
 `createStyles` 中消费 `var(...)`，不要声明 `--*` 自定义属性；变量声明由 `ChatHostVars` 承担。样式类必须挂到实际祖先节点，不能只定义而漏掉消费点。
 
 遵守宿主 React Compiler 约定：不手写 memo/useMemo/useCallback、不关闭 hooks 规则、不在 render-prop 中定义内联组件。异步状态等待真实完成信号，测试不靠固定延时。

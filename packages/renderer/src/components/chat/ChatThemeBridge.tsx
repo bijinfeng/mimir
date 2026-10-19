@@ -39,6 +39,7 @@ export function ChatThemeBridge({
       fontSize={{
         display: FONT_SIZE.display,
         body: FONT_SIZE.body,
+        reading: FONT_SIZE.reading,
         item: FONT_SIZE.item,
         excerpt: FONT_SIZE.excerpt,
         note: FONT_SIZE.note,

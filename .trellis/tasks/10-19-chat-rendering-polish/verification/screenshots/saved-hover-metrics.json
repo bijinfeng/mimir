@@ -1,0 +1,30 @@
+{
+  "focus": {
+    "color": "rgb(0, 122, 69)",
+    "focus": true,
+    "rect": {
+      "bottom": 491.546875,
+      "height": 30,
+      "left": 287,
+      "right": 317,
+      "top": 461.546875,
+      "width": 30,
+      "x": 287,
+      "y": 461.546875
+    }
+  },
+  "hover": {
+    "color": "rgb(0, 122, 69)",
+    "hover": false,
+    "rect": {
+      "bottom": 491.546875,
+      "height": 30,
+      "left": 287,
+      "right": 317,
+      "top": 461.546875,
+      "width": 30,
+      "x": 287,
+      "y": 461.546875
+    }
+  }
+}

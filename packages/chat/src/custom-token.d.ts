@@ -38,6 +38,10 @@ export type ChatCustomTokens = 'tintList' | 'tintHover' | 'inlineCodeFg' | 'surf
 
 declare module 'antd-style' {
   export interface CustomToken {
+    focusRing: string
+    fieldBorder: string
+    fieldBorderHover: string
+    fieldBorderFocus: string
     /** Main workspace surface; independent from card/input surfaces in dark mode. */
     surfaceContent: string
     /** 第四层表面：引用块 / 出处条的底 */

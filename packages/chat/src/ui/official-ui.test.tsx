@@ -188,10 +188,16 @@ describe('official UI production composition', () => {
     await update([withTool])
     expect(buttonContaining(container, '思考过程')).toBe(thinking)
     expect(thinking.getAttribute('aria-expanded')).toBe('true')
+    expect(
+      container.querySelector(`[id="${thinking.getAttribute('aria-controls')}"]`)?.textContent,
+    ).toContain('先检查资料')
     const group = buttonContaining(container, '工具调用')!
     await click(group)
     const tool = buttonContaining(container, 'read_blocks')!
     await click(tool)
+    const toolPanelId = tool.getAttribute('aria-controls')
+    expect(toolPanelId).toBeTruthy()
+    expect(container.querySelector(`[id="${toolPanelId}"]`)?.textContent).toContain('参数')
     tool.focus()
     await update([
       {
@@ -211,6 +217,8 @@ describe('official UI production composition', () => {
     expect(tool.getAttribute('aria-expanded')).toBe('true')
     expect(group.getAttribute('aria-expanded')).toBe('true')
     expect(document.activeElement).toBe(tool)
+    expect(tool.getAttribute('aria-controls')).toBe(toolPanelId)
+    expect(container.querySelector(`[id="${toolPanelId}"]`)?.textContent).toContain('完成结果')
     expect(container.textContent).toContain('完成结果')
     expect(container.textContent).toContain('初步回答继续增长')
   })

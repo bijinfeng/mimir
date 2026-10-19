@@ -48,7 +48,7 @@ export function CodeBlock({
    */
   if (text === null) {
     return (
-      <pre className={className} {...rest}>
+      <pre className={className} tabIndex={0} aria-label="代码块，可横向滚动" {...rest}>
         {children}
       </pre>
     )
@@ -60,7 +60,7 @@ export function CodeBlock({
        这组自己的观感。只有类名的话那两条覆盖选择器就找不着它了 */
     <div data-code-frame className={styles.frame}>
       <CodeBar lang={lang} text={text} />
-      <pre className={className} {...rest}>
+      <pre className={className} tabIndex={0} aria-label="代码块，可横向滚动" {...rest}>
         {children}
       </pre>
     </div>

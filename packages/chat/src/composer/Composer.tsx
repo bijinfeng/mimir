@@ -11,22 +11,23 @@ import { ImagePart } from '../parts/MediaParts.js'
 import { CONTENT_WIDTH } from '../ChatPanel.style.js'
 const useStyles = createStyles(({ css, token }) => ({
   wrap: css`
+    container: mimir-composer / inline-size;
     width: 100%;
     max-width: ${CONTENT_WIDTH}px;
     margin: 0 auto;
     padding: 12px var(--mimir-chat-gutter, 24px) 10px;
   `,
   box: css`
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 6px;
+    border: 1px solid ${token.fieldBorder ?? token.colorBorderSecondary};
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorBgContainer};
     padding: 0;
     transition: border-color 0.12s ease-out;
     &:hover {
-      border-color: ${token.colorBorder};
+      border-color: ${token.fieldBorderHover ?? token.colorBorder};
     }
     &:focus-within {
-      border-color: ${token.colorPrimary};
+      border-color: ${token.fieldBorderFocus ?? token.colorPrimary};
     }
     textarea {
       display: block;
@@ -51,10 +52,18 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   bar: css`
     display: flex;
-    align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    padding: 5px 7px 7px;
+    padding: 6px 8px 8px;
+    align-items: flex-end;
+    @container mimir-composer (max-width: 560px) {
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 4px;
+    }
+    @container mimir-composer (max-width: 300px) {
+      padding-inline: 4px;
+    }
   `,
   tools: css`
     display: flex;
@@ -63,6 +72,15 @@ const useStyles = createStyles(({ css, token }) => ({
     min-width: 0;
     gap: 4px;
     flex-wrap: wrap;
+    @container mimir-composer (max-width: 560px) {
+      flex-wrap: nowrap;
+      gap: 2px;
+    }
+  `,
+  usage: css`
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 12px 8px;
   `,
   icon: css`
     display: inline-flex;
@@ -77,12 +95,16 @@ const useStyles = createStyles(({ css, token }) => ({
     background: transparent;
     color: ${token.colorTextSecondary};
     cursor: pointer;
+    @media (pointer: coarse) {
+      width: 40px;
+      height: 40px;
+    }
     &:hover:not(:disabled) {
       background: ${token.colorFillTertiary};
       color: ${token.colorText};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimary};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
     }
     &:disabled {
@@ -103,11 +125,15 @@ const useStyles = createStyles(({ css, token }) => ({
     background: ${token.colorPrimary};
     color: ${token.colorTextLightSolid};
     cursor: pointer;
+    @media (pointer: coarse) {
+      width: 40px;
+      height: 40px;
+    }
     &:hover {
       background: ${token.colorPrimaryHover};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimary};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
     }
     &:disabled {
@@ -131,7 +157,18 @@ const useStyles = createStyles(({ css, token }) => ({
     border-radius: 6px;
     padding: 8px;
     background: ${token.colorFillQuaternary};
+    min-width: 0;
     font-size: var(--mimir-chat-font-meta, 12px);
+    > svg {
+      flex: none;
+      color: ${token.colorTextSecondary};
+    }
+    > div {
+      min-width: 0;
+    }
+    > div > span {
+      overflow-wrap: anywhere;
+    }
     img {
       width: 48px;
       height: 42px;
@@ -139,6 +176,7 @@ const useStyles = createStyles(({ css, token }) => ({
       border-radius: 3px;
     }
     a {
+      display: block;
       color: inherit;
       max-width: 190px;
       overflow: hidden;
@@ -157,7 +195,7 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 8px 0;
+    margin: 8px 12px;
     font-size: var(--mimir-chat-font-meta, 12px);
     line-height: 1.6;
     color: ${token.colorTextSecondary};
@@ -174,7 +212,7 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
+    margin: 0 12px 8px;
     padding: 5px 8px;
     background: ${token.colorFillQuaternary};
     border-radius: 4px;
@@ -182,6 +220,7 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextSecondary};
     span {
       flex: 1;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -431,7 +470,6 @@ export function Composer({
               onDocumentId={onDocumentIdChange}
               onManageModels={io.onManageModels}
             />
-            <ContextUsageChip usage={status.usage} />
           </div>
           {runtime.running ? (
             <button
@@ -452,6 +490,11 @@ export function Composer({
             </button>
           )}
         </div>
+        {status.usage?.promptTokens != null && (
+          <div className={styles.usage}>
+            <ContextUsageChip usage={status.usage} />
+          </div>
+        )}
       </form>
     </div>
   )

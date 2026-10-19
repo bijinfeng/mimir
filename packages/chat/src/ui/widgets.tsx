@@ -1,5 +1,6 @@
 import type { ChatUIComponents, PartProps, ToolProps } from '@tanstack/ai-react/ui'
 import { DOCX_ALL_TOOLS } from '@mimir/shared'
+import { ProtocolData } from '../parts/ProtocolData.js'
 import { MarkdownPart } from '../parts/MarkdownPart.js'
 import { ReasoningPart } from '../parts/ReasoningPart.js'
 import { FilePart, ImagePart } from '../parts/MediaParts.js'
@@ -44,12 +45,9 @@ export function ToolWidget({ part, result }: ToolProps<unknown>) {
 }
 function ToolResultWidget({ part }: PartProps<unknown, 'toolResult'>) {
   return (
-    <details>
-      <summary>工具结果</summary>
-      <pre>
-        {typeof part.content === 'string' ? part.content : JSON.stringify(part.content, null, 2)}
-      </pre>
-    </details>
+    <ProtocolData title="工具结果">
+      {typeof part.content === 'string' ? part.content : JSON.stringify(part.content, null, 2)}
+    </ProtocolData>
   )
 }
 function MediaWidget({ part }: PartProps<unknown, 'image' | 'document' | 'audio' | 'video'>) {
@@ -64,7 +62,8 @@ function MediaWidget({ part }: PartProps<unknown, 'image' | 'document' | 'audio'
         ? `data:${mime};base64,${source.value}`
         : ''
   if (part.type === 'image') return <ImagePart image={value} />
-  if (part.type === 'audio') return <audio controls src={value} aria-label="音频附件" />
+  if (part.type === 'audio')
+    return <audio controls src={value} aria-label="音频附件" style={{ maxWidth: '100%' }} />
   if (part.type === 'video')
     return <video controls src={value} aria-label="视频附件" style={{ maxWidth: '100%' }} />
   const metadata = part.metadata as Record<string, unknown> | undefined
@@ -78,21 +77,17 @@ function MediaWidget({ part }: PartProps<unknown, 'image' | 'document' | 'audio'
 }
 function ActivityWidget({ part }: PartProps<unknown, 'activity'>) {
   return (
-    <details>
-      <summary>{part.activityType}</summary>
-      <pre>{JSON.stringify(part.content, null, 2)}</pre>
-    </details>
+    <ProtocolData title={part.activityType}>{JSON.stringify(part.content, null, 2)}</ProtocolData>
   )
 }
 function StructuredWidget({ part }: PartProps<unknown, 'structuredOutput'>) {
-  return <pre>{JSON.stringify(part.data ?? part.partial, null, 2)}</pre>
+  return <ProtocolData>{JSON.stringify(part.data ?? part.partial, null, 2)}</ProtocolData>
 }
 export function SubagentWidget({ part }: PartProps<unknown, 'subagent'>) {
   return (
-    <details>
-      <summary>子任务 · {part.subagent.status}</summary>
-      <pre>{JSON.stringify(part.subagent.messages, null, 2)}</pre>
-    </details>
+    <ProtocolData title={`子任务 · ${part.subagent.status}`}>
+      {JSON.stringify(part.subagent.messages, null, 2)}
+    </ProtocolData>
   )
 }
 export const partsComponents = {

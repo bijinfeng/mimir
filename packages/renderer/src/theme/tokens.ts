@@ -100,7 +100,7 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
 })
 
 /** Fields have lighter boundaries than standalone checkbox/radio controls. */
-const FIELD_COLOR = {
+export const FIELD_COLOR = {
   light: {
     colorBorder: '#e7e9e8',
     hoverBorderColor: '#bfc5c1',

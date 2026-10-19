@@ -41,6 +41,8 @@ import type { CSSProperties, ReactNode } from 'react'
 export interface ChatHostFontSize {
   /** 界面正文：对话正文 */
   body: number
+  /** 连续回答正文 */
+  reading?: number
   /** 展示级大字：空态欢迎语（官方 text-2xl 那一档） */
   display: number
   /** 列表项标题 */
@@ -75,6 +77,7 @@ export function ChatHostVars({ children, gutter, fontSize }: ChatHostVarsProps) 
   if (fontSize !== undefined) {
     vars['--mimir-chat-font-display'] = `${fontSize.display}px`
     vars['--mimir-chat-font-body'] = `${fontSize.body}px`
+    if (fontSize.reading !== undefined) vars['--mimir-chat-font-reading'] = `${fontSize.reading}px`
     vars['--mimir-chat-font-item'] = `${fontSize.item}px`
     vars['--mimir-chat-font-excerpt'] = `${fontSize.excerpt}px`
     vars['--mimir-chat-font-note'] = `${fontSize.note}px`

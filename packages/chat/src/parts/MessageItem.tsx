@@ -20,6 +20,7 @@ const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 2px;
     min-height: 30px;
+    flex-wrap: wrap;
     margin-top: 8px;
     font-size: var(--mimir-chat-font-meta, 12px);
     color: ${token.colorTextTertiary};
@@ -34,36 +35,37 @@ const useStyles = createStyles(({ css, token }) => ({
       background: transparent;
       color: inherit;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: ${token.borderRadius}px;
+      padding: 0 6px;
+      font: inherit;
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background: ${token.colorFillTertiary};
       color: ${token.colorText};
     }
-    &[data-older] {
-      opacity: 0;
-    }
-    article:hover &,
-    article:focus-within & {
-      opacity: 1;
-    }
-    @media (hover: none) {
-      &[data-older] {
-        opacity: 1;
-      }
-    }
     button:focus-visible {
-      outline: 1px solid ${token.colorPrimary};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      color: ${token.colorTextDisabled};
+    }
+    @media (pointer: coarse) {
+      button {
+        min-width: 40px;
+        height: 40px;
+      }
     }
   `,
   menu: css`
     position: absolute;
     bottom: calc(100% + 6px);
-    left: 60px;
+    left: 0;
     z-index: 30;
     padding: 6px;
     min-width: 180px;
+    max-width: 100%;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: 6px;
     box-shadow: ${token.boxShadowSecondary};
@@ -103,9 +105,17 @@ const useStyles = createStyles(({ css, token }) => ({
       font: inherit;
       color: inherit;
       background: ${token.colorBgContainer};
-      border: 1px solid ${token.colorBorder};
+      border: 1px solid ${token.fieldBorder ?? token.colorBorderSecondary};
       border-radius: 6px;
-      padding: 8px;
+      padding: 10px 12px;
+      resize: vertical;
+      outline: none;
+      &:hover {
+        border-color: ${token.fieldBorderHover ?? token.colorBorder};
+      }
+      &:focus {
+        border-color: ${token.fieldBorderFocus ?? token.colorPrimary};
+      }
     }
   `,
 }))
@@ -214,57 +224,62 @@ export function MessageItem({ message }: { message: UIMessage }) {
   return (
     <MessageContext value={{ message, sidecar, running }}>
       <article data-role={user ? 'user' : 'assistant'}>
-        <div className={styles.assistantHeading}>{user ? '你' : 'mimir'}</div>
-        {!!sidecar.attachments?.length && (
-          <div className={local.files}>
-            {sidecar.attachments.map((file) => (
-              <AttachmentTile file={file} key={file.id} />
-            ))}
-          </div>
-        )}
-        {sidecar.snapshot && (
-          <ImagePart image={sidecar.snapshot.image.dataUrl} name={sidecar.snapshot.image.name} />
-        )}
-        {editing ? (
-          <div className={local.edit}>
-            <textarea
-              ref={editInput}
-              value={edit}
-              aria-label="编辑消息"
-              onChange={(event) => setEdit(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Escape') closeEdit()
-              }}
-            />
-            <div className={local.actions}>
-              <button
-                type="button"
-                onClick={() => {
-                  api.editTurn?.(message.id, edit)
-                  closeEdit()
-                }}
-                disabled={!edit.trim()}
-              >
-                保存并重新发送
-              </button>
-              <button type="button" onClick={closeEdit}>
-                取消
-              </button>
+        <div className={styles.assistantHeading} data-message-heading="">
+          {user ? '你' : 'mimir'}
+        </div>
+        <div data-message-body="">
+          {!!sidecar.attachments?.length && (
+            <div className={local.files}>
+              {sidecar.attachments.map((file) => (
+                <AttachmentTile file={file} key={file.id} />
+              ))}
             </div>
-          </div>
-        ) : (
-          <MessageParts message={message} />
-        )}
-        {!user &&
-          running &&
-          !message.parts.some(
-            (part) =>
-              (part.type === 'text' && part.content) || (part.type === 'thinking' && part.content),
-          ) && (
-            <span role="status" aria-label="正在生成回答" className={local.waiting}>
-              ●
-            </span>
           )}
+          {sidecar.snapshot && (
+            <ImagePart image={sidecar.snapshot.image.dataUrl} name={sidecar.snapshot.image.name} />
+          )}
+          {editing ? (
+            <div className={local.edit}>
+              <textarea
+                ref={editInput}
+                value={edit}
+                aria-label="编辑消息"
+                onChange={(event) => setEdit(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') closeEdit()
+                }}
+              />
+              <div className={local.actions}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    api.editTurn?.(message.id, edit)
+                    closeEdit()
+                  }}
+                  disabled={!edit.trim()}
+                >
+                  保存并重新发送
+                </button>
+                <button type="button" onClick={closeEdit}>
+                  取消
+                </button>
+              </div>
+            </div>
+          ) : (
+            <MessageParts message={message} />
+          )}
+          {!user &&
+            running &&
+            !message.parts.some(
+              (part) =>
+                (part.type === 'text' && part.content) ||
+                (part.type === 'thinking' && part.content),
+            ) && (
+              <span role="status" aria-label="正在生成回答" className={local.waiting}>
+                ●
+              </span>
+            )}
+        </div>
         {!user && sidecar.agent && <DocxAgentHistoryNotice agent={sidecar.agent} />}
         {!user && <CitationList citations={sidecar.citations ?? []} onOpen={api.onOpenCitation} />}
         {!user && sidecar.failure ? (
@@ -282,7 +297,7 @@ export function MessageItem({ message }: { message: UIMessage }) {
         ) : null}
         {!user && sidecar.stopped && <StoppedNotice />}
         {text && !running && (user || successful) && !editing && (
-          <div className={local.actions} data-older={!isLast || undefined}>
+          <div className={local.actions} data-message-actions="" data-older={!isLast || undefined}>
             {user ? (
               <>
                 <button type="button" aria-label="复制消息" onClick={() => void copy()}>

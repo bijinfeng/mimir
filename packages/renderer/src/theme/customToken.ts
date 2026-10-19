@@ -1,4 +1,5 @@
 import type { Appearance } from './appearance'
+import { FIELD_COLOR } from './tokens'
 
 /** Product roles that are independent from antd brand/semantic states. */
 export interface MimirCustomToken {
@@ -13,6 +14,10 @@ export interface MimirCustomToken {
   surfaceContent: string
   /** Visible keyboard ring; 2px with 2px offset at the consuming control. */
   focusRing: string
+  /** Native/custom fields share the exact Input/Select boundary palette. */
+  fieldBorder: string
+  fieldBorderHover: string
+  fieldBorderFocus: string
   inlineCodeFg: string
   highlightBg: string
   heatL1: string
@@ -33,6 +38,9 @@ const LIGHT: MimirCustomToken = {
   navSelectedText: '#262626',
   surfaceContent: '#ffffff',
   focusRing: '#00834d',
+  fieldBorder: FIELD_COLOR.light.colorBorder,
+  fieldBorderHover: FIELD_COLOR.light.hoverBorderColor,
+  fieldBorderFocus: FIELD_COLOR.light.activeBorderColor,
   inlineCodeFg: '#b42349',
   highlightBg: '#fff3b0',
   heatL1: '#b5ddc7',
@@ -49,6 +57,9 @@ const DARK: MimirCustomToken = {
   navSelectedText: '#eceeef',
   surfaceContent: '#18191a',
   focusRing: '#6bdaa5',
+  fieldBorder: FIELD_COLOR.dark.colorBorder,
+  fieldBorderHover: FIELD_COLOR.dark.hoverBorderColor,
+  fieldBorderFocus: FIELD_COLOR.dark.activeBorderColor,
   inlineCodeFg: '#ffa6b4',
   highlightBg: '#4a3c10',
   heatL1: '#28543e',

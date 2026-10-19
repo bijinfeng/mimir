@@ -1,0 +1,772 @@
+{
+  "date": "2026-10-19",
+  "baselineCommit": "b124c34",
+  "fixture": "real production ChatPanel/parts + official TanStack UI + actual renderer theme; in-memory IO and fixed messages",
+  "sameGallerySource": true,
+  "galleryMainSha256": "bba885568c53f2f6f99bbc487fca3500edf711c498dc2de38e2b39766a7c93bd",
+  "galleryStyleSha256": "5e953b5c26c72796883a5aad06fa541d1eae232bbef256695281144b7bce2920",
+  "beforeBundleSha256": "9c2d68a9853e58e47e4ce31194d748c15bcce3c4375913f7ac393ab80e458a8e",
+  "afterBundleSha256": "f87600c9e9cc74627acb408add848c3cb27fd7920712944d2895ddeb46dbfb3f",
+  "sharedCssBundleSha256": "3d716c59b76796f1a8be0ea8425fd19bab7162a87a2b5e95eda2642e303a34e1",
+  "viewport": [
+    1220,
+    900
+  ],
+  "captureNote": "Two sidebar state captures are emitted by the browser API at 1205x889; each before/after pair has identical pixel dimensions. No screenshots were resized.",
+  "pairs": [
+    {
+      "id": "reading-light-main",
+      "label": "正文排版 · 浅色 · 主对话",
+      "before": "screenshots/before/reading-light-main.png",
+      "after": "screenshots/after/reading-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "empty-light-main",
+      "label": "新对话 · 浅色 · 主对话",
+      "before": "screenshots/before/empty-light-main.png",
+      "after": "screenshots/after/empty-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "empty-light-sidebar",
+      "label": "新对话 · 浅色 · 文档侧栏",
+      "before": "screenshots/before/empty-light-sidebar.png",
+      "after": "screenshots/after/empty-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-empty-light-sidebar.png",
+      "previewAfter": "previews/after-empty-light-sidebar.png"
+    },
+    {
+      "id": "failure-light-main",
+      "label": "失败与恢复 · 浅色 · 主对话",
+      "before": "screenshots/before/failure-light-main.png",
+      "after": "screenshots/after/failure-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "history-error-light-main",
+      "label": "历史读取失败 · 浅色 · 主对话",
+      "before": "screenshots/before/history-error-light-main.png",
+      "after": "screenshots/after/history-error-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "loading-light-main",
+      "label": "历史读取 · 浅色 · 主对话",
+      "before": "screenshots/before/loading-light-main.png",
+      "after": "screenshots/after/loading-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "process-dark-main",
+      "label": "思考与工具 · 深色 · 主对话",
+      "before": "screenshots/before/process-dark-main.png",
+      "after": "screenshots/after/process-dark-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "process-dark-sidebar",
+      "label": "思考与工具 · 深色 · 文档侧栏",
+      "before": "screenshots/before/process-dark-sidebar.png",
+      "after": "screenshots/after/process-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-process-dark-sidebar.png",
+      "previewAfter": "previews/after-process-dark-sidebar.png"
+    },
+    {
+      "id": "process-expanded-light-sidebar",
+      "label": "展开的思考与工具 · 浅色 · 文档侧栏",
+      "before": "screenshots/before/process-expanded-light-sidebar.png",
+      "after": "screenshots/after/process-expanded-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-process-expanded-light-sidebar.png",
+      "previewAfter": "previews/after-process-expanded-light-sidebar.png"
+    },
+    {
+      "id": "process-light-main",
+      "label": "思考与工具 · 浅色 · 主对话",
+      "before": "screenshots/before/process-light-main.png",
+      "after": "screenshots/after/process-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "process-light-sidebar",
+      "label": "思考与工具 · 浅色 · 文档侧栏",
+      "before": "screenshots/before/process-light-sidebar.png",
+      "after": "screenshots/after/process-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-process-light-sidebar.png",
+      "previewAfter": "previews/after-process-light-sidebar.png"
+    },
+    {
+      "id": "reading-bottom-dark-main",
+      "label": "代码、引用与动作 · 深色 · 主对话",
+      "before": "screenshots/before/reading-bottom-dark-main.png",
+      "after": "screenshots/after/reading-bottom-dark-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "reading-bottom-dark-sidebar",
+      "label": "代码、引用与动作 · 深色 · 文档侧栏",
+      "before": "screenshots/before/reading-bottom-dark-sidebar.png",
+      "after": "screenshots/after/reading-bottom-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-reading-bottom-dark-sidebar.png",
+      "previewAfter": "previews/after-reading-bottom-dark-sidebar.png"
+    },
+    {
+      "id": "reading-bottom-light-main",
+      "label": "代码、引用与动作 · 浅色 · 主对话",
+      "before": "screenshots/before/reading-bottom-light-main.png",
+      "after": "screenshots/after/reading-bottom-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "reading-bottom-light-sidebar",
+      "label": "代码、引用与动作 · 浅色 · 文档侧栏",
+      "before": "screenshots/before/reading-bottom-light-sidebar.png",
+      "after": "screenshots/after/reading-bottom-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-reading-bottom-light-sidebar.png",
+      "previewAfter": "previews/after-reading-bottom-light-sidebar.png"
+    },
+    {
+      "id": "reading-dark-main",
+      "label": "正文排版 · 深色 · 主对话",
+      "before": "screenshots/before/reading-dark-main.png",
+      "after": "screenshots/after/reading-dark-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "reading-dark-sidebar",
+      "label": "正文排版 · 深色 · 文档侧栏",
+      "before": "screenshots/before/reading-dark-sidebar.png",
+      "after": "screenshots/after/reading-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-reading-dark-sidebar.png",
+      "previewAfter": "previews/after-reading-dark-sidebar.png"
+    },
+    {
+      "id": "reading-light-sidebar",
+      "label": "正文排版 · 浅色 · 文档侧栏",
+      "before": "screenshots/before/reading-light-sidebar.png",
+      "after": "screenshots/after/reading-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "previewBefore": "previews/before-reading-light-sidebar.png",
+      "previewAfter": "previews/after-reading-light-sidebar.png"
+    },
+    {
+      "id": "states-bottom-dark-sidebar",
+      "label": "媒体与协议内容 · 深色 · 文档侧栏",
+      "before": "screenshots/before/states-bottom-dark-sidebar.png",
+      "after": "screenshots/after/states-bottom-dark-sidebar.png",
+      "size": [
+        1205,
+        889
+      ],
+      "previewBefore": "previews/before-states-bottom-dark-sidebar.png",
+      "previewAfter": "previews/after-states-bottom-dark-sidebar.png"
+    },
+    {
+      "id": "states-bottom-light-main",
+      "label": "媒体与协议内容 · 浅色 · 主对话",
+      "before": "screenshots/before/states-bottom-light-main.png",
+      "after": "screenshots/after/states-bottom-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "states-dark-main",
+      "label": "过程、终局与媒体 · 深色 · 主对话",
+      "before": "screenshots/before/states-dark-main.png",
+      "after": "screenshots/after/states-dark-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "states-light-main",
+      "label": "过程、终局与媒体 · 浅色 · 主对话",
+      "before": "screenshots/before/states-light-main.png",
+      "after": "screenshots/after/states-light-main.png",
+      "size": [
+        1220,
+        900
+      ]
+    },
+    {
+      "id": "states-light-sidebar",
+      "label": "过程、终局与媒体 · 浅色 · 文档侧栏",
+      "before": "screenshots/before/states-light-sidebar.png",
+      "after": "screenshots/after/states-light-sidebar.png",
+      "size": [
+        1205,
+        889
+      ],
+      "previewBefore": "previews/before-states-light-sidebar.png",
+      "previewAfter": "previews/after-states-light-sidebar.png"
+    }
+  ],
+  "productEvidence": [
+    {
+      "label": "attachment-preview",
+      "path": "screenshots/product-attachment-preview.png"
+    },
+    {
+      "label": "edit-dark",
+      "path": "screenshots/product-edit-dark.png"
+    },
+    {
+      "label": "empty-before",
+      "path": "screenshots/product-empty-before.png"
+    },
+    {
+      "label": "main-600-light",
+      "path": "screenshots/product-main-600-light.png"
+    },
+    {
+      "label": "queue-stop-light",
+      "path": "screenshots/product-queue-stop-light.png"
+    },
+    {
+      "label": "reading-light",
+      "path": "screenshots/product-reading-light.png"
+    },
+    {
+      "label": "saved-dark",
+      "path": "screenshots/product-saved-dark.png"
+    },
+    {
+      "label": "saved-hover-light",
+      "path": "screenshots/product-saved-hover-light.png"
+    },
+    {
+      "label": "sidebar-light",
+      "path": "screenshots/product-sidebar-light.png"
+    },
+    {
+      "label": "sidebar-single-row-dark",
+      "path": "screenshots/product-sidebar-single-row-dark.png"
+    },
+    {
+      "label": "sidebar-single-row-light",
+      "path": "screenshots/product-sidebar-single-row-light.png"
+    }
+  ],
+  "files": [
+    {
+      "path": "screenshots/after/empty-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "4a2e5253cfac425285640b4dc672f1d629c679a6af66921c89c9d9369a06480b"
+    },
+    {
+      "path": "screenshots/after/empty-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "7f088988d3b577d82fa3fea856f5ca3da4071494f2717ef07ace54c274f521af"
+    },
+    {
+      "path": "screenshots/after/failure-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "e046f000ce062c3f03d9399c96f33b34ca628df5b8058fc32a49c498a5b0f9ec"
+    },
+    {
+      "path": "screenshots/after/history-error-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "83593075b3d4902817fdd28492a57c5a25cfd777c39db5e8439f2948f6d84321"
+    },
+    {
+      "path": "screenshots/after/loading-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "6c54a856807e091ebc14590b3953f2dd013304a272a0164c3457a9028866ff5c"
+    },
+    {
+      "path": "screenshots/after/process-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "e107417343a1f5f12c3dd0c7c30227b5b9e1924e193c24848eeb9203371f8130"
+    },
+    {
+      "path": "screenshots/after/process-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "351e81519c199d9eb621fd543e2f3745e6f4d5cef8324947898ce25ee21c83e0"
+    },
+    {
+      "path": "screenshots/after/process-expanded-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "6f51b227dc78eeb9a4778b1c15c12e9d14a36621ea36411effbac9c2942c18ff"
+    },
+    {
+      "path": "screenshots/after/process-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "dca48ffb56e7cc7a387e641f0b22e71b1f9b3cdac0ab0ca276da5c356b50c25e"
+    },
+    {
+      "path": "screenshots/after/process-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "c4d85813df5a81c1bb246bba25133b7f5e99a42996b6ad5142f727068ff1ae13"
+    },
+    {
+      "path": "screenshots/after/reading-bottom-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "14857bbc8fc7661b403ad5f67b75947a9b313c84b75d1e137c60c43d3c9d0e8b"
+    },
+    {
+      "path": "screenshots/after/reading-bottom-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "94f3461878e71317a2390800759851681e85635b225ff2e6633738e40d080715"
+    },
+    {
+      "path": "screenshots/after/reading-bottom-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "77d962c4917f9293300dc23d053ee462eaa94a91bc9e7b4ef2b90971db71cda8"
+    },
+    {
+      "path": "screenshots/after/reading-bottom-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "c5ae1d2b68223198b1393897938b8c85c0d2fc9a5079d3d1b7e1f6815fb5dd86"
+    },
+    {
+      "path": "screenshots/after/reading-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "1a593fe19f73faf0dddcb651f35cdeae222e43529e07a463a77669ae19dd4c20"
+    },
+    {
+      "path": "screenshots/after/reading-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "857c40211b53968969e3dfd864f760d82bfd41d2766fcb13d29fb0b452209938"
+    },
+    {
+      "path": "screenshots/after/reading-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "43541b052acfeb57375dfbd8db29a1c47dadc7cb71800fb754f3e1428a29c484"
+    },
+    {
+      "path": "screenshots/after/reading-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "a3996283089a97067851b8681c3884a173ef308da95246f48cf9c73cd63311b7"
+    },
+    {
+      "path": "screenshots/after/states-bottom-dark-sidebar.png",
+      "size": [
+        1205,
+        889
+      ],
+      "sha256": "328c7804bfd1f58dcb2976eb56dabf6a2b48ce0fdbcc905b89f5c96ee8874ed5"
+    },
+    {
+      "path": "screenshots/after/states-bottom-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "703bfcb002632209fd93b1fc6a7421105986c8860b385bc4a27c10246c0be450"
+    },
+    {
+      "path": "screenshots/after/states-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "c8700bf7b66b5585be44c1c06f55f6361eb56a90aaee094354e83bcf918e64f5"
+    },
+    {
+      "path": "screenshots/after/states-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "204f1f223e13cf40ec028567320e8f797757603039c65f0e0d2eead4073494fd"
+    },
+    {
+      "path": "screenshots/after/states-light-sidebar.png",
+      "size": [
+        1205,
+        889
+      ],
+      "sha256": "215814f7bab1adc5c5a71d08d4221a786a8a53ada95f34479eed783a0e6a760e"
+    },
+    {
+      "path": "screenshots/before/empty-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "3f6861a9034608c3d30414c6d7995bad033b12a8ada22fbd2e72a99e9df0a97b"
+    },
+    {
+      "path": "screenshots/before/empty-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "b93b8342cf7d034c37fac34194cfbb9abdc31359b24ca6d25d773a93f7b99d6c"
+    },
+    {
+      "path": "screenshots/before/failure-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "ee6e7b826a5561f695c0bb311e7389997165ad2bd3b366efb15f5c7c8b26190e"
+    },
+    {
+      "path": "screenshots/before/history-error-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "bd54fa6c16ecd91e4b18344d9de84f1f94ea17713c8eab7861f0bc0f235cb231"
+    },
+    {
+      "path": "screenshots/before/loading-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "2108a9567ce3707c976ea8ed9ef941916bbcb7d79e5225fbff2eaadd7c20dff6"
+    },
+    {
+      "path": "screenshots/before/process-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "71ebbaee1376af68d8da6d90bc964a3c0454da5043283022eb26cf691dc59e85"
+    },
+    {
+      "path": "screenshots/before/process-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "a5c2494130fe4db0a1f37be1f83d1c8b4ebf39851999a4111689638652b7b337"
+    },
+    {
+      "path": "screenshots/before/process-expanded-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "04c93c4cef3e61ca2c073447c3068c4dce519a294f4174658ad2618c037e9971"
+    },
+    {
+      "path": "screenshots/before/process-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "0c80763eeac876b7c6306b79d56dcf051050c63048cc5b8be5f8189ea69bbe61"
+    },
+    {
+      "path": "screenshots/before/process-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "36ca6ba7c54c9d67df3c15d46974837eb2473be6b7fa6edc2766ba899ca21c15"
+    },
+    {
+      "path": "screenshots/before/reading-bottom-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "0e907d521ab0512dabb28e72f4024786914f7204667057bd65b2e78ef4339a22"
+    },
+    {
+      "path": "screenshots/before/reading-bottom-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "98043b29dc4901fe7da86dc803896632a2da60358296b3aedb23b561086a3483"
+    },
+    {
+      "path": "screenshots/before/reading-bottom-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "4e5eacfcc6ea1ae2367eee913fd63bb5633726e38210ca1430cdf861e3b9fc2a"
+    },
+    {
+      "path": "screenshots/before/reading-bottom-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "ae54ff0ff5d6e8bf9cd45815f400fcdf298cb818e86fdc4ce5996cbfa71d45fc"
+    },
+    {
+      "path": "screenshots/before/reading-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "36b4a9a771d22799d91d21e227f0dbaa9cbe5c3becabff88b3d3a34787e7f812"
+    },
+    {
+      "path": "screenshots/before/reading-dark-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "e445211787d49659ca3793c8ccad0e5effbdb54e0425d83d0ab1a1da939ea507"
+    },
+    {
+      "path": "screenshots/before/reading-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "587422b78ed6c5c52f2554c9f5a5b6f0e4b4f1beaec7d73abfc4947485a3f91c"
+    },
+    {
+      "path": "screenshots/before/reading-light-sidebar.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "f587c7d9b676c5c0d3a8df7de9be702d70e8779d9b15f1cc692b6433d724babd"
+    },
+    {
+      "path": "screenshots/before/states-bottom-dark-sidebar.png",
+      "size": [
+        1205,
+        889
+      ],
+      "sha256": "9609bd98b567e981a475e6a7ccedd88b94ab031f7609f5937cea10f8c86e70d0"
+    },
+    {
+      "path": "screenshots/before/states-bottom-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "c88c3718c3f119e1e23332cd887442732fce5087d3c920394d66737724efc7e0"
+    },
+    {
+      "path": "screenshots/before/states-dark-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "98e6083739057f94859ed5b4549932e872fee803b9c7c8c8623fead32a708f85"
+    },
+    {
+      "path": "screenshots/before/states-light-main.png",
+      "size": [
+        1220,
+        900
+      ],
+      "sha256": "ac006ba619665e660f82c3c9db0a7c975812b5ca195b409fd0c92532a4f9c847"
+    },
+    {
+      "path": "screenshots/before/states-light-sidebar.png",
+      "size": [
+        1205,
+        889
+      ],
+      "sha256": "dd73f88ca885e02eda1cc490a7479251ee0856a92f93bcd687125a4d93866eb0"
+    },
+    {
+      "path": "screenshots/product-attachment-preview.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "d4a0a8b1682cc8d791550ed3dae6dd90936d9bc86174a4df571d6fb2e8c3afc6"
+    },
+    {
+      "path": "screenshots/product-edit-dark.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "1beb5806f527750194265d6c816367f625509d3b0b3968041ee0ec4adaeefbae"
+    },
+    {
+      "path": "screenshots/product-empty-before.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "a3cc0826236fd9e563f5081cf14b0b20a0b4b1fb233e13524705a8b70e796ef4"
+    },
+    {
+      "path": "screenshots/product-main-600-light.png",
+      "size": [
+        600,
+        479
+      ],
+      "sha256": "79eacc4d02901b8847979a274f015e73f85b384199fa986019997dfe83723d23"
+    },
+    {
+      "path": "screenshots/product-queue-stop-light.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "8f63eef2af6a4d9708fe1885b73fa22f9b6b7cb515c9bd67a130b0ae00a7cf27"
+    },
+    {
+      "path": "screenshots/product-reading-light.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "c1d4aa4f3b18a6cebd46f09d1e0294cd81a51cdd48075dc3f1e2fcbdf3c7483a"
+    },
+    {
+      "path": "screenshots/product-saved-dark.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "5746b751722c75b03c67199b07c2136c97198d17f396233dc9b416547736b718"
+    },
+    {
+      "path": "screenshots/product-saved-hover-light.png",
+      "size": [
+        1093,
+        873
+      ],
+      "sha256": "bd75265faf2bdcbec918f9873159eef6994a0469177dd1403224c026eb546d5e"
+    },
+    {
+      "path": "screenshots/product-sidebar-light.png",
+      "size": [
+        1280,
+        720
+      ],
+      "sha256": "97704fa29162f2966bcbde7b4c0648a44eb666cf1aa6fc57ecbd4771b9f0aac8"
+    },
+    {
+      "path": "screenshots/product-sidebar-single-row-dark.png",
+      "size": [
+        1093,
+        873
+      ],
+      "sha256": "f9525dac08db1258ecfab7308b4ad08412f80fd18db996cb7d445b6a0d4c59ca"
+    },
+    {
+      "path": "screenshots/product-sidebar-single-row-light.png",
+      "size": [
+        1093,
+        873
+      ],
+      "sha256": "b187ffc88c0cc6988cd898329481839df7d32f77d720a761776df9294bb99091"
+    }
+  ]
+}

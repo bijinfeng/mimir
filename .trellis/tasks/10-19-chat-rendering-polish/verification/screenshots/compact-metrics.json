@@ -1,0 +1,218 @@
+[
+  {
+    "buttons": [
+      {
+        "name": "添加附件",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 26,
+          "right": 56,
+          "top": 582,
+          "width": 30,
+          "x": 26,
+          "y": 582
+        }
+      },
+      {
+        "name": "当前模型：Knowledge Assistant",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 58,
+          "right": 171.453125,
+          "top": 582,
+          "width": 113.453125,
+          "x": 58,
+          "y": 582
+        }
+      },
+      {
+        "name": "推理等级：模型默认",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 173.453125,
+          "right": 237.96875,
+          "top": 582,
+          "width": 64.515625,
+          "x": 173.453125,
+          "y": 582
+        }
+      },
+      {
+        "name": "本轮检索范围：全部文档",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 239.96875,
+          "right": 330,
+          "top": 582,
+          "width": 90.03125,
+          "x": 239.96875,
+          "y": 582
+        }
+      },
+      {
+        "name": "发送",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 334,
+          "right": 364,
+          "top": 582,
+          "width": 30,
+          "x": 334,
+          "y": 582
+        }
+      }
+    ],
+    "client": 390,
+    "scroll": 390,
+    "viewport": 390
+  },
+  {
+    "buttons": [
+      {
+        "name": "添加附件",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 22,
+          "right": 52,
+          "top": 582,
+          "width": 30,
+          "x": 22,
+          "y": 582
+        }
+      },
+      {
+        "name": "当前模型：Knowledge Assistant",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 54,
+          "right": 147.96875,
+          "top": 582,
+          "width": 93.96875,
+          "x": 54,
+          "y": 582
+        }
+      },
+      {
+        "name": "推理等级：模型默认",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 149.96875,
+          "right": 197.484375,
+          "top": 582,
+          "width": 47.515625,
+          "x": 149.96875,
+          "y": 582
+        }
+      },
+      {
+        "name": "本轮检索范围：全部文档",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 199.484375,
+          "right": 264,
+          "top": 582,
+          "width": 64.515625,
+          "x": 199.484375,
+          "y": 582
+        }
+      },
+      {
+        "name": "发送",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 268,
+          "right": 298,
+          "top": 582,
+          "width": 30,
+          "x": 268,
+          "y": 582
+        }
+      }
+    ],
+    "client": 320,
+    "scroll": 320,
+    "viewport": 320
+  },
+  {
+    "buttons": [
+      {
+        "name": "添加附件",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 22,
+          "right": 52,
+          "top": 582,
+          "width": 30,
+          "x": 22,
+          "y": 582
+        }
+      },
+      {
+        "name": "当前模型：Knowledge Assistant",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 54,
+          "right": 107.96875,
+          "top": 582,
+          "width": 53.96875,
+          "x": 54,
+          "y": 582
+        }
+      },
+      {
+        "name": "推理等级：模型默认",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 109.96875,
+          "right": 157.484375,
+          "top": 582,
+          "width": 47.515625,
+          "x": 109.96875,
+          "y": 582
+        }
+      },
+      {
+        "name": "本轮检索范围：全部文档",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 159.484375,
+          "right": 224,
+          "top": 582,
+          "width": 64.515625,
+          "x": 159.484375,
+          "y": 582
+        }
+      },
+      {
+        "name": "发送",
+        "rect": {
+          "bottom": 612,
+          "height": 30,
+          "left": 228,
+          "right": 258,
+          "top": 582,
+          "width": 30,
+          "x": 228,
+          "y": 582
+        }
+      }
+    ],
+    "client": 280,
+    "scroll": 280,
+    "viewport": 280
+  }
+]

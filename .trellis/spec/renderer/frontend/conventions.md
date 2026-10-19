@@ -310,8 +310,8 @@ src/**/*.style.ts           组件/页面样式（createStyles）
 10. **对话包同理但只有字号与栏宽需要桥**（`--mimir-chat-*`）：颜色 / 间距 /
     圆角由包内的 `createStyles` 直接读本站 token（它内部就是
     `theme.useToken()`），**不需要也不该**在宿主里再传一套。桥是
-    `components/chat/ChatThemeBridge.tsx`，值只有 `FONT_SIZE` 八档 +
-    「主视图 40px / 侧栏 16px」的 `gutter`。两个宿主都走它，
+    `components/chat/ChatThemeBridge.tsx`，值来自 `FONT_SIZE`（含正文 `reading`）与
+    [对话主题几何合同](../../chat/frontend/conventions.md#主题与几何) 的 `gutter`。两个宿主都走它，
     各挂一份必然会漂移，而漂移是**静默**的（字号差半个像素）
 11. **编辑器工具条里的控件是 antd 组件（D-064），但它们住在 `packages/office`
     里，不归本包的样式管。** 那棵子树由包内一层只传

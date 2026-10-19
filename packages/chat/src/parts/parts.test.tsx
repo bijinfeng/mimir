@@ -143,6 +143,20 @@ describe('MarkdownPart', () => {
     expect(html).toContain('ts')
   })
 
+  it('表格保留原生语义与键盘可达的局部滚动边界', () => {
+    const html = renderToString(
+      createElement(MarkdownPart, {
+        text: '| 项目 | 说明 |\n| --- | --- |\n| 知识整理 | 保留可核对的原文 |',
+      }),
+    )
+    expect(html).toContain('role="region"')
+    expect(html).toContain('回答表格，可横向滚动')
+    expect(html).toContain('tabindex="0"')
+    expect(html).toContain('<table')
+    expect(html).toContain('<thead>')
+    expect(html).toContain('<tbody>')
+  })
+
   it('流式半截的标题/列表项不留空壳', () => {
     /**
      * 这是 `streamingMarkdownExtension` 的作用（实测它对「末尾占位」的处理）：

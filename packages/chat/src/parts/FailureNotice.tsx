@@ -19,9 +19,9 @@ import { createStyles } from 'antd-style'
 const useStyles = createStyles(({ css, token }) => ({
   box: css`
     padding: 13px 15px;
-    margin-top: 12px;
+    margin-top: 16px;
     border: 1px solid ${token.colorErrorBorder};
-    border-radius: 10px;
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorErrorBg};
   `,
   head: css`

@@ -110,7 +110,7 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 3px;
-    margin-top: 21px;
+    margin-top: 20px;
     padding-top: 11px;
     border-top: 1px solid ${token.colorBorderSecondary};
     /* 与检索过程、消息气泡同宽：对话列里这三样是一条竖线上的三个块 */
@@ -133,31 +133,33 @@ const useStyles = createStyles(({ css, token }) => ({
       background: ${token.colorFillQuaternary};
     }
     &:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: -2px;
     }
   `,
   top: css`
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px 10px;
+    flex-wrap: wrap;
     margin-bottom: 3px;
   `,
   title: css`
-    flex: 1;
+    flex: 1 1 140px;
     min-width: 0;
     font-size: var(--mimir-chat-font-excerpt, 13px);
     font-weight: 500;
     color: ${token.colorText};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
   `,
   /* 命中通道。中性、无彩色底：它是**元信息**（这条为什么在这），
      不是状态徽标（DESIGN §3.7 那种色对留给「偏离常态」的状态）。
      与标题同排但小一档，扫读时不会跟标题抢。 */
   channel: css`
     flex: none;
+    max-width: 100%;
+    white-space: normal;
     margin-inline-end: 0;
     font-size: var(--mimir-chat-font-badge, 11.5px);
     line-height: 1.6;

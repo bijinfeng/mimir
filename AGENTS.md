@@ -24,6 +24,10 @@ Managed by Trellis. Edits outside this block are preserved; edits inside may be 
 
 每轮实现与验收完成后，及时提交本轮相关代码、测试和规范记录，避免跨轮积累未提交改动。按功能组织提交，只纳入当前任务的改动；不混入其他会话或用户的未完成工作。提交前检查差异与质量门，提交后记录 commit。推送仍按用户要求执行。
 
+## 界面打磨节奏
+
+用户已授权后续界面打磨直接实施，无需逐模块等待对比稿确认。完成后以相同内容、主题和尺寸保存真实组件的前后渲染 HTML 对比，连同覆盖清单和验证结果归档；旧对比稿保留。若用户在具体任务中另设确认点，以新的要求为准。
+
 ## 测试账号
 
 统一使用以下凭据进行登录测试（与 `.env` 的 `OWNER_EMAIL` / `OWNER_PASSWORD`、`apps/server/src/test/helpers.ts` 的 `TEST_USER` 保持一致）：

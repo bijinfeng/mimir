@@ -32,9 +32,12 @@ const useStyles = createStyles(({ css, token }) => ({
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
     padding: 4px 10px 4px 6px;
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 9999px;
+    border-radius: ${token.borderRadius}px;
     background: none;
     color: ${token.colorTextSecondary};
     font-size: var(--mimir-chat-font-badge, 11.5px);
@@ -50,7 +53,7 @@ const useStyles = createStyles(({ css, token }) => ({
       border-color: ${token.colorBorder};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimaryBorder};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
     }
   `,
@@ -58,6 +61,7 @@ const useStyles = createStyles(({ css, token }) => ({
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: none;
     width: 16px;
     height: 16px;
     border-radius: ${token.borderRadiusSM}px;
@@ -74,6 +78,8 @@ const useStyles = createStyles(({ css, token }) => ({
     display: inline-flex;
     align-items: center;
     gap: 10px;
+    max-width: 100%;
+    min-width: 0;
     padding: 8px 12px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadiusLG}px;
@@ -120,7 +126,7 @@ const useStyles = createStyles(({ css, token }) => ({
       background: ${token.colorFillTertiary};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimaryBorder};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
     }
   `,
@@ -133,7 +139,7 @@ const useStyles = createStyles(({ css, token }) => ({
     cursor: zoom-in;
     border-radius: 6px;
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimary};
+      outline: 2px solid ${token.focusRing ?? token.colorPrimaryBorder};
       outline-offset: 2px;
     }
   `,
@@ -161,6 +167,10 @@ const useStyles = createStyles(({ css, token }) => ({
       color: inherit;
       cursor: pointer;
     }
+    > button:focus-visible {
+      outline: 2px solid white;
+      outline-offset: 2px;
+    }
     > img {
       max-width: 100%;
       max-height: calc(100vh - 88px);
@@ -170,7 +180,9 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   image: css`
     display: block;
-    max-width: 320px;
+    width: auto;
+    height: auto;
+    max-width: min(320px, 100%);
     border-radius: ${token.borderRadiusLG}px;
     border: 1px solid ${token.colorBorderSecondary};
   `,
