@@ -1350,3 +1350,39 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 47: XLSX交互精修完成
+<!-- trellis-session: v=2 fp=b43cf6861cf3f88e -->
+
+**Date**: 2026-10-20
+**Task**: XLSX交互精修完成
+**Package**: office
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成模块13 XLSX精修、独立审查与全仓质量门，保存九组真实前后及三组补充、完整来源索引和实际组件Demo。
+
+### Main Changes
+
+- 旧图表/图片/表格固定动作区；24处Select显式busy/protected；高级查找结果布局与请求身份生命周期。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `fdd6a1b` | fix(office): refine XLSX editor interactions |
+
+### Testing
+
+- [OK] pnpm check exit0：Office2749、Renderer591、server1365及local/fnOS/desktop/process检查通过；独立4文件96项通过。
+- [OK] 真实GUI验证690/390短高浅深、原生图表/结构化表提交、内存save失败重试/字节重开；静态归档与索引链接通过。未验边界见acceptance。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 继续模块14 PPTX，再15 PDF、16 Desktop；保持直接实施并留真实前后存档的授权。
