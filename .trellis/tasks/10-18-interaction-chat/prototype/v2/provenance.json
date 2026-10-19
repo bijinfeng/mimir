@@ -1,0 +1,134 @@
+{
+  "repository": "https://github.com/assistant-ui/assistant-ui",
+  "commit": "a587b2838f2d644549d216098d54cfbeedfac522",
+  "license": "MIT; Copyright (c) 2026 AgentbaseAI Inc.; vendor/LICENSE",
+  "files": [
+    {
+      "path": "vendor/LICENSE",
+      "upstreamPath": "LICENSE",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/LICENSE",
+      "sha256": "eafb05991a572efa34097474b31fef45b14a8879ed1d1a8fd77de62e6fa7d275",
+      "bytes": 1073,
+      "modified": false
+    },
+    {
+      "path": "vendor/apps/registry/app/globals.css",
+      "upstreamPath": "apps/registry/app/globals.css",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/apps/registry/app/globals.css",
+      "sha256": "95859cc13d07f9c1b1306aa0e6ebfccbc9ff480ce596b5d97e9fb8e0d1db380a",
+      "bytes": 5072,
+      "modified": false
+    },
+    {
+      "path": "vendor/apps/registry/src/registry.ts",
+      "upstreamPath": "apps/registry/src/registry.ts",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/apps/registry/src/registry.ts",
+      "sha256": "86409f797d56d9fc05b3995d85d3025dd06e7d88c18e754ce3c2160dc16252c9",
+      "bytes": 91337,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/tw-shimmer/src/index.css",
+      "upstreamPath": "packages/tw-shimmer/src/index.css",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/tw-shimmer/src/index.css",
+      "sha256": "827e798063a2c03906c83b469ffbb0d5ffc880055176fbd12cdb8f11c24a24c9",
+      "bytes": 9150,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+      "upstreamPath": "packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/collapsible-root.tsx",
+      "sha256": "6d3e6d9a776ac9db13448606627c2ef51e5605cacb2f805379ada9b58abe4565",
+      "bytes": 691,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+      "upstreamPath": "packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx",
+      "sha256": "02c42a1cad5fd56f4479fe65c779e9f9934c03a6e935ac92ebf98cbb46ef3cc7",
+      "bytes": 10311,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+      "upstreamPath": "packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx",
+      "sha256": "31720ad79fe332a5999cc1873108da740e63c05f4b8f322bde75f8d495cbf853",
+      "bytes": 39400,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+      "upstreamPath": "packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/utils/useIsomorphicLayoutEffect.ts",
+      "sha256": "8db117d730e640655e5099e086af4e00d545c283839d9ef5885ca93419d51893",
+      "bytes": 250,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/components/react/ui/base/button.tsx",
+      "upstreamPath": "packages/ui/src/components/react/ui/base/button.tsx",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/button.tsx",
+      "sha256": "de5e06ef482e702cc56abe8fbe0b1dfcfee9c30db4eafad24a38b5360188c42f",
+      "bytes": 3225,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/components/react/ui/base/textarea.tsx",
+      "upstreamPath": "packages/ui/src/components/react/ui/base/textarea.tsx",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/ui/base/textarea.tsx",
+      "sha256": "abab274474743d7b6d30e67848e4341c2fbd491a8a300010e5da1176c7f9624f",
+      "bytes": 891,
+      "modified": false
+    },
+    {
+      "path": "vendor/packages/ui/src/lib/utils.ts",
+      "upstreamPath": "packages/ui/src/lib/utils.ts",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/lib/utils.ts",
+      "sha256": "55bbdc94cef3e0c8a8bba386e94f97228dd2c967fe61466fc565378890550c08",
+      "bytes": 25,
+      "modified": false
+    },
+    {
+      "path": "vendor/thread.aui.tsx.source.txt",
+      "upstreamPath": "packages/ui/src/components/react/assistant-ui/elements/thread.aui.tsx",
+      "sourceUrl": "https://github.com/assistant-ui/assistant-ui/blob/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/thread.aui.tsx",
+      "sha256": "a5c2a4655a90a4e24df4e1223bbe4eb4f4f1b58f95fe868ce7b1fc9894f60dc7",
+      "bytes": 33258,
+      "modified": false
+    }
+  ],
+  "dependencies": {
+    "@assistant-ui/react": "0.15.29",
+    "@base-ui/react": "1.8.0",
+    "@tailwindcss/cli": "4.3.3",
+    "class-variance-authority": "0.7.1",
+    "cn": "0.4.0",
+    "postcss": "8.5.6",
+    "postcss-prefix-selector": "2.1.1",
+    "tailwindcss": "4.3.3",
+    "tw-animate-css": "1.4.0"
+  },
+  "productBaseline": {
+    "@assistant-ui/react": "0.15.28",
+    "@assistant-ui/react-ag-ui": "0.0.68",
+    "@ag-ui/client": "0.0.59"
+  },
+  "compatibility": "Product react 0.15.28 lacks responseDeliveryStatus used in this fixed registry source. Isolated runtime and types use 0.15.29; no product dependency changed. Future implementation requires explicit SDK upgrade or compatible official registry version and regression testing.",
+  "adaptations": [
+    "Vite/TypeScript explicit aliases for original @ imports; vendor component bytes unchanged.",
+    "official.css adapts registry globals imports to source(none), adds exact upstream tw-shimmer CSS, and limits candidate scanning.",
+    "Actual Tailwind 4.3.3 compiles official utility styles; PostCSS mechanically prefixes selectors to .official-message to isolate preflight.",
+    "Mimir theme/font variables only; original component English strings retained.",
+    "official-message.tsx supplies explicit local reasoning/tool protocol fixture parts through useExternalStoreRuntime and MessagePrimitive.GroupedParts; no trace data becomes reasoning/tool.",
+    "The existing reviewer 200% font mode scales official --text-xs/--text-sm/--text-base typography tokens; component state machines and vendor source remain unchanged."
+  ],
+  "indicator": {
+    "source": "vendor/thread.aui.tsx.source.txt",
+    "sourceLines": "705-716",
+    "integration": "Exact span JSX node from official Thread case indicator; emitted by real SDK GroupedParts default no-text mode. Waiting fixture has empty assistant content and running status. No custom trace/Brain loader."
+  },
+  "reactResolution": "Build aliases react/react-dom to the existing app instances and dedupes both across isolated SDK and base-ui. Product/runtime dependencies are not changed."
+}

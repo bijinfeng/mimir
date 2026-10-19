@@ -1,0 +1,14 @@
+{
+  "assistantUi": "0.15.29",
+  "react": "19.3.0",
+  "reactRoots": [
+    "/Users/admin/Desktop/mimir/node_modules/.pnpm/react@19.3.0/node_modules/react"
+  ],
+  "reactModules": [
+    "/Users/admin/Desktop/mimir/node_modules/.pnpm/react@19.3.0/node_modules/react/cjs/react.production.js",
+    "/Users/admin/Desktop/mimir/node_modules/.pnpm/react@19.3.0/node_modules/react/index.js",
+    "/Users/admin/Desktop/mimir/node_modules/.pnpm/react@19.3.0/node_modules/react/cjs/react-jsx-runtime.production.js",
+    "/Users/admin/Desktop/mimir/node_modules/.pnpm/react@19.3.0/node_modules/react/jsx-runtime.js"
+  ],
+  "isolatedProductChanges": false
+}

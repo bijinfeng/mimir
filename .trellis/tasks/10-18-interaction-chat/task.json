@@ -20,19 +20,30 @@
   "subtasks": [],
   "children": [],
   "parent": "10-18-modular-interaction-polish",
-  "relatedFiles": [],
-  "notes": "v1已冻结保存，用户2026-10-19反馈检索过程块不好看；研究AG-UI/assistant-ui来源后待视觉方向收敛，未获得产品实施批准。",
+  "relatedFiles": [
+    "prototype/v2/review.html",
+    "prototype/v2/version.json",
+    "planning-acceptance-v2.md",
+    "research/official-message-ui-contract.md",
+    "research/independent-v2-review.md"
+  ],
+  "notes": "2026-10-19用户要求完全删除自定义trace；v2官方组件对比稿已冻结并通过规划验收，v1保留，产品实施仍未批准。",
   "meta": {
     "planning_user_quote": "继续",
     "product_implementation_approved": false,
-    "planning_delivery": "revision_pending_design_choice",
-    "version": "chat-review-v1",
-    "html_sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
+    "planning_delivery": "revision_v2_frozen_awaiting_exact_version_approval",
+    "version": "chat-review-v2",
+    "html_sha256": "6c18bbd2d936e7b706b7ed3375a6234b82670b961e6be10ba7b81eac306a3af8",
     "coverage_groups": 71,
     "coverage_states": 379,
     "render_tracks": 52,
-    "preview_url": "http://127.0.0.1:5189/review.html?mode=compare",
-    "planning_acceptance": "planning-acceptance.md",
-    "trace_visual_feedback": "CHAT-005.user: 用户不认可过程块；来源已核查，待选轻量折叠行或步骤面板。"
+    "preview_url": "http://127.0.0.1:5189/v2/review.html?mode=compare#scene=CHAT-005.user",
+    "planning_acceptance": "planning-acceptance-v2.md",
+    "trace_visual_feedback": "CHAT-005.user: 用户不认可过程块；已选择完全删除，取消替代方案。",
+    "trace_visual_decision": "完全移除自定义trace，不以替代过程UI保留；真实reasoning/tool-call复用官方支持组件。",
+    "revision_user_quote": "完全去掉，使用 AG-UI 协议和 assistant-ui 支持的交互，不要自定义",
+    "previous_version": "chat-review-v1",
+    "previous_html_sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
+    "removed_source_states": 7
   }
 }

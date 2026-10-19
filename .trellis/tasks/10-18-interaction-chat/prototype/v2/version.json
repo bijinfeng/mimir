@@ -1,0 +1,16 @@
+{
+  "version": "chat-review-v2",
+  "frozen_on": "2026-10-19",
+  "html": "review.html",
+  "sha256": "6c18bbd2d936e7b706b7ed3375a6234b82670b961e6be10ba7b81eac306a3af8",
+  "preview_url": "http://127.0.0.1:5189/v2/review.html?mode=compare#scene=CHAT-005.user",
+  "groups": 71,
+  "source_states": 379,
+  "render_tracks": 52,
+  "removed_source_states": 7,
+  "status": "awaiting_exact_version_approval",
+  "product_implementation_approved": false,
+  "immutable": true,
+  "supersedes": "../version.json",
+  "revision_policy": "冻结后不覆盖；实质修改另存版本并重新审阅。"
+}

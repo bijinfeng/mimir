@@ -1,0 +1,44 @@
+[
+  {
+    "customTrace": false,
+    "officialWait": true,
+    "scene": "CHAT-016.waiting",
+    "traceCounts": false
+  },
+  {
+    "customTrace": false,
+    "officialWait": false,
+    "scene": "CHAT-016.live",
+    "traceCounts": false
+  },
+  {
+    "customTrace": false,
+    "officialWait": false,
+    "scene": "CHAT-016.manual",
+    "traceCounts": false
+  },
+  {
+    "customTrace": false,
+    "officialWait": false,
+    "scene": "CHAT-016.done",
+    "traceCounts": false
+  },
+  {
+    "customTrace": false,
+    "officialWait": false,
+    "scene": "CHAT-016.search",
+    "traceCounts": false
+  },
+  {
+    "customTrace": false,
+    "officialWait": false,
+    "scene": "CHAT-016.scroll",
+    "traceCounts": false
+  },
+  {
+    "customTrace": false,
+    "officialWait": false,
+    "scene": "CHAT-016.absent",
+    "traceCounts": false
+  }
+]

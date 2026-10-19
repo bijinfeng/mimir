@@ -5,26 +5,35 @@
 1. 已完成两份源码清单与固定版本WeKnora证据；71组379状态为来源枚举，真实基线有主对话/范围/强度/模型、浅深/390px、文档侧栏。
 2. 独立HTML逐一绑定全部来源状态，呈现当前/提案、专项组件与操作路径。内部合同只关联可观察结果及边界，不伪造新产品调试控件。
 3. 独立核查源码及HTML合同、来源/覆盖、可操作恢复，主会话实际浏览器抽验代表路径。修复本次发现后一次确认，记录未验证的原生/API能力。
-4. 原型类型/lint/格式/build/artifact检查；核对47个产品源文件散列，冻结版本与SHA256。
+4. 原型类型/lint/格式/build/artifact检查；核对51个产品源文件散列，冻结版本与SHA256。
 5. 更新台账、限定提交并交付本地预览。此阶段不执行task.py start、不改产品代码；等待用户认可具体本版。
 
 ## 认可后的实施顺序
 
-1. 加载trellis-before-dev及Chat/Renderer/共享Agent规范；重新检查同期工作树与清单，确定变动是否要求更新HTML重审。只实施本版认可的视觉与R7恢复修正。
+1. 加载trellis-before-dev及Chat/Renderer/共享Agent规范；重新检查同期工作树与清单，确定变动是否要求更新HTML重审。只实施本版认可的视觉、R7恢复修正与R8/R9自定义trace清理及官方件接线。
 2. 输入与菜单：ChatHostVars/宿主字号与gutter保留，局部样式遵循已认可角色；范围三态/标签、只读模型、强度、容量、生成/队列/快问/IME与截图草稿逐项还原。
-3. 消息与证据：空态/骨架/用户问题/正文层级、检索/思考/工具展开、引用、代码、来源/文件/图片/音频chip；主对话与侧栏分别验证。不新增图片音频编辑器或通用上传。
+3. 消息与证据：空态/骨架/用户问题/正文层级、删除自定义检索过程，真实reasoning/工具采用官方组件、引用、代码、来源/文件/图片/音频chip；主对话与侧栏分别验证。不新增图片音频编辑器或通用上传。
 4. 错误与笔记：四类失败与StreamError互斥、零内容恢复、标准历史重试/提示一致、代码复制失败、图片错误占位和容器适配、成功回答保存与打开笔记；不可用动作保持禁用。
 5. Agent桥：区分消息fallback与live桥区域；媒体选择/分析停止、部分草稿保留丢弃、回退等待互斥与错误留稿；续传仅重送缓存，不重做工具。截图校验/队列/取回与新输入冲突保持原合同。
 6. 宿主联动：新建真实ID保流，历史切换/失败、搜索预填、快捷问直接发送、关闭保活、文档引用/模型设置/打开笔记与未保存守卫、按实际容器宽度的覆盖布局。
-7. 按冻结版来源状态建立逐项实施映射；截图并测量关键尺寸/颜色、hover/focus稳定几何。新增R7行为必须有真实交互/HTTP帧与可控异步回归测试，不以原型成功替代业务验证。
+7. 按最新获准冻结版来源状态建立逐项实施映射；截图并测量关键尺寸/颜色、hover/focus稳定几何。新增R7行为必须有真实交互/HTTP帧与可控异步回归测试，不以原型成功替代业务验证。
 8. 受影响包和全仓质量门、独立复查、限定提交与记录。存在外部阻断时如实记失败范围，不声称通过、不混入他会话改动。
 
 ## 验证命令与边界
 
-- 原型：`node .trellis/tasks/10-18-interaction-chat/prototype/build.mjs`、独立tsconfig、oxlint、指定format.json的oxfmt、artifact脚本、task.py validate。
-- 认可后：`pnpm --filter @mimir/chat test`、`pnpm --filter @mimir/renderer test`、两包typecheck、`pnpm check`，以及实际GUI和Agent/队列的真实请求参数检查。
+- 原型：`node .trellis/tasks/10-18-interaction-chat/prototype/v2/build.mjs`、独立tsconfig、oxlint、指定format.json的oxfmt、artifact脚本、task.py validate。
+- 认可后：`pnpm --filter @mimir/chat test`、`pnpm --filter @mimir/renderer test`、两包typecheck、`pnpm check`，`@mimir/server`相关流事件/检索单测及共享协议类型检查，以及实际GUI和Agent/队列的真实请求参数检查。
 - IME/剪贴板权限/原生文件与媒体、实际模型计费、原件修改/保存/Electron只记完成的验证，不能以HTML模拟冒充。
 
 ## 回滚与风险文件
 
-所有产品改动待批准；届时窄化到packages/chat和renderer Chat宿主，避免改全局token及Office内部工具。运行时改动尤其use-mimir-runtime/DocxInterruptBridge须保留真实HTTP与版本/异步测试；失败后先修窄模块，不能削弱校验或修改未批准业务合同。冻结HTML不覆盖；实质变更另存版本并重新审阅。
+所有产品改动待批准；届时范围包括packages/chat、renderer Chat宿主、apps/server的trace发送/检索准备链及packages/shared相关常量与兼容类型，按R8/R9逐处核对；避免改全局token及Office内部工具。运行时改动尤其use-mimir-runtime/DocxInterruptBridge须保留真实HTTP与版本/异步测试；失败后先修窄模块，不能削弱校验或修改未批准业务合同。冻结HTML不覆盖；实质变更另存版本并重新审阅。
+
+## v2修订与认可后的额外实施项
+
+- 规划：只创建prototype/v2/**，保留v1；清单仍71/379，删除项显式removed；与官方源码版本核对原型组件和依赖，禁止自绘近似。先构建和独立复核，再主会话GUI检查、冻结新版、更新台账供用户验收。
+- 新版获准后：停止mimir.trace的服务端发送、运行时/历史part消费与消息渲染，旧记录只做兼容，不迁移为reasoning/tool-call。更新实际HTTP帧和历史回归测试，同时保证正常等待/发送/停止/失败仍由官方运行状态与现有恢复入口表达。
+- 复用官方reasoning/tool-call组件和支持的primitive；语言与主题适配独立列明。不要把官方示例的可选审批/新工具能力加入现有Agent桥。
+- 保留R7其他五类修正及所有文档业务守卫。最终产品验收逐项比对v2，不能使用被拒绝的v1过程设计作为标准。
+
+- 版本风险：v2原型的官方registry需react SDK 0.15.29；产品当前0.15.28有responseDeliveryStatus类型差异。实施将最小SDK升级列入接线变更，保留本地AG-UI中断补丁，并完整验证适配器、历史、队列与Agent；本轮只装临时隔离依赖，不改仓库manifest/lockfile。
