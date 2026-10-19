@@ -886,3 +886,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 32: 完整官方Thread v3与聊天附件规划交付
+<!-- trellis-session: v=2 fp=e66ac25b2b041204 -->
+
+**Date**: 2026-10-19
+**Task**: 完整官方Thread v3与聊天附件规划交付
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户要求冻结chat-review-v3：完整assistant-ui官方Thread/默认CSS，无自定义渲染与样式覆盖；用户已同意聊天附件纳入规划，父子PRD/design/implement与上下文齐全。原71组379态逐项分类，新增附件24态，共403路由，非403次GUI测试。独立源码复核、代表GUI抽验、原型类型/lint/产物质量门及51产品/57旧资产hash通过；原生文件选择事件超时、真实上传及产品服务待实施。预览5189/v3/review.html，SHA2bfbfd2c；产品未改，v1/v2保留，任务保持planning等待具体v3认可，不归档不推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9fc4157` | docs(chat): plan full official Thread and chat attachments v3 |
+
+### Status
+
+[OK] **Completed**
