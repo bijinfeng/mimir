@@ -1,0 +1,352 @@
+[
+  {
+    "variant": "before",
+    "key": "annotations-short",
+    "metrics": {
+      "actions": {
+        "bottom": 408.28125,
+        "height": 24,
+        "left": 86,
+        "right": 359,
+        "top": 384.28125,
+        "width": 273,
+        "x": 86,
+        "y": 384.28125
+      },
+      "clientWidth": 390,
+      "content": {
+        "bottom": 373.359375,
+        "height": 208.359375,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "expandedMenus": [],
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "annotations-selected-short",
+    "metrics": {
+      "actions": {
+        "bottom": 440.28125,
+        "height": 56,
+        "left": 86,
+        "right": 359,
+        "top": 384.28125,
+        "width": 273,
+        "x": 86,
+        "y": 384.28125
+      },
+      "clientWidth": 390,
+      "content": {
+        "bottom": 373.359375,
+        "height": 208.359375,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "expandedMenus": [],
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "annotations-selected-short",
+    "metrics": {
+      "actions": {
+        "bottom": 440.28125,
+        "height": 56,
+        "left": 86,
+        "right": 359,
+        "top": 384.28125,
+        "width": 273,
+        "x": 86,
+        "y": 384.28125
+      },
+      "clientWidth": 390,
+      "content": {
+        "bottom": 373.359375,
+        "height": 208.359375,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "expandedMenus": [],
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "local-pages-short",
+    "metrics": {
+      "clientWidth": 390,
+      "content": {
+        "bottom": 373.359375,
+        "height": 91.359375,
+        "left": 70,
+        "right": 390,
+        "top": 282,
+        "width": 320,
+        "x": 70,
+        "y": 282
+      },
+      "expandedMenus": ["文档工具"],
+      "nav": {
+        "bottom": 282,
+        "height": 117,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "local-stamps-short",
+    "metrics": {
+      "clientWidth": 390,
+      "content": {
+        "bottom": 373.359375,
+        "height": 91.359375,
+        "left": 70,
+        "right": 390,
+        "top": 282,
+        "width": 320,
+        "x": 70,
+        "y": 282
+      },
+      "expandedMenus": [],
+      "nav": {
+        "bottom": 282,
+        "height": 117,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "annotations-wide",
+    "metrics": {
+      "actions": {
+        "bottom": 401.28125,
+        "height": 24,
+        "left": 796,
+        "right": 1069,
+        "top": 377.28125,
+        "width": 273,
+        "x": 796,
+        "y": 377.28125
+      },
+      "clientWidth": 1100,
+      "content": {
+        "bottom": 733.359375,
+        "height": 575.359375,
+        "left": 780,
+        "right": 1100,
+        "top": 158,
+        "width": 320,
+        "x": 780,
+        "y": 158
+      },
+      "expandedMenus": [],
+      "panel": {
+        "bottom": 733.359375,
+        "height": 651.359375,
+        "left": 780,
+        "right": 1100,
+        "top": 82,
+        "width": 320,
+        "x": 780,
+        "y": 82
+      },
+      "scrollWidth": 1100,
+      "viewport": [1100, 760]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "properties-dark-medium",
+    "metrics": {
+      "clientWidth": 690,
+      "content": {
+        "bottom": 573.359375,
+        "height": 297.609375,
+        "left": 370,
+        "right": 690,
+        "top": 275.75,
+        "width": 320,
+        "x": 370,
+        "y": 275.75
+      },
+      "expandedMenus": [],
+      "nav": {
+        "bottom": 275.75,
+        "height": 117,
+        "left": 370,
+        "right": 690,
+        "top": 158.75,
+        "width": 320,
+        "x": 370,
+        "y": 158.75
+      },
+      "panel": {
+        "bottom": 573.359375,
+        "height": 490.609375,
+        "left": 370,
+        "right": 690,
+        "top": 82.75,
+        "width": 320,
+        "x": 370,
+        "y": 82.75
+      },
+      "scrollWidth": 690,
+      "viewport": [690, 600]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "redaction-dark-short",
+    "metrics": {
+      "clientWidth": 390,
+      "content": {
+        "bottom": 319.359375,
+        "height": 154.359375,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "expandedMenus": ["涂黑副本"],
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "local-drawing-short",
+    "metrics": {
+      "clientWidth": 390,
+      "content": {
+        "bottom": 314,
+        "height": 32,
+        "left": 70,
+        "right": 390,
+        "top": 282,
+        "width": 320,
+        "x": 70,
+        "y": 282
+      },
+      "expandedMenus": [],
+      "nav": {
+        "bottom": 282,
+        "height": 117,
+        "left": 70,
+        "right": 390,
+        "top": 165,
+        "width": 320,
+        "x": 70,
+        "y": 165
+      },
+      "panel": {
+        "bottom": 373.359375,
+        "height": 284.359375,
+        "left": 70,
+        "right": 390,
+        "top": 89,
+        "width": 320,
+        "x": 70,
+        "y": 89
+      },
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  }
+]

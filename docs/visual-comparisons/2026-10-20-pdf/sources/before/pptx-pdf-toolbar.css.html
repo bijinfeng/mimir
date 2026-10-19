@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pptx-pdf-toolbar.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pptx-pdf-toolbar.css</h1>
+    <p>before真实源码 · SHA256 4a0b979f6db0d36a3c5d9c9db8dcd4b00e9e7595c397f98c415b69f4ad29b5ec</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>/* Compound format menus stay inside the selected ribbon group. */</pre></li>
+    <li id="L2"><pre>.mimir-pptx-pdf-toolbar__panel .me-menu__fields {</pre></li>
+    <li id="L3"><pre>  align-items: flex-start;</pre></li>
+    <li id="L4"><pre>}</pre></li>
+    <li id="L5"><pre></pre></li>
+    <li id="L6">
+      <pre>/* The ribbon keeps navigation, find and text commands visible in their tabs.</pre>
+    </li>
+    <li id="L7">
+      <pre>   Legacy duplicate menu rows are retained in JSX only for callback parity. */</pre>
+    </li>
+    <li id="L8"><pre>.mimir-pptx-pdf-toolbar__narrow-only,</pre></li>
+    <li id="L9"><pre>.mimir-pptx-pdf-toolbar__page-nav-menu,</pre></li>
+    <li id="L10"><pre>.mimir-pptx-pdf-toolbar__find-menu {</pre></li>
+    <li id="L11"><pre>  display: none;</pre></li>
+    <li id="L12"><pre>}</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14"><pre>.mimir-pdf-local-tabs {</pre></li>
+    <li id="L15"><pre>  display: grid;</pre></li>
+    <li id="L16"><pre>  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);</pre></li>
+    <li id="L17"><pre>  gap: 4px;</pre></li>
+    <li id="L18"><pre>  flex: none;</pre></li>
+    <li id="L19"><pre>  padding: 0 16px 12px;</pre></li>
+    <li id="L20"><pre>  border-bottom: 1px solid var(--me-border);</pre></li>
+    <li id="L21"><pre>}</pre></li>
+    <li id="L22"><pre>.mimir-pdf-local-tabs .ant-btn {</pre></li>
+    <li id="L23"><pre>  width: 100%;</pre></li>
+    <li id="L24"><pre>  min-height: 32px;</pre></li>
+    <li id="L25"><pre>  justify-content: center;</pre></li>
+    <li id="L26"><pre>}</pre></li>
+    <li id="L27"><pre>.mimir-pdf-local-panel .mimir-pdf-inspector__content {</pre></li>
+    <li id="L28"><pre>  padding-top: 16px;</pre></li>
+    <li id="L29"><pre>}</pre></li>
+    <li id="L30"><pre>.mimir-pdf-local-group {</pre></li>
+    <li id="L31"><pre>  display: flex;</pre></li>
+    <li id="L32"><pre>  flex-direction: column;</pre></li>
+    <li id="L33"><pre>  gap: 10px;</pre></li>
+    <li id="L34"><pre>  min-width: 0;</pre></li>
+    <li id="L35"><pre>}</pre></li>
+    <li id="L36"><pre>.mimir-pdf-local-group .mimir-pdf-inspector__section-title {</pre></li>
+    <li id="L37"><pre>  margin: 0 0 2px;</pre></li>
+    <li id="L38"><pre>}</pre></li>
+    <li id="L39"><pre>.mimir-pdf-local-panel .mimir-pdf-inspector__content .ant-btn {</pre></li>
+    <li id="L40"><pre>  min-height: 32px;</pre></li>
+    <li id="L41"><pre>}</pre></li>
+    <li id="L42"><pre>.mimir-pdf-local-actions,</pre></li>
+    <li id="L43"><pre>.mimir-pdf-local-outputs {</pre></li>
+    <li id="L44"><pre>  display: flex;</pre></li>
+    <li id="L45"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L46"><pre>  gap: 8px;</pre></li>
+    <li id="L47"><pre>}</pre></li>
+    <li id="L48"><pre>.mimir-pdf-local-outputs {</pre></li>
+    <li id="L49"><pre>  flex: none;</pre></li>
+    <li id="L50"><pre>  flex-direction: column;</pre></li>
+    <li id="L51"><pre>  flex-wrap: nowrap;</pre></li>
+    <li id="L52"><pre>  max-height: 220px;</pre></li>
+    <li id="L53"><pre>  overflow-y: auto;</pre></li>
+    <li id="L54"><pre>}</pre></li>
+    <li id="L55"><pre>.mimir-pdf-local-actions .ant-btn {</pre></li>
+    <li id="L56"><pre>  flex: 1 1 auto;</pre></li>
+    <li id="L57"><pre>}</pre></li>
+    <li id="L58"><pre>.mimir-pdf-local-outputs button {</pre></li>
+    <li id="L59"><pre>  flex: none;</pre></li>
+    <li id="L60"><pre>  max-width: 100%;</pre></li>
+    <li id="L61"><pre>  overflow: hidden;</pre></li>
+    <li id="L62"><pre>  text-overflow: ellipsis;</pre></li>
+    <li id="L63"><pre>}</pre></li>
+  </ol>
+</html>

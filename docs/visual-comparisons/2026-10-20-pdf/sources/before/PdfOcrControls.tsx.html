@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfOcrControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfOcrControls.tsx</h1>
+    <p>before真实源码 · SHA256 a81dadf80938c1819c1cee2a0b4127bc851b46e43d897767c95b08b961b5a726</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button, Progress, Radio } from &#x27;antd&#x27;</pre></li>
+    <li id="L2">
+      <pre>import { Copy, ScanText, Square, Trash2 } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import { useState } from &#x27;react&#x27;</pre></li>
+    <li id="L4"><pre>import { PdfInspectorHeader } from &#x27;./PdfInspector.js&#x27;</pre></li>
+    <li id="L5"><pre>import type { PdfOcrState } from &#x27;./use-pdf-ocr.js&#x27;</pre></li>
+    <li id="L6"><pre>import &#x27;./pdf-ocr.css&#x27;</pre></li>
+    <li id="L7"><pre></pre></li>
+    <li id="L8"><pre>export function PdfOcrControls({</pre></li>
+    <li id="L9"><pre>  state,</pre></li>
+    <li id="L10"><pre>  activePage,</pre></li>
+    <li id="L11"><pre>  currentText,</pre></li>
+    <li id="L12"><pre>  blocked,</pre></li>
+    <li id="L13"><pre>  onStart,</pre></li>
+    <li id="L14"><pre>  onStop,</pre></li>
+    <li id="L15"><pre>  onClear,</pre></li>
+    <li id="L16"><pre>  onClose,</pre></li>
+    <li id="L17"><pre>  onSelect,</pre></li>
+    <li id="L18"><pre>}: {</pre></li>
+    <li id="L19"><pre>  state: PdfOcrState</pre></li>
+    <li id="L20"><pre>  activePage: number</pre></li>
+    <li id="L21"><pre>  currentText: string</pre></li>
+    <li id="L22"><pre>  blocked?: string</pre></li>
+    <li id="L23"><pre>  onStart(scope: &#x27;current&#x27; | &#x27;scanned&#x27;): void</pre></li>
+    <li id="L24"><pre>  onStop(): void</pre></li>
+    <li id="L25"><pre>  onClear(): void</pre></li>
+    <li id="L26"><pre>  onClose(): void</pre></li>
+    <li id="L27"><pre>  onSelect(): void</pre></li>
+    <li id="L28"><pre>}) {</pre></li>
+    <li id="L29">
+      <pre>
+  const [scope, setScope] = useState&lt;&#x27;current&#x27; | &#x27;scanned&#x27;&gt;(&#x27;current&#x27;)</pre>
+    </li>
+    <li id="L30"><pre>  const [copyStatus, setCopyStatus] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L31"><pre>  return (</pre></li>
+    <li id="L32">
+      <pre>    &lt;div className=&quot;mimir-pdf-panel mimir-pdf-ocr-panel&quot;&gt;</pre>
+    </li>
+    <li id="L33"><pre>      &lt;PdfInspectorHeader</pre></li>
+    <li id="L34"><pre>        title=&quot;识别扫描文字&quot;</pre></li>
+    <li id="L35"><pre>        detail=&quot;本地临时 OCR · 简体中文与英文&quot;</pre></li>
+    <li id="L36"><pre>        busy={state.running}</pre></li>
+    <li id="L37"><pre>        refreshLabel=&quot;清除识别结果&quot;</pre></li>
+    <li id="L38"><pre>        closeLabel=&quot;关闭扫描文字识别&quot;</pre></li>
+    <li id="L39"><pre>        onRefresh={onClear}</pre></li>
+    <li id="L40"><pre>        onClose={onClose}</pre></li>
+    <li id="L41"><pre>      /&gt;</pre></li>
+    <li id="L42">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L43"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L44">
+      <pre>          识别结果仅供本次打开时复制与查找，可能有误。不会写回 PDF 或知识库。</pre>
+    </li>
+    <li id="L45"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L46">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L47"><pre>          &lt;span&gt;识别范围&lt;/span&gt;</pre></li>
+    <li id="L48"><pre>          &lt;Radio.Group</pre></li>
+    <li id="L49"><pre>            aria-label=&quot;识别范围&quot;</pre></li>
+    <li id="L50"><pre>            value={scope}</pre></li>
+    <li id="L51"><pre>            disabled={state.running}</pre></li>
+    <li id="L52"><pre>            onChange={(event) =&gt; setScope(event.target.value)}</pre></li>
+    <li id="L53"><pre>            className=&quot;mimir-pdf-ocr-scope&quot;</pre></li>
+    <li id="L54"><pre>          &gt;</pre></li>
+    <li id="L55">
+      <pre>
+            &lt;Radio value=&quot;current&quot;&gt;当前第 {activePage + 1} 页&lt;/Radio&gt;</pre>
+    </li>
+    <li id="L56">
+      <pre>
+            &lt;Radio value=&quot;scanned&quot;&gt;从当前页起顺序识别扫描页&lt;/Radio&gt;</pre>
+    </li>
+    <li id="L57"><pre>          &lt;/Radio.Group&gt;</pre></li>
+    <li id="L58"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L59"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L60">
+      <pre>          每次最多 50 页、10 分钟；单页最长边 2048 像素。原生文字页会跳过。</pre>
+    </li>
+    <li id="L61"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L62"><pre>        {state.running &amp;&amp; (</pre></li>
+    <li id="L63">
+      <pre>          &lt;div role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;</pre>
+    </li>
+    <li id="L64"><pre>            &lt;p&gt;</pre></li>
+    <li id="L65"><pre>              {state.status} · {state.done}/{state.total} 页</pre></li>
+    <li id="L66"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L67"><pre>            &lt;Progress</pre></li>
+    <li id="L68">
+      <pre>
+              percent={Math.round(((state.done + state.progress) / Math.max(1, state.total)) * 100)}</pre>
+    </li>
+    <li id="L69"><pre>              size=&quot;small&quot;</pre></li>
+    <li id="L70"><pre>            /&gt;</pre></li>
+    <li id="L71"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L72"><pre>        )}</pre></li>
+    <li id="L73"><pre>        {!state.running &amp;&amp; state.status &amp;&amp; (</pre></li>
+    <li id="L74">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L75"><pre>            {state.status}</pre></li>
+    <li id="L76"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L77"><pre>        )}</pre></li>
+    <li id="L78"><pre>        {currentText ? (</pre></li>
+    <li id="L79">
+      <pre>          &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L80"><pre>            &lt;span&gt;当前页临时文字&lt;/span&gt;</pre></li>
+    <li id="L81">
+      <pre>
+            &lt;pre className=&quot;mimir-pdf-ocr-preview&quot;&gt;{currentText}&lt;/pre&gt;</pre>
+    </li>
+    <li id="L82"><pre>            &lt;div className=&quot;mimir-pdf-ocr-actions&quot;&gt;</pre></li>
+    <li id="L83"><pre>              &lt;Button</pre></li>
+    <li id="L84"><pre>                icon={&lt;Copy size={14} /&gt;}</pre></li>
+    <li id="L85"><pre>                onClick={async () =&gt; {</pre></li>
+    <li id="L86"><pre>                  try {</pre></li>
+    <li id="L87">
+      <pre>                    await navigator.clipboard.writeText(currentText)</pre>
+    </li>
+    <li id="L88"><pre>                    setCopyStatus(&#x27;已复制当前页识别文字&#x27;)</pre></li>
+    <li id="L89"><pre>                  } catch {</pre></li>
+    <li id="L90">
+      <pre>                    setCopyStatus(&#x27;无法访问剪贴板，请选择下方文字后复制&#x27;)</pre>
+    </li>
+    <li id="L91"><pre>                  }</pre></li>
+    <li id="L92"><pre>                }}</pre></li>
+    <li id="L93"><pre>              &gt;</pre></li>
+    <li id="L94"><pre>                复制文字</pre></li>
+    <li id="L95"><pre>              &lt;/Button&gt;</pre></li>
+    <li id="L96">
+      <pre>              &lt;Button onClick={onSelect}&gt;在页面上选字&lt;/Button&gt;</pre>
+    </li>
+    <li id="L97"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L98"><pre>            {copyStatus &amp;&amp; (</pre></li>
+    <li id="L99">
+      <pre>
+              &lt;span role=&quot;status&quot; className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L100"><pre>                {copyStatus}</pre></li>
+    <li id="L101"><pre>              &lt;/span&gt;</pre></li>
+    <li id="L102"><pre>            )}</pre></li>
+    <li id="L103"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L104"><pre>        ) : (</pre></li>
+    <li id="L105">
+      <pre>
+          !state.running &amp;&amp; &lt;p className=&quot;mimir-pdf-inspector__empty&quot;&gt;当前页尚无临时识别文字。&lt;/p&gt;</pre>
+    </li>
+    <li id="L106"><pre>        )}</pre></li>
+    <li id="L107"><pre>        {state.results.length &gt; 0 &amp;&amp; (</pre></li>
+    <li id="L108">
+      <pre>
+          &lt;Button icon={&lt;Trash2 size={14} /&gt;} disabled={state.running} onClick={onClear}&gt;</pre>
+    </li>
+    <li id="L109"><pre>            清除临时结果（{state.results.length} 页）</pre></li>
+    <li id="L110"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L111"><pre>        )}</pre></li>
+    <li id="L112"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L113">
+      <pre>      &lt;footer className=&quot;mimir-pdf-inspector__footer&quot;&gt;</pre>
+    </li>
+    <li id="L114"><pre>        {(state.error || blocked) &amp;&amp; (</pre></li>
+    <li id="L115">
+      <pre>
+          &lt;p role=&quot;alert&quot; className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L116"><pre>            {state.error || blocked}</pre></li>
+    <li id="L117"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L118"><pre>        )}</pre></li>
+    <li id="L119"><pre>        {state.running ? (</pre></li>
+    <li id="L120">
+      <pre>
+          &lt;Button type=&quot;primary&quot; icon={&lt;Square size={14} /&gt;} onClick={onStop}&gt;</pre>
+    </li>
+    <li id="L121"><pre>            停止识别</pre></li>
+    <li id="L122"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L123"><pre>        ) : (</pre></li>
+    <li id="L124"><pre>          &lt;Button</pre></li>
+    <li id="L125"><pre>            type=&quot;primary&quot;</pre></li>
+    <li id="L126"><pre>            icon={&lt;ScanText size={16} /&gt;}</pre></li>
+    <li id="L127"><pre>            disabled={!!blocked}</pre></li>
+    <li id="L128"><pre>            onClick={() =&gt; onStart(scope)}</pre></li>
+    <li id="L129"><pre>          &gt;</pre></li>
+    <li id="L130">
+      <pre>            {state.error ? &#x27;重试识别&#x27; : &#x27;开始本地识别&#x27;}</pre>
+    </li>
+    <li id="L131"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L132"><pre>        )}</pre></li>
+    <li id="L133"><pre>      &lt;/footer&gt;</pre></li>
+    <li id="L134"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L135"><pre>  )</pre></li>
+    <li id="L136"><pre>}</pre></li>
+  </ol>
+</html>

@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfFormPanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfFormPanel.tsx</h1>
+    <p>before真实源码 · SHA256 997daca34b68bb9b5bd7bfab78213196651449aea4b23d965938a534015f4426</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button, Checkbox, Input, Skeleton } from &#x27;antd&#x27;</pre></li>
+    <li id="L2"><pre>import { Check } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3"><pre>import { useState, type ReactNode } from &#x27;react&#x27;</pre></li>
+    <li id="L4">
+      <pre>import type { PdfFormField, PdfFormSnapshot } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import { ToolbarSelect } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L6">
+      <pre>
+import { PdfInspectorHeader, type PdfPanelAction } from &#x27;./PdfInspector.js&#x27;</pre>
+    </li>
+    <li id="L7"><pre></pre></li>
+    <li id="L8"><pre>const fieldType = {</pre></li>
+    <li id="L9"><pre>  text: &#x27;文本&#x27;,</pre></li>
+    <li id="L10"><pre>  checkbox: &#x27;复选框&#x27;,</pre></li>
+    <li id="L11"><pre>  radio: &#x27;单选&#x27;,</pre></li>
+    <li id="L12"><pre>  choice: &#x27;下拉选项&#x27;,</pre></li>
+    <li id="L13"><pre>  unsupported: &#x27;不支持的类型&#x27;,</pre></li>
+    <li id="L14"><pre>}</pre></li>
+    <li id="L15"><pre>const fieldText = (field: PdfFormField) =&gt;</pre></li>
+    <li id="L16"><pre>  Array.isArray(field.value)</pre></li>
+    <li id="L17"><pre>    ? (field.value[0] ?? &#x27;&#x27;)</pre></li>
+    <li id="L18"><pre>    : typeof field.value === &#x27;string&#x27;</pre></li>
+    <li id="L19"><pre>      ? field.value</pre></li>
+    <li id="L20"><pre>      : &#x27;&#x27;</pre></li>
+    <li id="L21"><pre></pre></li>
+    <li id="L22"><pre>function FieldEditor({</pre></li>
+    <li id="L23"><pre>  field,</pre></li>
+    <li id="L24"><pre>  busy,</pre></li>
+    <li id="L25"><pre>  feedback,</pre></li>
+    <li id="L26"><pre>  onApply,</pre></li>
+    <li id="L27"><pre>  children,</pre></li>
+    <li id="L28"><pre>  binding,</pre></li>
+    <li id="L29"><pre>}: {</pre></li>
+    <li id="L30"><pre>  field: PdfFormField</pre></li>
+    <li id="L31"><pre>  busy: boolean</pre></li>
+    <li id="L32"><pre>  feedback?: string</pre></li>
+    <li id="L33">
+      <pre>  onApply(value: { name: string; value?: string; checked?: boolean }): void</pre>
+    </li>
+    <li id="L34"><pre>  children: ReactNode</pre></li>
+    <li id="L35"><pre>  binding: string</pre></li>
+    <li id="L36"><pre>}) {</pre></li>
+    <li id="L37"><pre>  const [draft, setDraft] = useState({</pre></li>
+    <li id="L38"><pre>    binding,</pre></li>
+    <li id="L39"><pre>    text: fieldText(field),</pre></li>
+    <li id="L40"><pre>    checked: field.value === true,</pre></li>
+    <li id="L41"><pre>  })</pre></li>
+    <li id="L42"><pre>  if (draft.binding !== binding)</pre></li>
+    <li id="L43">
+      <pre>    setDraft({ binding, text: fieldText(field), checked: field.value === true })</pre>
+    </li>
+    <li id="L44"><pre>  const { text, checked } = draft</pre></li>
+    <li id="L45">
+      <pre>  const blocked = field.readOnly || field.type === &#x27;unsupported&#x27;</pre>
+    </li>
+    <li id="L46">
+      <pre>
+  const changed = field.type === &#x27;checkbox&#x27; ? checked !== field.value : text !== fieldText(field)</pre>
+    </li>
+    <li id="L47">
+      <pre>  const pages = [...new Set(field.widgets.map((widget) =&gt; widget.page))]</pre>
+    </li>
+    <li id="L48"><pre>  return (</pre></li>
+    <li id="L49"><pre>    &lt;&gt;</pre></li>
+    <li id="L50">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L51"><pre>        {children}</pre></li>
+    <li id="L52">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__field&quot;&gt;</pre>
+    </li>
+    <li id="L53">
+      <pre>
+          &lt;div className=&quot;mimir-pdf-inspector__field-title&quot;&gt;{field.name}&lt;/div&gt;</pre>
+    </li>
+    <li id="L54"><pre>          &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre></li>
+    <li id="L55">
+      <pre>
+            {fieldType[field.type]} · 第 {pages.join(&#x27;、&#x27;)} 页{field.required ? &#x27; · 必填&#x27; : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L56"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L57">
+      <pre>
+          {field.readOnly &amp;&amp; &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;此字段为只读，无法修改。&lt;/p&gt;}</pre>
+    </li>
+    <li id="L58"><pre>          {field.type === &#x27;unsupported&#x27; ? (</pre></li>
+    <li id="L59">
+      <pre>
+            &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;暂不支持编辑此字段类型。&lt;/p&gt;</pre>
+    </li>
+    <li id="L60"><pre>          ) : field.type === &#x27;checkbox&#x27; ? (</pre></li>
+    <li id="L61"><pre>            &lt;Checkbox</pre></li>
+    <li id="L62"><pre>              checked={checked}</pre></li>
+    <li id="L63"><pre>              disabled={busy || blocked}</pre></li>
+    <li id="L64"><pre>              onChange={(event) =&gt;</pre></li>
+    <li id="L65">
+      <pre>
+                setDraft((value) =&gt; ({ ...value, checked: event.target.checked }))</pre>
+    </li>
+    <li id="L66"><pre>              }</pre></li>
+    <li id="L67"><pre>              aria-label=&quot;表单勾选值&quot;</pre></li>
+    <li id="L68"><pre>            &gt;</pre></li>
+    <li id="L69"><pre>              勾选此项</pre></li>
+    <li id="L70"><pre>            &lt;/Checkbox&gt;</pre></li>
+    <li id="L71"><pre>          ) : field.type === &#x27;text&#x27; ? (</pre></li>
+    <li id="L72">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L73"><pre>              &lt;span&gt;字段内容&lt;/span&gt;</pre></li>
+    <li id="L74"><pre>              &lt;Input.TextArea</pre></li>
+    <li id="L75"><pre>                aria-label=&quot;表单文字值&quot;</pre></li>
+    <li id="L76"><pre>                value={text}</pre></li>
+    <li id="L77">
+      <pre>
+                onChange={(event) =&gt; setDraft((value) =&gt; ({ ...value, text: event.target.value }))}</pre>
+    </li>
+    <li id="L78"><pre>                rows={3}</pre></li>
+    <li id="L79"><pre>                disabled={busy || blocked}</pre></li>
+    <li id="L80"><pre>                maxLength={10000}</pre></li>
+    <li id="L81"><pre>              /&gt;</pre></li>
+    <li id="L82"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L83"><pre>          ) : (</pre></li>
+    <li id="L84">
+      <pre>            &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L85"><pre>              &lt;span&gt;字段选项&lt;/span&gt;</pre></li>
+    <li id="L86"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L87"><pre>                label=&quot;表单选项值&quot;</pre></li>
+    <li id="L88"><pre>                value={text}</pre></li>
+    <li id="L89"><pre>                options={[</pre></li>
+    <li id="L90">
+      <pre>                  { value: &#x27;&#x27;, label: &#x27;清除选择&#x27; },</pre>
+    </li>
+    <li id="L91">
+      <pre>                  ...field.options.map((value) =&gt; ({ value, label: value })),</pre>
+    </li>
+    <li id="L92"><pre>                ]}</pre></li>
+    <li id="L93"><pre>                disabled={busy || blocked}</pre></li>
+    <li id="L94">
+      <pre>
+                onChange={(nextText) =&gt; setDraft((value) =&gt; ({ ...value, text: nextText }))}</pre>
+    </li>
+    <li id="L95"><pre>              /&gt;</pre></li>
+    <li id="L96"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L97"><pre>          )}</pre></li>
+    <li id="L98"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L99"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L100">
+      <pre>      &lt;footer className=&quot;mimir-pdf-inspector__footer&quot;&gt;</pre>
+    </li>
+    <li id="L101"><pre>        &lt;Button</pre></li>
+    <li id="L102"><pre>          type=&quot;primary&quot;</pre></li>
+    <li id="L103"><pre>          block</pre></li>
+    <li id="L104"><pre>          aria-label=&quot;应用表单字段&quot;</pre></li>
+    <li id="L105"><pre>          disabled={blocked || busy || !changed}</pre></li>
+    <li id="L106"><pre>          loading={busy}</pre></li>
+    <li id="L107"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L108"><pre>            onApply({</pre></li>
+    <li id="L109"><pre>              name: field.name,</pre></li>
+    <li id="L110">
+      <pre>
+              ...(field.type === &#x27;checkbox&#x27; ? { checked } : { value: text }),</pre>
+    </li>
+    <li id="L111"><pre>            })</pre></li>
+    <li id="L112"><pre>          }</pre></li>
+    <li id="L113"><pre>        &gt;</pre></li>
+    <li id="L114"><pre>          应用字段</pre></li>
+    <li id="L115"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L116">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L117"><pre>          {feedback &amp;&amp; !changed ? (</pre></li>
+    <li id="L118"><pre>            &lt;&gt;</pre></li>
+    <li id="L119"><pre>              &lt;Check size={14} /&gt;</pre></li>
+    <li id="L120"><pre>              {feedback}</pre></li>
+    <li id="L121"><pre>            &lt;/&gt;</pre></li>
+    <li id="L122"><pre>          ) : changed ? (</pre></li>
+    <li id="L123"><pre>            &#x27;应用后更新文档，保存后写入文件。&#x27;</pre></li>
+    <li id="L124"><pre>          ) : (</pre></li>
+    <li id="L125"><pre>            &#x27;当前值已与文档一致。&#x27;</pre></li>
+    <li id="L126"><pre>          )}</pre></li>
+    <li id="L127"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L128"><pre>      &lt;/footer&gt;</pre></li>
+    <li id="L129"><pre>    &lt;/&gt;</pre></li>
+    <li id="L130"><pre>  )</pre></li>
+    <li id="L131"><pre>}</pre></li>
+    <li id="L132"><pre></pre></li>
+    <li id="L133"><pre>export function PdfFormPanel({</pre></li>
+    <li id="L134"><pre>  snapshot,</pre></li>
+    <li id="L135"><pre>  busy,</pre></li>
+    <li id="L136"><pre>  error,</pre></li>
+    <li id="L137"><pre>  onAction,</pre></li>
+    <li id="L138"><pre>  onClose,</pre></li>
+    <li id="L139"><pre>  onGotoPage,</pre></li>
+    <li id="L140"><pre>}: {</pre></li>
+    <li id="L141"><pre>  snapshot?: PdfFormSnapshot</pre></li>
+    <li id="L142"><pre>  busy: boolean</pre></li>
+    <li id="L143"><pre>  error?: string | null</pre></li>
+    <li id="L144"><pre>  onAction: PdfPanelAction</pre></li>
+    <li id="L145"><pre>  onClose(): void</pre></li>
+    <li id="L146"><pre>  onGotoPage(page: number): void</pre></li>
+    <li id="L147"><pre>}) {</pre></li>
+    <li id="L148"><pre>  const [name, setName] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L149">
+      <pre>
+  const [feedback, setFeedback] = useState&lt;{ name: string; sha256: string } | null&gt;(null)</pre>
+    </li>
+    <li id="L150">
+      <pre>
+  const field = snapshot?.fields.find((item) =&gt; item.name === name) ?? snapshot?.fields[0]</pre>
+    </li>
+    <li id="L151"><pre>  const failure = error ? (</pre></li>
+    <li id="L152">
+      <pre>
+    &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L153"><pre>      {error}</pre></li>
+    <li id="L154"><pre>    &lt;/p&gt;</pre></li>
+    <li id="L155"><pre>  ) : null</pre></li>
+    <li id="L156"><pre>  return (</pre></li>
+    <li id="L157"><pre>    &lt;section</pre></li>
+    <li id="L158"><pre>      className=&quot;mimir-pdf-panel mimir-pdf-form-panel&quot;</pre></li>
+    <li id="L159"><pre>      role=&quot;region&quot;</pre></li>
+    <li id="L160"><pre>      aria-label=&quot;PDF 表单面板&quot;</pre></li>
+    <li id="L161"><pre>      aria-busy={busy}</pre></li>
+    <li id="L162"><pre>    &gt;</pre></li>
+    <li id="L163"><pre>      &lt;PdfInspectorHeader</pre></li>
+    <li id="L164"><pre>        title=&quot;交互表单&quot;</pre></li>
+    <li id="L165">
+      <pre>        detail={snapshot ? `${snapshot.fields.length} 个字段` : undefined}</pre>
+    </li>
+    <li id="L166"><pre>        busy={busy}</pre></li>
+    <li id="L167"><pre>        refreshLabel=&quot;刷新表单字段&quot;</pre></li>
+    <li id="L168"><pre>        closeLabel=&quot;关闭表单面板&quot;</pre></li>
+    <li id="L169">
+      <pre>        onRefresh={() =&gt; void onAction(&#x27;list_form_fields&#x27;, {})}</pre>
+    </li>
+    <li id="L170"><pre>        onClose={onClose}</pre></li>
+    <li id="L171"><pre>      /&gt;</pre></li>
+    <li id="L172"><pre>      {field &amp;&amp; snapshot ? (</pre></li>
+    <li id="L173"><pre>        &lt;FieldEditor</pre></li>
+    <li id="L174"><pre>          binding={`${snapshot.sha256}:${field.name}`}</pre></li>
+    <li id="L175"><pre>          field={field}</pre></li>
+    <li id="L176"><pre>          busy={busy}</pre></li>
+    <li id="L177"><pre>          feedback={</pre></li>
+    <li id="L178">
+      <pre>
+            feedback?.name === field.name &amp;&amp; feedback.sha256 !== snapshot.sha256</pre>
+    </li>
+    <li id="L179"><pre>              ? &#x27;已应用到文档。&#x27;</pre></li>
+    <li id="L180"><pre>              : undefined</pre></li>
+    <li id="L181"><pre>          }</pre></li>
+    <li id="L182"><pre>          onApply={(value) =&gt; {</pre></li>
+    <li id="L183"><pre>            void (async () =&gt; {</pre></li>
+    <li id="L184">
+      <pre>
+              const result = await onAction(&#x27;apply_ops&#x27;, { ops: [{ op: &#x27;setFormValue&#x27;, value }] })</pre>
+    </li>
+    <li id="L185"><pre>              if (result?.ok &amp;&amp; result.changed)</pre></li>
+    <li id="L186">
+      <pre>                setFeedback({ name: value.name, sha256: snapshot.sha256 })</pre>
+    </li>
+    <li id="L187"><pre>            })()</pre></li>
+    <li id="L188"><pre>          }}</pre></li>
+    <li id="L189"><pre>        &gt;</pre></li>
+    <li id="L190"><pre>          {failure}</pre></li>
+    <li id="L191">
+      <pre>          &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L192"><pre>            &lt;span&gt;选择字段&lt;/span&gt;</pre></li>
+    <li id="L193"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L194"><pre>              label=&quot;选择表单字段&quot;</pre></li>
+    <li id="L195"><pre>              value={field?.name ?? &#x27;&#x27;}</pre></li>
+    <li id="L196"><pre>              disabled={busy}</pre></li>
+    <li id="L197"><pre>              options={snapshot.fields.map((item) =&gt; ({</pre></li>
+    <li id="L198"><pre>                value: item.name,</pre></li>
+    <li id="L199">
+      <pre>
+                label: `${item.name}${item.readOnly ? &#x27;（只读）&#x27; : &#x27;&#x27;}`,</pre>
+    </li>
+    <li id="L200"><pre>              }))}</pre></li>
+    <li id="L201"><pre>              onChange={(value) =&gt; {</pre></li>
+    <li id="L202"><pre>                setName(value)</pre></li>
+    <li id="L203"><pre>                setFeedback(null)</pre></li>
+    <li id="L204">
+      <pre>
+                const selected = snapshot.fields.find((item) =&gt; item.name === value)</pre>
+    </li>
+    <li id="L205">
+      <pre>                if (selected?.widgets[0]) onGotoPage(selected.widgets[0].page)</pre>
+    </li>
+    <li id="L206"><pre>              }}</pre></li>
+    <li id="L207"><pre>            /&gt;</pre></li>
+    <li id="L208"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L209"><pre>        &lt;/FieldEditor&gt;</pre></li>
+    <li id="L210"><pre>      ) : (</pre></li>
+    <li id="L211">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L212"><pre>          {failure}</pre></li>
+    <li id="L213"><pre>          {!snapshot &amp;&amp; busy ? (</pre></li>
+    <li id="L214"><pre>            &lt;div aria-label=&quot;正在读取表单&quot;&gt;</pre></li>
+    <li id="L215">
+      <pre>              &lt;Skeleton title={false} paragraph={{ rows: 4 }} /&gt;</pre>
+    </li>
+    <li id="L216"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L217"><pre>          ) : (</pre></li>
+    <li id="L218">
+      <pre>            &lt;p className=&quot;mimir-pdf-inspector__empty&quot;&gt;</pre>
+    </li>
+    <li id="L219">
+      <pre>
+              {snapshot ? &#x27;这份 PDF 没有交互表单字段。&#x27; : &#x27;未读取到字段，请刷新重试。&#x27;}</pre>
+    </li>
+    <li id="L220"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L221"><pre>          )}</pre></li>
+    <li id="L222"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L223"><pre>      )}</pre></li>
+    <li id="L224"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L225"><pre>  )</pre></li>
+    <li id="L226"><pre>}</pre></li>
+  </ol>
+</html>

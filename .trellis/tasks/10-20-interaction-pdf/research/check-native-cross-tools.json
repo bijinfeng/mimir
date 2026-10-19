@@ -1,0 +1,50 @@
+[
+  {
+    "variant": "before",
+    "fixtureBytes": 2142,
+    "afterDrawingBytes": 5546,
+    "afterNoteBytes": 3166,
+    "drawingsBeforeNote": 1,
+    "drawingsAfterNote": [
+      {
+        "kind": "rect",
+        "page": 1,
+        "x": 40,
+        "y": 100,
+        "width": 140,
+        "height": 80,
+        "color": "#2468AC",
+        "thickness": 2,
+        "opacity": 1,
+        "id": "d9d3be5c-749b-4564-ab1d-abcbc72e24cf"
+      }
+    ],
+    "annotationsBeforeNote": 3,
+    "annotationsAfterNote": 4,
+    "sha256AfterNote": "e3f5ce4e2784eb316834f2d378d37da03312457c9cc43d9c0e293019abbe8a89"
+  },
+  {
+    "variant": "after",
+    "fixtureBytes": 2142,
+    "afterDrawingBytes": 5546,
+    "afterNoteBytes": 3166,
+    "drawingsBeforeNote": 1,
+    "drawingsAfterNote": [
+      {
+        "kind": "rect",
+        "page": 1,
+        "x": 40,
+        "y": 100,
+        "width": 140,
+        "height": 80,
+        "color": "#2468AC",
+        "thickness": 2,
+        "opacity": 1,
+        "id": "23d4ac8f-ed49-48da-a7ef-f01eb6abff8c"
+      }
+    ],
+    "annotationsBeforeNote": 3,
+    "annotationsAfterNote": 4,
+    "sha256AfterNote": "27967c368345938f865a1086e3235a18e353fdf2cb72c9d2613f1cb51b42849d"
+  }
+]

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-redaction-copy.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-redaction-copy.ts</h1>
+    <p>before真实源码 · SHA256 97c40c3d0675b8781569e350382603dda8f5ff7a20c0ba0723aad7e1b7f7d6ac</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import type { PageViewport } from &#x27;pdfjs-dist&#x27;</pre></li>
+    <li id="L2"><pre></pre></li>
+    <li id="L3"><pre>export type RedactionPoint = { x: number; y: number }</pre></li>
+    <li id="L4"><pre>export type RedactionRect = [number, number, number, number]</pre></li>
+    <li id="L5"><pre>export interface PdfRedactionRegion {</pre></li>
+    <li id="L6"><pre>  id: string</pre></li>
+    <li id="L7"><pre>  pageIndex: number</pre></li>
+    <li id="L8"><pre>  rect: RedactionRect</pre></li>
+    <li id="L9"><pre>}</pre></li>
+    <li id="L10">
+      <pre>
+export function redactionPoint(client: RedactionPoint, box: DOMRect): RedactionPoint {</pre>
+    </li>
+    <li id="L11"><pre>  return {</pre></li>
+    <li id="L12">
+      <pre>    x: Math.max(0, Math.min(1, (client.x - box.left) / Math.max(1, box.width))),</pre>
+    </li>
+    <li id="L13">
+      <pre>    y: Math.max(0, Math.min(1, (client.y - box.top) / Math.max(1, box.height))),</pre>
+    </li>
+    <li id="L14"><pre>  }</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16">
+      <pre>
+/** PDF.js owns rotation, CropBox offsets and the PDF bottom-left coordinate system. */</pre>
+    </li>
+    <li id="L17"><pre>export function pdfRedactionRect(</pre></li>
+    <li id="L18">
+      <pre>
+  viewport: Pick&lt;PageViewport, &#x27;width&#x27; | &#x27;height&#x27; | &#x27;convertToPdfPoint&#x27;&gt;,</pre>
+    </li>
+    <li id="L19"><pre>  from: RedactionPoint,</pre></li>
+    <li id="L20"><pre>  to: RedactionPoint,</pre></li>
+    <li id="L21"><pre>): RedactionRect {</pre></li>
+    <li id="L22">
+      <pre>
+  const a = viewport.convertToPdfPoint(from.x * viewport.width, from.y * viewport.height)</pre>
+    </li>
+    <li id="L23">
+      <pre>
+  const b = viewport.convertToPdfPoint(to.x * viewport.width, to.y * viewport.height)</pre>
+    </li>
+    <li id="L24"><pre>  return [</pre></li>
+    <li id="L25"><pre>    Math.min(a[0]!, b[0]!),</pre></li>
+    <li id="L26"><pre>    Math.min(a[1]!, b[1]!),</pre></li>
+    <li id="L27"><pre>    Math.max(a[0]!, b[0]!),</pre></li>
+    <li id="L28"><pre>    Math.max(a[1]!, b[1]!),</pre></li>
+    <li id="L29"><pre>  ]</pre></li>
+    <li id="L30"><pre>}</pre></li>
+    <li id="L31"><pre>export function redactionScreenRect(</pre></li>
+    <li id="L32">
+      <pre>
+  viewport: Pick&lt;PageViewport, &#x27;width&#x27; | &#x27;height&#x27; | &#x27;convertToViewportPoint&#x27;&gt;,</pre>
+    </li>
+    <li id="L33"><pre>  rect: RedactionRect,</pre></li>
+    <li id="L34"><pre>) {</pre></li>
+    <li id="L35"><pre>  const a = viewport.convertToViewportPoint(rect[0], rect[1])</pre></li>
+    <li id="L36"><pre>  const b = viewport.convertToViewportPoint(rect[2], rect[3])</pre></li>
+    <li id="L37"><pre>  return {</pre></li>
+    <li id="L38"><pre>    left: `${(Math.min(a[0]!, b[0]!) / viewport.width) * 100}%`,</pre></li>
+    <li id="L39"><pre>    top: `${(Math.min(a[1]!, b[1]!) / viewport.height) * 100}%`,</pre></li>
+    <li id="L40"><pre>    width: `${(Math.abs(a[0]! - b[0]!) / viewport.width) * 100}%`,</pre></li>
+    <li id="L41">
+      <pre>    height: `${(Math.abs(a[1]! - b[1]!) / viewport.height) * 100}%`,</pre>
+    </li>
+    <li id="L42"><pre>  }</pre></li>
+    <li id="L43"><pre>}</pre></li>
+  </ol>
+</html>

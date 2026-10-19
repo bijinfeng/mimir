@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/ThumbnailSidebar.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/ThumbnailSidebar.tsx</h1>
+    <p>before真实源码 · SHA256 ca1af5ebc3a688da708260b12f1806d668ee20abe46db06d3e9c96e352dd1b0b</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button, Dropdown } from &#x27;antd&#x27;</pre></li>
+    <li id="L2">
+      <pre>import { ChevronLeft, ChevronRight, Plus } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>
+import { useEffect, useRef, useState, type DragEvent, type ReactNode } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import &#x27;./thumbnail-sidebar.css&#x27;</pre></li>
+    <li id="L5"><pre></pre></li>
+    <li id="L6"><pre>export interface ThumbnailPage {</pre></li>
+    <li id="L7"><pre>  key: string</pre></li>
+    <li id="L8"><pre>  label?: string</pre></li>
+    <li id="L9"><pre>}</pre></li>
+    <li id="L10"><pre>export interface ThumbnailSidebarProps {</pre></li>
+    <li id="L11"><pre>  pages: readonly ThumbnailPage[]</pre></li>
+    <li id="L12"><pre>  activeIndex: number</pre></li>
+    <li id="L13"><pre>  onSelect(index: number): void</pre></li>
+    <li id="L14"><pre>  onInsert(afterIndex: number): void</pre></li>
+    <li id="L15"><pre>  onDuplicate(index: number): void</pre></li>
+    <li id="L16"><pre>  onDelete(index: number): void</pre></li>
+    <li id="L17"><pre>  onMove(fromIndex: number, toIndex: number): void</pre></li>
+    <li id="L18"><pre>  renderThumbnail(index: number): ReactNode</pre></li>
+    <li id="L19"><pre>  noun?: string</pre></li>
+    <li id="L20"><pre>  children: ReactNode</pre></li>
+    <li id="L21"><pre>}</pre></li>
+    <li id="L22"><pre></pre></li>
+    <li id="L23"><pre>type ThumbnailItemProps = Pick&lt;</pre></li>
+    <li id="L24"><pre>  ThumbnailSidebarProps,</pre></li>
+    <li id="L25">
+      <pre>
+  &#x27;renderThumbnail&#x27; | &#x27;onSelect&#x27; | &#x27;onInsert&#x27; | &#x27;onDuplicate&#x27; | &#x27;onDelete&#x27; | &#x27;onMove&#x27;</pre>
+    </li>
+    <li id="L26"><pre>&gt; &amp; {</pre></li>
+    <li id="L27"><pre>  page: ThumbnailPage</pre></li>
+    <li id="L28"><pre>  index: number</pre></li>
+    <li id="L29"><pre>  count: number</pre></li>
+    <li id="L30"><pre>  active: boolean</pre></li>
+    <li id="L31"><pre>  noun: string</pre></li>
+    <li id="L32"><pre>  scrollRoot: React.RefObject&lt;HTMLDivElement | null&gt;</pre></li>
+    <li id="L33"><pre>  dragIndex: number | null</pre></li>
+    <li id="L34"><pre>  dropAt: number | null</pre></li>
+    <li id="L35">
+      <pre>  onDragStart(index: number, event: DragEvent&lt;HTMLDivElement&gt;): void</pre>
+    </li>
+    <li id="L36">
+      <pre>  onDragOver(index: number, event: DragEvent&lt;HTMLDivElement&gt;): void</pre>
+    </li>
+    <li id="L37"><pre>  onDrop(event: DragEvent&lt;HTMLDivElement&gt;): void</pre></li>
+    <li id="L38"><pre>  onDragEnd(): void</pre></li>
+    <li id="L39"><pre>}</pre></li>
+    <li id="L40"><pre></pre></li>
+    <li id="L41"><pre>function ThumbnailItem({</pre></li>
+    <li id="L42"><pre>  page,</pre></li>
+    <li id="L43"><pre>  index,</pre></li>
+    <li id="L44"><pre>  count,</pre></li>
+    <li id="L45"><pre>  active,</pre></li>
+    <li id="L46"><pre>  noun,</pre></li>
+    <li id="L47"><pre>  scrollRoot,</pre></li>
+    <li id="L48"><pre>  renderThumbnail,</pre></li>
+    <li id="L49"><pre>  onSelect,</pre></li>
+    <li id="L50"><pre>  onInsert,</pre></li>
+    <li id="L51"><pre>  onDuplicate,</pre></li>
+    <li id="L52"><pre>  onDelete,</pre></li>
+    <li id="L53"><pre>  onMove,</pre></li>
+    <li id="L54"><pre>  dragIndex,</pre></li>
+    <li id="L55"><pre>  dropAt,</pre></li>
+    <li id="L56"><pre>  onDragStart,</pre></li>
+    <li id="L57"><pre>  onDragOver,</pre></li>
+    <li id="L58"><pre>  onDrop,</pre></li>
+    <li id="L59"><pre>  onDragEnd,</pre></li>
+    <li id="L60"><pre>}: ThumbnailItemProps) {</pre></li>
+    <li id="L61"><pre>  const itemRef = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L62"><pre>  const [visible, setVisible] = useState(active || index &lt; 3)</pre></li>
+    <li id="L63"><pre>  const [menuOpen, setMenuOpen] = useState(false)</pre></li>
+    <li id="L64">
+      <pre>  const holdTimer = useRef&lt;ReturnType&lt;typeof setTimeout&gt; | null&gt;(null)</pre>
+    </li>
+    <li id="L65">
+      <pre>
+  const suppressTimer = useRef&lt;ReturnType&lt;typeof setTimeout&gt; | null&gt;(null)</pre>
+    </li>
+    <li id="L66">
+      <pre>  const holdPoint = useRef&lt;{ x: number; y: number } | null&gt;(null)</pre>
+    </li>
+    <li id="L67"><pre>  const suppressClick = useRef(false)</pre></li>
+    <li id="L68"><pre>  const cancelHold = () =&gt; {</pre></li>
+    <li id="L69"><pre>    if (holdTimer.current !== null) clearTimeout(holdTimer.current)</pre></li>
+    <li id="L70"><pre>    holdTimer.current = null</pre></li>
+    <li id="L71"><pre>    holdPoint.current = null</pre></li>
+    <li id="L72"><pre>  }</pre></li>
+    <li id="L73"><pre>  useEffect(</pre></li>
+    <li id="L74"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L75">
+      <pre>      if (holdTimer.current !== null) clearTimeout(holdTimer.current)</pre>
+    </li>
+    <li id="L76">
+      <pre>      if (suppressTimer.current !== null) clearTimeout(suppressTimer.current)</pre>
+    </li>
+    <li id="L77"><pre>    },</pre></li>
+    <li id="L78"><pre>    [],</pre></li>
+    <li id="L79"><pre>  )</pre></li>
+    <li id="L80"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L81"><pre>    if (!menuOpen) return</pre></li>
+    <li id="L82"><pre>    const timer = setTimeout(() =&gt; {</pre></li>
+    <li id="L83">
+      <pre>      const root = itemRef.current?.closest(&#x27;.mimir-page-browser&#x27;)</pre>
+    </li>
+    <li id="L84">
+      <pre>
+      const popup = [...(root?.querySelectorAll&lt;HTMLElement&gt;(&#x27;.ant-dropdown&#x27;) ?? [])].findLast(</pre>
+    </li>
+    <li id="L85">
+      <pre>        (node) =&gt; !node.classList.contains(&#x27;ant-dropdown-hidden&#x27;),</pre>
+    </li>
+    <li id="L86"><pre>      )</pre></li>
+    <li id="L87">
+      <pre>
+      popup?.querySelector&lt;HTMLElement&gt;(&#x27;[role=&quot;menuitem&quot;]:not([aria-disabled=&quot;true&quot;])&#x27;)?.focus()</pre>
+    </li>
+    <li id="L88"><pre>    }, 0)</pre></li>
+    <li id="L89"><pre>    return () =&gt; clearTimeout(timer)</pre></li>
+    <li id="L90"><pre>  }, [menuOpen])</pre></li>
+    <li id="L91"><pre>  const openAt = (x: number, y: number) =&gt; {</pre></li>
+    <li id="L92"><pre>    itemRef.current?.dispatchEvent(</pre></li>
+    <li id="L93"><pre>      new MouseEvent(&#x27;contextmenu&#x27;, {</pre></li>
+    <li id="L94"><pre>        bubbles: true,</pre></li>
+    <li id="L95"><pre>        cancelable: true,</pre></li>
+    <li id="L96"><pre>        clientX: x,</pre></li>
+    <li id="L97"><pre>        clientY: y,</pre></li>
+    <li id="L98"><pre>      }),</pre></li>
+    <li id="L99"><pre>    )</pre></li>
+    <li id="L100"><pre>  }</pre></li>
+    <li id="L101">
+      <pre>  const onKeyDown = (event: React.KeyboardEvent&lt;HTMLButtonElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L102">
+      <pre>
+    if (event.key !== &#x27;ContextMenu&#x27; &amp;&amp; !(event.shiftKey &amp;&amp; event.key === &#x27;F10&#x27;)) return</pre>
+    </li>
+    <li id="L103"><pre>    event.preventDefault()</pre></li>
+    <li id="L104"><pre>    const rect = itemRef.current?.getBoundingClientRect()</pre></li>
+    <li id="L105">
+      <pre>    if (rect) openAt(rect.left + rect.width / 2, rect.top + rect.height / 2)</pre>
+    </li>
+    <li id="L106"><pre>  }</pre></li>
+    <li id="L107">
+      <pre>  const onPointerDown = (event: React.PointerEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L108"><pre>    if (event.pointerType !== &#x27;touch&#x27;) return</pre></li>
+    <li id="L109"><pre>    cancelHold()</pre></li>
+    <li id="L110"><pre>    const point = { x: event.clientX, y: event.clientY }</pre></li>
+    <li id="L111"><pre>    holdPoint.current = point</pre></li>
+    <li id="L112"><pre>    holdTimer.current = setTimeout(() =&gt; {</pre></li>
+    <li id="L113"><pre>      suppressClick.current = true</pre></li>
+    <li id="L114"><pre>      suppressTimer.current = setTimeout(() =&gt; {</pre></li>
+    <li id="L115"><pre>        suppressClick.current = false</pre></li>
+    <li id="L116"><pre>      }, 800)</pre></li>
+    <li id="L117"><pre>      holdTimer.current = null</pre></li>
+    <li id="L118"><pre>      openAt(point.x, point.y)</pre></li>
+    <li id="L119"><pre>    }, 550)</pre></li>
+    <li id="L120"><pre>  }</pre></li>
+    <li id="L121">
+      <pre>  const onPointerMove = (event: React.PointerEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L122"><pre>    const point = holdPoint.current</pre></li>
+    <li id="L123">
+      <pre>
+    if (point &amp;&amp; Math.hypot(event.clientX - point.x, event.clientY - point.y) &gt; 10) cancelHold()</pre>
+    </li>
+    <li id="L124"><pre>  }</pre></li>
+    <li id="L125"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L126"><pre>    const node = itemRef.current</pre></li>
+    <li id="L127">
+      <pre>    if (!node || typeof IntersectionObserver === &#x27;undefined&#x27;) return</pre>
+    </li>
+    <li id="L128"><pre>    const observer = new IntersectionObserver(</pre></li>
+    <li id="L129">
+      <pre>      (entries) =&gt; setVisible(entries.some((entry) =&gt; entry.isIntersecting)),</pre>
+    </li>
+    <li id="L130">
+      <pre>      { root: scrollRoot.current, rootMargin: &#x27;220px 0px&#x27; },</pre>
+    </li>
+    <li id="L131"><pre>    )</pre></li>
+    <li id="L132"><pre>    observer.observe(node)</pre></li>
+    <li id="L133"><pre>    return () =&gt; observer.disconnect()</pre></li>
+    <li id="L134"><pre>  }, [scrollRoot])</pre></li>
+    <li id="L135"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L136">
+      <pre>
+    if (active &amp;&amp; typeof itemRef.current?.scrollIntoView === &#x27;function&#x27;) {</pre>
+    </li>
+    <li id="L137">
+      <pre>      itemRef.current.scrollIntoView({ block: &#x27;nearest&#x27; })</pre>
+    </li>
+    <li id="L138"><pre>    }</pre></li>
+    <li id="L139"><pre>  }, [active])</pre></li>
+    <li id="L140"><pre>  return (</pre></li>
+    <li id="L141"><pre>    &lt;Dropdown</pre></li>
+    <li id="L142"><pre>      trigger={[&#x27;contextMenu&#x27;]}</pre></li>
+    <li id="L143"><pre>      autoFocus</pre></li>
+    <li id="L144"><pre>      open={menuOpen}</pre></li>
+    <li id="L145"><pre>      onOpenChange={setMenuOpen}</pre></li>
+    <li id="L146"><pre>      placement=&quot;bottomLeft&quot;</pre></li>
+    <li id="L147"><pre>      destroyOnHidden</pre></li>
+    <li id="L148"><pre>      getPopupContainer={(node) =&gt;</pre></li>
+    <li id="L149">
+      <pre>
+        (node.closest(&#x27;.mimir-page-browser&#x27;) as HTMLElement) ?? document.body</pre>
+    </li>
+    <li id="L150"><pre>      }</pre></li>
+    <li id="L151"><pre>      menu={{</pre></li>
+    <li id="L152"><pre>        items: [</pre></li>
+    <li id="L153"><pre>          { key: &#x27;insert&#x27;, label: `在此${noun}后新增` },</pre></li>
+    <li id="L154"><pre>          { key: &#x27;duplicate&#x27;, label: `复制此${noun}` },</pre></li>
+    <li id="L155"><pre>          {</pre></li>
+    <li id="L156"><pre>            key: &#x27;delete&#x27;,</pre></li>
+    <li id="L157"><pre>            label:</pre></li>
+    <li id="L158"><pre>              count &lt;= 1</pre></li>
+    <li id="L159">
+      <pre>
+                ? `删除此${noun}（${noun === &#x27;幻灯片&#x27; ? &#x27;至少保留一张幻灯片&#x27; : &#x27;至少保留一页&#x27;}）`</pre>
+    </li>
+    <li id="L160"><pre>                : `删除此${noun}`,</pre></li>
+    <li id="L161"><pre>            disabled: count &lt;= 1,</pre></li>
+    <li id="L162"><pre>            danger: true,</pre></li>
+    <li id="L163"><pre>          },</pre></li>
+    <li id="L164"><pre>          { type: &#x27;divider&#x27; },</pre></li>
+    <li id="L165">
+      <pre>          { key: &#x27;up&#x27;, label: &#x27;上移&#x27;, disabled: index === 0 },</pre>
+    </li>
+    <li id="L166">
+      <pre>
+          { key: &#x27;down&#x27;, label: &#x27;下移&#x27;, disabled: index === count - 1 },</pre>
+    </li>
+    <li id="L167"><pre>        ],</pre></li>
+    <li id="L168"><pre>        onClick: ({ key }) =&gt; {</pre></li>
+    <li id="L169"><pre>          if (key === &#x27;insert&#x27;) onInsert(index)</pre></li>
+    <li id="L170"><pre>          if (key === &#x27;duplicate&#x27;) onDuplicate(index)</pre></li>
+    <li id="L171"><pre>          if (key === &#x27;delete&#x27;) onDelete(index)</pre></li>
+    <li id="L172"><pre>          if (key === &#x27;up&#x27;) onMove(index, index - 1)</pre></li>
+    <li id="L173"><pre>          if (key === &#x27;down&#x27;) onMove(index, index + 1)</pre></li>
+    <li id="L174"><pre>          setMenuOpen(false)</pre></li>
+    <li id="L175"><pre>        },</pre></li>
+    <li id="L176"><pre>      }}</pre></li>
+    <li id="L177"><pre>    &gt;</pre></li>
+    <li id="L178"><pre>      &lt;div</pre></li>
+    <li id="L179"><pre>        ref={itemRef}</pre></li>
+    <li id="L180"><pre>        className=&quot;mimir-page-browser__item&quot;</pre></li>
+    <li id="L181"><pre>        data-active={active}</pre></li>
+    <li id="L182"><pre>        data-dragging={dragIndex === index}</pre></li>
+    <li id="L183"><pre>        data-drop-before={dropAt === index}</pre></li>
+    <li id="L184">
+      <pre>        data-drop-after={dropAt === count &amp;&amp; index === count - 1}</pre>
+    </li>
+    <li id="L185"><pre>        draggable</pre></li>
+    <li id="L186"><pre>        onDragStart={(event) =&gt; {</pre></li>
+    <li id="L187"><pre>          cancelHold()</pre></li>
+    <li id="L188"><pre>          onDragStart(index, event)</pre></li>
+    <li id="L189"><pre>        }}</pre></li>
+    <li id="L190"><pre>        onDragOver={(event) =&gt; onDragOver(index, event)}</pre></li>
+    <li id="L191"><pre>        onDrop={onDrop}</pre></li>
+    <li id="L192"><pre>        onDragEnd={onDragEnd}</pre></li>
+    <li id="L193"><pre>        onPointerDown={onPointerDown}</pre></li>
+    <li id="L194"><pre>        onPointerMove={onPointerMove}</pre></li>
+    <li id="L195"><pre>        onPointerUp={cancelHold}</pre></li>
+    <li id="L196"><pre>        onPointerCancel={cancelHold}</pre></li>
+    <li id="L197"><pre>      &gt;</pre></li>
+    <li id="L198"><pre>        &lt;Button</pre></li>
+    <li id="L199"><pre>          type=&quot;text&quot;</pre></li>
+    <li id="L200"><pre>          className=&quot;mimir-page-browser__preview-button&quot;</pre></li>
+    <li id="L201">
+      <pre>
+          aria-label={`第 ${index + 1} ${noun}${page.label ? `：${page.label}` : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L202"><pre>          aria-current={active ? &#x27;page&#x27; : undefined}</pre></li>
+    <li id="L203"><pre>          aria-keyshortcuts=&quot;Shift+F10&quot;</pre></li>
+    <li id="L204">
+      <pre>          title=&quot;右键或长按打开页面操作；键盘可按 Shift+F10&quot;</pre>
+    </li>
+    <li id="L205"><pre>          onKeyDown={onKeyDown}</pre></li>
+    <li id="L206"><pre>          onClick={(event) =&gt; {</pre></li>
+    <li id="L207"><pre>            if (suppressClick.current) {</pre></li>
+    <li id="L208"><pre>              event.preventDefault()</pre></li>
+    <li id="L209"><pre>              suppressClick.current = false</pre></li>
+    <li id="L210">
+      <pre>
+              if (suppressTimer.current !== null) clearTimeout(suppressTimer.current)</pre>
+    </li>
+    <li id="L211"><pre>              suppressTimer.current = null</pre></li>
+    <li id="L212"><pre>              return</pre></li>
+    <li id="L213"><pre>            }</pre></li>
+    <li id="L214"><pre>            onSelect(index)</pre></li>
+    <li id="L215"><pre>          }}</pre></li>
+    <li id="L216"><pre>        &gt;</pre></li>
+    <li id="L217">
+      <pre>
+          &lt;span className=&quot;mimir-page-browser__preview&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L218">
+      <pre>
+            {active || visible || typeof IntersectionObserver === &#x27;undefined&#x27;</pre>
+    </li>
+    <li id="L219"><pre>              ? renderThumbnail(index)</pre></li>
+    <li id="L220"><pre>              : null}</pre></li>
+    <li id="L221"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L222"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L223">
+      <pre>        &lt;div className=&quot;mimir-page-browser__item-footer&quot;&gt;</pre>
+    </li>
+    <li id="L224">
+      <pre>
+          &lt;span className=&quot;mimir-page-browser__number&quot;&gt;{index + 1}&lt;/span&gt;</pre>
+    </li>
+    <li id="L225"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L226"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L227"><pre>    &lt;/Dropdown&gt;</pre></li>
+    <li id="L228"><pre>  )</pre></li>
+    <li id="L229"><pre>}</pre></li>
+    <li id="L230"><pre></pre></li>
+    <li id="L231">
+      <pre>
+/** The list owns navigation controls; the editor owns page data and persistence. */</pre>
+    </li>
+    <li id="L232"><pre>export function ThumbnailSidebar({</pre></li>
+    <li id="L233"><pre>  pages,</pre></li>
+    <li id="L234"><pre>  activeIndex,</pre></li>
+    <li id="L235"><pre>  onSelect,</pre></li>
+    <li id="L236"><pre>  onInsert,</pre></li>
+    <li id="L237"><pre>  onDuplicate,</pre></li>
+    <li id="L238"><pre>  onDelete,</pre></li>
+    <li id="L239"><pre>  onMove,</pre></li>
+    <li id="L240"><pre>  renderThumbnail,</pre></li>
+    <li id="L241"><pre>  noun = &#x27;页&#x27;,</pre></li>
+    <li id="L242"><pre>  children,</pre></li>
+    <li id="L243"><pre>}: ThumbnailSidebarProps) {</pre></li>
+    <li id="L244"><pre>  const scrollRoot = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L245">
+      <pre>  // `auto` keeps the rail beside a wide canvas and hides it over a narrow one.</pre>
+    </li>
+    <li id="L246"><pre>  // Explicit choices remain available until a page is selected.</pre></li>
+    <li id="L247">
+      <pre>
+  const [open, setOpen] = useState&lt;&#x27;auto&#x27; | &#x27;open&#x27; | &#x27;closed&#x27;&gt;(&#x27;auto&#x27;)</pre>
+    </li>
+    <li id="L248">
+      <pre>  const [dragIndex, setDragIndex] = useState&lt;number | null&gt;(null)</pre>
+    </li>
+    <li id="L249"><pre>  const [dropAt, setDropAt] = useState&lt;number | null&gt;(null)</pre></li>
+    <li id="L250">
+      <pre>
+  const onDragStart = (index: number, event: DragEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L251"><pre>    event.dataTransfer.effectAllowed = &#x27;move&#x27;</pre></li>
+    <li id="L252">
+      <pre>    event.dataTransfer.setData(&#x27;text/plain&#x27;, String(index))</pre>
+    </li>
+    <li id="L253"><pre>    setDragIndex(index)</pre></li>
+    <li id="L254"><pre>    setDropAt(null)</pre></li>
+    <li id="L255"><pre>  }</pre></li>
+    <li id="L256">
+      <pre>
+  const onDragOver = (index: number, event: DragEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L257"><pre>    if (dragIndex === null) return</pre></li>
+    <li id="L258"><pre>    event.preventDefault()</pre></li>
+    <li id="L259"><pre>    event.dataTransfer.dropEffect = &#x27;move&#x27;</pre></li>
+    <li id="L260"><pre>    const rect = event.currentTarget.getBoundingClientRect()</pre></li>
+    <li id="L261">
+      <pre>    setDropAt(index + (event.clientY &gt;= rect.top + rect.height / 2 ? 1 : 0))</pre>
+    </li>
+    <li id="L262"><pre>  }</pre></li>
+    <li id="L263"><pre>  const onDragEnd = () =&gt; {</pre></li>
+    <li id="L264"><pre>    setDragIndex(null)</pre></li>
+    <li id="L265"><pre>    setDropAt(null)</pre></li>
+    <li id="L266"><pre>  }</pre></li>
+    <li id="L267"><pre>  const onDrop = (event: DragEvent&lt;HTMLDivElement&gt;) =&gt; {</pre></li>
+    <li id="L268"><pre>    event.preventDefault()</pre></li>
+    <li id="L269"><pre>    if (dragIndex !== null &amp;&amp; dropAt !== null) {</pre></li>
+    <li id="L270"><pre>      const target = dropAt &gt; dragIndex ? dropAt - 1 : dropAt</pre></li>
+    <li id="L271"><pre>      if (target !== dragIndex) onMove(dragIndex, target)</pre></li>
+    <li id="L272"><pre>    }</pre></li>
+    <li id="L273"><pre>    onDragEnd()</pre></li>
+    <li id="L274"><pre>  }</pre></li>
+    <li id="L275"><pre>  return (</pre></li>
+    <li id="L276">
+      <pre>    &lt;div className=&quot;mimir-page-browser&quot; data-open={open}&gt;</pre>
+    </li>
+    <li id="L277"><pre>      &lt;aside</pre></li>
+    <li id="L278"><pre>        className=&quot;mimir-page-browser__sidebar&quot;</pre></li>
+    <li id="L279"><pre>        aria-label={`${noun}缩略图`}</pre></li>
+    <li id="L280"><pre>        hidden={open === &#x27;closed&#x27;}</pre></li>
+    <li id="L281"><pre>      &gt;</pre></li>
+    <li id="L282">
+      <pre>        &lt;div className=&quot;mimir-page-browser__header&quot;&gt;</pre>
+    </li>
+    <li id="L283"><pre>          &lt;span&gt;{noun}缩略图&lt;/span&gt;</pre></li>
+    <li id="L284"><pre>          &lt;Button</pre></li>
+    <li id="L285"><pre>            size=&quot;small&quot;</pre></li>
+    <li id="L286"><pre>            type=&quot;text&quot;</pre></li>
+    <li id="L287"><pre>            aria-label={`新增${noun}`}</pre></li>
+    <li id="L288"><pre>            title={`新增${noun}`}</pre></li>
+    <li id="L289">
+      <pre>            icon={&lt;Plus size={16} aria-hidden=&quot;true&quot; /&gt;}</pre>
+    </li>
+    <li id="L290"><pre>            onClick={() =&gt; onInsert(Math.max(0, activeIndex))}</pre></li>
+    <li id="L291"><pre>          /&gt;</pre></li>
+    <li id="L292"><pre>          &lt;Button</pre></li>
+    <li id="L293"><pre>            size=&quot;small&quot;</pre></li>
+    <li id="L294"><pre>            type=&quot;text&quot;</pre></li>
+    <li id="L295"><pre>            aria-label=&quot;收起缩略图&quot;</pre></li>
+    <li id="L296"><pre>            title=&quot;收起缩略图&quot;</pre></li>
+    <li id="L297">
+      <pre>            icon={&lt;ChevronLeft size={16} aria-hidden=&quot;true&quot; /&gt;}</pre>
+    </li>
+    <li id="L298"><pre>            onClick={() =&gt; setOpen(&#x27;closed&#x27;)}</pre></li>
+    <li id="L299"><pre>          /&gt;</pre></li>
+    <li id="L300"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L301">
+      <pre>        &lt;div ref={scrollRoot} className=&quot;mimir-page-browser__list&quot;&gt;</pre>
+    </li>
+    <li id="L302"><pre>          {pages.map((page, index) =&gt; (</pre></li>
+    <li id="L303"><pre>            &lt;ThumbnailItem</pre></li>
+    <li id="L304"><pre>              key={page.key}</pre></li>
+    <li id="L305"><pre>              page={page}</pre></li>
+    <li id="L306"><pre>              index={index}</pre></li>
+    <li id="L307"><pre>              count={pages.length}</pre></li>
+    <li id="L308"><pre>              active={index === activeIndex}</pre></li>
+    <li id="L309"><pre>              noun={noun}</pre></li>
+    <li id="L310"><pre>              scrollRoot={scrollRoot}</pre></li>
+    <li id="L311"><pre>              renderThumbnail={renderThumbnail}</pre></li>
+    <li id="L312"><pre>              onSelect={(selectedIndex) =&gt; {</pre></li>
+    <li id="L313"><pre>                onSelect(selectedIndex)</pre></li>
+    <li id="L314"><pre>                setOpen(&#x27;auto&#x27;)</pre></li>
+    <li id="L315"><pre>              }}</pre></li>
+    <li id="L316"><pre>              onInsert={onInsert}</pre></li>
+    <li id="L317"><pre>              onDuplicate={onDuplicate}</pre></li>
+    <li id="L318"><pre>              onDelete={onDelete}</pre></li>
+    <li id="L319"><pre>              onMove={onMove}</pre></li>
+    <li id="L320"><pre>              dragIndex={dragIndex}</pre></li>
+    <li id="L321"><pre>              dropAt={dropAt}</pre></li>
+    <li id="L322"><pre>              onDragStart={onDragStart}</pre></li>
+    <li id="L323"><pre>              onDragOver={onDragOver}</pre></li>
+    <li id="L324"><pre>              onDrop={onDrop}</pre></li>
+    <li id="L325"><pre>              onDragEnd={onDragEnd}</pre></li>
+    <li id="L326"><pre>            /&gt;</pre></li>
+    <li id="L327"><pre>          ))}</pre></li>
+    <li id="L328"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L329"><pre>      &lt;/aside&gt;</pre></li>
+    <li id="L330"><pre>      &lt;div className=&quot;mimir-page-browser__canvas&quot;&gt;</pre></li>
+    <li id="L331"><pre>        {open !== &#x27;open&#x27; &amp;&amp; (</pre></li>
+    <li id="L332"><pre>          &lt;Button</pre></li>
+    <li id="L333"><pre>            size=&quot;small&quot;</pre></li>
+    <li id="L334"><pre>            type=&quot;text&quot;</pre></li>
+    <li id="L335"><pre>            className=&quot;mimir-page-browser__reopen&quot;</pre></li>
+    <li id="L336"><pre>            data-auto={open === &#x27;auto&#x27;}</pre></li>
+    <li id="L337"><pre>            aria-label=&quot;显示缩略图&quot;</pre></li>
+    <li id="L338"><pre>            title=&quot;显示缩略图&quot;</pre></li>
+    <li id="L339">
+      <pre>            icon={&lt;ChevronRight size={16} aria-hidden=&quot;true&quot; /&gt;}</pre>
+    </li>
+    <li id="L340"><pre>            onClick={() =&gt; setOpen(&#x27;open&#x27;)}</pre></li>
+    <li id="L341"><pre>          /&gt;</pre></li>
+    <li id="L342"><pre>        )}</pre></li>
+    <li id="L343"><pre>        {children}</pre></li>
+    <li id="L344"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L345"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L346"><pre>  )</pre></li>
+    <li id="L347"><pre>}</pre></li>
+  </ol>
+</html>

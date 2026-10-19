@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-image-export.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-image-export.ts</h1>
+    <p>current真实源码 · SHA256 36724dbc27f5d1770cdc6199d5f6fcbaa0256fe5974ff91bd53587a0220cfaef</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import JSZip from &#x27;jszip&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import { renderPdfPageImage, retainPdfImageExport } from &#x27;./pdf-render.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre></pre></li>
+    <li id="L4">
+      <pre>
+/** Page numbers are displayed order, not the source file&#x27;s old page indexes. */</pre>
+    </li>
+    <li id="L5">
+      <pre>export function pdfImagePages(range: string, pageCount: number): number[] {</pre>
+    </li>
+    <li id="L6">
+      <pre>
+  if (!Number.isInteger(pageCount) || pageCount &lt; 1) throw new Error(&#x27;PDF 中没有可导出的页面&#x27;)</pre>
+    </li>
+    <li id="L7">
+      <pre>  if (!range.trim()) throw new Error(&#x27;请输入页码，例如 1-3,5&#x27;)</pre>
+    </li>
+    <li id="L8"><pre>  const pages = new Set&lt;number&gt;()</pre></li>
+    <li id="L9"><pre>  for (const part of range.split(/[,，]/)) {</pre></li>
+    <li id="L10"><pre>    const match = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/.exec(part)</pre></li>
+    <li id="L11">
+      <pre>    if (!match) throw new Error(&#x27;页码格式无效，请使用 1-3,5 这样的范围&#x27;)</pre>
+    </li>
+    <li id="L12"><pre>    const first = Number(match[1])</pre></li>
+    <li id="L13"><pre>    const last = Number(match[2] ?? match[1])</pre></li>
+    <li id="L14"><pre>    if (</pre></li>
+    <li id="L15"><pre>      !Number.isSafeInteger(first) ||</pre></li>
+    <li id="L16"><pre>      !Number.isSafeInteger(last) ||</pre></li>
+    <li id="L17"><pre>      first &lt; 1 ||</pre></li>
+    <li id="L18"><pre>      last &gt; pageCount</pre></li>
+    <li id="L19"><pre>    )</pre></li>
+    <li id="L20"><pre>      throw new Error(`页码须在 1 到 ${pageCount} 之间`)</pre></li>
+    <li id="L21">
+      <pre>
+    if (last &lt; first) throw new Error(&#x27;页码范围的结束页须不小于起始页&#x27;)</pre>
+    </li>
+    <li id="L22"><pre>    for (let n = first; n &lt;= last; n += 1) pages.add(n)</pre></li>
+    <li id="L23"><pre>  }</pre></li>
+    <li id="L24"><pre>  return [...pages].toSorted((a, b) =&gt; a - b)</pre></li>
+    <li id="L25"><pre>}</pre></li>
+    <li id="L26"><pre></pre></li>
+    <li id="L27"><pre>export interface PdfPageImageOutput {</pre></li>
+    <li id="L28"><pre>  bytes: Uint8Array</pre></li>
+    <li id="L29"><pre>  mime: &#x27;image/png&#x27; | &#x27;application/zip&#x27;</pre></li>
+    <li id="L30"><pre>  name: string</pre></li>
+    <li id="L31"><pre>  pages: { page: number; width: number; height: number }[]</pre></li>
+    <li id="L32"><pre>  preview: Uint8Array</pre></li>
+    <li id="L33"><pre>}</pre></li>
+    <li id="L34"><pre></pre></li>
+    <li id="L35">
+      <pre>/** Complete the full batch before offering a single explicit download. */</pre>
+    </li>
+    <li id="L36"><pre>export async function exportPdfPageImages({</pre></li>
+    <li id="L37"><pre>  bytes,</pre></li>
+    <li id="L38"><pre>  pages,</pre></li>
+    <li id="L39"><pre>  dpi,</pre></li>
+    <li id="L40"><pre>  signal,</pre></li>
+    <li id="L41"><pre>  assertCurrent,</pre></li>
+    <li id="L42"><pre>  onProgress,</pre></li>
+    <li id="L43"><pre>}: {</pre></li>
+    <li id="L44"><pre>  bytes: Uint8Array</pre></li>
+    <li id="L45"><pre>  pages: number[]</pre></li>
+    <li id="L46"><pre>  dpi: number</pre></li>
+    <li id="L47"><pre>  signal: AbortSignal</pre></li>
+    <li id="L48"><pre>  assertCurrent(): void</pre></li>
+    <li id="L49"><pre>  onProgress(done: number, total: number): void</pre></li>
+    <li id="L50"><pre>}): Promise&lt;PdfPageImageOutput&gt; {</pre></li>
+    <li id="L51"><pre>  if (!pages.length) throw new Error(&#x27;请选择至少一页&#x27;)</pre></li>
+    <li id="L52"><pre>  const zip = new JSZip()</pre></li>
+    <li id="L53"><pre>  const dimensions: PdfPageImageOutput[&#x27;pages&#x27;] = []</pre></li>
+    <li id="L54"><pre>  let totalSize = 0</pre></li>
+    <li id="L55"><pre>  let first: Uint8Array | null = null</pre></li>
+    <li id="L56"><pre>  const check = () =&gt; {</pre></li>
+    <li id="L57"><pre>    signal.throwIfAborted()</pre></li>
+    <li id="L58"><pre>    assertCurrent()</pre></li>
+    <li id="L59"><pre>  }</pre></li>
+    <li id="L60"><pre>  const release = retainPdfImageExport(bytes)</pre></li>
+    <li id="L61"><pre>  try {</pre></li>
+    <li id="L62"><pre>    for (const [index, page] of pages.entries()) {</pre></li>
+    <li id="L63"><pre>      check()</pre></li>
+    <li id="L64">
+      <pre>
+      const image = await renderPdfPageImage({ bytes, pageIndex: page - 1, dpi, signal })</pre>
+    </li>
+    <li id="L65"><pre>      check()</pre></li>
+    <li id="L66"><pre>      totalSize += image.bytes.byteLength</pre></li>
+    <li id="L67"><pre>      if (totalSize &gt; 128 * 1024 * 1024)</pre></li>
+    <li id="L68">
+      <pre>        throw new Error(&#x27;图像总大小超过 128 MiB，请减少页数或降低分辨率&#x27;)</pre>
+    </li>
+    <li id="L69"><pre>      first ??= image.bytes</pre></li>
+    <li id="L70">
+      <pre>      dimensions.push({ page, width: image.width, height: image.height })</pre>
+    </li>
+    <li id="L71">
+      <pre>      zip.file(`page-${String(page).padStart(3, &#x27;0&#x27;)}.png`, image.bytes)</pre>
+    </li>
+    <li id="L72"><pre>      onProgress(index + 1, pages.length)</pre></li>
+    <li id="L73"><pre>    }</pre></li>
+    <li id="L74"><pre>    check()</pre></li>
+    <li id="L75"><pre>    const output =</pre></li>
+    <li id="L76"><pre>      pages.length === 1</pre></li>
+    <li id="L77"><pre>        ? first!</pre></li>
+    <li id="L78">
+      <pre>
+        : await zip.generateAsync({ type: &#x27;uint8array&#x27;, compression: &#x27;STORE&#x27; }, () =&gt; check())</pre>
+    </li>
+    <li id="L79"><pre>    check()</pre></li>
+    <li id="L80"><pre>    return {</pre></li>
+    <li id="L81"><pre>      bytes: output,</pre></li>
+    <li id="L82"><pre>      preview: first!,</pre></li>
+    <li id="L83">
+      <pre>
+      name: pages.length === 1 ? `page-${String(pages[0]).padStart(3, &#x27;0&#x27;)}.png` : &#x27;pdf-pages.zip&#x27;,</pre>
+    </li>
+    <li id="L84">
+      <pre>
+      mime: pages.length === 1 ? &#x27;image/png&#x27; : &#x27;application/zip&#x27;,</pre>
+    </li>
+    <li id="L85"><pre>      pages: dimensions,</pre></li>
+    <li id="L86"><pre>    }</pre></li>
+    <li id="L87"><pre>  } finally {</pre></li>
+    <li id="L88"><pre>    release()</pre></li>
+    <li id="L89"><pre>  }</pre></li>
+    <li id="L90"><pre>}</pre></li>
+  </ol>
+</html>

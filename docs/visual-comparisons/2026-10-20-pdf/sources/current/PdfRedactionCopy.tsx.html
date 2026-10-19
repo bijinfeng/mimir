@@ -1,0 +1,549 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfRedactionCopy.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfRedactionCopy.tsx</h1>
+    <p>current真实源码 · SHA256 a2a53cc751f024c1211c783b502b1be906652921a943c1f3872cd70ea973393f</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useEffect, useRef, useState, type PointerEvent, type RefObject } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import type { PageViewport } from &#x27;pdfjs-dist&#x27;</pre></li>
+    <li id="L3"><pre>import { Download, Trash2, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L4">
+      <pre>import type { PdfAgentHandle } from &#x27;../agent/pdf-agent.js&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>import type { PdfHostLocal } from &#x27;../agent/pdf-local-agent.js&#x27;</pre>
+    </li>
+    <li id="L6"><pre>import { ToolbarButton } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L7"><pre>import { loadPdfDocument } from &#x27;./pdf-render.js&#x27;</pre></li>
+    <li id="L8"><pre>import {</pre></li>
+    <li id="L9"><pre>  pdfRedactionRect,</pre></li>
+    <li id="L10"><pre>  redactionPoint,</pre></li>
+    <li id="L11"><pre>  redactionScreenRect,</pre></li>
+    <li id="L12"><pre>  type PdfRedactionRegion,</pre></li>
+    <li id="L13"><pre>  type RedactionPoint,</pre></li>
+    <li id="L14"><pre>} from &#x27;./pdf-redaction-copy.js&#x27;</pre></li>
+    <li id="L15"><pre>import &#x27;./pdf-redaction-copy.css&#x27;</pre></li>
+    <li id="L16"><pre></pre></li>
+    <li id="L17"><pre>function pointerPoint(event: PointerEvent&lt;HTMLDivElement&gt;) {</pre></li>
+    <li id="L18"><pre>  return redactionPoint(</pre></li>
+    <li id="L19"><pre>    { x: event.clientX, y: event.clientY },</pre></li>
+    <li id="L20"><pre>    event.currentTarget.getBoundingClientRect(),</pre></li>
+    <li id="L21"><pre>  )</pre></li>
+    <li id="L22"><pre>}</pre></li>
+    <li id="L23"><pre></pre></li>
+    <li id="L24"><pre>function PdfRedactionOverlay({</pre></li>
+    <li id="L25"><pre>  viewport,</pre></li>
+    <li id="L26"><pre>  regions,</pre></li>
+    <li id="L27"><pre>  pageIndex,</pre></li>
+    <li id="L28"><pre>  disabled,</pre></li>
+    <li id="L29"><pre>  onAdd,</pre></li>
+    <li id="L30"><pre>  onClose,</pre></li>
+    <li id="L31"><pre>}: {</pre></li>
+    <li id="L32"><pre>  viewport: PageViewport</pre></li>
+    <li id="L33"><pre>  regions: PdfRedactionRegion[]</pre></li>
+    <li id="L34"><pre>  pageIndex: number</pre></li>
+    <li id="L35"><pre>  disabled: boolean</pre></li>
+    <li id="L36"><pre>  onAdd(region: PdfRedactionRegion): void</pre></li>
+    <li id="L37"><pre>  onClose(): void</pre></li>
+    <li id="L38"><pre>}) {</pre></li>
+    <li id="L39"><pre>  const [drag, setDrag] = useState&lt;{</pre></li>
+    <li id="L40"><pre>    pointer: number</pre></li>
+    <li id="L41"><pre>    from: RedactionPoint</pre></li>
+    <li id="L42"><pre>    to: RedactionPoint</pre></li>
+    <li id="L43"><pre>    width: number</pre></li>
+    <li id="L44"><pre>    height: number</pre></li>
+    <li id="L45"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L46"><pre>  const dragRef = useRef(drag)</pre></li>
+    <li id="L47"><pre>  const cancel = () =&gt; {</pre></li>
+    <li id="L48"><pre>    dragRef.current = null</pre></li>
+    <li id="L49"><pre>    setDrag(null)</pre></li>
+    <li id="L50"><pre>  }</pre></li>
+    <li id="L51">
+      <pre>  const finish = (event: PointerEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L52"><pre>    const current = dragRef.current</pre></li>
+    <li id="L53"><pre>    if (!current || current.pointer !== event.pointerId) return</pre></li>
+    <li id="L54"><pre>    cancel()</pre></li>
+    <li id="L55"><pre>    if (event.currentTarget.hasPointerCapture?.(event.pointerId))</pre></li>
+    <li id="L56"><pre>      event.currentTarget.releasePointerCapture(event.pointerId)</pre></li>
+    <li id="L57"><pre>    const to = pointerPoint(event)</pre></li>
+    <li id="L58"><pre>    if (</pre></li>
+    <li id="L59"><pre>      disabled ||</pre></li>
+    <li id="L60"><pre>      Math.abs(to.x - current.from.x) * current.width &lt; 3 ||</pre></li>
+    <li id="L61"><pre>      Math.abs(to.y - current.from.y) * current.height &lt; 3</pre></li>
+    <li id="L62"><pre>    )</pre></li>
+    <li id="L63"><pre>      return</pre></li>
+    <li id="L64"><pre>    onAdd({</pre></li>
+    <li id="L65"><pre>      id: crypto.randomUUID(),</pre></li>
+    <li id="L66"><pre>      pageIndex,</pre></li>
+    <li id="L67"><pre>      rect: pdfRedactionRect(viewport, current.from, to),</pre></li>
+    <li id="L68"><pre>    })</pre></li>
+    <li id="L69"><pre>  }</pre></li>
+    <li id="L70">
+      <pre>  const draft = drag ? pdfRedactionRect(viewport, drag.from, drag.to) : null</pre>
+    </li>
+    <li id="L71"><pre>  return (</pre></li>
+    <li id="L72"><pre>    &lt;div</pre></li>
+    <li id="L73"><pre>      className=&quot;mimir-pdf-redaction-overlay&quot;</pre></li>
+    <li id="L74"><pre>      role=&quot;group&quot;</pre></li>
+    <li id="L75"><pre>      aria-label=&quot;拖动标记涂黑区域&quot;</pre></li>
+    <li id="L76"><pre>      tabIndex={0}</pre></li>
+    <li id="L77"><pre>      data-disabled={disabled || undefined}</pre></li>
+    <li id="L78"><pre>      onPointerDown={(event) =&gt; {</pre></li>
+    <li id="L79">
+      <pre>
+        if (disabled || event.button !== 0 || event.isPrimary === false || dragRef.current) return</pre>
+    </li>
+    <li id="L80"><pre>        event.preventDefault()</pre></li>
+    <li id="L81"><pre>        event.stopPropagation()</pre></li>
+    <li id="L82"><pre>        event.currentTarget.focus()</pre></li>
+    <li id="L83"><pre>        event.currentTarget.setPointerCapture?.(event.pointerId)</pre></li>
+    <li id="L84"><pre>        const box = event.currentTarget.getBoundingClientRect(),</pre></li>
+    <li id="L85"><pre>          from = pointerPoint(event)</pre></li>
+    <li id="L86"><pre>        const next = {</pre></li>
+    <li id="L87"><pre>          pointer: event.pointerId,</pre></li>
+    <li id="L88"><pre>          from,</pre></li>
+    <li id="L89"><pre>          to: from,</pre></li>
+    <li id="L90"><pre>          width: box.width,</pre></li>
+    <li id="L91"><pre>          height: box.height,</pre></li>
+    <li id="L92"><pre>        }</pre></li>
+    <li id="L93"><pre>        dragRef.current = next</pre></li>
+    <li id="L94"><pre>        setDrag(next)</pre></li>
+    <li id="L95"><pre>      }}</pre></li>
+    <li id="L96"><pre>      onPointerMove={(event) =&gt; {</pre></li>
+    <li id="L97">
+      <pre>        if (!dragRef.current || dragRef.current.pointer !== event.pointerId) return</pre>
+    </li>
+    <li id="L98">
+      <pre>        const next = { ...dragRef.current, to: pointerPoint(event) }</pre>
+    </li>
+    <li id="L99"><pre>        dragRef.current = next</pre></li>
+    <li id="L100"><pre>        setDrag(next)</pre></li>
+    <li id="L101"><pre>      }}</pre></li>
+    <li id="L102"><pre>      onPointerUp={finish}</pre></li>
+    <li id="L103"><pre>      onPointerCancel={(event) =&gt; {</pre></li>
+    <li id="L104"><pre>        if (dragRef.current?.pointer === event.pointerId) cancel()</pre></li>
+    <li id="L105"><pre>      }}</pre></li>
+    <li id="L106"><pre>      onLostPointerCapture={(event) =&gt; {</pre></li>
+    <li id="L107"><pre>        if (dragRef.current?.pointer === event.pointerId) cancel()</pre></li>
+    <li id="L108"><pre>      }}</pre></li>
+    <li id="L109"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L110"><pre>        if (event.key !== &#x27;Escape&#x27;) return</pre></li>
+    <li id="L111"><pre>        event.preventDefault()</pre></li>
+    <li id="L112"><pre>        event.stopPropagation()</pre></li>
+    <li id="L113"><pre>        if (dragRef.current) {</pre></li>
+    <li id="L114"><pre>          const pointer = dragRef.current.pointer</pre></li>
+    <li id="L115"><pre>          cancel()</pre></li>
+    <li id="L116"><pre>          if (event.currentTarget.hasPointerCapture?.(pointer))</pre></li>
+    <li id="L117"><pre>            event.currentTarget.releasePointerCapture(pointer)</pre></li>
+    <li id="L118"><pre>        } else onClose()</pre></li>
+    <li id="L119"><pre>      }}</pre></li>
+    <li id="L120"><pre>    &gt;</pre></li>
+    <li id="L121"><pre>      {regions</pre></li>
+    <li id="L122"><pre>        .filter((region) =&gt; region.pageIndex === pageIndex)</pre></li>
+    <li id="L123"><pre>        .map((region) =&gt; (</pre></li>
+    <li id="L124"><pre>          &lt;span</pre></li>
+    <li id="L125"><pre>            key={region.id}</pre></li>
+    <li id="L126"><pre>            className=&quot;mimir-pdf-redaction-region&quot;</pre></li>
+    <li id="L127"><pre>            style={redactionScreenRect(viewport, region.rect)}</pre></li>
+    <li id="L128"><pre>          /&gt;</pre></li>
+    <li id="L129"><pre>        ))}</pre></li>
+    <li id="L130"><pre>      {draft &amp;&amp; (</pre></li>
+    <li id="L131"><pre>        &lt;span</pre></li>
+    <li id="L132"><pre>          className=&quot;mimir-pdf-redaction-region&quot;</pre></li>
+    <li id="L133"><pre>          data-draft=&quot;true&quot;</pre></li>
+    <li id="L134"><pre>          style={redactionScreenRect(viewport, draft)}</pre></li>
+    <li id="L135"><pre>        /&gt;</pre></li>
+    <li id="L136"><pre>      )}</pre></li>
+    <li id="L137"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L138"><pre>  )</pre></li>
+    <li id="L139"><pre>}</pre></li>
+    <li id="L140"><pre></pre></li>
+    <li id="L141"><pre>export function usePdfRedactionCopy({</pre></li>
+    <li id="L142"><pre>  identity,</pre></li>
+    <li id="L143"><pre>  enabled,</pre></li>
+    <li id="L144"><pre>  bytes,</pre></li>
+    <li id="L145"><pre>  pageIndex,</pre></li>
+    <li id="L146"><pre>  rotation,</pre></li>
+    <li id="L147"><pre>  blocked,</pre></li>
+    <li id="L148"><pre>  host,</pre></li>
+    <li id="L149"><pre>  agent,</pre></li>
+    <li id="L150"><pre>  onRequest,</pre></li>
+    <li id="L151"><pre>  onClose,</pre></li>
+    <li id="L152"><pre>}: {</pre></li>
+    <li id="L153"><pre>  identity: object</pre></li>
+    <li id="L154"><pre>  enabled: boolean</pre></li>
+    <li id="L155"><pre>  bytes: Uint8Array | null</pre></li>
+    <li id="L156"><pre>  pageIndex: number</pre></li>
+    <li id="L157"><pre>  rotation: number</pre></li>
+    <li id="L158"><pre>  blocked: boolean</pre></li>
+    <li id="L159"><pre>  host?: PdfHostLocal</pre></li>
+    <li id="L160"><pre>  agent: RefObject&lt;PdfAgentHandle | null&gt;</pre></li>
+    <li id="L161"><pre>  onRequest(controller: AbortController): void</pre></li>
+    <li id="L162"><pre>  onClose(): void</pre></li>
+    <li id="L163"><pre>}) {</pre></li>
+    <li id="L164"><pre>  const [state, setState] = useState&lt;{</pre></li>
+    <li id="L165"><pre>    identity: object</pre></li>
+    <li id="L166"><pre>    enabled: boolean</pre></li>
+    <li id="L167"><pre>    regions: PdfRedactionRegion[]</pre></li>
+    <li id="L168"><pre>    error: string | null</pre></li>
+    <li id="L169"><pre>    result: string | null</pre></li>
+    <li id="L170">
+      <pre>  }&gt;({ identity, enabled, regions: [], error: null, result: null })</pre>
+    </li>
+    <li id="L171"><pre>  if (state.identity !== identity || state.enabled !== enabled)</pre></li>
+    <li id="L172">
+      <pre>    setState({ identity, enabled, regions: [], error: null, result: null })</pre>
+    </li>
+    <li id="L173"><pre>  const current =</pre></li>
+    <li id="L174">
+      <pre>    state.identity === identity &amp;&amp; state.enabled === enabled</pre>
+    </li>
+    <li id="L175"><pre>      ? state</pre></li>
+    <li id="L176"><pre>      : { ...state, regions: [], error: null, result: null }</pre></li>
+    <li id="L177"><pre>  const [view, setView] = useState&lt;{</pre></li>
+    <li id="L178"><pre>    identity: object</pre></li>
+    <li id="L179"><pre>    pageIndex: number</pre></li>
+    <li id="L180"><pre>    rotation: number</pre></li>
+    <li id="L181"><pre>    viewport: PageViewport</pre></li>
+    <li id="L182"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L183">
+      <pre>
+  const [running, setRunning] = useState&lt;{ identity: object; controller: AbortController } | null&gt;(</pre>
+    </li>
+    <li id="L184"><pre>    null,</pre></li>
+    <li id="L185"><pre>  )</pre></li>
+    <li id="L186"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L187">
+      <pre>  const live = useRef({ identity, enabled, pageIndex, blocked, bytes })</pre>
+    </li>
+    <li id="L188"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L189">
+      <pre>    live.current = { identity, enabled, pageIndex, blocked, bytes }</pre>
+    </li>
+    <li id="L190"><pre>    return () =&gt; {</pre></li>
+    <li id="L191"><pre>      request.current?.abort()</pre></li>
+    <li id="L192"><pre>      request.current = null</pre></li>
+    <li id="L193"><pre>    }</pre></li>
+    <li id="L194"><pre>  }, [identity, enabled, pageIndex, blocked, bytes])</pre></li>
+    <li id="L195"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L196"><pre>    if (!enabled || !bytes) return</pre></li>
+    <li id="L197"><pre>    let cancelled = false</pre></li>
+    <li id="L198"><pre>    void loadPdfDocument(bytes)</pre></li>
+    <li id="L199"><pre>      .then((doc) =&gt; doc.getPage(pageIndex + 1))</pre></li>
+    <li id="L200"><pre>      .then((page) =&gt; {</pre></li>
+    <li id="L201"><pre>        if (!cancelled)</pre></li>
+    <li id="L202"><pre>          setView({</pre></li>
+    <li id="L203"><pre>            identity,</pre></li>
+    <li id="L204"><pre>            pageIndex,</pre></li>
+    <li id="L205"><pre>            rotation,</pre></li>
+    <li id="L206"><pre>            viewport: page.getViewport({ scale: 1, rotation }),</pre></li>
+    <li id="L207"><pre>          })</pre></li>
+    <li id="L208"><pre>      })</pre></li>
+    <li id="L209"><pre>      .catch((cause: unknown) =&gt; {</pre></li>
+    <li id="L210"><pre>        if (!cancelled)</pre></li>
+    <li id="L211"><pre>          setState((previous) =&gt; ({</pre></li>
+    <li id="L212"><pre>            ...previous,</pre></li>
+    <li id="L213">
+      <pre>            error: cause instanceof Error ? cause.message : String(cause),</pre>
+    </li>
+    <li id="L214"><pre>          }))</pre></li>
+    <li id="L215"><pre>      })</pre></li>
+    <li id="L216"><pre>    return () =&gt; {</pre></li>
+    <li id="L217"><pre>      cancelled = true</pre></li>
+    <li id="L218"><pre>    }</pre></li>
+    <li id="L219"><pre>  }, [identity, enabled, bytes, pageIndex, rotation])</pre></li>
+    <li id="L220">
+      <pre>
+  const busy = running?.identity === identity &amp;&amp; !running.controller.signal.aborted</pre>
+    </li>
+    <li id="L221"><pre>  const viewport =</pre></li>
+    <li id="L222">
+      <pre>
+    view?.identity === identity &amp;&amp; view.pageIndex === pageIndex &amp;&amp; view.rotation === rotation</pre>
+    </li>
+    <li id="L223"><pre>      ? view.viewport</pre></li>
+    <li id="L224"><pre>      : null</pre></li>
+    <li id="L225"><pre>  const changeRegions = (regions: PdfRedactionRegion[]) =&gt; {</pre></li>
+    <li id="L226"><pre>    request.current?.abort()</pre></li>
+    <li id="L227">
+      <pre>    setState({ identity, enabled, regions, error: null, result: null })</pre>
+    </li>
+    <li id="L228"><pre>  }</pre></li>
+    <li id="L229"><pre>  const exportCopy = async () =&gt; {</pre></li>
+    <li id="L230"><pre>    if (</pre></li>
+    <li id="L231"><pre>      blocked ||</pre></li>
+    <li id="L232"><pre>      busy ||</pre></li>
+    <li id="L233"><pre>      request.current ||</pre></li>
+    <li id="L234"><pre>      !enabled ||</pre></li>
+    <li id="L235"><pre>      !bytes ||</pre></li>
+    <li id="L236"><pre>      !host ||</pre></li>
+    <li id="L237"><pre>      !current.regions.length</pre></li>
+    <li id="L238"><pre>    )</pre></li>
+    <li id="L239"><pre>      return</pre></li>
+    <li id="L240"><pre>    const handle = agent.current</pre></li>
+    <li id="L241"><pre>    if (!handle) return</pre></li>
+    <li id="L242"><pre>    const version = handle.getVersion(),</pre></li>
+    <li id="L243"><pre>      controller = new AbortController(),</pre></li>
+    <li id="L244">
+      <pre>      frozen = current.regions.map(({ pageIndex: targetPage, rect }) =&gt; ({</pre>
+    </li>
+    <li id="L245"><pre>        pageIndex: targetPage,</pre></li>
+    <li id="L246"><pre>        rect: [...rect] as [number, number, number, number],</pre></li>
+    <li id="L247"><pre>      }))</pre></li>
+    <li id="L248"><pre>    request.current = controller</pre></li>
+    <li id="L249"><pre>    onRequest(controller)</pre></li>
+    <li id="L250"><pre>    setRunning({ identity, controller })</pre></li>
+    <li id="L251">
+      <pre>    setState((previous) =&gt; ({ ...previous, error: null, result: null }))</pre>
+    </li>
+    <li id="L252"><pre>    const assertCurrent = () =&gt; {</pre></li>
+    <li id="L253"><pre>      controller.signal.throwIfAborted()</pre></li>
+    <li id="L254"><pre>      const now = live.current</pre></li>
+    <li id="L255"><pre>      if (</pre></li>
+    <li id="L256"><pre>        now.identity !== identity ||</pre></li>
+    <li id="L257"><pre>        !now.enabled ||</pre></li>
+    <li id="L258"><pre>        now.pageIndex !== pageIndex ||</pre></li>
+    <li id="L259"><pre>        now.blocked ||</pre></li>
+    <li id="L260"><pre>        now.bytes !== bytes ||</pre></li>
+    <li id="L261"><pre>        agent.current !== handle ||</pre></li>
+    <li id="L262"><pre>        handle.getVersion() !== version</pre></li>
+    <li id="L263"><pre>      )</pre></li>
+    <li id="L264">
+      <pre>        throw new Error(&#x27;PDF 画布已变化，请重新标记涂黑区域&#x27;)</pre>
+    </li>
+    <li id="L265"><pre>    }</pre></li>
+    <li id="L266"><pre>    try {</pre></li>
+    <li id="L267"><pre>      assertCurrent()</pre></li>
+    <li id="L268"><pre>      const result = await host({</pre></li>
+    <li id="L269"><pre>        bytes,</pre></li>
+    <li id="L270"><pre>        expectedVersion: version,</pre></li>
+    <li id="L271">
+      <pre>        operation: { op: &#x27;redact_copy&#x27;, regions: frozen },</pre>
+    </li>
+    <li id="L272"><pre>        signal: controller.signal,</pre></li>
+    <li id="L273"><pre>      })</pre></li>
+    <li id="L274"><pre>      assertCurrent()</pre></li>
+    <li id="L275"><pre>      const output = result.outputs?.[0]</pre></li>
+    <li id="L276"><pre>      if (</pre></li>
+    <li id="L277"><pre>        result.bytes !== undefined ||</pre></li>
+    <li id="L278"><pre>        result.info !== undefined ||</pre></li>
+    <li id="L279"><pre>        result.version !== version ||</pre></li>
+    <li id="L280"><pre>        result.outputs?.length !== 1 ||</pre></li>
+    <li id="L281"><pre>        !output ||</pre></li>
+    <li id="L282"><pre>        output.name !== &#x27;document-redacted.pdf&#x27; ||</pre></li>
+    <li id="L283"><pre>        !(output.bytes instanceof Uint8Array) ||</pre></li>
+    <li id="L284"><pre>        !output.bytes.byteLength</pre></li>
+    <li id="L285"><pre>      )</pre></li>
+    <li id="L286"><pre>        throw new Error(&#x27;涂黑副本响应无效，请重试&#x27;)</pre></li>
+    <li id="L287"><pre>      const url = URL.createObjectURL(</pre></li>
+    <li id="L288">
+      <pre>
+        new Blob([output.bytes.slice().buffer], { type: &#x27;application/pdf&#x27; }),</pre>
+    </li>
+    <li id="L289"><pre>      )</pre></li>
+    <li id="L290"><pre>      try {</pre></li>
+    <li id="L291"><pre>        const link = document.createElement(&#x27;a&#x27;)</pre></li>
+    <li id="L292"><pre>        link.href = url</pre></li>
+    <li id="L293"><pre>        link.download = output.name</pre></li>
+    <li id="L294"><pre>        link.click()</pre></li>
+    <li id="L295"><pre>      } finally {</pre></li>
+    <li id="L296"><pre>        setTimeout(() =&gt; URL.revokeObjectURL(url), 1000)</pre></li>
+    <li id="L297"><pre>      }</pre></li>
+    <li id="L298">
+      <pre>
+      setState((previous) =&gt; ({ ...previous, result: `已导出 ${frozen.length} 个区域的涂黑副本` }))</pre>
+    </li>
+    <li id="L299"><pre>    } catch (cause) {</pre></li>
+    <li id="L300">
+      <pre>      if (!controller.signal.aborted &amp;&amp; live.current.identity === identity)</pre>
+    </li>
+    <li id="L301"><pre>        setState((previous) =&gt; ({</pre></li>
+    <li id="L302"><pre>          ...previous,</pre></li>
+    <li id="L303">
+      <pre>          error: cause instanceof Error ? cause.message : String(cause),</pre>
+    </li>
+    <li id="L304"><pre>        }))</pre></li>
+    <li id="L305"><pre>    } finally {</pre></li>
+    <li id="L306"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L307"><pre>        request.current = null</pre></li>
+    <li id="L308"><pre>        setRunning(null)</pre></li>
+    <li id="L309"><pre>      }</pre></li>
+    <li id="L310"><pre>    }</pre></li>
+    <li id="L311"><pre>  }</pre></li>
+    <li id="L312"><pre>  const overlay =</pre></li>
+    <li id="L313"><pre>    enabled &amp;&amp; viewport ? (</pre></li>
+    <li id="L314"><pre>      &lt;PdfRedactionOverlay</pre></li>
+    <li id="L315"><pre>        key={`${pageIndex}:${rotation}:${blocked || busy}`}</pre></li>
+    <li id="L316"><pre>        viewport={viewport}</pre></li>
+    <li id="L317"><pre>        regions={current.regions}</pre></li>
+    <li id="L318"><pre>        pageIndex={pageIndex}</pre></li>
+    <li id="L319">
+      <pre>        disabled={blocked || busy || current.regions.length &gt;= 100}</pre>
+    </li>
+    <li id="L320"><pre>        onClose={onClose}</pre></li>
+    <li id="L321"><pre>        onAdd={(region) =&gt; {</pre></li>
+    <li id="L322">
+      <pre>          if (!blocked &amp;&amp; !busy &amp;&amp; current.regions.length &lt; 100)</pre>
+    </li>
+    <li id="L323"><pre>            changeRegions([...current.regions, region])</pre></li>
+    <li id="L324"><pre>        }}</pre></li>
+    <li id="L325"><pre>      /&gt;</pre></li>
+    <li id="L326"><pre>    ) : null</pre></li>
+    <li id="L327"><pre>  const panel = enabled ? (</pre></li>
+    <li id="L328">
+      <pre>
+    &lt;section className=&quot;mimir-pdf-panel&quot; aria-label=&quot;涂黑副本面板&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L329">
+      <pre>      &lt;header className=&quot;mimir-pdf-inspector__header&quot;&gt;</pre>
+    </li>
+    <li id="L330"><pre>        &lt;div&gt;</pre></li>
+    <li id="L331"><pre>          &lt;h2&gt;涂黑副本&lt;/h2&gt;</pre></li>
+    <li id="L332">
+      <pre>          &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L333">
+      <pre>            第 {pageIndex + 1} 页 · 已标记 {current.regions.length} / 100 个区域</pre>
+    </li>
+    <li id="L334"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L335"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L336">
+      <pre>        &lt;ToolbarButton label=&quot;关闭涂黑副本&quot; onClick={onClose}&gt;</pre>
+    </li>
+    <li id="L337"><pre>          &lt;X size={16} /&gt;</pre></li>
+    <li id="L338"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L339"><pre>      &lt;/header&gt;</pre></li>
+    <li id="L340">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L341"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L342">
+      <pre>
+          在页面上拖动标记区域。导出后，副本中所选区域的内容不可恢复；知识库原件保持不变。</pre>
+    </li>
+    <li id="L343"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L344">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;标记可以跨页保留。请核对全部区域后导出。&lt;/p&gt;</pre>
+    </li>
+    <li id="L345">
+      <pre>
+        {!viewport &amp;&amp; &lt;p role=&quot;status&quot;&gt;正在读取页面坐标…&lt;/p&gt;}</pre>
+    </li>
+    <li id="L346"><pre>        {current.regions.length === 0 ? (</pre></li>
+    <li id="L347">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;尚未标记区域。&lt;/p&gt;</pre>
+    </li>
+    <li id="L348"><pre>        ) : (</pre></li>
+    <li id="L349">
+      <pre>
+          &lt;ol className=&quot;mimir-pdf-redaction-list&quot; aria-label=&quot;待涂黑区域&quot;&gt;</pre>
+    </li>
+    <li id="L350"><pre>            {current.regions.map((region, index) =&gt; (</pre></li>
+    <li id="L351">
+      <pre>
+              &lt;li key={region.id} data-current={region.pageIndex === pageIndex || undefined}&gt;</pre>
+    </li>
+    <li id="L352"><pre>                &lt;span&gt;</pre></li>
+    <li id="L353"><pre>                  区域 {index + 1} · 第 {region.pageIndex + 1} 页</pre></li>
+    <li id="L354"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L355"><pre>                &lt;ToolbarButton</pre></li>
+    <li id="L356"><pre>                  label={`删除涂黑区域 ${index + 1}`}</pre></li>
+    <li id="L357"><pre>                  disabled={busy}</pre></li>
+    <li id="L358"><pre>                  onClick={() =&gt;</pre></li>
+    <li id="L359">
+      <pre>
+                    changeRegions(current.regions.filter((item) =&gt; item.id !== region.id))</pre>
+    </li>
+    <li id="L360"><pre>                  }</pre></li>
+    <li id="L361"><pre>                &gt;</pre></li>
+    <li id="L362"><pre>                  &lt;Trash2 size={14} /&gt;</pre></li>
+    <li id="L363"><pre>                &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L364"><pre>              &lt;/li&gt;</pre></li>
+    <li id="L365"><pre>            ))}</pre></li>
+    <li id="L366"><pre>          &lt;/ol&gt;</pre></li>
+    <li id="L367"><pre>        )}</pre></li>
+    <li id="L368"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L369"><pre>          label=&quot;清空涂黑标记&quot;</pre></li>
+    <li id="L370"><pre>          disabled={busy || !current.regions.length}</pre></li>
+    <li id="L371"><pre>          onClick={() =&gt; changeRegions([])}</pre></li>
+    <li id="L372"><pre>        &gt;</pre></li>
+    <li id="L373"><pre>          清空标记</pre></li>
+    <li id="L374"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L375"><pre>        {current.regions.length &gt;= 100 &amp;&amp; (</pre></li>
+    <li id="L376">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L377"><pre>            已达到100个区域，请先删除部分标记。</pre></li>
+    <li id="L378"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L379"><pre>        )}</pre></li>
+    <li id="L380"><pre>        {current.error &amp;&amp; (</pre></li>
+    <li id="L381">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L382"><pre>            {current.error}</pre></li>
+    <li id="L383"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L384"><pre>        )}</pre></li>
+    <li id="L385"><pre>        {current.result &amp;&amp; (</pre></li>
+    <li id="L386">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L387"><pre>            {current.result}</pre></li>
+    <li id="L388"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L389"><pre>        )}</pre></li>
+    <li id="L390"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L391"><pre>      &lt;div className=&quot;mimir-pdf-redaction-footer&quot;&gt;</pre></li>
+    <li id="L392"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L393"><pre>          label=&quot;导出涂黑副本&quot;</pre></li>
+    <li id="L394">
+      <pre>          disabled={blocked || busy || !viewport || !current.regions.length}</pre>
+    </li>
+    <li id="L395"><pre>          onClick={() =&gt; void exportCopy()}</pre></li>
+    <li id="L396"><pre>        &gt;</pre></li>
+    <li id="L397"><pre>          &lt;Download size={14} /&gt;</pre></li>
+    <li id="L398">
+      <pre>          {busy ? &#x27;正在导出…&#x27; : &#x27;导出涂黑副本&#x27;}</pre>
+    </li>
+    <li id="L399"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L400"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L401"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L402"><pre>  ) : null</pre></li>
+    <li id="L403"><pre>  return { overlay, panel }</pre></li>
+    <li id="L404"><pre>}</pre></li>
+  </ol>
+</html>

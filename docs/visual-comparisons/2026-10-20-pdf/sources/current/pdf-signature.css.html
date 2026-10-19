@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-signature.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-signature.css</h1>
+    <p>current真实源码 · SHA256 703525cfb760788a993548184d537cff6f002e9c7186b0111dc76ef4bb701f54</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-signature-panel__body {</pre></li>
+    <li id="L2"><pre>  display: flex;</pre></li>
+    <li id="L3"><pre>  flex-direction: column;</pre></li>
+    <li id="L4"><pre>  gap: 12px;</pre></li>
+    <li id="L5"><pre>  min-width: 0;</pre></li>
+    <li id="L6"><pre>}</pre></li>
+    <li id="L7"><pre>.mimir-pdf-signature-tabs {</pre></li>
+    <li id="L8"><pre>  display: flex;</pre></li>
+    <li id="L9"><pre>  gap: 4px;</pre></li>
+    <li id="L10"><pre>  padding: 3px;</pre></li>
+    <li id="L11"><pre>  background: var(--me-bar-bg);</pre></li>
+    <li id="L12"><pre>  border-radius: var(--me-radius, 6px);</pre></li>
+    <li id="L13"><pre>}</pre></li>
+    <li id="L14"><pre>.mimir-pdf-signature-tabs button {</pre></li>
+    <li id="L15"><pre>  flex: 1;</pre></li>
+    <li id="L16"><pre>  min-width: 0;</pre></li>
+    <li id="L17"><pre>  min-height: 32px;</pre></li>
+    <li id="L18"><pre>  border: 0;</pre></li>
+    <li id="L19"><pre>  border-radius: 4px;</pre></li>
+    <li id="L20"><pre>  background: transparent;</pre></li>
+    <li id="L21"><pre>  color: var(--me-text);</pre></li>
+    <li id="L22"><pre>  font: inherit;</pre></li>
+    <li id="L23"><pre>  cursor: pointer;</pre></li>
+    <li id="L24"><pre>}</pre></li>
+    <li id="L25"><pre>.mimir-pdf-signature-tabs button[aria-selected=&#x27;true&#x27;],</pre></li>
+    <li id="L26"><pre>.mimir-pdf-signature-tabs button[aria-pressed=&#x27;true&#x27;] {</pre></li>
+    <li id="L27"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L28"><pre>  color: var(--me-accent-text);</pre></li>
+    <li id="L29"><pre>  font-weight: 600;</pre></li>
+    <li id="L30"><pre>}</pre></li>
+    <li id="L31"><pre>.mimir-pdf-signature-tabs button:hover:not(:disabled) {</pre></li>
+    <li id="L32"><pre>  background: var(--me-hover);</pre></li>
+    <li id="L33"><pre>}</pre></li>
+    <li id="L34"><pre>.mimir-pdf-signature-tabs button:focus-visible,</pre></li>
+    <li id="L35"><pre>.mimir-pdf-signature-fonts button:focus-visible {</pre></li>
+    <li id="L36"><pre>  outline: 2px solid var(--me-accent);</pre></li>
+    <li id="L37"><pre>  outline-offset: 2px;</pre></li>
+    <li id="L38"><pre>}</pre></li>
+    <li id="L39"><pre>.mimir-pdf-signature-tabs button:disabled {</pre></li>
+    <li id="L40"><pre>  cursor: default;</pre></li>
+    <li id="L41"><pre>  opacity: 0.5;</pre></li>
+    <li id="L42"><pre>}</pre></li>
+    <li id="L43"><pre>.mimir-pdf-signature-pad {</pre></li>
+    <li id="L44"><pre>  display: block;</pre></li>
+    <li id="L45"><pre>  width: 100%;</pre></li>
+    <li id="L46"><pre>  height: auto;</pre></li>
+    <li id="L47"><pre>  aspect-ratio: 2;</pre></li>
+    <li id="L48"><pre>  background: #fff;</pre></li>
+    <li id="L49"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L50"><pre>  border-radius: 4px;</pre></li>
+    <li id="L51"><pre>  touch-action: none;</pre></li>
+    <li id="L52"><pre>  cursor: crosshair;</pre></li>
+    <li id="L53"><pre>}</pre></li>
+    <li id="L54"><pre>.mimir-pdf-signature-row {</pre></li>
+    <li id="L55"><pre>  display: flex;</pre></li>
+    <li id="L56"><pre>  align-items: center;</pre></li>
+    <li id="L57"><pre>  gap: 4px;</pre></li>
+    <li id="L58"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L59"><pre>}</pre></li>
+    <li id="L60"><pre>.mimir-pdf-signature-row &gt; span {</pre></li>
+    <li id="L61"><pre>  flex: 1;</pre></li>
+    <li id="L62"><pre>}</pre></li>
+    <li id="L63"><pre>.mimir-pdf-signature-color {</pre></li>
+    <li id="L64"><pre>  display: flex;</pre></li>
+    <li id="L65"><pre>  align-items: center;</pre></li>
+    <li id="L66"><pre>  justify-content: space-between;</pre></li>
+    <li id="L67"><pre>  gap: 12px;</pre></li>
+    <li id="L68"><pre>}</pre></li>
+    <li id="L69"><pre>.mimir-pdf-signature-color input {</pre></li>
+    <li id="L70"><pre>  width: 40px;</pre></li>
+    <li id="L71"><pre>  height: 32px;</pre></li>
+    <li id="L72"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L73"><pre>  padding: 3px;</pre></li>
+    <li id="L74"><pre>  border-radius: 4px;</pre></li>
+    <li id="L75"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L76"><pre>  cursor: pointer;</pre></li>
+    <li id="L77"><pre>}</pre></li>
+    <li id="L78"><pre>.mimir-pdf-signature-fonts {</pre></li>
+    <li id="L79"><pre>  display: grid;</pre></li>
+    <li id="L80"><pre>  grid-template-columns: repeat(2, minmax(0, 1fr));</pre></li>
+    <li id="L81"><pre>  gap: 6px;</pre></li>
+    <li id="L82"><pre>}</pre></li>
+    <li id="L83"><pre>.mimir-pdf-signature-fonts button {</pre></li>
+    <li id="L84"><pre>  min-width: 0;</pre></li>
+    <li id="L85"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L86"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L87"><pre>  color: var(--me-text);</pre></li>
+    <li id="L88"><pre>  border-radius: 4px;</pre></li>
+    <li id="L89"><pre>  cursor: pointer;</pre></li>
+    <li id="L90"><pre>  padding: 10px 8px;</pre></li>
+    <li id="L91"><pre>  text-align: left;</pre></li>
+    <li id="L92"><pre>}</pre></li>
+    <li id="L93"><pre>.mimir-pdf-signature-fonts button[aria-pressed=&#x27;true&#x27;] {</pre></li>
+    <li id="L94"><pre>  border-color: var(--me-accent-text);</pre></li>
+    <li id="L95"><pre>}</pre></li>
+    <li id="L96"><pre>.mimir-pdf-signature-fonts span {</pre></li>
+    <li id="L97"><pre>  display: block;</pre></li>
+    <li id="L98"><pre>  overflow: hidden;</pre></li>
+    <li id="L99"><pre>  text-overflow: ellipsis;</pre></li>
+    <li id="L100"><pre>  white-space: nowrap;</pre></li>
+    <li id="L101"><pre>  font-size: 20px;</pre></li>
+    <li id="L102"><pre>  line-height: 1.7;</pre></li>
+    <li id="L103"><pre>}</pre></li>
+    <li id="L104"><pre>.mimir-pdf-signature-fonts small {</pre></li>
+    <li id="L105"><pre>  font-size: 11px;</pre></li>
+    <li id="L106"><pre>  color: var(--me-text-weak);</pre></li>
+    <li id="L107"><pre>}</pre></li>
+    <li id="L108"><pre>.mimir-pdf-signature-preview {</pre></li>
+    <li id="L109"><pre>  display: block;</pre></li>
+    <li id="L110"><pre>  width: 100%;</pre></li>
+    <li id="L111"><pre>  height: 120px;</pre></li>
+    <li id="L112"><pre>  object-fit: contain;</pre></li>
+    <li id="L113"><pre>  background: #fff;</pre></li>
+    <li id="L114"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L115"><pre>  border-radius: 4px;</pre></li>
+    <li id="L116"><pre>  padding: 8px;</pre></li>
+    <li id="L117"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L118"><pre>}</pre></li>
+    <li id="L119"><pre>.mimir-pdf-signature-existing h3 {</pre></li>
+    <li id="L120"><pre>  margin: 8px 0;</pre></li>
+    <li id="L121"><pre>  font-size: 12px;</pre></li>
+    <li id="L122"><pre>  font-weight: 600;</pre></li>
+    <li id="L123"><pre>}</pre></li>
+    <li id="L124"><pre>.mimir-pdf-signature-existing &gt; div {</pre></li>
+    <li id="L125"><pre>  display: flex;</pre></li>
+    <li id="L126"><pre>  gap: 4px;</pre></li>
+    <li id="L127"><pre>  margin-top: 4px;</pre></li>
+    <li id="L128"><pre>}</pre></li>
+    <li id="L129"><pre>.mimir-pdf-signature-existing &gt; div &gt; button:first-child {</pre></li>
+    <li id="L130"><pre>  flex: 1;</pre></li>
+    <li id="L131"><pre>  min-width: 0;</pre></li>
+    <li id="L132"><pre>}</pre></li>
+    <li id="L133"><pre>.mimir-pdf-signature-canvas {</pre></li>
+    <li id="L134"><pre>  position: absolute;</pre></li>
+    <li id="L135"><pre>  inset: 0;</pre></li>
+    <li id="L136"><pre>  width: 100%;</pre></li>
+    <li id="L137"><pre>  height: 100%;</pre></li>
+    <li id="L138"><pre>  z-index: 3;</pre></li>
+    <li id="L139"><pre>  touch-action: none;</pre></li>
+    <li id="L140"><pre>  cursor: move;</pre></li>
+    <li id="L141"><pre>  outline: none;</pre></li>
+    <li id="L142"><pre>}</pre></li>
+    <li id="L143"><pre>.mimir-pdf-signature-canvas:focus-visible {</pre></li>
+    <li id="L144"><pre>  outline: 2px solid var(--me-accent);</pre></li>
+    <li id="L145"><pre>  outline-offset: 2px;</pre></li>
+    <li id="L146"><pre>}</pre></li>
+    <li id="L147"><pre>.mimir-pdf-signature-canvas__box {</pre></li>
+    <li id="L148"><pre>  fill: transparent;</pre></li>
+    <li id="L149"><pre>  stroke: var(--me-accent);</pre></li>
+    <li id="L150"><pre>  stroke-width: 1;</pre></li>
+    <li id="L151"><pre>}</pre></li>
+    <li id="L152"><pre>.mimir-pdf-signature-canvas__resize {</pre></li>
+    <li id="L153"><pre>  fill: var(--me-surface);</pre></li>
+    <li id="L154"><pre>  stroke: var(--me-accent);</pre></li>
+    <li id="L155"><pre>  stroke-width: 1;</pre></li>
+    <li id="L156"><pre>  cursor: nwse-resize;</pre></li>
+    <li id="L157"><pre>}</pre></li>
+    <li id="L158"><pre>.mimir-pdf-signature-actions {</pre></li>
+    <li id="L159"><pre>  position: absolute;</pre></li>
+    <li id="L160"><pre>  bottom: 12px;</pre></li>
+    <li id="L161"><pre>  left: 50%;</pre></li>
+    <li id="L162"><pre>  transform: translateX(-50%);</pre></li>
+    <li id="L163"><pre>  z-index: 5;</pre></li>
+    <li id="L164"><pre>  display: flex;</pre></li>
+    <li id="L165"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L166"><pre>  align-items: center;</pre></li>
+    <li id="L167"><pre>  justify-content: center;</pre></li>
+    <li id="L168"><pre>  gap: 8px;</pre></li>
+    <li id="L169"><pre>  max-width: calc(100% - 24px);</pre></li>
+    <li id="L170"><pre>  width: max-content;</pre></li>
+    <li id="L171"><pre>  padding: 10px 12px;</pre></li>
+    <li id="L172"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L173"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L174"><pre>  border-radius: 6px;</pre></li>
+    <li id="L175"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L176"><pre>}</pre></li>
+    <li id="L177"><pre>.mimir-pdf-signature-actions &gt; div {</pre></li>
+    <li id="L178"><pre>  flex: 1 1 100%;</pre></li>
+    <li id="L179"><pre>  text-align: center;</pre></li>
+    <li id="L180"><pre>}</pre></li>
+    <li id="L181"><pre>.mimir-pdf-signature-actions strong {</pre></li>
+    <li id="L182"><pre>  font-size: 12px;</pre></li>
+    <li id="L183"><pre>  font-weight: 600;</pre></li>
+    <li id="L184"><pre>}</pre></li>
+    <li id="L185"><pre>.mimir-pdf-signature-actions &gt; div &gt; span {</pre></li>
+    <li id="L186"><pre>  display: block;</pre></li>
+    <li id="L187"><pre>  font-size: 11px;</pre></li>
+    <li id="L188"><pre>  color: var(--me-text-weak);</pre></li>
+    <li id="L189"><pre>  margin-top: 3px;</pre></li>
+    <li id="L190"><pre>}</pre></li>
+    <li id="L191"><pre>.mimir-pdf-signature-actions p {</pre></li>
+    <li id="L192"><pre>  flex: 1 1 100%;</pre></li>
+    <li id="L193"><pre>  margin: 0;</pre></li>
+    <li id="L194"><pre>  color: var(--me-danger);</pre></li>
+    <li id="L195"><pre>  font-size: 12px;</pre></li>
+    <li id="L196"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L197"><pre>}</pre></li>
+    <li id="L198"><pre>.mimir-pdf-signature-position {</pre></li>
+    <li id="L199"><pre>  flex: 1 1 100%;</pre></li>
+    <li id="L200"><pre>  min-width: 0;</pre></li>
+    <li id="L201"><pre>  font-size: 11px;</pre></li>
+    <li id="L202"><pre>}</pre></li>
+    <li id="L203"><pre>.mimir-pdf-signature-position summary {</pre></li>
+    <li id="L204"><pre>  cursor: pointer;</pre></li>
+    <li id="L205"><pre>  color: var(--me-text-weak);</pre></li>
+    <li id="L206"><pre>  text-align: center;</pre></li>
+    <li id="L207"><pre>  padding: 3px;</pre></li>
+    <li id="L208"><pre>}</pre></li>
+    <li id="L209"><pre>.mimir-pdf-signature-position &gt; div {</pre></li>
+    <li id="L210"><pre>  display: grid;</pre></li>
+    <li id="L211"><pre>  grid-template-columns: repeat(2, minmax(0, 1fr));</pre></li>
+    <li id="L212"><pre>  gap: 8px;</pre></li>
+    <li id="L213"><pre>  padding-top: 6px;</pre></li>
+    <li id="L214"><pre>}</pre></li>
+    <li id="L215"><pre>.mimir-pdf-signature-position label {</pre></li>
+    <li id="L216"><pre>  display: grid;</pre></li>
+    <li id="L217"><pre>  gap: 4px;</pre></li>
+    <li id="L218"><pre>  min-width: 0;</pre></li>
+    <li id="L219"><pre>}</pre></li>
+    <li id="L220"><pre>.mimir-pdf-signature-position input {</pre></li>
+    <li id="L221"><pre>  width: 100%;</pre></li>
+    <li id="L222"><pre>  min-width: 0;</pre></li>
+    <li id="L223"><pre>  height: 32px;</pre></li>
+    <li id="L224"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L225"><pre>  border-radius: 4px;</pre></li>
+    <li id="L226"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L227"><pre>  color: var(--me-text);</pre></li>
+    <li id="L228"><pre>  padding: 4px 6px;</pre></li>
+    <li id="L229"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L230"><pre>  font: inherit;</pre></li>
+    <li id="L231"><pre>}</pre></li>
+  </ol>
+</html>

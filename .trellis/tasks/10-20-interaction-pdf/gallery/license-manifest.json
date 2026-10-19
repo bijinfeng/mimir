@@ -1,0 +1,14 @@
+{
+  "GenOffice": {
+    "license": "Apache-2.0",
+    "source": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/LICENSE",
+    "sha256": "68e32334df324ef4fc79fad3a26487e5abac36055a484bb6c8d7ecf9d8350885",
+    "archive": "docs/visual-comparisons/2026-10-20-pdf/demo/LICENSE-GenOffice.txt"
+  },
+  "PDFjs": {
+    "license": "Apache-2.0",
+    "source": "installed packages/office/node_modules/pdfjs-dist/LICENSE",
+    "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+    "archive": "docs/visual-comparisons/2026-10-20-pdf/demo/dist/before/LICENSE-pdfjs-Apache-2.0.txt"
+  }
+}

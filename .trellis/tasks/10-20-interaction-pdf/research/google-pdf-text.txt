@@ -1,0 +1,368 @@
+Convert PDF and photo files to text - Computer - Google Drive Help
+Skip to main content
+Google Drive Help
+Sign in
+Google Help
+Help Center
+Community
+Google Drive
+Privacy Policy
+Terms of Service
+Submit feedback
+Send feedback on...
+This help content & information
+General Help Center experience
+Close
+Next
+Help Center
+Community
+Find, delete, and recover files
+Google Drive
+Convert PDF and photo files to text
+Want advanced Google Workspace features for your business?
+Try Google Workspace today!
+You can convert image files to text with Google Drive.
+Step 1: Prepare the file
+For the best results, use these tips:
+Format: You can convert PDFs (multipage documents) or photo files (.jpeg, .png and .gif)
+File size: The file should be 2 MB or smaller.
+Resolution: Text should be at least 10 pixels high.
+Orientation: Documents must be right-side up. If your image faces the wrong way, rotate it before you upload it to Google Drive.
+Languages: Google Drive detects the language of the document.
+Learn more about supported languages
+Font and character set: Use common fonts, such as Arial or Times New Roman.
+Image quality: Use sharp images with even lighting and clear contrasts.
+Step 2: Convert the file
+On your computer, go to
+Google Drive
+.
+Right click a file.
+Click
+Open with
+Google Docs
+.
+The image file is converted, but the format might not transfer:
+Bold, italics, font size, font type, and line breaks are likely to be retained.
+Lists, tables, columns, footnotes, and endnotes are not likely to be detected.
+Supported languages
+Acehnese
+Acholi
+Adangme
+Afrikaans
+Akan
+Albanian
+Algonquian
+Amharic
+Ancient Greek
+Arabic (Modern Standard)
+Araucanian/Mapuche
+Armenian
+Assamese
+Asturian
+Athabaskan
+Aymara
+Azerbaijani
+Azerbaijani (Cyrillic; old orthography)
+Balinese
+Bambara
+Bantu
+Bashkir
+Basque
+Batak
+Belarusian
+Bemba
+Bengali
+Bikol
+Bislama
+Bosnian
+Breton
+Bulgarian
+Burmese
+Catalan
+Cebuano
+Chechen
+Cherokee
+Chinese (Mandarin; Hong Kong)
+Chinese (Simplified; Mandarin)
+Chinese (Traditional; Mandarin)
+Choctaw
+Chuvash
+Cree
+Creek
+Crimean Tatar
+Croatian
+Czech
+Dakota
+Danish
+Dhivehi
+Duala
+Dutch
+Dzongkha
+Efik
+English (American)
+English (British)
+Esperanto
+Estonian
+Ewe
+Faroese
+Fijian
+Filipino
+Finnish
+Fon
+French (Canadian)
+French (European)
+Fulah
+Ga
+Galician
+Ganda
+Gayo
+Georgian
+German
+Gilbertese
+Gothic
+Greek
+Guarani
+Gujarati
+Haitian Creole
+Hausa
+Hawaiian
+Hebrew
+Herero
+Hiligaynon
+Hindi
+Hungarian
+Iban
+Icelandic
+Igbo
+Ilocano
+Indonesian
+Irish
+Italian
+Japanese
+Javanese
+Kabyle
+Kachin
+Kalaallisut
+Kamba
+Kannada
+Kanuri
+Kara-Kalpak
+Kazakh
+Khasi
+Khmer
+Kikuyu
+Kinyarwanda
+Kirghiz
+Komi
+Kongo
+Korean
+Kosraean
+Kuanyama
+Lao
+Latin
+Latvian
+Lingala
+Lithuanian
+Low German
+Lozi
+Luba-Katanga
+Luo
+Macedonian
+Madurese
+Malagasy
+Malay
+Malayalam
+Maltese
+Mandingo
+Manx
+Maori
+Marathi
+Marshallese
+Mende
+Middle English
+Middle High German
+Minangkabau
+Mohawk
+Mongo
+Mongolian
+Nahuatl
+Navajo
+Ndonga
+Nepali
+Niuean
+North Ndebele
+Northern Sotho
+Norwegian (Bokmål)
+Nyanja
+Nyankole
+Nyasa Tonga
+Nzima
+Occitan
+Ojibwa
+Old English
+Old French
+Old High German
+Old Norse
+Old Provencal
+Oriya
+Ossetic
+Pampanga
+Pangasinan
+Papiamento
+Pashto
+Persian
+Polish
+Portuguese (Brazilian)
+Portuguese (European)
+Punjabi (Gurmukhi)
+Quechua
+Romanian
+Romansh
+Romany
+Rundi
+Russian
+Russian (Old Orthography)
+Sakha
+Samoan
+Sango
+Sanskrit
+Scots
+Scottish Gaelic
+Serbian (Cyrillic)
+Serbian (Latin)
+Shona
+Sinhala
+Slovak
+Slovenian
+Songhai
+Southern Sotho
+Spanish (European)
+Spanish (Latin American)
+Sundanese
+Swahili
+Swati
+Swedish
+Tahitian
+Tajik
+Tamil
+Tatar
+Telugu
+Temne
+Thai
+Tibetan
+Tigrinya
+Tongan
+Tsonga
+Tswana
+Turkish
+Turkmen
+Udmurt Ukrainian
+Urdu
+Uzbek
+Uzbek (Cyrillic; old orthography)
+Venda
+Vietnamese
+Votic
+Welsh
+Western Frisian
+Wolof
+Xhosa
+Yiddish
+Yoruba
+Zapotec
+Zulu
+Computer
+Android phone & tablet
+iPhone & iPad
+More
+Need more help?
+Try these next steps:
+Post to the help community
+Get answers from community members
+Contact us
+Tell us more and we’ll help you get there
+true
+Help
+1 of 6
+Upload files & folders to Google Drive
+2 of 6
+Download a file
+3 of 6
+Organize your files in Google Drive
+4 of 6
+Files you can store in Google Drive
+5 of 6
+Convert PDF and photo files to text
+6 of 6
+Save web content to Google Drive
+Watch video tutorials
+To get the latest tips, tricks, and how-to's,
+subscribe to our YouTube Channel
+.
+©2026 Google
+Privacy Policy
+Terms of Service
+Language
+català‎
+dansk‎
+Deutsch‎
+English (United Kingdom)‎
+español‎
+español (Latinoamérica)‎
+français‎
+Indonesia‎
+italiano‎
+magyar‎
+Melayu‎
+Nederlands‎
+norsk‎
+polski‎
+português‎
+português (Brasil)‎
+română‎
+suomi‎
+svenska‎
+Tiếng Việt‎
+Türkçe‎
+čeština‎
+Ελληνικά‎
+русский‎
+українська‎
+‏
+עברית
+‏
+العربية
+मराठी‎
+हिन्दी‎
+தமிழ்‎
+తెలుగు‎
+ไทย‎
+中文（简体）‎
+中文（繁體）‎
+日本語‎
+한국어‎
+English‎
+Enable Dark Mode
+Send feedback on...
+This help content & information
+General Help Center experience
+Search
+Clear search
+Close search
+Google apps
+Main menu
+15784572803088145271
+true
+Search Help Center
+false
+true
+true
+true
+true
+true
+99950
+false
+false
+false
+false
+false

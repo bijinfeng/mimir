@@ -1,0 +1,22 @@
+[
+  {
+    "galleryInput": "index.html",
+    "archivedPath": "index.html.txt",
+    "note": "Original instrument input kept byte-for-byte as text; this is historical superseded evidence, not executable current demo."
+  },
+  {
+    "galleryInput": "vite.config.mjs",
+    "archivedPath": "vite.config.mjs.txt",
+    "note": "Original instrument input kept byte-for-byte as text; this is historical superseded evidence, not executable current demo."
+  },
+  {
+    "galleryInput": "main.jsx",
+    "archivedPath": "main.jsx.txt",
+    "note": "Original instrument input kept byte-for-byte as text; this is historical superseded evidence, not executable current demo."
+  },
+  {
+    "galleryInput": "style.css",
+    "archivedPath": "style.css.txt",
+    "note": "Original instrument input kept byte-for-byte as text; this is historical superseded evidence, not executable current demo."
+  }
+]

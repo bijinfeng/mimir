@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfSignaturePanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfSignaturePanel.tsx</h1>
+    <p>current真实源码 · SHA256 24748e6da07f1ebf1e20310bad85a3ae1f57fc9b6d26e1c51743465d4def2d50</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button, Input } from &#x27;antd&#x27;</pre></li>
+    <li id="L2">
+      <pre>import { ImagePlus, RotateCcw, Trash2, X } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>import { useEffect, useRef, useState, type PointerEvent } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import type { PdfSignatureSource, PdfVisualSignature } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>
+import { importedSignature, SIGNATURE_FONTS, typedSignature } from &#x27;./pdf-signature.js&#x27;</pre>
+    </li>
+    <li id="L6"><pre>import &#x27;./pdf-signature.css&#x27;</pre></li>
+    <li id="L7"><pre></pre></li>
+    <li id="L8"><pre>type Point = [number, number]</pre></li>
+    <li id="L9">
+      <pre>const signaturePadPoint = (e: PointerEvent&lt;HTMLCanvasElement&gt;): Point =&gt; {</pre>
+    </li>
+    <li id="L10"><pre>  const r = e.currentTarget.getBoundingClientRect()</pre></li>
+    <li id="L11"><pre>  return [</pre></li>
+    <li id="L12">
+      <pre>    Math.max(0, Math.min(560, ((e.clientX - r.left) * 560) / r.width)),</pre>
+    </li>
+    <li id="L13">
+      <pre>    Math.max(0, Math.min(280, ((e.clientY - r.top) * 280) / r.height)),</pre>
+    </li>
+    <li id="L14"><pre>  ]</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre>export function PdfSignaturePanel({</pre></li>
+    <li id="L17"><pre>  busy,</pre></li>
+    <li id="L18"><pre>  ready,</pre></li>
+    <li id="L19"><pre>  signatures,</pre></li>
+    <li id="L20"><pre>  error,</pre></li>
+    <li id="L21"><pre>  onPrepare,</pre></li>
+    <li id="L22"><pre>  onSelect,</pre></li>
+    <li id="L23"><pre>  onDelete,</pre></li>
+    <li id="L24"><pre>  onClose,</pre></li>
+    <li id="L25"><pre>}: {</pre></li>
+    <li id="L26"><pre>  busy: boolean</pre></li>
+    <li id="L27"><pre>  ready: boolean</pre></li>
+    <li id="L28"><pre>  signatures: PdfVisualSignature[]</pre></li>
+    <li id="L29"><pre>  error: string | null</pre></li>
+    <li id="L30"><pre>  onPrepare(source: PdfSignatureSource): void</pre></li>
+    <li id="L31"><pre>  onSelect(signature: PdfVisualSignature): void</pre></li>
+    <li id="L32"><pre>  onDelete(signature: PdfVisualSignature): void</pre></li>
+    <li id="L33"><pre>  onClose(): void</pre></li>
+    <li id="L34"><pre>}) {</pre></li>
+    <li id="L35">
+      <pre>
+  const [mode, setMode] = useState&lt;&#x27;ink&#x27; | &#x27;type&#x27; | &#x27;image&#x27;&gt;(&#x27;ink&#x27;),</pre>
+    </li>
+    <li id="L36"><pre>    [color, setColor] = useState(&#x27;#111111&#x27;),</pre></li>
+    <li id="L37"><pre>    [text, setText] = useState(&#x27;&#x27;),</pre></li>
+    <li id="L38"><pre>    [font, setFont] = useState(0)</pre></li>
+    <li id="L39"><pre>  const [strokes, setStrokes] = useState&lt;Point[][]&gt;([]),</pre></li>
+    <li id="L40">
+      <pre>    [image, setImage] = useState&lt;PdfSignatureSource | null&gt;(null),</pre>
+    </li>
+    <li id="L41"><pre>    [mono, setMono] = useState(false),</pre></li>
+    <li id="L42"><pre>    [file, setFile] = useState&lt;File | null&gt;(null),</pre></li>
+    <li id="L43"><pre>    [issue, setIssue] = useState&lt;string | null&gt;(null),</pre></li>
+    <li id="L44"><pre>    [loading, setLoading] = useState(false)</pre></li>
+    <li id="L45"><pre>  const canvas = useRef&lt;HTMLCanvasElement&gt;(null),</pre></li>
+    <li id="L46"><pre>    input = useRef&lt;HTMLInputElement&gt;(null),</pre></li>
+    <li id="L47"><pre>    generation = useRef(0),</pre></li>
+    <li id="L48">
+      <pre>    gesture = useRef&lt;{ id: number; points: Point[] } | null&gt;(null)</pre>
+    </li>
+    <li id="L49"><pre>  useEffect(</pre></li>
+    <li id="L50"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L51"><pre>      generation.current++</pre></li>
+    <li id="L52"><pre>      gesture.current = null</pre></li>
+    <li id="L53"><pre>    },</pre></li>
+    <li id="L54"><pre>    [],</pre></li>
+    <li id="L55"><pre>  )</pre></li>
+    <li id="L56"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L57"><pre>    if (mode !== &#x27;ink&#x27;) return</pre></li>
+    <li id="L58"><pre>    const el = canvas.current</pre></li>
+    <li id="L59"><pre>    if (!el) return</pre></li>
+    <li id="L60"><pre>    const ctx = el.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L61"><pre>    if (!ctx) return</pre></li>
+    <li id="L62"><pre>    const ratio = Math.max(1, window.devicePixelRatio || 1)</pre></li>
+    <li id="L63"><pre>    el.width = Math.round((el.clientWidth || 280) * ratio)</pre></li>
+    <li id="L64"><pre>    el.height = Math.round(el.width / 2)</pre></li>
+    <li id="L65"><pre>    ctx.clearRect(0, 0, el.width, el.height)</pre></li>
+    <li id="L66"><pre>    ctx.setTransform(el.width / 560, 0, 0, el.height / 280, 0, 0)</pre></li>
+    <li id="L67"><pre>    ctx.lineCap = &#x27;round&#x27;</pre></li>
+    <li id="L68"><pre>    ctx.lineJoin = &#x27;round&#x27;</pre></li>
+    <li id="L69"><pre>    ctx.lineWidth = 3</pre></li>
+    <li id="L70"><pre>    ctx.strokeStyle = color</pre></li>
+    <li id="L71"><pre>    for (const path of strokes) {</pre></li>
+    <li id="L72"><pre>      ctx.beginPath()</pre></li>
+    <li id="L73">
+      <pre>      path.forEach(([x, y], i) =&gt; (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)))</pre>
+    </li>
+    <li id="L74"><pre>      ctx.stroke()</pre></li>
+    <li id="L75"><pre>    }</pre></li>
+    <li id="L76"><pre>  }, [strokes, color, mode])</pre></li>
+    <li id="L77"><pre>  const changeMode = (next: typeof mode) =&gt; {</pre></li>
+    <li id="L78"><pre>    generation.current++</pre></li>
+    <li id="L79"><pre>    setLoading(false)</pre></li>
+    <li id="L80"><pre>    setIssue(null)</pre></li>
+    <li id="L81"><pre>    gesture.current = null</pre></li>
+    <li id="L82"><pre>    setMode(next)</pre></li>
+    <li id="L83"><pre>  }</pre></li>
+    <li id="L84"><pre>  const decode = async (next: File, black: boolean) =&gt; {</pre></li>
+    <li id="L85"><pre>    const token = ++generation.current</pre></li>
+    <li id="L86"><pre>    setLoading(true)</pre></li>
+    <li id="L87"><pre>    setIssue(null)</pre></li>
+    <li id="L88"><pre>    setImage(null)</pre></li>
+    <li id="L89"><pre>    try {</pre></li>
+    <li id="L90"><pre>      const source = await importedSignature(next, black)</pre></li>
+    <li id="L91"><pre>      if (token === generation.current) setImage(source)</pre></li>
+    <li id="L92"><pre>    } catch (e) {</pre></li>
+    <li id="L93">
+      <pre>
+      if (token === generation.current) setIssue(e instanceof Error ? e.message : String(e))</pre>
+    </li>
+    <li id="L94"><pre>    } finally {</pre></li>
+    <li id="L95"><pre>      if (token === generation.current) setLoading(false)</pre></li>
+    <li id="L96"><pre>    }</pre></li>
+    <li id="L97"><pre>  }</pre></li>
+    <li id="L98"><pre>  const prepare = async () =&gt; {</pre></li>
+    <li id="L99"><pre>    if (busy || loading || !ready) return</pre></li>
+    <li id="L100"><pre>    const token = ++generation.current</pre></li>
+    <li id="L101"><pre>    setLoading(true)</pre></li>
+    <li id="L102"><pre>    setIssue(null)</pre></li>
+    <li id="L103"><pre>    try {</pre></li>
+    <li id="L104"><pre>      let source: PdfSignatureSource</pre></li>
+    <li id="L105"><pre>      if (mode === &#x27;ink&#x27;) {</pre></li>
+    <li id="L106"><pre>        const points = strokes.flat()</pre></li>
+    <li id="L107">
+      <pre>        if (!points.length) throw new Error(&#x27;请先写下签名&#x27;)</pre>
+    </li>
+    <li id="L108"><pre>        const left = Math.min(...points.map((p) =&gt; p[0])) - 4,</pre></li>
+    <li id="L109"><pre>          top = Math.min(...points.map((p) =&gt; p[1])) - 4,</pre></li>
+    <li id="L110"><pre>          right = Math.max(...points.map((p) =&gt; p[0])) + 4,</pre></li>
+    <li id="L111"><pre>          bottom = Math.max(...points.map((p) =&gt; p[1])) + 4</pre></li>
+    <li id="L112"><pre>        source = {</pre></li>
+    <li id="L113"><pre>          kind: &#x27;ink&#x27;,</pre></li>
+    <li id="L114"><pre>          width: right - left,</pre></li>
+    <li id="L115"><pre>          height: bottom - top,</pre></li>
+    <li id="L116"><pre>          color,</pre></li>
+    <li id="L117"><pre>          thickness: 3,</pre></li>
+    <li id="L118">
+      <pre>
+          strokes: strokes.map((path) =&gt; path.map(([x, y]) =&gt; [x - left, y - top])),</pre>
+    </li>
+    <li id="L119"><pre>        }</pre></li>
+    <li id="L120">
+      <pre>
+      } else if (mode === &#x27;type&#x27;) source = await typedSignature(text, font, color)</pre>
+    </li>
+    <li id="L121"><pre>      else {</pre></li>
+    <li id="L122"><pre>        if (!image) throw new Error(&#x27;请先选择签名图片&#x27;)</pre></li>
+    <li id="L123"><pre>        source = image</pre></li>
+    <li id="L124"><pre>      }</pre></li>
+    <li id="L125"><pre>      if (token === generation.current) onPrepare(source)</pre></li>
+    <li id="L126"><pre>    } catch (e) {</pre></li>
+    <li id="L127">
+      <pre>
+      if (token === generation.current) setIssue(e instanceof Error ? e.message : String(e))</pre>
+    </li>
+    <li id="L128"><pre>    } finally {</pre></li>
+    <li id="L129"><pre>      if (token === generation.current) setLoading(false)</pre></li>
+    <li id="L130"><pre>    }</pre></li>
+    <li id="L131"><pre>  }</pre></li>
+    <li id="L132"><pre>  return (</pre></li>
+    <li id="L133">
+      <pre>
+    &lt;section className=&quot;mimir-pdf-panel mimir-pdf-signature-panel&quot; aria-label=&quot;签名与印章面板&quot;&gt;</pre>
+    </li>
+    <li id="L134">
+      <pre>      &lt;header className=&quot;mimir-pdf-inspector__header&quot;&gt;</pre>
+    </li>
+    <li id="L135"><pre>        &lt;div&gt;</pre></li>
+    <li id="L136"><pre>          &lt;h2&gt;签名与印章&lt;/h2&gt;</pre></li>
+    <li id="L137">
+      <pre>
+          &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;视觉签名，不包含数字证书&lt;/span&gt;</pre>
+    </li>
+    <li id="L138"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L139">
+      <pre>
+        &lt;Button type=&quot;text&quot; icon={&lt;X size={16} /&gt;} aria-label=&quot;关闭签名面板&quot; onClick={onClose} /&gt;</pre>
+    </li>
+    <li id="L140"><pre>      &lt;/header&gt;</pre></li>
+    <li id="L141">
+      <pre>
+      &lt;div className=&quot;mimir-pdf-inspector__content mimir-pdf-signature-panel__body&quot;&gt;</pre>
+    </li>
+    <li id="L142">
+      <pre>
+        &lt;div className=&quot;mimir-pdf-signature-tabs&quot; role=&quot;tablist&quot; aria-label=&quot;签名方式&quot;&gt;</pre>
+    </li>
+    <li id="L143">
+      <pre>
+          {([&#x27;ink&#x27;, &#x27;type&#x27;, &#x27;image&#x27;] as const).map((m, i) =&gt; (</pre>
+    </li>
+    <li id="L144"><pre>            &lt;button</pre></li>
+    <li id="L145"><pre>              type=&quot;button&quot;</pre></li>
+    <li id="L146"><pre>              role=&quot;tab&quot;</pre></li>
+    <li id="L147"><pre>              aria-selected={mode === m}</pre></li>
+    <li id="L148"><pre>              key={m}</pre></li>
+    <li id="L149"><pre>              disabled={busy}</pre></li>
+    <li id="L150"><pre>              onClick={() =&gt; changeMode(m)}</pre></li>
+    <li id="L151"><pre>            &gt;</pre></li>
+    <li id="L152">
+      <pre>              {[&#x27;手写&#x27;, &#x27;输入&#x27;, &#x27;图片&#x27;][i]}</pre>
+    </li>
+    <li id="L153"><pre>            &lt;/button&gt;</pre></li>
+    <li id="L154"><pre>          ))}</pre></li>
+    <li id="L155"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L156"><pre>        {mode === &#x27;ink&#x27; ? (</pre></li>
+    <li id="L157"><pre>          &lt;&gt;</pre></li>
+    <li id="L158"><pre>            &lt;canvas</pre></li>
+    <li id="L159"><pre>              ref={canvas}</pre></li>
+    <li id="L160"><pre>              width={560}</pre></li>
+    <li id="L161"><pre>              height={280}</pre></li>
+    <li id="L162"><pre>              className=&quot;mimir-pdf-signature-pad&quot;</pre></li>
+    <li id="L163"><pre>              aria-label=&quot;手写签名区域&quot;</pre></li>
+    <li id="L164"><pre>              onPointerDown={(e) =&gt; {</pre></li>
+    <li id="L165">
+      <pre>
+                if (busy || loading || gesture.current || e.button !== 0 || e.isPrimary === false)</pre>
+    </li>
+    <li id="L166"><pre>                  return</pre></li>
+    <li id="L167"><pre>                if (strokes.length &gt;= 64) {</pre></li>
+    <li id="L168"><pre>                  setIssue(&#x27;最多 64 笔，请撤销部分笔画&#x27;)</pre></li>
+    <li id="L169"><pre>                  return</pre></li>
+    <li id="L170"><pre>                }</pre></li>
+    <li id="L171"><pre>                e.preventDefault()</pre></li>
+    <li id="L172"><pre>                e.currentTarget.setPointerCapture?.(e.pointerId)</pre></li>
+    <li id="L173">
+      <pre>
+                gesture.current = { id: e.pointerId, points: [signaturePadPoint(e)] }</pre>
+    </li>
+    <li id="L174"><pre>              }}</pre></li>
+    <li id="L175"><pre>              onPointerMove={(e) =&gt; {</pre></li>
+    <li id="L176"><pre>                const g = gesture.current</pre></li>
+    <li id="L177"><pre>                if (!g || g.id !== e.pointerId) return</pre></li>
+    <li id="L178"><pre>                const p = signaturePadPoint(e),</pre></li>
+    <li id="L179"><pre>                  last = g.points.at(-1)!</pre></li>
+    <li id="L180">
+      <pre>                if (Math.hypot(p[0] - last[0], p[1] - last[1]) &lt; 2) return</pre>
+    </li>
+    <li id="L181">
+      <pre>                if (strokes.flat().length + g.points.length &gt;= 2000) {</pre>
+    </li>
+    <li id="L182"><pre>                  setIssue(&#x27;签名累计最多 2000 点&#x27;)</pre></li>
+    <li id="L183"><pre>                  return</pre></li>
+    <li id="L184"><pre>                }</pre></li>
+    <li id="L185"><pre>                g.points.push(p)</pre></li>
+    <li id="L186">
+      <pre>                const ctx = e.currentTarget.getContext(&#x27;2d&#x27;)</pre>
+    </li>
+    <li id="L187"><pre>                if (ctx) {</pre></li>
+    <li id="L188"><pre>                  ctx.strokeStyle = color</pre></li>
+    <li id="L189"><pre>                  ctx.lineWidth = 3</pre></li>
+    <li id="L190"><pre>                  ctx.lineCap = &#x27;round&#x27;</pre></li>
+    <li id="L191"><pre>                  ctx.beginPath()</pre></li>
+    <li id="L192"><pre>                  ctx.moveTo(...last)</pre></li>
+    <li id="L193"><pre>                  ctx.lineTo(...p)</pre></li>
+    <li id="L194"><pre>                  ctx.stroke()</pre></li>
+    <li id="L195"><pre>                }</pre></li>
+    <li id="L196"><pre>              }}</pre></li>
+    <li id="L197"><pre>              onPointerUp={(e) =&gt; {</pre></li>
+    <li id="L198"><pre>                const g = gesture.current</pre></li>
+    <li id="L199"><pre>                if (!g || g.id !== e.pointerId) return</pre></li>
+    <li id="L200"><pre>                gesture.current = null</pre></li>
+    <li id="L201">
+      <pre>                if (g.points.length &gt; 1) setStrokes((s) =&gt; [...s, g.points])</pre>
+    </li>
+    <li id="L202"><pre>                else setStrokes((s) =&gt; [...s])</pre></li>
+    <li id="L203"><pre>              }}</pre></li>
+    <li id="L204"><pre>              onPointerCancel={() =&gt; {</pre></li>
+    <li id="L205"><pre>                gesture.current = null</pre></li>
+    <li id="L206"><pre>                setStrokes((s) =&gt; [...s])</pre></li>
+    <li id="L207"><pre>              }}</pre></li>
+    <li id="L208"><pre>            /&gt;</pre></li>
+    <li id="L209">
+      <pre>            &lt;div className=&quot;mimir-pdf-signature-row&quot;&gt;</pre>
+    </li>
+    <li id="L210">
+      <pre>              &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L211">
+      <pre>
+                {strokes.length ? `${strokes.length} 笔` : &#x27;在上方写下签名&#x27;}</pre>
+    </li>
+    <li id="L212"><pre>              &lt;/span&gt;</pre></li>
+    <li id="L213"><pre>              &lt;Button</pre></li>
+    <li id="L214"><pre>                type=&quot;text&quot;</pre></li>
+    <li id="L215"><pre>                icon={&lt;RotateCcw size={14} /&gt;}</pre></li>
+    <li id="L216"><pre>                disabled={busy || !strokes.length}</pre></li>
+    <li id="L217">
+      <pre>                onClick={() =&gt; setStrokes((s) =&gt; s.slice(0, -1))}</pre>
+    </li>
+    <li id="L218"><pre>              &gt;</pre></li>
+    <li id="L219"><pre>                撤销上笔</pre></li>
+    <li id="L220"><pre>              &lt;/Button&gt;</pre></li>
+    <li id="L221"><pre>              &lt;Button</pre></li>
+    <li id="L222"><pre>                type=&quot;text&quot;</pre></li>
+    <li id="L223"><pre>                icon={&lt;Trash2 size={14} /&gt;}</pre></li>
+    <li id="L224"><pre>                disabled={busy || !strokes.length}</pre></li>
+    <li id="L225"><pre>                onClick={() =&gt; setStrokes([])}</pre></li>
+    <li id="L226"><pre>              &gt;</pre></li>
+    <li id="L227"><pre>                清空</pre></li>
+    <li id="L228"><pre>              &lt;/Button&gt;</pre></li>
+    <li id="L229"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L230"><pre>          &lt;/&gt;</pre></li>
+    <li id="L231"><pre>        ) : mode === &#x27;type&#x27; ? (</pre></li>
+    <li id="L232"><pre>          &lt;&gt;</pre></li>
+    <li id="L233">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L234"><pre>              &lt;span&gt;姓名&lt;/span&gt;</pre></li>
+    <li id="L235"><pre>              &lt;Input</pre></li>
+    <li id="L236"><pre>                aria-label=&quot;签名姓名&quot;</pre></li>
+    <li id="L237"><pre>                maxLength={100}</pre></li>
+    <li id="L238"><pre>                value={text}</pre></li>
+    <li id="L239"><pre>                disabled={busy}</pre></li>
+    <li id="L240"><pre>                onChange={(e) =&gt; {</pre></li>
+    <li id="L241"><pre>                  generation.current++</pre></li>
+    <li id="L242"><pre>                  setLoading(false)</pre></li>
+    <li id="L243"><pre>                  setText(e.target.value)</pre></li>
+    <li id="L244"><pre>                }}</pre></li>
+    <li id="L245"><pre>              /&gt;</pre></li>
+    <li id="L246"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L247">
+      <pre>
+            &lt;div className=&quot;mimir-pdf-signature-fonts&quot; role=&quot;group&quot; aria-label=&quot;签名字体&quot;&gt;</pre>
+    </li>
+    <li id="L248"><pre>              {SIGNATURE_FONTS.map((f, i) =&gt; (</pre></li>
+    <li id="L249"><pre>                &lt;button</pre></li>
+    <li id="L250"><pre>                  type=&quot;button&quot;</pre></li>
+    <li id="L251"><pre>                  key={f.label}</pre></li>
+    <li id="L252"><pre>                  aria-pressed={font === i}</pre></li>
+    <li id="L253"><pre>                  disabled={busy}</pre></li>
+    <li id="L254"><pre>                  onClick={() =&gt; {</pre></li>
+    <li id="L255"><pre>                    generation.current++</pre></li>
+    <li id="L256"><pre>                    setLoading(false)</pre></li>
+    <li id="L257"><pre>                    setFont(i)</pre></li>
+    <li id="L258"><pre>                  }}</pre></li>
+    <li id="L259"><pre>                &gt;</pre></li>
+    <li id="L260"><pre>                  &lt;span</pre></li>
+    <li id="L261"><pre>                    style={{</pre></li>
+    <li id="L262"><pre>                      fontFamily: f.family,</pre></li>
+    <li id="L263">
+      <pre>
+                      fontStyle: f.italic ? &#x27;italic&#x27; : &#x27;normal&#x27;,</pre>
+    </li>
+    <li id="L264"><pre>                      color,</pre></li>
+    <li id="L265"><pre>                    }}</pre></li>
+    <li id="L266"><pre>                  &gt;</pre></li>
+    <li id="L267"><pre>                    {text.trim() || &#x27;张三 Li&#x27;}</pre></li>
+    <li id="L268"><pre>                  &lt;/span&gt;</pre></li>
+    <li id="L269"><pre>                  &lt;small&gt;{f.label}&lt;/small&gt;</pre></li>
+    <li id="L270"><pre>                &lt;/button&gt;</pre></li>
+    <li id="L271"><pre>              ))}</pre></li>
+    <li id="L272"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L273">
+      <pre>
+            &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;使用本机可用字体，预览字样将作为图片落纸。&lt;/p&gt;</pre>
+    </li>
+    <li id="L274"><pre>          &lt;/&gt;</pre></li>
+    <li id="L275"><pre>        ) : (</pre></li>
+    <li id="L276"><pre>          &lt;&gt;</pre></li>
+    <li id="L277"><pre>            &lt;input</pre></li>
+    <li id="L278"><pre>              ref={input}</pre></li>
+    <li id="L279"><pre>              type=&quot;file&quot;</pre></li>
+    <li id="L280"><pre>              accept=&quot;image/png,image/jpeg&quot;</pre></li>
+    <li id="L281"><pre>              hidden</pre></li>
+    <li id="L282"><pre>              onChange={(e) =&gt; {</pre></li>
+    <li id="L283"><pre>                const next = e.target.files?.[0]</pre></li>
+    <li id="L284"><pre>                e.target.value = &#x27;&#x27;</pre></li>
+    <li id="L285"><pre>                if (next) {</pre></li>
+    <li id="L286"><pre>                  setFile(next)</pre></li>
+    <li id="L287"><pre>                  void decode(next, mono)</pre></li>
+    <li id="L288"><pre>                }</pre></li>
+    <li id="L289"><pre>              }}</pre></li>
+    <li id="L290"><pre>            /&gt;</pre></li>
+    <li id="L291"><pre>            &lt;Button</pre></li>
+    <li id="L292"><pre>              icon={&lt;ImagePlus size={15} /&gt;}</pre></li>
+    <li id="L293"><pre>              disabled={busy || loading}</pre></li>
+    <li id="L294"><pre>              onClick={() =&gt; input.current?.click()}</pre></li>
+    <li id="L295"><pre>            &gt;</pre></li>
+    <li id="L296"><pre>              选择签名图片</pre></li>
+    <li id="L297"><pre>            &lt;/Button&gt;</pre></li>
+    <li id="L298"><pre>            {image?.kind === &#x27;stamp&#x27; &amp;&amp; (</pre></li>
+    <li id="L299"><pre>              &lt;img</pre></li>
+    <li id="L300"><pre>                className=&quot;mimir-pdf-signature-preview&quot;</pre></li>
+    <li id="L301"><pre>                src={`data:image/png;base64,${image.png}`}</pre></li>
+    <li id="L302"><pre>                alt=&quot;签名图片预览&quot;</pre></li>
+    <li id="L303"><pre>              /&gt;</pre></li>
+    <li id="L304"><pre>            )}</pre></li>
+    <li id="L305">
+      <pre>
+            &lt;div className=&quot;mimir-pdf-signature-tabs&quot; role=&quot;group&quot; aria-label=&quot;图片处理&quot;&gt;</pre>
+    </li>
+    <li id="L306"><pre>              {[false, true].map((v, i) =&gt; (</pre></li>
+    <li id="L307"><pre>                &lt;button</pre></li>
+    <li id="L308"><pre>                  key={String(v)}</pre></li>
+    <li id="L309"><pre>                  type=&quot;button&quot;</pre></li>
+    <li id="L310"><pre>                  aria-pressed={mono === v}</pre></li>
+    <li id="L311"><pre>                  disabled={busy || loading}</pre></li>
+    <li id="L312"><pre>                  onClick={() =&gt; {</pre></li>
+    <li id="L313"><pre>                    setMono(v)</pre></li>
+    <li id="L314"><pre>                    if (file) void decode(file, v)</pre></li>
+    <li id="L315"><pre>                  }}</pre></li>
+    <li id="L316"><pre>                &gt;</pre></li>
+    <li id="L317">
+      <pre>                  {[&#x27;保留原色&#x27;, &#x27;黑白去浅底&#x27;][i]}</pre>
+    </li>
+    <li id="L318"><pre>                &lt;/button&gt;</pre></li>
+    <li id="L319"><pre>              ))}</pre></li>
+    <li id="L320"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L321">
+      <pre>            &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L322"><pre>              PNG / JPEG，最大 8 MiB。图片仅在此文档中使用。</pre></li>
+    <li id="L323"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L324"><pre>          &lt;/&gt;</pre></li>
+    <li id="L325"><pre>        )}</pre></li>
+    <li id="L326"><pre>        {mode !== &#x27;image&#x27; &amp;&amp; (</pre></li>
+    <li id="L327">
+      <pre>          &lt;label className=&quot;mimir-pdf-signature-color&quot;&gt;</pre>
+    </li>
+    <li id="L328"><pre>            &lt;span&gt;颜色&lt;/span&gt;</pre></li>
+    <li id="L329"><pre>            &lt;input</pre></li>
+    <li id="L330"><pre>              type=&quot;color&quot;</pre></li>
+    <li id="L331"><pre>              aria-label=&quot;签名颜色&quot;</pre></li>
+    <li id="L332"><pre>              value={color}</pre></li>
+    <li id="L333"><pre>              disabled={busy}</pre></li>
+    <li id="L334"><pre>              onChange={(e) =&gt; {</pre></li>
+    <li id="L335"><pre>                generation.current++</pre></li>
+    <li id="L336"><pre>                setLoading(false)</pre></li>
+    <li id="L337"><pre>                setColor(e.target.value)</pre></li>
+    <li id="L338"><pre>              }}</pre></li>
+    <li id="L339"><pre>            /&gt;</pre></li>
+    <li id="L340"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L341"><pre>        )}</pre></li>
+    <li id="L342"><pre>        {!!signatures.length &amp;&amp; (</pre></li>
+    <li id="L343">
+      <pre>          &lt;div className=&quot;mimir-pdf-signature-existing&quot;&gt;</pre>
+    </li>
+    <li id="L344"><pre>            &lt;h3&gt;本页签名&lt;/h3&gt;</pre></li>
+    <li id="L345"><pre>            {signatures.map((s, i) =&gt; (</pre></li>
+    <li id="L346"><pre>              &lt;div key={s.id}&gt;</pre></li>
+    <li id="L347">
+      <pre>
+                &lt;Button disabled={busy || !ready} onClick={() =&gt; onSelect(s)}&gt;</pre>
+    </li>
+    <li id="L348">
+      <pre>
+                  调整{s.kind === &#x27;ink&#x27; ? &#x27;手写&#x27; : &#x27;图片&#x27;}签名 {i + 1}</pre>
+    </li>
+    <li id="L349"><pre>                &lt;/Button&gt;</pre></li>
+    <li id="L350"><pre>                &lt;Button</pre></li>
+    <li id="L351"><pre>                  type=&quot;text&quot;</pre></li>
+    <li id="L352"><pre>                  danger</pre></li>
+    <li id="L353"><pre>                  icon={&lt;Trash2 size={14} /&gt;}</pre></li>
+    <li id="L354"><pre>                  aria-label={`删除签名 ${i + 1}`}</pre></li>
+    <li id="L355"><pre>                  disabled={busy}</pre></li>
+    <li id="L356"><pre>                  onClick={() =&gt; onDelete(s)}</pre></li>
+    <li id="L357"><pre>                /&gt;</pre></li>
+    <li id="L358"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L359"><pre>            ))}</pre></li>
+    <li id="L360"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L361"><pre>        )}</pre></li>
+    <li id="L362"><pre>        {(issue || error) &amp;&amp; (</pre></li>
+    <li id="L363">
+      <pre>
+          &lt;p role=&quot;alert&quot; className=&quot;mimir-pdf-inspector__error&quot;&gt;</pre>
+    </li>
+    <li id="L364"><pre>            {issue || error}</pre></li>
+    <li id="L365"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L366"><pre>        )}</pre></li>
+    <li id="L367"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L368">
+      <pre>      &lt;footer className=&quot;mimir-pdf-inspector__footer&quot;&gt;</pre>
+    </li>
+    <li id="L369"><pre>        &lt;Button</pre></li>
+    <li id="L370"><pre>          type=&quot;primary&quot;</pre></li>
+    <li id="L371"><pre>          block</pre></li>
+    <li id="L372"><pre>          loading={loading}</pre></li>
+    <li id="L373"><pre>          disabled={</pre></li>
+    <li id="L374"><pre>            busy ||</pre></li>
+    <li id="L375"><pre>            !ready ||</pre></li>
+    <li id="L376">
+      <pre>
+            (mode === &#x27;ink&#x27; ? !strokes.length : mode === &#x27;type&#x27; ? !text.trim() : !image)</pre>
+    </li>
+    <li id="L377"><pre>          }</pre></li>
+    <li id="L378"><pre>          onClick={() =&gt; void prepare()}</pre></li>
+    <li id="L379"><pre>        &gt;</pre></li>
+    <li id="L380"><pre>          准备放置</pre></li>
+    <li id="L381"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L382"><pre>      &lt;/footer&gt;</pre></li>
+    <li id="L383"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L384"><pre>  )</pre></li>
+    <li id="L385"><pre>}</pre></li>
+  </ol>
+</html>

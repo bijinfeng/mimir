@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-text-controls.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-text-controls.css</h1>
+    <p>current真实源码 · SHA256 3e2296ca5fa2db89826400207758e42a4f03c3f7ba7702095cbd052dfafd114c</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-text-controls__style {</pre></li>
+    <li id="L2"><pre>  display: flex;</pre></li>
+    <li id="L3"><pre>  gap: 8px;</pre></li>
+    <li id="L4"><pre>}</pre></li>
+    <li id="L5"><pre>.mimir-pdf-text-controls__footer {</pre></li>
+    <li id="L6"><pre>  flex: none;</pre></li>
+    <li id="L7"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L8"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L9"><pre>}</pre></li>
+    <li id="L10"><pre>.mimir-pdf-text-controls__footer &gt; [role=&#x27;alert&#x27;],</pre></li>
+    <li id="L11"><pre>.mimir-pdf-text-controls__footer &gt; [role=&#x27;status&#x27;] {</pre></li>
+    <li id="L12"><pre>  max-height: 4.5em;</pre></li>
+    <li id="L13"><pre>  overflow: auto;</pre></li>
+    <li id="L14"><pre>  margin: 0 0 8px;</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre>.mimir-pdf-text-controls__actions {</pre></li>
+    <li id="L17"><pre>  display: flex;</pre></li>
+    <li id="L18"><pre>  gap: 8px;</pre></li>
+    <li id="L19"><pre>}</pre></li>
+    <li id="L20"><pre>.mimir-pdf-text-controls__actions &gt; :last-child {</pre></li>
+    <li id="L21"><pre>  flex: 1;</pre></li>
+    <li id="L22"><pre>}</pre></li>
+    <li id="L23"><pre>.mimir-pdf-text-controls .me-input--text {</pre></li>
+    <li id="L24"><pre>  width: 100%;</pre></li>
+    <li id="L25"><pre>}</pre></li>
+    <li id="L26"><pre>.mimir-pdf-text-gesture {</pre></li>
+    <li id="L27"><pre>  position: absolute;</pre></li>
+    <li id="L28"><pre>  border: 1px solid var(--me-accent);</pre></li>
+    <li id="L29"><pre>  background: transparent;</pre></li>
+    <li id="L30"><pre>  cursor: move;</pre></li>
+    <li id="L31"><pre>  touch-action: none;</pre></li>
+    <li id="L32"><pre>}</pre></li>
+    <li id="L33"><pre>.mimir-pdf-text-gesture:focus-visible {</pre></li>
+    <li id="L34"><pre>  outline: 2px solid var(--me-accent);</pre></li>
+    <li id="L35"><pre>  outline-offset: 3px;</pre></li>
+    <li id="L36"><pre>}</pre></li>
+    <li id="L37"><pre>.mimir-pdf-text-gesture__resize {</pre></li>
+    <li id="L38"><pre>  position: absolute;</pre></li>
+    <li id="L39"><pre>  right: -12px;</pre></li>
+    <li id="L40"><pre>  bottom: -12px;</pre></li>
+    <li id="L41"><pre>  width: 24px;</pre></li>
+    <li id="L42"><pre>  height: 24px;</pre></li>
+    <li id="L43"><pre>  cursor: ew-resize;</pre></li>
+    <li id="L44"><pre>  touch-action: none;</pre></li>
+    <li id="L45"><pre>}</pre></li>
+    <li id="L46"><pre></pre></li>
+    <li id="L47"><pre>.mimir-pdf-text-gesture__resize::after {</pre></li>
+    <li id="L48"><pre>  content: &#x27;&#x27;;</pre></li>
+    <li id="L49"><pre>  position: absolute;</pre></li>
+    <li id="L50"><pre>  inset: 7px;</pre></li>
+    <li id="L51"><pre>  border: 1px solid var(--me-accent);</pre></li>
+    <li id="L52"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L53"><pre>}</pre></li>
+    <li id="L54"><pre>.mimir-pdf-text-gesture__resize:focus-visible {</pre></li>
+    <li id="L55"><pre>  outline: 2px solid var(--me-accent);</pre></li>
+    <li id="L56"><pre>  outline-offset: 1px;</pre></li>
+    <li id="L57"><pre>}</pre></li>
+  </ol>
+</html>

@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-drawing-canvas.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-drawing-canvas.ts</h1>
+    <p>before真实源码 · SHA256 1bcda85181c39d19f56c723eab969ec7c668bc4201d98787a8e46e941bde1a3f</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import type { PdfDrawingInput } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L2"><pre></pre></li>
+    <li id="L3"><pre>export type DrawingPoint = [number, number]</pre></li>
+    <li id="L4">
+      <pre>export type PdfCanvasTool = &#x27;select&#x27; | PdfDrawingInput[&#x27;kind&#x27;]</pre>
+    </li>
+    <li id="L5">
+      <pre>
+export type DrawingHandle = &#x27;nw&#x27; | &#x27;n&#x27; | &#x27;ne&#x27; | &#x27;e&#x27; | &#x27;se&#x27; | &#x27;s&#x27; | &#x27;sw&#x27; | &#x27;w&#x27;</pre>
+    </li>
+    <li id="L6">
+      <pre>
+export const DRAWING_HANDLES: DrawingHandle[] = [&#x27;nw&#x27;, &#x27;n&#x27;, &#x27;ne&#x27;, &#x27;e&#x27;, &#x27;se&#x27;, &#x27;s&#x27;, &#x27;sw&#x27;, &#x27;w&#x27;]</pre>
+    </li>
+    <li id="L7"><pre>export const DRAWING_LABELS: Record&lt;PdfCanvasTool, string&gt; = {</pre></li>
+    <li id="L8"><pre>  select: &#x27;选择与调整&#x27;,</pre></li>
+    <li id="L9"><pre>  ink: &#x27;自由笔&#x27;,</pre></li>
+    <li id="L10"><pre>  rect: &#x27;矩形&#x27;,</pre></li>
+    <li id="L11"><pre>  ellipse: &#x27;椭圆&#x27;,</pre></li>
+    <li id="L12"><pre>  line: &#x27;直线&#x27;,</pre></li>
+    <li id="L13"><pre>  arrow: &#x27;箭头&#x27;,</pre></li>
+    <li id="L14"><pre>  check: &#x27;勾选&#x27;,</pre></li>
+    <li id="L15"><pre>  cross: &#x27;叉号&#x27;,</pre></li>
+    <li id="L16"><pre>}</pre></li>
+    <li id="L17"><pre>export function drawingPoint(</pre></li>
+    <li id="L18"><pre>  client: DrawingPoint,</pre></li>
+    <li id="L19">
+      <pre>
+  box: Pick&lt;DOMRect, &#x27;left&#x27; | &#x27;top&#x27; | &#x27;width&#x27; | &#x27;height&#x27;&gt;,</pre>
+    </li>
+    <li id="L20"><pre>  size: { width: number; height: number },</pre></li>
+    <li id="L21"><pre>): DrawingPoint | null {</pre></li>
+    <li id="L22"><pre>  if (box.width &lt;= 0 || box.height &lt;= 0) return null</pre></li>
+    <li id="L23"><pre>  return [</pre></li>
+    <li id="L24"><pre>    ((client[0] - box.left) * size.width) / box.width,</pre></li>
+    <li id="L25"><pre>    ((client[1] - box.top) * size.height) / box.height,</pre></li>
+    <li id="L26"><pre>  ]</pre></li>
+    <li id="L27"><pre>}</pre></li>
+    <li id="L28"><pre>export function createDrawing(</pre></li>
+    <li id="L29"><pre>  kind: PdfDrawingInput[&#x27;kind&#x27;],</pre></li>
+    <li id="L30"><pre>  page: number,</pre></li>
+    <li id="L31"><pre>  points: DrawingPoint[],</pre></li>
+    <li id="L32"><pre>): PdfDrawingInput | null {</pre></li>
+    <li id="L33"><pre>  if (points.length &lt; 2) return null</pre></li>
+    <li id="L34"><pre>  const first = points[0]!,</pre></li>
+    <li id="L35"><pre>    last = points.at(-1)!</pre></li>
+    <li id="L36"><pre>  const path = kind === &#x27;ink&#x27; ? points : [first, last]</pre></li>
+    <li id="L37"><pre>  const xs = path.map((p) =&gt; p[0]),</pre></li>
+    <li id="L38"><pre>    ys = path.map((p) =&gt; p[1])</pre></li>
+    <li id="L39"><pre>  const width = Math.max(...xs) - Math.min(...xs),</pre></li>
+    <li id="L40"><pre>    height = Math.max(...ys) - Math.min(...ys)</pre></li>
+    <li id="L41"><pre>  if (Math.hypot(width, height) &lt; 2) return null</pre></li>
+    <li id="L42"><pre>  const dx = last[0] - first[0],</pre></li>
+    <li id="L43"><pre>    dy = last[1] - first[1]</pre></li>
+    <li id="L44"><pre>  return {</pre></li>
+    <li id="L45"><pre>    kind,</pre></li>
+    <li id="L46"><pre>    page,</pre></li>
+    <li id="L47"><pre>    x: Math.min(...xs),</pre></li>
+    <li id="L48"><pre>    y: Math.min(...ys),</pre></li>
+    <li id="L49">
+      <pre>
+    width: Math.max(kind === &#x27;line&#x27; || kind === &#x27;arrow&#x27; ? Number.MIN_VALUE : 0.25, width),</pre>
+    </li>
+    <li id="L50">
+      <pre>
+    height: Math.max(kind === &#x27;line&#x27; || kind === &#x27;arrow&#x27; ? Number.MIN_VALUE : 0.25, height),</pre>
+    </li>
+    <li id="L51"><pre>    color: &#x27;#2563EB&#x27;,</pre></li>
+    <li id="L52"><pre>    thickness: 2,</pre></li>
+    <li id="L53"><pre>    opacity: 1,</pre></li>
+    <li id="L54"><pre>    ...(kind === &#x27;line&#x27; || kind === &#x27;arrow&#x27;</pre></li>
+    <li id="L55">
+      <pre>      ? { rotation: dx &lt; 0 ? (dy &lt; 0 ? 180 : 90) : dy &lt; 0 ? 270 : 0 }</pre>
+    </li>
+    <li id="L56"><pre>      : {}),</pre></li>
+    <li id="L57">
+      <pre>
+    ...(kind === &#x27;arrow&#x27; ? { arrowHeadLength: Math.min(12, Math.hypot(width, height) / 3) } : {}),</pre>
+    </li>
+    <li id="L58"><pre>    ...(kind === &#x27;ink&#x27; ? { points: path } : {}),</pre></li>
+    <li id="L59"><pre>  }</pre></li>
+    <li id="L60"><pre>}</pre></li>
+    <li id="L61">
+      <pre>
+export function moveDrawing(d: PdfDrawingInput, dx: number, dy: number): PdfDrawingInput {</pre>
+    </li>
+    <li id="L62"><pre>  return {</pre></li>
+    <li id="L63"><pre>    ...d,</pre></li>
+    <li id="L64"><pre>    x: d.x + dx,</pre></li>
+    <li id="L65"><pre>    y: d.y + dy,</pre></li>
+    <li id="L66">
+      <pre>
+    ...(d.points ? { points: d.points.map(([x, y]) =&gt; [x + dx, y + dy] as DrawingPoint) } : {}),</pre>
+    </li>
+    <li id="L67"><pre>  }</pre></li>
+    <li id="L68"><pre>}</pre></li>
+    <li id="L69"><pre>export function resizeDrawing(</pre></li>
+    <li id="L70"><pre>  d: PdfDrawingInput,</pre></li>
+    <li id="L71"><pre>  handle: DrawingHandle,</pre></li>
+    <li id="L72"><pre>  to: DrawingPoint,</pre></li>
+    <li id="L73"><pre>): PdfDrawingInput {</pre></li>
+    <li id="L74"><pre>  const right = d.x + d.width,</pre></li>
+    <li id="L75"><pre>    bottom = d.y + d.height</pre></li>
+    <li id="L76">
+      <pre>  const x = handle.includes(&#x27;w&#x27;) ? Math.min(to[0], right - 0.25) : d.x</pre>
+    </li>
+    <li id="L77">
+      <pre>  const y = handle.includes(&#x27;n&#x27;) ? Math.min(to[1], bottom - 0.25) : d.y</pre>
+    </li>
+    <li id="L78"><pre>  const width = handle.includes(&#x27;w&#x27;)</pre></li>
+    <li id="L79"><pre>    ? right - x</pre></li>
+    <li id="L80"><pre>    : handle.includes(&#x27;e&#x27;)</pre></li>
+    <li id="L81"><pre>      ? Math.max(0.25, to[0] - x)</pre></li>
+    <li id="L82"><pre>      : d.width</pre></li>
+    <li id="L83"><pre>  const height = handle.includes(&#x27;n&#x27;)</pre></li>
+    <li id="L84"><pre>    ? bottom - y</pre></li>
+    <li id="L85"><pre>    : handle.includes(&#x27;s&#x27;)</pre></li>
+    <li id="L86"><pre>      ? Math.max(0.25, to[1] - y)</pre></li>
+    <li id="L87"><pre>      : d.height</pre></li>
+    <li id="L88"><pre>  return {</pre></li>
+    <li id="L89"><pre>    ...d,</pre></li>
+    <li id="L90"><pre>    x,</pre></li>
+    <li id="L91"><pre>    y,</pre></li>
+    <li id="L92"><pre>    width,</pre></li>
+    <li id="L93"><pre>    height,</pre></li>
+    <li id="L94"><pre>    ...(d.points</pre></li>
+    <li id="L95"><pre>      ? {</pre></li>
+    <li id="L96"><pre>          points: d.points.map(</pre></li>
+    <li id="L97"><pre>            ([px, py]) =&gt;</pre></li>
+    <li id="L98"><pre>              [</pre></li>
+    <li id="L99"><pre>                x + ((px - d.x) * width) / d.width,</pre></li>
+    <li id="L100"><pre>                y + ((py - d.y) * height) / d.height,</pre></li>
+    <li id="L101"><pre>              ] as DrawingPoint,</pre></li>
+    <li id="L102"><pre>          ),</pre></li>
+    <li id="L103"><pre>        }</pre></li>
+    <li id="L104"><pre>      : {}),</pre></li>
+    <li id="L105"><pre>  }</pre></li>
+    <li id="L106"><pre>}</pre></li>
+    <li id="L107">
+      <pre>export function handlePoint(d: PdfDrawingInput, h: DrawingHandle): DrawingPoint {</pre>
+    </li>
+    <li id="L108"><pre>  return [</pre></li>
+    <li id="L109">
+      <pre>
+    d.x + d.width * (h.includes(&#x27;w&#x27;) ? 0 : h.includes(&#x27;e&#x27;) ? 1 : 0.5),</pre>
+    </li>
+    <li id="L110">
+      <pre>
+    d.y + d.height * (h.includes(&#x27;n&#x27;) ? 0 : h.includes(&#x27;s&#x27;) ? 1 : 0.5),</pre>
+    </li>
+    <li id="L111"><pre>  ]</pre></li>
+    <li id="L112"><pre>}</pre></li>
+    <li id="L113">
+      <pre>/** Same local quarter-turn convention as the native pdf-local writer. */</pre>
+    </li>
+    <li id="L114"><pre>export function drawingPath(d: PdfDrawingInput): string {</pre></li>
+    <li id="L115"><pre>  if (d.kind === &#x27;ink&#x27;)</pre></li>
+    <li id="L116">
+      <pre>
+    return (d.points ?? []).map(([x, y], i) =&gt; `${i ? &#x27;L&#x27; : &#x27;M&#x27;}${x},${y}`).join(&#x27; &#x27;)</pre>
+    </li>
+    <li id="L117"><pre>  const r = d.rotation ?? 0,</pre></li>
+    <li id="L118"><pre>    w = r === 90 || r === 270 ? d.height : d.width,</pre></li>
+    <li id="L119"><pre>    h = r === 90 || r === 270 ? d.width : d.height</pre></li>
+    <li id="L120"><pre>  const p = (u: number, v: number): string =&gt; {</pre></li>
+    <li id="L121"><pre>    const [x, y] =</pre></li>
+    <li id="L122">
+      <pre>
+      r === 90 ? [h - v, u] : r === 180 ? [w - u, h - v] : r === 270 ? [v, w - u] : [u, v]</pre>
+    </li>
+    <li id="L123"><pre>    return `${d.x + x},${d.y + y}`</pre></li>
+    <li id="L124"><pre>  }</pre></li>
+    <li id="L125">
+      <pre>
+  if (d.kind === &#x27;check&#x27;) return `M${p(0, h * 0.5)} L${p(w * 0.35, h)} L${p(w, 0)}`</pre>
+    </li>
+    <li id="L126">
+      <pre>
+  if (d.kind === &#x27;cross&#x27;) return `M${p(0, h)} L${p(w, 0)} M${p(0, 0)} L${p(w, h)}`</pre>
+    </li>
+    <li id="L127"><pre>  let path = `M${p(0, 0)} L${p(w, h)}`</pre></li>
+    <li id="L128"><pre>  if (d.kind === &#x27;arrow&#x27;) {</pre></li>
+    <li id="L129"><pre>    const len = d.arrowHeadLength ?? Math.min(12, w / 3, h / 3),</pre></li>
+    <li id="L130"><pre>      a = Math.atan2(h, w)</pre></li>
+    <li id="L131"><pre>    for (const delta of [-0.5, 0.5])</pre></li>
+    <li id="L132">
+      <pre>
+      path += ` M${p(w, h)} L${p(w - len * Math.cos(a + delta), h - len * Math.sin(a + delta))}`</pre>
+    </li>
+    <li id="L133"><pre>  }</pre></li>
+    <li id="L134"><pre>  return path</pre></li>
+    <li id="L135"><pre>}</pre></li>
+  </ol>
+</html>

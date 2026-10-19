@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-text.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-text.ts</h1>
+    <p>current真实源码 · SHA256 d381bb0a646d0899ae1eb1e3fa30bec7b5e447791f2c287ffe6ed31161fe952e</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>/**</pre></li>
+    <li id="L2"><pre> * PDF 的文字层：**查得到、指得准**。</pre></li>
+    <li id="L3"><pre> *</pre></li>
+    <li id="L4"><pre> * ## 它是什么、不是什么</pre></li>
+    <li id="L5"><pre> *</pre></li>
+    <li id="L6"><pre> * | 做 | 不做 |</pre></li>
+    <li id="L7"><pre> * |---|---|</pre></li>
+    <li id="L8">
+      <pre>
+ * | 用 pdf.js 的 `getTextContent()` 取出每页的文字与位置 | **改文字**——那要 PDFium 确认内容流对象并写回 |</pre>
+    </li>
+    <li id="L9"><pre> * | 在整份文档里找一个串，报出共几处、当前第几处 | 正则、通配符 |</pre></li>
+    <li id="L10">
+      <pre> * | 把命中换算成**页面比例矩形**，画在 canvas 上 | 拖拽任意字符选区、复制文字 |</pre>
+    </li>
+    <li id="L11">
+      <pre> * | 点选一个完整文字项并保留其 PDF 用户空间矩形 | 仅凭近似查找高亮进行文字替换 |</pre>
+    </li>
+    <li id="L12"><pre> *</pre></li>
+    <li id="L13"><pre> * ## 为什么矩形是「比例」而不是像素</pre></li>
+    <li id="L14"><pre> *</pre></li>
+    <li id="L15">
+      <pre> * 画布宽度随缩放变（40%–240%），而命中矩形属于**同一次渲染的坐标系**。</pre>
+    </li>
+    <li id="L16">
+      <pre> * 存比例（0..1）的话，缩放、换页、换 DPI 都不用重算文字层——四个百分比直接</pre>
+    </li>
+    <li id="L17">
+      <pre> * 跟着走。存像素就必须在每次缩放时重算一遍，而漏算一处症状是「放大之后高亮</pre>
+    </li>
+    <li id="L18"><pre> * 跑偏」，不报错。</pre></li>
+    <li id="L19"><pre> *</pre></li>
+    <li id="L20"><pre> * ## 旋转：矩形与画面用**同一个 viewport**</pre></li>
+    <li id="L21"><pre> *</pre></li>
+    <li id="L22">
+      <pre> * `rects` 由 `page.getViewport({ scale: 1, rotation })` 换算，`rotation` 就是</pre>
+    </li>
+    <li id="L23">
+      <pre> * 画布渲染时传的那个（`PdfPageRef.rotation`，绝对值）。包括原件自带的 /Rotate</pre>
+    </li>
+    <li id="L24">
+      <pre> * （它已经并进 `rotation` 里了）。所以文字层与画面**必然**对齐——不自己写</pre>
+    </li>
+    <li id="L25"><pre> * 四个角度的变换矩阵，那四份 case 里平时只看得见一份。</pre></li>
+    <li id="L26"><pre> *</pre></li>
+    <li id="L27">
+      <pre> * 代价是旋转变了要重算矩形。为此**原始文字（pdf.js 的 `TextItem`）单独缓存**：</pre>
+    </li>
+    <li id="L28">
+      <pre> * 重算只做一次坐标变换，不重新解析 PDF 的文字（那才是慢的那一步）。</pre>
+    </li>
+    <li id="L29"><pre> *</pre></li>
+    <li id="L30"><pre> * ## 裁剪与纸型**不在这里算**</pre></li>
+    <li id="L31"><pre> *</pre></li>
+    <li id="L32">
+      <pre> * 它们是「保存后才生效」的改动，而画布画的是**原件**（`source.bytes`，未裁剪</pre>
+    </li>
+    <li id="L33">
+      <pre> * 未换纸）。文字层要跟画布对齐，所以它也只认原件。拿待生效的裁剪去缩文字层</pre>
+    </li>
+    <li id="L34"><pre> * 会得到「高亮在画面外面」——那是两套坐标系。</pre></li>
+    <li id="L35"><pre> *</pre></li>
+    <li id="L36"><pre> * ## 为什么先建索引、搜索是同步的</pre></li>
+    <li id="L37"><pre> *</pre></li>
+    <li id="L38">
+      <pre> * `FindAdapter.search` 按契约**同步返回匹配数**（`EditorShell.tsx` 的</pre>
+    </li>
+    <li id="L39">
+      <pre> * `FindAdapter`），而 `getTextContent()` 是异步的。所以文字在打开查找之前</pre>
+    </li>
+    <li id="L40">
+      <pre> * 先扫一遍（异步、可取消），搜索本身在内存里同步做。反过来（在 `search` 里</pre>
+    </li>
+    <li id="L41">
+      <pre> * 发起异步扫描）会让匹配数晚一拍到——栏上显示的是上一次的结果，那看起来</pre>
+    </li>
+    <li id="L42"><pre> * 就是「搜不到」。</pre></li>
+    <li id="L43"><pre> */</pre></li>
+    <li id="L44"><pre></pre></li>
+    <li id="L45">
+      <pre>import type { PDFDocumentProxy } from &#x27;pdfjs-dist/legacy/build/pdf.mjs&#x27;</pre>
+    </li>
+    <li id="L46"><pre>import type { FindOptions } from &#x27;../shims/ui.js&#x27;</pre></li>
+    <li id="L47"><pre></pre></li>
+    <li id="L48"><pre>/**</pre></li>
+    <li id="L49">
+      <pre> * 页面比例矩形（0..1，左上角原点）。画布按百分比定位它，缩放不用重算。</pre>
+    </li>
+    <li id="L50"><pre> *</pre></li>
+    <li id="L51">
+      <pre> * `insetLeft` / `insetRight` 是**在这一段的盒子里**再切一刀的比例：命中一段</pre>
+    </li>
+    <li id="L52">
+      <pre> * 文字里的一截时用它们，而不是改 `x`/`width`。有角度的文字（斜排的页眉）</pre>
+    </li>
+    <li id="L53">
+      <pre> * 改 `x` 只能水平切，切出来的位置是错的；`inset` 是相对段自己的盒子切，</pre>
+    </li>
+    <li id="L54"><pre> * 与角度无关。</pre></li>
+    <li id="L55"><pre> */</pre></li>
+    <li id="L56"><pre>export interface PdfRect {</pre></li>
+    <li id="L57"><pre>  x: number</pre></li>
+    <li id="L58"><pre>  y: number</pre></li>
+    <li id="L59"><pre>  width: number</pre></li>
+    <li id="L60"><pre>  height: number</pre></li>
+    <li id="L61"><pre>  insetLeft?: number</pre></li>
+    <li id="L62"><pre>  insetRight?: number</pre></li>
+    <li id="L63"><pre>}</pre></li>
+    <li id="L64"><pre></pre></li>
+    <li id="L65"><pre>/** 一段文字 + 它在页面上的矩形。一段 = pdf.js 的一个 `TextItem` */</pre></li>
+    <li id="L66"><pre>interface TextChunk {</pre></li>
+    <li id="L67"><pre>  text: string</pre></li>
+    <li id="L68"><pre>  rect: PdfRect</pre></li>
+    <li id="L69">
+      <pre>
+  /** Unmodified pdf.js item text; unlike `text`, it never includes an EOL separator. */</pre>
+    </li>
+    <li id="L70"><pre>  sourceText: string</pre></li>
+    <li id="L71">
+      <pre>
+  /** Full item bounds in PDF user space. Search highlight insets are never used here. */</pre>
+    </li>
+    <li id="L72"><pre>  pdfRect: readonly [number, number, number, number]</pre></li>
+    <li id="L73"><pre>  fontSizeHint: number</pre></li>
+    <li id="L74"><pre>}</pre></li>
+    <li id="L75"><pre></pre></li>
+    <li id="L76">
+      <pre>/** A single complete pdf.js text item selected from the rendered page. */</pre>
+    </li>
+    <li id="L77"><pre>export interface PdfTextRun {</pre></li>
+    <li id="L78"><pre>  page: number</pre></li>
+    <li id="L79"><pre>  text: string</pre></li>
+    <li id="L80"><pre>  rect: PdfRect</pre></li>
+    <li id="L81"><pre>  pdfRect: readonly [number, number, number, number]</pre></li>
+    <li id="L82">
+      <pre>  /** pdf.js reported height; the PDFium writer must verify the actual object. */</pre>
+    </li>
+    <li id="L83"><pre>  fontSizeHint: number</pre></li>
+    <li id="L84"><pre>}</pre></li>
+    <li id="L85"><pre></pre></li>
+    <li id="L86"><pre>/** 一页的文字层：拼好的整页文本 + 每段在里面的下标 + 每段的矩形 */</pre></li>
+    <li id="L87"><pre>interface PageText {</pre></li>
+    <li id="L88">
+      <pre>  /** 布局里的页号（0 起）。**不是原文档的页号**——倒序之后就不同了 */</pre>
+    </li>
+    <li id="L89"><pre>  page: number</pre></li>
+    <li id="L90"><pre>  chunks: readonly TextChunk[]</pre></li>
+    <li id="L91"><pre>  /** 全页文本。段之间按 `hasEOL` 插 `\n` */</pre></li>
+    <li id="L92"><pre>  text: string</pre></li>
+    <li id="L93">
+      <pre>  /** 每一段在 `text` 里的起始下标（`starts[i]` 对应 `chunks[i]`） */</pre>
+    </li>
+    <li id="L94"><pre>  starts: readonly number[]</pre></li>
+    <li id="L95"><pre>}</pre></li>
+    <li id="L96"><pre></pre></li>
+    <li id="L97"><pre>/**</pre></li>
+    <li id="L98"><pre> * 整份文档的文字索引。</pre></li>
+    <li id="L99"><pre> *</pre></li>
+    <li id="L100">
+      <pre> * `pages` 的顺序就是**布局顺序**，所以命中里的 `page` 直接可以拿去</pre>
+    </li>
+    <li id="L101"><pre> * `setActive`。</pre></li>
+    <li id="L102"><pre> */</pre></li>
+    <li id="L103"><pre>export interface PdfTextIndex {</pre></li>
+    <li id="L104"><pre>  pages: readonly PageText[]</pre></li>
+    <li id="L105">
+      <pre>  /** 有文字的页数（0 表示这份文档是扫描件——没有文字层，查找永远搜不到） */</pre>
+    </li>
+    <li id="L106"><pre>  pagesWithText: number</pre></li>
+    <li id="L107"><pre>}</pre></li>
+    <li id="L108"><pre></pre></li>
+    <li id="L109"><pre>/** 一处命中：哪一页、几个矩形（跨行/跨段会有多个） */</pre></li>
+    <li id="L110"><pre>export interface PdfMatch {</pre></li>
+    <li id="L111"><pre>  page: number</pre></li>
+    <li id="L112"><pre>  rects: readonly PdfRect[]</pre></li>
+    <li id="L113"><pre>  /** 命中处的原文，给状态行显示「找到了什么」 */</pre></li>
+    <li id="L114"><pre>  text: string</pre></li>
+    <li id="L115"><pre>}</pre></li>
+    <li id="L116"><pre></pre></li>
+    <li id="L117"><pre>/**</pre></li>
+    <li id="L118"><pre> * 建索引要扫的一页。</pre></li>
+    <li id="L119"><pre> *</pre></li>
+    <li id="L120">
+      <pre> * `bytes` 是这一页**来源**那一份 PDF 的字节（原件，或导入进来的那一份），</pre>
+    </li>
+    <li id="L121">
+      <pre> * `index` 是它在那一份里的页号。空白页没有来源，用 `bytes: null` 表示。</pre>
+    </li>
+    <li id="L122"><pre> */</pre></li>
+    <li id="L123"><pre>export interface PdfTextSource {</pre></li>
+    <li id="L124"><pre>  bytes: Uint8Array | null</pre></li>
+    <li id="L125"><pre>  index: number</pre></li>
+    <li id="L126"><pre>  /** 画布上这一页的旋转（绝对值）。矩形按它换算 */</pre></li>
+    <li id="L127"><pre>  rotation: number</pre></li>
+    <li id="L128"><pre>}</pre></li>
+    <li id="L129"><pre></pre></li>
+    <li id="L130"><pre>/**</pre></li>
+    <li id="L131"><pre> * 原始文字缓存：`字节 → (原页号 → 那页的原始文字)`。</pre></li>
+    <li id="L132"><pre> *</pre></li>
+    <li id="L133">
+      <pre> * 存的是 pdf.js 的**用户空间**坐标（还没过 viewport），所以它与旋转无关。</pre>
+    </li>
+    <li id="L134"><pre> * 旋转一页时只是重跑坐标变换，不必再碰 PDF。</pre></li>
+    <li id="L135"><pre> *</pre></li>
+    <li id="L136">
+      <pre> * 用 `WeakMap` 而不是普通 `Map`：形状与 `pdf-render.ts` 的按字节缓存一致，</pre>
+    </li>
+    <li id="L137"><pre> * 换文档、关编辑器之后这些键自然可以回收，不需要谁记得清理。</pre></li>
+    <li id="L138"><pre> */</pre></li>
+    <li id="L139">
+      <pre>const rawCache = new WeakMap&lt;Uint8Array, Map&lt;number, RawPage&gt;&gt;()</pre>
+    </li>
+    <li id="L140"><pre></pre></li>
+    <li id="L141"><pre>interface RawPage {</pre></li>
+    <li id="L142"><pre>  chunks: readonly RawChunk[]</pre></li>
+    <li id="L143"><pre>}</pre></li>
+    <li id="L144"><pre></pre></li>
+    <li id="L145"><pre>interface RawChunk {</pre></li>
+    <li id="L146"><pre>  text: string</pre></li>
+    <li id="L147"><pre>  sourceText: string</pre></li>
+    <li id="L148"><pre>  fontSizeHint: number</pre></li>
+    <li id="L149"><pre>  /** 这一段的四个角（PDF 用户空间，y 向上） */</pre></li>
+    <li id="L150"><pre>  corners: readonly { x: number; y: number }[]</pre></li>
+    <li id="L151"><pre>}</pre></li>
+    <li id="L152"><pre></pre></li>
+    <li id="L153"><pre>/**</pre></li>
+    <li id="L154"><pre> * 扫出整份文档的文字层。</pre></li>
+    <li id="L155"><pre> *</pre></li>
+    <li id="L156">
+      <pre> * `documentFor` 由调用方给（`pdf-render.ts` 的 `loadPdfDocument`）——这里不</pre>
+    </li>
+    <li id="L157">
+      <pre> * 自己 `getDocument`：那样同一份 PDF 会被解析两遍（画布一份、查找一份），</pre>
+    </li>
+    <li id="L158">
+      <pre> * 各持一个 worker 侧的对象树，白费几百毫秒与几倍内存。测试里传一个直接</pre>
+    </li>
+    <li id="L159"><pre> * `getDocument` 的实现即可，不需要打包器。</pre></li>
+    <li id="L160"><pre> *</pre></li>
+    <li id="L161">
+      <pre> * **不调 `page.cleanup()`**：它会把这一页**正在进行的渲染任务取消掉**</pre>
+    </li>
+    <li id="L162">
+      <pre> * （`pdf.mjs` 的 `#tryCleanup`：`internalRenderTask.cancel()`）。索引与画布</pre>
+    </li>
+    <li id="L163">
+      <pre> * 共用同一份文档，所以那次清理会让画面变白——正是 TECH §15.12 记的那类</pre>
+    </li>
+    <li id="L164"><pre> * 「全白且无报错」。</pre></li>
+    <li id="L165"><pre> */</pre></li>
+    <li id="L166"><pre>export async function buildPdfTextIndex(</pre></li>
+    <li id="L167"><pre>  sources: readonly PdfTextSource[],</pre></li>
+    <li id="L168">
+      <pre>  documentFor: (bytes: Uint8Array) =&gt; Promise&lt;PDFDocumentProxy&gt;,</pre>
+    </li>
+    <li id="L169"><pre>  onProgress?: (done: number, total: number) =&gt; void,</pre></li>
+    <li id="L170"><pre>): Promise&lt;PdfTextIndex&gt; {</pre></li>
+    <li id="L171"><pre>  const pages: PageText[] = []</pre></li>
+    <li id="L172"><pre>  let pagesWithText = 0</pre></li>
+    <li id="L173"><pre>  for (const [page, source] of sources.entries()) {</pre></li>
+    <li id="L174"><pre>    if (source.bytes === null) {</pre></li>
+    <li id="L175">
+      <pre>      // 空白页：一定没有文字。仍然占一个位置（page 下标要能直接当页号用）</pre>
+    </li>
+    <li id="L176">
+      <pre>      pages.push({ page, chunks: [], text: &#x27;&#x27;, starts: [] })</pre>
+    </li>
+    <li id="L177"><pre>      onProgress?.(page + 1, sources.length)</pre></li>
+    <li id="L178"><pre>      continue</pre></li>
+    <li id="L179"><pre>    }</pre></li>
+    <li id="L180"><pre>    const doc = await documentFor(source.bytes)</pre></li>
+    <li id="L181"><pre>    const raw = await rawPageOf(doc, source.bytes, source.index)</pre></li>
+    <li id="L182">
+      <pre>
+    const chunks = project(raw, viewportOf(await doc.getPage(source.index + 1), source.rotation))</pre>
+    </li>
+    <li id="L183"><pre>    if (chunks.length &gt; 0) pagesWithText += 1</pre></li>
+    <li id="L184"><pre>    pages.push(assemble(page, chunks))</pre></li>
+    <li id="L185"><pre>    onProgress?.(page + 1, sources.length)</pre></li>
+    <li id="L186"><pre>  }</pre></li>
+    <li id="L187"><pre>  return { pages, pagesWithText }</pre></li>
+    <li id="L188"><pre>}</pre></li>
+    <li id="L189"><pre></pre></li>
+    <li id="L190"><pre>/** 取一页的原始文字（用户空间）。命中缓存时完全不碰 PDF */</pre></li>
+    <li id="L191"><pre>async function rawPageOf(</pre></li>
+    <li id="L192"><pre>  doc: PDFDocumentProxy,</pre></li>
+    <li id="L193"><pre>  bytes: Uint8Array,</pre></li>
+    <li id="L194"><pre>  index: number,</pre></li>
+    <li id="L195"><pre>): Promise&lt;RawPage&gt; {</pre></li>
+    <li id="L196"><pre>  let pages = rawCache.get(bytes)</pre></li>
+    <li id="L197"><pre>  if (pages === undefined) {</pre></li>
+    <li id="L198"><pre>    pages = new Map()</pre></li>
+    <li id="L199"><pre>    rawCache.set(bytes, pages)</pre></li>
+    <li id="L200"><pre>  }</pre></li>
+    <li id="L201"><pre>  const hit = pages.get(index)</pre></li>
+    <li id="L202"><pre>  if (hit !== undefined) return hit</pre></li>
+    <li id="L203"><pre></pre></li>
+    <li id="L204"><pre>  const proxy = await doc.getPage(index + 1)</pre></li>
+    <li id="L205"><pre>  const content = await proxy.getTextContent()</pre></li>
+    <li id="L206"><pre>  const chunks: RawChunk[] = []</pre></li>
+    <li id="L207"><pre>  for (const item of content.items) {</pre></li>
+    <li id="L208">
+      <pre>    // `TextMarkedContent` 没有 `str`（只在 includeMarkedContent 时出现，这里没开）</pre>
+    </li>
+    <li id="L209">
+      <pre>    if (!(&#x27;str&#x27; in item) || item.str === &#x27;&#x27;) continue</pre>
+    </li>
+    <li id="L210"><pre>    const corners = quadOf(item)</pre></li>
+    <li id="L211"><pre>    if (corners === null) continue</pre></li>
+    <li id="L212"><pre>    chunks.push({</pre></li>
+    <li id="L213"><pre>      // `hasEOL` 的段后面补一个换行：跨行的串不该被当成连在一起</pre></li>
+    <li id="L214"><pre>      text: item.hasEOL ? `${item.str}\n` : item.str,</pre></li>
+    <li id="L215"><pre>      sourceText: item.str,</pre></li>
+    <li id="L216"><pre>      fontSizeHint: item.height,</pre></li>
+    <li id="L217"><pre>      corners,</pre></li>
+    <li id="L218"><pre>    })</pre></li>
+    <li id="L219"><pre>  }</pre></li>
+    <li id="L220"><pre>  const raw: RawPage = { chunks }</pre></li>
+    <li id="L221"><pre>  pages.set(index, raw)</pre></li>
+    <li id="L222"><pre>  return raw</pre></li>
+    <li id="L223"><pre>}</pre></li>
+    <li id="L224"><pre></pre></li>
+    <li id="L225"><pre>interface Viewport {</pre></li>
+    <li id="L226"><pre>  width: number</pre></li>
+    <li id="L227"><pre>  height: number</pre></li>
+    <li id="L228"><pre>  convertToViewportPoint: (x: number, y: number) =&gt; number[]</pre></li>
+    <li id="L229"><pre>}</pre></li>
+    <li id="L230"><pre></pre></li>
+    <li id="L231"><pre>function viewportOf(</pre></li>
+    <li id="L232">
+      <pre>
+  page: { getViewport: (params: { scale: number; rotation: number }) =&gt; unknown },</pre>
+    </li>
+    <li id="L233"><pre>  rotation: number,</pre></li>
+    <li id="L234"><pre>): Viewport {</pre></li>
+    <li id="L235"><pre>  return page.getViewport({ scale: 1, rotation }) as Viewport</pre></li>
+    <li id="L236"><pre>}</pre></li>
+    <li id="L237"><pre></pre></li>
+    <li id="L238"><pre>/**</pre></li>
+    <li id="L239"><pre> * 把用户空间的四边形投到页面比例矩形上。</pre></li>
+    <li id="L240"><pre> *</pre></li>
+    <li id="L241"><pre> * ## `transform` 的六个分量怎么读</pre></li>
+    <li id="L242"><pre> *</pre></li>
+    <li id="L243">
+      <pre> * pdf.js 的 `TextItem.transform` 是 `[a, b, c, d, e, f]`：`(e, f)` 是基线起点，</pre>
+    </li>
+    <li id="L244">
+      <pre> * `(a, b)` 是文字前进方向（乘 `width` 得到终点），`(c, d)` 是「向上」的方向</pre>
+    </li>
+    <li id="L245"><pre> * （乘字高得到上边）。所以这一段的四边形是：</pre></li>
+    <li id="L246"><pre> *</pre></li>
+    <li id="L247"><pre> * ```</pre></li>
+    <li id="L248"><pre> * P0 = (e, f)                基线起点</pre></li>
+    <li id="L249"><pre> * P1 = P0 + û·width          û = (a, b) / |(a, b)|</pre></li>
+    <li id="L250"><pre> * P2 = P1 + v̂·height         v̂ = (c, d) / |(c, d)|</pre></li>
+    <li id="L251"><pre> * P3 = P0 + v̂·height</pre></li>
+    <li id="L252"><pre> * ```</pre></li>
+    <li id="L253"><pre> *</pre></li>
+    <li id="L254">
+      <pre> * 四个角都过一遍 `convertToViewportPoint` 再取**外包矩形**：旋转、翻转、</pre>
+    </li>
+    <li id="L255"><pre> * 裁剪偏移全由 viewport 负责。</pre></li>
+    <li id="L256"><pre> *</pre></li>
+    <li id="L257">
+      <pre> * `width` 的单位与用户空间一致（实测：12pt 的 Helvetica &quot;Hello World&quot; 报</pre>
+    </li>
+    <li id="L258">
+      <pre> * 62.004），所以不用再乘字号——这也是 pdf.js 自己的文本层用的同一套量</pre>
+    </li>
+    <li id="L259"><pre> * （`pdf.mjs` 的 `#appendText`：`canvasWidth = geom.width`）。</pre></li>
+    <li id="L260"><pre> */</pre></li>
+    <li id="L261"><pre>function project(raw: RawPage, viewport: Viewport): TextChunk[] {</pre></li>
+    <li id="L262"><pre>  const width = viewport.width</pre></li>
+    <li id="L263"><pre>  const height = viewport.height</pre></li>
+    <li id="L264"><pre>  if (width &lt;= 0 || height &lt;= 0) return []</pre></li>
+    <li id="L265"><pre></pre></li>
+    <li id="L266"><pre>  const chunks: TextChunk[] = []</pre></li>
+    <li id="L267"><pre>  for (const chunk of raw.chunks) {</pre></li>
+    <li id="L268"><pre>    const points = chunk.corners.map((corner) =&gt;</pre></li>
+    <li id="L269"><pre>      viewport.convertToViewportPoint(corner.x, corner.y),</pre></li>
+    <li id="L270"><pre>    )</pre></li>
+    <li id="L271"><pre>    const xs = points.map((point) =&gt; point[0] as number)</pre></li>
+    <li id="L272"><pre>    const ys = points.map((point) =&gt; point[1] as number)</pre></li>
+    <li id="L273"><pre>    const left = Math.min(...xs)</pre></li>
+    <li id="L274"><pre>    const top = Math.min(...ys)</pre></li>
+    <li id="L275"><pre>    const pdfXs = chunk.corners.map((corner) =&gt; corner.x)</pre></li>
+    <li id="L276"><pre>    const pdfYs = chunk.corners.map((corner) =&gt; corner.y)</pre></li>
+    <li id="L277"><pre>    chunks.push({</pre></li>
+    <li id="L278"><pre>      text: chunk.text,</pre></li>
+    <li id="L279"><pre>      sourceText: chunk.sourceText,</pre></li>
+    <li id="L280">
+      <pre>
+      pdfRect: [Math.min(...pdfXs), Math.min(...pdfYs), Math.max(...pdfXs), Math.max(...pdfYs)],</pre>
+    </li>
+    <li id="L281"><pre>      fontSizeHint: chunk.fontSizeHint,</pre></li>
+    <li id="L282"><pre>      rect: {</pre></li>
+    <li id="L283"><pre>        x: left / width,</pre></li>
+    <li id="L284"><pre>        y: top / height,</pre></li>
+    <li id="L285"><pre>        width: (Math.max(...xs) - left) / width,</pre></li>
+    <li id="L286"><pre>        height: (Math.max(...ys) - top) / height,</pre></li>
+    <li id="L287"><pre>      },</pre></li>
+    <li id="L288"><pre>    })</pre></li>
+    <li id="L289"><pre>  }</pre></li>
+    <li id="L290"><pre>  return chunks</pre></li>
+    <li id="L291"><pre>}</pre></li>
+    <li id="L292"><pre></pre></li>
+    <li id="L293"><pre>/**</pre></li>
+    <li id="L294">
+      <pre>
+ * Pick only a complete, unambiguous text item. A search substring&#x27;s proportional</pre>
+    </li>
+    <li id="L295">
+      <pre> * highlight is useful for finding words but must never become an edit rectangle.</pre>
+    </li>
+    <li id="L296">
+      <pre>
+ * Overlapping items have no safe click target until the host distinguishes objects.</pre>
+    </li>
+    <li id="L297"><pre> */</pre></li>
+    <li id="L298"><pre>export function pickPdfTextRun(</pre></li>
+    <li id="L299"><pre>  index: PdfTextIndex,</pre></li>
+    <li id="L300"><pre>  page: number,</pre></li>
+    <li id="L301"><pre>  x: number,</pre></li>
+    <li id="L302"><pre>  y: number,</pre></li>
+    <li id="L303"><pre>): PdfTextRun | null {</pre></li>
+    <li id="L304">
+      <pre>
+  if (!Number.isFinite(x) || !Number.isFinite(y) || x &lt; 0 || y &lt; 0 || x &gt; 1 || y &gt; 1) return null</pre>
+    </li>
+    <li id="L305"><pre>  const matches =</pre></li>
+    <li id="L306"><pre>    index.pages[page]?.chunks.filter((chunk) =&gt; {</pre></li>
+    <li id="L307"><pre>      const rect = chunk.rect</pre></li>
+    <li id="L308"><pre>      return (</pre></li>
+    <li id="L309"><pre>        chunk.sourceText.trim().length &gt; 0 &amp;&amp;</pre></li>
+    <li id="L310"><pre>        rect.width &gt; 0 &amp;&amp;</pre></li>
+    <li id="L311"><pre>        rect.height &gt; 0 &amp;&amp;</pre></li>
+    <li id="L312"><pre>        x &gt;= rect.x &amp;&amp;</pre></li>
+    <li id="L313"><pre>        x &lt;= rect.x + rect.width &amp;&amp;</pre></li>
+    <li id="L314"><pre>        y &gt;= rect.y &amp;&amp;</pre></li>
+    <li id="L315"><pre>        y &lt;= rect.y + rect.height</pre></li>
+    <li id="L316"><pre>      )</pre></li>
+    <li id="L317"><pre>    }) ?? []</pre></li>
+    <li id="L318"><pre>  if (matches.length !== 1) return null</pre></li>
+    <li id="L319"><pre>  const match = matches[0]!</pre></li>
+    <li id="L320"><pre>  return {</pre></li>
+    <li id="L321"><pre>    page,</pre></li>
+    <li id="L322"><pre>    text: match.sourceText,</pre></li>
+    <li id="L323"><pre>    rect: match.rect,</pre></li>
+    <li id="L324"><pre>    pdfRect: match.pdfRect,</pre></li>
+    <li id="L325"><pre>    fontSizeHint: match.fontSizeHint,</pre></li>
+    <li id="L326"><pre>  }</pre></li>
+    <li id="L327"><pre>}</pre></li>
+    <li id="L328"><pre></pre></li>
+    <li id="L329"><pre>/** 一段文字的四个角（PDF 用户空间）。取不到方向时返回 null */</pre></li>
+    <li id="L330"><pre>function quadOf(item: {</pre></li>
+    <li id="L331"><pre>  transform: Array&lt;unknown&gt;</pre></li>
+    <li id="L332"><pre>  width: number</pre></li>
+    <li id="L333"><pre>  height: number</pre></li>
+    <li id="L334"><pre>}): { x: number; y: number }[] | null {</pre></li>
+    <li id="L335"><pre>  const values = item.transform.map(Number)</pre></li>
+    <li id="L336"><pre>  const [a, b, c, d, e, f] = values</pre></li>
+    <li id="L337">
+      <pre>
+  if (values.length &lt; 6 || ![a, b, c, d, e, f].every((value) =&gt; Number.isFinite(value))) {</pre>
+    </li>
+    <li id="L338"><pre>    return null</pre></li>
+    <li id="L339"><pre>  }</pre></li>
+    <li id="L340"><pre>  const advance = Math.hypot(a!, b!)</pre></li>
+    <li id="L341"><pre>  const rise = Math.hypot(c!, d!)</pre></li>
+    <li id="L342">
+      <pre>  // 退化的矩阵（没有方向或没有高度）算不出矩形——跳过这一段，不要瞎猜</pre>
+    </li>
+    <li id="L343"><pre>  if (advance === 0 || rise === 0) return null</pre></li>
+    <li id="L344"><pre>  const ux = (a! / advance) * item.width</pre></li>
+    <li id="L345"><pre>  const uy = (b! / advance) * item.width</pre></li>
+    <li id="L346"><pre>  const vx = (c! / rise) * item.height</pre></li>
+    <li id="L347"><pre>  const vy = (d! / rise) * item.height</pre></li>
+    <li id="L348"><pre>  return [</pre></li>
+    <li id="L349"><pre>    { x: e!, y: f! },</pre></li>
+    <li id="L350"><pre>    { x: e! + ux, y: f! + uy },</pre></li>
+    <li id="L351"><pre>    { x: e! + ux + vx, y: f! + uy + vy },</pre></li>
+    <li id="L352"><pre>    { x: e! + vx, y: f! + vy },</pre></li>
+    <li id="L353"><pre>  ]</pre></li>
+    <li id="L354"><pre>}</pre></li>
+    <li id="L355"><pre></pre></li>
+    <li id="L356"><pre>/** 把一段段拼成整页文本，并记下每段的起始下标 */</pre></li>
+    <li id="L357">
+      <pre>function assemble(page: number, chunks: readonly TextChunk[]): PageText {</pre>
+    </li>
+    <li id="L358"><pre>  let text = &#x27;&#x27;</pre></li>
+    <li id="L359"><pre>  const starts: number[] = []</pre></li>
+    <li id="L360"><pre>  for (const chunk of chunks) {</pre></li>
+    <li id="L361"><pre>    starts.push(text.length)</pre></li>
+    <li id="L362"><pre>    text += chunk.text</pre></li>
+    <li id="L363"><pre>  }</pre></li>
+    <li id="L364"><pre>  return { page, chunks, text, starts }</pre></li>
+    <li id="L365"><pre>}</pre></li>
+    <li id="L366"><pre></pre></li>
+    <li id="L367">
+      <pre>/* ── 搜索（同步：索引已经建好） ─────────────────────────────────── */</pre>
+    </li>
+    <li id="L368"><pre></pre></li>
+    <li id="L369"><pre>/**</pre></li>
+    <li id="L370"><pre> * 在整份索引里找 `query`，返回每一处命中的页号与矩形。</pre></li>
+    <li id="L371"><pre> *</pre></li>
+    <li id="L372">
+      <pre> * 空串返回空——**不能**把空串当成「全匹配」：那样每敲一下都报出成千上万处，</pre>
+    </li>
+    <li id="L373"><pre> * 而栏上显示「1 / 2847」看着像正常工作，实际是噪音。</pre></li>
+    <li id="L374"><pre> *</pre></li>
+    <li id="L375"><pre> * ## 逐字符比较，不用 `toLowerCase()` 整串</pre></li>
+    <li id="L376"><pre> *</pre></li>
+    <li id="L377">
+      <pre> * 整串转小写会**改变长度**（`İ`.toLowerCase() 是两个码元），于是匹配下标与</pre>
+    </li>
+    <li id="L378">
+      <pre> * 原文下标错位——而矩形是按下标从段里取的，错位的高亮会框在别的字上。这里</pre>
+    </li>
+    <li id="L379">
+      <pre>
+ * 逐字符比：`a === b || (!matchCase &amp;&amp; a.toLowerCase() === b.toLowerCase())`，</pre>
+    </li>
+    <li id="L380"><pre> * 一一对应，长度不变。</pre></li>
+    <li id="L381"><pre> *</pre></li>
+    <li id="L382"><pre> * ## 全词匹配的边界怎么定（**对中文同样成立**）</pre></li>
+    <li id="L383"><pre> *</pre></li>
+    <li id="L384"><pre> * 边界 = 两侧不是 `[A-Za-z0-9_]`。于是：</pre></li>
+    <li id="L385"><pre> *</pre></li>
+    <li id="L386"><pre> *   - 英文：`cat` 在 `concat` 里不匹配，在 `a cat.` 里匹配</pre></li>
+    <li id="L387">
+      <pre> *   - 中文：汉字不在 ASCII 词字符集里，所以「组件」在「组件性能」里照样匹配</pre>
+    </li>
+    <li id="L388">
+      <pre> *     ——**这正是中文该有的语义**（中文没有词边界，硬按空格切会让中文搜不到，</pre>
+    </li>
+    <li id="L389"><pre> *     而那种开关比没有开关更坏）</pre></li>
+    <li id="L390"><pre> */</pre></li>
+    <li id="L391"><pre>export function searchPdfText(</pre></li>
+    <li id="L392"><pre>  index: PdfTextIndex,</pre></li>
+    <li id="L393"><pre>  query: string,</pre></li>
+    <li id="L394"><pre>  options: FindOptions,</pre></li>
+    <li id="L395"><pre>): PdfMatch[] {</pre></li>
+    <li id="L396"><pre>  if (query === &#x27;&#x27;) return []</pre></li>
+    <li id="L397"><pre>  const matches: PdfMatch[] = []</pre></li>
+    <li id="L398"><pre>  for (const page of index.pages) {</pre></li>
+    <li id="L399">
+      <pre>    for (const [start, end] of findRanges(page.text, query, options)) {</pre>
+    </li>
+    <li id="L400"><pre>      const rects = rectsFor(page, start, end)</pre></li>
+    <li id="L401"><pre>      if (rects.length === 0) continue</pre></li>
+    <li id="L402">
+      <pre>      matches.push({ page: page.page, rects, text: page.text.slice(start, end) })</pre>
+    </li>
+    <li id="L403"><pre>    }</pre></li>
+    <li id="L404"><pre>  }</pre></li>
+    <li id="L405"><pre>  return matches</pre></li>
+    <li id="L406"><pre>}</pre></li>
+    <li id="L407"><pre></pre></li>
+    <li id="L408"><pre>/** `text` 里所有命中区间（`[start, end)`） */</pre></li>
+    <li id="L409">
+      <pre>
+function findRanges(text: string, query: string, options: FindOptions): [number, number][] {</pre>
+    </li>
+    <li id="L410"><pre>  const out: [number, number][] = []</pre></li>
+    <li id="L411"><pre>  const last = text.length - query.length</pre></li>
+    <li id="L412"><pre>  for (let at = 0; at &lt;= last; at += 1) {</pre></li>
+    <li id="L413"><pre>    if (!matchAt(text, at, query, options)) continue</pre></li>
+    <li id="L414"><pre>    out.push([at, at + query.length])</pre></li>
+    <li id="L415"><pre>    // 不重叠：`aaaaa` 里找 `aa` 报 2 处（与浏览器一致）</pre></li>
+    <li id="L416"><pre>    at += query.length - 1</pre></li>
+    <li id="L417"><pre>  }</pre></li>
+    <li id="L418"><pre>  return out</pre></li>
+    <li id="L419"><pre>}</pre></li>
+    <li id="L420"><pre></pre></li>
+    <li id="L421">
+      <pre>
+function matchAt(text: string, at: number, query: string, options: FindOptions): boolean {</pre>
+    </li>
+    <li id="L422"><pre>  for (let offset = 0; offset &lt; query.length; offset += 1) {</pre></li>
+    <li id="L423"><pre>    const found = text[at + offset]</pre></li>
+    <li id="L424"><pre>    const wanted = query[offset]</pre></li>
+    <li id="L425"><pre>    if (found === undefined || wanted === undefined) return false</pre></li>
+    <li id="L426"><pre>    if (found === wanted) continue</pre></li>
+    <li id="L427"><pre>    if (options.matchCase) return false</pre></li>
+    <li id="L428"><pre>    if (found.toLowerCase() !== wanted.toLowerCase()) return false</pre></li>
+    <li id="L429"><pre>  }</pre></li>
+    <li id="L430"><pre>  if (options.wholeWord) {</pre></li>
+    <li id="L431"><pre>    if (isWordChar(text[at - 1])) return false</pre></li>
+    <li id="L432"><pre>    if (isWordChar(text[at + query.length])) return false</pre></li>
+    <li id="L433"><pre>  }</pre></li>
+    <li id="L434"><pre>  return true</pre></li>
+    <li id="L435"><pre>}</pre></li>
+    <li id="L436"><pre></pre></li>
+    <li id="L437">
+      <pre>/** ASCII 词字符。**故意不把汉字算进来**——理由见 `searchPdfText` 的说明 */</pre>
+    </li>
+    <li id="L438"><pre>function isWordChar(char: string | undefined): boolean {</pre></li>
+    <li id="L439"><pre>  return char !== undefined &amp;&amp; /[A-Za-z0-9_]/.test(char)</pre></li>
+    <li id="L440"><pre>}</pre></li>
+    <li id="L441"><pre></pre></li>
+    <li id="L442"><pre>/**</pre></li>
+    <li id="L443"><pre> * 命中区间 → 矩形。</pre></li>
+    <li id="L444"><pre> *</pre></li>
+    <li id="L445">
+      <pre> * 命中通常落在一段里（word 级的 `TextItem`），那就直接取那一段的矩形。跨段</pre>
+    </li>
+    <li id="L446">
+      <pre> * （换行、或者 PDF 把一个词拆成几段）时每段各给一个矩形——按**字符数比例**</pre>
+    </li>
+    <li id="L447">
+      <pre> * 切出被覆盖的那一截。这个比例是近似：等宽字体与中文准，拉丁字母会有几个</pre>
+    </li>
+    <li id="L448">
+      <pre> * 像素的误差（`WWW` 与 `iii` 同宽不同长）。高亮是给人看位置的，不值得为它</pre>
+    </li>
+    <li id="L449"><pre> * 去取每个字形的宽度（那要 `getOperatorList` 的逐字形矩阵）。</pre></li>
+    <li id="L450"><pre> */</pre></li>
+    <li id="L451">
+      <pre>function rectsFor(page: PageText, start: number, end: number): PdfRect[] {</pre>
+    </li>
+    <li id="L452"><pre>  const out: PdfRect[] = []</pre></li>
+    <li id="L453"><pre>  for (const [position, chunk] of page.chunks.entries()) {</pre></li>
+    <li id="L454"><pre>    const chunkStart = page.starts[position]</pre></li>
+    <li id="L455"><pre>    if (chunkStart === undefined) continue</pre></li>
+    <li id="L456"><pre>    const chunkEnd = chunkStart + chunk.text.length</pre></li>
+    <li id="L457"><pre>    // 命中区间与这一段没有交集</pre></li>
+    <li id="L458"><pre>    if (end &lt;= chunkStart || start &gt;= chunkEnd) continue</pre></li>
+    <li id="L459"><pre>    const total = chunk.text.length</pre></li>
+    <li id="L460"><pre>    if (total === 0) continue</pre></li>
+    <li id="L461"><pre>    const from = Math.max(start, chunkStart) - chunkStart</pre></li>
+    <li id="L462"><pre>    const to = Math.min(end, chunkEnd) - chunkStart</pre></li>
+    <li id="L463"><pre>    const rect: PdfRect = { ...chunk.rect }</pre></li>
+    <li id="L464"><pre>    // 整数段落（常见）不加 inset：少两个数字，CSS 也少一次计算</pre></li>
+    <li id="L465"><pre>    if (from &gt; 0) rect.insetLeft = from / total</pre></li>
+    <li id="L466"><pre>    if (to &lt; total) rect.insetRight = (total - to) / total</pre></li>
+    <li id="L467"><pre>    out.push(rect)</pre></li>
+    <li id="L468"><pre>  }</pre></li>
+    <li id="L469"><pre>  return out</pre></li>
+    <li id="L470"><pre>}</pre></li>
+  </ol>
+</html>

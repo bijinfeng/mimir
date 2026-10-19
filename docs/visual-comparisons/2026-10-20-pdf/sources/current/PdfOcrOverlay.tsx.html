@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfOcrOverlay.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfOcrOverlay.tsx</h1>
+    <p>current真实源码 · SHA256 ce1fe9256eb22a74ca4b07649d9884b513e1fb615cfbf2e1f4663b85ba99c139</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import type { ProjectedPdfOcrPage } from &#x27;./pdf-ocr.js&#x27;</pre></li>
+    <li id="L2"><pre>import { useEffect, useRef } from &#x27;react&#x27;</pre></li>
+    <li id="L3"><pre>import &#x27;./pdf-ocr.css&#x27;</pre></li>
+    <li id="L4"><pre></pre></li>
+    <li id="L5">
+      <pre>
+/** SVG selection adds visual line breaks between glyph elements; recover only the actual source span. */</pre>
+    </li>
+    <li id="L6"><pre>export function pdfOcrSelectionText(</pre></li>
+    <li id="L7"><pre>  root: SVGSVGElement,</pre></li>
+    <li id="L8"><pre>  selection: Selection | null,</pre></li>
+    <li id="L9"><pre>  sourceText: string,</pre></li>
+    <li id="L10"><pre>): string | null {</pre></li>
+    <li id="L11"><pre>  if (!selection || selection.isCollapsed) return null</pre></li>
+    <li id="L12">
+      <pre>  const boundary = (node: Node | null, offset: number): number | null =&gt; {</pre>
+    </li>
+    <li id="L13"><pre>    if (!node || !root.contains(node)) return null</pre></li>
+    <li id="L14"><pre>    if (node === root) {</pre></li>
+    <li id="L15"><pre>      const next = root.childNodes.item(offset)</pre></li>
+    <li id="L16"><pre>      return next instanceof Element</pre></li>
+    <li id="L17"><pre>        ? Number(next.getAttribute(&#x27;data-ocr-start&#x27;))</pre></li>
+    <li id="L18"><pre>        : sourceText.length</pre></li>
+    <li id="L19"><pre>    }</pre></li>
+    <li id="L20">
+      <pre>    const element = node instanceof Element ? node : node.parentElement</pre>
+    </li>
+    <li id="L21"><pre>    const text = element?.closest(&#x27;text[data-ocr-start]&#x27;)</pre></li>
+    <li id="L22"><pre>    if (!text || !root.contains(text)) return null</pre></li>
+    <li id="L23"><pre>    let characters =</pre></li>
+    <li id="L24"><pre>      node.nodeType === Node.TEXT_NODE</pre></li>
+    <li id="L25"><pre>        ? Math.min(offset, node.textContent?.length ?? 0)</pre></li>
+    <li id="L26"><pre>        : Array.from(node.childNodes)</pre></li>
+    <li id="L27"><pre>            .slice(0, offset)</pre></li>
+    <li id="L28">
+      <pre>            .reduce((sum, child) =&gt; sum + (child.textContent?.length ?? 0), 0)</pre>
+    </li>
+    <li id="L29"><pre>    let current = node</pre></li>
+    <li id="L30"><pre>    while (current !== text) {</pre></li>
+    <li id="L31">
+      <pre>
+      for (let previous = current.previousSibling; previous; previous = previous.previousSibling)</pre>
+    </li>
+    <li id="L32"><pre>        characters += previous.textContent?.length ?? 0</pre></li>
+    <li id="L33"><pre>      if (!current.parentNode) return null</pre></li>
+    <li id="L34"><pre>      current = current.parentNode</pre></li>
+    <li id="L35"><pre>    }</pre></li>
+    <li id="L36">
+      <pre>    return Number(text.getAttribute(&#x27;data-ocr-start&#x27;)) + characters</pre>
+    </li>
+    <li id="L37"><pre>  }</pre></li>
+    <li id="L38">
+      <pre>  const anchor = boundary(selection.anchorNode, selection.anchorOffset)</pre>
+    </li>
+    <li id="L39">
+      <pre>  const focus = boundary(selection.focusNode, selection.focusOffset)</pre>
+    </li>
+    <li id="L40">
+      <pre>
+  if (anchor === null || focus === null || !Number.isFinite(anchor) || !Number.isFinite(focus))</pre>
+    </li>
+    <li id="L41"><pre>    return null</pre></li>
+    <li id="L42">
+      <pre>  return sourceText.slice(Math.min(anchor, focus), Math.max(anchor, focus))</pre>
+    </li>
+    <li id="L43"><pre>}</pre></li>
+    <li id="L44"><pre></pre></li>
+    <li id="L45">
+      <pre>
+/** Real selectable glyph boxes, including rotated pages; no original-text editing targets. */</pre>
+    </li>
+    <li id="L46">
+      <pre>
+export function PdfOcrOverlay({ page, onExit }: { page: ProjectedPdfOcrPage; onExit(): void }) {</pre>
+    </li>
+    <li id="L47"><pre>  const root = useRef&lt;SVGSVGElement&gt;(null)</pre></li>
+    <li id="L48"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L49"><pre>    root.current?.focus({ preventScroll: true })</pre></li>
+    <li id="L50"><pre>  }, [])</pre></li>
+    <li id="L51"><pre>  return (</pre></li>
+    <li id="L52"><pre>    &lt;svg</pre></li>
+    <li id="L53"><pre>      ref={root}</pre></li>
+    <li id="L54"><pre>      className=&quot;mimir-pdf-ocr-overlay&quot;</pre></li>
+    <li id="L55"><pre>      aria-label=&quot;临时 OCR 文字（可能有误）&quot;</pre></li>
+    <li id="L56"><pre>      tabIndex={0}</pre></li>
+    <li id="L57"><pre>      onCopy={(event) =&gt; {</pre></li>
+    <li id="L58">
+      <pre>
+        const text = pdfOcrSelectionText(event.currentTarget, window.getSelection(), page.text)</pre>
+    </li>
+    <li id="L59"><pre>        if (text === null) return</pre></li>
+    <li id="L60"><pre>        event.clipboardData.setData(&#x27;text/plain&#x27;, text)</pre></li>
+    <li id="L61"><pre>        event.preventDefault()</pre></li>
+    <li id="L62"><pre>      }}</pre></li>
+    <li id="L63"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L64"><pre>        if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L65"><pre>          event.stopPropagation()</pre></li>
+    <li id="L66"><pre>          onExit()</pre></li>
+    <li id="L67"><pre>        }</pre></li>
+    <li id="L68"><pre>      }}</pre></li>
+    <li id="L69">
+      <pre>      viewBox={`0 0 ${page.viewport.width} ${page.viewport.height}`}</pre>
+    </li>
+    <li id="L70"><pre>      preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L71"><pre>      onPointerDown={(event) =&gt; event.stopPropagation()}</pre></li>
+    <li id="L72"><pre>    &gt;</pre></li>
+    <li id="L73"><pre>      {page.boxes.map(({ token, points }, index) =&gt; {</pre></li>
+    <li id="L74">
+      <pre>
+        const [p0, p1, , p3] = points as readonly [number[], number[], number[], number[]]</pre>
+    </li>
+    <li id="L75"><pre>        const dx = p1[0]! - p0[0]!,</pre></li>
+    <li id="L76"><pre>          dy = p1[1]! - p0[1]!</pre></li>
+    <li id="L77"><pre>        const hx = p3[0]! - p0[0]!,</pre></li>
+    <li id="L78"><pre>          hy = p3[1]! - p0[1]!</pre></li>
+    <li id="L79"><pre>        const width = Math.hypot(dx, dy),</pre></li>
+    <li id="L80"><pre>          height = Math.hypot(hx, hy)</pre></li>
+    <li id="L81"><pre>        if (!width || !height) return null</pre></li>
+    <li id="L82"><pre>        return (</pre></li>
+    <li id="L83"><pre>          &lt;text</pre></li>
+    <li id="L84"><pre>            key={`${token.start}:${token.end}`}</pre></li>
+    <li id="L85"><pre>            data-ocr-start={token.start}</pre></li>
+    <li id="L86"><pre>            fontSize={height}</pre></li>
+    <li id="L87"><pre>            textLength={width}</pre></li>
+    <li id="L88"><pre>            lengthAdjust=&quot;spacingAndGlyphs&quot;</pre></li>
+    <li id="L89"><pre>            dominantBaseline=&quot;text-before-edge&quot;</pre></li>
+    <li id="L90"><pre>            x={0}</pre></li>
+    <li id="L91"><pre>            y={0}</pre></li>
+    <li id="L92">
+      <pre>
+            transform={`matrix(${dx / width} ${dy / width} ${hx / height} ${hy / height} ${p0[0]} ${p0[1]})`}</pre>
+    </li>
+    <li id="L93"><pre>          &gt;</pre></li>
+    <li id="L94"><pre>            {token.text}</pre></li>
+    <li id="L95">
+      <pre>
+            {page.text.slice(token.end, page.boxes[index + 1]?.token.start ?? page.text.length)}</pre>
+    </li>
+    <li id="L96"><pre>          &lt;/text&gt;</pre></li>
+    <li id="L97"><pre>        )</pre></li>
+    <li id="L98"><pre>      })}</pre></li>
+    <li id="L99"><pre>    &lt;/svg&gt;</pre></li>
+    <li id="L100"><pre>  )</pre></li>
+    <li id="L101"><pre>}</pre></li>
+  </ol>
+</html>

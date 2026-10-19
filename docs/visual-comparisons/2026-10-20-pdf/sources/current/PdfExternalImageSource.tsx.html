@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfExternalImageSource.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfExternalImageSource.tsx</h1>
+    <p>current真实源码 · SHA256 d087455fddf425dc319c60a7621e23de8a51035fcf758ec0041ed0a1a8945ae4</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button, Input, Segmented } from &#x27;antd&#x27;</pre></li>
+    <li id="L2">
+      <pre>import { useCallback, useEffect, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  PDF_IMAGE_ASPECT_RATIOS,</pre></li>
+    <li id="L5"><pre>  type PdfAssetData,</pre></li>
+    <li id="L6"><pre>  type PdfAssetReadiness,</pre></li>
+    <li id="L7"><pre>  type PdfImageAspectRatio,</pre></li>
+    <li id="L8"><pre>} from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L9">
+      <pre>
+import type { PdfHostAssetPreview, PdfHostAssetReadiness } from &#x27;../agent/pdf-asset-agent.js&#x27;</pre>
+    </li>
+    <li id="L10"><pre>import { ToolbarSelect } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L11"><pre>import type { PdfPanelResult } from &#x27;./PdfInspector.js&#x27;</pre></li>
+    <li id="L12"><pre>import &#x27;./pdf-external-images.css&#x27;</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14">
+      <pre>
+export type PdfImageSource = &#x27;upload&#x27; | &#x27;search&#x27; | &#x27;generate&#x27;</pre>
+    </li>
+    <li id="L15"><pre>export interface PdfExternalSelection {</pre></li>
+    <li id="L16"><pre>  url: string</pre></li>
+    <li id="L17"><pre>  title: string</pre></li>
+    <li id="L18"><pre>}</pre></li>
+    <li id="L19"><pre>export type PdfAssetAction = (</pre></li>
+    <li id="L20"><pre>  tool: string,</pre></li>
+    <li id="L21"><pre>  args: Record&lt;string, unknown&gt;,</pre></li>
+    <li id="L22"><pre>  version?: number,</pre></li>
+    <li id="L23"><pre>  signal?: AbortSignal,</pre></li>
+    <li id="L24">
+      <pre>) =&gt; Promise&lt;(PdfPanelResult &amp; { data?: unknown }) | undefined&gt;</pre>
+    </li>
+    <li id="L25"><pre></pre></li>
+    <li id="L26"><pre>export function PdfExternalImageSource({</pre></li>
+    <li id="L27"><pre>  source,</pre></li>
+    <li id="L28"><pre>  onSource,</pre></li>
+    <li id="L29"><pre>  getVersion,</pre></li>
+    <li id="L30"><pre>  assetSessionId,</pre></li>
+    <li id="L31"><pre>  readinessHost,</pre></li>
+    <li id="L32"><pre>  previewHost,</pre></li>
+    <li id="L33"><pre>  onSelection,</pre></li>
+    <li id="L34"><pre>  onAction,</pre></li>
+    <li id="L35"><pre>  busy,</pre></li>
+    <li id="L36"><pre>  onSettings,</pre></li>
+    <li id="L37"><pre>}: {</pre></li>
+    <li id="L38"><pre>  source: PdfImageSource</pre></li>
+    <li id="L39"><pre>  onSource(source: PdfImageSource): void</pre></li>
+    <li id="L40"><pre>  getVersion(): number</pre></li>
+    <li id="L41"><pre>  assetSessionId: string</pre></li>
+    <li id="L42"><pre>  readinessHost?: PdfHostAssetReadiness</pre></li>
+    <li id="L43"><pre>  previewHost?: PdfHostAssetPreview</pre></li>
+    <li id="L44">
+      <pre>  onSettings?(kind: &#x27;search&#x27; | &#x27;generate&#x27;): void</pre>
+    </li>
+    <li id="L45"><pre>  onSelection(selection: PdfExternalSelection | null): void</pre></li>
+    <li id="L46"><pre>  onAction: PdfAssetAction</pre></li>
+    <li id="L47"><pre>  busy: boolean</pre></li>
+    <li id="L48"><pre>}) {</pre></li>
+    <li id="L49">
+      <pre>  const [readiness, setReadiness] = useState&lt;PdfAssetReadiness | null&gt;(null)</pre>
+    </li>
+    <li id="L50">
+      <pre>  const [readinessError, setReadinessError] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L51"><pre>  const [query, setQuery] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L52"><pre>  const [prompt, setPrompt] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L53">
+      <pre>  const [ratio, setRatio] = useState&lt;PdfImageAspectRatio&gt;(&#x27;auto&#x27;)</pre>
+    </li>
+    <li id="L54"><pre>  const [pending, setPending] = useState(false)</pre></li>
+    <li id="L55"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L56"><pre>  const [data, setData] = useState&lt;PdfAssetData | null&gt;(null)</pre></li>
+    <li id="L57">
+      <pre>  const [selected, setSelected] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L58"><pre>  const [preview, setPreview] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L59"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L60">
+      <pre>  const readinessRequest = useRef&lt;AbortController | null&gt;(null)</pre>
+    </li>
+    <li id="L61"><pre>  const readinessRef = useRef(readinessHost)</pre></li>
+    <li id="L62"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L63"><pre>    readinessRef.current = readinessHost</pre></li>
+    <li id="L64"><pre>  }, [readinessHost])</pre></li>
+    <li id="L65"><pre>  const loadReadiness = useCallback(() =&gt; {</pre></li>
+    <li id="L66"><pre>    readinessRequest.current?.abort()</pre></li>
+    <li id="L67"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L68"><pre>    readinessRequest.current = controller</pre></li>
+    <li id="L69"><pre>    const host = readinessRef.current</pre></li>
+    <li id="L70"><pre>    if (host)</pre></li>
+    <li id="L71"><pre>      void host(controller.signal).then(</pre></li>
+    <li id="L72"><pre>        (result) =&gt; {</pre></li>
+    <li id="L73"><pre>          if (!controller.signal.aborted) setReadiness(result)</pre></li>
+    <li id="L74"><pre>        },</pre></li>
+    <li id="L75"><pre>        (reason: unknown) =&gt; {</pre></li>
+    <li id="L76"><pre>          if (!controller.signal.aborted)</pre></li>
+    <li id="L77"><pre>            setReadinessError(</pre></li>
+    <li id="L78">
+      <pre>
+              reason instanceof Error ? reason.message : &#x27;无法读取图片服务配置，请重试&#x27;,</pre>
+    </li>
+    <li id="L79"><pre>            )</pre></li>
+    <li id="L80"><pre>        },</pre></li>
+    <li id="L81"><pre>      )</pre></li>
+    <li id="L82"><pre>    return controller</pre></li>
+    <li id="L83"><pre>  }, [])</pre></li>
+    <li id="L84"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L85"><pre>    const controller = loadReadiness()</pre></li>
+    <li id="L86"><pre>    return () =&gt; controller.abort()</pre></li>
+    <li id="L87"><pre>  }, [loadReadiness])</pre></li>
+    <li id="L88"><pre>  useEffect(</pre></li>
+    <li id="L89"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L90"><pre>      request.current?.abort()</pre></li>
+    <li id="L91"><pre>      readinessRequest.current?.abort()</pre></li>
+    <li id="L92"><pre>    },</pre></li>
+    <li id="L93"><pre>    [],</pre></li>
+    <li id="L94"><pre>  )</pre></li>
+    <li id="L95"><pre>  useEffect(</pre></li>
+    <li id="L96"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L97"><pre>      if (preview) URL.revokeObjectURL(preview)</pre></li>
+    <li id="L98"><pre>    },</pre></li>
+    <li id="L99"><pre>    [preview],</pre></li>
+    <li id="L100"><pre>  )</pre></li>
+    <li id="L101"><pre>  const run = async () =&gt; {</pre></li>
+    <li id="L102"><pre>    request.current?.abort()</pre></li>
+    <li id="L103"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L104"><pre>    request.current = controller</pre></li>
+    <li id="L105"><pre>    setPending(true)</pre></li>
+    <li id="L106"><pre>    setError(null)</pre></li>
+    <li id="L107"><pre>    setData(null)</pre></li>
+    <li id="L108"><pre>    setSelected(null)</pre></li>
+    <li id="L109"><pre>    setPreview(null)</pre></li>
+    <li id="L110"><pre>    onSelection(null)</pre></li>
+    <li id="L111"><pre>    try {</pre></li>
+    <li id="L112"><pre>      const result = await onAction(</pre></li>
+    <li id="L113">
+      <pre>
+        source === &#x27;search&#x27; ? &#x27;image_search&#x27; : &#x27;generate_image&#x27;,</pre>
+    </li>
+    <li id="L114">
+      <pre>
+        source === &#x27;search&#x27; ? { query, max_results: 8 } : { prompt, aspect_ratio: ratio },</pre>
+    </li>
+    <li id="L115"><pre>        getVersion(),</pre></li>
+    <li id="L116"><pre>        controller.signal,</pre></li>
+    <li id="L117"><pre>      )</pre></li>
+    <li id="L118"><pre>      if (controller.signal.aborted) return</pre></li>
+    <li id="L119">
+      <pre>
+      if (!result?.ok) throw new Error(result?.error ?? &#x27;图片素材准备失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L120"><pre>      const value = result.data as PdfAssetData</pre></li>
+    <li id="L121"><pre>      setData(value)</pre></li>
+    <li id="L122"><pre>      if (&#x27;url&#x27; in value) {</pre></li>
+    <li id="L123">
+      <pre>        if (!previewHost) throw new Error(&#x27;图片预览宿主未连接&#x27;)</pre>
+    </li>
+    <li id="L124"><pre>        const blob = await previewHost({</pre></li>
+    <li id="L125"><pre>          assetSessionId,</pre></li>
+    <li id="L126"><pre>          url: value.url,</pre></li>
+    <li id="L127"><pre>          signal: controller.signal,</pre></li>
+    <li id="L128"><pre>        })</pre></li>
+    <li id="L129"><pre>        if (controller.signal.aborted) return</pre></li>
+    <li id="L130"><pre>        setPreview(URL.createObjectURL(blob))</pre></li>
+    <li id="L131"><pre>        setSelected(value.url)</pre></li>
+    <li id="L132">
+      <pre>        onSelection({ url: value.url, title: &#x27;生成图片&#x27; })</pre>
+    </li>
+    <li id="L133"><pre>      }</pre></li>
+    <li id="L134"><pre>    } catch (reason) {</pre></li>
+    <li id="L135"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L136">
+      <pre>
+        setError(reason instanceof Error ? reason.message : &#x27;图片素材准备失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L137"><pre>    } finally {</pre></li>
+    <li id="L138"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L139"><pre>        request.current = null</pre></li>
+    <li id="L140"><pre>        setPending(false)</pre></li>
+    <li id="L141"><pre>      }</pre></li>
+    <li id="L142"><pre>    }</pre></li>
+    <li id="L143"><pre>  }</pre></li>
+    <li id="L144">
+      <pre>
+  const capability = readiness?.[source === &#x27;search&#x27; ? &#x27;image_search&#x27; : &#x27;generate_image&#x27;]</pre>
+    </li>
+    <li id="L145"><pre>  return (</pre></li>
+    <li id="L146"><pre>    &lt;div className=&quot;mimir-pdf-image-source&quot;&gt;</pre></li>
+    <li id="L147"><pre>      &lt;Segmented</pre></li>
+    <li id="L148"><pre>        block</pre></li>
+    <li id="L149"><pre>        aria-label=&quot;图片来源&quot;</pre></li>
+    <li id="L150"><pre>        value={source}</pre></li>
+    <li id="L151"><pre>        options={[</pre></li>
+    <li id="L152"><pre>          { value: &#x27;upload&#x27;, label: &#x27;上传&#x27; },</pre></li>
+    <li id="L153"><pre>          { value: &#x27;search&#x27;, label: &#x27;搜索&#x27; },</pre></li>
+    <li id="L154">
+      <pre>          { value: &#x27;generate&#x27;, label: &#x27;生成&#x27; },</pre>
+    </li>
+    <li id="L155"><pre>        ]}</pre></li>
+    <li id="L156"><pre>        onChange={(value) =&gt; onSource(value as PdfImageSource)}</pre></li>
+    <li id="L157"><pre>      /&gt;</pre></li>
+    <li id="L158"><pre>      {source !== &#x27;upload&#x27; &amp;&amp; (</pre></li>
+    <li id="L159"><pre>        &lt;&gt;</pre></li>
+    <li id="L160"><pre>          {!capability?.available &amp;&amp; (</pre></li>
+    <li id="L161">
+      <pre>
+            &lt;div className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L162"><pre>              {readinessError ??</pre></li>
+    <li id="L163"><pre>                capability?.reason ??</pre></li>
+    <li id="L164">
+      <pre>
+                (readinessHost ? &#x27;正在检查图片服务配置…&#x27; : &#x27;图片服务宿主未连接&#x27;)}</pre>
+    </li>
+    <li id="L165">
+      <pre>              {(readinessError || capability) &amp;&amp; onSettings &amp;&amp; (</pre>
+    </li>
+    <li id="L166">
+      <pre>
+                &lt;Button size=&quot;small&quot; type=&quot;link&quot; onClick={() =&gt; onSettings(source)}&gt;</pre>
+    </li>
+    <li id="L167"><pre>                  前往设置</pre></li>
+    <li id="L168"><pre>                &lt;/Button&gt;</pre></li>
+    <li id="L169"><pre>              )}</pre></li>
+    <li id="L170"><pre>              {(readinessError || capability) &amp;&amp; (</pre></li>
+    <li id="L171"><pre>                &lt;Button</pre></li>
+    <li id="L172"><pre>                  size=&quot;small&quot;</pre></li>
+    <li id="L173"><pre>                  type=&quot;link&quot;</pre></li>
+    <li id="L174"><pre>                  onClick={() =&gt; {</pre></li>
+    <li id="L175"><pre>                    setReadiness(null)</pre></li>
+    <li id="L176"><pre>                    setReadinessError(null)</pre></li>
+    <li id="L177"><pre>                    loadReadiness()</pre></li>
+    <li id="L178"><pre>                  }}</pre></li>
+    <li id="L179"><pre>                &gt;</pre></li>
+    <li id="L180"><pre>                  重新检查配置</pre></li>
+    <li id="L181"><pre>                &lt;/Button&gt;</pre></li>
+    <li id="L182"><pre>              )}</pre></li>
+    <li id="L183"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L184"><pre>          )}</pre></li>
+    <li id="L185"><pre>          {source === &#x27;search&#x27; ? (</pre></li>
+    <li id="L186">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L187"><pre>              &lt;span&gt;搜索图片&lt;/span&gt;</pre></li>
+    <li id="L188"><pre>              &lt;Input</pre></li>
+    <li id="L189"><pre>                aria-label=&quot;搜索PDF图片关键词&quot;</pre></li>
+    <li id="L190"><pre>                value={query}</pre></li>
+    <li id="L191"><pre>                maxLength={500}</pre></li>
+    <li id="L192"><pre>                placeholder=&quot;输入图片主题&quot;</pre></li>
+    <li id="L193"><pre>                disabled={pending || busy}</pre></li>
+    <li id="L194">
+      <pre>                onChange={(event) =&gt; setQuery(event.target.value)}</pre>
+    </li>
+    <li id="L195"><pre>                onPressEnter={() =&gt; {</pre></li>
+    <li id="L196">
+      <pre>
+                  if (capability?.available &amp;&amp; query.trim() &amp;&amp; !pending &amp;&amp; !busy) void run()</pre>
+    </li>
+    <li id="L197"><pre>                }}</pre></li>
+    <li id="L198"><pre>              /&gt;</pre></li>
+    <li id="L199"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L200"><pre>          ) : (</pre></li>
+    <li id="L201"><pre>            &lt;&gt;</pre></li>
+    <li id="L202">
+      <pre>              &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L203"><pre>                &lt;span&gt;描述图片&lt;/span&gt;</pre></li>
+    <li id="L204"><pre>                &lt;Input.TextArea</pre></li>
+    <li id="L205"><pre>                  aria-label=&quot;PDF生成图片描述&quot;</pre></li>
+    <li id="L206"><pre>                  value={prompt}</pre></li>
+    <li id="L207"><pre>                  maxLength={2000}</pre></li>
+    <li id="L208"><pre>                  autoSize={{ minRows: 3, maxRows: 5 }}</pre></li>
+    <li id="L209"><pre>                  placeholder=&quot;描述主体、场景和风格&quot;</pre></li>
+    <li id="L210"><pre>                  disabled={pending || busy}</pre></li>
+    <li id="L211">
+      <pre>                  onChange={(event) =&gt; setPrompt(event.target.value)}</pre>
+    </li>
+    <li id="L212"><pre>                /&gt;</pre></li>
+    <li id="L213"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L214">
+      <pre>              &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L215"><pre>                &lt;span&gt;图片比例&lt;/span&gt;</pre></li>
+    <li id="L216"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L217"><pre>                  label=&quot;PDF生成图片比例&quot;</pre></li>
+    <li id="L218"><pre>                  value={ratio}</pre></li>
+    <li id="L219">
+      <pre>                  options={PDF_IMAGE_ASPECT_RATIOS.map((value) =&gt; ({</pre>
+    </li>
+    <li id="L220"><pre>                    value,</pre></li>
+    <li id="L221">
+      <pre>                    label: value === &#x27;auto&#x27; ? &#x27;自动&#x27; : value,</pre>
+    </li>
+    <li id="L222"><pre>                  }))}</pre></li>
+    <li id="L223"><pre>                  onChange={setRatio}</pre></li>
+    <li id="L224"><pre>                  disabled={pending || busy}</pre></li>
+    <li id="L225"><pre>                /&gt;</pre></li>
+    <li id="L226"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L227">
+      <pre>              &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L228">
+      <pre>
+                按模型支持的尺寸生成，实际比例以结果宽高为准。生成后仍需插入或替换。</pre>
+    </li>
+    <li id="L229"><pre>              &lt;/p&gt;</pre></li>
+    <li id="L230"><pre>            &lt;/&gt;</pre></li>
+    <li id="L231"><pre>          )}</pre></li>
+    <li id="L232">
+      <pre>          &lt;div className=&quot;mimir-pdf-image-source__actions&quot;&gt;</pre>
+    </li>
+    <li id="L233"><pre>            &lt;Button</pre></li>
+    <li id="L234"><pre>              size=&quot;small&quot;</pre></li>
+    <li id="L235"><pre>              loading={pending}</pre></li>
+    <li id="L236"><pre>              disabled={</pre></li>
+    <li id="L237">
+      <pre>
+                !capability?.available || busy || !(source === &#x27;search&#x27; ? query : prompt).trim()</pre>
+    </li>
+    <li id="L238"><pre>              }</pre></li>
+    <li id="L239"><pre>              onClick={() =&gt; void run()}</pre></li>
+    <li id="L240"><pre>            &gt;</pre></li>
+    <li id="L241">
+      <pre>
+              {source === &#x27;search&#x27; ? &#x27;搜索图片&#x27; : &#x27;生成图片&#x27;}</pre>
+    </li>
+    <li id="L242"><pre>            &lt;/Button&gt;</pre></li>
+    <li id="L243"><pre>            {pending &amp;&amp; (</pre></li>
+    <li id="L244"><pre>              &lt;Button</pre></li>
+    <li id="L245"><pre>                size=&quot;small&quot;</pre></li>
+    <li id="L246"><pre>                onClick={() =&gt; {</pre></li>
+    <li id="L247"><pre>                  request.current?.abort()</pre></li>
+    <li id="L248"><pre>                  request.current = null</pre></li>
+    <li id="L249"><pre>                  setPending(false)</pre></li>
+    <li id="L250"><pre>                }}</pre></li>
+    <li id="L251"><pre>              &gt;</pre></li>
+    <li id="L252"><pre>                取消</pre></li>
+    <li id="L253"><pre>              &lt;/Button&gt;</pre></li>
+    <li id="L254"><pre>            )}</pre></li>
+    <li id="L255"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L256"><pre>          {error &amp;&amp; (</pre></li>
+    <li id="L257">
+      <pre>
+            &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L258"><pre>              {error}</pre></li>
+    <li id="L259"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L260"><pre>          )}</pre></li>
+    <li id="L261"><pre>          {data &amp;&amp;</pre></li>
+    <li id="L262"><pre>            &#x27;results&#x27; in data &amp;&amp;</pre></li>
+    <li id="L263"><pre>            (data.results.length ? (</pre></li>
+    <li id="L264"><pre>              &lt;div</pre></li>
+    <li id="L265">
+      <pre>                className=&quot;mimir-pdf-image-source__results&quot;</pre>
+    </li>
+    <li id="L266"><pre>                role=&quot;group&quot;</pre></li>
+    <li id="L267"><pre>                aria-label=&quot;图片搜索结果&quot;</pre></li>
+    <li id="L268"><pre>              &gt;</pre></li>
+    <li id="L269"><pre>                {data.results.map(</pre></li>
+    <li id="L270"><pre>                  (image, index) =&gt;</pre></li>
+    <li id="L271"><pre>                    image.imageUrl &amp;&amp; (</pre></li>
+    <li id="L272"><pre>                      &lt;button</pre></li>
+    <li id="L273"><pre>                        key={`${image.url}:${image.imageUrl}`}</pre></li>
+    <li id="L274"><pre>                        type=&quot;button&quot;</pre></li>
+    <li id="L275">
+      <pre>                        className=&quot;mimir-pdf-image-source__result&quot;</pre>
+    </li>
+    <li id="L276">
+      <pre>
+                        aria-label={`选择图片：${image.title || `结果${index + 1}`}`}</pre>
+    </li>
+    <li id="L277"><pre>                        aria-pressed={selected === image.imageUrl}</pre></li>
+    <li id="L278"><pre>                        onClick={() =&gt; {</pre></li>
+    <li id="L279"><pre>                          setSelected(image.imageUrl!)</pre></li>
+    <li id="L280"><pre>                          onSelection({</pre></li>
+    <li id="L281"><pre>                            url: image.imageUrl!,</pre></li>
+    <li id="L282">
+      <pre>                            title: image.title || `结果${index + 1}`,</pre>
+    </li>
+    <li id="L283"><pre>                          })</pre></li>
+    <li id="L284"><pre>                        }}</pre></li>
+    <li id="L285"><pre>                      &gt;</pre></li>
+    <li id="L286"><pre>                        &lt;img</pre></li>
+    <li id="L287"><pre>                          src={image.imageUrl}</pre></li>
+    <li id="L288"><pre>                          alt=&quot;&quot;</pre></li>
+    <li id="L289"><pre>                          referrerPolicy=&quot;no-referrer&quot;</pre></li>
+    <li id="L290"><pre>                          loading=&quot;lazy&quot;</pre></li>
+    <li id="L291"><pre>                        /&gt;</pre></li>
+    <li id="L292">
+      <pre>
+                        &lt;span&gt;{image.title || `结果${index + 1}`}&lt;/span&gt;</pre>
+    </li>
+    <li id="L293"><pre>                      &lt;/button&gt;</pre></li>
+    <li id="L294"><pre>                    ),</pre></li>
+    <li id="L295"><pre>                )}</pre></li>
+    <li id="L296"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L297"><pre>            ) : (</pre></li>
+    <li id="L298">
+      <pre>
+              &lt;p className=&quot;mimir-pdf-inspector__empty&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L299"><pre>                没有找到图片，试试其他关键词。</pre></li>
+    <li id="L300"><pre>              &lt;/p&gt;</pre></li>
+    <li id="L301"><pre>            ))}</pre></li>
+    <li id="L302">
+      <pre>          {data &amp;&amp; &#x27;url&#x27; in data &amp;&amp; preview &amp;&amp; (</pre>
+    </li>
+    <li id="L303">
+      <pre>            &lt;figure className=&quot;mimir-pdf-image-source__preview&quot;&gt;</pre>
+    </li>
+    <li id="L304">
+      <pre>              &lt;img src={preview} alt=&quot;生成图片预览&quot; /&gt;</pre>
+    </li>
+    <li id="L305"><pre>              &lt;figcaption&gt;</pre></li>
+    <li id="L306"><pre>                {data.width} × {data.height} px · 20 分钟内可用</pre></li>
+    <li id="L307"><pre>              &lt;/figcaption&gt;</pre></li>
+    <li id="L308"><pre>            &lt;/figure&gt;</pre></li>
+    <li id="L309"><pre>          )}</pre></li>
+    <li id="L310"><pre>          {selected &amp;&amp; (</pre></li>
+    <li id="L311">
+      <pre>
+            &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L312"><pre>              已选择素材；点击底部按钮后才会修改文档。</pre></li>
+    <li id="L313"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L314"><pre>          )}</pre></li>
+    <li id="L315"><pre>        &lt;/&gt;</pre></li>
+    <li id="L316"><pre>      )}</pre></li>
+    <li id="L317"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L318"><pre>  )</pre></li>
+    <li id="L319"><pre>}</pre></li>
+  </ol>
+</html>

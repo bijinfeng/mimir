@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-20",
+  "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+  "pairs": 8,
+  "screenshots": 16,
+  "geometryFile": "browser-layout-metrics.json",
+  "actualNativeFlows": [
+    {
+      "flow": "drawing + undo + redo + failed save + retry + reopen",
+      "widthPt": 140,
+      "ackBytes": 5540,
+      "result": "pass"
+    },
+    {
+      "flow": "note create/edit/reply/delete cancel + locked save + reopen refresh",
+      "ackBytes": 3221,
+      "result": "pass"
+    },
+    {
+      "flow": "metadata subject apply/save/reopen refresh",
+      "subject": "PDF layout verification",
+      "ackBytes": 6312,
+      "result": "pass"
+    }
+  ],
+  "limitations": [
+    "ACK only page memory, no database",
+    "Same React demo instance needs explicit annotation refresh after reopen; production keys by document id",
+    "Source mapping is not all-GUI coverage",
+    "System dialogs, external services, devices not verified"
+  ]
+}

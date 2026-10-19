@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfTextInsertPanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfTextInsertPanel.tsx</h1>
+    <p>current真实源码 · SHA256 ddbea3a341da6326a9dab85444f9083d4b59ec1693c642dea7d6974c76caf4e8</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Check, Trash2, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L2"><pre>import {</pre></li>
+    <li id="L3"><pre>  ToolbarButton,</pre></li>
+    <li id="L4"><pre>  ToolbarConfirm,</pre></li>
+    <li id="L5"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L6"><pre>  ToolbarSelect,</pre></li>
+    <li id="L7"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L8"><pre>  ToolbarTextField,</pre></li>
+    <li id="L9"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L10"><pre>import &#x27;./pdf-text-controls.css&#x27;</pre></li>
+    <li id="L11"><pre></pre></li>
+    <li id="L12"><pre>export interface PdfInsertDraft {</pre></li>
+    <li id="L13"><pre>  text: string</pre></li>
+    <li id="L14"><pre>  fontSize: number</pre></li>
+    <li id="L15"><pre>  color: string</pre></li>
+    <li id="L16">
+      <pre>  font: &#x27;&#x27; | &#x27;arial&#x27; | &#x27;times&#x27; | &#x27;courier&#x27;</pre>
+    </li>
+    <li id="L17"><pre>  bold: boolean</pre></li>
+    <li id="L18"><pre>  italic: boolean</pre></li>
+    <li id="L19"><pre>  align: &#x27;left&#x27; | &#x27;center&#x27; | &#x27;right&#x27;</pre></li>
+    <li id="L20"><pre>  maxWidth: number</pre></li>
+    <li id="L21"><pre>  x?: number</pre></li>
+    <li id="L22"><pre>  y?: number</pre></li>
+    <li id="L23"><pre>}</pre></li>
+    <li id="L24"><pre>const NO_INSERT_OPTIONS: { value: string; label: string }[] = []</pre></li>
+    <li id="L25"><pre>export function PdfTextInsertPanel({</pre></li>
+    <li id="L26"><pre>  value,</pre></li>
+    <li id="L27"><pre>  onChange,</pre></li>
+    <li id="L28"><pre>  busy,</pre></li>
+    <li id="L29"><pre>  error,</pre></li>
+    <li id="L30"><pre>  page,</pre></li>
+    <li id="L31"><pre>  onApply,</pre></li>
+    <li id="L32"><pre>  onClose,</pre></li>
+    <li id="L33"><pre>  selectedId,</pre></li>
+    <li id="L34"><pre>  options = NO_INSERT_OPTIONS,</pre></li>
+    <li id="L35"><pre>  onSelect,</pre></li>
+    <li id="L36"><pre>  onDelete,</pre></li>
+    <li id="L37"><pre>}: {</pre></li>
+    <li id="L38"><pre>  value: PdfInsertDraft</pre></li>
+    <li id="L39"><pre>  onChange(value: PdfInsertDraft): void</pre></li>
+    <li id="L40"><pre>  busy: boolean</pre></li>
+    <li id="L41"><pre>  error?: string | null</pre></li>
+    <li id="L42"><pre>  page: number</pre></li>
+    <li id="L43"><pre>  onApply(): void</pre></li>
+    <li id="L44"><pre>  onClose(): void</pre></li>
+    <li id="L45"><pre>  selectedId?: string</pre></li>
+    <li id="L46"><pre>  options?: { value: string; label: string }[]</pre></li>
+    <li id="L47"><pre>  onSelect?(id: string): void</pre></li>
+    <li id="L48"><pre>  onDelete?(): void</pre></li>
+    <li id="L49"><pre>}) {</pre></li>
+    <li id="L50">
+      <pre>
+  const update = (patch: Partial&lt;PdfInsertDraft&gt;) =&gt; onChange({ ...value, ...patch })</pre>
+    </li>
+    <li id="L51"><pre>  const invalid =</pre></li>
+    <li id="L52">
+      <pre>
+    !value.text.trim() || value.text.length &gt; 10000 || !/^#[0-9a-fA-F]{6}$/.test(value.color)</pre>
+    </li>
+    <li id="L53"><pre>  return (</pre></li>
+    <li id="L54"><pre>    &lt;section</pre></li>
+    <li id="L55"><pre>      className=&quot;mimir-pdf-panel mimir-pdf-text-controls&quot;</pre></li>
+    <li id="L56">
+      <pre>
+      aria-label={selectedId ? &#x27;待保存文字面板&#x27; : &#x27;插入文字面板&#x27;}</pre>
+    </li>
+    <li id="L57"><pre>    &gt;</pre></li>
+    <li id="L58">
+      <pre>      &lt;header className=&quot;mimir-pdf-inspector__header&quot;&gt;</pre>
+    </li>
+    <li id="L59"><pre>        &lt;div&gt;</pre></li>
+    <li id="L60">
+      <pre>
+          &lt;h2&gt;{selectedId ? &#x27;编辑插字&#x27; : &#x27;插入文字&#x27;}&lt;/h2&gt;</pre>
+    </li>
+    <li id="L61">
+      <pre>
+          &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;第 {page} 页 · pt&lt;/span&gt;</pre>
+    </li>
+    <li id="L62"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L63">
+      <pre>        &lt;ToolbarButton label=&quot;关闭文字面板&quot; onClick={onClose}&gt;</pre>
+    </li>
+    <li id="L64"><pre>          &lt;X /&gt;</pre></li>
+    <li id="L65"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L66"><pre>      &lt;/header&gt;</pre></li>
+    <li id="L67">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L68"><pre>        {selectedId &amp;&amp; onSelect &amp;&amp; (</pre></li>
+    <li id="L69">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L70"><pre>            &lt;span&gt;待保存文字&lt;/span&gt;</pre></li>
+    <li id="L71"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L72"><pre>              label=&quot;待保存文字&quot;</pre></li>
+    <li id="L73"><pre>              value={selectedId}</pre></li>
+    <li id="L74"><pre>              options={options}</pre></li>
+    <li id="L75"><pre>              onChange={onSelect}</pre></li>
+    <li id="L76"><pre>              disabled={busy}</pre></li>
+    <li id="L77"><pre>            /&gt;</pre></li>
+    <li id="L78"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L79"><pre>        )}</pre></li>
+    <li id="L80">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L81"><pre>          &lt;span&gt;文字&lt;/span&gt;</pre></li>
+    <li id="L82"><pre>          &lt;ToolbarTextArea</pre></li>
+    <li id="L83">
+      <pre>
+            label={selectedId ? &#x27;插入文字内容&#x27; : &#x27;要插入的文字&#x27;}</pre>
+    </li>
+    <li id="L84"><pre>            value={value.text}</pre></li>
+    <li id="L85"><pre>            onChange={(text) =&gt; {</pre></li>
+    <li id="L86"><pre>              if (!busy) update({ text })</pre></li>
+    <li id="L87"><pre>            }}</pre></li>
+    <li id="L88"><pre>          /&gt;</pre></li>
+    <li id="L89"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L90"><pre>        &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre></li>
+    <li id="L91">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L92"><pre>            &lt;span&gt;字体&lt;/span&gt;</pre></li>
+    <li id="L93"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L94"><pre>              label=&quot;插字字体&quot;</pre></li>
+    <li id="L95"><pre>              value={value.font}</pre></li>
+    <li id="L96"><pre>              options={[</pre></li>
+    <li id="L97"><pre>                { value: &#x27;&#x27;, label: &#x27;自动&#x27; },</pre></li>
+    <li id="L98">
+      <pre>                { value: &#x27;arial&#x27;, label: &#x27;Arial&#x27; },</pre>
+    </li>
+    <li id="L99">
+      <pre>                { value: &#x27;times&#x27;, label: &#x27;Times&#x27; },</pre>
+    </li>
+    <li id="L100">
+      <pre>                { value: &#x27;courier&#x27;, label: &#x27;Courier&#x27; },</pre>
+    </li>
+    <li id="L101"><pre>              ]}</pre></li>
+    <li id="L102">
+      <pre>
+              onChange={(font: PdfInsertDraft[&#x27;font&#x27;]) =&gt; update({ font })}</pre>
+    </li>
+    <li id="L103"><pre>              disabled={busy}</pre></li>
+    <li id="L104"><pre>            /&gt;</pre></li>
+    <li id="L105"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L106">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L107"><pre>            &lt;span&gt;字号&lt;/span&gt;</pre></li>
+    <li id="L108"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L109"><pre>              label=&quot;文字字号&quot;</pre></li>
+    <li id="L110"><pre>              value={value.fontSize}</pre></li>
+    <li id="L111"><pre>              min={1}</pre></li>
+    <li id="L112"><pre>              max={500}</pre></li>
+    <li id="L113"><pre>              onCommit={(fontSize) =&gt; update({ fontSize })}</pre></li>
+    <li id="L114"><pre>              disabled={busy}</pre></li>
+    <li id="L115"><pre>            /&gt;</pre></li>
+    <li id="L116"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L117">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L118"><pre>            &lt;span&gt;对齐&lt;/span&gt;</pre></li>
+    <li id="L119"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L120"><pre>              label=&quot;插字对齐&quot;</pre></li>
+    <li id="L121"><pre>              value={value.align}</pre></li>
+    <li id="L122"><pre>              options={[</pre></li>
+    <li id="L123">
+      <pre>                { value: &#x27;left&#x27;, label: &#x27;左对齐&#x27; },</pre>
+    </li>
+    <li id="L124">
+      <pre>                { value: &#x27;center&#x27;, label: &#x27;居中&#x27; },</pre>
+    </li>
+    <li id="L125">
+      <pre>                { value: &#x27;right&#x27;, label: &#x27;右对齐&#x27; },</pre>
+    </li>
+    <li id="L126"><pre>              ]}</pre></li>
+    <li id="L127">
+      <pre>
+              onChange={(align: PdfInsertDraft[&#x27;align&#x27;]) =&gt; update({ align })}</pre>
+    </li>
+    <li id="L128"><pre>              disabled={busy}</pre></li>
+    <li id="L129"><pre>            /&gt;</pre></li>
+    <li id="L130"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L131">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L132"><pre>            &lt;span&gt;换行宽度 · 0 为不换行&lt;/span&gt;</pre></li>
+    <li id="L133"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L134"><pre>              label=&quot;文字换行宽度&quot;</pre></li>
+    <li id="L135"><pre>              value={value.maxWidth}</pre></li>
+    <li id="L136"><pre>              min={0}</pre></li>
+    <li id="L137"><pre>              max={14400}</pre></li>
+    <li id="L138"><pre>              onCommit={(maxWidth) =&gt; update({ maxWidth })}</pre></li>
+    <li id="L139"><pre>              disabled={busy}</pre></li>
+    <li id="L140"><pre>            /&gt;</pre></li>
+    <li id="L141"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L142"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L143">
+      <pre>        &lt;div className=&quot;mimir-pdf-text-controls__style&quot;&gt;</pre>
+    </li>
+    <li id="L144"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L145"><pre>            label=&quot;插字粗体&quot;</pre></li>
+    <li id="L146"><pre>            active={value.bold}</pre></li>
+    <li id="L147"><pre>            onClick={() =&gt; update({ bold: !value.bold })}</pre></li>
+    <li id="L148"><pre>            disabled={busy}</pre></li>
+    <li id="L149"><pre>          &gt;</pre></li>
+    <li id="L150"><pre>            粗体</pre></li>
+    <li id="L151"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L152"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L153"><pre>            label=&quot;插字斜体&quot;</pre></li>
+    <li id="L154"><pre>            active={value.italic}</pre></li>
+    <li id="L155"><pre>            onClick={() =&gt; update({ italic: !value.italic })}</pre></li>
+    <li id="L156"><pre>            disabled={busy}</pre></li>
+    <li id="L157"><pre>          &gt;</pre></li>
+    <li id="L158"><pre>            斜体</pre></li>
+    <li id="L159"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L160"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L161">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L162"><pre>          &lt;span&gt;颜色 · #RRGGBB&lt;/span&gt;</pre></li>
+    <li id="L163"><pre>          &lt;ToolbarTextField</pre></li>
+    <li id="L164"><pre>            label=&quot;文字颜色&quot;</pre></li>
+    <li id="L165"><pre>            value={value.color}</pre></li>
+    <li id="L166"><pre>            onChange={(color) =&gt; {</pre></li>
+    <li id="L167"><pre>              if (!busy) update({ color })</pre></li>
+    <li id="L168"><pre>            }}</pre></li>
+    <li id="L169"><pre>          /&gt;</pre></li>
+    <li id="L170"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L171">
+      <pre>        {value.x !== undefined &amp;&amp; value.y !== undefined ? (</pre>
+    </li>
+    <li id="L172">
+      <pre>          &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L173">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L174"><pre>              &lt;span&gt;X&lt;/span&gt;</pre></li>
+    <li id="L175"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L176"><pre>                label=&quot;文字 X 坐标&quot;</pre></li>
+    <li id="L177"><pre>                value={value.x}</pre></li>
+    <li id="L178"><pre>                min={0}</pre></li>
+    <li id="L179"><pre>                max={14400}</pre></li>
+    <li id="L180"><pre>                onCommit={(x) =&gt; update({ x })}</pre></li>
+    <li id="L181"><pre>                disabled={busy}</pre></li>
+    <li id="L182"><pre>              /&gt;</pre></li>
+    <li id="L183"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L184">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L185"><pre>              &lt;span&gt;Y&lt;/span&gt;</pre></li>
+    <li id="L186"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L187"><pre>                label=&quot;文字 Y 坐标&quot;</pre></li>
+    <li id="L188"><pre>                value={value.y}</pre></li>
+    <li id="L189"><pre>                min={0}</pre></li>
+    <li id="L190"><pre>                max={14400}</pre></li>
+    <li id="L191"><pre>                onCommit={(y) =&gt; update({ y })}</pre></li>
+    <li id="L192"><pre>                disabled={busy}</pre></li>
+    <li id="L193"><pre>              /&gt;</pre></li>
+    <li id="L194"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L195"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L196"><pre>        ) : (</pre></li>
+    <li id="L197">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;默认放在页面顶部居中，也可点击纸面选择位置。&lt;/p&gt;</pre>
+    </li>
+    <li id="L198"><pre>        )}</pre></li>
+    <li id="L199"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L200">
+      <pre>          中文使用覆盖对应字形的字体。换行与对齐按实际 PDF 字体计算。</pre>
+    </li>
+    <li id="L201"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L202"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L203">
+      <pre>      &lt;div className=&quot;mimir-pdf-text-controls__footer&quot;&gt;</pre>
+    </li>
+    <li id="L204"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L205">
+      <pre>
+          &lt;p role=&quot;alert&quot; className=&quot;mimir-pdf-inspector__error&quot;&gt;</pre>
+    </li>
+    <li id="L206"><pre>            {error}</pre></li>
+    <li id="L207"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L208"><pre>        )}</pre></li>
+    <li id="L209">
+      <pre>        &lt;div className=&quot;mimir-pdf-text-controls__actions&quot;&gt;</pre>
+    </li>
+    <li id="L210"><pre>          {onDelete &amp;&amp; (</pre></li>
+    <li id="L211"><pre>            &lt;ToolbarConfirm</pre></li>
+    <li id="L212"><pre>              title=&quot;删除这段待保存文字？&quot;</pre></li>
+    <li id="L213">
+      <pre>              description=&quot;删除后可撤销，尚未保存到原件。&quot;</pre>
+    </li>
+    <li id="L214"><pre>              confirmLabel=&quot;删除文字&quot;</pre></li>
+    <li id="L215"><pre>              onConfirm={onDelete}</pre></li>
+    <li id="L216"><pre>            &gt;</pre></li>
+    <li id="L217">
+      <pre>              &lt;ToolbarButton label=&quot;删除插入文字&quot; disabled={busy}&gt;</pre>
+    </li>
+    <li id="L218"><pre>                &lt;Trash2 /&gt;</pre></li>
+    <li id="L219"><pre>              &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L220"><pre>            &lt;/ToolbarConfirm&gt;</pre></li>
+    <li id="L221"><pre>          )}</pre></li>
+    <li id="L222"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L223"><pre>            primary</pre></li>
+    <li id="L224">
+      <pre>            label={selectedId ? &#x27;更新插入文字&#x27; : &#x27;插入到页面&#x27;}</pre>
+    </li>
+    <li id="L225"><pre>            disabled={busy || invalid}</pre></li>
+    <li id="L226">
+      <pre>
+            disabledReason={busy ? &#x27;文字正在写入&#x27; : &#x27;请输入有效文字与颜色&#x27;}</pre>
+    </li>
+    <li id="L227"><pre>            onClick={onApply}</pre></li>
+    <li id="L228"><pre>          &gt;</pre></li>
+    <li id="L229"><pre>            &lt;Check /&gt;</pre></li>
+    <li id="L230"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L231"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L232"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L233"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L234"><pre>  )</pre></li>
+    <li id="L235"><pre>}</pre></li>
+  </ol>
+</html>

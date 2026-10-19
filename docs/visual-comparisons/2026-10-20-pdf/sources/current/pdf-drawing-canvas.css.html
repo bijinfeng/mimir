@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-drawing-canvas.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-drawing-canvas.css</h1>
+    <p>current真实源码 · SHA256 d7de01ab2b7344a00355dcfe996ee617c9fdf4a5a017996d9c1ab8ec29ab0c4c</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-drawing-canvas {</pre></li>
+    <li id="L2"><pre>  position: absolute;</pre></li>
+    <li id="L3"><pre>  inset: 0;</pre></li>
+    <li id="L4"><pre>  width: 100%;</pre></li>
+    <li id="L5"><pre>  height: 100%;</pre></li>
+    <li id="L6"><pre>  z-index: 2;</pre></li>
+    <li id="L7"><pre>  pointer-events: none;</pre></li>
+    <li id="L8"><pre>  outline: none;</pre></li>
+    <li id="L9"><pre>}</pre></li>
+    <li id="L10"><pre>.mimir-pdf-drawing-canvas--draw {</pre></li>
+    <li id="L11"><pre>  pointer-events: auto;</pre></li>
+    <li id="L12"><pre>  touch-action: none;</pre></li>
+    <li id="L13"><pre>  cursor: crosshair;</pre></li>
+    <li id="L14"><pre>}</pre></li>
+    <li id="L15"><pre>.mimir-pdf-drawing-canvas__target {</pre></li>
+    <li id="L16"><pre>  pointer-events: all;</pre></li>
+    <li id="L17"><pre>  cursor: move;</pre></li>
+    <li id="L18"><pre>  touch-action: none;</pre></li>
+    <li id="L19"><pre>}</pre></li>
+    <li id="L20"><pre>.mimir-pdf-drawing-canvas__selection {</pre></li>
+    <li id="L21"><pre>  pointer-events: none;</pre></li>
+    <li id="L22"><pre>  stroke: var(--me-accent, #2563eb);</pre></li>
+    <li id="L23"><pre>  stroke-width: 1;</pre></li>
+    <li id="L24"><pre>}</pre></li>
+    <li id="L25"><pre>.mimir-pdf-drawing-canvas__handle {</pre></li>
+    <li id="L26"><pre>  pointer-events: all;</pre></li>
+    <li id="L27"><pre>  touch-action: none;</pre></li>
+    <li id="L28"><pre>  fill: var(--me-surface, #fff);</pre></li>
+    <li id="L29"><pre>}</pre></li>
+    <li id="L30"><pre>.mimir-pdf-drawing-canvas__handle--nw,</pre></li>
+    <li id="L31"><pre>.mimir-pdf-drawing-canvas__handle--se {</pre></li>
+    <li id="L32"><pre>  cursor: nwse-resize;</pre></li>
+    <li id="L33"><pre>}</pre></li>
+    <li id="L34"><pre>.mimir-pdf-drawing-canvas__handle--ne,</pre></li>
+    <li id="L35"><pre>.mimir-pdf-drawing-canvas__handle--sw {</pre></li>
+    <li id="L36"><pre>  cursor: nesw-resize;</pre></li>
+    <li id="L37"><pre>}</pre></li>
+    <li id="L38"><pre>.mimir-pdf-drawing-canvas__handle--n,</pre></li>
+    <li id="L39"><pre>.mimir-pdf-drawing-canvas__handle--s {</pre></li>
+    <li id="L40"><pre>  cursor: ns-resize;</pre></li>
+    <li id="L41"><pre>}</pre></li>
+    <li id="L42"><pre>.mimir-pdf-drawing-canvas__handle--e,</pre></li>
+    <li id="L43"><pre>.mimir-pdf-drawing-canvas__handle--w {</pre></li>
+    <li id="L44"><pre>  cursor: ew-resize;</pre></li>
+    <li id="L45"><pre>}</pre></li>
+    <li id="L46"><pre>.mimir-pdf-drawing-canvas[data-dragging] {</pre></li>
+    <li id="L47"><pre>  pointer-events: auto;</pre></li>
+    <li id="L48"><pre>  touch-action: none;</pre></li>
+    <li id="L49"><pre>}</pre></li>
+    <li id="L50"><pre>.mimir-pdf-drawing-controls {</pre></li>
+    <li id="L51"><pre>  display: grid;</pre></li>
+    <li id="L52"><pre>  gap: 8px;</pre></li>
+    <li id="L53"><pre>}</pre></li>
+    <li id="L54"><pre>.mimir-pdf-drawing-controls p {</pre></li>
+    <li id="L55"><pre>  margin: 0;</pre></li>
+    <li id="L56"><pre>}</pre></li>
+    <li id="L57"><pre>.mimir-pdf-drawing-footer {</pre></li>
+    <li id="L58"><pre>  flex: none;</pre></li>
+    <li id="L59"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L60"><pre>  border-top: 1px solid var(--me-border, #e5e5e5);</pre></li>
+    <li id="L61"><pre>}</pre></li>
+  </ol>
+</html>

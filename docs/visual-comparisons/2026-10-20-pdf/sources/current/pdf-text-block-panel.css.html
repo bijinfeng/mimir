@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-text-block-panel.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-text-block-panel.css</h1>
+    <p>current真实源码 · SHA256 c16b15e18e2f3f0c8dfac22427a17e458f0f1dc9d73d6a60af66ab205bd5274e</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-text-block__selection {</pre></li>
+    <li id="L2"><pre>  display: grid;</pre></li>
+    <li id="L3"><pre>  flex: none;</pre></li>
+    <li id="L4"><pre>  gap: 12px;</pre></li>
+    <li id="L5"><pre>  min-width: 0;</pre></li>
+    <li id="L6"><pre>  max-height: 50%;</pre></li>
+    <li id="L7"><pre>  overflow: auto;</pre></li>
+    <li id="L8"><pre>  padding: 4px 16px 16px;</pre></li>
+    <li id="L9"><pre>}</pre></li>
+    <li id="L10"><pre>.mimir-pdf-text-block__excerpt {</pre></li>
+    <li id="L11"><pre>  max-height: 120px;</pre></li>
+    <li id="L12"><pre>  overflow: auto;</pre></li>
+    <li id="L13"><pre>  margin: 0;</pre></li>
+    <li id="L14"><pre>  padding: 12px;</pre></li>
+    <li id="L15"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L16"><pre>  border-radius: var(--me-radius);</pre></li>
+    <li id="L17"><pre>  color: var(--me-text);</pre></li>
+    <li id="L18"><pre>  font-size: var(--me-font-size-sm);</pre></li>
+    <li id="L19"><pre>  line-height: 1.6;</pre></li>
+    <li id="L20"><pre>  white-space: pre-wrap;</pre></li>
+    <li id="L21"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L22"><pre>}</pre></li>
+    <li id="L23"><pre>.mimir-pdf-text-block__actions {</pre></li>
+    <li id="L24"><pre>  display: grid;</pre></li>
+    <li id="L25"><pre>  grid-template-columns: auto minmax(0, 1fr);</pre></li>
+    <li id="L26"><pre>  flex: none;</pre></li>
+    <li id="L27"><pre>  gap: 8px;</pre></li>
+    <li id="L28"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L29"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L30"><pre>}</pre></li>
+    <li id="L31"><pre>.mimir-pdf-text-block__actions .me-btn__icon {</pre></li>
+    <li id="L32"><pre>  gap: 6px;</pre></li>
+    <li id="L33"><pre>}</pre></li>
+    <li id="L34"><pre>.mimir-pdf-text-block__empty {</pre></li>
+    <li id="L35"><pre>  flex: 1;</pre></li>
+    <li id="L36"><pre>}</pre></li>
+    <li id="L37"><pre>.mimir-pdf-text-block__modes {</pre></li>
+    <li id="L38"><pre>  flex: none;</pre></li>
+    <li id="L39"><pre>  padding: 0 16px 12px;</pre></li>
+    <li id="L40"><pre>}</pre></li>
+    <li id="L41"><pre>.mimir-pdf-text-block__fields {</pre></li>
+    <li id="L42"><pre>  display: grid;</pre></li>
+    <li id="L43"><pre>  gap: 12px;</pre></li>
+    <li id="L44"><pre>  min-width: 0;</pre></li>
+    <li id="L45"><pre>  margin: 0;</pre></li>
+    <li id="L46"><pre>  padding: 0;</pre></li>
+    <li id="L47"><pre>  border: 0;</pre></li>
+    <li id="L48"><pre>}</pre></li>
+    <li id="L49"><pre>.mimir-pdf-text-block__fields .me-input--text {</pre></li>
+    <li id="L50"><pre>  width: 100%;</pre></li>
+    <li id="L51"><pre>}</pre></li>
+    <li id="L52"><pre>.mimir-pdf-text-block__format {</pre></li>
+    <li id="L53"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L54"><pre>  padding-top: 12px;</pre></li>
+    <li id="L55"><pre>}</pre></li>
+    <li id="L56"><pre>.mimir-pdf-text-block__format summary {</pre></li>
+    <li id="L57"><pre>  color: var(--me-text);</pre></li>
+    <li id="L58"><pre>  cursor: pointer;</pre></li>
+    <li id="L59"><pre>}</pre></li>
+    <li id="L60"><pre>.mimir-pdf-text-block__format[open] &gt; :not(summary) {</pre></li>
+    <li id="L61"><pre>  margin-top: 12px;</pre></li>
+    <li id="L62"><pre>}</pre></li>
+    <li id="L63"><pre>.mimir-pdf-text-block__match {</pre></li>
+    <li id="L64"><pre>  margin: 0;</pre></li>
+    <li id="L65"><pre>  color: var(--me-text);</pre></li>
+    <li id="L66"><pre>  font-size: var(--me-font-size-sm);</pre></li>
+    <li id="L67"><pre>  line-height: 1.6;</pre></li>
+    <li id="L68"><pre>  white-space: pre-wrap;</pre></li>
+    <li id="L69"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L70"><pre>}</pre></li>
+    <li id="L71"><pre>.mimir-pdf-text-block__match mark {</pre></li>
+    <li id="L72"><pre>  color: var(--me-text);</pre></li>
+    <li id="L73"><pre>  background: var(--me-accent-bg);</pre></li>
+    <li id="L74"><pre>}</pre></li>
+  </ol>
+</html>

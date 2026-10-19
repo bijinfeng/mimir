@@ -1,0 +1,720 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-render.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-render.ts</h1>
+    <p>before真实源码 · SHA256 14beadd1ad57c04b6305ceb1853eb2347a8e5dfc04e8dbd6c21a82531fa8d47c</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>/**</pre></li>
+    <li id="L2"><pre> * PDF 渲染：pdf.js → canvas。</pre></li>
+    <li id="L3"><pre> *</pre></li>
+    <li id="L4"><pre> * ## 为什么是 pdf.js 而不是 `&lt;iframe&gt;` 指向下载端点</pre></li>
+    <li id="L5"><pre> *</pre></li>
+    <li id="L6">
+      <pre> * 改之前 PDF 走浏览器内置阅读器（`&lt;iframe src=下载端点&gt;`）。那在「只能看」</pre>
+    </li>
+    <li id="L7"><pre> * 的时候是对的——零依赖零体积。但它有两个硬限制：</pre></li>
+    <li id="L8"><pre> *</pre></li>
+    <li id="L9">
+      <pre> *   1. **我们控制不了那个阅读器**：没有自己的工具条、拿不到当前页号、</pre>
+    </li>
+    <li id="L10"><pre> *      没法在页上叠层（PDF 的编辑要能指着某一页说「就是这页」）</pre></li>
+    <li id="L11">
+      <pre> *   2. **它与编辑无法共存**：内置阅读器的工具栏与我们的工具条会长成两层</pre>
+    </li>
+    <li id="L12"><pre> *</pre></li>
+    <li id="L13">
+      <pre> * pdf.js（Apache-2.0）用的是同一套渲染代码，只是我们把 canvas 拿回自己手里。</pre>
+    </li>
+    <li id="L14"><pre> *</pre></li>
+    <li id="L15"><pre> * ## 中文 PDF 必须要 cmaps</pre></li>
+    <li id="L16"><pre> *</pre></li>
+    <li id="L17">
+      <pre> * 最容易静默失效的一处：**没有 cmaps 时中文 PDF 里含 CID 字体的文字会整段</pre>
+    </li>
+    <li id="L18">
+      <pre> * 不显示**（不是乱码——是空白）。那些 PDF 不内嵌字符到字形的映射表，pdf.js</pre>
+    </li>
+    <li id="L19">
+      <pre> * 得按 Adobe 的 CMap 去查（169 个文件）。它们由宿主的 `pdfjs-assets.ts`</pre>
+    </li>
+    <li id="L20">
+      <pre> * 从 `pdfjs-dist` 依赖拷到 `public/pdfjs/`——**不进 git**（理由在那个文件里）。</pre>
+    </li>
+    <li id="L21"><pre> */</pre></li>
+    <li id="L22"><pre></pre></li>
+    <li id="L23"><pre>import {</pre></li>
+    <li id="L24"><pre>  getDocument,</pre></li>
+    <li id="L25"><pre>  GlobalWorkerOptions,</pre></li>
+    <li id="L26"><pre>  type PDFDocumentProxy,</pre></li>
+    <li id="L27"><pre>} from &#x27;pdfjs-dist/legacy/build/pdf.mjs&#x27;</pre></li>
+    <li id="L28"><pre>/**</pre></li>
+    <li id="L29"><pre> * worker 的 URL。</pre></li>
+    <li id="L30"><pre> *</pre></li>
+    <li id="L31"><pre> * ## `?worker&amp;url` 而不是 `?url`（这一处调试了很久）</pre></li>
+    <li id="L32"><pre> *</pre></li>
+    <li id="L33">
+      <pre> * `?url` 在开发模式下给的是**源文件路径**（`/@fs/…/pdf.worker.min.mjs`），</pre>
+    </li>
+    <li id="L34"><pre> * 而 Vite 会把它当**待转换的模块**服务——实测那段响应里第一行是</pre></li>
+    <li id="L35">
+      <pre>
+ * `import { injectQuery } from &quot;/@vite/client&quot;`（HMR 注入）。`new Worker()`</pre>
+    </li>
+    <li id="L36"><pre> * 里没有 `/@vite/client` 那个环境，于是**worker 起不来，而</pre></li>
+    <li id="L37"><pre> * `getDocument()` 永远挂着**——界面一片空白、没有报错、也没有超时。</pre></li>
+    <li id="L38"><pre> *</pre></li>
+    <li id="L39">
+      <pre> * `?worker&amp;url` 让 Vite 把那个文件当**独立 worker 入口**走一遍构建（含生产</pre>
+    </li>
+    <li id="L40"><pre> * 的打包与依赖处理），给回一个自包含的 URL。这正是它存在的用途。</pre></li>
+    <li id="L41"><pre> *</pre></li>
+    <li id="L42"><pre> * ## 为什么按 `{ default: string }` 取值</pre></li>
+    <li id="L43"><pre> *</pre></li>
+    <li id="L44">
+      <pre> * pdfjs 的包**自带 `.d.ts`**，TypeScript 会优先用它解释这个导入（它描述的是</pre>
+    </li>
+    <li id="L45">
+      <pre> * worker 入口模块，不是字符串）。所以按**实际形状**取值，而不是把整个导入</pre>
+    </li>
+    <li id="L46">
+      <pre> * 断言成假类型——后者会让 `Invalid workerSrc type` 这种真问题藏到运行时。</pre>
+    </li>
+    <li id="L47"><pre> */</pre></li>
+    <li id="L48">
+      <pre>
+import * as pdfWorkerModule from &#x27;pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&amp;url&#x27;</pre>
+    </li>
+    <li id="L49"><pre>import { PDFJS_ASSETS } from &#x27;./pdfjs-assets.js&#x27;</pre></li>
+    <li id="L50"><pre></pre></li>
+    <li id="L51">
+      <pre>const workerUrl: string = (pdfWorkerModule as { default: string }).default</pre>
+    </li>
+    <li id="L52"><pre></pre></li>
+    <li id="L53"><pre>/**</pre></li>
+    <li id="L54"><pre> * worker 的 URL 只在模块首次加载时设一次。</pre></li>
+    <li id="L55"><pre> *</pre></li>
+    <li id="L56">
+      <pre> * **不能设在组件里**：`GlobalWorkerOptions` 是模块级单例，重复设置会在已经</pre>
+    </li>
+    <li id="L57">
+      <pre> * 启动的 worker 上造成警告并让它退回「假 worker」（在主线程解析）——那个</pre>
+    </li>
+    <li id="L58"><pre> * 症状是大文件时 UI 卡住，且没有报错。</pre></li>
+    <li id="L59"><pre> */</pre></li>
+    <li id="L60"><pre>let workerConfigured = false</pre></li>
+    <li id="L61"><pre></pre></li>
+    <li id="L62"><pre>function ensureWorker(): void {</pre></li>
+    <li id="L63"><pre>  if (workerConfigured) return</pre></li>
+    <li id="L64"><pre>  GlobalWorkerOptions.workerSrc = workerUrl</pre></li>
+    <li id="L65"><pre>  workerConfigured = true</pre></li>
+    <li id="L66"><pre>}</pre></li>
+    <li id="L67"><pre></pre></li>
+    <li id="L68">
+      <pre>/* ── 文档缓存：按字节缓存，渲染与文字层共用 ──────────────────────── */</pre>
+    </li>
+    <li id="L69"><pre></pre></li>
+    <li id="L70"><pre>interface CachedDoc {</pre></li>
+    <li id="L71"><pre>  /** 哪一份字节的文档（同一引用 → 同一份） */</pre></li>
+    <li id="L72"><pre>  bytes: Uint8Array</pre></li>
+    <li id="L73"><pre>  doc: PDFDocumentProxy</pre></li>
+    <li id="L74"><pre>  /**</pre></li>
+    <li id="L75">
+      <pre>   * 加载任务。**收尾要用它而不是 `doc`**：pdf.js 6.x 把 `destroy()` 从</pre>
+    </li>
+    <li id="L76">
+      <pre>   * `PDFDocumentProxy` 挪到了 loading task 上（上游的注释也记了这一点）。</pre>
+    </li>
+    <li id="L77">
+      <pre>   * 用错对象的症状是「解析出的文档永远不释放」，越开越多、越用越卡。</pre>
+    </li>
+    <li id="L78"><pre>   */</pre></li>
+    <li id="L79"><pre>  task: { destroy: () =&gt; Promise&lt;void&gt; }</pre></li>
+    <li id="L80"><pre>}</pre></li>
+    <li id="L81"><pre></pre></li>
+    <li id="L82"><pre>/**</pre></li>
+    <li id="L83">
+      <pre> * 已解析的文档，按**字节的身份**索引（同一 `Uint8Array` 引用 → 同一份文档）。</pre>
+    </li>
+    <li id="L84"><pre> *</pre></li>
+    <li id="L85"><pre> * ## 为什么是 `Map` 而不是上一版的单条缓存</pre></li>
+    <li id="L86"><pre> *</pre></li>
+    <li id="L87">
+      <pre> * 上一版只留一份（「界面上同时只有一份 PDF 在编辑」）。加了「导入页面」与</pre>
+    </li>
+    <li id="L88"><pre> * 「查找」之后这句话不再成立：</pre></li>
+    <li id="L89"><pre> *</pre></li>
+    <li id="L90"><pre> *   - 画布要画某一页，它的来源可能是原件，也可能是**导入的那一份**</pre></li>
+    <li id="L91"><pre> *   - 查找要把每一页的来源都读一遍（导入的页也要能搜到）</pre></li>
+    <li id="L92"><pre> *</pre></li>
+    <li id="L93">
+      <pre> * 单条缓存下这两件事会互相把对方的文档挤掉，症状是翻到导入的页时重新解析</pre>
+    </li>
+    <li id="L94"><pre> * 整份文件（慢，但没有报错）——**每一次翻页都重来一遍**。</pre></li>
+    <li id="L95"><pre> */</pre></li>
+    <li id="L96"><pre>const cached = new Map&lt;Uint8Array, CachedDoc&gt;()</pre></li>
+    <li id="L97">
+      <pre>/** 多个缩略图会同时要同一份字节；解析进行中也要共用一笔 loading task。 */</pre>
+    </li>
+    <li id="L98"><pre>const loading = new Map&lt;</pre></li>
+    <li id="L99"><pre>  Uint8Array,</pre></li>
+    <li id="L100">
+      <pre>  { promise: Promise&lt;PDFDocumentProxy&gt;; task: CachedDoc[&#x27;task&#x27;] }</pre>
+    </li>
+    <li id="L101"><pre>&gt;()</pre></li>
+    <li id="L102"><pre>let retainedBytes: Set&lt;Uint8Array&gt; | null = null</pre></li>
+    <li id="L103"><pre>const documentUsers = new Map&lt;Uint8Array, number&gt;()</pre></li>
+    <li id="L104"><pre>const releasedDuringLoad = new WeakSet&lt;Uint8Array&gt;()</pre></li>
+    <li id="L105"><pre></pre></li>
+    <li id="L106"><pre>/**</pre></li>
+    <li id="L107"><pre> * 还有多少笔渲染在用这些文档。</pre></li>
+    <li id="L108"><pre> *</pre></li>
+    <li id="L109">
+      <pre> * 销毁一份**正在被渲染的**文档会让 pdf.js 的渲染任务直接失败（报的是一句</pre>
+    </li>
+    <li id="L110">
+      <pre> * 与用户操作毫无关系的 `Worker was destroyed`）。所以淘汰不立即执行：先记在</pre>
+    </li>
+    <li id="L111"><pre> * `pending` 里，等这一轮渲染结束了再收。</pre></li>
+    <li id="L112"><pre> */</pre></li>
+    <li id="L113"><pre>let activeRenders = 0</pre></li>
+    <li id="L114"><pre>const pending: CachedDoc[] = []</pre></li>
+    <li id="L115"><pre></pre></li>
+    <li id="L116">
+      <pre>/** 除了这些字节之外的文档可以收了。编辑器在 bytes / 导入列表变化时调它 */</pre>
+    </li>
+    <li id="L117">
+      <pre>export function retainPdfDocuments(keep: readonly (Uint8Array | null)[]): void {</pre>
+    </li>
+    <li id="L118">
+      <pre>
+  const alive = new Set(keep.filter((bytes): bytes is Uint8Array =&gt; bytes !== null))</pre>
+    </li>
+    <li id="L119"><pre>  retainedBytes = alive</pre></li>
+    <li id="L120"><pre>  for (const [bytes, entry] of cached) {</pre></li>
+    <li id="L121"><pre>    if (alive.has(bytes) || documentUsers.has(bytes)) continue</pre></li>
+    <li id="L122"><pre>    cached.delete(bytes)</pre></li>
+    <li id="L123"><pre>    pending.push(entry)</pre></li>
+    <li id="L124"><pre>  }</pre></li>
+    <li id="L125"><pre>  collect()</pre></li>
+    <li id="L126"><pre>}</pre></li>
+    <li id="L127"><pre></pre></li>
+    <li id="L128"><pre>/** 收掉待销毁的（渲染中就不动它——见 `activeRenders`） */</pre></li>
+    <li id="L129"><pre>function collect(): void {</pre></li>
+    <li id="L130"><pre>  if (activeRenders &gt; 0) return</pre></li>
+    <li id="L131"><pre>  for (const [bytes, entry] of loading) {</pre></li>
+    <li id="L132">
+      <pre>
+    if (!releasedDuringLoad.has(bytes) || retainedBytes?.has(bytes) || documentUsers.has(bytes))</pre>
+    </li>
+    <li id="L133"><pre>      continue</pre></li>
+    <li id="L134"><pre>    loading.delete(bytes)</pre></li>
+    <li id="L135"><pre>    releasedDuringLoad.delete(bytes)</pre></li>
+    <li id="L136"><pre>    void entry.task.destroy()</pre></li>
+    <li id="L137"><pre>  }</pre></li>
+    <li id="L138"><pre>  while (pending.length &gt; 0) {</pre></li>
+    <li id="L139"><pre>    const entry = pending.pop()</pre></li>
+    <li id="L140"><pre>    if (entry !== undefined) void entry.task.destroy()</pre></li>
+    <li id="L141"><pre>  }</pre></li>
+    <li id="L142"><pre>}</pre></li>
+    <li id="L143"><pre></pre></li>
+    <li id="L144"><pre>/**</pre></li>
+    <li id="L145"><pre> * 取（或建）这一份字节的文档。</pre></li>
+    <li id="L146"><pre> *</pre></li>
+    <li id="L147"><pre> * ## 为什么必须缓存</pre></li>
+    <li id="L148"><pre> *</pre></li>
+    <li id="L149">
+      <pre> * 不缓存的话每次换页、每次改缩放都要重新 `getDocument` —— 那是**解析整份</pre>
+    </li>
+    <li id="L150">
+      <pre> * PDF**（解压、解析对象树、重建字体）。对一个几十 MB 的 PDF，翻一页要等</pre>
+    </li>
+    <li id="L151"><pre> * 好几秒，而用户只是点了一下「下一页」。</pre></li>
+    <li id="L152"><pre> *</pre></li>
+    <li id="L153"><pre> * ## `bytes.slice()` 不是可选的</pre></li>
+    <li id="L154"><pre> *</pre></li>
+    <li id="L155">
+      <pre> * pdf.js 把字节 **transfer** 给 worker（零拷贝），传原引用会让调用方手里</pre>
+    </li>
+    <li id="L156">
+      <pre> * 那个 `Uint8Array` 变成空（`byteLength === 0`）——而我们还要用它保存。</pre>
+    </li>
+    <li id="L157"><pre> * 实测症状：**预览一次之后保存出来的文件是 0 字节**。</pre></li>
+    <li id="L158"><pre> *</pre></li>
+    <li id="L159"><pre> * ## 导出它是为了让文字层复用同一份文档</pre></li>
+    <li id="L160"><pre> *</pre></li>
+    <li id="L161">
+      <pre> * `pdf-text.ts` 需要一个「字节 → 文档」的加载器。让它自己 `getDocument` 就会</pre>
+    </li>
+    <li id="L162">
+      <pre> * 同一份 PDF 被解析两遍（一份给画布、一份给查找），而两份文档各持一个</pre>
+    </li>
+    <li id="L163"><pre> * worker 侧的对象树——那是白白的几百毫秒与几倍内存。</pre></li>
+    <li id="L164"><pre> */</pre></li>
+    <li id="L165">
+      <pre>
+export async function loadPdfDocument(bytes: Uint8Array): Promise&lt;PDFDocumentProxy&gt; {</pre>
+    </li>
+    <li id="L166"><pre>  const hit = cached.get(bytes)</pre></li>
+    <li id="L167"><pre>  if (hit !== undefined) return hit.doc</pre></li>
+    <li id="L168"><pre>  const inFlight = loading.get(bytes)</pre></li>
+    <li id="L169"><pre>  if (inFlight !== undefined) return inFlight.promise</pre></li>
+    <li id="L170"><pre></pre></li>
+    <li id="L171"><pre>  ensureWorker()</pre></li>
+    <li id="L172"><pre>  const task = getDocument({</pre></li>
+    <li id="L173"><pre>    data: bytes.slice(),</pre></li>
+    <li id="L174"><pre>    cMapUrl: PDFJS_ASSETS.cmaps,</pre></li>
+    <li id="L175"><pre>    cMapPacked: true,</pre></li>
+    <li id="L176"><pre>    standardFontDataUrl: PDFJS_ASSETS.standardFonts,</pre></li>
+    <li id="L177"><pre>    wasmUrl: PDFJS_ASSETS.wasm,</pre></li>
+    <li id="L178"><pre>    /**</pre></li>
+    <li id="L179">
+      <pre>     * **不用 `eval`**：pdf.js 默认在某些字体解析路径上用 `new Function` 做</pre>
+    </li>
+    <li id="L180">
+      <pre>     * 性能优化。我们打开的 PDF 来自互联网，那是它最容易被利用的一处；</pre>
+    </li>
+    <li id="L181"><pre>     * 关掉只影响少量字体的解析速度。</pre></li>
+    <li id="L182"><pre>     *</pre></li>
+    <li id="L183">
+      <pre>     * 它不在 `DocumentInitParameters` 的公开类型里（pdf.js 标成内部选项），</pre>
+    </li>
+    <li id="L184"><pre>     * 但运行时确实读它——所以断言形状而不是删掉这个安全设置。</pre></li>
+    <li id="L185"><pre>     */</pre></li>
+    <li id="L186"><pre>    isEvalSupported: false,</pre></li>
+    <li id="L187"><pre>  } as Parameters&lt;typeof getDocument&gt;[0])</pre></li>
+    <li id="L188"><pre></pre></li>
+    <li id="L189"><pre>  const promise = task.promise.then(</pre></li>
+    <li id="L190"><pre>    (doc) =&gt; {</pre></li>
+    <li id="L191"><pre>      const current = loading.get(bytes)?.task === task</pre></li>
+    <li id="L192"><pre>      if (current) loading.delete(bytes)</pre></li>
+    <li id="L193"><pre>      const entry: CachedDoc = { bytes, doc, task }</pre></li>
+    <li id="L194">
+      <pre>      const released = current &amp;&amp; releasedDuringLoad.delete(bytes)</pre>
+    </li>
+    <li id="L195"><pre>      if (</pre></li>
+    <li id="L196"><pre>        !current ||</pre></li>
+    <li id="L197"><pre>        ((retainedBytes !== null || released) &amp;&amp;</pre></li>
+    <li id="L198"><pre>          !retainedBytes?.has(bytes) &amp;&amp;</pre></li>
+    <li id="L199"><pre>          !documentUsers.has(bytes))</pre></li>
+    <li id="L200"><pre>      ) {</pre></li>
+    <li id="L201"><pre>        pending.push(entry)</pre></li>
+    <li id="L202"><pre>        collect()</pre></li>
+    <li id="L203"><pre>      } else {</pre></li>
+    <li id="L204"><pre>        cached.set(bytes, entry)</pre></li>
+    <li id="L205"><pre>      }</pre></li>
+    <li id="L206"><pre>      return doc</pre></li>
+    <li id="L207"><pre>    },</pre></li>
+    <li id="L208"><pre>    (cause: unknown) =&gt; {</pre></li>
+    <li id="L209">
+      <pre>
+      // A rejected loading promise does not release pdf.js&#x27;s worker/transport.</pre>
+    </li>
+    <li id="L210">
+      <pre>      // This task owns those resources even if a newer same-bytes load exists.</pre>
+    </li>
+    <li id="L211"><pre>      void task.destroy()</pre></li>
+    <li id="L212"><pre>      if (loading.get(bytes)?.task === task) {</pre></li>
+    <li id="L213"><pre>        loading.delete(bytes)</pre></li>
+    <li id="L214"><pre>        releasedDuringLoad.delete(bytes)</pre></li>
+    <li id="L215"><pre>      }</pre></li>
+    <li id="L216"><pre>      throw cause</pre></li>
+    <li id="L217"><pre>    },</pre></li>
+    <li id="L218"><pre>  )</pre></li>
+    <li id="L219"><pre>  loading.set(bytes, { promise, task })</pre></li>
+    <li id="L220"><pre>  return promise</pre></li>
+    <li id="L221"><pre>}</pre></li>
+    <li id="L222"><pre></pre></li>
+    <li id="L223"><pre>export interface PdfRenderHandle {</pre></li>
+    <li id="L224"><pre>  /** 放弃这一笔（组件卸载或换页时） */</pre></li>
+    <li id="L225"><pre>  dispose: () =&gt; void</pre></li>
+    <li id="L226"><pre>}</pre></li>
+    <li id="L227"><pre></pre></li>
+    <li id="L228"><pre>interface CanvasRenderState {</pre></li>
+    <li id="L229"><pre>  generation: number</pre></li>
+    <li id="L230"><pre>  task: { cancel: () =&gt; void } | null</pre></li>
+    <li id="L231"><pre>  settled: Promise&lt;void&gt; | null</pre></li>
+    <li id="L232"><pre>}</pre></li>
+    <li id="L233"><pre></pre></li>
+    <li id="L234"><pre>/** 主画布与每个缩略图各有自己的代次和 pdf.js 渲染任务。 */</pre></li>
+    <li id="L235">
+      <pre>const canvasRenders = new WeakMap&lt;HTMLCanvasElement, CanvasRenderState&gt;()</pre>
+    </li>
+    <li id="L236"><pre></pre></li>
+    <li id="L237">
+      <pre>function renderState(canvas: HTMLCanvasElement): CanvasRenderState {</pre>
+    </li>
+    <li id="L238"><pre>  let state = canvasRenders.get(canvas)</pre></li>
+    <li id="L239"><pre>  if (state === undefined) {</pre></li>
+    <li id="L240"><pre>    state = { generation: 0, task: null, settled: null }</pre></li>
+    <li id="L241"><pre>    canvasRenders.set(canvas, state)</pre></li>
+    <li id="L242"><pre>  }</pre></li>
+    <li id="L243"><pre>  return state</pre></li>
+    <li id="L244"><pre>}</pre></li>
+    <li id="L245"><pre></pre></li>
+    <li id="L246"><pre>/** 换页或卸载时连尚在加载文档、未拿到 handle 的绘制一起废弃。 */</pre></li>
+    <li id="L247">
+      <pre>export function cancelPdfRender(canvas: HTMLCanvasElement | null): void {</pre>
+    </li>
+    <li id="L248"><pre>  if (canvas === null) return</pre></li>
+    <li id="L249"><pre>  const state = canvasRenders.get(canvas)</pre></li>
+    <li id="L250"><pre>  if (state === undefined) return</pre></li>
+    <li id="L251"><pre>  state.generation += 1</pre></li>
+    <li id="L252"><pre>  state.task?.cancel()</pre></li>
+    <li id="L253"><pre>}</pre></li>
+    <li id="L254"><pre></pre></li>
+    <li id="L255"><pre>export interface RenderPdfOptions {</pre></li>
+    <li id="L256"><pre>  bytes: Uint8Array</pre></li>
+    <li id="L257"><pre>  /** **原文档**里的页号（0 开始） */</pre></li>
+    <li id="L258"><pre>  pageIndex: number</pre></li>
+    <li id="L259"><pre>  /** 目标旋转角度（绝对值） */</pre></li>
+    <li id="L260"><pre>  rotation: number</pre></li>
+    <li id="L261"><pre>  /** 目标绘制宽度（CSS 像素） */</pre></li>
+    <li id="L262"><pre>  width: number</pre></li>
+    <li id="L263"><pre>  canvas: HTMLCanvasElement | null</pre></li>
+    <li id="L264"><pre>}</pre></li>
+    <li id="L265"><pre></pre></li>
+    <li id="L266"><pre>/**</pre></li>
+    <li id="L267"><pre> * 渲染的**代次**按 canvas 隔离。</pre></li>
+    <li id="L268"><pre> *</pre></li>
+    <li id="L269"><pre> * pdf.js 对同一块 canvas 的并发 `render()` 直接抛</pre></li>
+    <li id="L270">
+      <pre> * `Cannot use the same canvas during multiple render() operations`，而这</pre>
+    </li>
+    <li id="L271">
+      <pre> * 条并发**在 React 下必然发生**（StrictMode 挂载两次、快速翻页、连续点放大）。</pre>
+    </li>
+    <li id="L272"><pre> * 早期实现用「模块级记一个取消入口，新调用先取消旧的」，结果是</pre></li>
+    <li id="L273">
+      <pre> * **两次都不画、界面全白且无报错**：第二次取消了第一次，第二次自己又被</pre>
+    </li>
+    <li id="L274"><pre> * cleanup 取消。</pre></li>
+    <li id="L275"><pre> *</pre></li>
+    <li id="L276">
+      <pre> * 代次的语义是「同一块 canvas 只有最新那一代有权画」：每次调用领一个号，</pre>
+    </li>
+    <li id="L277">
+      <pre> * await 之间对一次；过期绘制先取消并等其 promise 结束，再让下一笔碰 canvas。</pre>
+    </li>
+    <li id="L278">
+      <pre> * 每个缩略图与主画布各有状态，不能因别的 canvas 开始绘制而放弃本页。</pre>
+    </li>
+    <li id="L279"><pre> */</pre></li>
+    <li id="L280"><pre></pre></li>
+    <li id="L281"><pre>/**</pre></li>
+    <li id="L282"><pre> * 把一页画到 canvas 上。</pre></li>
+    <li id="L283"><pre> *</pre></li>
+    <li id="L284">
+      <pre> * ## 渲染参数用 `{ canvas, canvasContext, viewport, transform }`（实测换来的）</pre>
+    </li>
+    <li id="L285"><pre> *</pre></li>
+    <li id="L286">
+      <pre> * pdf.js 6.x 的类型声明推荐「只传 `canvas`，不要传 `canvasContext`」。但**实测</pre>
+    </li>
+    <li id="L287"><pre> * 在浏览器里只有带上 context 与 transform 才真的画出内容**：</pre></li>
+    <li id="L288"><pre> *</pre></li>
+    <li id="L289"><pre> * | 写法 | 结果 |</pre></li>
+    <li id="L290"><pre> * |---|---|</pre></li>
+    <li id="L291">
+      <pre>
+ * | `{ canvas, viewport }`（viewport 的 scale 乘 dpr） | canvas 尺寸正确、`render()` 正常 resolve、**零像素**、无报错 |</pre>
+    </li>
+    <li id="L292">
+      <pre>
+ * | `{ canvas, canvasContext, viewport, transform: [dpr,0,0,dpr,0,0] }` | 画出内容（实测蓝框 31345 像素、文字 48740 像素） |</pre>
+    </li>
+    <li id="L293"><pre> *</pre></li>
+    <li id="L294">
+      <pre> * 所以这里按**能工作的那一组**写，并在注释里留下这条对照——不写的话下一个人</pre>
+    </li>
+    <li id="L295">
+      <pre> * 会照着类型声明「简化」成上面那一种，然后对着全白的画布查半天（我就查了</pre>
+    </li>
+    <li id="L296"><pre> * 很久）。viewport 用 **1 倍缩放**，放大的部分交给 `transform`。</pre></li>
+    <li id="L297"><pre> *</pre></li>
+    <li id="L298"><pre> * ## 缩放：canvas 的像素尺寸与 CSS 尺寸分开算</pre></li>
+    <li id="L299"><pre> *</pre></li>
+    <li id="L300">
+      <pre> * 像素尺寸乘 DPR（Retina 上不发虚），CSS 尺寸保持目标宽度（版面不变）。</pre>
+    </li>
+    <li id="L301"><pre> * 只改一个的症状分别是画面被拉伸与文字发虚。</pre></li>
+    <li id="L302"><pre> */</pre></li>
+    <li id="L303">
+      <pre>
+export async function renderPdfPages(options: RenderPdfOptions): Promise&lt;PdfRenderHandle | null&gt; {</pre>
+    </li>
+    <li id="L304"><pre>  const { bytes, pageIndex, rotation, width, canvas } = options</pre></li>
+    <li id="L305"><pre>  if (!canvas) return null</pre></li>
+    <li id="L306"><pre></pre></li>
+    <li id="L307"><pre>  const state = renderState(canvas)</pre></li>
+    <li id="L308"><pre>  state.generation += 1</pre></li>
+    <li id="L309"><pre>  const generation = state.generation</pre></li>
+    <li id="L310"><pre>  state.task?.cancel()</pre></li>
+    <li id="L311"><pre>  const previous = state.settled</pre></li>
+    <li id="L312"><pre>  const stale = (): boolean =&gt; generation !== state.generation</pre></li>
+    <li id="L313"><pre></pre></li>
+    <li id="L314"><pre>  activeRenders += 1</pre></li>
+    <li id="L315"><pre>  let startedTask: { cancel: () =&gt; void } | null = null</pre></li>
+    <li id="L316"><pre>  try {</pre></li>
+    <li id="L317"><pre>    const doc = await loadPdfDocument(bytes)</pre></li>
+    <li id="L318"><pre>    if (stale()) {</pre></li>
+    <li id="L319"><pre>      return null</pre></li>
+    <li id="L320"><pre>    }</pre></li>
+    <li id="L321"><pre></pre></li>
+    <li id="L322"><pre>    const page = await doc.getPage(pageIndex + 1)</pre></li>
+    <li id="L323"><pre>    if (stale()) {</pre></li>
+    <li id="L324"><pre>      return null</pre></li>
+    <li id="L325"><pre>    }</pre></li>
+    <li id="L326"><pre></pre></li>
+    <li id="L327"><pre>    const base = page.getViewport({ scale: 1, rotation })</pre></li>
+    <li id="L328">
+      <pre>    const viewport = page.getViewport({ scale: width / base.width, rotation })</pre>
+    </li>
+    <li id="L329"><pre></pre></li>
+    <li id="L330"><pre>    const ctx = canvas.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L331"><pre>    if (!ctx) return null</pre></li>
+    <li id="L332"><pre></pre></li>
+    <li id="L333">
+      <pre>    // pdf.js 不允许同一块 canvas 同时有两笔绘制；取消后等旧任务确实结束。</pre>
+    </li>
+    <li id="L334"><pre>    if (previous !== null) await previous</pre></li>
+    <li id="L335"><pre>    if (stale()) return null</pre></li>
+    <li id="L336"><pre></pre></li>
+    <li id="L337"><pre>    const dpr = Math.min(window.devicePixelRatio || 1, 2)</pre></li>
+    <li id="L338"><pre>    canvas.width = Math.floor(viewport.width * dpr)</pre></li>
+    <li id="L339"><pre>    canvas.height = Math.floor(viewport.height * dpr)</pre></li>
+    <li id="L340"><pre>    canvas.style.width = `${Math.floor(viewport.width)}px`</pre></li>
+    <li id="L341"><pre>    canvas.style.height = `${Math.floor(viewport.height)}px`</pre></li>
+    <li id="L342"><pre></pre></li>
+    <li id="L343"><pre>    const renderTask = page.render({</pre></li>
+    <li id="L344"><pre>      canvas,</pre></li>
+    <li id="L345"><pre>      canvasContext: ctx,</pre></li>
+    <li id="L346"><pre>      viewport,</pre></li>
+    <li id="L347"><pre>      transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0],</pre></li>
+    <li id="L348"><pre>    })</pre></li>
+    <li id="L349"><pre></pre></li>
+    <li id="L350"><pre>    state.task = renderTask</pre></li>
+    <li id="L351"><pre>    startedTask = renderTask</pre></li>
+    <li id="L352"><pre>    state.settled = renderTask.promise.then(</pre></li>
+    <li id="L353"><pre>      () =&gt; {},</pre></li>
+    <li id="L354"><pre>      () =&gt; {},</pre></li>
+    <li id="L355"><pre>    )</pre></li>
+    <li id="L356"><pre>    await renderTask.promise</pre></li>
+    <li id="L357"><pre>    return {</pre></li>
+    <li id="L358"><pre>      dispose: () =&gt; {</pre></li>
+    <li id="L359">
+      <pre>        if (state.generation === generation) cancelPdfRender(canvas)</pre>
+    </li>
+    <li id="L360"><pre>      },</pre></li>
+    <li id="L361"><pre>    }</pre></li>
+    <li id="L362"><pre>  } catch (cause) {</pre></li>
+    <li id="L363"><pre>    /**</pre></li>
+    <li id="L364">
+      <pre>     * **取消不是失败。** pdf.js 用 `RenderingCancelledException` 表示它——</pre>
+    </li>
+    <li id="L365">
+      <pre>     * 把它当错误抛出去会让界面显示「渲染失败：Rendering cancelled」，而用户</pre>
+    </li>
+    <li id="L366">
+      <pre>     * 只是翻了一页。返回 null 表示「这一笔没画」，调用方不必知道。</pre>
+    </li>
+    <li id="L367"><pre>     */</pre></li>
+    <li id="L368"><pre>    if (isCancellation(cause)) return null</pre></li>
+    <li id="L369"><pre>    throw cause</pre></li>
+    <li id="L370"><pre>  } finally {</pre></li>
+    <li id="L371"><pre>    if (state.task === startedTask) state.task = null</pre></li>
+    <li id="L372"><pre>    activeRenders -= 1</pre></li>
+    <li id="L373">
+      <pre>    // 这一笔结束了，被淘汰的文档现在可以收了（见 `retainPdfDocuments`）</pre>
+    </li>
+    <li id="L374"><pre>    collect()</pre></li>
+    <li id="L375"><pre>  }</pre></li>
+    <li id="L376"><pre>}</pre></li>
+    <li id="L377"><pre></pre></li>
+    <li id="L378">
+      <pre>/** Pin a request workcopy without replacing the live viewer&#x27;s source set. */</pre>
+    </li>
+    <li id="L379">
+      <pre>export function retainPdfDocument(bytes: Uint8Array): () =&gt; void {</pre>
+    </li>
+    <li id="L380"><pre>  releasedDuringLoad.delete(bytes)</pre></li>
+    <li id="L381"><pre>  documentUsers.set(bytes, (documentUsers.get(bytes) ?? 0) + 1)</pre></li>
+    <li id="L382"><pre>  let released = false</pre></li>
+    <li id="L383"><pre>  return () =&gt; {</pre></li>
+    <li id="L384"><pre>    if (released) return</pre></li>
+    <li id="L385"><pre>    released = true</pre></li>
+    <li id="L386"><pre>    const users = (documentUsers.get(bytes) ?? 1) - 1</pre></li>
+    <li id="L387"><pre>    if (users &gt; 0) {</pre></li>
+    <li id="L388"><pre>      documentUsers.set(bytes, users)</pre></li>
+    <li id="L389"><pre>      return</pre></li>
+    <li id="L390"><pre>    }</pre></li>
+    <li id="L391"><pre>    documentUsers.delete(bytes)</pre></li>
+    <li id="L392"><pre>    if (retainedBytes?.has(bytes)) return</pre></li>
+    <li id="L393"><pre>    if (loading.has(bytes)) {</pre></li>
+    <li id="L394"><pre>      releasedDuringLoad.add(bytes)</pre></li>
+    <li id="L395"><pre>      collect()</pre></li>
+    <li id="L396"><pre>    }</pre></li>
+    <li id="L397"><pre>    const entry = cached.get(bytes)</pre></li>
+    <li id="L398"><pre>    if (entry) {</pre></li>
+    <li id="L399"><pre>      cached.delete(bytes)</pre></li>
+    <li id="L400"><pre>      pending.push(entry)</pre></li>
+    <li id="L401"><pre>      collect()</pre></li>
+    <li id="L402"><pre>    }</pre></li>
+    <li id="L403"><pre>  }</pre></li>
+    <li id="L404"><pre>}</pre></li>
+    <li id="L405"><pre></pre></li>
+    <li id="L406"><pre>/** Backwards-compatible image batch lease. */</pre></li>
+    <li id="L407"><pre>export const retainPdfImageExport = retainPdfDocument</pre></li>
+    <li id="L408"><pre></pre></li>
+    <li id="L409">
+      <pre>
+/** Cancel this reader without cancelling another reader&#x27;s loading/page task. */</pre>
+    </li>
+    <li id="L410">
+      <pre>
+export function awaitPdfTask&lt;T&gt;(task: Promise&lt;T&gt;, signal?: AbortSignal): Promise&lt;T&gt; {</pre>
+    </li>
+    <li id="L411"><pre>  if (!signal) return task</pre></li>
+    <li id="L412"><pre>  return new Promise&lt;T&gt;((resolve, reject) =&gt; {</pre></li>
+    <li id="L413"><pre>    const abort = () =&gt; {</pre></li>
+    <li id="L414"><pre>      signal.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L415"><pre>      reject(signal.reason)</pre></li>
+    <li id="L416"><pre>    }</pre></li>
+    <li id="L417"><pre>    if (signal.aborted) abort()</pre></li>
+    <li id="L418">
+      <pre>    else signal.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre>
+    </li>
+    <li id="L419"><pre>    task.then(</pre></li>
+    <li id="L420"><pre>      (value) =&gt; {</pre></li>
+    <li id="L421"><pre>        signal.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L422"><pre>        resolve(value)</pre></li>
+    <li id="L423"><pre>      },</pre></li>
+    <li id="L424"><pre>      (cause: unknown) =&gt; {</pre></li>
+    <li id="L425"><pre>        signal.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L426"><pre>        reject(cause)</pre></li>
+    <li id="L427"><pre>      },</pre></li>
+    <li id="L428"><pre>    )</pre></li>
+    <li id="L429"><pre>  })</pre></li>
+    <li id="L430"><pre>}</pre></li>
+    <li id="L431"><pre></pre></li>
+    <li id="L432">
+      <pre>
+/** Raster output has a fixed DPI, independent of the screen&#x27;s zoom and DPR. */</pre>
+    </li>
+    <li id="L433"><pre>export async function renderPdfPageImage({</pre></li>
+    <li id="L434"><pre>  bytes,</pre></li>
+    <li id="L435"><pre>  pageIndex,</pre></li>
+    <li id="L436"><pre>  dpi,</pre></li>
+    <li id="L437"><pre>  signal,</pre></li>
+    <li id="L438"><pre>}: {</pre></li>
+    <li id="L439"><pre>  bytes: Uint8Array</pre></li>
+    <li id="L440"><pre>  pageIndex: number</pre></li>
+    <li id="L441"><pre>  dpi: number</pre></li>
+    <li id="L442"><pre>  signal?: AbortSignal</pre></li>
+    <li id="L443">
+      <pre>}): Promise&lt;{ bytes: Uint8Array; width: number; height: number }&gt; {</pre>
+    </li>
+    <li id="L444">
+      <pre>
+  if (![72, 150, 300].includes(dpi)) throw new Error(&#x27;请选择 72、150 或 300 dpi&#x27;)</pre>
+    </li>
+    <li id="L445"><pre>  signal?.throwIfAborted()</pre></li>
+    <li id="L446"><pre>  activeRenders += 1</pre></li>
+    <li id="L447"><pre>  const canvas = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L448"><pre>  let task: { cancel(): void } | null = null</pre></li>
+    <li id="L449"><pre>  const abort = () =&gt; task?.cancel()</pre></li>
+    <li id="L450">
+      <pre>  signal?.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre>
+    </li>
+    <li id="L451"><pre>  try {</pre></li>
+    <li id="L452"><pre>    const doc = await loadPdfDocument(bytes)</pre></li>
+    <li id="L453"><pre>    signal?.throwIfAborted()</pre></li>
+    <li id="L454"><pre>    const page = await doc.getPage(pageIndex + 1)</pre></li>
+    <li id="L455"><pre>    signal?.throwIfAborted()</pre></li>
+    <li id="L456"><pre>    const viewport = page.getViewport({ scale: dpi / 72 })</pre></li>
+    <li id="L457"><pre>    const width = Math.floor(viewport.width)</pre></li>
+    <li id="L458"><pre>    const height = Math.floor(viewport.height)</pre></li>
+    <li id="L459">
+      <pre>
+    if (width &lt; 1 || height &lt; 1 || width &gt; 16384 || height &gt; 16384 || width * height &gt; 32_000_000)</pre>
+    </li>
+    <li id="L460">
+      <pre>      throw new Error(`第 ${pageIndex + 1} 页图像过大，请降低分辨率后重试`)</pre>
+    </li>
+    <li id="L461"><pre>    canvas.width = width</pre></li>
+    <li id="L462"><pre>    canvas.height = height</pre></li>
+    <li id="L463"><pre>    const context = canvas.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L464">
+      <pre>    if (!context) throw new Error(&#x27;浏览器无法生成页面图像&#x27;)</pre>
+    </li>
+    <li id="L465"><pre>    const rendered = page.render({</pre></li>
+    <li id="L466"><pre>      canvas,</pre></li>
+    <li id="L467"><pre>      canvasContext: context,</pre></li>
+    <li id="L468"><pre>      viewport,</pre></li>
+    <li id="L469"><pre>      background: &#x27;#ffffff&#x27;,</pre></li>
+    <li id="L470"><pre>    })</pre></li>
+    <li id="L471"><pre>    task = rendered</pre></li>
+    <li id="L472"><pre>    await rendered.promise</pre></li>
+    <li id="L473"><pre>    signal?.throwIfAborted()</pre></li>
+    <li id="L474">
+      <pre>    const blob = await new Promise&lt;Blob&gt;((resolve, reject) =&gt;</pre>
+    </li>
+    <li id="L475"><pre>      canvas.toBlob(</pre></li>
+    <li id="L476">
+      <pre>
+        (value) =&gt; (value ? resolve(value) : reject(new Error(&#x27;页面图像编码失败，请重试&#x27;))),</pre>
+    </li>
+    <li id="L477"><pre>        &#x27;image/png&#x27;,</pre></li>
+    <li id="L478"><pre>      ),</pre></li>
+    <li id="L479"><pre>    )</pre></li>
+    <li id="L480"><pre>    const output = new Uint8Array(await blob.arrayBuffer())</pre></li>
+    <li id="L481"><pre>    signal?.throwIfAborted()</pre></li>
+    <li id="L482"><pre>    return { bytes: output, width, height }</pre></li>
+    <li id="L483"><pre>  } finally {</pre></li>
+    <li id="L484"><pre>    signal?.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L485"><pre>    canvas.width = 0</pre></li>
+    <li id="L486"><pre>    canvas.height = 0</pre></li>
+    <li id="L487"><pre>    activeRenders -= 1</pre></li>
+    <li id="L488"><pre>    collect()</pre></li>
+    <li id="L489"><pre>  }</pre></li>
+    <li id="L490"><pre>}</pre></li>
+    <li id="L491"><pre></pre></li>
+    <li id="L492"><pre>/** pdf.js 的取消（换页、卸载时会发生，不是错误） */</pre></li>
+    <li id="L493"><pre>function isCancellation(cause: unknown): boolean {</pre></li>
+    <li id="L494"><pre>  return (</pre></li>
+    <li id="L495"><pre>    typeof cause === &#x27;object&#x27; &amp;&amp;</pre></li>
+    <li id="L496"><pre>    cause !== null &amp;&amp;</pre></li>
+    <li id="L497"><pre>    &#x27;name&#x27; in cause &amp;&amp;</pre></li>
+    <li id="L498">
+      <pre>    (cause as { name?: unknown }).name === &#x27;RenderingCancelledException&#x27;</pre>
+    </li>
+    <li id="L499"><pre>  )</pre></li>
+    <li id="L500"><pre>}</pre></li>
+  </ol>
+</html>

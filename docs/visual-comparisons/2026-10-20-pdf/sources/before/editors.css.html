@@ -1,0 +1,1557 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/editors.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/editors.css</h1>
+    <p>before真实源码 · SHA256 4be47bfdb68cd383521b0deb3605bcef00d642567e3d2ec21ec6fe78dc35844b</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>/*</pre></li>
+    <li id="L2">
+      <pre> * 三种格式各自的渲染细节。外壳管框架，这里管「表/幻灯片/纸张」本身。</pre>
+    </li>
+    <li id="L3"><pre> *</pre></li>
+    <li id="L4">
+      <pre> * 与 shell.css 同一条规矩：颜色走 `--me-*` 自定义属性（宿主填 antd token），</pre>
+    </li>
+    <li id="L5"><pre> * 每个属性带中性回退值，所以这个包能脱离宿主渲染。</pre></li>
+    <li id="L6"><pre> */</pre></li>
+    <li id="L7"><pre></pre></li>
+    <li id="L8">
+      <pre>/* ── xlsx：表体 ────────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L9"><pre></pre></li>
+    <li id="L10"><pre>/* 表体的外框由它自己画（不像 docx 的纸张那样有上游样式兜底）。</pre></li>
+    <li id="L11"><pre>   `position: relative` 是给「写不进去」的提示条定位用的 */</pre></li>
+    <li id="L12"><pre>.mimir-xlsx-wrap {</pre></li>
+    <li id="L13"><pre>  position: relative;</pre></li>
+    <li id="L14"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre></pre></li>
+    <li id="L17"><pre>.mimir-xlsx {</pre></li>
+    <li id="L18"><pre>  border-collapse: collapse;</pre></li>
+    <li id="L19"><pre>  table-layout: fixed;</pre></li>
+    <li id="L20"><pre>  font-size: var(--me-font-size, 13px);</pre></li>
+    <li id="L21">
+      <pre>  /* 数字列对齐用等宽数字：不等宽的话每行的数字宽度不同，纵向扫一列很费眼 */</pre>
+    </li>
+    <li id="L22"><pre>  font-variant-numeric: tabular-nums;</pre></li>
+    <li id="L23"><pre>}</pre></li>
+    <li id="L24"><pre></pre></li>
+    <li id="L25"><pre>/* 行号列。**sticky + 左对齐**：横向滚动时它必须留在原地，</pre></li>
+    <li id="L26"><pre>   否则滚到右边就看不出这一行是第几行了 */</pre></li>
+    <li id="L27"><pre>.mimir-xlsx__gutter {</pre></li>
+    <li id="L28"><pre>  position: sticky;</pre></li>
+    <li id="L29"><pre>  left: 0;</pre></li>
+    <li id="L30"><pre>  z-index: 1;</pre></li>
+    <li id="L31"><pre>  min-width: 34px;</pre></li>
+    <li id="L32"><pre>  padding: 2px 6px;</pre></li>
+    <li id="L33"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L34"><pre>  background-color: var(--me-surface, #fff);</pre></li>
+    <li id="L35">
+      <pre>
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));</pre>
+    </li>
+    <li id="L36"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L37"><pre>  font-weight: normal;</pre></li>
+    <li id="L38"><pre>  text-align: center;</pre></li>
+    <li id="L39"><pre>  user-select: none;</pre></li>
+    <li id="L40"><pre>}</pre></li>
+    <li id="L41"><pre></pre></li>
+    <li id="L42"><pre>/*</pre></li>
+    <li id="L43">
+      <pre> * 列字母行（A/B/C…）。行号栏的**镜像**：它回答「这一列是第几列」，与行号栏</pre>
+    </li>
+    <li id="L44">
+      <pre> * 一起让「C3」这个引用在屏幕上找得到落点（没有它，用户只能靠蓝色选中框反推</pre>
+    </li>
+    <li id="L45"><pre> * 列号）。样式与行号栏同一套——它们都是网格的 chrome，不是数据。</pre></li>
+    <li id="L46"><pre> *</pre></li>
+    <li id="L47">
+      <pre> * `top: 0` 让它纵向滚动时钉住（滚动区是 `.mimir-xlsx-wrap` 的 `me-scroll`）。</pre>
+    </li>
+    <li id="L48">
+      <pre> * `z-index` 比行号栏高一档：横向滚动时左上角那个交角格要同时压住两者。</pre>
+    </li>
+    <li id="L49"><pre> */</pre></li>
+    <li id="L50"><pre>.mimir-xlsx__colhead {</pre></li>
+    <li id="L51"><pre>  position: sticky;</pre></li>
+    <li id="L52"><pre>  top: 0;</pre></li>
+    <li id="L53"><pre>  z-index: 1;</pre></li>
+    <li id="L54"><pre>  min-width: 34px;</pre></li>
+    <li id="L55"><pre>  padding: 2px 6px;</pre></li>
+    <li id="L56"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L57"><pre>  background-color: var(--me-surface, #fff);</pre></li>
+    <li id="L58">
+      <pre>
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));</pre>
+    </li>
+    <li id="L59"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L60"><pre>  font-weight: normal;</pre></li>
+    <li id="L61"><pre>  text-align: center;</pre></li>
+    <li id="L62"><pre>  user-select: none;</pre></li>
+    <li id="L63"><pre>}</pre></li>
+    <li id="L64"><pre></pre></li>
+    <li id="L65"><pre>/* 左上角：行号栏与列头都是 sticky，交叉点要自己占一格并压住两者 */</pre></li>
+    <li id="L66"><pre>.mimir-xlsx__corner {</pre></li>
+    <li id="L67"><pre>  z-index: 2;</pre></li>
+    <li id="L68"><pre>}</pre></li>
+    <li id="L69"><pre></pre></li>
+    <li id="L70"><pre>.mimir-xlsx__cell {</pre></li>
+    <li id="L71"><pre>  padding: 2px 6px;</pre></li>
+    <li id="L72"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L73"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L74"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L75"><pre>  vertical-align: top;</pre></li>
+    <li id="L76"><pre>  white-space: nowrap;</pre></li>
+    <li id="L77"><pre>  overflow-wrap: normal;</pre></li>
+    <li id="L78"><pre>  overflow: hidden;</pre></li>
+    <li id="L79"><pre>  text-overflow: ellipsis;</pre></li>
+    <li id="L80"><pre>  cursor: cell;</pre></li>
+    <li id="L81"><pre>}</pre></li>
+    <li id="L82"><pre></pre></li>
+    <li id="L83"><pre>.mimir-xlsx__cell:hover {</pre></li>
+    <li id="L84"><pre>  background: var(--me-hover, #f0f0f0);</pre></li>
+    <li id="L85"><pre>}</pre></li>
+    <li id="L86"><pre></pre></li>
+    <li id="L87"><pre>.mimir-xlsx__cell--num {</pre></li>
+    <li id="L88"><pre>  text-align: right;</pre></li>
+    <li id="L89"><pre>}</pre></li>
+    <li id="L90"><pre></pre></li>
+    <li id="L91"><pre>.mimir-xlsx__cell--bold {</pre></li>
+    <li id="L92"><pre>  font-weight: 700;</pre></li>
+    <li id="L93"><pre>}</pre></li>
+    <li id="L94"><pre></pre></li>
+    <li id="L95"><pre>.mimir-xlsx__formula-tag {</pre></li>
+    <li id="L96"><pre>  display: inline-block;</pre></li>
+    <li id="L97"><pre>  margin-left: 6px;</pre></li>
+    <li id="L98"><pre>  padding: 0 3px;</pre></li>
+    <li id="L99"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L100"><pre>  border-radius: 3px;</pre></li>
+    <li id="L101"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L102"><pre>  font-size: 10px;</pre></li>
+    <li id="L103"><pre>  font-weight: 400;</pre></li>
+    <li id="L104"><pre>  line-height: 1.4;</pre></li>
+    <li id="L105"><pre>  vertical-align: baseline;</pre></li>
+    <li id="L106"><pre>}</pre></li>
+    <li id="L107"><pre></pre></li>
+    <li id="L108"><pre>/*</pre></li>
+    <li id="L109"><pre> * 十字高亮：选中格所在的**行与列**各铺一层淡底。</pre></li>
+    <li id="L110"><pre> *</pre></li>
+    <li id="L111">
+      <pre> * 目的是回答「我在看哪一行哪一列」——表宽了以后只看一个小方框很容易串行。</pre>
+    </li>
+    <li id="L112">
+      <pre> * 颜色取 accent 的 10% 而不是 `--me-hover`：悬停底是灰的，两者撞在一起</pre>
+    </li>
+    <li id="L113"><pre> * 用户会以为指针停在那里。`color-mix` 让它在浅色与深色下都成立</pre></li>
+    <li id="L114"><pre> * （vendored 的上游样式里也在用它）。</pre></li>
+    <li id="L115"><pre> *</pre></li>
+    <li id="L116">
+      <pre> * 必须写在 `--on` **之前**：选中格自己那一格是行与列的交叉点，那里 `--on`</pre>
+    </li>
+    <li id="L117"><pre> * 的底要赢（同特异性，靠先后）。</pre></li>
+    <li id="L118"><pre> */</pre></li>
+    <li id="L119"><pre>.mimir-xlsx__cell--cross,</pre></li>
+    <li id="L120"><pre>.mimir-xlsx__gutter--cross {</pre></li>
+    <li id="L121">
+      <pre>
+  background: color-mix(in srgb, var(--me-accent, #00834d) 10%, var(--me-surface, #fff));</pre>
+    </li>
+    <li id="L122"><pre>}</pre></li>
+    <li id="L123"><pre></pre></li>
+    <li id="L124">
+      <pre>/* The A1 range field previews its target before the user applies formatting. */</pre>
+    </li>
+    <li id="L125"><pre>.mimir-xlsx__cell--range {</pre></li>
+    <li id="L126">
+      <pre>
+  background: color-mix(in srgb, var(--me-accent, #00834d) 16%, var(--me-surface, #fff));</pre>
+    </li>
+    <li id="L127"><pre>  box-shadow: inset 0 0 0 1px var(--me-accent, #00834d);</pre></li>
+    <li id="L128"><pre>}</pre></li>
+    <li id="L129"><pre></pre></li>
+    <li id="L130"><pre>/* 选中的格子用主色描边（outline 不占布局，不会把表格挤动一格） */</pre></li>
+    <li id="L131"><pre>.mimir-xlsx__cell--on {</pre></li>
+    <li id="L132"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L133"><pre>  outline-offset: -2px;</pre></li>
+    <li id="L134"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L135"><pre>}</pre></li>
+    <li id="L136"><pre></pre></li>
+    <li id="L137"><pre>/* 单元格编辑行（内容下方的附属面板） */</pre></li>
+    <li id="L138"><pre>.mimir-cell-editor {</pre></li>
+    <li id="L139"><pre>  display: flex;</pre></li>
+    <li id="L140"><pre>  align-items: center;</pre></li>
+    <li id="L141"><pre>  gap: 8px;</pre></li>
+    <li id="L142"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L143"><pre>}</pre></li>
+    <li id="L144"><pre></pre></li>
+    <li id="L145"><pre>/*</pre></li>
+    <li id="L146">
+      <pre> * 格内容编辑框**占满这一行的剩余宽度**（它就是 `ToolbarTextField`，antd 的</pre>
+    </li>
+    <li id="L147">
+      <pre> * `Input`）。原语自带的 `.me-input--text` 是 180px + `flex: none`——那是给</pre>
+    </li>
+    <li id="L148">
+      <pre> * 工具条那一排定的（`shell.css`），而这一行在内容区下方、宽度随窗口。</pre>
+    </li>
+    <li id="L149"><pre> *</pre></li>
+    <li id="L150">
+      <pre> * 按调用点覆写是这套原语既有的做法（另一个例子是 `.me-link .me-input--text`）。</pre>
+    </li>
+    <li id="L151">
+      <pre> * 关键是 `flex: 1`（basis 0）：它让输入框吃掉行号与「应用」按钮之外的空间，</pre>
+    </li>
+    <li id="L152"><pre> * 而不是按 180px 缩成一小段、也不是按 100% 把兄弟元素挤走。</pre></li>
+    <li id="L153"><pre> */</pre></li>
+    <li id="L154"><pre>.mimir-cell-editor .me-input--text {</pre></li>
+    <li id="L155"><pre>  flex: 1;</pre></li>
+    <li id="L156"><pre>  width: auto;</pre></li>
+    <li id="L157"><pre>}</pre></li>
+    <li id="L158"><pre></pre></li>
+    <li id="L159"><pre>.mimir-cell-editor__ref {</pre></li>
+    <li id="L160"><pre>  min-width: 46px;</pre></li>
+    <li id="L161"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L162"><pre>  font-family: var(--me-font-mono, monospace);</pre></li>
+    <li id="L163"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L164"><pre>}</pre></li>
+    <li id="L165"><pre></pre></li>
+    <li id="L166"><pre>/*</pre></li>
+    <li id="L167"><pre> * 「原来是公式，改后公式会被清掉」。</pre></li>
+    <li id="L168"><pre> *</pre></li>
+    <li id="L169">
+      <pre> * **这个类以前没有任何规则**——调用点在（`XlsxEditor.tsx`），样式表里却</pre>
+    </li>
+    <li id="L170">
+      <pre> * 没有它，于是那句警告按中性 `.me-label` 渲染：12px、三级文字色、400 字重</pre>
+    </li>
+    <li id="L171">
+      <pre> * （实测 `rgba(255,255,255,.52)`），与旁边的普通说明长得一模一样。</pre>
+    </li>
+    <li id="L172">
+      <pre> * 一句「你这一改会丢掉东西」的警告没有视觉重量，等于没说（D-096）。</pre>
+    </li>
+    <li id="L173"><pre> *</pre></li>
+    <li id="L174">
+      <pre> * 用危险色的**文字**而不是 `.me-notice` 那块整行提示：它在编辑行内联、</pre>
+    </li>
+    <li id="L175"><pre> * 与输入框同排，包一层底色会把这一行撑成两段。图标是调用点给的</pre></li>
+    <li id="L176"><pre> * （`AlertIcon`），这里只负责颜色与字重。</pre></li>
+    <li id="L177"><pre> */</pre></li>
+    <li id="L178"><pre>.mimir-cell-editor__warn {</pre></li>
+    <li id="L179"><pre>  display: inline-flex;</pre></li>
+    <li id="L180"><pre>  align-items: center;</pre></li>
+    <li id="L181"><pre>  gap: 4px;</pre></li>
+    <li id="L182"><pre>  color: var(--me-danger, #cf1322);</pre></li>
+    <li id="L183"><pre>  font-weight: 500;</pre></li>
+    <li id="L184"><pre>}</pre></li>
+    <li id="L185"><pre></pre></li>
+    <li id="L186"><pre>/* 就地的「写不进去」提示。**不弹窗**：它是编辑动作的直接结果，</pre></li>
+    <li id="L187"><pre>   应该出现在编辑动作旁边（弹窗会打断连续录入） */</pre></li>
+    <li id="L188"><pre>.mimir-apply-error {</pre></li>
+    <li id="L189"><pre>  padding: 5px 10px;</pre></li>
+    <li id="L190"><pre>  border-bottom: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L191"><pre>  background: var(--me-danger-bg, #fff2f0);</pre></li>
+    <li id="L192"><pre>  color: var(--me-danger, #cf1322);</pre></li>
+    <li id="L193"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L194"><pre>}</pre></li>
+    <li id="L195"><pre></pre></li>
+    <li id="L196">
+      <pre>/* ── pptx：幻灯片画布 ──────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L197"><pre></pre></li>
+    <li id="L198"><pre>/* 画布底色比内容底暗一档：幻灯片是白纸，工作台要能区分出来</pre></li>
+    <li id="L199"><pre>   （深色下同理——纸跟着内容底走，工作台跟着布局底走） */</pre></li>
+    <li id="L200"><pre>.mimir-pptx-stage {</pre></li>
+    <li id="L201"><pre>  display: flex;</pre></li>
+    <li id="L202"><pre>  align-items: flex-start;</pre></li>
+    <li id="L203"><pre>  justify-content: center;</pre></li>
+    <li id="L204"><pre>  padding: 16px;</pre></li>
+    <li id="L205"><pre>  background: var(--me-stage-bg, #f5f5f5);</pre></li>
+    <li id="L206"><pre>}</pre></li>
+    <li id="L207"><pre></pre></li>
+    <li id="L208"><pre>.mimir-pptx-slide {</pre></li>
+    <li id="L209"><pre>  max-width: 100%;</pre></li>
+    <li id="L210"><pre>  background: #fff;</pre></li>
+    <li id="L211"><pre>  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));</pre></li>
+    <li id="L212"><pre>  /* 幻灯片里的文字要能选中——这是换掉 canvas 适配器的全部理由 */</pre></li>
+    <li id="L213"><pre>  user-select: text;</pre></li>
+    <li id="L214"><pre></pre></li>
+    <li id="L215"><pre>  svg {</pre></li>
+    <li id="L216"><pre>    display: block;</pre></li>
+    <li id="L217"><pre>    width: 100%;</pre></li>
+    <li id="L218"><pre>    height: auto;</pre></li>
+    <li id="L219"><pre>  }</pre></li>
+    <li id="L220"><pre></pre></li>
+    <li id="L221"><pre>  /* 可点的元素给个手势提示——选中是编辑的入口 */</pre></li>
+    <li id="L222"><pre>  [data-element-id] {</pre></li>
+    <li id="L223"><pre>    cursor: pointer;</pre></li>
+    <li id="L224"><pre>  }</pre></li>
+    <li id="L225"><pre>}</pre></li>
+    <li id="L226"><pre></pre></li>
+    <li id="L227"><pre>/* 选中的元素：SVG 里那一个是它，加一圈主色描边 */</pre></li>
+    <li id="L228"><pre>.mimir-pptx-slide [data-element-id].mimir-pptx-selected {</pre></li>
+    <li id="L229"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L230"><pre>  outline-offset: 1px;</pre></li>
+    <li id="L231"><pre>}</pre></li>
+    <li id="L232"><pre></pre></li>
+    <li id="L233"><pre>/* 段落编辑（内容下方的附属面板） */</pre></li>
+    <li id="L234"><pre>.mimir-paras {</pre></li>
+    <li id="L235"><pre>  display: flex;</pre></li>
+    <li id="L236"><pre>  flex-direction: column;</pre></li>
+    <li id="L237"><pre>  gap: 5px;</pre></li>
+    <li id="L238"><pre>}</pre></li>
+    <li id="L239"><pre></pre></li>
+    <li id="L240"><pre>.mimir-paras__head {</pre></li>
+    <li id="L241"><pre>  display: flex;</pre></li>
+    <li id="L242"><pre>  align-items: center;</pre></li>
+    <li id="L243"><pre>  gap: 8px;</pre></li>
+    <li id="L244"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L245"><pre>}</pre></li>
+    <li id="L246"><pre></pre></li>
+    <li id="L247"><pre>.mimir-paras__list {</pre></li>
+    <li id="L248"><pre>  display: flex;</pre></li>
+    <li id="L249"><pre>  flex-direction: column;</pre></li>
+    <li id="L250"><pre>  gap: 4px;</pre></li>
+    <li id="L251"><pre>  max-height: 168px;</pre></li>
+    <li id="L252"><pre>  overflow-y: auto;</pre></li>
+    <li id="L253"><pre>}</pre></li>
+    <li id="L254"><pre></pre></li>
+    <li id="L255"><pre>/*</pre></li>
+    <li id="L256">
+      <pre> * `.mimir-paras__item` **已删（D-064 的适配）**：段落输入框改成外壳的</pre>
+    </li>
+    <li id="L257">
+      <pre> * `ToolbarTextArea`（antd 的 `Input.TextArea`，见 `PptxEditor.tsx` 的 footer），</pre>
+    </li>
+    <li id="L258">
+      <pre> * 高度 / 内边距 / 圆角 / 边框 / 字号 / 焦点环全部由 `--ant-*` 承担。</pre>
+    </li>
+    <li id="L259"><pre> *</pre></li>
+    <li id="L260">
+      <pre> * **留着的那个坑要记着**：删掉的是这套规则，而它们原来解决的是两件事——</pre>
+    </li>
+    <li id="L261">
+      <pre> * ① 一段可能是好几行（所以必须是 textarea，不能换成单行 `Input`：值消毒会把</pre>
+    </li>
+    <li id="L262">
+      <pre> * `\n` 静默删掉，软换行 `&lt;a:br/&gt;` 就没了）；② 自适应的多行输入在 Office 里</pre>
+    </li>
+    <li id="L263">
+      <pre> * 反而不好对齐（用户看不出边界在哪），所以上一版才把它压成「看着像单行」的</pre>
+    </li>
+    <li id="L264">
+      <pre> * 26px。第 ② 条现在的答案是 antd 的 small 档 + `rows={1}`，**不再是自绘样式**。</pre>
+    </li>
+    <li id="L265"><pre> */</pre></li>
+    <li id="L266"><pre></pre></li>
+    <li id="L267">
+      <pre>/* ── docx：纸张滚动区 ──────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L268"><pre></pre></li>
+    <li id="L269"><pre>/* 上游工作台的 `.editor-scroll` 留白规则没有进入裁剪后的样式。</pre></li>
+    <li id="L270">
+      <pre>   底色与纸张阴影由 Mimir 提供，首尾留白放在纸张外层，避免改变分页的纸张尺寸。 */</pre>
+    </li>
+    <li id="L271"><pre>.mimir-docx-scroll {</pre></li>
+    <li id="L272"><pre>  background: var(--me-stage-bg, #f5f5f5);</pre></li>
+    <li id="L273"><pre>  --canvas: var(--me-stage-bg, #f5f5f5);</pre></li>
+    <li id="L274"><pre>  --docs-paper: var(--me-surface, #fff);</pre></li>
+    <li id="L275"><pre>  /*</pre></li>
+    <li id="L276"><pre>   * 纸张阴影。**上游把它定义在没被 import 的那份样式里**：</pre></li>
+    <li id="L277">
+      <pre>   * `--docs-page-shadow` 只在 `vendor/apps/docs/src/renderer/styles.css` 出现</pre>
+    </li>
+    <li id="L278">
+      <pre>   * （两份外观各一处），而 `DocxEditor.tsx` 只 import shell / generated /</pre>
+    </li>
+    <li id="L279">
+      <pre>
+   * fonts / editors 四份——于是 `.doc-page` 的 `box-shadow: var(--docs-page-shadow)`</pre>
+    </li>
+    <li id="L280">
+      <pre>   * 解析成 `none`（实测计算值就是 `none`），纸与工作台糊成一片：读长文档时</pre>
+    </li>
+    <li id="L281"><pre>   * 看不出页面从哪儿开始、左右留白在哪儿。</pre></li>
+    <li id="L282"><pre>   *</pre></li>
+    <li id="L283">
+      <pre>   * 阴影取**一档**（`--me-page-shadow`，宿主填 `boxShadowTertiary`）：纸是</pre>
+    </li>
+    <li id="L284">
+      <pre>   * 「微浮起」的卡片，不是浮层——DESIGN §5.3 把 secondary 留给对话框与下拉，</pre>
+    </li>
+    <li id="L285">
+      <pre>   * 而 pptx 幻灯片 / pdf 页面用的 `--me-shadow`（secondary）在同一个判断下</pre>
+    </li>
+    <li id="L286">
+      <pre>   * 偏重了。三处的「纸」现在各有各的档：pdf/pptx 是浮层档（它们更大、更像</pre>
+    </li>
+    <li id="L287">
+      <pre>   * 独立的画布），docx 的纸用卡片档。回退值带一点中性灰，脱离宿主也不会没影。</pre>
+    </li>
+    <li id="L288"><pre>   */</pre></li>
+    <li id="L289">
+      <pre>
+  --docs-page-shadow: var(--me-page-shadow, 0 1px 2px rgb(0 0 0 / 5%), 0 2px 4px rgb(0 0 0 / 3%));</pre>
+    </li>
+    <li id="L290"><pre>}</pre></li>
+    <li id="L291"><pre></pre></li>
+    <li id="L292">
+      <pre>/* 留白属于滚动内容，末页滚到底时也能看到工作台；不参与正文分页几何。 */</pre>
+    </li>
+    <li id="L293"><pre>.mimir-docx-scroll &gt; .editor-scroll {</pre></li>
+    <li id="L294"><pre>  padding-block: 24px;</pre></li>
+    <li id="L295"><pre>}</pre></li>
+    <li id="L296"><pre></pre></li>
+    <li id="L297">
+      <pre>/* The upstream selector starts with .editor-scroll, so trim-editor-css drops it.</pre>
+    </li>
+    <li id="L298">
+      <pre>   Width decorations still survive, but columns remain stacked at the same x</pre>
+    </li>
+    <li id="L299">
+      <pre>   without this paint transform. Keep it in our tracked editor stylesheet. */</pre>
+    </li>
+    <li id="L300">
+      <pre>.mimir-docx-scroll .doc-page:not(.measuring-columns) .doc-col-block {</pre>
+    </li>
+    <li id="L301">
+      <pre>
+  transform: translate(calc(var(--col-dx, 0px) + var(--page-cx, 0px)), var(--col-dy, 0px));</pre>
+    </li>
+    <li id="L302"><pre>}</pre></li>
+    <li id="L303"><pre></pre></li>
+    <li id="L304">
+      <pre>/* A right-floated table anchors to the full shared flow box. Keep the extra</pre>
+    </li>
+    <li id="L305">
+      <pre>   canvas width outside its section in the float margin (real wrap geometry),</pre>
+    </li>
+    <li id="L306">
+      <pre>   while preserving the engine&#x27;s original native-X margin expression. Flowed</pre>
+    </li>
+    <li id="L307">
+      <pre>   tall tables use normal block placement and need no float compensation. */</pre>
+    </li>
+    <li id="L308">
+      <pre>
+.mimir-docx-scroll .doc-page .mimir-docx-section-float-right:not(.doc-table-float-flow) {</pre>
+    </li>
+    <li id="L309"><pre>  margin-right: calc(</pre></li>
+    <li id="L310">
+      <pre>
+    max(0px, 100% - var(--doc-content-w, 100%)) + var(--mimir-tbl-margin-right, 0px)</pre>
+    </li>
+    <li id="L311"><pre>  ) !important;</pre></li>
+    <li id="L312"><pre>}</pre></li>
+    <li id="L313"><pre></pre></li>
+    <li id="L314"><pre>/*</pre></li>
+    <li id="L315"><pre> * 查找高亮。</pre></li>
+    <li id="L316"><pre> *</pre></li>
+    <li id="L317"><pre> * **必须写在这里，不能写进 `src/generated/editor.css`**：那份是</pre></li>
+    <li id="L318"><pre> * `trim-editor-css.mjs` 按前缀裁出来的产物，同步会整个覆盖——而</pre></li>
+    <li id="L319">
+      <pre> * `search-hit` 不在保留前缀（`.doc-` / `.ProseMirror` / `.page-` / `.hf-` /</pre>
+    </li>
+    <li id="L320"><pre> * `.rb-`）里，注定会被裁掉。上游那份规则本来也读不到色：</pre></li>
+    <li id="L321">
+      <pre> * `--docs-paper-hit-bg` 由未 vendored 的 App 壳运行时注入（与工作台底色同源）。</pre>
+    </li>
+    <li id="L322"><pre> *</pre></li>
+    <li id="L323">
+      <pre> * 用 `.mimir-docx-scroll .search-hit` 而不是裸类名：这两个类名很短，容易被</pre>
+    </li>
+    <li id="L324">
+      <pre> * 别处（html 的 CodeMirror 那套）撞上，限在 docx 的滚动区里更稳妥。</pre>
+    </li>
+    <li id="L325"><pre> */</pre></li>
+    <li id="L326"><pre>.mimir-docx-scroll .search-hit {</pre></li>
+    <li id="L327"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L328"><pre>  border-radius: 2px;</pre></li>
+    <li id="L329"><pre>}</pre></li>
+    <li id="L330"><pre></pre></li>
+    <li id="L331"><pre>.mimir-docx-scroll .search-hit-active {</pre></li>
+    <li id="L332"><pre>  background: var(--me-accent, #00834d);</pre></li>
+    <li id="L333"><pre>  color: #fff;</pre></li>
+    <li id="L334"><pre>}</pre></li>
+    <li id="L335"><pre></pre></li>
+    <li id="L336"><pre>.mimir-markdown-scroll .search-hit {</pre></li>
+    <li id="L337"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L338"><pre>  border-radius: 2px;</pre></li>
+    <li id="L339"><pre>}</pre></li>
+    <li id="L340"><pre></pre></li>
+    <li id="L341"><pre>.mimir-markdown-scroll .search-hit-active {</pre></li>
+    <li id="L342"><pre>  background: var(--me-accent, #00834d);</pre></li>
+    <li id="L343"><pre>  color: #fff;</pre></li>
+    <li id="L344"><pre>}</pre></li>
+    <li id="L345"><pre></pre></li>
+    <li id="L346">
+      <pre>/* 状态行上的一次性提示（图片读不出来之类）。**不弹窗**：它是动作的直接结果，</pre>
+    </li>
+    <li id="L347"><pre>   落在状态行上与「保存失败」同一个位置，不打断正在做的事。</pre></li>
+    <li id="L348">
+      <pre>   样式归外壳原语 `ToolbarNotice`（`shell.css` 的 `.me-notice`）——docx 之前</pre>
+    </li>
+    <li id="L349">
+      <pre>   在这里自造了一个 `.mimir-docx-notice`，而 pdf 拿 `ToolbarNote` 顶，同一档</pre>
+    </li>
+    <li id="L350">
+      <pre>   文案两处分叉。收进原语之后这个类不再需要，删掉的是类名，不是那条判断。 */</pre>
+    </li>
+    <li id="L351"><pre></pre></li>
+    <li id="L352">
+      <pre>/* ── markdown：笔记正文 ────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L353"><pre></pre></li>
+    <li id="L354"><pre>/*</pre></li>
+    <li id="L355">
+      <pre> * 滚动区。笔记没有纸张，所以底色就是内容底（不像 docx 有工作台与纸两层）。</pre>
+    </li>
+    <li id="L356"><pre> *</pre></li>
+    <li id="L357">
+      <pre> * **方向上的内边距为 0**：外壳（工具条、状态行）要铺满，而正文的呼吸空间</pre>
+    </li>
+    <li id="L358"><pre> * 由下面那个内容列自己给（它居中且限宽，两边自然留白）。</pre></li>
+    <li id="L359"><pre> */</pre></li>
+    <li id="L360"><pre>.mimir-markdown-scroll {</pre></li>
+    <li id="L361"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L362"><pre>  padding: 0;</pre></li>
+    <li id="L363"><pre>}</pre></li>
+    <li id="L364"><pre></pre></li>
+    <li id="L365"><pre>/*</pre></li>
+    <li id="L366"><pre> * 正文挂载点。</pre></li>
+    <li id="L367"><pre> *</pre></li>
+    <li id="L368">
+      <pre> * **`min-height` 不是装饰，它决定「点空白处也能继续写」**：ProseMirror 的</pre>
+    </li>
+    <li id="L369">
+      <pre> * 高度默认等于内容高度，所以一篇三行笔记的编辑区只有约 98px，而可见的</pre>
+    </li>
+    <li id="L370">
+      <pre> * 正文列高约 900px——下面 800px 是**死区**，点上去什么都不发生（实测：</pre>
+    </li>
+    <li id="L371">
+      <pre> * 点击后 `activeElement` 是 `body`）。记笔记最常见的一步就是「打开 →</pre>
+    </li>
+    <li id="L372"><pre> * 在末尾接着写」，那一击落空很败好感。</pre></li>
+    <li id="L373"><pre> *</pre></li>
+    <li id="L374">
+      <pre> * 给到 46vh 之后，这一片空白的点击会落在编辑区里，Tiptap 把光标放到最近的</pre>
+    </li>
+    <li id="L375"><pre> * 文字位置——即末尾，这是所有编辑器的一致行为。</pre></li>
+    <li id="L376"><pre> */</pre></li>
+    <li id="L377"><pre>/*</pre></li>
+    <li id="L378">
+      <pre> * 正文列。**行宽是有可读性上限的**：760px 约 45 个汉字，再宽眼睛回行时</pre>
+    </li>
+    <li id="L379">
+      <pre> * 容易串行（.trellis/spec/project/design.md §4.3 的 CONTENT_WIDTH）。由宿主填</pre>
+    </li>
+    <li id="L380"><pre> * --me-content-width，回退值是同一个数。</pre></li>
+    <li id="L381"><pre> *</pre></li>
+    <li id="L382">
+      <pre> * 居中的那 760 是**正文**，不是外壳：工具条与状态行仍然横跨整个宽度，</pre>
+    </li>
+    <li id="L383"><pre> * 这样它们与上面 44px 的文档头部对齐。</pre></li>
+    <li id="L384"><pre> */</pre></li>
+    <li id="L385"><pre>.mimir-markdown-body {</pre></li>
+    <li id="L386"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L387"><pre>  max-width: calc(var(--me-content-width, 760px) + 96px);</pre></li>
+    <li id="L388"><pre>  margin: 0 auto;</pre></li>
+    <li id="L389"><pre>  padding: 40px 48px 64px;</pre></li>
+    <li id="L390"><pre>}</pre></li>
+    <li id="L391"><pre></pre></li>
+    <li id="L392"><pre>.mimir-markdown-scroll {</pre></li>
+    <li id="L393"><pre>  container-type: inline-size;</pre></li>
+    <li id="L394"><pre>  container-name: markdown-reading;</pre></li>
+    <li id="L395"><pre>}</pre></li>
+    <li id="L396"><pre></pre></li>
+    <li id="L397"><pre>@container markdown-reading (max-width: 620px) {</pre></li>
+    <li id="L398"><pre>  .mimir-markdown-body {</pre></li>
+    <li id="L399"><pre>    padding: 28px 16px 64px;</pre></li>
+    <li id="L400"><pre>  }</pre></li>
+    <li id="L401"><pre>}</pre></li>
+    <li id="L402"><pre></pre></li>
+    <li id="L403"><pre>.mimir-markdown-body .ProseMirror {</pre></li>
+    <li id="L404"><pre>  min-height: 46vh;</pre></li>
+    <li id="L405"><pre>  outline: none;</pre></li>
+    <li id="L406"><pre>}</pre></li>
+    <li id="L407"><pre></pre></li>
+    <li id="L408"><pre>.mimir-markdown-slash {</pre></li>
+    <li id="L409"><pre>  z-index: 80;</pre></li>
+    <li id="L410"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L411"><pre>  width: 216px;</pre></li>
+    <li id="L412"><pre>  min-width: 0;</pre></li>
+    <li id="L413"><pre>  max-height: min(320px, 60vh);</pre></li>
+    <li id="L414"><pre>  overflow-y: auto;</pre></li>
+    <li id="L415"><pre>}</pre></li>
+    <li id="L416"><pre></pre></li>
+    <li id="L417"><pre>.mimir-inline-bar {</pre></li>
+    <li id="L418"><pre>  display: flex;</pre></li>
+    <li id="L419"><pre>  align-items: center;</pre></li>
+    <li id="L420"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L421"><pre>  gap: 2px;</pre></li>
+    <li id="L422"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L423"><pre>  max-width: calc(100vw - 16px);</pre></li>
+    <li id="L424"><pre>  padding: 4px;</pre></li>
+    <li id="L425"><pre>  border-radius: var(--me-radius, 6px);</pre></li>
+    <li id="L426"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L427"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L428"><pre>  box-shadow: var(--me-shadow, 0 8px 24px rgb(0 0 0 / 12%));</pre></li>
+    <li id="L429"><pre>}</pre></li>
+    <li id="L430"><pre></pre></li>
+    <li id="L431"><pre>.mimir-inline-bar .me-tb {</pre></li>
+    <li id="L432"><pre>  flex: 0 0 auto;</pre></li>
+    <li id="L433"><pre>}</pre></li>
+    <li id="L434"><pre></pre></li>
+    <li id="L435"><pre>.mimir-editor--note .me-note-link-picker {</pre></li>
+    <li id="L436"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L437"><pre>  overscroll-behavior: contain;</pre></li>
+    <li id="L438"><pre>}</pre></li>
+    <li id="L439"><pre></pre></li>
+    <li id="L440"><pre>.mimir-editor--note .me-note-link-picker__hint {</pre></li>
+    <li id="L441"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L442"><pre>}</pre></li>
+    <li id="L443"><pre></pre></li>
+    <li id="L444"><pre>.me-note-link-picker__title {</pre></li>
+    <li id="L445"><pre>  display: block;</pre></li>
+    <li id="L446"><pre>  overflow: hidden;</pre></li>
+    <li id="L447"><pre>  text-overflow: ellipsis;</pre></li>
+    <li id="L448"><pre>  white-space: nowrap;</pre></li>
+    <li id="L449"><pre>}</pre></li>
+    <li id="L450"><pre></pre></li>
+    <li id="L451"><pre>.mimir-markdown-properties {</pre></li>
+    <li id="L452"><pre>  display: flex;</pre></li>
+    <li id="L453"><pre>  flex-direction: column;</pre></li>
+    <li id="L454"><pre>  gap: 8px;</pre></li>
+    <li id="L455"><pre>  min-width: 0;</pre></li>
+    <li id="L456"><pre>  padding: 4px;</pre></li>
+    <li id="L457"><pre>}</pre></li>
+    <li id="L458"><pre></pre></li>
+    <li id="L459"><pre>.mimir-markdown-properties &gt; .me-property-form,</pre></li>
+    <li id="L460"><pre>.mimir-editor--note .me-link .me-property-form,</pre></li>
+    <li id="L461"><pre>.mimir-editor--note .me-insert &gt; .me-property-form {</pre></li>
+    <li id="L462"><pre>  padding: 0;</pre></li>
+    <li id="L463"><pre>}</pre></li>
+    <li id="L464"><pre></pre></li>
+    <li id="L465"><pre>.mimir-markdown-panel-hint,</pre></li>
+    <li id="L466"><pre>.mimir-markdown-panel-error {</pre></li>
+    <li id="L467"><pre>  margin: 0;</pre></li>
+    <li id="L468"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L469"><pre>  line-height: 1.6;</pre></li>
+    <li id="L470"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L471"><pre>}</pre></li>
+    <li id="L472"><pre></pre></li>
+    <li id="L473"><pre>.mimir-markdown-panel-hint {</pre></li>
+    <li id="L474"><pre>  color: var(--me-text-weak, #6b6b6b);</pre></li>
+    <li id="L475"><pre>}</pre></li>
+    <li id="L476"><pre></pre></li>
+    <li id="L477"><pre>.mimir-markdown-panel-error {</pre></li>
+    <li id="L478"><pre>  color: var(--me-danger);</pre></li>
+    <li id="L479"><pre>}</pre></li>
+    <li id="L480"><pre></pre></li>
+    <li id="L481"><pre>.mimir-markdown-slash__empty {</pre></li>
+    <li id="L482"><pre>  padding: 8px 12px;</pre></li>
+    <li id="L483"><pre>  color: var(--me-text-weak, #6b6b6b);</pre></li>
+    <li id="L484"><pre>  font-size: 12px;</pre></li>
+    <li id="L485"><pre>}</pre></li>
+    <li id="L486"><pre></pre></li>
+    <li id="L487"><pre>/*</pre></li>
+    <li id="L488"><pre> * 焦点环。</pre></li>
+    <li id="L489"><pre> *</pre></li>
+    <li id="L490">
+      <pre> * **`:focus-visible` 在这里不够用**：正文是 contenteditable，而规范规定</pre>
+    </li>
+    <li id="L491">
+      <pre> * 文本输入类元素的 `:focus-visible` **永远匹配**（浏览器无法假定用户接下来</pre>
+    </li>
+    <li id="L492"><pre> * 用键盘还是鼠标）。实测鼠标点进正文也会拿到一圈原生环</pre></li>
+    <li id="L493">
+      <pre> * `outline: auto 1px rgb(16,16,16)`，而点进正文是几乎每次编辑都会做的事。</pre>
+    </li>
+    <li id="L494"><pre> *</pre></li>
+    <li id="L495"><pre> * `--mimir-focus-ring-style` 由宿主按**最近一次输入方式**切换：</pre></li>
+    <li id="L496">
+      <pre> * 鼠标是 none、键盘是 solid。于是「键盘用户看得见焦点」与「鼠标用户看不到</pre>
+    </li>
+    <li id="L497">
+      <pre> * 一圈黑框」同时成立。变量在宿主上声明（见 apps/web/src/lib/input-modality.ts），</pre>
+    </li>
+    <li id="L498">
+      <pre> * 这里只消费它——**默认值必须是 none**，否则宿主没装那个模块时环又会回来。</pre>
+    </li>
+    <li id="L499"><pre> */</pre></li>
+    <li id="L500"><pre>.mimir-markdown-body .ProseMirror:focus {</pre></li>
+    <li id="L501"><pre>  outline-style: var(--mimir-focus-ring-style, none);</pre></li>
+    <li id="L502"><pre>  outline-width: 2px;</pre></li>
+    <li id="L503"><pre>  outline-color: var(--me-accent-border, #00834d);</pre></li>
+    <li id="L504"><pre>  outline-offset: 3px;</pre></li>
+    <li id="L505"><pre>  border-radius: 4px;</pre></li>
+    <li id="L506"><pre>}</pre></li>
+    <li id="L507"><pre></pre></li>
+    <li id="L508"><pre>/*</pre></li>
+    <li id="L509">
+      <pre> * `.me-status-action` 已删（D-064）：它的唯一消费者是 markdown 状态行里那两个</pre>
+    </li>
+    <li id="L510">
+      <pre> * 裸 `&lt;button&gt;`，现在改走外壳原语 `ToolbarTextButton`，样式在 `shell.css` 的</pre>
+    </li>
+    <li id="L511">
+      <pre> * `.me-text-btn`（那一份还要压 antd 的 height / padding / border / nowrap，</pre>
+    </li>
+    <li id="L512"><pre> * 所以留在外壳那一层——它是**控件**，不是格式特有的东西）。</pre></li>
+    <li id="L513"><pre> *</pre></li>
+    <li id="L514">
+      <pre> * 留着它就是个陷阱：同名的类没消费者，下一个人会以为状态行的可点文字还归这里管。</pre>
+    </li>
+    <li id="L515"><pre> */</pre></li>
+    <li id="L516"><pre></pre></li>
+    <li id="L517">
+      <pre>/* ── html：源码 + 预览分栏 ─────────────────────────────────────── */</pre>
+    </li>
+    <li id="L518"><pre></pre></li>
+    <li id="L519"><pre>/*</pre></li>
+    <li id="L520">
+      <pre> * 左右分栏。**两边都要能滚**，且都占满高度——HTML 的源码与渲染结果长度通常</pre>
+    </li>
+    <li id="L521"><pre> * 不同，让容器统一滚动会让其中一边的工具栏滑出视野。</pre></li>
+    <li id="L522"><pre> */</pre></li>
+    <li id="L523"><pre>.mimir-html-split-container {</pre></li>
+    <li id="L524"><pre>  display: flex;</pre></li>
+    <li id="L525"><pre>  flex: 1;</pre></li>
+    <li id="L526"><pre>  min-width: 0;</pre></li>
+    <li id="L527"><pre>  min-height: 0;</pre></li>
+    <li id="L528"><pre>  container: html-split / inline-size;</pre></li>
+    <li id="L529"><pre>}</pre></li>
+    <li id="L530"><pre></pre></li>
+    <li id="L531"><pre>.mimir-html-split {</pre></li>
+    <li id="L532"><pre>  display: flex;</pre></li>
+    <li id="L533"><pre>  flex: 1;</pre></li>
+    <li id="L534"><pre>  min-width: 0;</pre></li>
+    <li id="L535"><pre>  min-height: 0;</pre></li>
+    <li id="L536"><pre>}</pre></li>
+    <li id="L537"><pre></pre></li>
+    <li id="L538"><pre>/*</pre></li>
+    <li id="L539">
+      <pre> * 视图切换用 `hidden` 属性（不是卸载，理由见 HtmlEditor 的 `view` 说明）。</pre>
+    </li>
+    <li id="L540"><pre> *</pre></li>
+    <li id="L541">
+      <pre> * **这条规则不能省**：`[hidden] { display: none }` 在浏览器的默认样式表里，</pre>
+    </li>
+    <li id="L542">
+      <pre> * 而下面 `.mimir-html-preview-pane` 自己写了 `display: flex`——**作者样式一律</pre>
+    </li>
+    <li id="L543">
+      <pre> * 胜过默认样式**（与选择器特异性无关），于是那个栏位会照常显示、`hidden`</pre>
+    </li>
+    <li id="L544"><pre> * 看起来完全没生效。这一条把它压回去。</pre></li>
+    <li id="L545"><pre> */</pre></li>
+    <li id="L546"><pre>.mimir-html-split &gt; [hidden] {</pre></li>
+    <li id="L547"><pre>  display: none;</pre></li>
+    <li id="L548"><pre>}</pre></li>
+    <li id="L549"><pre></pre></li>
+    <li id="L550"><pre>.mimir-html-source {</pre></li>
+    <li id="L551"><pre>  flex: 1 1 50%;</pre></li>
+    <li id="L552"><pre>  min-width: 0;</pre></li>
+    <li id="L553"><pre>  min-height: 0;</pre></li>
+    <li id="L554"><pre>  overflow: hidden;</pre></li>
+    <li id="L555"><pre>  border-right: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L556"><pre>}</pre></li>
+    <li id="L557"><pre></pre></li>
+    <li id="L558"><pre>/* CodeMirror 自己的滚动容器。高度由宿主给，它只管铺满 */</pre></li>
+    <li id="L559"><pre>.mimir-html-cm {</pre></li>
+    <li id="L560">
+      <pre>  /* Keep the vendored editor&#x27;s palette contract local to the source pane. */</pre>
+    </li>
+    <li id="L561"><pre>  --surface: var(--me-surface, #fff);</pre></li>
+    <li id="L562"><pre>  --text: var(--me-text, #262626);</pre></li>
+    <li id="L563"><pre>  --text-muted: var(--me-text-weak, #777);</pre></li>
+    <li id="L564"><pre>  --accent-soft: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L565"><pre>  --hover: var(--me-hover, #f3f3f3);</pre></li>
+    <li id="L566"><pre>  --border: var(--me-border, #d9d9d9);</pre></li>
+    <li id="L567"><pre>  --cm-tag: var(--me-accent-text, #007a45);</pre></li>
+    <li id="L568"><pre>  --cm-punct: var(--me-text, #262626);</pre></li>
+    <li id="L569"><pre>  --cm-attr: var(--me-text, #262626);</pre></li>
+    <li id="L570"><pre>  --cm-string: var(--me-danger, #d4380d);</pre></li>
+    <li id="L571"><pre>  --cm-comment: var(--me-text-weak, #777);</pre></li>
+    <li id="L572"><pre>  --cm-keyword: var(--me-accent-text, #007a45);</pre></li>
+    <li id="L573"><pre>  --cm-number: var(--me-danger, #d4380d);</pre></li>
+    <li id="L574"><pre>  height: 100%;</pre></li>
+    <li id="L575"><pre>}</pre></li>
+    <li id="L576"><pre></pre></li>
+    <li id="L577"><pre>.mimir-html-cm .cm-editor {</pre></li>
+    <li id="L578"><pre>  height: 100%;</pre></li>
+    <li id="L579"><pre>  font-family: var(--me-font-mono, monospace);</pre></li>
+    <li id="L580"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L581"><pre>}</pre></li>
+    <li id="L582"><pre></pre></li>
+    <li id="L583"><pre>.mimir-html-cm .cm-scroller {</pre></li>
+    <li id="L584"><pre>  overflow: auto;</pre></li>
+    <li id="L585"><pre>  font-family: inherit;</pre></li>
+    <li id="L586"><pre>}</pre></li>
+    <li id="L587"><pre></pre></li>
+    <li id="L588"><pre>/* 查找高亮（`source/cm-find.ts` 里的两个类名，配色由我们给） */</pre></li>
+    <li id="L589"><pre>.mimir-html-cm .search-hit {</pre></li>
+    <li id="L590"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L591"><pre>}</pre></li>
+    <li id="L592"><pre></pre></li>
+    <li id="L593"><pre>.mimir-html-cm .search-hit-active {</pre></li>
+    <li id="L594"><pre>  background: var(--me-accent, #00834d);</pre></li>
+    <li id="L595"><pre>  color: #fff;</pre></li>
+    <li id="L596"><pre>}</pre></li>
+    <li id="L597"><pre></pre></li>
+    <li id="L598"><pre>/*</pre></li>
+    <li id="L599"><pre> * 预览一侧（栏位）。</pre></li>
+    <li id="L600"><pre> *</pre></li>
+    <li id="L601">
+      <pre> * **它是能滚的**：放大的预览会比这一栏宽（`zoom` 只放大内容，不放大栏），</pre>
+    </li>
+    <li id="L602">
+      <pre> * 那时要能滚过去看右边。工作台底色比内容底暗一档，于是「这一块是预览」与</pre>
+    </li>
+    <li id="L603"><pre> * 「这一块是源码」一眼分得开（与 pdf/pttx 的舞台同一个判断）。</pre></li>
+    <li id="L604"><pre> */</pre></li>
+    <li id="L605"><pre>.mimir-html-preview-pane {</pre></li>
+    <li id="L606"><pre>  display: flex;</pre></li>
+    <li id="L607"><pre>  flex: 1 1 50%;</pre></li>
+    <li id="L608"><pre>  min-width: 0;</pre></li>
+    <li id="L609"><pre>  min-height: 0;</pre></li>
+    <li id="L610"><pre>  overflow: auto;</pre></li>
+    <li id="L611"><pre>  background: var(--me-stage-bg, #f5f5f5);</pre></li>
+    <li id="L612"><pre>}</pre></li>
+    <li id="L613"><pre></pre></li>
+    <li id="L614"><pre>/*</pre></li>
+    <li id="L615">
+      <pre> * 预览的宿主层：**宽度（设备档位）与缩放（`style.zoom`）都加在它身上**，</pre>
+    </li>
+    <li id="L616"><pre> * iframe 只管铺满它。</pre></li>
+    <li id="L617"><pre> *</pre></li>
+    <li id="L618"><pre> * ## 为什么宽度是 `calc(100% * var(--html-preview-zoom))`</pre></li>
+    <li id="L619"><pre> *</pre></li>
+    <li id="L620">
+      <pre> * `zoom` 不只是「画大一点」——它同时**缩掉元素的布局尺寸**：`zoom: 2` 下</pre>
+    </li>
+    <li id="L621">
+      <pre> * `width: 100%` 解析成「容器宽度 ÷ 2」的局部像素，渲染出来还是容器那么宽。</pre>
+    </li>
+    <li id="L622">
+      <pre> * 于是「放大到 200%」实际得到的是**一个 360px 宽的视口被拉成 720px**：内容</pre>
+    </li>
+    <li id="L623">
+      <pre> * 重排成手机版，而不是同一份布局放大着看（实测：1440 视口下 host 的</pre>
+    </li>
+    <li id="L624"><pre> * offsetWidth 359 对 rect 719）。乘回缩放倍数才是真的放大。</pre></li>
+    <li id="L625"><pre> *</pre></li>
+    <li id="L626">
+      <pre> * 宽度按**宿主自己的局部像素**解析，所以这个倍数只能由组件侧一起给</pre>
+    </li>
+    <li id="L627">
+      <pre> * （`--html-preview-zoom` 与 `style.zoom` 是同一个值，见 HtmlEditor）。</pre>
+    </li>
+    <li id="L628"><pre> *</pre></li>
+    <li id="L629"><pre> * ## 另外两条</pre></li>
+    <li id="L630"><pre> *</pre></li>
+    <li id="L631">
+      <pre> * `flex: none`：宿主是预览栏（flex 行）的子项，默认可收缩——不关掉的话上面</pre>
+    </li>
+    <li id="L632"><pre> * 那个宽度会被 flex 收回去，缩放又变回失效（实测踩过）。</pre></li>
+    <li id="L633"><pre> *</pre></li>
+    <li id="L634">
+      <pre> * 居中用 `margin-inline: auto` 而不是 `justify-content: center`：内容比容器宽</pre>
+    </li>
+    <li id="L635">
+      <pre> * 时（放大后的预览）后者会把左半边切掉、滚不回去，而 auto 外边距在溢出方向</pre>
+    </li>
+    <li id="L636"><pre> * 上解析成 0，于是两头都滚得到。</pre></li>
+    <li id="L637"><pre> *</pre></li>
+    <li id="L638">
+      <pre> * 白底（页面默认就是白的，跟着深色主题走会让「这个页面长什么样」失真——</pre>
+    </li>
+    <li id="L639"><pre> * 浏览器里看网页也不会因为系统是深色就把白底换成黑的）。</pre></li>
+    <li id="L640"><pre> */</pre></li>
+    <li id="L641"><pre>.mimir-html-preview-host {</pre></li>
+    <li id="L642"><pre>  display: flex;</pre></li>
+    <li id="L643"><pre>  flex: none;</pre></li>
+    <li id="L644"><pre>  margin-inline: auto;</pre></li>
+    <li id="L645"><pre>  width: calc(100% * var(--html-preview-zoom, 1));</pre></li>
+    <li id="L646"><pre>  min-width: 0;</pre></li>
+    <li id="L647"><pre>  background: #fff;</pre></li>
+    <li id="L648"><pre>}</pre></li>
+    <li id="L649"><pre></pre></li>
+    <li id="L650">
+      <pre>/* 设备档位：平板 768px、手机 390px（与上游的 `responsive` 预览同一档）。</pre>
+    </li>
+    <li id="L651">
+      <pre>   桌面档不写宽度——它铺满预览栏。`max-width` 同样要乘回缩放倍数，否则</pre>
+    </li>
+    <li id="L652">
+      <pre>   `max-width: 100%` 会在 zoom 2 下把「手机 390px」夹成 719/2 ——设备宽度</pre>
+    </li>
+    <li id="L653"><pre>   就白设了（与上面同一笔局部像素的账）。 */</pre></li>
+    <li id="L654"><pre>.mimir-html-preview-host[data-device=&#x27;tablet&#x27;],</pre></li>
+    <li id="L655"><pre>.mimir-html-preview-host[data-device=&#x27;phone&#x27;] {</pre></li>
+    <li id="L656"><pre>  max-width: calc(100% * var(--html-preview-zoom, 1));</pre></li>
+    <li id="L657"><pre>  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));</pre></li>
+    <li id="L658"><pre>}</pre></li>
+    <li id="L659"><pre></pre></li>
+    <li id="L660"><pre>.mimir-html-preview-host[data-device=&#x27;tablet&#x27;] {</pre></li>
+    <li id="L661"><pre>  width: 768px;</pre></li>
+    <li id="L662"><pre>}</pre></li>
+    <li id="L663"><pre></pre></li>
+    <li id="L664"><pre>.mimir-html-preview-host[data-device=&#x27;phone&#x27;] {</pre></li>
+    <li id="L665"><pre>  width: 390px;</pre></li>
+    <li id="L666"><pre>}</pre></li>
+    <li id="L667"><pre></pre></li>
+    <li id="L668"><pre>.mimir-html-preview {</pre></li>
+    <li id="L669"><pre>  flex: 1 1 auto;</pre></li>
+    <li id="L670"><pre>  min-width: 0;</pre></li>
+    <li id="L671"><pre>  border: none;</pre></li>
+    <li id="L672"><pre>  background: #fff;</pre></li>
+    <li id="L673"><pre>}</pre></li>
+    <li id="L674"><pre></pre></li>
+    <li id="L675"><pre>/*</pre></li>
+    <li id="L676"><pre> * 元素路径（面包屑）。一排紧凑按钮 + 一个 › 分隔符。</pre></li>
+    <li id="L677"><pre> *</pre></li>
+    <li id="L678">
+      <pre> * 分隔符是**装饰**（`aria-hidden` 在标记里）：读屏用户听到的是「body › main ›</pre>
+    </li>
+    <li id="L679"><pre> * h2」里的那三个可点项，不是三个「›」。</pre></li>
+    <li id="L680"><pre> */</pre></li>
+    <li id="L681"><pre>.mimir-html-crumbs {</pre></li>
+    <li id="L682"><pre>  display: inline-flex;</pre></li>
+    <li id="L683"><pre>  align-items: center;</pre></li>
+    <li id="L684"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L685"><pre>  gap: 2px;</pre></li>
+    <li id="L686"><pre>}</pre></li>
+    <li id="L687"><pre></pre></li>
+    <li id="L688"><pre>.mimir-html-crumbs__sep {</pre></li>
+    <li id="L689"><pre>  display: inline-flex;</pre></li>
+    <li id="L690"><pre>  align-items: center;</pre></li>
+    <li id="L691"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L692"><pre>  font-size: 11px;</pre></li>
+    <li id="L693"><pre>}</pre></li>
+    <li id="L694"><pre></pre></li>
+    <li id="L695"><pre>.mimir-html-op-panel {</pre></li>
+    <li id="L696"><pre>  display: grid;</pre></li>
+    <li id="L697"><pre>  gap: 8px;</pre></li>
+    <li id="L698"><pre>  min-width: 0;</pre></li>
+    <li id="L699"><pre>  padding: 8px;</pre></li>
+    <li id="L700"><pre>}</pre></li>
+    <li id="L701"><pre></pre></li>
+    <li id="L702"><pre>.mimir-html-op-panel .me-property-form {</pre></li>
+    <li id="L703"><pre>  display: grid;</pre></li>
+    <li id="L704"><pre>  gap: 12px;</pre></li>
+    <li id="L705"><pre>  padding: 0;</pre></li>
+    <li id="L706"><pre>}</pre></li>
+    <li id="L707"><pre></pre></li>
+    <li id="L708"><pre>.mimir-html-op-row {</pre></li>
+    <li id="L709"><pre>  display: flex;</pre></li>
+    <li id="L710"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L711"><pre>  align-items: end;</pre></li>
+    <li id="L712"><pre>  gap: 6px;</pre></li>
+    <li id="L713"><pre>}</pre></li>
+    <li id="L714"><pre></pre></li>
+    <li id="L715"><pre>.mimir-html-op-row .me-field {</pre></li>
+    <li id="L716"><pre>  flex: 1 1 150px;</pre></li>
+    <li id="L717"><pre>}</pre></li>
+    <li id="L718"><pre></pre></li>
+    <li id="L719"><pre>.mimir-html-op-panel .mimir-html-op-row .me-property-field {</pre></li>
+    <li id="L720"><pre>  flex: 1 1 100px;</pre></li>
+    <li id="L721"><pre>}</pre></li>
+    <li id="L722"><pre></pre></li>
+    <li id="L723"><pre>.mimir-html-picture-dialog {</pre></li>
+    <li id="L724"><pre>  --color-bg-overlay: rgb(0 0 0 / 50%);</pre></li>
+    <li id="L725"><pre>  --border-strong: var(--me-border, #d9d9d9);</pre></li>
+    <li id="L726"><pre>  --surface: var(--me-surface, #fff);</pre></li>
+    <li id="L727">
+      <pre>  --shadow-modal-strong: var(--me-shadow, 0 8px 28px rgb(0 0 0 / 20%));</pre>
+    </li>
+    <li id="L728"><pre>  --text: var(--me-text, #262626);</pre></li>
+    <li id="L729"><pre>  --text-dim: var(--me-text-weak, #777);</pre></li>
+    <li id="L730"><pre>  --accent: var(--me-accent, #00834d);</pre></li>
+    <li id="L731"><pre>  --color-bg-page: var(--me-surface, #fff);</pre></li>
+    <li id="L732"><pre>  --color-bg-subtle: var(--me-hover, #f3f3f3);</pre></li>
+    <li id="L733"><pre>  --color-border-default: var(--me-border, #d9d9d9);</pre></li>
+    <li id="L734"><pre>  --color-btn-primary: var(--me-accent, #00834d);</pre></li>
+    <li id="L735">
+      <pre>  --color-btn-primary-hover: var(--ant-color-primary-hover, #007846);</pre>
+    </li>
+    <li id="L736"><pre>  --color-btn-primary-text: #fff;</pre></li>
+    <li id="L737"><pre>  --color-error: var(--me-danger, #d4380d);</pre></li>
+    <li id="L738"><pre>  --color-text-primary: var(--me-text, #262626);</pre></li>
+    <li id="L739"><pre>}</pre></li>
+    <li id="L740"><pre></pre></li>
+    <li id="L741"><pre>.mimir-html-picture-error {</pre></li>
+    <li id="L742"><pre>  position: fixed;</pre></li>
+    <li id="L743"><pre>  z-index: 51;</pre></li>
+    <li id="L744"><pre>  right: 24px;</pre></li>
+    <li id="L745"><pre>  bottom: 24px;</pre></li>
+    <li id="L746"><pre>  max-width: min(440px, calc(100vw - 48px));</pre></li>
+    <li id="L747"><pre>  padding: 10px 14px;</pre></li>
+    <li id="L748"><pre>  border: 1px solid var(--me-danger, #d4380d);</pre></li>
+    <li id="L749"><pre>  border-radius: var(--me-radius, 8px);</pre></li>
+    <li id="L750"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L751"><pre>  color: var(--me-danger, #d4380d);</pre></li>
+    <li id="L752"><pre>  box-shadow: var(--me-shadow, 0 6px 16px rgb(0 0 0 / 12%));</pre></li>
+    <li id="L753"><pre>}</pre></li>
+    <li id="L754"><pre></pre></li>
+    <li id="L755"><pre>.mimir-html-op-panel .me-input--text,</pre></li>
+    <li id="L756"><pre>.mimir-html-op-panel .me-input--textarea {</pre></li>
+    <li id="L757"><pre>  width: 100%;</pre></li>
+    <li id="L758"><pre>}</pre></li>
+    <li id="L759"><pre></pre></li>
+    <li id="L760"><pre>.mimir-html-agent-prompt {</pre></li>
+    <li id="L761"><pre>  display: flex;</pre></li>
+    <li id="L762"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L763"><pre>  align-items: center;</pre></li>
+    <li id="L764"><pre>  gap: 8px;</pre></li>
+    <li id="L765"><pre>  width: 100%;</pre></li>
+    <li id="L766"><pre>  min-width: 0;</pre></li>
+    <li id="L767"><pre>  padding: 8px;</pre></li>
+    <li id="L768"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L769"><pre>}</pre></li>
+    <li id="L770"><pre></pre></li>
+    <li id="L771"><pre>.mimir-html-writing__copy {</pre></li>
+    <li id="L772"><pre>  flex: 1 1 280px;</pre></li>
+    <li id="L773"><pre>  min-width: 0;</pre></li>
+    <li id="L774"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L775"><pre>}</pre></li>
+    <li id="L776"><pre></pre></li>
+    <li id="L777"><pre>.mimir-html-writing__copy strong {</pre></li>
+    <li id="L778"><pre>  display: block;</pre></li>
+    <li id="L779"><pre>  margin-bottom: 4px;</pre></li>
+    <li id="L780"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L781"><pre>  font-size: var(--me-font-size, 14px);</pre></li>
+    <li id="L782"><pre>  font-weight: 600;</pre></li>
+    <li id="L783"><pre>}</pre></li>
+    <li id="L784"><pre></pre></li>
+    <li id="L785"><pre>.mimir-html-writing__actions {</pre></li>
+    <li id="L786"><pre>  display: flex;</pre></li>
+    <li id="L787"><pre>  align-items: center;</pre></li>
+    <li id="L788"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L789"><pre>  gap: 6px;</pre></li>
+    <li id="L790"><pre>}</pre></li>
+    <li id="L791"><pre></pre></li>
+    <li id="L792">
+      <pre>/* Follow the actual panes&#x27; width, including space taken by the Inspector. */</pre>
+    </li>
+    <li id="L793"><pre>@container html-split (width &lt; 800px) {</pre></li>
+    <li id="L794"><pre>  .mimir-html-split {</pre></li>
+    <li id="L795"><pre>    flex-direction: column;</pre></li>
+    <li id="L796"><pre>  }</pre></li>
+    <li id="L797"><pre></pre></li>
+    <li id="L798"><pre>  .mimir-html-source {</pre></li>
+    <li id="L799"><pre>    border-right: none;</pre></li>
+    <li id="L800"><pre>    border-bottom: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L801"><pre>  }</pre></li>
+    <li id="L802"><pre>}</pre></li>
+    <li id="L803"><pre></pre></li>
+    <li id="L804">
+      <pre>/* ── pdf：页面画布 ─────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L805"><pre></pre></li>
+    <li id="L806"><pre>/*</pre></li>
+    <li id="L807">
+      <pre> * 工作台：页面居中、底色比内容底暗一档（与 pptx 的舞台同一个判断——</pre>
+    </li>
+    <li id="L808"><pre> * 纸是白的，工作台要能区分出来）。</pre></li>
+    <li id="L809"><pre> */</pre></li>
+    <li id="L810"><pre>.mimir-pdf-stage {</pre></li>
+    <li id="L811"><pre>  display: flex;</pre></li>
+    <li id="L812"><pre>  align-items: flex-start;</pre></li>
+    <li id="L813"><pre>  padding: 16px;</pre></li>
+    <li id="L814"><pre>  background: var(--me-stage-bg, #f5f5f5);</pre></li>
+    <li id="L815"><pre>}</pre></li>
+    <li id="L816"><pre></pre></li>
+    <li id="L817"><pre>.mimir-pdf-insert-bar {</pre></li>
+    <li id="L818"><pre>  display: flex;</pre></li>
+    <li id="L819"><pre>  align-items: center;</pre></li>
+    <li id="L820"><pre>  gap: 8px;</pre></li>
+    <li id="L821"><pre>  padding: 6px 10px;</pre></li>
+    <li id="L822"><pre>}</pre></li>
+    <li id="L823"><pre></pre></li>
+    <li id="L824"><pre>.mimir-pdf-workspace {</pre></li>
+    <li id="L825"><pre>  display: flex;</pre></li>
+    <li id="L826"><pre>  position: relative;</pre></li>
+    <li id="L827"><pre>  flex: 1;</pre></li>
+    <li id="L828"><pre>  min-width: 0;</pre></li>
+    <li id="L829"><pre>  min-height: 0;</pre></li>
+    <li id="L830"><pre>  container: pdf-workspace / inline-size;</pre></li>
+    <li id="L831"><pre>}</pre></li>
+    <li id="L832"><pre></pre></li>
+    <li id="L833"><pre>.mimir-pdf-workspace__canvas {</pre></li>
+    <li id="L834"><pre>  display: flex;</pre></li>
+    <li id="L835"><pre>  flex: 1;</pre></li>
+    <li id="L836"><pre>  min-width: 0;</pre></li>
+    <li id="L837"><pre>  min-height: 0;</pre></li>
+    <li id="L838"><pre>}</pre></li>
+    <li id="L839"><pre></pre></li>
+    <li id="L840"><pre>.mimir-pdf-inspector {</pre></li>
+    <li id="L841"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L842"><pre>  flex: 0 0 320px;</pre></li>
+    <li id="L843"><pre>  width: 320px;</pre></li>
+    <li id="L844"><pre>  max-width: calc(100% - 32px);</pre></li>
+    <li id="L845"><pre>  min-height: 0;</pre></li>
+    <li id="L846"><pre>  background-color: var(--me-surface, #fff);</pre></li>
+    <li id="L847">
+      <pre>
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));</pre>
+    </li>
+    <li id="L848"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L849"><pre>  z-index: 3;</pre></li>
+    <li id="L850"><pre>  outline: none;</pre></li>
+    <li id="L851"><pre>}</pre></li>
+    <li id="L852"><pre></pre></li>
+    <li id="L853"><pre>.mimir-pdf-panel {</pre></li>
+    <li id="L854"><pre>  display: flex;</pre></li>
+    <li id="L855"><pre>  flex-direction: column;</pre></li>
+    <li id="L856"><pre>  height: 100%;</pre></li>
+    <li id="L857"><pre>  min-width: 0;</pre></li>
+    <li id="L858"><pre>  min-height: 0;</pre></li>
+    <li id="L859"><pre>}</pre></li>
+    <li id="L860"><pre></pre></li>
+    <li id="L861"><pre>.mimir-pdf-inspector__header {</pre></li>
+    <li id="L862"><pre>  display: flex;</pre></li>
+    <li id="L863"><pre>  align-items: center;</pre></li>
+    <li id="L864"><pre>  justify-content: space-between;</pre></li>
+    <li id="L865"><pre>  gap: 8px;</pre></li>
+    <li id="L866"><pre>  flex: none;</pre></li>
+    <li id="L867"><pre>  padding: 16px 16px 12px;</pre></li>
+    <li id="L868"><pre>}</pre></li>
+    <li id="L869"><pre></pre></li>
+    <li id="L870"><pre>.mimir-pdf-inspector__header h2 {</pre></li>
+    <li id="L871"><pre>  margin: 0 0 4px;</pre></li>
+    <li id="L872"><pre>  font: inherit;</pre></li>
+    <li id="L873"><pre>  font-weight: 600;</pre></li>
+    <li id="L874"><pre>}</pre></li>
+    <li id="L875"><pre></pre></li>
+    <li id="L876"><pre>.mimir-pdf-inspector__header-actions {</pre></li>
+    <li id="L877"><pre>  display: flex;</pre></li>
+    <li id="L878"><pre>  flex: none;</pre></li>
+    <li id="L879"><pre>  gap: 4px;</pre></li>
+    <li id="L880"><pre>}</pre></li>
+    <li id="L881"><pre></pre></li>
+    <li id="L882"><pre>.mimir-pdf-inspector__header-actions button {</pre></li>
+    <li id="L883"><pre>  min-width: 28px;</pre></li>
+    <li id="L884"><pre>  min-height: 28px;</pre></li>
+    <li id="L885"><pre>}</pre></li>
+    <li id="L886"><pre></pre></li>
+    <li id="L887"><pre>.mimir-pdf-inspector__content {</pre></li>
+    <li id="L888"><pre>  display: flex;</pre></li>
+    <li id="L889"><pre>  flex-direction: column;</pre></li>
+    <li id="L890"><pre>  align-items: stretch;</pre></li>
+    <li id="L891"><pre>  gap: 20px;</pre></li>
+    <li id="L892"><pre>  flex: 1;</pre></li>
+    <li id="L893"><pre>  min-height: 0;</pre></li>
+    <li id="L894"><pre>  min-width: 0;</pre></li>
+    <li id="L895"><pre>  overflow: auto;</pre></li>
+    <li id="L896"><pre>  padding: 4px 16px 16px;</pre></li>
+    <li id="L897"><pre>  scrollbar-gutter: stable;</pre></li>
+    <li id="L898"><pre>}</pre></li>
+    <li id="L899"><pre></pre></li>
+    <li id="L900"><pre>.mimir-pdf-inspector__control {</pre></li>
+    <li id="L901"><pre>  display: grid;</pre></li>
+    <li id="L902"><pre>  min-width: 0;</pre></li>
+    <li id="L903"><pre>  gap: 8px;</pre></li>
+    <li id="L904"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L905"><pre>}</pre></li>
+    <li id="L906"><pre></pre></li>
+    <li id="L907"><pre>.mimir-pdf-inspector__grid {</pre></li>
+    <li id="L908"><pre>  display: grid;</pre></li>
+    <li id="L909"><pre>  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);</pre></li>
+    <li id="L910"><pre>  align-items: end;</pre></li>
+    <li id="L911"><pre>  gap: 12px 8px;</pre></li>
+    <li id="L912"><pre>}</pre></li>
+    <li id="L913"><pre></pre></li>
+    <li id="L914"><pre>.mimir-pdf-inspector__grid .me-number {</pre></li>
+    <li id="L915"><pre>  max-width: 100%;</pre></li>
+    <li id="L916"><pre>}</pre></li>
+    <li id="L917"><pre></pre></li>
+    <li id="L918"><pre>.mimir-pdf-inspector__section-title {</pre></li>
+    <li id="L919"><pre>  margin: 4px 0 -12px;</pre></li>
+    <li id="L920"><pre>  font: inherit;</pre></li>
+    <li id="L921"><pre>  font-weight: 600;</pre></li>
+    <li id="L922"><pre>}</pre></li>
+    <li id="L923"><pre></pre></li>
+    <li id="L924"><pre>.mimir-pdf-inspector__control &gt; * {</pre></li>
+    <li id="L925"><pre>  min-width: 0;</pre></li>
+    <li id="L926"><pre>  max-width: 100%;</pre></li>
+    <li id="L927"><pre>}</pre></li>
+    <li id="L928"><pre></pre></li>
+    <li id="L929"><pre>.mimir-pdf-inspector__field {</pre></li>
+    <li id="L930"><pre>  display: grid;</pre></li>
+    <li id="L931"><pre>  gap: 8px;</pre></li>
+    <li id="L932"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L933"><pre>}</pre></li>
+    <li id="L934"><pre></pre></li>
+    <li id="L935"><pre>.mimir-pdf-inspector__field-title {</pre></li>
+    <li id="L936"><pre>  font-weight: 600;</pre></li>
+    <li id="L937"><pre>}</pre></li>
+    <li id="L938"><pre></pre></li>
+    <li id="L939"><pre>.mimir-pdf-inspector__meta,</pre></li>
+    <li id="L940"><pre>.mimir-pdf-inspector__hint,</pre></li>
+    <li id="L941"><pre>.mimir-pdf-inspector__empty {</pre></li>
+    <li id="L942"><pre>  margin: 0;</pre></li>
+    <li id="L943"><pre>  color: var(--me-text-weak, #595959);</pre></li>
+    <li id="L944"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L945"><pre>  line-height: 1.6;</pre></li>
+    <li id="L946"><pre>}</pre></li>
+    <li id="L947"><pre></pre></li>
+    <li id="L948"><pre>.mimir-pdf-inspector__footer {</pre></li>
+    <li id="L949"><pre>  display: grid;</pre></li>
+    <li id="L950"><pre>  gap: 8px;</pre></li>
+    <li id="L951"><pre>  margin-top: 4px;</pre></li>
+    <li id="L952"><pre>}</pre></li>
+    <li id="L953"><pre></pre></li>
+    <li id="L954"><pre>.mimir-pdf-inspector__footer &gt; button {</pre></li>
+    <li id="L955"><pre>  min-height: 32px;</pre></li>
+    <li id="L956"><pre>}</pre></li>
+    <li id="L957"><pre></pre></li>
+    <li id="L958"><pre>.mimir-pdf-form-panel &gt; .mimir-pdf-inspector__footer {</pre></li>
+    <li id="L959"><pre>  flex: none;</pre></li>
+    <li id="L960"><pre>  margin-top: 0;</pre></li>
+    <li id="L961"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L962"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L963"><pre>}</pre></li>
+    <li id="L964"><pre></pre></li>
+    <li id="L965"><pre>.mimir-pdf-inspector__hint svg {</pre></li>
+    <li id="L966"><pre>  display: inline;</pre></li>
+    <li id="L967"><pre>  vertical-align: middle;</pre></li>
+    <li id="L968"><pre>  margin-right: 4px;</pre></li>
+    <li id="L969"><pre>}</pre></li>
+    <li id="L970"><pre></pre></li>
+    <li id="L971"><pre>.mimir-pdf-inspector__error {</pre></li>
+    <li id="L972"><pre>  margin: 0;</pre></li>
+    <li id="L973"><pre>  color: var(--ant-color-error, #c53030);</pre></li>
+    <li id="L974"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L975"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L976"><pre>}</pre></li>
+    <li id="L977"><pre></pre></li>
+    <li id="L978"><pre>@container pdf-workspace (max-width: 900px) {</pre></li>
+    <li id="L979"><pre>  .mimir-pdf-inspector {</pre></li>
+    <li id="L980"><pre>    position: absolute;</pre></li>
+    <li id="L981"><pre>    top: 0;</pre></li>
+    <li id="L982"><pre>    right: 0;</pre></li>
+    <li id="L983"><pre>    bottom: 0;</pre></li>
+    <li id="L984">
+      <pre>    box-shadow: var(--ant-box-shadow-secondary, -4px 0 16px rgb(0 0 0 / 10%));</pre>
+    </li>
+    <li id="L985"><pre>  }</pre></li>
+    <li id="L986"><pre>}</pre></li>
+    <li id="L987"><pre></pre></li>
+    <li id="L988"><pre>.mimir-pdf-annotations {</pre></li>
+    <li id="L989"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L990"><pre>  display: grid;</pre></li>
+    <li id="L991"><pre>  gap: 8px;</pre></li>
+    <li id="L992"><pre>  width: 100%;</pre></li>
+    <li id="L993"><pre>  min-width: 0;</pre></li>
+    <li id="L994"><pre>  align-content: start;</pre></li>
+    <li id="L995"><pre>}</pre></li>
+    <li id="L996"><pre></pre></li>
+    <li id="L997"><pre>.mimir-pdf-annotations__header,</pre></li>
+    <li id="L998"><pre>.mimir-pdf-annotations__actions,</pre></li>
+    <li id="L999"><pre>.mimir-pdf-annotations__context-actions {</pre></li>
+    <li id="L1000"><pre>  display: flex;</pre></li>
+    <li id="L1001"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L1002"><pre>  align-items: center;</pre></li>
+    <li id="L1003"><pre>  gap: 8px;</pre></li>
+    <li id="L1004"><pre>  min-width: 0;</pre></li>
+    <li id="L1005"><pre>}</pre></li>
+    <li id="L1006"><pre></pre></li>
+    <li id="L1007"><pre>.mimir-pdf-annotations__selection {</pre></li>
+    <li id="L1008"><pre>  display: grid;</pre></li>
+    <li id="L1009"><pre>  min-width: 0;</pre></li>
+    <li id="L1010"><pre>}</pre></li>
+    <li id="L1011"><pre></pre></li>
+    <li id="L1012"><pre>.mimir-pdf-annotations__selection &gt; * {</pre></li>
+    <li id="L1013"><pre>  max-width: 100%;</pre></li>
+    <li id="L1014"><pre>  min-width: 0;</pre></li>
+    <li id="L1015"><pre>}</pre></li>
+    <li id="L1016"><pre></pre></li>
+    <li id="L1017"><pre>.mimir-pdf-annotations__context-actions {</pre></li>
+    <li id="L1018"><pre>  flex-basis: 100%;</pre></li>
+    <li id="L1019"><pre>  gap: 4px;</pre></li>
+    <li id="L1020"><pre>}</pre></li>
+    <li id="L1021"><pre></pre></li>
+    <li id="L1022"><pre>.mimir-pdf-annotations__actions &gt; * {</pre></li>
+    <li id="L1023"><pre>  flex-shrink: 0;</pre></li>
+    <li id="L1024"><pre>}</pre></li>
+    <li id="L1025"><pre></pre></li>
+    <li id="L1026"><pre>.mimir-pdf-annotations__threads {</pre></li>
+    <li id="L1027"><pre>  display: grid;</pre></li>
+    <li id="L1028"><pre>  gap: 4px;</pre></li>
+    <li id="L1029"><pre>  margin: 0;</pre></li>
+    <li id="L1030"><pre>  padding: 0;</pre></li>
+    <li id="L1031"><pre>  list-style: none;</pre></li>
+    <li id="L1032"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L1033"><pre>  white-space: pre-wrap;</pre></li>
+    <li id="L1034"><pre>}</pre></li>
+    <li id="L1035"><pre></pre></li>
+    <li id="L1036"><pre>.mimir-pdf-sheet--pick &gt; .mimir-pdf-page {</pre></li>
+    <li id="L1037"><pre>  cursor: crosshair;</pre></li>
+    <li id="L1038"><pre>}</pre></li>
+    <li id="L1039"><pre></pre></li>
+    <li id="L1040"><pre>/*</pre></li>
+    <li id="L1041">
+      <pre> * 页面本身。**白底固定**（与 html 预览同一条理由）：PDF 的页面就是白纸，</pre>
+    </li>
+    <li id="L1042">
+      <pre> * 跟着深色主题走会让「这份 PDF 长什么样」失真——而 PDF 常常是要打印的。</pre>
+    </li>
+    <li id="L1043"><pre> *</pre></li>
+    <li id="L1044">
+      <pre> * ## 为什么**没有** `max-width: 100%`（这里踩过一次，两个都是静默的）</pre>
+    </li>
+    <li id="L1045"><pre> *</pre></li>
+    <li id="L1046">
+      <pre> * 那个属性只夹宽度、不夹高度，而高度由渲染器显式设成目标高度——于是在一个比</pre>
+    </li>
+    <li id="L1047">
+      <pre> * 900px 窄的窗口里画的是一张 666×1200 的**被压扁**的页（实测 700px 窗口：</pre>
+    </li>
+    <li id="L1048">
+      <pre> * CSS 盒 666×1200、宽高比 0.555，而页面本身是 0.75）。它不会报错，只是</pre>
+    </li>
+    <li id="L1049"><pre> * 「看起来有点怪」。</pre></li>
+    <li id="L1050"><pre> *</pre></li>
+    <li id="L1051">
+      <pre> * 更糟的是它让缩放说了假话：150% 时页面被夹回工作台宽度，画布一点没变大，</pre>
+    </li>
+    <li id="L1052">
+      <pre> * 而状态行写着「150%」。现在页面保持**缩放指定的尺寸**、工作台横向滚动</pre>
+    </li>
+    <li id="L1053"><pre> * （它是 `me-scroll`，本来就能滚）——每个缩放档位都是真的。</pre></li>
+    <li id="L1054"><pre> */</pre></li>
+    <li id="L1055"><pre>.mimir-pdf-page {</pre></li>
+    <li id="L1056"><pre>  display: block;</pre></li>
+    <li id="L1057">
+      <pre>  /* 高度由位图的宽高比决定（canvas 是有内在尺寸的替换元素）。**不写死</pre>
+    </li>
+    <li id="L1058">
+      <pre>     `height`**：写死了就多一个可能与宽度不同步的数——而不同步的症状正是</pre>
+    </li>
+    <li id="L1059"><pre>     「画面被拉伸」，不报错 */</pre></li>
+    <li id="L1060"><pre>  height: auto;</pre></li>
+    <li id="L1061"><pre>  background: #fff;</pre></li>
+    <li id="L1062">
+      <pre>  /* 页面上的文字是画进 canvas 的，选不中——那与 pptx 的 SVG 不同，</pre>
+    </li>
+    <li id="L1063"><pre>     这里如实接受（要可选文字得再叠一层文本层，本版没做） */</pre></li>
+    <li id="L1064"><pre>}</pre></li>
+    <li id="L1065"><pre></pre></li>
+    <li id="L1066"><pre>/*</pre></li>
+    <li id="L1067"><pre> * 一张纸：画布 + 叠在它上面的两层（命中高亮、待生效的裁剪框）。</pre></li>
+    <li id="L1068"><pre> *</pre></li>
+    <li id="L1069"><pre> * ## 两条不能少</pre></li>
+    <li id="L1070"><pre> *</pre></li>
+    <li id="L1071">
+      <pre> * `align-self: flex-start`：工作台是 flex 行，默认 `align-items: stretch`</pre>
+    </li>
+    <li id="L1072">
+      <pre> * 会把这一层**拉到工作台那么高**。而高亮与裁剪框是按这一层的百分比定位的，</pre>
+    </li>
+    <li id="L1073">
+      <pre> * 于是「页面 900×1200、这一层 900×667」时高亮被纵向压进 667 里——框落在页面</pre>
+    </li>
+    <li id="L1074">
+      <pre>
+ * 上半部分的某个位置（实测过，框住的不是那行字）。这与 .trellis/spec/office/frontend/editors/pitfalls.md 里那串</pre>
+    </li>
+    <li id="L1075"><pre> * 「高度链」是同一类坑：**静默地错，且错的是位置**。</pre></li>
+    <li id="L1076"><pre> *</pre></li>
+    <li id="L1077">
+      <pre> * `margin-inline: auto`：页面比工作台窄时居中。**不用 `justify-content:</pre>
+    </li>
+    <li id="L1078">
+      <pre> * center`**——页面比工作台宽时（放大到 200%），flex 的居中会让左边那一截</pre>
+    </li>
+    <li id="L1079">
+      <pre> * 滚不到（溢出方向跟着 start 边被裁掉，flex 的老问题）。`margin: auto` 在</pre>
+    </li>
+    <li id="L1080"><pre> * 溢出时退化成 0，横向滚动条能一路滚到左边缘。</pre></li>
+    <li id="L1081"><pre> *</pre></li>
+    <li id="L1082">
+      <pre> * 阴影画在这一层（不是 canvas）：高亮在画布**之上**，阴影留在 canvas 上会压在</pre>
+    </li>
+    <li id="L1083">
+      <pre> * 高亮与纸的交界处，看着像高亮被纸压住了。两者盒子一样大，观感不变。</pre>
+    </li>
+    <li id="L1084"><pre> */</pre></li>
+    <li id="L1085"><pre>.mimir-pdf-sheet {</pre></li>
+    <li id="L1086"><pre>  position: relative;</pre></li>
+    <li id="L1087"><pre>  flex: none;</pre></li>
+    <li id="L1088"><pre>  align-self: flex-start;</pre></li>
+    <li id="L1089"><pre>  margin-inline: auto;</pre></li>
+    <li id="L1090"><pre>  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));</pre></li>
+    <li id="L1091"><pre>}</pre></li>
+    <li id="L1092"><pre></pre></li>
+    <li id="L1093"><pre>/*</pre></li>
+    <li id="L1094">
+      <pre> * canvas 是 `inline-block`，直接放进块级容器会在它下面留一行行高的空隙</pre>
+    </li>
+    <li id="L1095">
+      <pre> * （基线下沉）。那一截空隙会让**这一层的盒子比画面高几个像素**——而两层</pre>
+    </li>
+    <li id="L1096"><pre> * 都按这一层的百分比定位，于是高亮整体偏下（字旁的框对不上字）。</pre></li>
+    <li id="L1097"><pre> */</pre></li>
+    <li id="L1098"><pre>.mimir-pdf-sheet &gt; .mimir-pdf-page {</pre></li>
+    <li id="L1099"><pre>  display: block;</pre></li>
+    <li id="L1100"><pre>}</pre></li>
+    <li id="L1101"><pre></pre></li>
+    <li id="L1102"><pre>/* 空白页（还没有内容，保存后才成为真的一页） */</pre></li>
+    <li id="L1103"><pre>.mimir-pdf-sheet--blank {</pre></li>
+    <li id="L1104"><pre>  display: flex;</pre></li>
+    <li id="L1105"><pre>  align-items: center;</pre></li>
+    <li id="L1106"><pre>  justify-content: center;</pre></li>
+    <li id="L1107"><pre>  background: #fff;</pre></li>
+    <li id="L1108">
+      <pre>  /* 虚线框：它是**还没有的东西**，不是一张白纸（后者也是内容） */</pre>
+    </li>
+    <li id="L1109"><pre>  border: 1px dashed #bfbfbf;</pre></li>
+    <li id="L1110"><pre>}</pre></li>
+    <li id="L1111"><pre></pre></li>
+    <li id="L1112"><pre>.mimir-pdf-sheet__note {</pre></li>
+    <li id="L1113"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L1114"><pre>  color: #8c8c8c;</pre></li>
+    <li id="L1115"><pre>}</pre></li>
+    <li id="L1116"><pre></pre></li>
+    <li id="L1117"><pre>/*</pre></li>
+    <li id="L1118"><pre> * 命中高亮。</pre></li>
+    <li id="L1119"><pre> *</pre></li>
+    <li id="L1120"><pre> * ## 颜色是**固定值**，不走 `--me-*`</pre></li>
+    <li id="L1121"><pre> *</pre></li>
+    <li id="L1122">
+      <pre> * 高亮画在**白纸上**（`.mimir-pdf-page` 的底是固定的白——PDF 的页面就是白纸，</pre>
+    </li>
+    <li id="L1123">
+      <pre> * 跟着主题走会让「这份 PDF 长什么样」失真）。所以它要的是「在白底上看得见的</pre>
+    </li>
+    <li id="L1124">
+      <pre> * 黄/橙」，而 `--me-accent` 是给**界面**（有主题底）用的：深色主题下它偏亮，</pre>
+    </li>
+    <li id="L1125"><pre> * 压在白纸上反而看不清。</pre></li>
+    <li id="L1126"><pre> *</pre></li>
+    <li id="L1127">
+      <pre> * `mix-blend-mode: multiply` 让底下的字透出来——不透明的高亮会把文字盖掉，</pre>
+    </li>
+    <li id="L1128">
+      <pre> * 而「找到的那几个字长什么样」正是要找的东西。当前那一处用橙色区分。</pre>
+    </li>
+    <li id="L1129"><pre> */</pre></li>
+    <li id="L1130"><pre>.mimir-pdf-hit {</pre></li>
+    <li id="L1131"><pre>  position: absolute;</pre></li>
+    <li id="L1132"><pre>  border-radius: 2px;</pre></li>
+    <li id="L1133"><pre>  background: #ffe58f;</pre></li>
+    <li id="L1134"><pre>  mix-blend-mode: multiply;</pre></li>
+    <li id="L1135"><pre>  /* 高亮不该挡住画布的滚动与后续的点击（它是标注，不是控件） */</pre></li>
+    <li id="L1136"><pre>  pointer-events: none;</pre></li>
+    <li id="L1137"><pre>}</pre></li>
+    <li id="L1138"><pre></pre></li>
+    <li id="L1139"><pre>.mimir-pdf-hit[data-active=&#x27;true&#x27;] {</pre></li>
+    <li id="L1140"><pre>  background: #ffa940;</pre></li>
+    <li id="L1141"><pre>}</pre></li>
+    <li id="L1142"><pre></pre></li>
+    <li id="L1143"><pre>/*</pre></li>
+    <li id="L1144"><pre> * 待生效的裁剪框：框外压暗。</pre></li>
+    <li id="L1145"><pre> *</pre></li>
+    <li id="L1146">
+      <pre> * 用 `box-shadow` 的扩散而不是四个伪元素：不需要知道页面多大，`9999px` 的阴影</pre>
+    </li>
+    <li id="L1147">
+      <pre> * 把外面全铺上。**它表达的是「保存后只看得见这一块」**，不是「画面被裁了」</pre>
+    </li>
+    <li id="L1148">
+      <pre> * ——画布画的始终是原件。所以框外的内容还看得见（只是暗），与「裁剪不改内容」</pre>
+    </li>
+    <li id="L1149"><pre> * 这条事实一致。</pre></li>
+    <li id="L1150"><pre> */</pre></li>
+    <li id="L1151"><pre>.mimir-pdf-crop {</pre></li>
+    <li id="L1152"><pre>  position: absolute;</pre></li>
+    <li id="L1153"><pre>  border: 1px solid #faad14;</pre></li>
+    <li id="L1154"><pre>  box-shadow: 0 0 0 9999px rgb(0 0 0 / 28%);</pre></li>
+    <li id="L1155"><pre>  pointer-events: none;</pre></li>
+    <li id="L1156"><pre>}</pre></li>
+    <li id="L1157"><pre></pre></li>
+    <li id="L1158"><pre>.mimir-markdown-writing {</pre></li>
+    <li id="L1159"><pre>  margin: 16px auto;</pre></li>
+    <li id="L1160"><pre>  width: min(760px, calc(100% - 32px));</pre></li>
+    <li id="L1161"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L1162"><pre>  border-radius: var(--me-radius);</pre></li>
+    <li id="L1163"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L1164"><pre>  color: var(--me-text);</pre></li>
+    <li id="L1165"><pre>  overflow: hidden;</pre></li>
+    <li id="L1166"><pre>}</pre></li>
+    <li id="L1167"><pre>.mimir-markdown-writing__header {</pre></li>
+    <li id="L1168"><pre>  display: flex;</pre></li>
+    <li id="L1169"><pre>  align-items: center;</pre></li>
+    <li id="L1170"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L1171"><pre>  justify-content: space-between;</pre></li>
+    <li id="L1172"><pre>  gap: 8px 16px;</pre></li>
+    <li id="L1173"><pre>  padding: 12px 16px;</pre></li>
+    <li id="L1174"><pre>  border-bottom: 1px solid var(--me-border);</pre></li>
+    <li id="L1175"><pre>}</pre></li>
+    <li id="L1176"><pre>.mimir-markdown-writing__header &gt; div:first-child {</pre></li>
+    <li id="L1177"><pre>  flex: 1 1 240px;</pre></li>
+    <li id="L1178"><pre>  min-width: 0;</pre></li>
+    <li id="L1179"><pre>}</pre></li>
+    <li id="L1180"><pre>.mimir-markdown-writing h3 {</pre></li>
+    <li id="L1181"><pre>  margin: 0 0 4px;</pre></li>
+    <li id="L1182"><pre>  font: inherit;</pre></li>
+    <li id="L1183"><pre>  font-weight: 600;</pre></li>
+    <li id="L1184"><pre>}</pre></li>
+    <li id="L1185"><pre>.mimir-markdown-writing p {</pre></li>
+    <li id="L1186"><pre>  margin: 0;</pre></li>
+    <li id="L1187"><pre>  color: var(--me-text-weak);</pre></li>
+    <li id="L1188"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L1189"><pre>  line-height: 1.6;</pre></li>
+    <li id="L1190"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L1191"><pre>}</pre></li>
+    <li id="L1192"><pre>.mimir-markdown-writing__actions {</pre></li>
+    <li id="L1193"><pre>  display: flex;</pre></li>
+    <li id="L1194"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L1195"><pre>  gap: 8px;</pre></li>
+    <li id="L1196"><pre>}</pre></li>
+    <li id="L1197"><pre>.mimir-markdown-writing .mimir-markdown-writing__warning {</pre></li>
+    <li id="L1198"><pre>  padding: 12px 16px;</pre></li>
+    <li id="L1199"><pre>  color: var(--me-danger);</pre></li>
+    <li id="L1200"><pre>}</pre></li>
+    <li id="L1201"><pre>.mimir-markdown-writing pre {</pre></li>
+    <li id="L1202"><pre>  margin: 0;</pre></li>
+    <li id="L1203"><pre>  padding: 16px;</pre></li>
+    <li id="L1204"><pre>  max-height: 320px;</pre></li>
+    <li id="L1205"><pre>  overflow: auto;</pre></li>
+    <li id="L1206"><pre>  white-space: pre-wrap;</pre></li>
+    <li id="L1207"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L1208"><pre>  font: inherit;</pre></li>
+    <li id="L1209"><pre>  line-height: 1.7;</pre></li>
+    <li id="L1210"><pre>  overscroll-behavior: contain;</pre></li>
+    <li id="L1211"><pre>}</pre></li>
+  </ol>
+</html>

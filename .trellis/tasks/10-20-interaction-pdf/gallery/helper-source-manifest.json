@@ -1,0 +1,659 @@
+{
+  "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+  "adapterSha256": "2b547f3e14543c21ceff36764b1b55472f4a92cf4e63671aa8e8725f2c0c68ce",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-pdf-baseline-53285bb",
+      "bundleSha256": "efed1d367d050454322d648e04066dabfd17aea5e0a03ff1d06652e54bb6af45",
+      "files": [
+        {
+          "path": "apps/server/src/services/docx-image-fetch.ts",
+          "sha256": "1e0548e3213a96e13a5bfaa56c844f77b3084f8e01d772faa974412e37e10354"
+        },
+        {
+          "path": "apps/server/src/services/pdf-agent-host.ts",
+          "sha256": "924b664cfe4f0e89463e4c9f5658bd28a1185f3a4963e3f530633f6391fc9338"
+        },
+        {
+          "path": "apps/server/src/services/pdf-annotations.ts",
+          "sha256": "7b5c48de1a326d8a030410ebf07eac77ce411321c381d8cfd643ad9a9e3a1254"
+        },
+        {
+          "path": "apps/server/src/services/pdf-block-rewrite.ts",
+          "sha256": "4d8e4e974d8e2e7cc65c57fd9c58fe096b78d5cfcd15ea26624e7a090a61b283"
+        },
+        {
+          "path": "apps/server/src/services/pdf-block-writer.ts",
+          "sha256": "6cd7c11824d4da280694328d879d779d9c6d2f14148280a36abc30028a1706a1"
+        },
+        {
+          "path": "apps/server/src/services/pdf-cff-font.ts",
+          "sha256": "6fea22eac4380ed71ed573cca4bee5ccb241c04b4e93381db38de34f44225e37"
+        },
+        {
+          "path": "apps/server/src/services/pdf-drawing-geometry.ts",
+          "sha256": "1d6739735495184a9ef52dcd7231ff3d68b089db8e1d1bb719dc71e8b59baf9b"
+        },
+        {
+          "path": "apps/server/src/services/pdf-forms.ts",
+          "sha256": "591b09364b78038f21d1a00adda4cd3516c66f3374f5c48a7bb18a4da8ecfb93"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-codec.ts",
+          "sha256": "3467d20786639d798e3a05c93399eb7610bc4b2d5281a6528a96a1d55b5b8e05"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-opacity.ts",
+          "sha256": "5c490f317819b71e8a3c6527d0056cad550d55488ec7fab194aa28c8d1a48bac"
+        },
+        {
+          "path": "apps/server/src/services/pdf-images.ts",
+          "sha256": "547f72ba9616e03f7469445c6d088ce62e41f9d14e3bfbb0964a7e49426942e5"
+        },
+        {
+          "path": "apps/server/src/services/pdf-insert-layout.ts",
+          "sha256": "e30ea0aca4cd513ad19f0e116d51ed18f66a2e39a73023a922ab28932bdd511e"
+        },
+        {
+          "path": "apps/server/src/services/pdf-local.ts",
+          "sha256": "0e6be8d1e7481999fce0604a1d8bf97e2729f560bfc0965be1681734318e883e"
+        },
+        {
+          "path": "apps/server/src/services/pdf-page-layout.ts",
+          "sha256": "9167d29ebbcac2b6ae0f5641affdc2d880f5e0e7a1fae8b2932cbb5bd016cc9c"
+        },
+        {
+          "path": "apps/server/src/services/pdf-page-prune.ts",
+          "sha256": "417be131686879f8f1b45c0f4be0a48f599c430272721a2897bb8063cac8ed21"
+        },
+        {
+          "path": "apps/server/src/services/pdf-preserving-guard.ts",
+          "sha256": "f18b900fffc80c9d0cbe8cfa1d4d408599a0d6b7fbc7e4440b22fc2b6a46cdf5"
+        },
+        {
+          "path": "apps/server/src/services/pdf-redaction-copy.ts",
+          "sha256": "582ad787721fffeeca4c00f774148f1d86a836de76fadcbf9b0c9f9fe388c762"
+        },
+        {
+          "path": "apps/server/src/services/pdf-text-blocks.ts",
+          "sha256": "0e2e041fbcf9c48d53811c76b804c74d29dab59ef2cb27c91074891e8eb45853"
+        },
+        {
+          "path": "apps/server/src/services/pdf-text-glyphs.ts",
+          "sha256": "9aa45bbe7ad8121420f19f7e538c6ba749effa2b40dbf88734c4f91b8b47e286"
+        },
+        {
+          "path": "apps/server/src/services/pdf-visual-signatures.ts",
+          "sha256": "747611536a04f581ff4524f706fc26e51972f2c0e1934f898648a5e6b8a7ec82"
+        },
+        {
+          "path": "packages/office/src/editors/pdf-text-blocks.ts",
+          "sha256": "51b783c3d814b67fab03a21834cf8c179b3542fd922ac3048cc2d55b9ef80576"
+        },
+        {
+          "path": "packages/office/src/editors/pdf-text.ts",
+          "sha256": "d381bb0a646d0899ae1eb1e3fa30bec7b5e447791f2c287ffe6ed31161fe952e"
+        },
+        {
+          "path": "packages/office/src/shims/pdf-native-image.ts",
+          "sha256": "e8cf4a1d79ad5ccbfeb4655af875f8d675435ac1200f2209c676b30522e91b3a"
+        },
+        {
+          "path": "packages/office/src/shims/pdf-wasm-path.ts",
+          "sha256": "e273ff905fa369058e8e6d5d942e5dd294e2ebd53474d7e7457801f3f81fa97b"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/annot-delete.ts",
+          "sha256": "9689d4ff4498a172b2b63494aa20ec6959abe18c96d057aab88c151217f1e0f2"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/font-cmap.ts",
+          "sha256": "9edaf2f2c59a934983b7b6bcf40b38376d32ea5e72b6df3a32c611b8b842c1ea"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/font-locate.ts",
+          "sha256": "bd7b29b6ccac80437199899e0d98d9ae26136a006b53776fdcd99119ec2b7f65"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/font-subset.ts",
+          "sha256": "46fce4a81ec1ab0283f02c3374a616b82b1848c0882342337d6bb269f073e557"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/image-edit.ts",
+          "sha256": "c8bf2c85c48c61c433c62dca1cd4fb7ff4236078fa21d4c0e9b2fd783b453aba"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/redaction.ts",
+          "sha256": "0afef46889b8d23fe752eade5fc1a7394244dd24778abadaad78afb785e695ef"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/text-edit.ts",
+          "sha256": "6cf2ce2d617fcd2dd0ba5148e2d29c230312f5b3c84e0d8896a24839ed933241"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/renderer/cutout.ts",
+          "sha256": "4a1c2e2e74e81794b7abb6ec7ef2c94532cb09166f455e64799e220c7cebf949"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/renderer/image-bake.ts",
+          "sha256": "68e4edd48d5112693b4442aebde9077c43770fdbdbc95c043bf5f315f2ec6a69"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/shared/ipc.ts",
+          "sha256": "a3ffcfb0554749b854f76b723c91140c59f9d0941864fce581ffc06cde1e7ea6"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/shared/radicals.ts",
+          "sha256": "8f0338f42601759926523d465b3593016bfccafbc4b662b21da6d02f2381cc11"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/shared/x-layers.ts",
+          "sha256": "f85ec637461e7aebea256d62336dfd40e6d8fab0ae1277ff932ed018214eb417"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/advance.ts",
+          "sha256": "a8c7fe6a5d36f834ce3ddd7ee0b5390e61afcc349a9f07011ce321ff92924915"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/font-locate.ts",
+          "sha256": "a37bf07ac1683e72ecccaa82f55ce0ecb00fc9e51edcbc356aa7bbef086584cc"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/index.ts",
+          "sha256": "d07e45d4df5bf6d239a7668d3eb18101f314e05e97d1005fc5004bff51ebaad3"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/metrics.ts",
+          "sha256": "35e16dca83eae6998afd5e5f578bcc95ef228c092c43512df781ec81c75aa427"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/sfnt.ts",
+          "sha256": "8a9bd617c823dd20dd49bed72ce1472c349b49ba826b823f4fef859104531c56"
+        },
+        {
+          "path": "packages/shared/src/agent-media.ts",
+          "sha256": "0fb7c24258c60d1d7ec5e4dada2e3accc5cdb564156bc836a883b34b371e9e85"
+        },
+        {
+          "path": "packages/shared/src/ai-text.ts",
+          "sha256": "6a7c2ac21168b1cf7cdc1f1867b607bc74b5a09fc223c4c5b71d1919fb74428c"
+        },
+        {
+          "path": "packages/shared/src/auth.ts",
+          "sha256": "441ea506f814d9ec809cb92f0e68179b17725c2e62f229f0c685ca6cf7f772ca"
+        },
+        {
+          "path": "packages/shared/src/capture.ts",
+          "sha256": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098"
+        },
+        {
+          "path": "packages/shared/src/chat-attachments.ts",
+          "sha256": "79d68ea992f28ab4924bed461b805f3985535c80dec9636f2ad4432a53065196"
+        },
+        {
+          "path": "packages/shared/src/chat-models.ts",
+          "sha256": "219a4e596de1a73ba44b5631a99fb4aa2eccf0bb952419a4b367980d5b13d755"
+        },
+        {
+          "path": "packages/shared/src/config.ts",
+          "sha256": "48405f0b5e840a6647a122e3dbf2a09aa7aee1231932ac60c50e4ea4c2f9ceba"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "sha256": "28465744520de1eaf9f949d1d13786f4c955eca688a3b8405be8976a386b83a7"
+        },
+        {
+          "path": "packages/shared/src/desktop.ts",
+          "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6"
+        },
+        {
+          "path": "packages/shared/src/document-agent.ts",
+          "sha256": "c52bc6ccf6796332da5e527f0cd7f48d68423b8a67e407be0939e82798b843d2"
+        },
+        {
+          "path": "packages/shared/src/documents.ts",
+          "sha256": "c2d867c38bc91a826aec09c458c0bd374564fb658cee5dbbbd42f75376942fe5"
+        },
+        {
+          "path": "packages/shared/src/docx-agent.ts",
+          "sha256": "86387516b18450550319124daff63286a5b92f1df0c92bc92c9d2cbcc7580131"
+        },
+        {
+          "path": "packages/shared/src/docx-office-tools.ts",
+          "sha256": "22200ac02b679f2d22756bed993ef6cdd16d349afe30880c7dedde8794d0f3c3"
+        },
+        {
+          "path": "packages/shared/src/export.ts",
+          "sha256": "ee13032f2e82b2c44723580062b7c0c79a9d2f95f7359391b4a8f8412cd6890b"
+        },
+        {
+          "path": "packages/shared/src/feeds.ts",
+          "sha256": "38b1d7bb968fb93deb6087a26763b633cc10fb6938edaa383b53ca723275d53a"
+        },
+        {
+          "path": "packages/shared/src/files.ts",
+          "sha256": "e229f62fdf3f5404bdd63c28b855964c86adc5c927b949457cbf8b38cc043237"
+        },
+        {
+          "path": "packages/shared/src/html-brief.ts",
+          "sha256": "72e7551932bc6c72e05a1f05fb9b06b00f7c09f6a3d5501ed5cefac64a018b4c"
+        },
+        {
+          "path": "packages/shared/src/index.ts",
+          "sha256": "ba21f0b1168d184d19dd92aa4489e8e9d1493f37ebb71f9c7dff8d93c0d6fb26"
+        },
+        {
+          "path": "packages/shared/src/local.ts",
+          "sha256": "e6780f8af15ce51a5482f81e3163c8f1f71f7ed76b395ef068bf37a130b64bd3"
+        },
+        {
+          "path": "packages/shared/src/miniapp.ts",
+          "sha256": "f0e74622dff90236b5a39e2783816d4137907ed49cf91c49d61a8dcd593e5c59"
+        },
+        {
+          "path": "packages/shared/src/pdf-agent.ts",
+          "sha256": "611abc1f4708888194276c40ecb5302668300f1755604a85a2d184f1ca21df46"
+        },
+        {
+          "path": "packages/shared/src/pdf-visual-signature.ts",
+          "sha256": "52acded015883a0ddb8a69e9a0089af494d994568e97e65ae4bea3b645d149f7"
+        },
+        {
+          "path": "packages/shared/src/plugin.ts",
+          "sha256": "243f7d1569d33a616ee57332f5599810ed41436339e688b59cde92430f123723"
+        },
+        {
+          "path": "packages/shared/src/pptx-agent.ts",
+          "sha256": "f9c50470a326dfd0b57aa3650f69222670e4e302f6c9cf268eacdcd7314de9ac"
+        },
+        {
+          "path": "packages/shared/src/pptx-animation.ts",
+          "sha256": "f556f66fb4904630a06104418a711c09f17dd333ed2437b9c6aff17bad2aa40f"
+        },
+        {
+          "path": "packages/shared/src/pptx-deck-progress.ts",
+          "sha256": "a39014d4279feffa9f299401d439da141725c39ace2cd95f9bc9b83c2879db28"
+        },
+        {
+          "path": "packages/shared/src/pptx-fill.ts",
+          "sha256": "1cd2981b906969e0d4beacd6ac5a5540a109613f359b43a6b96c718fb0194373"
+        },
+        {
+          "path": "packages/shared/src/pptx-image.ts",
+          "sha256": "2e796250e171653045a453215c810af24f8db298ce39dce853e26845fa9d380d"
+        },
+        {
+          "path": "packages/shared/src/pptx-ink.ts",
+          "sha256": "fa4556647bbf553aa758f8850093fc20ce2715cb7e833bbd299cc6cd052157c5"
+        },
+        {
+          "path": "packages/shared/src/pptx-paragraph.ts",
+          "sha256": "a69d627fd6a71ba8e7be3bf352afbd93b4b070dd077698e10649d6585ed6552f"
+        },
+        {
+          "path": "packages/shared/src/pptx-picture.ts",
+          "sha256": "e1f829619f57dba4d931668fcbdd9f608232332f1bcf0b677027a2bb24d5fc59"
+        },
+        {
+          "path": "packages/shared/src/pptx-shape.ts",
+          "sha256": "0d47e4546cf3659206bfa8cd2dfaf13d1a1a7e39e23e9c62e22c60bdf82b77bd"
+        },
+        {
+          "path": "packages/shared/src/pptx-zoom.ts",
+          "sha256": "572f160ac854894cf769c31c6320152f14e0b622df667c50e30e114f201fea5a"
+        },
+        {
+          "path": "packages/shared/src/retrieval.ts",
+          "sha256": "5661f5aeaadf63f36bad957e15e5cba6af98afac385eb1259fe214901448d2fb"
+        },
+        {
+          "path": "packages/shared/src/seams.ts",
+          "sha256": "1ab833ff66a44890b603e118fe6233317be550a763b377e890889923dbc17df8"
+        },
+        {
+          "path": "packages/shared/src/search.ts",
+          "sha256": "dcbcf32017e2c4d7e13ee66686e8c618ef6faff3603735b0c302f8d2bbbbfe08"
+        },
+        {
+          "path": "packages/shared/src/structure.ts",
+          "sha256": "d0cdb24ad03e4a030f872d246588ed7110a7001c7827ce7973b4518a17d8d3ed"
+        },
+        {
+          "path": "packages/shared/src/usage.ts",
+          "sha256": "5f55cd19e4ae213449ce67394a148c5f08ed8e8a324a8dc202dfa3f7953123ba"
+        },
+        {
+          "path": "packages/shared/src/xlsx-agent.ts",
+          "sha256": "f0681ab8265ad8d1565f5847d3cd6cc77d0a180aa0120a928997b09e6a35de37"
+        }
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "bundleSha256": "ea22759d0a19c79aabc18dd73a614c3a112bc068471f8d10b6766f4cb00243ca",
+      "files": [
+        {
+          "path": "apps/server/src/services/docx-image-fetch.ts",
+          "sha256": "1e0548e3213a96e13a5bfaa56c844f77b3084f8e01d772faa974412e37e10354"
+        },
+        {
+          "path": "apps/server/src/services/pdf-agent-host.ts",
+          "sha256": "924b664cfe4f0e89463e4c9f5658bd28a1185f3a4963e3f530633f6391fc9338"
+        },
+        {
+          "path": "apps/server/src/services/pdf-annotations.ts",
+          "sha256": "7b5c48de1a326d8a030410ebf07eac77ce411321c381d8cfd643ad9a9e3a1254"
+        },
+        {
+          "path": "apps/server/src/services/pdf-block-rewrite.ts",
+          "sha256": "4d8e4e974d8e2e7cc65c57fd9c58fe096b78d5cfcd15ea26624e7a090a61b283"
+        },
+        {
+          "path": "apps/server/src/services/pdf-block-writer.ts",
+          "sha256": "6cd7c11824d4da280694328d879d779d9c6d2f14148280a36abc30028a1706a1"
+        },
+        {
+          "path": "apps/server/src/services/pdf-cff-font.ts",
+          "sha256": "6fea22eac4380ed71ed573cca4bee5ccb241c04b4e93381db38de34f44225e37"
+        },
+        {
+          "path": "apps/server/src/services/pdf-drawing-geometry.ts",
+          "sha256": "1d6739735495184a9ef52dcd7231ff3d68b089db8e1d1bb719dc71e8b59baf9b"
+        },
+        {
+          "path": "apps/server/src/services/pdf-forms.ts",
+          "sha256": "591b09364b78038f21d1a00adda4cd3516c66f3374f5c48a7bb18a4da8ecfb93"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-codec.ts",
+          "sha256": "3467d20786639d798e3a05c93399eb7610bc4b2d5281a6528a96a1d55b5b8e05"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-opacity.ts",
+          "sha256": "5c490f317819b71e8a3c6527d0056cad550d55488ec7fab194aa28c8d1a48bac"
+        },
+        {
+          "path": "apps/server/src/services/pdf-images.ts",
+          "sha256": "547f72ba9616e03f7469445c6d088ce62e41f9d14e3bfbb0964a7e49426942e5"
+        },
+        {
+          "path": "apps/server/src/services/pdf-insert-layout.ts",
+          "sha256": "e30ea0aca4cd513ad19f0e116d51ed18f66a2e39a73023a922ab28932bdd511e"
+        },
+        {
+          "path": "apps/server/src/services/pdf-local.ts",
+          "sha256": "0e6be8d1e7481999fce0604a1d8bf97e2729f560bfc0965be1681734318e883e"
+        },
+        {
+          "path": "apps/server/src/services/pdf-page-layout.ts",
+          "sha256": "9167d29ebbcac2b6ae0f5641affdc2d880f5e0e7a1fae8b2932cbb5bd016cc9c"
+        },
+        {
+          "path": "apps/server/src/services/pdf-page-prune.ts",
+          "sha256": "417be131686879f8f1b45c0f4be0a48f599c430272721a2897bb8063cac8ed21"
+        },
+        {
+          "path": "apps/server/src/services/pdf-preserving-guard.ts",
+          "sha256": "f18b900fffc80c9d0cbe8cfa1d4d408599a0d6b7fbc7e4440b22fc2b6a46cdf5"
+        },
+        {
+          "path": "apps/server/src/services/pdf-redaction-copy.ts",
+          "sha256": "582ad787721fffeeca4c00f774148f1d86a836de76fadcbf9b0c9f9fe388c762"
+        },
+        {
+          "path": "apps/server/src/services/pdf-text-blocks.ts",
+          "sha256": "0e2e041fbcf9c48d53811c76b804c74d29dab59ef2cb27c91074891e8eb45853"
+        },
+        {
+          "path": "apps/server/src/services/pdf-text-glyphs.ts",
+          "sha256": "9aa45bbe7ad8121420f19f7e538c6ba749effa2b40dbf88734c4f91b8b47e286"
+        },
+        {
+          "path": "apps/server/src/services/pdf-visual-signatures.ts",
+          "sha256": "747611536a04f581ff4524f706fc26e51972f2c0e1934f898648a5e6b8a7ec82"
+        },
+        {
+          "path": "packages/office/src/editors/pdf-text-blocks.ts",
+          "sha256": "51b783c3d814b67fab03a21834cf8c179b3542fd922ac3048cc2d55b9ef80576"
+        },
+        {
+          "path": "packages/office/src/editors/pdf-text.ts",
+          "sha256": "d381bb0a646d0899ae1eb1e3fa30bec7b5e447791f2c287ffe6ed31161fe952e"
+        },
+        {
+          "path": "packages/office/src/shims/pdf-native-image.ts",
+          "sha256": "e8cf4a1d79ad5ccbfeb4655af875f8d675435ac1200f2209c676b30522e91b3a"
+        },
+        {
+          "path": "packages/office/src/shims/pdf-wasm-path.ts",
+          "sha256": "e273ff905fa369058e8e6d5d942e5dd294e2ebd53474d7e7457801f3f81fa97b"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/annot-delete.ts",
+          "sha256": "9689d4ff4498a172b2b63494aa20ec6959abe18c96d057aab88c151217f1e0f2"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/font-cmap.ts",
+          "sha256": "9edaf2f2c59a934983b7b6bcf40b38376d32ea5e72b6df3a32c611b8b842c1ea"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/font-locate.ts",
+          "sha256": "bd7b29b6ccac80437199899e0d98d9ae26136a006b53776fdcd99119ec2b7f65"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/font-subset.ts",
+          "sha256": "46fce4a81ec1ab0283f02c3374a616b82b1848c0882342337d6bb269f073e557"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/image-edit.ts",
+          "sha256": "c8bf2c85c48c61c433c62dca1cd4fb7ff4236078fa21d4c0e9b2fd783b453aba"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/redaction.ts",
+          "sha256": "0afef46889b8d23fe752eade5fc1a7394244dd24778abadaad78afb785e695ef"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/main/text-edit.ts",
+          "sha256": "6cf2ce2d617fcd2dd0ba5148e2d29c230312f5b3c84e0d8896a24839ed933241"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/renderer/cutout.ts",
+          "sha256": "4a1c2e2e74e81794b7abb6ec7ef2c94532cb09166f455e64799e220c7cebf949"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/renderer/image-bake.ts",
+          "sha256": "68e4edd48d5112693b4442aebde9077c43770fdbdbc95c043bf5f315f2ec6a69"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/shared/ipc.ts",
+          "sha256": "a3ffcfb0554749b854f76b723c91140c59f9d0941864fce581ffc06cde1e7ea6"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/shared/radicals.ts",
+          "sha256": "8f0338f42601759926523d465b3593016bfccafbc4b662b21da6d02f2381cc11"
+        },
+        {
+          "path": "packages/office/vendor/apps/pdf/src/shared/x-layers.ts",
+          "sha256": "f85ec637461e7aebea256d62336dfd40e6d8fab0ae1277ff932ed018214eb417"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/advance.ts",
+          "sha256": "a8c7fe6a5d36f834ce3ddd7ee0b5390e61afcc349a9f07011ce321ff92924915"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/font-locate.ts",
+          "sha256": "a37bf07ac1683e72ecccaa82f55ce0ecb00fc9e51edcbc356aa7bbef086584cc"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/index.ts",
+          "sha256": "d07e45d4df5bf6d239a7668d3eb18101f314e05e97d1005fc5004bff51ebaad3"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/metrics.ts",
+          "sha256": "35e16dca83eae6998afd5e5f578bcc95ef228c092c43512df781ec81c75aa427"
+        },
+        {
+          "path": "packages/office/vendor/packages/font-metrics/src/sfnt.ts",
+          "sha256": "8a9bd617c823dd20dd49bed72ce1472c349b49ba826b823f4fef859104531c56"
+        },
+        {
+          "path": "packages/shared/src/agent-media.ts",
+          "sha256": "0fb7c24258c60d1d7ec5e4dada2e3accc5cdb564156bc836a883b34b371e9e85"
+        },
+        {
+          "path": "packages/shared/src/ai-text.ts",
+          "sha256": "6a7c2ac21168b1cf7cdc1f1867b607bc74b5a09fc223c4c5b71d1919fb74428c"
+        },
+        {
+          "path": "packages/shared/src/auth.ts",
+          "sha256": "441ea506f814d9ec809cb92f0e68179b17725c2e62f229f0c685ca6cf7f772ca"
+        },
+        {
+          "path": "packages/shared/src/capture.ts",
+          "sha256": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098"
+        },
+        {
+          "path": "packages/shared/src/chat-attachments.ts",
+          "sha256": "79d68ea992f28ab4924bed461b805f3985535c80dec9636f2ad4432a53065196"
+        },
+        {
+          "path": "packages/shared/src/chat-models.ts",
+          "sha256": "219a4e596de1a73ba44b5631a99fb4aa2eccf0bb952419a4b367980d5b13d755"
+        },
+        {
+          "path": "packages/shared/src/config.ts",
+          "sha256": "48405f0b5e840a6647a122e3dbf2a09aa7aee1231932ac60c50e4ea4c2f9ceba"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "sha256": "28465744520de1eaf9f949d1d13786f4c955eca688a3b8405be8976a386b83a7"
+        },
+        {
+          "path": "packages/shared/src/desktop.ts",
+          "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6"
+        },
+        {
+          "path": "packages/shared/src/document-agent.ts",
+          "sha256": "c52bc6ccf6796332da5e527f0cd7f48d68423b8a67e407be0939e82798b843d2"
+        },
+        {
+          "path": "packages/shared/src/documents.ts",
+          "sha256": "c2d867c38bc91a826aec09c458c0bd374564fb658cee5dbbbd42f75376942fe5"
+        },
+        {
+          "path": "packages/shared/src/docx-agent.ts",
+          "sha256": "86387516b18450550319124daff63286a5b92f1df0c92bc92c9d2cbcc7580131"
+        },
+        {
+          "path": "packages/shared/src/docx-office-tools.ts",
+          "sha256": "22200ac02b679f2d22756bed993ef6cdd16d349afe30880c7dedde8794d0f3c3"
+        },
+        {
+          "path": "packages/shared/src/export.ts",
+          "sha256": "ee13032f2e82b2c44723580062b7c0c79a9d2f95f7359391b4a8f8412cd6890b"
+        },
+        {
+          "path": "packages/shared/src/feeds.ts",
+          "sha256": "38b1d7bb968fb93deb6087a26763b633cc10fb6938edaa383b53ca723275d53a"
+        },
+        {
+          "path": "packages/shared/src/files.ts",
+          "sha256": "e229f62fdf3f5404bdd63c28b855964c86adc5c927b949457cbf8b38cc043237"
+        },
+        {
+          "path": "packages/shared/src/html-brief.ts",
+          "sha256": "72e7551932bc6c72e05a1f05fb9b06b00f7c09f6a3d5501ed5cefac64a018b4c"
+        },
+        {
+          "path": "packages/shared/src/index.ts",
+          "sha256": "ba21f0b1168d184d19dd92aa4489e8e9d1493f37ebb71f9c7dff8d93c0d6fb26"
+        },
+        {
+          "path": "packages/shared/src/local.ts",
+          "sha256": "e6780f8af15ce51a5482f81e3163c8f1f71f7ed76b395ef068bf37a130b64bd3"
+        },
+        {
+          "path": "packages/shared/src/miniapp.ts",
+          "sha256": "f0e74622dff90236b5a39e2783816d4137907ed49cf91c49d61a8dcd593e5c59"
+        },
+        {
+          "path": "packages/shared/src/pdf-agent.ts",
+          "sha256": "611abc1f4708888194276c40ecb5302668300f1755604a85a2d184f1ca21df46"
+        },
+        {
+          "path": "packages/shared/src/pdf-visual-signature.ts",
+          "sha256": "52acded015883a0ddb8a69e9a0089af494d994568e97e65ae4bea3b645d149f7"
+        },
+        {
+          "path": "packages/shared/src/plugin.ts",
+          "sha256": "243f7d1569d33a616ee57332f5599810ed41436339e688b59cde92430f123723"
+        },
+        {
+          "path": "packages/shared/src/pptx-agent.ts",
+          "sha256": "f9c50470a326dfd0b57aa3650f69222670e4e302f6c9cf268eacdcd7314de9ac"
+        },
+        {
+          "path": "packages/shared/src/pptx-animation.ts",
+          "sha256": "f556f66fb4904630a06104418a711c09f17dd333ed2437b9c6aff17bad2aa40f"
+        },
+        {
+          "path": "packages/shared/src/pptx-deck-progress.ts",
+          "sha256": "a39014d4279feffa9f299401d439da141725c39ace2cd95f9bc9b83c2879db28"
+        },
+        {
+          "path": "packages/shared/src/pptx-fill.ts",
+          "sha256": "1cd2981b906969e0d4beacd6ac5a5540a109613f359b43a6b96c718fb0194373"
+        },
+        {
+          "path": "packages/shared/src/pptx-image.ts",
+          "sha256": "2e796250e171653045a453215c810af24f8db298ce39dce853e26845fa9d380d"
+        },
+        {
+          "path": "packages/shared/src/pptx-ink.ts",
+          "sha256": "fa4556647bbf553aa758f8850093fc20ce2715cb7e833bbd299cc6cd052157c5"
+        },
+        {
+          "path": "packages/shared/src/pptx-paragraph.ts",
+          "sha256": "a69d627fd6a71ba8e7be3bf352afbd93b4b070dd077698e10649d6585ed6552f"
+        },
+        {
+          "path": "packages/shared/src/pptx-picture.ts",
+          "sha256": "e1f829619f57dba4d931668fcbdd9f608232332f1bcf0b677027a2bb24d5fc59"
+        },
+        {
+          "path": "packages/shared/src/pptx-shape.ts",
+          "sha256": "0d47e4546cf3659206bfa8cd2dfaf13d1a1a7e39e23e9c62e22c60bdf82b77bd"
+        },
+        {
+          "path": "packages/shared/src/pptx-zoom.ts",
+          "sha256": "572f160ac854894cf769c31c6320152f14e0b622df667c50e30e114f201fea5a"
+        },
+        {
+          "path": "packages/shared/src/retrieval.ts",
+          "sha256": "5661f5aeaadf63f36bad957e15e5cba6af98afac385eb1259fe214901448d2fb"
+        },
+        {
+          "path": "packages/shared/src/seams.ts",
+          "sha256": "1ab833ff66a44890b603e118fe6233317be550a763b377e890889923dbc17df8"
+        },
+        {
+          "path": "packages/shared/src/search.ts",
+          "sha256": "dcbcf32017e2c4d7e13ee66686e8c618ef6faff3603735b0c302f8d2bbbbfe08"
+        },
+        {
+          "path": "packages/shared/src/structure.ts",
+          "sha256": "d0cdb24ad03e4a030f872d246588ed7110a7001c7827ce7973b4518a17d8d3ed"
+        },
+        {
+          "path": "packages/shared/src/usage.ts",
+          "sha256": "5f55cd19e4ae213449ce67394a148c5f08ed8e8a324a8dc202dfa3f7953123ba"
+        },
+        {
+          "path": "packages/shared/src/xlsx-agent.ts",
+          "sha256": "f0681ab8265ad8d1565f5847d3cd6cc77d0a180aa0120a928997b09e6a35de37"
+        }
+      ]
+    }
+  },
+  "boundary": "Product service functions only. No documents/DB/model/asset registry imports. Uploaded bytes are request-local. External assets explicitly rejected in demo."
+}

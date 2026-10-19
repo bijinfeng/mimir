@@ -1,0 +1,152 @@
+[
+  {
+    "file": "weknora-pdf-viewer.html",
+    "line": 32,
+    "query": "const currentPage",
+    "excerpt": "const pageCount = ref(0)\nconst currentPage = ref(1)\nconst zoom = ref(1)\nconst loading = ref(false)\nconst error = ref('')"
+  },
+  {
+    "file": "weknora-pdf-viewer.html",
+    "line": 33,
+    "query": "const zoom",
+    "excerpt": "const currentPage = ref(1)\nconst zoom = ref(1)\nconst loading = ref(false)\nconst error = ref('')\n/** Height / width of each page; unknown pages borrow the first page's. */"
+  },
+  {
+    "file": "weknora-pdf-viewer.html",
+    "line": 246,
+    "query": "function setZoom",
+    "excerpt": "\nfunction setZoom(next: number) {\n  const box = scroller.value\n  const anchor = box ? box.scrollTop / Math.max(1, box.scrollHeight) : 0\n  zoom.value = Math.max(0.5, Math.min(3, Math.round(next * 10) / 10))"
+  },
+  {
+    "file": "weknora-pdf-viewer.html",
+    "line": 428,
+    "query": "const pageLabel",
+    "excerpt": "\nconst pageLabel = computed(() => (pageCount.value ? `${currentPage.value} / ${pageCount.value}` : ''))\n\ndefineExpose({ relocate: () => applyLocate(props.locate) })\n</script>"
+  },
+  {
+    "file": "weknora-pdf-viewer.html",
+    "line": 479,
+    "query": "preview.zoomOut",
+    "excerpt": "        theme=\"default\" variant=\"text\" size=\"small\" shape=\"square\"\n        :aria-label=\"t('preview.zoomOut')\" :title=\"t('preview.zoomOut')\"\n        @click=\"setZoom(zoom - 0.2)\"\n      >\n        <template #icon><t-icon name=\"zoom-out\" /></template>"
+  },
+  {
+    "file": "weknora-pdf-viewer.html",
+    "line": 487,
+    "query": "preview.zoomIn",
+    "excerpt": "        theme=\"default\" variant=\"text\" size=\"small\" shape=\"square\"\n        :aria-label=\"t('preview.zoomIn')\" :title=\"t('preview.zoomIn')\"\n        @click=\"setZoom(zoom + 0.2)\"\n      >\n        <template #icon><t-icon name=\"zoom-in\" /></template>"
+  },
+  {
+    "file": "weknora-source-readme.txt",
+    "line": 61,
+    "query": "10+ document formats",
+    "excerpt": "- **Memory and curation**: cross-session long-term memory keeps the profile, preferences and facts a user has confirmed. Folder uploads keep their directory tree, and retrieval chunks can be edited, diffed and rolled back.\n- **Data sources and formats**: auto-sync from Feishu wiki / Feishu Drive / Confluence / GitLab / Tencent IMA / Notion / Yuque / DingTalk Docs / Seafile / RSS, with more on the way. 10+ document formats including PDF, Word, images, Excel and XMind; Office files are parsed in-process by anydoc.\n- **Channels and integrations**: Q&A in WeCom, Feishu, Slack, Telegram and other IM apps; an embed widget for external websites; a built-in MCP Server for Cursor, Claude and other AI tools; scoped API keys with a principal model for programmatic access.\n- **Models**: 29 built-in vendors with a generated model catalog, including OpenAI, DeepSeek, Qwen (Alibaba Cloud), Zhipu, Hunyuan, Gemini, MiniMax, NVIDIA, LiteLLM and Ollama.\n- **Permissions and operations**: multi-workspace RBAC (four roles, per-resource ownership, per-workspace audit log), several storage instances per workspace, a runtime task-queue dashboard with worker-pool governance, and Langfuse tracing for agent steps, token usage and pipelines."
+  },
+  {
+    "file": "weknora-source-readme.txt",
+    "line": 330,
+    "query": "PDF / Word / PPT",
+    "excerpt": "| [Object storage](https://weknora.weixin.qq.com/docs/03-features/19-storage-backends) | Local / Tencent Cloud COS / MinIO / AWS S3 / Volcengine TOS / Alibaba Cloud OSS / Kingsoft Cloud KS3 / Huawei Cloud OBS |\n| [Document formats](https://weknora.weixin.qq.com/docs/03-features/03-document-parsing) | PDF / Word / PPT / Excel / CSV / TXT / Markdown / HTML / EPUB / MHTML / JSON / XMind / images |\n| [Data sources](https://weknora.weixin.qq.com/docs/03-features/10-datasource) | Feishu wiki / Feishu Drive / Lark / Confluence / GitLab / Tencent IMA / Notion / Yuque / DingTalk Docs / Seafile / RSS |\n| [IM channels](https://weknora.weixin.qq.com/docs/03-features/12-im-integration) | WeCom / Feishu / Lark / QQBot / Slack / Telegram / DingTalk / Mattermost / WeChat / Yunzhijia |\n| [Web search](https://weknora.weixin.qq.com/docs/03-features/11-web-search) | DuckDuckGo / Bing / Google / Tavily / Baidu / Ollama / SearXNG / Keenable / Zhipu AI / Exa / Metaso / Bocha / Serply |"
+  },
+  {
+    "file": "genoffice-pdf-app.txt",
+    "line": 281,
+    "query": "const RIBBON_TABS",
+    "excerpt": "// ── ribbon tabs (docs-style tab strip over a fixed 80px band) ──\nconst RIBBON_TABS = [\n  { id: 'home', labelKey: 'ribbonTabHome' },\n  { id: 'annotate', labelKey: 'ribbonTabAnnotate' },\n  { id: 'edit', labelKey: 'ribbonTabEdit' },"
+  },
+  {
+    "file": "genoffice-pdf-app.txt",
+    "line": 5880,
+    "query": "const markupGroup",
+    "excerpt": "  // mousedown preventDefault: the browser clears the text selection the instant the button is pressed, so applyMarkup would lose it\n  const markupGroup = (\n    <div className=\"ribbon-group\" onMouseDown={(e) => e.preventDefault()}>\n      <div className=\"ribbon-group-items\">\n        <div"
+  },
+  {
+    "file": "genoffice-pdf-app.txt",
+    "line": 5889,
+    "query": "disabled={readOnly}",
+    "excerpt": "            className=\"rb-big rb-highlight-main\"\n            disabled={readOnly}\n            data-tip={t('highlight')}\n            onClick={() => applyMarkup('highlight')}\n          >"
+  },
+  {
+    "file": "genoffice-pdf-app.txt",
+    "line": 5903,
+    "query": "disabled={readOnly}",
+    "excerpt": "            className={`rb-highlight-caret${highlightColorOpen ? ' active' : ''}`}\n            disabled={readOnly}\n            aria-label={t('drawColor')}\n            data-tip={t('drawColor')}\n            onClick={() => setHighlightColorOpen((open) => !open)}"
+  },
+  {
+    "file": "genoffice-pdf-app.txt",
+    "line": 5945,
+    "query": "const pageZoomGroup",
+    "excerpt": "\n  const pageZoomGroup = (\n    <div className=\"ribbon-group\">\n      <div className=\"ribbon-group-items\">\n        <div className=\"rb-col\">"
+  },
+  {
+    "file": "genoffice-readme.txt",
+    "line": 125,
+    "query": "Edit inside the page",
+    "excerpt": "<tr>\n<td><b>Edit inside the page</b> — Edit text mode outlines every text block for in-place retyping; the content stream is rewritten through PDFium with the original fonts, not a cover-up annotation. Ask the AI about a long report and get answers with page citations.</td>\n<td><b>Convert on-device</b> — <b>PDF Converter → PDF to Word</b> produces an editable <code>.docx</code> that opens in Docs next to the source, headings, stat rows and paragraphs intact. Excel and PowerPoint targets work the same way; scanned pages go through the system OCR.</td>\n</tr>\n</table>"
+  },
+  {
+    "file": "genoffice-readme.txt",
+    "line": 126,
+    "query": "Convert on-device",
+    "excerpt": "<td><b>Edit inside the page</b> — Edit text mode outlines every text block for in-place retyping; the content stream is rewritten through PDFium with the original fonts, not a cover-up annotation. Ask the AI about a long report and get answers with page citations.</td>\n<td><b>Convert on-device</b> — <b>PDF Converter → PDF to Word</b> produces an editable <code>.docx</code> that opens in Docs next to the source, headings, stat rows and paragraphs intact. Excel and PowerPoint targets work the same way; scanned pages go through the system OCR.</td>\n</tr>\n</table>\n"
+  },
+  {
+    "file": "pdfjs-current-toolbar.txt",
+    "line": 199,
+    "query": "#editorModeChanged",
+    "excerpt": "    // Reset the Editor buttons too, since they're document specific.\n    this.#editorModeChanged({ mode: AnnotationEditorType.DISABLE });\n  }\n\n  #bindListeners(buttons) {"
+  },
+  {
+    "file": "pdfjs-current-toolbar.txt",
+    "line": 278,
+    "query": "#editorModeChanged",
+    "excerpt": "      \"annotationeditormodechanged\",\n      this.#editorModeChanged.bind(this),\n      internalOpt\n    );\n    eventBus.on("
+  },
+  {
+    "file": "pdfjs-current-toolbar.txt",
+    "line": 366,
+    "query": "editorCommentButton.disabled",
+    "excerpt": "\n    editorCommentButton.disabled =\n      editorFreeTextButton.disabled =\n      editorHighlightButton.disabled =\n      editorInkButton.disabled ="
+  },
+  {
+    "file": "pdfjs-current-toolbar.txt",
+    "line": 407,
+    "query": "opts.previous.disabled",
+    "excerpt": "\n    opts.previous.disabled = pageNumber <= 1;\n    opts.next.disabled = pageNumber >= pagesCount;\n\n    opts.zoomOut.disabled = pageScale <= MIN_SCALE;"
+  },
+  {
+    "file": "pdfjs-current-toolbar.txt",
+    "line": 410,
+    "query": "opts.zoomOut.disabled",
+    "excerpt": "\n    opts.zoomOut.disabled = pageScale <= MIN_SCALE;\n    opts.zoomIn.disabled = pageScale >= MAX_SCALE;\n\n    let predefinedValueFound = false;"
+  },
+  {
+    "file": "google-pdf-text.txt",
+    "line": 44,
+    "query": "format might not transfer",
+    "excerpt": ".\nThe image file is converted, but the format might not transfer:\nBold, italics, font size, font type, and line breaks are likely to be retained.\nLists, tables, columns, footnotes, and endnotes are not likely to be detected.\nSupported languages"
+  },
+  {
+    "file": "google-pdf-text.txt",
+    "line": 27,
+    "query": "convert PDFs",
+    "excerpt": "For the best results, use these tips:\nFormat: You can convert PDFs (multipage documents) or photo files (.jpeg, .png and .gif)\nFile size: The file should be 2 MB or smaller.\nResolution: Text should be at least 10 pixels high.\nOrientation: Documents must be right-side up. If your image faces the wrong way, rotate it before you upload it to Google Drive."
+  },
+  {
+    "file": "microsoft-pdf-text.txt",
+    "line": 155,
+    "query": "To edit a PDF",
+    "excerpt": "Create a guide on how to edit a PDF.\nTo edit a PDF, open it in Word. This works best with PDFs that are mostly text. PDFs of book chapters or something that looks like a manuscript from a copier won't be formatted well in Word.\nGo to\nFile\n>"
+  },
+  {
+    "file": "microsoft-pdf-text.txt",
+    "line": 164,
+    "query": "make a copy of the PDF",
+    "excerpt": "and find the PDF in a folder).\nWord tells you that it's going to make a copy of the PDF and convert its contents into a format that Word can display. The original PDF won't be changed at all. Select\nOK\n.\nAfter your edits, you save it as a Word doc or a PDF. In the"
+  },
+  {
+    "file": "microsoft-pdf-text.txt",
+    "line": 175,
+    "query": "page-to-page correspondence",
+    "excerpt": "Note\nThe converted document might not have a perfect page-to-page correspondence with the original. For example, lines and pages may break at different locations.\nConvert or save to PDF\nGo to\nExport"
+  }
+]

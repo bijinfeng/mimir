@@ -955,7 +955,8 @@
   min-height: 32px;
 }
 
-.mimir-pdf-form-panel > .mimir-pdf-inspector__footer {
+.mimir-pdf-form-panel > .mimir-pdf-inspector__footer,
+.mimir-pdf-annotations-panel > .mimir-pdf-inspector__footer {
   flex: none;
   margin-top: 0;
   padding: 12px 16px 16px;
@@ -994,8 +995,6 @@
   align-content: start;
 }
 
-.mimir-pdf-annotations__header,
-.mimir-pdf-annotations__actions,
 .mimir-pdf-annotations__context-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1019,8 +1018,21 @@
   gap: 4px;
 }
 
-.mimir-pdf-annotations__actions > * {
-  flex-shrink: 0;
+.mimir-pdf-annotations__fields {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mimir-pdf-annotations__actions > button {
+  width: 100%;
+}
+
+.mimir-pdf-annotations__context-actions > * {
+  flex: 1;
 }
 
 .mimir-pdf-annotations__threads {

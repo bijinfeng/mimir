@@ -55,6 +55,7 @@ interface NumberFieldProps {
   min?: number
   max?: number
   step?: number
+  disabled?: boolean
 }
 function NumberField(props: NumberFieldProps) {
   return (
@@ -71,11 +72,13 @@ function ConciseNumberInput({
   min = 0,
   max = 14400,
   step = 1,
+  disabled = false,
 }: NumberFieldProps) {
   // Format only the view: unrelated edits must retain the exact source geometry.
   const display = String(Number(value.toPrecision(6)))
   const [draft, setDraft] = useState<string | null>(null)
   const commit = () => {
+    if (disabled) return
     setDraft(null)
     if (draft === null || draft.trim() === '') return
     const parsed = Number(draft)
@@ -85,6 +88,7 @@ function ConciseNumberInput({
   }
   return (
     <InputNumber<string>
+      disabled={disabled}
       style={{ width: '100%' }}
       aria-label={label}
       title={label}
@@ -106,10 +110,12 @@ function ConciseNumberInput({
   )
 }
 function Field({
+  disabled,
   label,
   value,
   onChange,
 }: {
+  disabled?: boolean
   label: string
   value: string
   onChange: (s: string) => void
@@ -117,7 +123,12 @@ function Field({
   return (
     <label className="mimir-pdf-inspector__control">
       <span>{label}</span>
-      <Input value={value} aria-label={label} onChange={(e) => onChange(e.target.value)} />
+      <Input
+        disabled={disabled}
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </label>
   )
 }
@@ -185,49 +196,49 @@ export function PdfLocalPanel({
         onRefresh={() => void onAction('get_document_properties', {})}
         onClose={onClose}
       />
-      <div
-        className="mimir-pdf-local-tabs"
-        role="tablist"
-        aria-label="文档工具类别"
-        onKeyDown={(event) => {
-          const keys = Object.keys(labels) as PdfLocalPanelMode[]
-          const current = keys.indexOf(mode)
-          const next =
-            event.key === 'ArrowRight' || event.key === 'ArrowDown'
-              ? (current + 1) % keys.length
-              : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
-                ? (current + keys.length - 1) % keys.length
-                : event.key === 'Home'
-                  ? 0
-                  : event.key === 'End'
-                    ? keys.length - 1
-                    : null
-          if (next === null) return
-          event.preventDefault()
-          setMode(keys[next]!)
-          onModeChange?.(keys[next]!)
-          setFeedback(null)
-          event.currentTarget.querySelectorAll<HTMLButtonElement>('button')[next]?.focus()
-        }}
-      >
-        {(Object.entries(labels) as Array<[PdfLocalPanelMode, string]>).map(([key, label]) => (
-          <Button
-            key={key}
-            role="tab"
-            aria-selected={mode === key}
-            tabIndex={mode === key ? 0 : -1}
-            type={mode === key ? 'primary' : 'text'}
-            onClick={() => {
-              setMode(key)
-              onModeChange?.(key)
-              setFeedback(null)
-            }}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
       <div className="mimir-pdf-inspector__content" ref={contentRef}>
+        <div
+          className="mimir-pdf-local-tabs"
+          role="tablist"
+          aria-label="文档工具类别"
+          onKeyDown={(event) => {
+            const keys = Object.keys(labels) as PdfLocalPanelMode[]
+            const current = keys.indexOf(mode)
+            const next =
+              event.key === 'ArrowRight' || event.key === 'ArrowDown'
+                ? (current + 1) % keys.length
+                : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+                  ? (current + keys.length - 1) % keys.length
+                  : event.key === 'Home'
+                    ? 0
+                    : event.key === 'End'
+                      ? keys.length - 1
+                      : null
+            if (next === null) return
+            event.preventDefault()
+            setMode(keys[next]!)
+            onModeChange?.(keys[next]!)
+            setFeedback(null)
+            event.currentTarget.querySelectorAll<HTMLButtonElement>('button')[next]?.focus()
+          }}
+        >
+          {(Object.entries(labels) as Array<[PdfLocalPanelMode, string]>).map(([key, label]) => (
+            <Button
+              key={key}
+              role="tab"
+              aria-selected={mode === key}
+              tabIndex={mode === key ? 0 : -1}
+              type={mode === key ? 'primary' : 'text'}
+              onClick={() => {
+                setMode(key)
+                onModeChange?.(key)
+                setFeedback(null)
+              }}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
         {error && (
           <p className="mimir-pdf-inspector__error" role="alert">
             {error}
@@ -342,7 +353,7 @@ function PageTools({
         >
           导出当前 PDF / 打印
         </Button>
-        <Field label="目标页码" value={range} onChange={setRange} />
+        <Field disabled={busy} label="目标页码" value={range} onChange={setRange} />
         <p className="mimir-pdf-inspector__meta">例如 1-3,5；all 表示全部页面。</p>
         <Button
           icon={<FileOutput size={14} />}
@@ -365,7 +376,7 @@ function PageTools({
         <p className="mimir-pdf-inspector__meta">
           {file?.name ?? '选择另一份 PDF，保留当前原件。'}
         </p>
-        <Field label="来源页码" value={sourceRange} onChange={setSourceRange} />
+        <Field disabled={busy} label="来源页码" value={sourceRange} onChange={setSourceRange} />
         <div className="mimir-pdf-local-actions">
           <Button
             type="primary"
@@ -397,6 +408,7 @@ function PageTools({
       <div className="mimir-pdf-local-group">
         <h3 className="mimir-pdf-inspector__section-title">按份拆分</h3>
         <NumberField
+          disabled={busy}
           label="每份页数"
           value={count}
           min={1}
@@ -415,6 +427,7 @@ function PageTools({
         <label className="mimir-pdf-inspector__control">
           <span>每页拆为</span>
           <ToolbarSelect
+            disabled={busy}
             label="拆页网格"
             value={grid}
             options={[
@@ -428,8 +441,16 @@ function PageTools({
         <Button disabled={busy} onClick={() => void act('split_pages', { per_page: Number(grid) })}>
           拆页为新 PDF
         </Button>
-        <NumberField label="每张纸页数" value={perSheet} min={2} max={16} onChange={setPerSheet} />
+        <NumberField
+          disabled={busy}
+          label="每张纸页数"
+          value={perSheet}
+          min={2}
+          max={16}
+          onChange={setPerSheet}
+        />
         <ToolbarSelect
+          disabled={busy}
           label="拼版方向"
           value={direction}
           options={[
@@ -438,7 +459,11 @@ function PageTools({
           ]}
           onChange={setDirection}
         />
-        <Checkbox checked={separator} onChange={(e) => setSeparator(e.target.checked)}>
+        <Checkbox
+          disabled={busy}
+          checked={separator}
+          onChange={(e) => setSeparator(e.target.checked)}
+        >
           绘制分隔线
         </Checkbox>
         <Button
@@ -454,6 +479,7 @@ function PageTools({
         <div className="mimir-pdf-inspector__grid">
           {(['left', 'top', 'right', 'bottom'] as const).map((k, i) => (
             <NumberField
+              disabled={busy}
               key={k}
               label={['左边界', '上边界', '右边界', '下边界'][i]!}
               value={crop[k]}
@@ -527,6 +553,7 @@ function DrawingTools({
     <>
       <div className="mimir-pdf-local-group">
         <ToolbarSelect
+          disabled={busy}
           label="选择绘图"
           value={id}
           options={[
@@ -539,6 +566,7 @@ function DrawingTools({
           onChange={setId}
         />
         <ToolbarSelect
+          disabled={busy}
           label="绘图形状"
           value={draft.kind}
           options={[
@@ -554,6 +582,7 @@ function DrawingTools({
         />
         <div className="mimir-pdf-inspector__grid">
           <NumberField
+            disabled={busy}
             label="左侧距离 pt"
             value={draft.x}
             min={id === 'new' ? 0 : -Number.MAX_VALUE}
@@ -561,6 +590,7 @@ function DrawingTools({
             onChange={(x) => patch({ x })}
           />
           <NumberField
+            disabled={busy}
             label="顶部距离 pt"
             value={draft.y}
             min={id === 'new' ? 0 : -Number.MAX_VALUE}
@@ -568,6 +598,7 @@ function DrawingTools({
             onChange={(y) => patch({ y })}
           />
           <NumberField
+            disabled={busy}
             label="宽度 pt"
             value={draft.width}
             min={Number.MIN_VALUE}
@@ -575,6 +606,7 @@ function DrawingTools({
             onChange={(width) => patch({ width })}
           />
           <NumberField
+            disabled={busy}
             label="高度 pt"
             value={draft.height}
             min={Number.MIN_VALUE}
@@ -582,6 +614,7 @@ function DrawingTools({
             onChange={(height) => patch({ height })}
           />
           <NumberField
+            disabled={busy}
             label="线宽 pt"
             value={draft.thickness}
             min={id === 'new' ? 0.25 : Number.MIN_VALUE}
@@ -590,6 +623,7 @@ function DrawingTools({
             onChange={(thickness) => patch({ thickness })}
           />
           <NumberField
+            disabled={busy}
             label="不透明度"
             value={draft.opacity}
             max={1}
@@ -599,14 +633,21 @@ function DrawingTools({
         </div>
         {draft.kind !== 'ink' && (
           <ToolbarSelect
+            disabled={busy}
             label="绘图方向"
             value={String(draft.rotation ?? 0)}
             options={[0, 90, 180, 270].map((r) => ({ value: String(r), label: `${r}°` }))}
             onChange={(v) => patch({ rotation: Number(v) as 0 | 90 | 180 | 270 })}
           />
         )}
-        <Field label="线条颜色" value={draft.color} onChange={(color) => patch({ color })} />
         <Field
+          disabled={busy}
+          label="线条颜色"
+          value={draft.color}
+          onChange={(color) => patch({ color })}
+        />
+        <Field
+          disabled={busy}
           label="填充颜色（可留空）"
           value={draft.fill ?? ''}
           onChange={(fill) => patch({ fill: fill || undefined })}
@@ -661,9 +702,15 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
   return (
     <>
       <div className="mimir-pdf-local-group">
-        <Field label="水印文字" value={wm.text} onChange={(text) => setWm({ ...wm, text })} />
+        <Field
+          disabled={busy}
+          label="水印文字"
+          value={wm.text}
+          onChange={(text) => setWm({ ...wm, text })}
+        />
         <div className="mimir-pdf-inspector__grid">
           <NumberField
+            disabled={busy}
             label="旋转角度"
             value={wm.angle}
             min={-180}
@@ -671,6 +718,7 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
             onChange={(angle) => setWm({ ...wm, angle })}
           />
           <NumberField
+            disabled={busy}
             label="水印不透明度"
             value={wm.opacity}
             max={1}
@@ -678,6 +726,7 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
             onChange={(opacity) => setWm({ ...wm, opacity })}
           />
           <NumberField
+            disabled={busy}
             label="相对页面宽度"
             value={wm.size_ratio}
             min={0.02}
@@ -686,7 +735,12 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
             onChange={(size_ratio) => setWm({ ...wm, size_ratio })}
           />
         </div>
-        <Field label="水印颜色" value={wm.color} onChange={(color) => setWm({ ...wm, color })} />
+        <Field
+          disabled={busy}
+          label="水印颜色"
+          value={wm.color}
+          onChange={(color) => setWm({ ...wm, color })}
+        />
         <Button type="primary" disabled={busy} onClick={() => void act('set_watermark', wm)}>
           应用水印
         </Button>
@@ -705,6 +759,7 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
           ] as const
         ).map((key, i) => (
           <Field
+            disabled={busy}
             key={key}
             label={['页眉左', '页眉中', '页眉右', '页脚左', '页脚中', '页脚右'][i]!}
             value={hf[key]}
@@ -715,6 +770,7 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
           使用 {'{page}'} 和 {'{total}'} 插入页码与总页数。
         </p>
         <Checkbox
+          disabled={busy}
           checked={hf.page_number}
           onChange={(e) => setHf({ ...hf, page_number: e.target.checked })}
         >
@@ -722,12 +778,14 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
         </Checkbox>
         <div className="mimir-pdf-inspector__grid">
           <NumberField
+            disabled={busy}
             label="起始页码"
             value={hf.start_at}
             max={1000000}
             onChange={(start_at) => setHf({ ...hf, start_at })}
           />
           <NumberField
+            disabled={busy}
             label="页眉页脚字号"
             value={hf.font_size}
             min={6}
@@ -736,6 +794,7 @@ function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; a
           />
         </div>
         <Field
+          disabled={busy}
           label="页眉页脚颜色"
           value={hf.color}
           onChange={(color) => setHf({ ...hf, color })}
@@ -760,6 +819,7 @@ function PropertyTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean
       <div className="mimir-pdf-local-group">
         {(['title', 'author', 'subject', 'keywords'] as const).map((key, i) => (
           <Field
+            disabled={busy}
             key={key}
             label={['标题', '作者', '主题', '关键词'][i]!}
             value={metadata[key] ?? ''}
@@ -778,6 +838,7 @@ function PropertyTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean
         <h3 className="mimir-pdf-inspector__section-title">书签目录</h3>
         <p className="mimir-pdf-inspector__meta">每行“页码 | 标题”；两空格缩进一级。</p>
         <Input.TextArea
+          disabled={busy}
           rows={7}
           value={outline}
           aria-label="书签目录"

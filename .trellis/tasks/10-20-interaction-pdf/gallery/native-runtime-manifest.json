@@ -1,0 +1,35 @@
+{
+  "node": "v25.9.0",
+  "packages": {
+    "pdf-lib": {
+      "version": "1.17.1",
+      "packageJsonSha256": "951726fe11b7376919050c18d2cd9237d6e211d7ee0b01104990cb95105fe182"
+    },
+    "pdfjs-dist": {
+      "version": "6.4.299",
+      "packageJsonSha256": "8103b756525a79ec119558e9796062228290acfd5178a6b7fc93e6979511f604"
+    },
+    "@embedpdf/pdfium": {
+      "version": "2.15.1",
+      "packageJsonSha256": "03b964354a9d50118daf412c1acb3d542816960cf0afff0a75f68dde7ba332bf"
+    },
+    "harfbuzzjs": {
+      "version": "0.10.3",
+      "packageJsonSha256": "4a27341dc8881a1c5657fb5eedf7e7a63a550167a8ae45d0e85a71d21b629fe2"
+    }
+  },
+  "lockfileSha256": "c08872d4285b6487b32ecb274740f23c195d734a99c7874c0eb09c87bb05896d",
+  "baselineLockfileSha256": "c08872d4285b6487b32ecb274740f23c195d734a99c7874c0eb09c87bb05896d",
+  "nativeWasm": {
+    "pdfium": {
+      "path": "/Users/admin/Desktop/mimir/node_modules/.pnpm/@embedpdf+pdfium@2.15.1/node_modules/@embedpdf/pdfium/dist/pdfium.wasm",
+      "bytes": 4646932,
+      "sha256": "5e4cd023c3dad4a895b3571ca573d3fc51bac6de48360d95283134385b954eaa"
+    },
+    "harfbuzz": {
+      "path": "/Users/admin/Desktop/mimir/node_modules/.pnpm/harfbuzzjs@0.10.3/node_modules/harfbuzzjs/hb-subset.wasm",
+      "bytes": 634892,
+      "sha256": "3a5d246b0e4c0017084775e9f2c7fce96e45d09b1a354fd9e2e440c88fb9890d"
+    }
+  }
+}

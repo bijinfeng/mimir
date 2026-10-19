@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfTextBlockPanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfTextBlockPanel.tsx</h1>
+    <p>current真实源码 · SHA256 74b51cec62736d9b17d0ce4e021e2d7803fc7b54c0240aaf6ba30f14d63ef56d</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Move, RotateCcw } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L2"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L3">
+      <pre>import type { PdfPageTextBlock, PdfTextBlockTarget } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>import type { PdfHostBlocks } from &#x27;../agent/pdf-content-agent.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import {</pre></li>
+    <li id="L6"><pre>  ToolbarButton,</pre></li>
+    <li id="L7"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L8"><pre>  ToolbarSelect,</pre></li>
+    <li id="L9"><pre>  ToolbarToggleGroup,</pre></li>
+    <li id="L10"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L11">
+      <pre>
+import { PdfInspectorHeader, type PdfPanelResult } from &#x27;./PdfInspector.js&#x27;</pre>
+    </li>
+    <li id="L12">
+      <pre>import { PdfTextBlockRewriteForm } from &#x27;./PdfTextBlockRewriteForm.js&#x27;</pre>
+    </li>
+    <li id="L13"><pre>import type { PdfTextBlock } from &#x27;./pdf-text-blocks.js&#x27;</pre></li>
+    <li id="L14"><pre>import &#x27;./pdf-text-block-panel.css&#x27;</pre></li>
+    <li id="L15"><pre></pre></li>
+    <li id="L16"><pre>type Apply = (</pre></li>
+    <li id="L17"><pre>  tool: string,</pre></li>
+    <li id="L18"><pre>  args: Record&lt;string, unknown&gt;,</pre></li>
+    <li id="L19"><pre>  version: number,</pre></li>
+    <li id="L20"><pre>  signal: AbortSignal,</pre></li>
+    <li id="L21"><pre>) =&gt; Promise&lt;PdfPanelResult | undefined&gt;</pre></li>
+    <li id="L22"><pre></pre></li>
+    <li id="L23"><pre>function BlockMoveForm({</pre></li>
+    <li id="L24"><pre>  target,</pre></li>
+    <li id="L25"><pre>  version,</pre></li>
+    <li id="L26"><pre>  busy,</pre></li>
+    <li id="L27"><pre>  onApply,</pre></li>
+    <li id="L28"><pre>}: {</pre></li>
+    <li id="L29"><pre>  target: PdfTextBlockTarget</pre></li>
+    <li id="L30"><pre>  version: number</pre></li>
+    <li id="L31"><pre>  busy: boolean</pre></li>
+    <li id="L32"><pre>  onApply: Apply</pre></li>
+    <li id="L33"><pre>}) {</pre></li>
+    <li id="L34"><pre>  const [dx, setDx] = useState(0)</pre></li>
+    <li id="L35"><pre>  const [dy, setDy] = useState(0)</pre></li>
+    <li id="L36"><pre>  const [pending, setPending] = useState(false)</pre></li>
+    <li id="L37"><pre>  const [numberFocused, setNumberFocused] = useState(false)</pre></li>
+    <li id="L38"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L39"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L40"><pre>  useEffect(() =&gt; () =&gt; request.current?.abort(), [])</pre></li>
+    <li id="L41"><pre>  const apply = async () =&gt; {</pre></li>
+    <li id="L42"><pre>    if (request.current || busy || (!dx &amp;&amp; !dy)) return</pre></li>
+    <li id="L43"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L44"><pre>    request.current = controller</pre></li>
+    <li id="L45"><pre>    setPending(true)</pre></li>
+    <li id="L46"><pre>    setError(null)</pre></li>
+    <li id="L47"><pre>    try {</pre></li>
+    <li id="L48"><pre>      const result = await onApply(</pre></li>
+    <li id="L49"><pre>        &#x27;move_text_block&#x27;,</pre></li>
+    <li id="L50"><pre>        {</pre></li>
+    <li id="L51"><pre>          page: target.pageIndex + 1,</pre></li>
+    <li id="L52"><pre>          target,</pre></li>
+    <li id="L53"><pre>          dx,</pre></li>
+    <li id="L54"><pre>          dy,</pre></li>
+    <li id="L55"><pre>        },</pre></li>
+    <li id="L56"><pre>        version,</pre></li>
+    <li id="L57"><pre>        controller.signal,</pre></li>
+    <li id="L58"><pre>      )</pre></li>
+    <li id="L59"><pre>      if (!controller.signal.aborted &amp;&amp; !result?.ok)</pre></li>
+    <li id="L60">
+      <pre>        setError(result?.error ?? &#x27;段落移动未完成，请重试&#x27;)</pre>
+    </li>
+    <li id="L61"><pre>    } catch (cause) {</pre></li>
+    <li id="L62"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L63">
+      <pre>        setError(cause instanceof Error ? cause.message : String(cause))</pre>
+    </li>
+    <li id="L64"><pre>    } finally {</pre></li>
+    <li id="L65"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L66"><pre>        request.current = null</pre></li>
+    <li id="L67"><pre>        if (!controller.signal.aborted) setPending(false)</pre></li>
+    <li id="L68"><pre>      }</pre></li>
+    <li id="L69"><pre>    }</pre></li>
+    <li id="L70"><pre>  }</pre></li>
+    <li id="L71"><pre>  const blocked = busy || pending</pre></li>
+    <li id="L72"><pre>  return (</pre></li>
+    <li id="L73"><pre>    &lt;&gt;</pre></li>
+    <li id="L74"><pre>      &lt;div</pre></li>
+    <li id="L75"><pre>        className=&quot;mimir-pdf-inspector__content&quot;</pre></li>
+    <li id="L76"><pre>        onFocusCapture={(event) =&gt;</pre></li>
+    <li id="L77"><pre>          setNumberFocused(</pre></li>
+    <li id="L78">
+      <pre>
+            event.target instanceof HTMLInputElement &amp;&amp; !!event.target.closest(&#x27;.me-input--num&#x27;),</pre>
+    </li>
+    <li id="L79"><pre>          )</pre></li>
+    <li id="L80"><pre>        }</pre></li>
+    <li id="L81"><pre>        onBlurCapture={() =&gt; setNumberFocused(false)}</pre></li>
+    <li id="L82"><pre>      &gt;</pre></li>
+    <li id="L83"><pre>        &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre></li>
+    <li id="L84">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L85"><pre>            &lt;span&gt;水平移动 · pt&lt;/span&gt;</pre></li>
+    <li id="L86"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L87"><pre>              label=&quot;段落水平偏移（pt）&quot;</pre></li>
+    <li id="L88"><pre>              value={dx}</pre></li>
+    <li id="L89"><pre>              min={-10000}</pre></li>
+    <li id="L90"><pre>              max={10000}</pre></li>
+    <li id="L91"><pre>              disabled={blocked}</pre></li>
+    <li id="L92"><pre>              onCommit={setDx}</pre></li>
+    <li id="L93"><pre>            /&gt;</pre></li>
+    <li id="L94"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L95">
+      <pre>          &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L96"><pre>            &lt;span&gt;垂直移动 · pt&lt;/span&gt;</pre></li>
+    <li id="L97"><pre>            &lt;ToolbarNumberField</pre></li>
+    <li id="L98"><pre>              label=&quot;段落垂直偏移（pt）&quot;</pre></li>
+    <li id="L99"><pre>              value={dy}</pre></li>
+    <li id="L100"><pre>              min={-10000}</pre></li>
+    <li id="L101"><pre>              max={10000}</pre></li>
+    <li id="L102"><pre>              disabled={blocked}</pre></li>
+    <li id="L103"><pre>              onCommit={setDy}</pre></li>
+    <li id="L104"><pre>            /&gt;</pre></li>
+    <li id="L105"><pre>          &lt;/label&gt;</pre></li>
+    <li id="L106"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L107"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L108">
+      <pre>
+          正数向右、向下，负数向左、向上。整体移动原文对象，保留字体和字形，不重排其他内容。</pre>
+    </li>
+    <li id="L109"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L110"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L111">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L112"><pre>            {error}</pre></li>
+    <li id="L113"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L114"><pre>        )}</pre></li>
+    <li id="L115"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L116">
+      <pre>      &lt;div className=&quot;mimir-pdf-text-block__actions&quot;&gt;</pre>
+    </li>
+    <li id="L117"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L118"><pre>          label=&quot;重置段落偏移&quot;</pre></li>
+    <li id="L119"><pre>          disabled={blocked || (!dx &amp;&amp; !dy)}</pre></li>
+    <li id="L120"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L121"><pre>            setDx(0)</pre></li>
+    <li id="L122"><pre>            setDy(0)</pre></li>
+    <li id="L123"><pre>          }}</pre></li>
+    <li id="L124"><pre>        &gt;</pre></li>
+    <li id="L125"><pre>          &lt;RotateCcw size={16} /&gt;</pre></li>
+    <li id="L126"><pre>          重置</pre></li>
+    <li id="L127"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L128"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L129"><pre>          label=&quot;应用段落移动&quot;</pre></li>
+    <li id="L130"><pre>          primary</pre></li>
+    <li id="L131">
+      <pre>          disabled={blocked || (!dx &amp;&amp; !dy &amp;&amp; !numberFocused)}</pre>
+    </li>
+    <li id="L132">
+      <pre>
+          disabledReason={blocked ? &#x27;PDF 正在处理&#x27; : &#x27;先设置移动距离&#x27;}</pre>
+    </li>
+    <li id="L133"><pre>          onClick={() =&gt; void apply()}</pre></li>
+    <li id="L134"><pre>        &gt;</pre></li>
+    <li id="L135"><pre>          &lt;Move size={16} /&gt;</pre></li>
+    <li id="L136"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L137"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L138"><pre>    &lt;/&gt;</pre></li>
+    <li id="L139"><pre>  )</pre></li>
+    <li id="L140"><pre>}</pre></li>
+    <li id="L141"><pre></pre></li>
+    <li id="L142"><pre>function BlockTools({</pre></li>
+    <li id="L143"><pre>  target,</pre></li>
+    <li id="L144"><pre>  block,</pre></li>
+    <li id="L145"><pre>  version,</pre></li>
+    <li id="L146"><pre>  getVersion,</pre></li>
+    <li id="L147"><pre>  busy,</pre></li>
+    <li id="L148"><pre>  onApply,</pre></li>
+    <li id="L149"><pre>}: {</pre></li>
+    <li id="L150"><pre>  target: PdfTextBlockTarget</pre></li>
+    <li id="L151"><pre>  block?: PdfPageTextBlock</pre></li>
+    <li id="L152"><pre>  version: number</pre></li>
+    <li id="L153"><pre>  getVersion(): number</pre></li>
+    <li id="L154"><pre>  busy: boolean</pre></li>
+    <li id="L155"><pre>  onApply: Apply</pre></li>
+    <li id="L156"><pre>}) {</pre></li>
+    <li id="L157">
+      <pre>
+  const [mode, setMode] = useState&lt;&#x27;move&#x27; | &#x27;rewrite&#x27; | &#x27;replace&#x27;&gt;(&#x27;move&#x27;)</pre>
+    </li>
+    <li id="L158">
+      <pre>  const canRewrite = block?.canRewrite === true &amp;&amp; !!block.format</pre>
+    </li>
+    <li id="L159"><pre>  return (</pre></li>
+    <li id="L160"><pre>    &lt;&gt;</pre></li>
+    <li id="L161">
+      <pre>      &lt;div className=&quot;mimir-pdf-text-block__modes&quot;&gt;</pre>
+    </li>
+    <li id="L162"><pre>        &lt;ToolbarToggleGroup</pre></li>
+    <li id="L163"><pre>          label=&quot;原文段落操作&quot;</pre></li>
+    <li id="L164"><pre>          value={mode}</pre></li>
+    <li id="L165"><pre>          onChange={setMode}</pre></li>
+    <li id="L166"><pre>          options={[</pre></li>
+    <li id="L167">
+      <pre>            { value: &#x27;move&#x27;, label: &#x27;整体移动&#x27; },</pre>
+    </li>
+    <li id="L168">
+      <pre>
+            { value: &#x27;rewrite&#x27;, label: &#x27;整段改写&#x27;, disabled: !canRewrite },</pre>
+    </li>
+    <li id="L169">
+      <pre>
+            { value: &#x27;replace&#x27;, label: &#x27;局部替换&#x27;, disabled: !canRewrite },</pre>
+    </li>
+    <li id="L170"><pre>          ]}</pre></li>
+    <li id="L171"><pre>        /&gt;</pre></li>
+    <li id="L172"><pre>        {!canRewrite &amp;&amp; (</pre></li>
+    <li id="L173">
+      <pre>          &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L174">
+      <pre>
+            {block?.rewriteReason ?? &#x27;此段落尚未核验为可改写原文，可整体移动。&#x27;}</pre>
+    </li>
+    <li id="L175"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L176"><pre>        )}</pre></li>
+    <li id="L177"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L178"><pre>      {mode === &#x27;move&#x27; || !block?.format ? (</pre></li>
+    <li id="L179">
+      <pre>
+        &lt;BlockMoveForm target={target} version={version} busy={busy} onApply={onApply} /&gt;</pre>
+    </li>
+    <li id="L180"><pre>      ) : (</pre></li>
+    <li id="L181"><pre>        &lt;PdfTextBlockRewriteForm</pre></li>
+    <li id="L182"><pre>          key={mode}</pre></li>
+    <li id="L183"><pre>          target={target}</pre></li>
+    <li id="L184"><pre>          block={{ ...block, format: block.format }}</pre></li>
+    <li id="L185"><pre>          partial={mode === &#x27;replace&#x27;}</pre></li>
+    <li id="L186"><pre>          version={version}</pre></li>
+    <li id="L187"><pre>          getVersion={getVersion}</pre></li>
+    <li id="L188"><pre>          busy={busy}</pre></li>
+    <li id="L189"><pre>          onApply={onApply}</pre></li>
+    <li id="L190"><pre>        /&gt;</pre></li>
+    <li id="L191"><pre>      )}</pre></li>
+    <li id="L192"><pre>    &lt;/&gt;</pre></li>
+    <li id="L193"><pre>  )</pre></li>
+    <li id="L194"><pre>}</pre></li>
+    <li id="L195"><pre></pre></li>
+    <li id="L196"><pre>export function PdfTextBlockPanel({</pre></li>
+    <li id="L197"><pre>  bytes,</pre></li>
+    <li id="L198"><pre>  blocks,</pre></li>
+    <li id="L199"><pre>  selected,</pre></li>
+    <li id="L200"><pre>  getVersion,</pre></li>
+    <li id="L201"><pre>  size,</pre></li>
+    <li id="L202"><pre>  host,</pre></li>
+    <li id="L203"><pre>  busy,</pre></li>
+    <li id="L204"><pre>  ready,</pre></li>
+    <li id="L205"><pre>  issue,</pre></li>
+    <li id="L206"><pre>  onSelect,</pre></li>
+    <li id="L207"><pre>  onApply,</pre></li>
+    <li id="L208"><pre>  onClose,</pre></li>
+    <li id="L209"><pre>}: {</pre></li>
+    <li id="L210"><pre>  bytes: Uint8Array</pre></li>
+    <li id="L211"><pre>  blocks: readonly PdfTextBlock[]</pre></li>
+    <li id="L212"><pre>  selected: PdfTextBlock | null</pre></li>
+    <li id="L213"><pre>  getVersion(): number</pre></li>
+    <li id="L214"><pre>  size: { width: number; height: number }</pre></li>
+    <li id="L215"><pre>  host: PdfHostBlocks</pre></li>
+    <li id="L216"><pre>  busy: boolean</pre></li>
+    <li id="L217"><pre>  ready: boolean</pre></li>
+    <li id="L218"><pre>  issue?: string</pre></li>
+    <li id="L219"><pre>  onSelect(block: PdfTextBlock): void</pre></li>
+    <li id="L220"><pre>  onApply: Apply</pre></li>
+    <li id="L221"><pre>  onClose(): void</pre></li>
+    <li id="L222"><pre>}) {</pre></li>
+    <li id="L223"><pre>  const [verified, setVerified] = useState&lt;{</pre></li>
+    <li id="L224"><pre>    bytes: Uint8Array</pre></li>
+    <li id="L225"><pre>    block: PdfTextBlock</pre></li>
+    <li id="L226"><pre>    version: number</pre></li>
+    <li id="L227"><pre>    target?: PdfTextBlockTarget</pre></li>
+    <li id="L228"><pre>    metadata?: PdfPageTextBlock</pre></li>
+    <li id="L229"><pre>    error?: string</pre></li>
+    <li id="L230"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L231">
+      <pre>
+  const result = verified?.bytes === bytes &amp;&amp; verified.block === selected ? verified : null</pre>
+    </li>
+    <li id="L232"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L233"><pre>    if (!selected || !ready) return</pre></li>
+    <li id="L234"><pre>    const version = getVersion()</pre></li>
+    <li id="L235"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L236"><pre>    void host({</pre></li>
+    <li id="L237"><pre>      bytes,</pre></li>
+    <li id="L238"><pre>      expectedVersion: version,</pre></li>
+    <li id="L239">
+      <pre>
+      operation: { op: &#x27;inspect&#x27;, probe: { pageIndex: selected.page, items: selected.items } },</pre>
+    </li>
+    <li id="L240"><pre>      signal: controller.signal,</pre></li>
+    <li id="L241"><pre>    })</pre></li>
+    <li id="L242"><pre>      .then((response) =&gt; {</pre></li>
+    <li id="L243">
+      <pre>        if (controller.signal.aborted || getVersion() !== version) return</pre>
+    </li>
+    <li id="L244">
+      <pre>        if (response.bytes || response.version !== version || !response.target)</pre>
+    </li>
+    <li id="L245"><pre>          throw new Error(&#x27;原文段落核验结果无效&#x27;)</pre></li>
+    <li id="L246"><pre>        setVerified({</pre></li>
+    <li id="L247"><pre>          bytes,</pre></li>
+    <li id="L248"><pre>          block: selected,</pre></li>
+    <li id="L249"><pre>          version,</pre></li>
+    <li id="L250"><pre>          target: response.target,</pre></li>
+    <li id="L251"><pre>          metadata: response.blocks.blocks.find(</pre></li>
+    <li id="L252"><pre>            (block) =&gt;</pre></li>
+    <li id="L253">
+      <pre>              block.blockIndex === response.target!.blockIndex &amp;&amp;</pre>
+    </li>
+    <li id="L254"><pre>              block.page === response.target!.pageIndex + 1,</pre></li>
+    <li id="L255"><pre>          ),</pre></li>
+    <li id="L256"><pre>        })</pre></li>
+    <li id="L257"><pre>      })</pre></li>
+    <li id="L258"><pre>      .catch((cause) =&gt; {</pre></li>
+    <li id="L259"><pre>        if (!controller.signal.aborted)</pre></li>
+    <li id="L260"><pre>          setVerified({</pre></li>
+    <li id="L261"><pre>            bytes,</pre></li>
+    <li id="L262"><pre>            block: selected,</pre></li>
+    <li id="L263"><pre>            version,</pre></li>
+    <li id="L264">
+      <pre>            error: cause instanceof Error ? cause.message : String(cause),</pre>
+    </li>
+    <li id="L265"><pre>          })</pre></li>
+    <li id="L266"><pre>      })</pre></li>
+    <li id="L267"><pre>    return () =&gt; controller.abort()</pre></li>
+    <li id="L268"><pre>  }, [bytes, selected, getVersion, host, ready])</pre></li>
+    <li id="L269"><pre>  return (</pre></li>
+    <li id="L270">
+      <pre>
+    &lt;section className=&quot;mimir-pdf-panel&quot; role=&quot;region&quot; aria-label=&quot;原文段落编辑面板&quot;&gt;</pre>
+    </li>
+    <li id="L271"><pre>      &lt;PdfInspectorHeader</pre></li>
+    <li id="L272"><pre>        title=&quot;原文段落&quot;</pre></li>
+    <li id="L273"><pre>        detail={`${blocks.length} 个段落`}</pre></li>
+    <li id="L274"><pre>        busy={busy || !selected || !ready}</pre></li>
+    <li id="L275"><pre>        refreshLabel=&quot;重新核验段落&quot;</pre></li>
+    <li id="L276"><pre>        closeLabel=&quot;关闭原文段落面板&quot;</pre></li>
+    <li id="L277"><pre>        onRefresh={() =&gt; {</pre></li>
+    <li id="L278"><pre>          if (selected) onSelect({ ...selected })</pre></li>
+    <li id="L279"><pre>        }}</pre></li>
+    <li id="L280"><pre>        onClose={onClose}</pre></li>
+    <li id="L281"><pre>      /&gt;</pre></li>
+    <li id="L282">
+      <pre>      &lt;div className=&quot;mimir-pdf-text-block__selection&quot;&gt;</pre>
+    </li>
+    <li id="L283">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L284"><pre>          &lt;span&gt;当前段落&lt;/span&gt;</pre></li>
+    <li id="L285"><pre>          &lt;ToolbarSelect&lt;string&gt;</pre></li>
+    <li id="L286"><pre>            label=&quot;选择原文段落&quot;</pre></li>
+    <li id="L287">
+      <pre>            value={selected ? String(selected.blockIndex) : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L288"><pre>            disabled={busy || !ready}</pre></li>
+    <li id="L289"><pre>            options={[</pre></li>
+    <li id="L290"><pre>              {</pre></li>
+    <li id="L291"><pre>                value: &#x27;&#x27;,</pre></li>
+    <li id="L292"><pre>                label: issue</pre></li>
+    <li id="L293"><pre>                  ? &#x27;请先保存当前改动&#x27;</pre></li>
+    <li id="L294"><pre>                  : ready</pre></li>
+    <li id="L295"><pre>                    ? &#x27;在页面点选或从此处选择&#x27;</pre></li>
+    <li id="L296"><pre>                    : &#x27;正在读取文字层…&#x27;,</pre></li>
+    <li id="L297"><pre>              },</pre></li>
+    <li id="L298"><pre>              ...blocks.map((block) =&gt; ({</pre></li>
+    <li id="L299"><pre>                value: String(block.blockIndex),</pre></li>
+    <li id="L300">
+      <pre>
+                label: `${block.blockIndex + 1}. ${block.text.replace(/\s+/g, &#x27; &#x27;).slice(0, 48)}`,</pre>
+    </li>
+    <li id="L301"><pre>              })),</pre></li>
+    <li id="L302"><pre>            ]}</pre></li>
+    <li id="L303"><pre>            onChange={(value) =&gt; {</pre></li>
+    <li id="L304">
+      <pre>
+              const block = blocks.find((item) =&gt; String(item.blockIndex) === value)</pre>
+    </li>
+    <li id="L305"><pre>              if (block) onSelect(block)</pre></li>
+    <li id="L306"><pre>            }}</pre></li>
+    <li id="L307"><pre>          /&gt;</pre></li>
+    <li id="L308"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L309"><pre>        {selected &amp;&amp; (</pre></li>
+    <li id="L310"><pre>          &lt;&gt;</pre></li>
+    <li id="L311">
+      <pre>
+            &lt;p className=&quot;mimir-pdf-text-block__excerpt&quot;&gt;{selected.text}&lt;/p&gt;</pre>
+    </li>
+    <li id="L312">
+      <pre>            &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L313"><pre>              位置 {Math.round(selected.rect.x * size.width)}，</pre></li>
+    <li id="L314">
+      <pre>
+              {Math.round(selected.rect.y * size.height)} pt · {selected.items.length} 个文字项</pre>
+    </li>
+    <li id="L315"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L316"><pre>          &lt;/&gt;</pre></li>
+    <li id="L317"><pre>        )}</pre></li>
+    <li id="L318"><pre>        &lt;p</pre></li>
+    <li id="L319">
+      <pre>
+          className={result?.error ? &#x27;mimir-pdf-inspector__error&#x27; : &#x27;mimir-pdf-inspector__hint&#x27;}</pre>
+    </li>
+    <li id="L320"><pre>          role={result?.error ? &#x27;alert&#x27; : undefined}</pre></li>
+    <li id="L321"><pre>        &gt;</pre></li>
+    <li id="L322"><pre>          {issue ??</pre></li>
+    <li id="L323"><pre>            (selected</pre></li>
+    <li id="L324">
+      <pre>
+              ? (result?.error ?? (!result ? &#x27;正在核验原文对象…&#x27; : &#x27;原文对象已核验&#x27;))</pre>
+    </li>
+    <li id="L325"><pre>              : ready &amp;&amp; !blocks.length</pre></li>
+    <li id="L326"><pre>                ? &#x27;本页没有可识别的文字段落。&#x27;</pre></li>
+    <li id="L327">
+      <pre>                : &#x27;点选页面中的原文段落，移动、改写或替换原文。&#x27;)}</pre>
+    </li>
+    <li id="L328"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L329"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L330"><pre>      {result?.target &amp;&amp; !issue ? (</pre></li>
+    <li id="L331"><pre>        &lt;BlockTools</pre></li>
+    <li id="L332">
+      <pre>
+          key={`${result.target.sha256}:${result.version}:${result.target.blockIndex}`}</pre>
+    </li>
+    <li id="L333"><pre>          target={result.target}</pre></li>
+    <li id="L334"><pre>          version={result.version}</pre></li>
+    <li id="L335"><pre>          block={result.metadata}</pre></li>
+    <li id="L336"><pre>          getVersion={getVersion}</pre></li>
+    <li id="L337"><pre>          busy={busy}</pre></li>
+    <li id="L338"><pre>          onApply={onApply}</pre></li>
+    <li id="L339"><pre>        /&gt;</pre></li>
+    <li id="L340"><pre>      ) : (</pre></li>
+    <li id="L341">
+      <pre>        &lt;div className=&quot;mimir-pdf-text-block__empty&quot; /&gt;</pre>
+    </li>
+    <li id="L342"><pre>      )}</pre></li>
+    <li id="L343"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L344"><pre>  )</pre></li>
+    <li id="L345"><pre>}</pre></li>
+  </ol>
+</html>

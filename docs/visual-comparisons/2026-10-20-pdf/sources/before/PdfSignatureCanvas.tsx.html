@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfSignatureCanvas.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfSignatureCanvas.tsx</h1>
+    <p>before真实源码 · SHA256 bb41c46e1e63396ff16a2e2cefc5c08ee8f38e5340afebf653ef5b8701b68be0</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button } from &#x27;antd&#x27;</pre></li>
+    <li id="L2"><pre>import { Check, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  useEffect,</pre></li>
+    <li id="L5"><pre>  useLayoutEffect,</pre></li>
+    <li id="L6"><pre>  useRef,</pre></li>
+    <li id="L7"><pre>  useState,</pre></li>
+    <li id="L8"><pre>  type PointerEvent,</pre></li>
+    <li id="L9"><pre>  type RefObject,</pre></li>
+    <li id="L10"><pre>} from &#x27;react&#x27;</pre></li>
+    <li id="L11">
+      <pre>
+import type { PdfSignatureSource, PdfVisualSignature } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L12">
+      <pre>
+import { clampSignature, placeSignature, type SignatureRect } from &#x27;./pdf-signature.js&#x27;</pre>
+    </li>
+    <li id="L13">
+      <pre>import { PdfSignaturePanel } from &#x27;./PdfSignaturePanel.js&#x27;</pre>
+    </li>
+    <li id="L14"><pre>import type { PdfPanelResult } from &#x27;./PdfInspector.js&#x27;</pre></li>
+    <li id="L15"><pre>interface Draft {</pre></li>
+    <li id="L16"><pre>  id?: string</pre></li>
+    <li id="L17"><pre>  source?: PdfSignatureSource</pre></li>
+    <li id="L18">
+      <pre>
+  display: Pick&lt;PdfVisualSignature, &#x27;preview&#x27; | &#x27;strokes&#x27; | &#x27;color&#x27; | &#x27;thickness&#x27;&gt;</pre>
+    </li>
+    <li id="L19"><pre>  rect: SignatureRect | null</pre></li>
+    <li id="L20"><pre>  version: number</pre></li>
+    <li id="L21"><pre>  initial?: SignatureRect</pre></li>
+    <li id="L22"><pre>}</pre></li>
+    <li id="L23"><pre>interface Identity {</pre></li>
+    <li id="L24"><pre>  documentId: string</pre></li>
+    <li id="L25"><pre>  bytes: Uint8Array | null</pre></li>
+    <li id="L26"><pre>  layout: unknown</pre></li>
+    <li id="L27"><pre>  page: number</pre></li>
+    <li id="L28"><pre>  revision: number</pre></li>
+    <li id="L29"><pre>  enabled: boolean</pre></li>
+    <li id="L30"><pre>  saving: boolean</pre></li>
+    <li id="L31"><pre>}</pre></li>
+    <li id="L32"><pre>const same = (a: Identity, b: Identity) =&gt;</pre></li>
+    <li id="L33"><pre>  a.documentId === b.documentId &amp;&amp;</pre></li>
+    <li id="L34"><pre>  a.bytes === b.bytes &amp;&amp;</pre></li>
+    <li id="L35"><pre>  a.layout === b.layout &amp;&amp;</pre></li>
+    <li id="L36"><pre>  a.page === b.page &amp;&amp;</pre></li>
+    <li id="L37"><pre>  a.revision === b.revision &amp;&amp;</pre></li>
+    <li id="L38"><pre>  a.enabled === b.enabled &amp;&amp;</pre></li>
+    <li id="L39"><pre>  a.saving === b.saving</pre></li>
+    <li id="L40">
+      <pre>function sourceDisplay(source: PdfSignatureSource): Draft[&#x27;display&#x27;] {</pre>
+    </li>
+    <li id="L41"><pre>  return source.kind === &#x27;stamp&#x27;</pre></li>
+    <li id="L42"><pre>    ? { preview: source.png }</pre></li>
+    <li id="L43">
+      <pre>    : { strokes: source.strokes, color: source.color, thickness: source.thickness }</pre>
+    </li>
+    <li id="L44"><pre>}</pre></li>
+    <li id="L45"><pre>export function usePdfSignature({</pre></li>
+    <li id="L46"><pre>  identity,</pre></li>
+    <li id="L47"><pre>  size,</pre></li>
+    <li id="L48"><pre>  ready,</pre></li>
+    <li id="L49"><pre>  busy,</pre></li>
+    <li id="L50"><pre>  issue,</pre></li>
+    <li id="L51"><pre>  signatures,</pre></li>
+    <li id="L52"><pre>  getVersion,</pre></li>
+    <li id="L53"><pre>  apply,</pre></li>
+    <li id="L54"><pre>  onClose,</pre></li>
+    <li id="L55"><pre>}: {</pre></li>
+    <li id="L56"><pre>  identity: Identity</pre></li>
+    <li id="L57"><pre>  size: { width: number; height: number }</pre></li>
+    <li id="L58"><pre>  ready: boolean</pre></li>
+    <li id="L59"><pre>  busy: boolean</pre></li>
+    <li id="L60"><pre>  issue?: string | null</pre></li>
+    <li id="L61"><pre>  signatures: PdfVisualSignature[]</pre></li>
+    <li id="L62"><pre>  getVersion(): number</pre></li>
+    <li id="L63"><pre>  apply(</pre></li>
+    <li id="L64"><pre>    tool: string,</pre></li>
+    <li id="L65"><pre>    args: Record&lt;string, unknown&gt;,</pre></li>
+    <li id="L66"><pre>    version: number,</pre></li>
+    <li id="L67"><pre>    signal: AbortSignal,</pre></li>
+    <li id="L68"><pre>  ): Promise&lt;PdfPanelResult | undefined&gt;</pre></li>
+    <li id="L69"><pre>  onClose(): void</pre></li>
+    <li id="L70"><pre>}) {</pre></li>
+    <li id="L71"><pre>  const [state, setState] = useState&lt;{</pre></li>
+    <li id="L72"><pre>      identity: Identity</pre></li>
+    <li id="L73"><pre>      draft: Draft | null</pre></li>
+    <li id="L74"><pre>      generation: number</pre></li>
+    <li id="L75"><pre>    }&gt;({</pre></li>
+    <li id="L76"><pre>      identity,</pre></li>
+    <li id="L77"><pre>      draft: null,</pre></li>
+    <li id="L78"><pre>      generation: 0,</pre></li>
+    <li id="L79"><pre>    }),</pre></li>
+    <li id="L80"><pre>    [error, setError] = useState&lt;string | null&gt;(null),</pre></li>
+    <li id="L81"><pre>    [applying, setApplying] = useState(false)</pre></li>
+    <li id="L82"><pre>  const request = useRef&lt;AbortController | null&gt;(null),</pre></li>
+    <li id="L83"><pre>    live = useRef(identity),</pre></li>
+    <li id="L84"><pre>    centerRequested = useRef(false),</pre></li>
+    <li id="L85"><pre>    svg = useRef&lt;SVGSVGElement&gt;(null)</pre></li>
+    <li id="L86"><pre>  if (!same(state.identity, identity)) {</pre></li>
+    <li id="L87">
+      <pre>    setState({ identity, draft: null, generation: state.generation + 1 })</pre>
+    </li>
+    <li id="L88"><pre>  }</pre></li>
+    <li id="L89"><pre>  const draft = same(state.identity, identity) ? state.draft : null</pre></li>
+    <li id="L90"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L91"><pre>    if (!centerRequested.current) return</pre></li>
+    <li id="L92"><pre>    centerRequested.current = false</pre></li>
+    <li id="L93"><pre>    if (!draft?.rect) return</pre></li>
+    <li id="L94">
+      <pre>
+    svg.current?.querySelector(&#x27;.mimir-pdf-signature-canvas__box&#x27;)?.scrollIntoView?.({</pre>
+    </li>
+    <li id="L95"><pre>      block: &#x27;center&#x27;,</pre></li>
+    <li id="L96"><pre>      inline: &#x27;center&#x27;,</pre></li>
+    <li id="L97"><pre>    })</pre></li>
+    <li id="L98"><pre>  }, [draft])</pre></li>
+    <li id="L99"><pre>  const placing = !!draft</pre></li>
+    <li id="L100"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L101"><pre>    if (!placing) return</pre></li>
+    <li id="L102">
+      <pre>
+    const frame = requestAnimationFrame(() =&gt; svg.current?.focus({ preventScroll: true }))</pre>
+    </li>
+    <li id="L103"><pre>    return () =&gt; cancelAnimationFrame(frame)</pre></li>
+    <li id="L104"><pre>  }, [placing])</pre></li>
+    <li id="L105"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L106"><pre>    live.current = state.identity</pre></li>
+    <li id="L107"><pre>    return () =&gt; {</pre></li>
+    <li id="L108"><pre>      request.current?.abort()</pre></li>
+    <li id="L109"><pre>      request.current = null</pre></li>
+    <li id="L110"><pre>    }</pre></li>
+    <li id="L111"><pre>  }, [state.identity])</pre></li>
+    <li id="L112"><pre>  const cancel = () =&gt; {</pre></li>
+    <li id="L113"><pre>    centerRequested.current = false</pre></li>
+    <li id="L114"><pre>    request.current?.abort()</pre></li>
+    <li id="L115">
+      <pre>
+    setState((s) =&gt; ({ identity: live.current, draft: null, generation: s.generation + 1 }))</pre>
+    </li>
+    <li id="L116"><pre>    setError(null)</pre></li>
+    <li id="L117"><pre>  }</pre></li>
+    <li id="L118"><pre>  const change = (next: Draft | null) =&gt;</pre></li>
+    <li id="L119">
+      <pre>    setState((s) =&gt; ({ ...s, identity: live.current, draft: next }))</pre>
+    </li>
+    <li id="L120"><pre>  const submit = async (remove?: PdfVisualSignature) =&gt; {</pre></li>
+    <li id="L121">
+      <pre>    if (busy || applying || (!remove &amp;&amp; (!ready || !draft?.rect))) return</pre>
+    </li>
+    <li id="L122"><pre>    const frozen = identity,</pre></li>
+    <li id="L123"><pre>      token = state.generation,</pre></li>
+    <li id="L124"><pre>      controller = new AbortController()</pre></li>
+    <li id="L125"><pre>    request.current = controller</pre></li>
+    <li id="L126"><pre>    setApplying(true)</pre></li>
+    <li id="L127"><pre>    setError(null)</pre></li>
+    <li id="L128"><pre>    try {</pre></li>
+    <li id="L129"><pre>      const result = await apply(</pre></li>
+    <li id="L130"><pre>        remove</pre></li>
+    <li id="L131"><pre>          ? &#x27;delete_visual_signature&#x27;</pre></li>
+    <li id="L132"><pre>          : draft!.id</pre></li>
+    <li id="L133"><pre>            ? &#x27;transform_visual_signature&#x27;</pre></li>
+    <li id="L134"><pre>            : &#x27;add_visual_signature&#x27;,</pre></li>
+    <li id="L135"><pre>        remove</pre></li>
+    <li id="L136"><pre>          ? { page: identity.page, id: remove.id }</pre></li>
+    <li id="L137"><pre>          : {</pre></li>
+    <li id="L138"><pre>              page: identity.page,</pre></li>
+    <li id="L139">
+      <pre>              ...(draft!.id ? { id: draft!.id } : { source: draft!.source }),</pre>
+    </li>
+    <li id="L140"><pre>              rect: draft!.rect,</pre></li>
+    <li id="L141"><pre>            },</pre></li>
+    <li id="L142"><pre>        remove ? getVersion() : draft!.version,</pre></li>
+    <li id="L143"><pre>        controller.signal,</pre></li>
+    <li id="L144"><pre>      )</pre></li>
+    <li id="L145">
+      <pre>
+      if (!controller.signal.aborted &amp;&amp; same(live.current, frozen) &amp;&amp; token === state.generation) {</pre>
+    </li>
+    <li id="L146"><pre>        if (result?.ok) change(null)</pre></li>
+    <li id="L147">
+      <pre>        else setError(result?.error ?? &#x27;签名未应用，请重试&#x27;)</pre>
+    </li>
+    <li id="L148"><pre>      }</pre></li>
+    <li id="L149"><pre>    } catch (e) {</pre></li>
+    <li id="L150">
+      <pre>      if (!controller.signal.aborted &amp;&amp; same(live.current, frozen))</pre>
+    </li>
+    <li id="L151"><pre>        setError(e instanceof Error ? e.message : String(e))</pre></li>
+    <li id="L152"><pre>    } finally {</pre></li>
+    <li id="L153"><pre>      if (request.current === controller) request.current = null</pre></li>
+    <li id="L154"><pre>      setApplying(false)</pre></li>
+    <li id="L155"><pre>    }</pre></li>
+    <li id="L156"><pre>  }</pre></li>
+    <li id="L157"><pre>  const panel = (</pre></li>
+    <li id="L158"><pre>    &lt;PdfSignaturePanel</pre></li>
+    <li id="L159">
+      <pre>      key={`${identity.documentId}:${identity.page}:${identity.revision}:${busy}`}</pre>
+    </li>
+    <li id="L160"><pre>      busy={busy || applying}</pre></li>
+    <li id="L161"><pre>      ready={ready}</pre></li>
+    <li id="L162">
+      <pre>      signatures={signatures.filter((s) =&gt; s.page === identity.page)}</pre>
+    </li>
+    <li id="L163"><pre>      error={issue || error}</pre></li>
+    <li id="L164"><pre>      onPrepare={(source) =&gt; {</pre></li>
+    <li id="L165"><pre>        setError(null)</pre></li>
+    <li id="L166">
+      <pre>
+        change({ source, display: sourceDisplay(source), rect: null, version: getVersion() })</pre>
+    </li>
+    <li id="L167"><pre>      }}</pre></li>
+    <li id="L168"><pre>      onSelect={(s) =&gt; {</pre></li>
+    <li id="L169"><pre>        setError(null)</pre></li>
+    <li id="L170"><pre>        change({</pre></li>
+    <li id="L171"><pre>          id: s.id,</pre></li>
+    <li id="L172"><pre>          display: {</pre></li>
+    <li id="L173"><pre>            preview: s.preview,</pre></li>
+    <li id="L174"><pre>            strokes: s.strokes,</pre></li>
+    <li id="L175"><pre>            color: s.color,</pre></li>
+    <li id="L176"><pre>            thickness: s.thickness,</pre></li>
+    <li id="L177"><pre>          },</pre></li>
+    <li id="L178"><pre>          rect: s.rect,</pre></li>
+    <li id="L179"><pre>          initial: s.rect,</pre></li>
+    <li id="L180"><pre>          version: getVersion(),</pre></li>
+    <li id="L181"><pre>        })</pre></li>
+    <li id="L182"><pre>      }}</pre></li>
+    <li id="L183"><pre>      onDelete={(s) =&gt; void submit(s)}</pre></li>
+    <li id="L184"><pre>      onClose={onClose}</pre></li>
+    <li id="L185"><pre>    /&gt;</pre></li>
+    <li id="L186"><pre>  )</pre></li>
+    <li id="L187"><pre>  const basis =</pre></li>
+    <li id="L188"><pre>    draft?.initial ??</pre></li>
+    <li id="L189">
+      <pre>
+    (draft?.source ? { x: 0, y: 0, width: draft.source.width, height: draft.source.height } : null)</pre>
+    </li>
+    <li id="L190"><pre>  const center = () =&gt; {</pre></li>
+    <li id="L191"><pre>    if (!draft || !basis) return</pre></li>
+    <li id="L192"><pre>    const rect = placeSignature(basis.width, basis.height, size)</pre></li>
+    <li id="L193"><pre>    centerRequested.current = true</pre></li>
+    <li id="L194"><pre>    change({ ...draft, rect })</pre></li>
+    <li id="L195">
+      <pre>    requestAnimationFrame(() =&gt; svg.current?.focus({ preventScroll: true }))</pre>
+    </li>
+    <li id="L196"><pre>  }</pre></li>
+    <li id="L197"><pre>  const actions = draft ? (</pre></li>
+    <li id="L198"><pre>    &lt;div</pre></li>
+    <li id="L199"><pre>      className=&quot;mimir-pdf-signature-actions&quot;</pre></li>
+    <li id="L200"><pre>      role=&quot;region&quot;</pre></li>
+    <li id="L201"><pre>      aria-label=&quot;签名放置操作&quot;</pre></li>
+    <li id="L202"><pre>      onKeyDown={(e) =&gt; {</pre></li>
+    <li id="L203"><pre>        if (e.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L204"><pre>          e.preventDefault()</pre></li>
+    <li id="L205"><pre>          e.stopPropagation()</pre></li>
+    <li id="L206"><pre>          cancel()</pre></li>
+    <li id="L207"><pre>        }</pre></li>
+    <li id="L208"><pre>      }}</pre></li>
+    <li id="L209"><pre>    &gt;</pre></li>
+    <li id="L210"><pre>      &lt;div&gt;</pre></li>
+    <li id="L211">
+      <pre>
+        &lt;strong&gt;{draft.rect ? &#x27;签名位置草稿&#x27; : &#x27;点击纸面放置&#x27;}&lt;/strong&gt;</pre>
+    </li>
+    <li id="L212"><pre>        &lt;span&gt;</pre></li>
+    <li id="L213"><pre>          {draft.rect</pre></li>
+    <li id="L214">
+      <pre>
+            ? `${draft.rect.width.toFixed(1)} × ${draft.rect.height.toFixed(1)} pt · 拖移 / 角部缩放`</pre>
+    </li>
+    <li id="L215"><pre>            : &#x27;放置后可移动和等比缩放&#x27;}</pre></li>
+    <li id="L216"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L217"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L218"><pre>      {!draft.rect &amp;&amp; (</pre></li>
+    <li id="L219">
+      <pre>        &lt;Button disabled={busy || applying} onClick={center}&gt;</pre>
+    </li>
+    <li id="L220"><pre>          放在页面中央</pre></li>
+    <li id="L221"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L222"><pre>      )}</pre></li>
+    <li id="L223"><pre>      {draft.rect &amp;&amp; (</pre></li>
+    <li id="L224"><pre>        &lt;Button</pre></li>
+    <li id="L225"><pre>          type=&quot;primary&quot;</pre></li>
+    <li id="L226"><pre>          icon={&lt;Check size={14} /&gt;}</pre></li>
+    <li id="L227"><pre>          loading={applying}</pre></li>
+    <li id="L228"><pre>          disabled={busy || !ready}</pre></li>
+    <li id="L229"><pre>          onClick={() =&gt; void submit()}</pre></li>
+    <li id="L230"><pre>        &gt;</pre></li>
+    <li id="L231"><pre>          应用签名</pre></li>
+    <li id="L232"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L233"><pre>      )}</pre></li>
+    <li id="L234"><pre>      &lt;Button icon={&lt;X size={14} /&gt;} onClick={cancel}&gt;</pre></li>
+    <li id="L235"><pre>        取消</pre></li>
+    <li id="L236"><pre>      &lt;/Button&gt;</pre></li>
+    <li id="L237"><pre>      {draft.rect &amp;&amp; (</pre></li>
+    <li id="L238">
+      <pre>        &lt;details className=&quot;mimir-pdf-signature-position&quot;&gt;</pre>
+    </li>
+    <li id="L239"><pre>          &lt;summary&gt;精确位置&lt;/summary&gt;</pre></li>
+    <li id="L240"><pre>          &lt;div&gt;</pre></li>
+    <li id="L241">
+      <pre>
+            {([&#x27;x&#x27;, &#x27;y&#x27;, &#x27;width&#x27;] as const).map((field) =&gt; (</pre>
+    </li>
+    <li id="L242"><pre>              &lt;label key={field}&gt;</pre></li>
+    <li id="L243">
+      <pre>
+                &lt;span&gt;{field === &#x27;x&#x27; ? &#x27;左侧 pt&#x27; : field === &#x27;y&#x27; ? &#x27;顶部 pt&#x27; : &#x27;宽度 pt&#x27;}&lt;/span&gt;</pre>
+    </li>
+    <li id="L244"><pre>                &lt;input</pre></li>
+    <li id="L245"><pre>                  type=&quot;number&quot;</pre></li>
+    <li id="L246"><pre>                  step=&quot;0.1&quot;</pre></li>
+    <li id="L247"><pre>                  min={field === &#x27;width&#x27; ? 4 : 0}</pre></li>
+    <li id="L248">
+      <pre>
+                  aria-label={`签名${field === &#x27;x&#x27; ? &#x27;左侧位置&#x27; : field === &#x27;y&#x27; ? &#x27;顶部位置&#x27; : &#x27;宽度&#x27;}`}</pre>
+    </li>
+    <li id="L249"><pre>                  disabled={busy || applying}</pre></li>
+    <li id="L250"><pre>                  value={Number(draft.rect![field].toFixed(1))}</pre></li>
+    <li id="L251"><pre>                  onChange={(event) =&gt; {</pre></li>
+    <li id="L252"><pre>                    const n = event.currentTarget.valueAsNumber</pre></li>
+    <li id="L253">
+      <pre>
+                    if (!Number.isFinite(n) || (field === &#x27;width&#x27; &amp;&amp; n &lt; 4)) return</pre>
+    </li>
+    <li id="L254"><pre>                    const rect =</pre></li>
+    <li id="L255"><pre>                      field === &#x27;width&#x27;</pre></li>
+    <li id="L256"><pre>                        ? {</pre></li>
+    <li id="L257"><pre>                            ...draft.rect!,</pre></li>
+    <li id="L258"><pre>                            width: n,</pre></li>
+    <li id="L259">
+      <pre>                            height: (n * draft.rect!.height) / draft.rect!.width,</pre>
+    </li>
+    <li id="L260"><pre>                          }</pre></li>
+    <li id="L261"><pre>                        : { ...draft.rect!, [field]: n }</pre></li>
+    <li id="L262">
+      <pre>                    change({ ...draft, rect: clampSignature(rect, size) })</pre>
+    </li>
+    <li id="L263"><pre>                  }}</pre></li>
+    <li id="L264"><pre>                /&gt;</pre></li>
+    <li id="L265"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L266"><pre>            ))}</pre></li>
+    <li id="L267"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L268"><pre>        &lt;/details&gt;</pre></li>
+    <li id="L269"><pre>      )}</pre></li>
+    <li id="L270">
+      <pre>      {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L271"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L272"><pre>  ) : null</pre></li>
+    <li id="L273"><pre>  const overlay =</pre></li>
+    <li id="L274"><pre>    draft &amp;&amp; basis &amp;&amp; ready ? (</pre></li>
+    <li id="L275"><pre>      &lt;PdfSignatureCanvas</pre></li>
+    <li id="L276"><pre>        refObject={svg}</pre></li>
+    <li id="L277"><pre>        size={size}</pre></li>
+    <li id="L278"><pre>        draft={draft}</pre></li>
+    <li id="L279"><pre>        basis={basis}</pre></li>
+    <li id="L280"><pre>        busy={busy || applying}</pre></li>
+    <li id="L281"><pre>        onChange={(rect) =&gt; change({ ...draft, rect })}</pre></li>
+    <li id="L282"><pre>        onCancel={cancel}</pre></li>
+    <li id="L283"><pre>        onApply={() =&gt; void submit()}</pre></li>
+    <li id="L284"><pre>      /&gt;</pre></li>
+    <li id="L285"><pre>    ) : null</pre></li>
+    <li id="L286">
+      <pre>
+  return { panel, overlay, actions, placing: !!draft, cancel, hasDraft: !!draft || applying }</pre>
+    </li>
+    <li id="L287"><pre>}</pre></li>
+    <li id="L288"><pre>function PdfSignatureCanvas({</pre></li>
+    <li id="L289"><pre>  refObject,</pre></li>
+    <li id="L290"><pre>  size,</pre></li>
+    <li id="L291"><pre>  draft,</pre></li>
+    <li id="L292"><pre>  basis,</pre></li>
+    <li id="L293"><pre>  busy,</pre></li>
+    <li id="L294"><pre>  onChange,</pre></li>
+    <li id="L295"><pre>  onCancel,</pre></li>
+    <li id="L296"><pre>  onApply,</pre></li>
+    <li id="L297"><pre>}: {</pre></li>
+    <li id="L298"><pre>  refObject: RefObject&lt;SVGSVGElement | null&gt;</pre></li>
+    <li id="L299"><pre>  size: { width: number; height: number }</pre></li>
+    <li id="L300"><pre>  draft: Draft</pre></li>
+    <li id="L301"><pre>  basis: SignatureRect</pre></li>
+    <li id="L302"><pre>  busy: boolean</pre></li>
+    <li id="L303"><pre>  onChange(rect: SignatureRect): void</pre></li>
+    <li id="L304"><pre>  onCancel(): void</pre></li>
+    <li id="L305"><pre>  onApply(): void</pre></li>
+    <li id="L306"><pre>}) {</pre></li>
+    <li id="L307"><pre>  const gesture = useRef&lt;{</pre></li>
+    <li id="L308"><pre>      id: number</pre></li>
+    <li id="L309"><pre>      x: number</pre></li>
+    <li id="L310"><pre>      y: number</pre></li>
+    <li id="L311"><pre>      rect: SignatureRect</pre></li>
+    <li id="L312"><pre>      resize: boolean</pre></li>
+    <li id="L313"><pre>    } | null&gt;(null),</pre></li>
+    <li id="L314"><pre>    callbacks = useRef({ onChange })</pre></li>
+    <li id="L315"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L316"><pre>    callbacks.current = { onChange }</pre></li>
+    <li id="L317"><pre>  }, [onChange])</pre></li>
+    <li id="L318"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L319"><pre>    const cancel = () =&gt; {</pre></li>
+    <li id="L320"><pre>      if (gesture.current) {</pre></li>
+    <li id="L321"><pre>        callbacks.current.onChange(gesture.current.rect)</pre></li>
+    <li id="L322"><pre>        gesture.current = null</pre></li>
+    <li id="L323"><pre>      }</pre></li>
+    <li id="L324"><pre>    }</pre></li>
+    <li id="L325"><pre>    window.addEventListener(&#x27;blur&#x27;, cancel)</pre></li>
+    <li id="L326"><pre>    window.addEventListener(&#x27;pointercancel&#x27;, cancel)</pre></li>
+    <li id="L327"><pre>    return () =&gt; {</pre></li>
+    <li id="L328"><pre>      window.removeEventListener(&#x27;blur&#x27;, cancel)</pre></li>
+    <li id="L329">
+      <pre>      window.removeEventListener(&#x27;pointercancel&#x27;, cancel)</pre>
+    </li>
+    <li id="L330"><pre>    }</pre></li>
+    <li id="L331"><pre>  }, [])</pre></li>
+    <li id="L332"><pre>  const point = (e: PointerEvent): [number, number] =&gt; {</pre></li>
+    <li id="L333"><pre>    const r = refObject.current!.getBoundingClientRect()</pre></li>
+    <li id="L334"><pre>    return [</pre></li>
+    <li id="L335"><pre>      ((e.clientX - r.left) / r.width) * size.width,</pre></li>
+    <li id="L336"><pre>      ((e.clientY - r.top) / r.height) * size.height,</pre></li>
+    <li id="L337"><pre>    ]</pre></li>
+    <li id="L338"><pre>  }</pre></li>
+    <li id="L339"><pre>  const down = (e: PointerEvent, resize = false) =&gt; {</pre></li>
+    <li id="L340">
+      <pre>    if (busy || gesture.current || e.button !== 0 || e.isPrimary === false) return</pre>
+    </li>
+    <li id="L341"><pre>    e.preventDefault()</pre></li>
+    <li id="L342"><pre>    e.stopPropagation()</pre></li>
+    <li id="L343"><pre>    refObject.current?.focus({ preventScroll: true })</pre></li>
+    <li id="L344"><pre>    const [x, y] = point(e)</pre></li>
+    <li id="L345"><pre>    if (!draft.rect) {</pre></li>
+    <li id="L346">
+      <pre>      onChange(placeSignature(basis.width, basis.height, size, x, y))</pre>
+    </li>
+    <li id="L347"><pre>      return</pre></li>
+    <li id="L348"><pre>    }</pre></li>
+    <li id="L349"><pre>    refObject.current?.setPointerCapture?.(e.pointerId)</pre></li>
+    <li id="L350">
+      <pre>    gesture.current = { id: e.pointerId, x, y, rect: draft.rect, resize }</pre>
+    </li>
+    <li id="L351"><pre>  }</pre></li>
+    <li id="L352"><pre>  const rect = draft.rect,</pre></li>
+    <li id="L353"><pre>    display = draft.display</pre></li>
+    <li id="L354"><pre>  return (</pre></li>
+    <li id="L355"><pre>    &lt;svg</pre></li>
+    <li id="L356"><pre>      ref={refObject}</pre></li>
+    <li id="L357"><pre>      className=&quot;mimir-pdf-signature-canvas&quot;</pre></li>
+    <li id="L358"><pre>      viewBox={`0 0 ${size.width} ${size.height}`}</pre></li>
+    <li id="L359"><pre>      preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L360"><pre>      role=&quot;application&quot;</pre></li>
+    <li id="L361"><pre>      aria-label=&quot;签名位置预览&quot;</pre></li>
+    <li id="L362"><pre>      tabIndex={0}</pre></li>
+    <li id="L363"><pre>      onPointerDown={(e) =&gt; down(e)}</pre></li>
+    <li id="L364"><pre>      onPointerMove={(e) =&gt; {</pre></li>
+    <li id="L365"><pre>        const g = gesture.current</pre></li>
+    <li id="L366"><pre>        if (!g || g.id !== e.pointerId || busy) return</pre></li>
+    <li id="L367"><pre>        const [x, y] = point(e)</pre></li>
+    <li id="L368"><pre>        if (g.resize) {</pre></li>
+    <li id="L369"><pre>          const w = Math.max(8, g.rect.width + x - g.x)</pre></li>
+    <li id="L370"><pre>          const max = Math.min(</pre></li>
+    <li id="L371"><pre>            size.width - g.rect.x,</pre></li>
+    <li id="L372">
+      <pre>            ((size.height - g.rect.y) * g.rect.width) / g.rect.height,</pre>
+    </li>
+    <li id="L373"><pre>          )</pre></li>
+    <li id="L374"><pre>          const width = Math.min(max, w)</pre></li>
+    <li id="L375">
+      <pre>
+          onChange({ ...g.rect, width, height: (width * g.rect.height) / g.rect.width })</pre>
+    </li>
+    <li id="L376"><pre>        } else</pre></li>
+    <li id="L377"><pre>          onChange(</pre></li>
+    <li id="L378">
+      <pre>
+            clampSignature({ ...g.rect, x: g.rect.x + x - g.x, y: g.rect.y + y - g.y }, size),</pre>
+    </li>
+    <li id="L379"><pre>          )</pre></li>
+    <li id="L380"><pre>      }}</pre></li>
+    <li id="L381"><pre>      onPointerUp={(e) =&gt; {</pre></li>
+    <li id="L382"><pre>        if (gesture.current?.id === e.pointerId) {</pre></li>
+    <li id="L383"><pre>          gesture.current = null</pre></li>
+    <li id="L384"><pre>          e.stopPropagation()</pre></li>
+    <li id="L385"><pre>          refObject.current?.releasePointerCapture?.(e.pointerId)</pre></li>
+    <li id="L386"><pre>        }</pre></li>
+    <li id="L387"><pre>      }}</pre></li>
+    <li id="L388"><pre>      onPointerCancel={() =&gt; {</pre></li>
+    <li id="L389"><pre>        if (gesture.current) onChange(gesture.current.rect)</pre></li>
+    <li id="L390"><pre>        gesture.current = null</pre></li>
+    <li id="L391"><pre>      }}</pre></li>
+    <li id="L392"><pre>      onKeyDown={(e) =&gt; {</pre></li>
+    <li id="L393"><pre>        if (e.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L394"><pre>          e.preventDefault()</pre></li>
+    <li id="L395"><pre>          e.stopPropagation()</pre></li>
+    <li id="L396"><pre>          onCancel()</pre></li>
+    <li id="L397"><pre>        } else if (e.key === &#x27;Enter&#x27; &amp;&amp; rect) {</pre></li>
+    <li id="L398"><pre>          e.preventDefault()</pre></li>
+    <li id="L399"><pre>          e.stopPropagation()</pre></li>
+    <li id="L400"><pre>          onApply()</pre></li>
+    <li id="L401"><pre>        } else if (</pre></li>
+    <li id="L402"><pre>          rect &amp;&amp;</pre></li>
+    <li id="L403">
+      <pre>
+          [&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;, &#x27;ArrowUp&#x27;, &#x27;ArrowDown&#x27;].includes(e.key) &amp;&amp;</pre>
+    </li>
+    <li id="L404"><pre>          !busy</pre></li>
+    <li id="L405"><pre>        ) {</pre></li>
+    <li id="L406"><pre>          e.preventDefault()</pre></li>
+    <li id="L407"><pre>          const n = e.shiftKey ? 10 : 1</pre></li>
+    <li id="L408"><pre>          onChange(</pre></li>
+    <li id="L409"><pre>            clampSignature(</pre></li>
+    <li id="L410"><pre>              {</pre></li>
+    <li id="L411"><pre>                ...rect,</pre></li>
+    <li id="L412">
+      <pre>
+                x: rect.x + (e.key === &#x27;ArrowLeft&#x27; ? -n : e.key === &#x27;ArrowRight&#x27; ? n : 0),</pre>
+    </li>
+    <li id="L413">
+      <pre>
+                y: rect.y + (e.key === &#x27;ArrowUp&#x27; ? -n : e.key === &#x27;ArrowDown&#x27; ? n : 0),</pre>
+    </li>
+    <li id="L414"><pre>              },</pre></li>
+    <li id="L415"><pre>              size,</pre></li>
+    <li id="L416"><pre>            ),</pre></li>
+    <li id="L417"><pre>          )</pre></li>
+    <li id="L418"><pre>        }</pre></li>
+    <li id="L419"><pre>      }}</pre></li>
+    <li id="L420"><pre>    &gt;</pre></li>
+    <li id="L421"><pre>      {rect &amp;&amp; (</pre></li>
+    <li id="L422"><pre>        &lt;g&gt;</pre></li>
+    <li id="L423"><pre>          &lt;svg</pre></li>
+    <li id="L424"><pre>            x={rect.x}</pre></li>
+    <li id="L425"><pre>            y={rect.y}</pre></li>
+    <li id="L426"><pre>            width={rect.width}</pre></li>
+    <li id="L427"><pre>            height={rect.height}</pre></li>
+    <li id="L428"><pre>            viewBox={`0 0 ${basis.width} ${basis.height}`}</pre></li>
+    <li id="L429"><pre>            preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L430"><pre>            opacity={0.85}</pre></li>
+    <li id="L431"><pre>          &gt;</pre></li>
+    <li id="L432"><pre>            {display.preview ? (</pre></li>
+    <li id="L433"><pre>              &lt;image</pre></li>
+    <li id="L434"><pre>                href={`data:image/png;base64,${display.preview}`}</pre></li>
+    <li id="L435"><pre>                width={basis.width}</pre></li>
+    <li id="L436"><pre>                height={basis.height}</pre></li>
+    <li id="L437"><pre>                preserveAspectRatio=&quot;none&quot;</pre></li>
+    <li id="L438"><pre>              /&gt;</pre></li>
+    <li id="L439"><pre>            ) : (</pre></li>
+    <li id="L440"><pre>              display.strokes?.map((path, i) =&gt; (</pre></li>
+    <li id="L441"><pre>                &lt;path</pre></li>
+    <li id="L442">
+      <pre>
+                  // Ordered immutable paths have no per-stroke IDs; identical strokes remain distinct.</pre>
+    </li>
+    <li id="L443">
+      <pre>                  // eslint-disable-next-line react/no-array-index-key</pre>
+    </li>
+    <li id="L444"><pre>                  key={i}</pre></li>
+    <li id="L445">
+      <pre>
+                  d={path.map(([x, y], j) =&gt; `${j ? &#x27;L&#x27; : &#x27;M&#x27;}${x},${y}`).join(&#x27; &#x27;)}</pre>
+    </li>
+    <li id="L446"><pre>                  fill=&quot;none&quot;</pre></li>
+    <li id="L447"><pre>                  stroke={display.color}</pre></li>
+    <li id="L448"><pre>                  strokeWidth={display.thickness}</pre></li>
+    <li id="L449"><pre>                  strokeLinecap=&quot;round&quot;</pre></li>
+    <li id="L450"><pre>                  strokeLinejoin=&quot;round&quot;</pre></li>
+    <li id="L451"><pre>                /&gt;</pre></li>
+    <li id="L452"><pre>              ))</pre></li>
+    <li id="L453"><pre>            )}</pre></li>
+    <li id="L454"><pre>          &lt;/svg&gt;</pre></li>
+    <li id="L455"><pre>          &lt;rect</pre></li>
+    <li id="L456"><pre>            x={rect.x}</pre></li>
+    <li id="L457"><pre>            y={rect.y}</pre></li>
+    <li id="L458"><pre>            width={rect.width}</pre></li>
+    <li id="L459"><pre>            height={rect.height}</pre></li>
+    <li id="L460"><pre>            className=&quot;mimir-pdf-signature-canvas__box&quot;</pre></li>
+    <li id="L461"><pre>            vectorEffect=&quot;non-scaling-stroke&quot;</pre></li>
+    <li id="L462"><pre>          /&gt;</pre></li>
+    <li id="L463"><pre>          &lt;rect</pre></li>
+    <li id="L464"><pre>            x={rect.x + rect.width - 5}</pre></li>
+    <li id="L465"><pre>            y={rect.y + rect.height - 5}</pre></li>
+    <li id="L466"><pre>            width={10}</pre></li>
+    <li id="L467"><pre>            height={10}</pre></li>
+    <li id="L468">
+      <pre>            className=&quot;mimir-pdf-signature-canvas__resize&quot;</pre>
+    </li>
+    <li id="L469"><pre>            vectorEffect=&quot;non-scaling-stroke&quot;</pre></li>
+    <li id="L470"><pre>            onPointerDown={(e) =&gt; down(e, true)}</pre></li>
+    <li id="L471"><pre>          /&gt;</pre></li>
+    <li id="L472"><pre>        &lt;/g&gt;</pre></li>
+    <li id="L473"><pre>      )}</pre></li>
+    <li id="L474"><pre>    &lt;/svg&gt;</pre></li>
+    <li id="L475"><pre>  )</pre></li>
+    <li id="L476"><pre>}</pre></li>
+  </ol>
+</html>

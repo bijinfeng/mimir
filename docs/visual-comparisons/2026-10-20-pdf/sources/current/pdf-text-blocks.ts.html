@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-text-blocks.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-text-blocks.ts</h1>
+    <p>current真实源码 · SHA256 51b783c3d814b67fab03a21834cf8c179b3542fd922ac3048cc2d55b9ef80576</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import type { PdfTextBlockProbe } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L2"><pre>import type { PdfRect, PdfTextIndex } from &#x27;./pdf-text.js&#x27;</pre></li>
+    <li id="L3"><pre></pre></li>
+    <li id="L4"><pre>export interface PdfTextBlock {</pre></li>
+    <li id="L5"><pre>  page: number</pre></li>
+    <li id="L6"><pre>  blockIndex: number</pre></li>
+    <li id="L7"><pre>  text: string</pre></li>
+    <li id="L8">
+      <pre>  /** Display page proportions, using the text index&#x27;s current viewport. */</pre>
+    </li>
+    <li id="L9"><pre>  rect: PdfRect</pre></li>
+    <li id="L10"><pre>  pdfRect: [number, number, number, number]</pre></li>
+    <li id="L11"><pre>  items: PdfTextBlockProbe[&#x27;items&#x27;]</pre></li>
+    <li id="L12"><pre>}</pre></li>
+    <li id="L13">
+      <pre>type Chunk = PdfTextIndex[&#x27;pages&#x27;][number][&#x27;chunks&#x27;][number]</pre>
+    </li>
+    <li id="L14">
+      <pre>
+/** Whitespace-insensitive NFKC occurrences, with exact UTF-16 source boundaries. */</pre>
+    </li>
+    <li id="L15">
+      <pre>
+export function pdfTextOccurrences(text: string, needle: string): { start: number; end: number }[] {</pre>
+    </li>
+    <li id="L16"><pre>  const units: string[] = [],</pre></li>
+    <li id="L17"><pre>    starts: number[] = [],</pre></li>
+    <li id="L18"><pre>    ends: number[] = []</pre></li>
+    <li id="L19"><pre>  let offset = 0</pre></li>
+    <li id="L20"><pre>  for (const char of text) {</pre></li>
+    <li id="L21"><pre>    for (const unit of char.normalize(&#x27;NFKC&#x27;))</pre></li>
+    <li id="L22"><pre>      if (!/\s/.test(unit)) {</pre></li>
+    <li id="L23"><pre>        units.push(unit)</pre></li>
+    <li id="L24"><pre>        starts.push(offset)</pre></li>
+    <li id="L25"><pre>        ends.push(offset + char.length)</pre></li>
+    <li id="L26"><pre>      }</pre></li>
+    <li id="L27"><pre>    offset += char.length</pre></li>
+    <li id="L28"><pre>  }</pre></li>
+    <li id="L29">
+      <pre>
+  const wanted = [...needle.normalize(&#x27;NFKC&#x27;)].filter((char) =&gt; !/\s/.test(char)),</pre>
+    </li>
+    <li id="L30"><pre>    results: { start: number; end: number }[] = []</pre></li>
+    <li id="L31"><pre>  if (!wanted.length) return results</pre></li>
+    <li id="L32"><pre>  for (let at = 0; at &lt;= units.length - wanted.length; at++) {</pre></li>
+    <li id="L33">
+      <pre>    if (!wanted.every((unit, i) =&gt; units[at + i] === unit)) continue</pre>
+    </li>
+    <li id="L34"><pre>    const end = at + wanted.length - 1</pre></li>
+    <li id="L35"><pre>    if (</pre></li>
+    <li id="L36"><pre>      (at &gt; 0 &amp;&amp; starts[at]! &lt; ends[at - 1]!) ||</pre></li>
+    <li id="L37">
+      <pre>      (end + 1 &lt; units.length &amp;&amp; starts[end + 1]! &lt; ends[end]!)</pre>
+    </li>
+    <li id="L38"><pre>    )</pre></li>
+    <li id="L39"><pre>      continue</pre></li>
+    <li id="L40"><pre>    results.push({ start: starts[at]!, end: ends[end]! })</pre></li>
+    <li id="L41"><pre>    at = end</pre></li>
+    <li id="L42"><pre>  }</pre></li>
+    <li id="L43"><pre>  return results</pre></li>
+    <li id="L44"><pre>}</pre></li>
+    <li id="L45"><pre>interface Line {</pre></li>
+    <li id="L46"><pre>  chunks: Chunk[]</pre></li>
+    <li id="L47"><pre>  bounds: [number, number, number, number]</pre></li>
+    <li id="L48"><pre>  size: number</pre></li>
+    <li id="L49"><pre>  text: string</pre></li>
+    <li id="L50"><pre>}</pre></li>
+    <li id="L51">
+      <pre>
+const union = (boxes: readonly (readonly number[])[]): [number, number, number, number] =&gt; [</pre>
+    </li>
+    <li id="L52"><pre>  Math.min(...boxes.map((box) =&gt; box[0]!)),</pre></li>
+    <li id="L53"><pre>  Math.min(...boxes.map((box) =&gt; box[1]!)),</pre></li>
+    <li id="L54"><pre>  Math.max(...boxes.map((box) =&gt; box[2]!)),</pre></li>
+    <li id="L55"><pre>  Math.max(...boxes.map((box) =&gt; box[3]!)),</pre></li>
+    <li id="L56"><pre>]</pre></li>
+    <li id="L57"><pre>const median = (values: number[]) =&gt;</pre></li>
+    <li id="L58">
+      <pre>  values.toSorted((a, b) =&gt; a - b)[Math.floor((values.length - 1) / 2)]!</pre>
+    </li>
+    <li id="L59"><pre>function line(chunks: Chunk[]): Line {</pre></li>
+    <li id="L60"><pre>  let text = &#x27;&#x27;</pre></li>
+    <li id="L61"><pre>  for (const [index, chunk] of chunks.entries()) {</pre></li>
+    <li id="L62"><pre>    const previous = chunks[index - 1]</pre></li>
+    <li id="L63"><pre>    if (</pre></li>
+    <li id="L64"><pre>      previous &amp;&amp;</pre></li>
+    <li id="L65">
+      <pre>
+      chunk.pdfRect[0] - previous.pdfRect[2] &gt; chunk.fontSizeHint * 0.15 &amp;&amp;</pre>
+    </li>
+    <li id="L66"><pre>      !/\s$/.test(text) &amp;&amp;</pre></li>
+    <li id="L67"><pre>      !/^\s/.test(chunk.sourceText)</pre></li>
+    <li id="L68"><pre>    )</pre></li>
+    <li id="L69"><pre>      text += &#x27; &#x27;</pre></li>
+    <li id="L70"><pre>    text += chunk.sourceText</pre></li>
+    <li id="L71"><pre>  }</pre></li>
+    <li id="L72"><pre>  return {</pre></li>
+    <li id="L73"><pre>    chunks,</pre></li>
+    <li id="L74"><pre>    bounds: union(chunks.map((chunk) =&gt; chunk.pdfRect)),</pre></li>
+    <li id="L75"><pre>    size: median(chunks.map((chunk) =&gt; chunk.fontSizeHint)),</pre></li>
+    <li id="L76"><pre>    text,</pre></li>
+    <li id="L77"><pre>  }</pre></li>
+    <li id="L78"><pre>}</pre></li>
+    <li id="L79"><pre></pre></li>
+    <li id="L80">
+      <pre>
+/** Conservative original-space clustering, shared by pointer selection and host verification. */</pre>
+    </li>
+    <li id="L81">
+      <pre>
+export function groupPdfTextBlocks(index: PdfTextIndex, page: number): PdfTextBlock[] {</pre>
+    </li>
+    <li id="L82"><pre>  const chunks = [...(index.pages[page]?.chunks ?? [])].filter(</pre></li>
+    <li id="L83"><pre>    (chunk) =&gt;</pre></li>
+    <li id="L84"><pre>      chunk.sourceText.trim() &amp;&amp;</pre></li>
+    <li id="L85"><pre>      chunk.fontSizeHint &gt; 0 &amp;&amp;</pre></li>
+    <li id="L86"><pre>      chunk.pdfRect.every(Number.isFinite) &amp;&amp;</pre></li>
+    <li id="L87"><pre>      chunk.pdfRect[2] &gt; chunk.pdfRect[0] &amp;&amp;</pre></li>
+    <li id="L88"><pre>      chunk.pdfRect[3] &gt; chunk.pdfRect[1],</pre></li>
+    <li id="L89"><pre>  )</pre></li>
+    <li id="L90">
+      <pre>
+  chunks.sort((a, b) =&gt; b.pdfRect[1] - a.pdfRect[1] || a.pdfRect[0] - b.pdfRect[0])</pre>
+    </li>
+    <li id="L91"><pre>  const rows: Chunk[][] = []</pre></li>
+    <li id="L92"><pre>  for (const chunk of chunks) {</pre></li>
+    <li id="L93"><pre>    const row = rows.at(-1),</pre></li>
+    <li id="L94"><pre>      anchor = row?.[0]</pre></li>
+    <li id="L95"><pre>    if (</pre></li>
+    <li id="L96"><pre>      row &amp;&amp;</pre></li>
+    <li id="L97"><pre>      anchor &amp;&amp;</pre></li>
+    <li id="L98"><pre>      Math.abs(chunk.pdfRect[1] - anchor.pdfRect[1]) &lt;=</pre></li>
+    <li id="L99"><pre>        Math.max(chunk.fontSizeHint, anchor.fontSizeHint) * 0.3</pre></li>
+    <li id="L100"><pre>    )</pre></li>
+    <li id="L101"><pre>      row.push(chunk)</pre></li>
+    <li id="L102"><pre>    else rows.push([chunk])</pre></li>
+    <li id="L103"><pre>  }</pre></li>
+    <li id="L104"><pre>  const lines: Line[] = []</pre></li>
+    <li id="L105"><pre>  for (const row of rows) {</pre></li>
+    <li id="L106"><pre>    row.sort((a, b) =&gt; a.pdfRect[0] - b.pdfRect[0])</pre></li>
+    <li id="L107"><pre>    let segment: Chunk[] = []</pre></li>
+    <li id="L108"><pre>    for (const chunk of row) {</pre></li>
+    <li id="L109"><pre>      const previous = segment.at(-1)</pre></li>
+    <li id="L110"><pre>      if (</pre></li>
+    <li id="L111"><pre>        previous &amp;&amp;</pre></li>
+    <li id="L112"><pre>        chunk.pdfRect[0] - previous.pdfRect[2] &gt;</pre></li>
+    <li id="L113">
+      <pre>          Math.max(chunk.fontSizeHint, previous.fontSizeHint) * 1.2</pre>
+    </li>
+    <li id="L114"><pre>      ) {</pre></li>
+    <li id="L115"><pre>        lines.push(line(segment))</pre></li>
+    <li id="L116"><pre>        segment = []</pre></li>
+    <li id="L117"><pre>      }</pre></li>
+    <li id="L118"><pre>      segment.push(chunk)</pre></li>
+    <li id="L119"><pre>    }</pre></li>
+    <li id="L120"><pre>    if (segment.length) lines.push(line(segment))</pre></li>
+    <li id="L121"><pre>  }</pre></li>
+    <li id="L122">
+      <pre>  lines.sort((a, b) =&gt; b.bounds[1] - a.bounds[1] || a.bounds[0] - b.bounds[0])</pre>
+    </li>
+    <li id="L123"><pre>  const paragraphs: { lines: Line[]; leads: number[] }[] = []</pre></li>
+    <li id="L124"><pre>  for (const current of lines) {</pre></li>
+    <li id="L125"><pre>    let best: (typeof paragraphs)[number] | undefined</pre></li>
+    <li id="L126"><pre>    let overlap = 0</pre></li>
+    <li id="L127"><pre>    for (const paragraph of paragraphs) {</pre></li>
+    <li id="L128"><pre>      const previous = paragraph.lines.at(-1)!,</pre></li>
+    <li id="L129"><pre>        gap = previous.bounds[1] - current.bounds[1],</pre></li>
+    <li id="L130"><pre>        size = Math.max(previous.size, current.size),</pre></li>
+    <li id="L131">
+      <pre>        box = union(paragraph.lines.map((item) =&gt; item.bounds)),</pre>
+    </li>
+    <li id="L132">
+      <pre>        width = Math.min(box[2] - box[0], current.bounds[2] - current.bounds[0]),</pre>
+    </li>
+    <li id="L133">
+      <pre>
+        intersection = Math.min(box[2], current.bounds[2]) - Math.max(box[0], current.bounds[0])</pre>
+    </li>
+    <li id="L134"><pre>      if (</pre></li>
+    <li id="L135"><pre>        gap &lt;= 0 ||</pre></li>
+    <li id="L136">
+      <pre>
+        gap &gt; (paragraph.leads.length ? median(paragraph.leads) * 1.45 : size * 2.1) ||</pre>
+    </li>
+    <li id="L137"><pre>        Math.abs(previous.size - current.size) &gt; size * 0.1 ||</pre></li>
+    <li id="L138"><pre>        intersection &lt; width * 0.6 ||</pre></li>
+    <li id="L139"><pre>        intersection &lt;= overlap</pre></li>
+    <li id="L140"><pre>      )</pre></li>
+    <li id="L141"><pre>        continue</pre></li>
+    <li id="L142"><pre>      best = paragraph</pre></li>
+    <li id="L143"><pre>      overlap = intersection</pre></li>
+    <li id="L144"><pre>    }</pre></li>
+    <li id="L145"><pre>    if (best) {</pre></li>
+    <li id="L146">
+      <pre>      best.leads.push(best.lines.at(-1)!.bounds[1] - current.bounds[1])</pre>
+    </li>
+    <li id="L147"><pre>      best.lines.push(current)</pre></li>
+    <li id="L148"><pre>    } else paragraphs.push({ lines: [current], leads: [] })</pre></li>
+    <li id="L149"><pre>  }</pre></li>
+    <li id="L150">
+      <pre>  // A short closing line ends a left-set paragraph even with identical leading.</pre>
+    </li>
+    <li id="L151"><pre>  const split: Line[][] = []</pre></li>
+    <li id="L152"><pre>  for (const paragraph of paragraphs) {</pre></li>
+    <li id="L153">
+      <pre>    const box = union(paragraph.lines.map((item) =&gt; item.bounds))</pre>
+    </li>
+    <li id="L154"><pre>    const leftSet = paragraph.lines.every(</pre></li>
+    <li id="L155">
+      <pre>      (item) =&gt; Math.abs(item.bounds[0] - box[0]) &lt;= item.size * 0.6,</pre>
+    </li>
+    <li id="L156"><pre>    )</pre></li>
+    <li id="L157"><pre>    let current: Line[] = []</pre></li>
+    <li id="L158"><pre>    for (const item of paragraph.lines) {</pre></li>
+    <li id="L159"><pre>      const previous = current.at(-1),</pre></li>
+    <li id="L160">
+      <pre>        firstToken = /^\S+/.exec(item.text.trimStart())?.[0] ?? &#x27;&#x27;</pre>
+    </li>
+    <li id="L161"><pre>      const firstWidth = /^[\u2e80-\u9fff]/.test(firstToken)</pre></li>
+    <li id="L162"><pre>        ? item.size * 2</pre></li>
+    <li id="L163"><pre>        : firstToken.length * item.size * 0.6</pre></li>
+    <li id="L164">
+      <pre>
+      if (previous &amp;&amp; leftSet &amp;&amp; box[2] - previous.bounds[2] &gt; firstWidth + item.size * 1.5) {</pre>
+    </li>
+    <li id="L165"><pre>        split.push(current)</pre></li>
+    <li id="L166"><pre>        current = []</pre></li>
+    <li id="L167"><pre>      }</pre></li>
+    <li id="L168"><pre>      current.push(item)</pre></li>
+    <li id="L169"><pre>    }</pre></li>
+    <li id="L170"><pre>    if (current.length) split.push(current)</pre></li>
+    <li id="L171"><pre>  }</pre></li>
+    <li id="L172">
+      <pre>
+  split.sort((a, b) =&gt; b[0]!.bounds[1] - a[0]!.bounds[1] || a[0]!.bounds[0] - b[0]!.bounds[0])</pre>
+    </li>
+    <li id="L173"><pre>  return split.map((paragraph, blockIndex) =&gt; {</pre></li>
+    <li id="L174"><pre>    const members = paragraph.flatMap((item) =&gt; item.chunks)</pre></li>
+    <li id="L175"><pre>    const display = union(</pre></li>
+    <li id="L176">
+      <pre>
+      members.map(({ rect }) =&gt; [rect.x, rect.y, rect.x + rect.width, rect.y + rect.height]),</pre>
+    </li>
+    <li id="L177"><pre>    )</pre></li>
+    <li id="L178"><pre>    return {</pre></li>
+    <li id="L179"><pre>      page,</pre></li>
+    <li id="L180"><pre>      blockIndex,</pre></li>
+    <li id="L181">
+      <pre>      text: paragraph.map((item) =&gt; item.text).join(&#x27;\n&#x27;),</pre>
+    </li>
+    <li id="L182"><pre>      rect: {</pre></li>
+    <li id="L183"><pre>        x: display[0],</pre></li>
+    <li id="L184"><pre>        y: display[1],</pre></li>
+    <li id="L185"><pre>        width: display[2] - display[0],</pre></li>
+    <li id="L186"><pre>        height: display[3] - display[1],</pre></li>
+    <li id="L187"><pre>      },</pre></li>
+    <li id="L188"><pre>      pdfRect: union(members.map((chunk) =&gt; chunk.pdfRect)),</pre></li>
+    <li id="L189">
+      <pre>
+      items: members.map((chunk) =&gt; ({ text: chunk.sourceText, bounds: [...chunk.pdfRect] })),</pre>
+    </li>
+    <li id="L190"><pre>    }</pre></li>
+    <li id="L191"><pre>  })</pre></li>
+    <li id="L192"><pre>}</pre></li>
+    <li id="L193"><pre></pre></li>
+    <li id="L194"><pre>export function pickPdfTextBlock(</pre></li>
+    <li id="L195"><pre>  index: PdfTextIndex,</pre></li>
+    <li id="L196"><pre>  page: number,</pre></li>
+    <li id="L197"><pre>  x: number,</pre></li>
+    <li id="L198"><pre>  y: number,</pre></li>
+    <li id="L199"><pre>): PdfTextBlock | null {</pre></li>
+    <li id="L200">
+      <pre>
+  if (![x, y].every(Number.isFinite) || x &lt; 0 || y &lt; 0 || x &gt; 1 || y &gt; 1) return null</pre>
+    </li>
+    <li id="L201"><pre>  const matches = groupPdfTextBlocks(index, page).filter(</pre></li>
+    <li id="L202"><pre>    ({ rect }) =&gt;</pre></li>
+    <li id="L203">
+      <pre>
+      x &gt;= rect.x &amp;&amp; x &lt;= rect.x + rect.width &amp;&amp; y &gt;= rect.y &amp;&amp; y &lt;= rect.y + rect.height,</pre>
+    </li>
+    <li id="L204"><pre>  )</pre></li>
+    <li id="L205"><pre>  return matches.length === 1 ? matches[0]! : null</pre></li>
+    <li id="L206"><pre>}</pre></li>
+    <li id="L207"><pre></pre></li>
+    <li id="L208">
+      <pre>/** The difference of two inverse-viewport points cancels CropBox translation. */</pre>
+    </li>
+    <li id="L209"><pre>export function pdfTextBlockDelta(</pre></li>
+    <li id="L210"><pre>  viewport: { convertToPdfPoint(x: number, y: number): number[] },</pre></li>
+    <li id="L211"><pre>  dx: number,</pre></li>
+    <li id="L212"><pre>  dy: number,</pre></li>
+    <li id="L213"><pre>): [number, number] {</pre></li>
+    <li id="L214"><pre>  const a = viewport.convertToPdfPoint(0, 0),</pre></li>
+    <li id="L215"><pre>    b = viewport.convertToPdfPoint(dx, dy)</pre></li>
+    <li id="L216"><pre>  return [b[0]! - a[0]!, b[1]! - a[1]!]</pre></li>
+    <li id="L217"><pre>}</pre></li>
+  </ol>
+</html>

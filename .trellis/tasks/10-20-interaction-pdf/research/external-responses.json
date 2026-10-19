@@ -1,0 +1,158 @@
+{
+  "weknora-site": {
+    "url": "https://weknora.weixin.qq.com/",
+    "resolvedUrl": "https://weknora.weixin.qq.com/",
+    "status": 200,
+    "bytes": 113529,
+    "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+    "date": "2026-10-20"
+  },
+  "weknora-release": {
+    "url": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+    "resolvedUrl": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+    "status": 200,
+    "bytes": 44048,
+    "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478",
+    "date": "2026-10-20"
+  },
+  "weknora-head": {
+    "url": "https://api.github.com/repos/Tencent/WeKnora/commits/main",
+    "resolvedUrl": "https://api.github.com/repos/Tencent/WeKnora/commits/main",
+    "status": 200,
+    "bytes": 593392,
+    "sha256": "9f55b2d588262a5161701f72979e8d0f77a78ed6cbf75a058856fbc69c6b3d33",
+    "date": "2026-10-20"
+  },
+  "genoffice-upstream": {
+    "url": "https://raw.githubusercontent.com/Letxj/GenOffice/480548fd55f1be3593ee0d8e316a734751d58309/README.md",
+    "error": "HTTP Error 404: Not Found",
+    "date": "2026-10-20"
+  },
+  "adobe-pdf-edit": {
+    "url": "https://helpx.adobe.com/acrobat/using/edit-text-pdfs.html",
+    "error": "HTTP Error 403: Forbidden",
+    "date": "2026-10-20"
+  },
+  "adobe-organize": {
+    "url": "https://helpx.adobe.com/acrobat/using/manipulating-deleting-renumbering-pdf-pages.html",
+    "error": "HTTP Error 403: Forbidden",
+    "date": "2026-10-20"
+  },
+  "google-pdf": {
+    "url": "https://support.google.com/drive/answer/176692?hl=en",
+    "resolvedUrl": "https://support.google.com/drive/answer/176692?hl=en",
+    "status": 200,
+    "bytes": 1623479,
+    "sha256": "5bc02d9da2fed79abf7730698054fc4d6ce619b9c47cac33328ebdecf4909539",
+    "date": "2026-10-20"
+  },
+  "microsoft-pdf": {
+    "url": "https://support.microsoft.com/en-us/office/edit-a-pdf-b2d1d729-6b79-499a-bcdb-233379c2f63a",
+    "resolvedUrl": "https://support.microsoft.com/en-us/word/training/edit-a-pdf",
+    "status": 200,
+    "bytes": 116249,
+    "sha256": "af31eef9e9022dbdcee8a382f35a602fede053dd06c4f0c8f29cb8fb1958b156",
+    "date": "2026-10-20"
+  },
+  "pdfjs-release": {
+    "url": "https://api.github.com/repos/mozilla/pdf.js/releases/latest",
+    "resolvedUrl": "https://api.github.com/repos/mozilla/pdf.js/releases/latest",
+    "status": 200,
+    "bytes": 25840,
+    "sha256": "52f3ef7f9945c37a6eb3d123f010987aacd8d56cd23d070bab4065922c5e5e28",
+    "date": "2026-10-20"
+  },
+  "weknora-source-readme": {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd/README.md",
+    "resolvedUrl": "https://raw.githubusercontent.com/Tencent/WeKnora/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd/README.md",
+    "status": 200,
+    "bytes": 36300,
+    "sha256": "51dae2acad7b70f82631635526e4ab41f47f8910074d234be9c4b1cfed59a4c9",
+    "date": "2026-10-20"
+  },
+  "weknora-source-package": {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd/frontend/package.json",
+    "resolvedUrl": "https://raw.githubusercontent.com/Tencent/WeKnora/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd/frontend/package.json",
+    "status": 200,
+    "bytes": 2229,
+    "sha256": "22a673ec3715689f3f1cc308625d618db2defcc1d6a12a7b0eb65b1179f72e13",
+    "date": "2026-10-20"
+  },
+  "weknora-source-tree": {
+    "url": "https://api.github.com/repos/Tencent/WeKnora/git/trees/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd?recursive=1",
+    "resolvedUrl": "https://api.github.com/repos/Tencent/WeKnora/git/trees/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd?recursive=1",
+    "status": 200,
+    "bytes": 1447534,
+    "sha256": "235b04f799585740d60d30d21abc1a5d5313fcc8b22b464094436c0304d491eb",
+    "date": "2026-10-20"
+  },
+  "genoffice-readme": {
+    "url": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/README.md",
+    "resolvedUrl": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/README.md",
+    "status": 200,
+    "bytes": 45691,
+    "sha256": "33c0dc620afe5c42d3eb0b5dfe22685fd121a79290372c3984388b505eaec0a9",
+    "date": "2026-10-20"
+  },
+  "genoffice-tree": {
+    "url": "https://api.github.com/repos/genspark-ai/genoffice/git/trees/480548fd55f1be3593ee0d8e316a734751d58309?recursive=1",
+    "resolvedUrl": "https://api.github.com/repos/genspark-ai/genoffice/git/trees/480548fd55f1be3593ee0d8e316a734751d58309?recursive=1",
+    "status": 200,
+    "bytes": 935627,
+    "sha256": "455a0085caaf357bf4ec195081934ee952fe393592bc9b12bcc402c4893464fa",
+    "date": "2026-10-20"
+  },
+  "pdfjs-toolbar-source": {
+    "url": "https://raw.githubusercontent.com/mozilla/pdf.js/v5.6.205/web/toolbar.js",
+    "resolvedUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/v5.6.205/web/toolbar.js",
+    "status": 200,
+    "bytes": 12809,
+    "sha256": "20ab1edfde98f78e8333ebb5245bd0eb78c5d05fd624b7fb7ae0d51f7a1b1814",
+    "date": "2026-10-20"
+  },
+  "adobe-express-pdf": {
+    "url": "https://www.adobe.com/acrobat/online/pdf-editor.html",
+    "error": "HTTP Error 403: Forbidden",
+    "date": "2026-10-20"
+  },
+  "weknora-pdf-viewer": {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd/frontend/src/components/source-preview/PdfSourceViewer.vue",
+    "resolvedUrl": "https://raw.githubusercontent.com/Tencent/WeKnora/eecfe4b3c8c34c94e9b559e5dd02187b4ae447cd/frontend/src/components/source-preview/PdfSourceViewer.vue",
+    "status": 200,
+    "bytes": 21318,
+    "sha256": "c8cef0edc43337ebe3571f0ab9b0039c12f5552cc25568799a003d0d98b047e1",
+    "date": "2026-10-20"
+  },
+  "genoffice-pdf-app": {
+    "url": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/App.tsx",
+    "resolvedUrl": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/App.tsx",
+    "status": 200,
+    "bytes": 387842,
+    "sha256": "e20d64aff9967ed5284d7ad1b6c84b6a7f4bf73cb7118544a2f095b4182a436c",
+    "date": "2026-10-20"
+  },
+  "pdfjs-current-toolbar": {
+    "url": "https://raw.githubusercontent.com/mozilla/pdf.js/v6.4.299/web/toolbar.js",
+    "resolvedUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/v6.4.299/web/toolbar.js",
+    "status": 200,
+    "bytes": 13101,
+    "sha256": "86498d3893b08835c685201c39a06c3858b5af816dddbdc7af51a9d1231ad7d1",
+    "date": "2026-10-20"
+  },
+  "pdfjs-current-viewer": {
+    "url": "https://raw.githubusercontent.com/mozilla/pdf.js/v6.4.299/web/viewer.html",
+    "resolvedUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/v6.4.299/web/viewer.html",
+    "status": 200,
+    "bytes": 72311,
+    "sha256": "bc6f51bae20a92bb986fcfdf1d6028f81468964dea10ab3f009df83dc4605a59",
+    "date": "2026-10-20"
+  },
+  "pdfjs-current-tag": {
+    "url": "https://api.github.com/repos/mozilla/pdf.js/commits/v6.4.299",
+    "resolvedUrl": "https://api.github.com/repos/mozilla/pdf.js/commits/v6.4.299",
+    "status": 200,
+    "bytes": 6986,
+    "sha256": "8fca633af334db92b288b44b0e96dc91c6bcae124be5fbcf19b2a49b2c4abd19",
+    "date": "2026-10-20"
+  }
+}

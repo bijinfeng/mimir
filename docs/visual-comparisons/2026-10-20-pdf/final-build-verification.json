@@ -1,0 +1,67 @@
+{
+  "scope": "Compiled resources, source files, source HTML line anchors, helper and real screenshot files. Product GUI acceptance is separate.",
+  "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+  "variants": {
+    "before": {
+      "resources": 206,
+      "aggregateSha256": "777ac87a99260371ba8e7ce1abf07f6d69860d4361b6e549f94899730f8002d9",
+      "sourceInputsVerified": 111,
+      "allResourceBytesAndHashesMatch": true,
+      "sourceComparison": "fixed git SHA + frozen gallery input"
+    },
+    "after": {
+      "resources": 206,
+      "aggregateSha256": "e7db554dea8c5b4265654b0fdde03767a510220e1ee629253fa25c6bf1f1608e",
+      "sourceInputsVerified": 111,
+      "allResourceBytesAndHashesMatch": true,
+      "sourceComparison": "current source files"
+    }
+  },
+  "baselineFreezeVerified": true,
+  "helper": {
+    "adapterSha256": "2b547f3e14543c21ceff36764b1b55472f4a92cf4e63671aa8e8725f2c0c68ce",
+    "variants": {
+      "before": {
+        "sourceInputsVerified": 80,
+        "compiledBundleHashMatches": true,
+        "bundleSha256": "efed1d367d050454322d648e04066dabfd17aea5e0a03ff1d06652e54bb6af45"
+      },
+      "after": {
+        "sourceInputsVerified": 80,
+        "compiledBundleHashMatches": true,
+        "bundleSha256": "ea22759d0a19c79aabc18dd73a614c3a112bc068471f8d10b6766f4cb00243ca"
+      }
+    }
+  },
+  "inventory": {
+    "heterogeneousRecords": 740,
+    "uniqueIds": true,
+    "sourceOnly": true,
+    "baselineSourceViewsExact": 42,
+    "currentSourceViewsExact": 42,
+    "rawInventoryMatches": true
+  },
+  "originalLicenseHashesMatch": true,
+  "realCaptures": {
+    "matchedPairs": 8,
+    "verifiedImages": 16,
+    "sameFixtureThemeViewportAndEditorDimensions": true,
+    "productAcceptanceIsSeparate": true
+  },
+  "nativeRuntime": {
+    "lockfileMatchesBothVariants": true,
+    "nativeWasmHashesMatch": true,
+    "packageVersions": {
+      "pdf-lib": "1.17.1",
+      "pdfjs-dist": "6.4.299",
+      "@embedpdf/pdfium": "2.15.1",
+      "harfbuzzjs": "0.10.3"
+    }
+  },
+  "supersededInstrumentationV1": {
+    "originalResourceHashesMatch": true,
+    "resources": 206,
+    "aggregateSha256": "57f5f6b24847e4af6b3b6444c0295d3e822310487c3625041fd31c4e2a7f4213",
+    "excludedFromFinalPairs": true
+  }
+}

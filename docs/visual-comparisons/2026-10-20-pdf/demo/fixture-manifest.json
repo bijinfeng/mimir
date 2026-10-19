@@ -1,0 +1,42 @@
+[
+  {
+    "name": "text",
+    "source": "pdf-lib generation mirroring apps/server/src/test/pdf-atomic-batch-fixture.ts",
+    "bytes": 1874,
+    "sha256": "39ab16abe238da70e729ce0c72bdc2c5ef90041220323f0c2aa6776384e25129",
+    "pages": 3,
+    "formFields": []
+  },
+  {
+    "name": "annotations",
+    "source": "pdf-lib generation mirroring apps/server/src/test/pdf-atomic-batch-fixture.ts",
+    "bytes": 2142,
+    "sha256": "914499724f3f8668c886b7b207e20adf2d118e87ca915759d1169a6e2cc757d3",
+    "pages": 3,
+    "formFields": []
+  },
+  {
+    "name": "forms",
+    "source": "pdf-lib generation mirroring apps/server/src/test/pdf-atomic-batch-fixture.ts",
+    "bytes": 4742,
+    "sha256": "23f303a390fa8db52811259fc2d2c3b3d105be683803a793d07bb90fa7fc6b9e",
+    "pages": 3,
+    "formFields": ["name", "agree", "department"]
+  },
+  {
+    "name": "image",
+    "source": "pdf-lib generation mirroring apps/server/src/test/pdf-atomic-batch-fixture.ts",
+    "bytes": 2113,
+    "sha256": "89d9b7fa0ec671b0d20bcd9821cbfadacd69bf170ce0edf270b881e95e09e763",
+    "pages": 3,
+    "formFields": []
+  },
+  {
+    "name": "rotated",
+    "source": "pdf-lib generation mirroring apps/server/src/test/pdf-atomic-batch-fixture.ts",
+    "bytes": 1902,
+    "sha256": "0d611025d8cdb7d36d5818ff0cae7cfa8b1de219a5cc475dc7b489c255ec7381",
+    "pages": 3,
+    "formFields": []
+  }
+]

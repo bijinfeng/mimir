@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-signature.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-signature.ts</h1>
+    <p>before真实源码 · SHA256 ed9d88129e87a9d2e10b070dbb6a03a37009ab11ca630a03391f1dffd209acc8</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import type { PdfSignatureSource } from &#x27;@mimir/shared&#x27;</pre></li>
+    <li id="L2">
+      <pre>export type SignatureRect = { x: number; y: number; width: number; height: number }</pre>
+    </li>
+    <li id="L3"><pre>export const SIGNATURE_FONTS = [</pre></li>
+    <li id="L4">
+      <pre>
+  { label: &#x27;宋体&#x27;, family: &#x27;&quot;Songti SC&quot;, &quot;Noto Serif CJK SC&quot;, serif&#x27;, italic: false },</pre>
+    </li>
+    <li id="L5">
+      <pre>
+  { label: &#x27;楷体&#x27;, family: &#x27;&quot;Kaiti SC&quot;, &quot;KaiTi&quot;, serif&#x27;, italic: false },</pre>
+    </li>
+    <li id="L6">
+      <pre>
+  { label: &#x27;无衬线&#x27;, family: &#x27;&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif&#x27;, italic: false },</pre>
+    </li>
+    <li id="L7">
+      <pre>
+  { label: &#x27;斜体&#x27;, family: &#x27;&quot;Times New Roman&quot;, &quot;Songti SC&quot;, serif&#x27;, italic: true },</pre>
+    </li>
+    <li id="L8"><pre>] as const</pre></li>
+    <li id="L9"><pre>export function placeSignature(</pre></li>
+    <li id="L10"><pre>  width: number,</pre></li>
+    <li id="L11"><pre>  height: number,</pre></li>
+    <li id="L12"><pre>  size: { width: number; height: number },</pre></li>
+    <li id="L13"><pre>  x = size.width / 2,</pre></li>
+    <li id="L14"><pre>  y = size.height / 2,</pre></li>
+    <li id="L15"><pre>): SignatureRect {</pre></li>
+    <li id="L16">
+      <pre>  const scale = Math.min(size.width / 3 / width, size.height / 6 / height)</pre>
+    </li>
+    <li id="L17"><pre>  const w = width * scale,</pre></li>
+    <li id="L18"><pre>    h = height * scale</pre></li>
+    <li id="L19"><pre>  return {</pre></li>
+    <li id="L20"><pre>    x: Math.max(0, Math.min(size.width - w, x - w / 2)),</pre></li>
+    <li id="L21"><pre>    y: Math.max(0, Math.min(size.height - h, y - h / 2)),</pre></li>
+    <li id="L22"><pre>    width: w,</pre></li>
+    <li id="L23"><pre>    height: h,</pre></li>
+    <li id="L24"><pre>  }</pre></li>
+    <li id="L25"><pre>}</pre></li>
+    <li id="L26"><pre>export function clampSignature(</pre></li>
+    <li id="L27"><pre>  rect: SignatureRect,</pre></li>
+    <li id="L28"><pre>  size: { width: number; height: number },</pre></li>
+    <li id="L29"><pre>): SignatureRect {</pre></li>
+    <li id="L30">
+      <pre>  const scale = Math.min(1, size.width / rect.width, size.height / rect.height)</pre>
+    </li>
+    <li id="L31"><pre>  const width = rect.width * scale,</pre></li>
+    <li id="L32"><pre>    height = rect.height * scale</pre></li>
+    <li id="L33"><pre>  return {</pre></li>
+    <li id="L34"><pre>    width,</pre></li>
+    <li id="L35"><pre>    height,</pre></li>
+    <li id="L36"><pre>    x: Math.max(0, Math.min(size.width - width, rect.x)),</pre></li>
+    <li id="L37"><pre>    y: Math.max(0, Math.min(size.height - height, rect.y)),</pre></li>
+    <li id="L38"><pre>  }</pre></li>
+    <li id="L39"><pre>}</pre></li>
+    <li id="L40">
+      <pre>function croppedCanvas(canvas: HTMLCanvasElement): HTMLCanvasElement {</pre>
+    </li>
+    <li id="L41">
+      <pre>  const ctx = canvas.getContext(&#x27;2d&#x27;, { willReadFrequently: true })</pre>
+    </li>
+    <li id="L42"><pre>  if (!ctx) throw new Error(&#x27;浏览器不支持签名绘制&#x27;)</pre></li>
+    <li id="L43">
+      <pre>
+  const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height)</pre>
+    </li>
+    <li id="L44"><pre>  let left = width,</pre></li>
+    <li id="L45"><pre>    top = height,</pre></li>
+    <li id="L46"><pre>    right = -1,</pre></li>
+    <li id="L47"><pre>    bottom = -1</pre></li>
+    <li id="L48"><pre>  for (let y = 0; y &lt; height; y++)</pre></li>
+    <li id="L49"><pre>    for (let x = 0; x &lt; width; x++)</pre></li>
+    <li id="L50"><pre>      if (data[(y * width + x) * 4 + 3]! &gt; 0) {</pre></li>
+    <li id="L51"><pre>        left = Math.min(left, x)</pre></li>
+    <li id="L52"><pre>        top = Math.min(top, y)</pre></li>
+    <li id="L53"><pre>        right = Math.max(right, x)</pre></li>
+    <li id="L54"><pre>        bottom = Math.max(bottom, y)</pre></li>
+    <li id="L55"><pre>      }</pre></li>
+    <li id="L56">
+      <pre>
+  if (right &lt; left) throw new Error(&#x27;签名没有可见内容，请重新输入或选择图片&#x27;)</pre>
+    </li>
+    <li id="L57"><pre>  const out = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L58"><pre>  out.width = right - left + 5</pre></li>
+    <li id="L59"><pre>  out.height = bottom - top + 5</pre></li>
+    <li id="L60"><pre>  out</pre></li>
+    <li id="L61"><pre>    .getContext(&#x27;2d&#x27;)!</pre></li>
+    <li id="L62"><pre>    .drawImage(</pre></li>
+    <li id="L63"><pre>      canvas,</pre></li>
+    <li id="L64"><pre>      left,</pre></li>
+    <li id="L65"><pre>      top,</pre></li>
+    <li id="L66"><pre>      right - left + 1,</pre></li>
+    <li id="L67"><pre>      bottom - top + 1,</pre></li>
+    <li id="L68"><pre>      2,</pre></li>
+    <li id="L69"><pre>      2,</pre></li>
+    <li id="L70"><pre>      right - left + 1,</pre></li>
+    <li id="L71"><pre>      bottom - top + 1,</pre></li>
+    <li id="L72"><pre>    )</pre></li>
+    <li id="L73"><pre>  return out</pre></li>
+    <li id="L74"><pre>}</pre></li>
+    <li id="L75"><pre>function stamp(canvas: HTMLCanvasElement): PdfSignatureSource {</pre></li>
+    <li id="L76"><pre>  const result = croppedCanvas(canvas),</pre></li>
+    <li id="L77"><pre>    scale = Math.min(1, 1600 / result.width, 1600 / result.height)</pre></li>
+    <li id="L78"><pre>  const out = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L79"><pre>  out.width = Math.max(1, Math.ceil(result.width * scale))</pre></li>
+    <li id="L80"><pre>  out.height = Math.max(1, Math.ceil(result.height * scale))</pre></li>
+    <li id="L81">
+      <pre>  out.getContext(&#x27;2d&#x27;)!.drawImage(result, 0, 0, out.width, out.height)</pre>
+    </li>
+    <li id="L82">
+      <pre>  const png = out.toDataURL(&#x27;image/png&#x27;).split(&#x27;,&#x27;)[1]!</pre>
+    </li>
+    <li id="L83">
+      <pre>  if (png.length &gt; 5592408) throw new Error(&#x27;签名 PNG 不能超过 4 MiB&#x27;)</pre>
+    </li>
+    <li id="L84">
+      <pre>  return { kind: &#x27;stamp&#x27;, width: out.width, height: out.height, png }</pre>
+    </li>
+    <li id="L85"><pre>}</pre></li>
+    <li id="L86"><pre>export async function typedSignature(</pre></li>
+    <li id="L87"><pre>  text: string,</pre></li>
+    <li id="L88"><pre>  font: number,</pre></li>
+    <li id="L89"><pre>  color: string,</pre></li>
+    <li id="L90"><pre>): Promise&lt;PdfSignatureSource&gt; {</pre></li>
+    <li id="L91">
+      <pre>
+  if (!text.trim() || text.length &gt; 100) throw new Error(&#x27;请输入 1–100 字符的姓名&#x27;)</pre>
+    </li>
+    <li id="L92"><pre>  const selected = SIGNATURE_FONTS[font]!</pre></li>
+    <li id="L93">
+      <pre>
+  await document.fonts?.load(`${selected.italic ? &#x27;italic &#x27; : &#x27;&#x27;}120px ${selected.family}`, text)</pre>
+    </li>
+    <li id="L94"><pre>  await document.fonts?.ready</pre></li>
+    <li id="L95"><pre>  const f = SIGNATURE_FONTS[font]!,</pre></li>
+    <li id="L96"><pre>    canvas = document.createElement(&#x27;canvas&#x27;),</pre></li>
+    <li id="L97"><pre>    ctx = canvas.getContext(&#x27;2d&#x27;)</pre></li>
+    <li id="L98"><pre>  if (!ctx) throw new Error(&#x27;浏览器不支持签名绘制&#x27;)</pre></li>
+    <li id="L99">
+      <pre>  const style = `${f.italic ? &#x27;italic &#x27; : &#x27;&#x27;}120px ${f.family}`</pre>
+    </li>
+    <li id="L100"><pre>  ctx.font = style</pre></li>
+    <li id="L101"><pre>  const m = ctx.measureText(text),</pre></li>
+    <li id="L102"><pre>    left = Math.max(0, m.actualBoundingBoxLeft || 0),</pre></li>
+    <li id="L103"><pre>    right = Math.max(m.width, m.actualBoundingBoxRight || 0),</pre></li>
+    <li id="L104"><pre>    ascent = Math.max(120, m.actualBoundingBoxAscent || 0),</pre></li>
+    <li id="L105"><pre>    descent = Math.max(36, m.actualBoundingBoxDescent || 0)</pre></li>
+    <li id="L106"><pre>  const scale = Math.min(1, 1592 / (left + right + 8))</pre></li>
+    <li id="L107"><pre>  canvas.width = Math.ceil((left + right + 8) * scale)</pre></li>
+    <li id="L108"><pre>  canvas.height = Math.ceil((ascent + descent + 8) * scale)</pre></li>
+    <li id="L109"><pre>  ctx.scale(scale, scale)</pre></li>
+    <li id="L110"><pre>  ctx.font = style</pre></li>
+    <li id="L111"><pre>  ctx.fillStyle = color</pre></li>
+    <li id="L112"><pre>  ctx.fillText(text, left + 4, ascent + 4)</pre></li>
+    <li id="L113"><pre>  return stamp(canvas)</pre></li>
+    <li id="L114"><pre>}</pre></li>
+    <li id="L115">
+      <pre>/** Inspect encoded dimensions before browser allocation. Only PNG and JPEG. */</pre>
+    </li>
+    <li id="L116"><pre>export async function importedSignature(</pre></li>
+    <li id="L117"><pre>  file: File,</pre></li>
+    <li id="L118"><pre>  monochrome: boolean,</pre></li>
+    <li id="L119"><pre>): Promise&lt;PdfSignatureSource&gt; {</pre></li>
+    <li id="L120"><pre>  if (!file.size || file.size &gt; 8 * 1024 * 1024)</pre></li>
+    <li id="L121"><pre>    throw new Error(&#x27;请选择不超过 8 MiB 的 PNG 或 JPEG&#x27;)</pre></li>
+    <li id="L122"><pre>  const bytes = new Uint8Array(await file.arrayBuffer()),</pre></li>
+    <li id="L123"><pre>    view = new DataView(bytes.buffer)</pre></li>
+    <li id="L124"><pre>  let width = 0,</pre></li>
+    <li id="L125"><pre>    height = 0</pre></li>
+    <li id="L126">
+      <pre>
+  if (bytes.length &gt;= 24 &amp;&amp; bytes.slice(0, 8).join(&#x27;,&#x27;) === &#x27;137,80,78,71,13,10,26,10&#x27;) {</pre>
+    </li>
+    <li id="L127"><pre>    width = view.getUint32(16)</pre></li>
+    <li id="L128"><pre>    height = view.getUint32(20)</pre></li>
+    <li id="L129"><pre>  } else if (bytes[0] === 255 &amp;&amp; bytes[1] === 216) {</pre></li>
+    <li id="L130"><pre>    for (let p = 2; p + 9 &lt; bytes.length;) {</pre></li>
+    <li id="L131">
+      <pre>      if (bytes[p++] !== 255) throw new Error(&#x27;JPEG 数据无效&#x27;)</pre>
+    </li>
+    <li id="L132"><pre>      const marker = bytes[p++]!</pre></li>
+    <li id="L133"><pre>      if (marker === 217 || marker === 218) break</pre></li>
+    <li id="L134">
+      <pre>
+      if (marker === 216 || marker === 1 || (marker &gt;= 208 &amp;&amp; marker &lt;= 215)) continue</pre>
+    </li>
+    <li id="L135"><pre>      const n = view.getUint16(p)</pre></li>
+    <li id="L136">
+      <pre>
+      if (n &lt; 2 || p + n &gt; bytes.length) throw new Error(&#x27;JPEG 数据不完整&#x27;)</pre>
+    </li>
+    <li id="L137"><pre>      if ([192, 193, 194].includes(marker)) {</pre></li>
+    <li id="L138"><pre>        height = view.getUint16(p + 3)</pre></li>
+    <li id="L139"><pre>        width = view.getUint16(p + 5)</pre></li>
+    <li id="L140"><pre>        break</pre></li>
+    <li id="L141"><pre>      }</pre></li>
+    <li id="L142"><pre>      p += n</pre></li>
+    <li id="L143"><pre>    }</pre></li>
+    <li id="L144"><pre>  } else throw new Error(&#x27;签名图片仅支持 PNG 或 JPEG&#x27;)</pre></li>
+    <li id="L145">
+      <pre>
+  if (!width || !height || width &gt; 12000 || height &gt; 12000 || width * height &gt; 24_000_000)</pre>
+    </li>
+    <li id="L146">
+      <pre>    throw new Error(&#x27;原图尺寸超限（最长边 12000px，2400 万像素）&#x27;)</pre>
+    </li>
+    <li id="L147"><pre>  const url = URL.createObjectURL(</pre></li>
+    <li id="L148">
+      <pre>
+    new Blob([bytes], { type: bytes[0] === 137 ? &#x27;image/png&#x27; : &#x27;image/jpeg&#x27; }),</pre>
+    </li>
+    <li id="L149"><pre>  )</pre></li>
+    <li id="L150"><pre>  try {</pre></li>
+    <li id="L151"><pre>    const img = new Image()</pre></li>
+    <li id="L152"><pre>    img.src = url</pre></li>
+    <li id="L153"><pre>    await img.decode()</pre></li>
+    <li id="L154"><pre>    const scale = Math.min(1, 1596 / width, 1596 / height),</pre></li>
+    <li id="L155"><pre>      canvas = document.createElement(&#x27;canvas&#x27;)</pre></li>
+    <li id="L156"><pre>    canvas.width = Math.ceil(width * scale)</pre></li>
+    <li id="L157"><pre>    canvas.height = Math.ceil(height * scale)</pre></li>
+    <li id="L158">
+      <pre>    const ctx = canvas.getContext(&#x27;2d&#x27;, { willReadFrequently: true })</pre>
+    </li>
+    <li id="L159"><pre>    if (!ctx) throw new Error(&#x27;浏览器不支持签名绘制&#x27;)</pre></li>
+    <li id="L160"><pre>    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)</pre></li>
+    <li id="L161"><pre>    if (monochrome) {</pre></li>
+    <li id="L162">
+      <pre>      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height)</pre>
+    </li>
+    <li id="L163"><pre>      for (let i = 0; i &lt; pixels.data.length; i += 4) {</pre></li>
+    <li id="L164"><pre>        const l =</pre></li>
+    <li id="L165">
+      <pre>
+          0.299 * pixels.data[i]! + 0.587 * pixels.data[i + 1]! + 0.114 * pixels.data[i + 2]!</pre>
+    </li>
+    <li id="L166">
+      <pre>        pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = 0</pre>
+    </li>
+    <li id="L167"><pre>        pixels.data[i + 3] = Math.round(</pre></li>
+    <li id="L168">
+      <pre>          pixels.data[i + 3]! * Math.max(0, Math.min(1, (200 - l) / 80)),</pre>
+    </li>
+    <li id="L169"><pre>        )</pre></li>
+    <li id="L170"><pre>      }</pre></li>
+    <li id="L171"><pre>      ctx.putImageData(pixels, 0, 0)</pre></li>
+    <li id="L172"><pre>    }</pre></li>
+    <li id="L173"><pre>    return stamp(canvas)</pre></li>
+    <li id="L174"><pre>  } finally {</pre></li>
+    <li id="L175"><pre>    URL.revokeObjectURL(url)</pre></li>
+    <li id="L176"><pre>  }</pre></li>
+    <li id="L177"><pre>}</pre></li>
+  </ol>
+</html>

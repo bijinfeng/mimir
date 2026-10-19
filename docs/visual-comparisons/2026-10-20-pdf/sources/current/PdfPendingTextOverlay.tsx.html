@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfPendingTextOverlay.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfPendingTextOverlay.tsx</h1>
+    <p>current真实源码 · SHA256 e45beb76e5c6ff84e54ca73778179f2ecfd3d9f7ae6ea8e776333e6e4a12e58c</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import type { PdfPendingTextInsert } from &#x27;../agent/pdf-agent.js&#x27;</pre>
+    </li>
+    <li id="L3"><pre>import &#x27;./pdf-text-controls.css&#x27;</pre></li>
+    <li id="L4"><pre></pre></li>
+    <li id="L5"><pre>type Geometry = { x: number; y: number; width: number }</pre></li>
+    <li id="L6"><pre>export function PdfPendingTextOverlay({</pre></li>
+    <li id="L7"><pre>  insert,</pre></li>
+    <li id="L8"><pre>  size,</pre></li>
+    <li id="L9"><pre>  onCommit,</pre></li>
+    <li id="L10"><pre>}: {</pre></li>
+    <li id="L11">
+      <pre>  insert: PdfPendingTextInsert &amp; { width: number; height: number }</pre>
+    </li>
+    <li id="L12"><pre>  size: { width: number; height: number }</pre></li>
+    <li id="L13"><pre>  onCommit(geometry: Geometry): void</pre></li>
+    <li id="L14"><pre>}) {</pre></li>
+    <li id="L15"><pre>  const [draft, setDraft] = useState&lt;Geometry | null&gt;(null)</pre></li>
+    <li id="L16"><pre>  const draftRef = useRef&lt;Geometry | null&gt;(null)</pre></li>
+    <li id="L17"><pre>  const gesture = useRef&lt;{</pre></li>
+    <li id="L18"><pre>    pointer: number</pre></li>
+    <li id="L19"><pre>    x: number</pre></li>
+    <li id="L20"><pre>    y: number</pre></li>
+    <li id="L21"><pre>    scaleX: number</pre></li>
+    <li id="L22"><pre>    scaleY: number</pre></li>
+    <li id="L23"><pre>    initial: Geometry</pre></li>
+    <li id="L24"><pre>    resize: boolean</pre></li>
+    <li id="L25"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L26">
+      <pre>  const value = draft ?? { x: insert.x, y: insert.y, width: insert.width }</pre>
+    </li>
+    <li id="L27"><pre>  const cancel = () =&gt; {</pre></li>
+    <li id="L28"><pre>    gesture.current = null</pre></li>
+    <li id="L29"><pre>    draftRef.current = null</pre></li>
+    <li id="L30"><pre>    setDraft(null)</pre></li>
+    <li id="L31"><pre>  }</pre></li>
+    <li id="L32">
+      <pre>  const begin = (event: ReactPointerEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L33"><pre>    if (gesture.current || event.button !== 0) return</pre></li>
+    <li id="L34">
+      <pre>    const sheet = event.currentTarget.parentElement?.getBoundingClientRect()</pre>
+    </li>
+    <li id="L35"><pre>    if (!sheet?.width || !sheet.height) return</pre></li>
+    <li id="L36"><pre>    event.preventDefault()</pre></li>
+    <li id="L37"><pre>    event.stopPropagation()</pre></li>
+    <li id="L38"><pre>    event.currentTarget.focus({ preventScroll: true })</pre></li>
+    <li id="L39"><pre>    event.currentTarget.setPointerCapture(event.pointerId)</pre></li>
+    <li id="L40"><pre>    gesture.current = {</pre></li>
+    <li id="L41"><pre>      pointer: event.pointerId,</pre></li>
+    <li id="L42"><pre>      x: event.clientX,</pre></li>
+    <li id="L43"><pre>      y: event.clientY,</pre></li>
+    <li id="L44"><pre>      scaleX: size.width / sheet.width,</pre></li>
+    <li id="L45"><pre>      scaleY: size.height / sheet.height,</pre></li>
+    <li id="L46"><pre>      initial: value,</pre></li>
+    <li id="L47">
+      <pre>
+      resize: (event.target as Element).closest(&#x27;[data-resize]&#x27;) !== null,</pre>
+    </li>
+    <li id="L48"><pre>    }</pre></li>
+    <li id="L49"><pre>  }</pre></li>
+    <li id="L50"><pre>  return (</pre></li>
+    <li id="L51"><pre>    &lt;div</pre></li>
+    <li id="L52"><pre>      className=&quot;mimir-pdf-text-gesture&quot;</pre></li>
+    <li id="L53"><pre>      role=&quot;group&quot;</pre></li>
+    <li id="L54"><pre>      aria-label=&quot;调整待保存文字位置与宽度&quot;</pre></li>
+    <li id="L55"><pre>      tabIndex={0}</pre></li>
+    <li id="L56"><pre>      style={{</pre></li>
+    <li id="L57"><pre>        left: `${(value.x / size.width) * 100}%`,</pre></li>
+    <li id="L58"><pre>        top: `${(value.y / size.height) * 100}%`,</pre></li>
+    <li id="L59"><pre>        width: `${(value.width / size.width) * 100}%`,</pre></li>
+    <li id="L60"><pre>        height: `${(insert.height / size.height) * 100}%`,</pre></li>
+    <li id="L61"><pre>      }}</pre></li>
+    <li id="L62"><pre>      onPointerDown={begin}</pre></li>
+    <li id="L63"><pre>      onPointerMove={(event) =&gt; {</pre></li>
+    <li id="L64"><pre>        const current = gesture.current</pre></li>
+    <li id="L65"><pre>        if (!current || current.pointer !== event.pointerId) return</pre></li>
+    <li id="L66"><pre>        const dx = (event.clientX - current.x) * current.scaleX,</pre></li>
+    <li id="L67"><pre>          dy = (event.clientY - current.y) * current.scaleY</pre></li>
+    <li id="L68"><pre>        const next = current.resize</pre></li>
+    <li id="L69"><pre>          ? {</pre></li>
+    <li id="L70"><pre>              ...current.initial,</pre></li>
+    <li id="L71"><pre>              width: Math.max(</pre></li>
+    <li id="L72"><pre>                1,</pre></li>
+    <li id="L73">
+      <pre>
+                Math.min(size.width - current.initial.x, current.initial.width + dx),</pre>
+    </li>
+    <li id="L74"><pre>              ),</pre></li>
+    <li id="L75"><pre>            }</pre></li>
+    <li id="L76"><pre>          : {</pre></li>
+    <li id="L77"><pre>              ...current.initial,</pre></li>
+    <li id="L78">
+      <pre>
+              x: Math.max(0, Math.min(size.width - current.initial.width, current.initial.x + dx)),</pre>
+    </li>
+    <li id="L79">
+      <pre>
+              y: Math.max(0, Math.min(size.height - insert.height, current.initial.y + dy)),</pre>
+    </li>
+    <li id="L80"><pre>            }</pre></li>
+    <li id="L81"><pre>        draftRef.current = next</pre></li>
+    <li id="L82"><pre>        setDraft(next)</pre></li>
+    <li id="L83"><pre>      }}</pre></li>
+    <li id="L84"><pre>      onPointerUp={(event) =&gt; {</pre></li>
+    <li id="L85"><pre>        if (gesture.current?.pointer !== event.pointerId) return</pre></li>
+    <li id="L86"><pre>        const final = draftRef.current</pre></li>
+    <li id="L87"><pre>        const changed =</pre></li>
+    <li id="L88">
+      <pre>
+          final &amp;&amp; (final.x !== insert.x || final.y !== insert.y || final.width !== insert.width)</pre>
+    </li>
+    <li id="L89"><pre>        cancel()</pre></li>
+    <li id="L90"><pre>        if (changed &amp;&amp; final) onCommit(final)</pre></li>
+    <li id="L91"><pre>      }}</pre></li>
+    <li id="L92"><pre>      onPointerCancel={(event) =&gt; {</pre></li>
+    <li id="L93"><pre>        if (gesture.current?.pointer === event.pointerId) cancel()</pre></li>
+    <li id="L94"><pre>      }}</pre></li>
+    <li id="L95"><pre>      onLostPointerCapture={(event) =&gt; {</pre></li>
+    <li id="L96"><pre>        if (gesture.current?.pointer === event.pointerId) cancel()</pre></li>
+    <li id="L97"><pre>      }}</pre></li>
+    <li id="L98"><pre>      onBlur={cancel}</pre></li>
+    <li id="L99"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L100">
+      <pre>        if (event.key === &#x27;Escape&#x27; &amp;&amp; gesture.current) {</pre>
+    </li>
+    <li id="L101"><pre>          event.preventDefault()</pre></li>
+    <li id="L102"><pre>          event.stopPropagation()</pre></li>
+    <li id="L103"><pre>          cancel()</pre></li>
+    <li id="L104"><pre>          return</pre></li>
+    <li id="L105"><pre>        }</pre></li>
+    <li id="L106"><pre>        if (</pre></li>
+    <li id="L107">
+      <pre>
+          ![&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;, &#x27;ArrowUp&#x27;, &#x27;ArrowDown&#x27;].includes(event.key) ||</pre>
+    </li>
+    <li id="L108"><pre>          gesture.current</pre></li>
+    <li id="L109"><pre>        )</pre></li>
+    <li id="L110"><pre>          return</pre></li>
+    <li id="L111"><pre>        event.preventDefault()</pre></li>
+    <li id="L112"><pre>        event.stopPropagation()</pre></li>
+    <li id="L113"><pre>        const step = event.shiftKey ? 10 : 1</pre></li>
+    <li id="L114"><pre>        const next = { ...value }</pre></li>
+    <li id="L115">
+      <pre>
+        if (event.key === &#x27;ArrowLeft&#x27;) next.x = Math.max(0, next.x - step)</pre>
+    </li>
+    <li id="L116">
+      <pre>
+        if (event.key === &#x27;ArrowRight&#x27;) next.x = Math.min(size.width - next.width, next.x + step)</pre>
+    </li>
+    <li id="L117">
+      <pre>        if (event.key === &#x27;ArrowUp&#x27;) next.y = Math.max(0, next.y - step)</pre>
+    </li>
+    <li id="L118">
+      <pre>
+        if (event.key === &#x27;ArrowDown&#x27;) next.y = Math.min(size.height - insert.height, next.y + step)</pre>
+    </li>
+    <li id="L119">
+      <pre>        if (next.x !== value.x || next.y !== value.y) onCommit(next)</pre>
+    </li>
+    <li id="L120"><pre>      }}</pre></li>
+    <li id="L121"><pre>    &gt;</pre></li>
+    <li id="L122"><pre>      &lt;span</pre></li>
+    <li id="L123"><pre>        className=&quot;mimir-pdf-text-gesture__resize&quot;</pre></li>
+    <li id="L124"><pre>        data-resize=&quot;true&quot;</pre></li>
+    <li id="L125"><pre>        aria-label=&quot;调整文字换行宽度&quot;</pre></li>
+    <li id="L126"><pre>        role=&quot;slider&quot;</pre></li>
+    <li id="L127"><pre>        tabIndex={0}</pre></li>
+    <li id="L128"><pre>        aria-valuemin={1}</pre></li>
+    <li id="L129"><pre>        aria-valuemax={size.width - insert.x}</pre></li>
+    <li id="L130"><pre>        aria-valuenow={value.width}</pre></li>
+    <li id="L131"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L132">
+      <pre>
+          if (![&#x27;ArrowLeft&#x27;, &#x27;ArrowRight&#x27;].includes(event.key) || gesture.current) return</pre>
+    </li>
+    <li id="L133"><pre>          event.preventDefault()</pre></li>
+    <li id="L134"><pre>          event.stopPropagation()</pre></li>
+    <li id="L135"><pre>          const width = Math.max(</pre></li>
+    <li id="L136"><pre>            1,</pre></li>
+    <li id="L137"><pre>            Math.min(</pre></li>
+    <li id="L138"><pre>              size.width - value.x,</pre></li>
+    <li id="L139">
+      <pre>
+              value.width + (event.key === &#x27;ArrowLeft&#x27; ? -1 : 1) * (event.shiftKey ? 10 : 1),</pre>
+    </li>
+    <li id="L140"><pre>            ),</pre></li>
+    <li id="L141"><pre>          )</pre></li>
+    <li id="L142"><pre>          if (width !== value.width) onCommit({ ...value, width })</pre></li>
+    <li id="L143"><pre>        }}</pre></li>
+    <li id="L144"><pre>      /&gt;</pre></li>
+    <li id="L145"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L146"><pre>  )</pre></li>
+    <li id="L147"><pre>}</pre></li>
+  </ol>
+</html>

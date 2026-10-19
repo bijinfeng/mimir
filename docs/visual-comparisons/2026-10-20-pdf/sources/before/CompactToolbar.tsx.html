@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/CompactToolbar.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/CompactToolbar.tsx</h1>
+    <p>before真实源码 · SHA256 616537059b202af3c2a37d208a4f3b7cd8a68788137fcd9657f1c9f576634523</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import {</pre></li>
+    <li id="L2"><pre>  useEffect,</pre></li>
+    <li id="L3"><pre>  useId,</pre></li>
+    <li id="L4"><pre>  useLayoutEffect,</pre></li>
+    <li id="L5"><pre>  useRef,</pre></li>
+    <li id="L6"><pre>  useState,</pre></li>
+    <li id="L7"><pre>  type KeyboardEvent,</pre></li>
+    <li id="L8"><pre>  type ReactNode,</pre></li>
+    <li id="L9"><pre>} from &#x27;react&#x27;</pre></li>
+    <li id="L10"><pre>import { ToolbarMenu } from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L11"><pre></pre></li>
+    <li id="L12"><pre>export interface CompactToolbarSection {</pre></li>
+    <li id="L13"><pre>  key: string</pre></li>
+    <li id="L14"><pre>  label: string</pre></li>
+    <li id="L15">
+      <pre>
+  /** Kept for callers during the ribbon migration; width no longer hides commands. */</pre>
+    </li>
+    <li id="L16"><pre>  minWidth: number</pre></li>
+    <li id="L17"><pre>  tab?: string</pre></li>
+    <li id="L18">
+      <pre>  /** Omit commands that the current editor or document cannot provide. */</pre>
+    </li>
+    <li id="L19"><pre>  enabled?: boolean</pre></li>
+    <li id="L20"><pre>  content: ReactNode</pre></li>
+    <li id="L21">
+      <pre>  /** Close the collapsed group before opening another workspace surface. */</pre>
+    </li>
+    <li id="L22"><pre>  collapsedContent?(close: () =&gt; void): ReactNode</pre></li>
+    <li id="L23"><pre>}</pre></li>
+    <li id="L24"><pre></pre></li>
+    <li id="L25"><pre>export interface CompactToolbarTab {</pre></li>
+    <li id="L26"><pre>  key: string</pre></li>
+    <li id="L27"><pre>  label: string</pre></li>
+    <li id="L28"><pre>}</pre></li>
+    <li id="L29"><pre></pre></li>
+    <li id="L30">
+      <pre>
+/** Visible categories; groups collapse individually to named menus when the editor column narrows. */</pre>
+    </li>
+    <li id="L31"><pre>export function CompactToolbar({</pre></li>
+    <li id="L32"><pre>  sections,</pre></li>
+    <li id="L33"><pre>  tabs,</pre></li>
+    <li id="L34"><pre>  activeTab: controlledTab,</pre></li>
+    <li id="L35"><pre>  onTabChange,</pre></li>
+    <li id="L36"><pre>  quickAccess,</pre></li>
+    <li id="L37"><pre>}: {</pre></li>
+    <li id="L38"><pre>  sections: readonly CompactToolbarSection[]</pre></li>
+    <li id="L39"><pre>  tabs?: readonly CompactToolbarTab[]</pre></li>
+    <li id="L40"><pre>  activeTab?: string</pre></li>
+    <li id="L41"><pre>  onTabChange?: (key: string) =&gt; void</pre></li>
+    <li id="L42">
+      <pre>  /** Actions that stay visible before the scrollable ribbon tabs. */</pre>
+    </li>
+    <li id="L43"><pre>  quickAccess?: ReactNode</pre></li>
+    <li id="L44">
+      <pre>
+  /** Legacy prop retained while format toolbars migrate away from overflow menus. */</pre>
+    </li>
+    <li id="L45"><pre>  overflowLabel?: string</pre></li>
+    <li id="L46"><pre>}) {</pre></li>
+    <li id="L47">
+      <pre>  const [requestedTab, setRequestedTab] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L48">
+      <pre>  const tabRefs = useRef&lt;Array&lt;HTMLButtonElement | null&gt;&gt;([])</pre>
+    </li>
+    <li id="L49"><pre>  const commandsRef = useRef&lt;HTMLDivElement | null&gt;(null)</pre></li>
+    <li id="L50"><pre>  const widths = useRef(new Map&lt;string, number&gt;())</pre></li>
+    <li id="L51"><pre>  const findGroups = useRef(new Set&lt;string&gt;())</pre></li>
+    <li id="L52"><pre>  const [collapsed, setCollapsed] = useState&lt;string[]&gt;([])</pre></li>
+    <li id="L53"><pre>  const [commandOverflow, setCommandOverflow] = useState(false)</pre></li>
+    <li id="L54"><pre>  const id = useId()</pre></li>
+    <li id="L55"><pre>  const selectedTab = controlledTab ?? requestedTab</pre></li>
+    <li id="L56">
+      <pre>
+  const activeTab = tabs?.some((tab) =&gt; tab.key === selectedTab) ? selectedTab : tabs?.[0]?.key</pre>
+    </li>
+    <li id="L57"><pre>  const available = sections.filter(</pre></li>
+    <li id="L58"><pre>    (section) =&gt;</pre></li>
+    <li id="L59">
+      <pre>
+      section.enabled !== false &amp;&amp; section.content !== null &amp;&amp; section.content !== undefined,</pre>
+    </li>
+    <li id="L60"><pre>  )</pre></li>
+    <li id="L61"><pre>  const shown = tabs</pre></li>
+    <li id="L62">
+      <pre>    ? available.filter((section) =&gt; (section.tab ?? tabs[0]?.key) === activeTab)</pre>
+    </li>
+    <li id="L63"><pre>    : available</pre></li>
+    <li id="L64"><pre>  const lastTab = useRef(activeTab)</pre></li>
+    <li id="L65"><pre></pre></li>
+    <li id="L66"><pre>  const selectTab = (key: string) =&gt; {</pre></li>
+    <li id="L67"><pre>    if (controlledTab === undefined) setRequestedTab(key)</pre></li>
+    <li id="L68"><pre>    onTabChange?.(key)</pre></li>
+    <li id="L69"><pre>  }</pre></li>
+    <li id="L70"><pre></pre></li>
+    <li id="L71">
+      <pre>
+  const onTabKeyDown = (event: KeyboardEvent&lt;HTMLButtonElement&gt;, index: number) =&gt; {</pre>
+    </li>
+    <li id="L72"><pre>    if (!tabs?.length) return</pre></li>
+    <li id="L73"><pre>    let next = index</pre></li>
+    <li id="L74">
+      <pre>    if (event.key === &#x27;ArrowRight&#x27;) next = (index + 1) % tabs.length</pre>
+    </li>
+    <li id="L75">
+      <pre>
+    else if (event.key === &#x27;ArrowLeft&#x27;) next = (index - 1 + tabs.length) % tabs.length</pre>
+    </li>
+    <li id="L76"><pre>    else if (event.key === &#x27;Home&#x27;) next = 0</pre></li>
+    <li id="L77"><pre>    else if (event.key === &#x27;End&#x27;) next = tabs.length - 1</pre></li>
+    <li id="L78"><pre>    else return</pre></li>
+    <li id="L79"><pre>    event.preventDefault()</pre></li>
+    <li id="L80"><pre>    selectTab(tabs[next]!.key)</pre></li>
+    <li id="L81"><pre>    tabRefs.current[next]?.focus()</pre></li>
+    <li id="L82"><pre>  }</pre></li>
+    <li id="L83"><pre></pre></li>
+    <li id="L84"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L85"><pre>    if (lastTab.current !== activeTab) {</pre></li>
+    <li id="L86"><pre>      if (commandsRef.current) commandsRef.current.scrollLeft = 0</pre></li>
+    <li id="L87"><pre>      lastTab.current = activeTab</pre></li>
+    <li id="L88"><pre>    }</pre></li>
+    <li id="L89"><pre>  }, [activeTab])</pre></li>
+    <li id="L90"><pre></pre></li>
+    <li id="L91"><pre>  useLayoutEffect(() =&gt; {</pre></li>
+    <li id="L92"><pre>    const commands = commandsRef.current</pre></li>
+    <li id="L93"><pre>    if (!commands) return</pre></li>
+    <li id="L94"><pre>    const measure = () =&gt; {</pre></li>
+    <li id="L95">
+      <pre>
+      const availableWidth = commands.clientWidth || commands.getBoundingClientRect().width</pre>
+    </li>
+    <li id="L96"><pre>      if (availableWidth &lt;= 0) return</pre></li>
+    <li id="L97">
+      <pre>      // Share the actual width budget with CSS; retain a 44px touch target.</pre>
+    </li>
+    <li id="L98">
+      <pre>      // Only columns narrower than all minimum targets need local scrolling.</pre>
+    </li>
+    <li id="L99">
+      <pre>
+      const buttonWidth = Math.max(44, Math.min(72, Math.floor(availableWidth / shown.length)))</pre>
+    </li>
+    <li id="L100">
+      <pre>
+      commands.style.setProperty(&#x27;--compact-group-width&#x27;, `${buttonWidth}px`)</pre>
+    </li>
+    <li id="L101">
+      <pre>
+      for (const section of commands.querySelectorAll&lt;HTMLElement&gt;(&#x27;[data-section-key]&#x27;)) {</pre>
+    </li>
+    <li id="L102"><pre>        const key = section.dataset.sectionKey!</pre></li>
+    <li id="L103"><pre>        if (!section.hasAttribute(&#x27;data-collapsed&#x27;)) {</pre></li>
+    <li id="L104">
+      <pre>
+          const width = section.getBoundingClientRect().width || section.scrollWidth</pre>
+    </li>
+    <li id="L105"><pre>          if (width &gt; 0) widths.current.set(key, width)</pre></li>
+    <li id="L106">
+      <pre>
+          if (section.querySelector(&#x27;[data-find-input]&#x27;)) findGroups.current.add(key)</pre>
+    </li>
+    <li id="L107"><pre>        }</pre></li>
+    <li id="L108"><pre>      }</pre></li>
+    <li id="L109">
+      <pre>
+      const costs = shown.map((section) =&gt; widths.current.get(section.key) ?? section.minWidth)</pre>
+    </li>
+    <li id="L110"><pre>      let total = costs.reduce((sum, cost) =&gt; sum + cost, 0)</pre></li>
+    <li id="L111"><pre>      const next: string[] = []</pre></li>
+    <li id="L112">
+      <pre>
+      for (let index = shown.length - 1; index &gt;= 0 &amp;&amp; total &gt; availableWidth + 0.5; index--) {</pre>
+    </li>
+    <li id="L113"><pre>        const section = shown[index]!</pre></li>
+    <li id="L114"><pre>        if (costs[index]! &lt;= buttonWidth) continue</pre></li>
+    <li id="L115"><pre>        next.push(section.key)</pre></li>
+    <li id="L116"><pre>        total -= costs[index]! - buttonWidth</pre></li>
+    <li id="L117"><pre>      }</pre></li>
+    <li id="L118"><pre>      setCommandOverflow(total &gt; availableWidth + 0.5)</pre></li>
+    <li id="L119"><pre>      setCollapsed((previous) =&gt;</pre></li>
+    <li id="L120">
+      <pre>
+        previous.length === next.length &amp;&amp; previous.every((key, index) =&gt; key === next[index])</pre>
+    </li>
+    <li id="L121"><pre>          ? previous</pre></li>
+    <li id="L122"><pre>          : next,</pre></li>
+    <li id="L123"><pre>      )</pre></li>
+    <li id="L124"><pre>    }</pre></li>
+    <li id="L125"><pre>    measure()</pre></li>
+    <li id="L126"><pre>    const observer = new ResizeObserver(measure)</pre></li>
+    <li id="L127"><pre>    observer.observe(commands)</pre></li>
+    <li id="L128">
+      <pre>    for (const section of commands.children) observer.observe(section)</pre>
+    </li>
+    <li id="L129"><pre>    return () =&gt; observer.disconnect()</pre></li>
+    <li id="L130"><pre>  }, [shown])</pre></li>
+    <li id="L131"><pre></pre></li>
+    <li id="L132">
+      <pre>  // The format host changes the active category on Ctrl/Cmd+F. If its input is</pre>
+    </li>
+    <li id="L133">
+      <pre>
+  // in a collapsed group, reveal that group&#x27;s sole instance before focusing it.</pre>
+    </li>
+    <li id="L134"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L135">
+      <pre>    let revealTimer: ReturnType&lt;typeof setTimeout&gt; | undefined,</pre>
+    </li>
+    <li id="L136"><pre>      focusTimer: ReturnType&lt;typeof setTimeout&gt; | undefined</pre></li>
+    <li id="L137"><pre>    const revealFind = (event: globalThis.KeyboardEvent) =&gt; {</pre></li>
+    <li id="L138">
+      <pre>
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== &#x27;f&#x27; || event.altKey)</pre>
+    </li>
+    <li id="L139"><pre>        return</pre></li>
+    <li id="L140"><pre>      clearTimeout(revealTimer)</pre></li>
+    <li id="L141"><pre>      clearTimeout(focusTimer)</pre></li>
+    <li id="L142"><pre>      // Hidden webviews may stop delivering animation frames.</pre></li>
+    <li id="L143"><pre>      revealTimer = setTimeout(() =&gt; {</pre></li>
+    <li id="L144"><pre>        const commands = commandsRef.current</pre></li>
+    <li id="L145">
+      <pre>
+        const direct = commands?.querySelector&lt;HTMLInputElement&gt;(&#x27;[data-find-input]&#x27;)</pre>
+    </li>
+    <li id="L146"><pre>        if (direct) return</pre></li>
+    <li id="L147"><pre>        const group = Array.from(</pre></li>
+    <li id="L148">
+      <pre>
+          commands?.querySelectorAll&lt;HTMLElement&gt;(&#x27;[data-collapsed]&#x27;) ?? [],</pre>
+    </li>
+    <li id="L149"><pre>        ).find(</pre></li>
+    <li id="L150"><pre>          (section) =&gt;</pre></li>
+    <li id="L151"><pre>            findGroups.current.has(section.dataset.sectionKey!) ||</pre></li>
+    <li id="L152">
+      <pre>
+            section.getAttribute(&#x27;aria-label&#x27;)?.includes(&#x27;查找&#x27;),</pre>
+    </li>
+    <li id="L153"><pre>        )</pre></li>
+    <li id="L154"><pre>        if (!group) return</pre></li>
+    <li id="L155">
+      <pre>
+        group.querySelector&lt;HTMLButtonElement&gt;(&#x27;button[aria-haspopup=&quot;menu&quot;]&#x27;)?.click()</pre>
+    </li>
+    <li id="L156"><pre>        focusTimer = setTimeout(() =&gt; {</pre></li>
+    <li id="L157">
+      <pre>
+          const panel = group.querySelector&lt;HTMLInputElement&gt;(&#x27;[data-find-input]&#x27;)</pre>
+    </li>
+    <li id="L158"><pre>          panel?.focus()</pre></li>
+    <li id="L159"><pre>          panel?.select()</pre></li>
+    <li id="L160"><pre>        }, 0)</pre></li>
+    <li id="L161"><pre>      }, 0)</pre></li>
+    <li id="L162"><pre>    }</pre></li>
+    <li id="L163">
+      <pre>    document.addEventListener(&#x27;keydown&#x27;, revealFind, true)</pre>
+    </li>
+    <li id="L164"><pre>    return () =&gt; {</pre></li>
+    <li id="L165">
+      <pre>      document.removeEventListener(&#x27;keydown&#x27;, revealFind, true)</pre>
+    </li>
+    <li id="L166"><pre>      clearTimeout(revealTimer)</pre></li>
+    <li id="L167"><pre>      clearTimeout(focusTimer)</pre></li>
+    <li id="L168"><pre>    }</pre></li>
+    <li id="L169"><pre>  }, [])</pre></li>
+    <li id="L170"><pre></pre></li>
+    <li id="L171"><pre>  return (</pre></li>
+    <li id="L172"><pre>    &lt;div className=&quot;mimir-compact-toolbar&quot;&gt;</pre></li>
+    <li id="L173">
+      <pre>      {(quickAccess != null || (tabs &amp;&amp; tabs.length &gt; 0)) &amp;&amp; (</pre>
+    </li>
+    <li id="L174">
+      <pre>        &lt;div className=&quot;mimir-compact-toolbar__tab-row&quot;&gt;</pre>
+    </li>
+    <li id="L175"><pre>          {quickAccess != null &amp;&amp; (</pre></li>
+    <li id="L176">
+      <pre>
+            &lt;div className=&quot;mimir-compact-toolbar__quick-access&quot; role=&quot;group&quot; aria-label=&quot;快捷操作&quot;&gt;</pre>
+    </li>
+    <li id="L177"><pre>              {quickAccess}</pre></li>
+    <li id="L178"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L179"><pre>          )}</pre></li>
+    <li id="L180">
+      <pre>
+          {quickAccess != null &amp;&amp; tabs &amp;&amp; tabs.length &gt; 0 &amp;&amp; (</pre>
+    </li>
+    <li id="L181">
+      <pre>
+            &lt;span className=&quot;mimir-compact-toolbar__quick-divider&quot; aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L182"><pre>          )}</pre></li>
+    <li id="L183"><pre>          {tabs &amp;&amp; tabs.length &gt; 0 &amp;&amp; (</pre></li>
+    <li id="L184">
+      <pre>
+            &lt;div className=&quot;mimir-compact-toolbar__tabs&quot; role=&quot;tablist&quot; aria-label=&quot;编辑分类&quot;&gt;</pre>
+    </li>
+    <li id="L185"><pre>              {tabs.map((tab, index) =&gt; (</pre></li>
+    <li id="L186"><pre>                &lt;button</pre></li>
+    <li id="L187"><pre>                  key={tab.key}</pre></li>
+    <li id="L188"><pre>                  ref={(node) =&gt; {</pre></li>
+    <li id="L189"><pre>                    tabRefs.current[index] = node</pre></li>
+    <li id="L190"><pre>                  }}</pre></li>
+    <li id="L191"><pre>                  className=&quot;mimir-compact-toolbar__tab&quot;</pre></li>
+    <li id="L192"><pre>                  type=&quot;button&quot;</pre></li>
+    <li id="L193"><pre>                  role=&quot;tab&quot;</pre></li>
+    <li id="L194"><pre>                  id={`${id}-tab-${tab.key}`}</pre></li>
+    <li id="L195"><pre>                  aria-controls={`${id}-commands`}</pre></li>
+    <li id="L196"><pre>                  aria-selected={tab.key === activeTab}</pre></li>
+    <li id="L197"><pre>                  tabIndex={tab.key === activeTab ? 0 : -1}</pre></li>
+    <li id="L198"><pre>                  onClick={() =&gt; selectTab(tab.key)}</pre></li>
+    <li id="L199">
+      <pre>                  onKeyDown={(event) =&gt; onTabKeyDown(event, index)}</pre>
+    </li>
+    <li id="L200"><pre>                &gt;</pre></li>
+    <li id="L201"><pre>                  {tab.label}</pre></li>
+    <li id="L202"><pre>                &lt;/button&gt;</pre></li>
+    <li id="L203"><pre>              ))}</pre></li>
+    <li id="L204"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L205"><pre>          )}</pre></li>
+    <li id="L206"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L207"><pre>      )}</pre></li>
+    <li id="L208"><pre>      &lt;div</pre></li>
+    <li id="L209"><pre>        ref={commandsRef}</pre></li>
+    <li id="L210"><pre>        className=&quot;mimir-compact-toolbar__commands&quot;</pre></li>
+    <li id="L211"><pre>        id={tabs ? `${id}-commands` : undefined}</pre></li>
+    <li id="L212"><pre>        role={tabs ? &#x27;tabpanel&#x27; : undefined}</pre></li>
+    <li id="L213">
+      <pre>
+        aria-labelledby={tabs &amp;&amp; activeTab ? `${id}-tab-${activeTab}` : undefined}</pre>
+    </li>
+    <li id="L214"><pre>        data-overflow={commandOverflow ? &#x27;&#x27; : undefined}</pre></li>
+    <li id="L215"><pre>      &gt;</pre></li>
+    <li id="L216"><pre>        {shown.map((section) =&gt; (</pre></li>
+    <li id="L217"><pre>          &lt;div</pre></li>
+    <li id="L218"><pre>            className=&quot;mimir-compact-toolbar__section&quot;</pre></li>
+    <li id="L219"><pre>            key={section.key}</pre></li>
+    <li id="L220"><pre>            role=&quot;group&quot;</pre></li>
+    <li id="L221"><pre>            aria-label={section.label}</pre></li>
+    <li id="L222"><pre>            data-section-key={section.key}</pre></li>
+    <li id="L223">
+      <pre>
+            data-collapsed={collapsed.includes(section.key) ? &#x27;&#x27; : undefined}</pre>
+    </li>
+    <li id="L224"><pre>          &gt;</pre></li>
+    <li id="L225"><pre>            {collapsed.includes(section.key) ? (</pre></li>
+    <li id="L226"><pre>              &lt;ToolbarMenu</pre></li>
+    <li id="L227"><pre>                label={section.label}</pre></li>
+    <li id="L228"><pre>                text={section.label}</pre></li>
+    <li id="L229"><pre>                panelWidth={320}</pre></li>
+    <li id="L230"><pre>                renderPanel={(close) =&gt; (</pre></li>
+    <li id="L231">
+      <pre>                  &lt;div className=&quot;mimir-compact-toolbar__panel&quot;&gt;</pre>
+    </li>
+    <li id="L232">
+      <pre>                    {section.collapsedContent?.(close) ?? section.content}</pre>
+    </li>
+    <li id="L233"><pre>                  &lt;/div&gt;</pre></li>
+    <li id="L234"><pre>                )}</pre></li>
+    <li id="L235"><pre>              /&gt;</pre></li>
+    <li id="L236"><pre>            ) : (</pre></li>
+    <li id="L237"><pre>              &lt;&gt;</pre></li>
+    <li id="L238">
+      <pre>
+                &lt;div className=&quot;mimir-compact-toolbar__controls&quot;&gt;{section.content}&lt;/div&gt;</pre>
+    </li>
+    <li id="L239">
+      <pre>
+                &lt;span className=&quot;mimir-compact-toolbar__caption&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L240"><pre>                  {section.label}</pre></li>
+    <li id="L241"><pre>                &lt;/span&gt;</pre></li>
+    <li id="L242"><pre>              &lt;/&gt;</pre></li>
+    <li id="L243"><pre>            )}</pre></li>
+    <li id="L244"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L245"><pre>        ))}</pre></li>
+    <li id="L246"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L247"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L248"><pre>  )</pre></li>
+    <li id="L249"><pre>}</pre></li>
+  </ol>
+</html>

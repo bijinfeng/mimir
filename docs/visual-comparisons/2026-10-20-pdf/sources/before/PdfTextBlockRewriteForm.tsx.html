@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfTextBlockRewriteForm.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfTextBlockRewriteForm.tsx</h1>
+    <p>before真实源码 · SHA256 fb8fd2eaca4211b2323daed25b8b6b3fea233cd7727cbc45b3376a195e9113a3</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+import { Replace, RotateCcw, TextCursorInput, Trash2 } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L2"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L3">
+      <pre>import type { PdfPageTextBlock, PdfTextBlockTarget } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarButton,</pre></li>
+    <li id="L6"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L7"><pre>  ToolbarSelect,</pre></li>
+    <li id="L8"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L9"><pre>  ToolbarTextField,</pre></li>
+    <li id="L10"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L11"><pre>import type { PdfPanelResult } from &#x27;./PdfInspector.js&#x27;</pre></li>
+    <li id="L12"><pre>import { pdfTextOccurrences } from &#x27;./pdf-text-blocks.js&#x27;</pre></li>
+    <li id="L13"><pre></pre></li>
+    <li id="L14">
+      <pre>
+type RewriteBlock = PdfPageTextBlock &amp; { format: NonNullable&lt;PdfPageTextBlock[&#x27;format&#x27;]&gt; }</pre>
+    </li>
+    <li id="L15"><pre>export function PdfTextBlockRewriteForm({</pre></li>
+    <li id="L16"><pre>  target,</pre></li>
+    <li id="L17"><pre>  block,</pre></li>
+    <li id="L18"><pre>  partial,</pre></li>
+    <li id="L19"><pre>  version,</pre></li>
+    <li id="L20"><pre>  getVersion,</pre></li>
+    <li id="L21"><pre>  busy,</pre></li>
+    <li id="L22"><pre>  onApply,</pre></li>
+    <li id="L23"><pre>}: {</pre></li>
+    <li id="L24"><pre>  target: PdfTextBlockTarget</pre></li>
+    <li id="L25"><pre>  block: RewriteBlock</pre></li>
+    <li id="L26"><pre>  partial: boolean</pre></li>
+    <li id="L27"><pre>  version: number</pre></li>
+    <li id="L28"><pre>  getVersion(): number</pre></li>
+    <li id="L29"><pre>  busy: boolean</pre></li>
+    <li id="L30"><pre>  onApply(</pre></li>
+    <li id="L31"><pre>    tool: string,</pre></li>
+    <li id="L32"><pre>    args: Record&lt;string, unknown&gt;,</pre></li>
+    <li id="L33"><pre>    version: number,</pre></li>
+    <li id="L34"><pre>    signal: AbortSignal,</pre></li>
+    <li id="L35"><pre>  ): Promise&lt;PdfPanelResult | undefined&gt;</pre></li>
+    <li id="L36"><pre>}) {</pre></li>
+    <li id="L37">
+      <pre>  const [text, setText] = useState(partial ? &#x27;&#x27; : block.text)</pre>
+    </li>
+    <li id="L38"><pre>  const [oldText, setOldText] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L39"><pre>  const [occurrence, setOccurrence] = useState(1)</pre></li>
+    <li id="L40"><pre>  const [fontSize, setFontSize] = useState(block.format.fontSize)</pre></li>
+    <li id="L41"><pre>  const [align, setAlign] = useState(block.format.align)</pre></li>
+    <li id="L42"><pre>  const [font, setFont] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L43"><pre>  const [color, setColor] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L44"><pre>  const [bold, setBold] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L45"><pre>  const [italic, setItalic] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L46"><pre>  const [pending, setPending] = useState(false)</pre></li>
+    <li id="L47"><pre>  const [numberFocused, setNumberFocused] = useState(false)</pre></li>
+    <li id="L48"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L49"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L50"><pre>  useEffect(() =&gt; () =&gt; request.current?.abort(), [])</pre></li>
+    <li id="L51"><pre>  const matches = pdfTextOccurrences(block.text, oldText)</pre></li>
+    <li id="L52"><pre>  const match = matches[occurrence - 1]</pre></li>
+    <li id="L53"><pre>  const styleChanged =</pre></li>
+    <li id="L54"><pre>    fontSize !== block.format.fontSize ||</pre></li>
+    <li id="L55"><pre>    (!partial &amp;&amp; align !== block.format.align) ||</pre></li>
+    <li id="L56"><pre>    !!font ||</pre></li>
+    <li id="L57"><pre>    !!color ||</pre></li>
+    <li id="L58"><pre>    !!bold ||</pre></li>
+    <li id="L59"><pre>    !!italic</pre></li>
+    <li id="L60"><pre>  const deleting = !partial &amp;&amp; !text.trim()</pre></li>
+    <li id="L61"><pre>  const invalid =</pre></li>
+    <li id="L62"><pre>    text.length &gt; 10000 || oldText.length &gt; 10000</pre></li>
+    <li id="L63"><pre>      ? &#x27;文字不能超过 10000 字符&#x27;</pre></li>
+    <li id="L64"><pre>      : color &amp;&amp; !/^#[a-fA-F0-9]{6}$/.test(color)</pre></li>
+    <li id="L65"><pre>        ? &#x27;颜色请使用 #RRGGBB 格式&#x27;</pre></li>
+    <li id="L66"><pre>        : partial &amp;&amp; !match</pre></li>
+    <li id="L67"><pre>          ? oldText</pre></li>
+    <li id="L68"><pre>            ? &#x27;当前段落没有指定次序的匹配&#x27;</pre></li>
+    <li id="L69"><pre>            : &#x27;先输入要替换的原文&#x27;</pre></li>
+    <li id="L70"><pre>          : null</pre></li>
+    <li id="L71"><pre>  const unchanged = partial</pre></li>
+    <li id="L72"><pre>    ? text === oldText &amp;&amp; !styleChanged</pre></li>
+    <li id="L73"><pre>    : text === block.text &amp;&amp; !styleChanged</pre></li>
+    <li id="L74"><pre>  const blocked = busy || pending</pre></li>
+    <li id="L75"><pre>  const apply = async () =&gt; {</pre></li>
+    <li id="L76"><pre>    if (request.current || blocked || invalid || unchanged) return</pre></li>
+    <li id="L77"><pre>    if (getVersion() !== version) {</pre></li>
+    <li id="L78"><pre>      setError(&#x27;PDF 已变化，请重新核验段落&#x27;)</pre></li>
+    <li id="L79"><pre>      return</pre></li>
+    <li id="L80"><pre>    }</pre></li>
+    <li id="L81"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L82"><pre>    request.current = controller</pre></li>
+    <li id="L83"><pre>    setPending(true)</pre></li>
+    <li id="L84"><pre>    setError(null)</pre></li>
+    <li id="L85"><pre>    const args: Record&lt;string, unknown&gt; = {</pre></li>
+    <li id="L86"><pre>      page: target.pageIndex + 1,</pre></li>
+    <li id="L87"><pre>      target,</pre></li>
+    <li id="L88"><pre>      new_text: deleting ? &#x27;&#x27; : text,</pre></li>
+    <li id="L89">
+      <pre>      ...(fontSize !== block.format.fontSize ? { font_size: fontSize } : {}),</pre>
+    </li>
+    <li id="L90">
+      <pre>      ...(!partial &amp;&amp; align !== block.format.align ? { align } : {}),</pre>
+    </li>
+    <li id="L91"><pre>      ...(font ? { font } : {}),</pre></li>
+    <li id="L92"><pre>      ...(color ? { color } : {}),</pre></li>
+    <li id="L93"><pre>      ...(bold ? { bold: bold === &#x27;apply&#x27; } : {}),</pre></li>
+    <li id="L94"><pre>      ...(italic ? { italic: italic === &#x27;apply&#x27; } : {}),</pre></li>
+    <li id="L95"><pre>      ...(partial ? { old_text: oldText, occurrence } : {}),</pre></li>
+    <li id="L96"><pre>    }</pre></li>
+    <li id="L97"><pre>    try {</pre></li>
+    <li id="L98"><pre>      const result = await onApply(</pre></li>
+    <li id="L99"><pre>        partial ? &#x27;edit_text&#x27; : &#x27;edit_block&#x27;,</pre></li>
+    <li id="L100"><pre>        args,</pre></li>
+    <li id="L101"><pre>        version,</pre></li>
+    <li id="L102"><pre>        controller.signal,</pre></li>
+    <li id="L103"><pre>      )</pre></li>
+    <li id="L104"><pre>      if (!controller.signal.aborted &amp;&amp; !result?.ok)</pre></li>
+    <li id="L105">
+      <pre>        setError(result?.error ?? &#x27;原文修改未完成，请重试&#x27;)</pre>
+    </li>
+    <li id="L106"><pre>    } catch (cause) {</pre></li>
+    <li id="L107"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L108">
+      <pre>        setError(cause instanceof Error ? cause.message : String(cause))</pre>
+    </li>
+    <li id="L109"><pre>    } finally {</pre></li>
+    <li id="L110"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L111"><pre>        request.current = null</pre></li>
+    <li id="L112"><pre>        if (!controller.signal.aborted) setPending(false)</pre></li>
+    <li id="L113"><pre>      }</pre></li>
+    <li id="L114"><pre>    }</pre></li>
+    <li id="L115"><pre>  }</pre></li>
+    <li id="L116"><pre>  const reset = () =&gt; {</pre></li>
+    <li id="L117"><pre>    setText(partial ? &#x27;&#x27; : block.text)</pre></li>
+    <li id="L118"><pre>    setOldText(&#x27;&#x27;)</pre></li>
+    <li id="L119"><pre>    setOccurrence(1)</pre></li>
+    <li id="L120"><pre>    setFontSize(block.format.fontSize)</pre></li>
+    <li id="L121"><pre>    setAlign(block.format.align)</pre></li>
+    <li id="L122"><pre>    setFont(&#x27;&#x27;)</pre></li>
+    <li id="L123"><pre>    setColor(&#x27;&#x27;)</pre></li>
+    <li id="L124"><pre>    setBold(&#x27;&#x27;)</pre></li>
+    <li id="L125"><pre>    setItalic(&#x27;&#x27;)</pre></li>
+    <li id="L126"><pre>    setError(null)</pre></li>
+    <li id="L127"><pre>  }</pre></li>
+    <li id="L128"><pre>  return (</pre></li>
+    <li id="L129"><pre>    &lt;&gt;</pre></li>
+    <li id="L130"><pre>      &lt;div</pre></li>
+    <li id="L131"><pre>        className=&quot;mimir-pdf-inspector__content&quot;</pre></li>
+    <li id="L132"><pre>        onFocusCapture={(event) =&gt;</pre></li>
+    <li id="L133"><pre>          setNumberFocused(</pre></li>
+    <li id="L134">
+      <pre>
+            event.target instanceof HTMLInputElement &amp;&amp; !!event.target.closest(&#x27;.me-input--num&#x27;),</pre>
+    </li>
+    <li id="L135"><pre>          )</pre></li>
+    <li id="L136"><pre>        }</pre></li>
+    <li id="L137"><pre>        onBlurCapture={() =&gt; setNumberFocused(false)}</pre></li>
+    <li id="L138"><pre>      &gt;</pre></li>
+    <li id="L139">
+      <pre>
+        &lt;fieldset className=&quot;mimir-pdf-text-block__fields&quot; disabled={blocked}&gt;</pre>
+    </li>
+    <li id="L140"><pre>          {partial &amp;&amp; (</pre></li>
+    <li id="L141"><pre>            &lt;&gt;</pre></li>
+    <li id="L142"><pre>              &lt;ToolbarTextField</pre></li>
+    <li id="L143"><pre>                label=&quot;要替换的原文&quot;</pre></li>
+    <li id="L144"><pre>                value={oldText}</pre></li>
+    <li id="L145"><pre>                onChange={(value) =&gt; {</pre></li>
+    <li id="L146"><pre>                  setOldText(value)</pre></li>
+    <li id="L147"><pre>                  setOccurrence(1)</pre></li>
+    <li id="L148"><pre>                }}</pre></li>
+    <li id="L149"><pre>              /&gt;</pre></li>
+    <li id="L150">
+      <pre>              &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L151">
+      <pre>                &lt;span&gt;匹配位置 · 共 {matches.length} 处&lt;/span&gt;</pre>
+    </li>
+    <li id="L152"><pre>                &lt;ToolbarNumberField</pre></li>
+    <li id="L153"><pre>                  label=&quot;替换第几处&quot;</pre></li>
+    <li id="L154"><pre>                  value={occurrence}</pre></li>
+    <li id="L155"><pre>                  min={1}</pre></li>
+    <li id="L156"><pre>                  max={Math.max(1, matches.length)}</pre></li>
+    <li id="L157"><pre>                  disabled={blocked || !matches.length}</pre></li>
+    <li id="L158"><pre>                  onCommit={setOccurrence}</pre></li>
+    <li id="L159"><pre>                /&gt;</pre></li>
+    <li id="L160"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L161"><pre>              {match &amp;&amp; (</pre></li>
+    <li id="L162">
+      <pre>
+                &lt;p className=&quot;mimir-pdf-text-block__match&quot; aria-label=&quot;替换位置预览&quot;&gt;</pre>
+    </li>
+    <li id="L163">
+      <pre>                  {block.text.slice(Math.max(0, match.start - 24), match.start)}</pre>
+    </li>
+    <li id="L164">
+      <pre>
+                  &lt;mark&gt;{block.text.slice(match.start, match.end)}&lt;/mark&gt;</pre>
+    </li>
+    <li id="L165"><pre>                  {block.text.slice(match.end, match.end + 24)}</pre></li>
+    <li id="L166"><pre>                &lt;/p&gt;</pre></li>
+    <li id="L167"><pre>              )}</pre></li>
+    <li id="L168"><pre>            &lt;/&gt;</pre></li>
+    <li id="L169"><pre>          )}</pre></li>
+    <li id="L170"><pre>          &lt;ToolbarTextArea</pre></li>
+    <li id="L171">
+      <pre>            label={partial ? &#x27;替换为&#x27; : &#x27;段落新文字&#x27;}</pre>
+    </li>
+    <li id="L172"><pre>            value={text}</pre></li>
+    <li id="L173"><pre>            onChange={setText}</pre></li>
+    <li id="L174"><pre>            rows={partial ? 3 : 6}</pre></li>
+    <li id="L175"><pre>          /&gt;</pre></li>
+    <li id="L176">
+      <pre>          &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L177"><pre>            {partial</pre></li>
+    <li id="L178">
+      <pre>              ? &#x27;仅替换指定匹配，不重排整段。留空只删除这处文字。&#x27;</pre>
+    </li>
+    <li id="L179"><pre>              : deleting</pre></li>
+    <li id="L180">
+      <pre>                ? &#x27;将移除整段原文对象。可撤销，其他段落保持原位。&#x27;</pre>
+    </li>
+    <li id="L181">
+      <pre>
+                : &#x27;按原段宽度重排，向下扩展，其他内容保持原位；内容过长可能重叠。清空文字可删除整段。&#x27;}</pre>
+    </li>
+    <li id="L182"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L183">
+      <pre>          &lt;details className=&quot;mimir-pdf-text-block__format&quot;&gt;</pre>
+    </li>
+    <li id="L184"><pre>            &lt;summary&gt;文字格式&lt;/summary&gt;</pre></li>
+    <li id="L185">
+      <pre>            &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L186">
+      <pre>
+              当前参考字号 {Math.round(block.format.fontSize * 100) / 100} pt · 行距{&#x27; &#x27;}</pre>
+    </li>
+    <li id="L187"><pre>              {Math.round(block.format.leading * 100) / 100} pt</pre></li>
+    <li id="L188"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L189">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L190"><pre>              &lt;span&gt;字号 · pt&lt;/span&gt;</pre></li>
+    <li id="L191"><pre>              &lt;ToolbarNumberField</pre></li>
+    <li id="L192"><pre>                label=&quot;改写字号（pt）&quot;</pre></li>
+    <li id="L193"><pre>                value={fontSize}</pre></li>
+    <li id="L194"><pre>                min={0.1}</pre></li>
+    <li id="L195"><pre>                max={500}</pre></li>
+    <li id="L196"><pre>                disabled={blocked || deleting}</pre></li>
+    <li id="L197"><pre>                onCommit={setFontSize}</pre></li>
+    <li id="L198"><pre>              /&gt;</pre></li>
+    <li id="L199"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L200">
+      <pre>            &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L201"><pre>              &lt;span&gt;字体&lt;/span&gt;</pre></li>
+    <li id="L202"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L203"><pre>                label=&quot;改写字体&quot;</pre></li>
+    <li id="L204"><pre>                value={font}</pre></li>
+    <li id="L205"><pre>                disabled={blocked || deleting}</pre></li>
+    <li id="L206"><pre>                options={[</pre></li>
+    <li id="L207">
+      <pre>                  { value: &#x27;&#x27;, label: &#x27;保留原字体&#x27; },</pre>
+    </li>
+    <li id="L208">
+      <pre>                  { value: &#x27;arial&#x27;, label: &#x27;Arial&#x27; },</pre>
+    </li>
+    <li id="L209">
+      <pre>                  { value: &#x27;times&#x27;, label: &#x27;Times&#x27; },</pre>
+    </li>
+    <li id="L210">
+      <pre>                  { value: &#x27;courier&#x27;, label: &#x27;Courier&#x27; },</pre>
+    </li>
+    <li id="L211"><pre>                ]}</pre></li>
+    <li id="L212"><pre>                onChange={setFont}</pre></li>
+    <li id="L213"><pre>              /&gt;</pre></li>
+    <li id="L214"><pre>            &lt;/label&gt;</pre></li>
+    <li id="L215"><pre>            {!partial &amp;&amp; (</pre></li>
+    <li id="L216">
+      <pre>              &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L217"><pre>                &lt;span&gt;对齐&lt;/span&gt;</pre></li>
+    <li id="L218"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L219"><pre>                  label=&quot;改写段落对齐&quot;</pre></li>
+    <li id="L220"><pre>                  value={align}</pre></li>
+    <li id="L221"><pre>                  disabled={blocked || deleting}</pre></li>
+    <li id="L222"><pre>                  options={[</pre></li>
+    <li id="L223">
+      <pre>                    { value: &#x27;left&#x27;, label: &#x27;左对齐&#x27; },</pre>
+    </li>
+    <li id="L224">
+      <pre>                    { value: &#x27;center&#x27;, label: &#x27;居中&#x27; },</pre>
+    </li>
+    <li id="L225">
+      <pre>                    { value: &#x27;right&#x27;, label: &#x27;右对齐&#x27; },</pre>
+    </li>
+    <li id="L226"><pre>                  ]}</pre></li>
+    <li id="L227"><pre>                  onChange={setAlign}</pre></li>
+    <li id="L228"><pre>                /&gt;</pre></li>
+    <li id="L229"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L230"><pre>            )}</pre></li>
+    <li id="L231"><pre>            &lt;ToolbarTextField</pre></li>
+    <li id="L232"><pre>              label=&quot;文字颜色（留空保留）&quot;</pre></li>
+    <li id="L233"><pre>              value={color}</pre></li>
+    <li id="L234"><pre>              placeholder=&quot;#RRGGBB&quot;</pre></li>
+    <li id="L235"><pre>              onChange={setColor}</pre></li>
+    <li id="L236"><pre>            /&gt;</pre></li>
+    <li id="L237">
+      <pre>            &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L238">
+      <pre>              &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L239"><pre>                &lt;span&gt;粗体&lt;/span&gt;</pre></li>
+    <li id="L240"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L241"><pre>                  label=&quot;改写粗体&quot;</pre></li>
+    <li id="L242"><pre>                  value={bold}</pre></li>
+    <li id="L243"><pre>                  disabled={blocked || deleting}</pre></li>
+    <li id="L244"><pre>                  options={[</pre></li>
+    <li id="L245">
+      <pre>                    { value: &#x27;&#x27;, label: &#x27;保留&#x27; },</pre>
+    </li>
+    <li id="L246">
+      <pre>                    { value: &#x27;apply&#x27;, label: &#x27;应用粗体&#x27; },</pre>
+    </li>
+    <li id="L247">
+      <pre>                    { value: &#x27;clear&#x27;, label: &#x27;取消粗体&#x27; },</pre>
+    </li>
+    <li id="L248"><pre>                  ]}</pre></li>
+    <li id="L249"><pre>                  onChange={setBold}</pre></li>
+    <li id="L250"><pre>                /&gt;</pre></li>
+    <li id="L251"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L252">
+      <pre>              &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L253"><pre>                &lt;span&gt;斜体&lt;/span&gt;</pre></li>
+    <li id="L254"><pre>                &lt;ToolbarSelect</pre></li>
+    <li id="L255"><pre>                  label=&quot;改写斜体&quot;</pre></li>
+    <li id="L256"><pre>                  value={italic}</pre></li>
+    <li id="L257"><pre>                  disabled={blocked || deleting}</pre></li>
+    <li id="L258"><pre>                  options={[</pre></li>
+    <li id="L259">
+      <pre>                    { value: &#x27;&#x27;, label: &#x27;保留&#x27; },</pre>
+    </li>
+    <li id="L260">
+      <pre>                    { value: &#x27;apply&#x27;, label: &#x27;应用斜体&#x27; },</pre>
+    </li>
+    <li id="L261">
+      <pre>                    { value: &#x27;clear&#x27;, label: &#x27;取消斜体&#x27; },</pre>
+    </li>
+    <li id="L262"><pre>                  ]}</pre></li>
+    <li id="L263"><pre>                  onChange={setItalic}</pre></li>
+    <li id="L264"><pre>                /&gt;</pre></li>
+    <li id="L265"><pre>              &lt;/label&gt;</pre></li>
+    <li id="L266"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L267">
+      <pre>            &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L268">
+      <pre>
+              未改参数沿用原文；混合字体的参考字号来自原生对象。缺失字形会拒绝写入。</pre>
+    </li>
+    <li id="L269"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L270"><pre>          &lt;/details&gt;</pre></li>
+    <li id="L271"><pre>        &lt;/fieldset&gt;</pre></li>
+    <li id="L272">
+      <pre>
+        {invalid &amp;&amp; &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;{invalid}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L273"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L274">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L275"><pre>            {error}</pre></li>
+    <li id="L276"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L277"><pre>        )}</pre></li>
+    <li id="L278"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L279">
+      <pre>      &lt;div className=&quot;mimir-pdf-text-block__actions&quot;&gt;</pre>
+    </li>
+    <li id="L280">
+      <pre>
+        &lt;ToolbarButton label=&quot;重置原文修改&quot; disabled={blocked} onClick={reset}&gt;</pre>
+    </li>
+    <li id="L281"><pre>          &lt;RotateCcw size={16} /&gt;</pre></li>
+    <li id="L282"><pre>          重置</pre></li>
+    <li id="L283"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L284"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L285">
+      <pre>
+          label={deleting ? &#x27;删除整段&#x27; : partial ? &#x27;应用局部替换&#x27; : &#x27;应用段落改写&#x27;}</pre>
+    </li>
+    <li id="L286"><pre>          primary</pre></li>
+    <li id="L287">
+      <pre>          disabled={blocked || !!invalid || (unchanged &amp;&amp; !numberFocused)}</pre>
+    </li>
+    <li id="L288">
+      <pre>
+          disabledReason={blocked ? &#x27;PDF 正在处理&#x27; : (invalid ?? &#x27;先修改文字或格式&#x27;)}</pre>
+    </li>
+    <li id="L289"><pre>          onClick={() =&gt; void apply()}</pre></li>
+    <li id="L290"><pre>        &gt;</pre></li>
+    <li id="L291"><pre>          {deleting ? (</pre></li>
+    <li id="L292"><pre>            &lt;Trash2 size={16} /&gt;</pre></li>
+    <li id="L293"><pre>          ) : partial ? (</pre></li>
+    <li id="L294"><pre>            &lt;Replace size={16} /&gt;</pre></li>
+    <li id="L295"><pre>          ) : (</pre></li>
+    <li id="L296"><pre>            &lt;TextCursorInput size={16} /&gt;</pre></li>
+    <li id="L297"><pre>          )}</pre></li>
+    <li id="L298"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L299"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L300"><pre>    &lt;/&gt;</pre></li>
+    <li id="L301"><pre>  )</pre></li>
+    <li id="L302"><pre>}</pre></li>
+  </ol>
+</html>

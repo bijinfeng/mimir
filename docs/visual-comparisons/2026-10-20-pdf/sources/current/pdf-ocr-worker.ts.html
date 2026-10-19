@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-ocr-worker.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-ocr-worker.ts</h1>
+    <p>current真实源码 · SHA256 4e66e8e633b5a3a5130820fa016567f78d8212da1bb77d52c528d06fc9207099</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>
+/** Pinned tesseract.js 7 worker protocol; owns cancellation even before engine initialization. */</pre>
+    </li>
+    <li id="L2"><pre>export interface OcrBox {</pre></li>
+    <li id="L3"><pre>  x0: number</pre></li>
+    <li id="L4"><pre>  y0: number</pre></li>
+    <li id="L5"><pre>  x1: number</pre></li>
+    <li id="L6"><pre>  y1: number</pre></li>
+    <li id="L7"><pre>}</pre></li>
+    <li id="L8"><pre>export interface OcrSymbol {</pre></li>
+    <li id="L9"><pre>  text: string</pre></li>
+    <li id="L10"><pre>  confidence: number</pre></li>
+    <li id="L11"><pre>  bbox: OcrBox</pre></li>
+    <li id="L12"><pre>}</pre></li>
+    <li id="L13"><pre>export interface OcrWord extends OcrSymbol {</pre></li>
+    <li id="L14"><pre>  symbols: OcrSymbol[]</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre>export interface OcrLine {</pre></li>
+    <li id="L17"><pre>  words: OcrWord[]</pre></li>
+    <li id="L18"><pre>}</pre></li>
+    <li id="L19"><pre>export interface OcrPageData {</pre></li>
+    <li id="L20"><pre>  text: string</pre></li>
+    <li id="L21"><pre>  confidence: number</pre></li>
+    <li id="L22"><pre>  blocks: { paragraphs: { lines: OcrLine[] }[] }[] | null</pre></li>
+    <li id="L23"><pre>}</pre></li>
+    <li id="L24"><pre>export interface OcrWorkerProgress {</pre></li>
+    <li id="L25"><pre>  status: string</pre></li>
+    <li id="L26"><pre>  progress: number</pre></li>
+    <li id="L27"><pre>}</pre></li>
+    <li id="L28"><pre>export interface PdfOcrWorker {</pre></li>
+    <li id="L29"><pre>  recognize(image: Uint8Array): Promise&lt;OcrPageData&gt;</pre></li>
+    <li id="L30"><pre>  terminate(): void</pre></li>
+    <li id="L31"><pre>}</pre></li>
+    <li id="L32"><pre>export interface OcrTransport {</pre></li>
+    <li id="L33"><pre>  postMessage(message: unknown): void</pre></li>
+    <li id="L34"><pre>  terminate(): void</pre></li>
+    <li id="L35"><pre>  onmessage: ((event: MessageEvent) =&gt; void) | null</pre></li>
+    <li id="L36"><pre>  onerror: ((event: ErrorEvent) =&gt; void) | null</pre></li>
+    <li id="L37"><pre>}</pre></li>
+    <li id="L38"><pre>export function pdfOcrAssetPaths(baseUrl: string) {</pre></li>
+    <li id="L39">
+      <pre>
+  const base = baseUrl.startsWith(&#x27;/&#x27;) ? baseUrl.replace(/\/+$/, &#x27;&#x27;) : &#x27;&#x27;</pre>
+    </li>
+    <li id="L40"><pre>  return {</pre></li>
+    <li id="L41"><pre>    worker: `${base}/pdf-ocr/worker.min.js`,</pre></li>
+    <li id="L42"><pre>    core: `${base}/pdf-ocr/tesseract-core-lstm.js`,</pre></li>
+    <li id="L43"><pre>    lang: `${base}/pdf-ocr/lang/`,</pre></li>
+    <li id="L44"><pre>  }</pre></li>
+    <li id="L45"><pre>}</pre></li>
+    <li id="L46"><pre></pre></li>
+    <li id="L47"><pre>export async function createPdfOcrWorker({</pre></li>
+    <li id="L48"><pre>  signal,</pre></li>
+    <li id="L49"><pre>  onProgress,</pre></li>
+    <li id="L50"><pre>  baseUrl,</pre></li>
+    <li id="L51"><pre>  spawn = (url) =&gt; new Worker(url),</pre></li>
+    <li id="L52"><pre>}: {</pre></li>
+    <li id="L53"><pre>  signal: AbortSignal</pre></li>
+    <li id="L54"><pre>  onProgress?: (progress: OcrWorkerProgress) =&gt; void</pre></li>
+    <li id="L55"><pre>  baseUrl: string</pre></li>
+    <li id="L56"><pre>  spawn?: (url: string) =&gt; OcrTransport</pre></li>
+    <li id="L57"><pre>}): Promise&lt;PdfOcrWorker&gt; {</pre></li>
+    <li id="L58"><pre>  signal.throwIfAborted()</pre></li>
+    <li id="L59"><pre>  const assets = pdfOcrAssetPaths(baseUrl)</pre></li>
+    <li id="L60"><pre>  const worker = spawn(assets.worker)</pre></li>
+    <li id="L61"><pre>  let sequence = 0</pre></li>
+    <li id="L62"><pre>  let closed = false</pre></li>
+    <li id="L63">
+      <pre>
+  const pending = new Map&lt;string, { resolve(value: unknown): void; reject(error: unknown): void }&gt;()</pre>
+    </li>
+    <li id="L64"><pre>  const stop = (error: unknown) =&gt; {</pre></li>
+    <li id="L65"><pre>    if (closed) return</pre></li>
+    <li id="L66"><pre>    closed = true</pre></li>
+    <li id="L67"><pre>    clearTimeout(timeout)</pre></li>
+    <li id="L68"><pre>    signal.removeEventListener(&#x27;abort&#x27;, abort)</pre></li>
+    <li id="L69"><pre>    worker.onmessage = null</pre></li>
+    <li id="L70"><pre>    worker.onerror = null</pre></li>
+    <li id="L71"><pre>    worker.terminate()</pre></li>
+    <li id="L72"><pre>    for (const job of pending.values()) job.reject(error)</pre></li>
+    <li id="L73"><pre>    pending.clear()</pre></li>
+    <li id="L74"><pre>  }</pre></li>
+    <li id="L75">
+      <pre>
+  const abort = () =&gt; stop(signal.reason ?? new DOMException(&#x27;已停止识别&#x27;, &#x27;AbortError&#x27;))</pre>
+    </li>
+    <li id="L76">
+      <pre>
+  // Covers worker script loading, language initialization and recognition, not only the final job.</pre>
+    </li>
+    <li id="L77">
+      <pre>
+  const timeoutError = () =&gt; stop(new Error(&#x27;本页识别超过 120 秒，请重试或降低页面复杂度&#x27;))</pre>
+    </li>
+    <li id="L78"><pre>  let timeout = setTimeout(timeoutError, 120_000)</pre></li>
+    <li id="L79"><pre>  signal.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre></li>
+    <li id="L80">
+      <pre>
+  worker.onerror = () =&gt; stop(new Error(&#x27;本地识别引擎加载失败，请检查静态资源后重试&#x27;))</pre>
+    </li>
+    <li id="L81"><pre>  worker.onmessage = ({ data }) =&gt; {</pre></li>
+    <li id="L82">
+      <pre>    if (closed || !data || typeof data !== &#x27;object&#x27;) return</pre>
+    </li>
+    <li id="L83"><pre>    if (data.status === &#x27;progress&#x27;) {</pre></li>
+    <li id="L84">
+      <pre>
+      if (typeof data.data?.status === &#x27;string&#x27; &amp;&amp; Number.isFinite(data.data?.progress))</pre>
+    </li>
+    <li id="L85"><pre>        onProgress?.({</pre></li>
+    <li id="L86"><pre>          status: data.data.status,</pre></li>
+    <li id="L87"><pre>          progress: Math.max(0, Math.min(1, data.data.progress)),</pre></li>
+    <li id="L88"><pre>        })</pre></li>
+    <li id="L89"><pre>      return</pre></li>
+    <li id="L90"><pre>    }</pre></li>
+    <li id="L91"><pre>    const job = pending.get(data.jobId)</pre></li>
+    <li id="L92"><pre>    if (!job) return</pre></li>
+    <li id="L93"><pre>    pending.delete(data.jobId)</pre></li>
+    <li id="L94"><pre>    if (data.status === &#x27;resolve&#x27;) job.resolve(data.data)</pre></li>
+    <li id="L95"><pre>    else if (data.status === &#x27;reject&#x27;) {</pre></li>
+    <li id="L96">
+      <pre>
+      job.reject(new Error(typeof data.data === &#x27;string&#x27; ? data.data : &#x27;本地文字识别失败，请重试&#x27;))</pre>
+    </li>
+    <li id="L97"><pre>      stop(new Error(&#x27;本地文字识别失败，请重试&#x27;))</pre></li>
+    <li id="L98"><pre>    }</pre></li>
+    <li id="L99"><pre>  }</pre></li>
+    <li id="L100">
+      <pre>  const run = (action: string, payload: unknown): Promise&lt;unknown&gt; =&gt;</pre>
+    </li>
+    <li id="L101"><pre>    new Promise((resolve, reject) =&gt; {</pre></li>
+    <li id="L102"><pre>      if (closed) {</pre></li>
+    <li id="L103">
+      <pre>        reject(new DOMException(&#x27;已停止识别&#x27;, &#x27;AbortError&#x27;))</pre>
+    </li>
+    <li id="L104"><pre>        return</pre></li>
+    <li id="L105"><pre>      }</pre></li>
+    <li id="L106"><pre>      const jobId = `mimir-ocr-${++sequence}`</pre></li>
+    <li id="L107"><pre>      pending.set(jobId, { resolve, reject })</pre></li>
+    <li id="L108"><pre>      try {</pre></li>
+    <li id="L109">
+      <pre>
+        worker.postMessage({ workerId: &#x27;mimir-ocr&#x27;, jobId, action, payload })</pre>
+    </li>
+    <li id="L110"><pre>      } catch (error) {</pre></li>
+    <li id="L111"><pre>        stop(error)</pre></li>
+    <li id="L112"><pre>      }</pre></li>
+    <li id="L113"><pre>    })</pre></li>
+    <li id="L114"><pre>  try {</pre></li>
+    <li id="L115">
+      <pre>
+    await run(&#x27;load&#x27;, { options: { lstmOnly: true, corePath: assets.core, logging: false } })</pre>
+    </li>
+    <li id="L116"><pre>    await run(&#x27;loadLanguage&#x27;, {</pre></li>
+    <li id="L117"><pre>      langs: [&#x27;eng&#x27;, &#x27;chi_sim&#x27;],</pre></li>
+    <li id="L118"><pre>      options: {</pre></li>
+    <li id="L119"><pre>        langPath: assets.lang,</pre></li>
+    <li id="L120"><pre>        gzip: true,</pre></li>
+    <li id="L121"><pre>        cacheMethod: &#x27;none&#x27;,</pre></li>
+    <li id="L122"><pre>        lstmOnly: true,</pre></li>
+    <li id="L123"><pre>      },</pre></li>
+    <li id="L124"><pre>    })</pre></li>
+    <li id="L125">
+      <pre>
+    await run(&#x27;initialize&#x27;, { langs: [&#x27;eng&#x27;, &#x27;chi_sim&#x27;], oem: 1, config: {} })</pre>
+    </li>
+    <li id="L126"><pre>    return {</pre></li>
+    <li id="L127"><pre>      recognize: async (image) =&gt; {</pre></li>
+    <li id="L128"><pre>        clearTimeout(timeout)</pre></li>
+    <li id="L129"><pre>        timeout = setTimeout(timeoutError, 120_000)</pre></li>
+    <li id="L130"><pre>        const result = await run(&#x27;recognize&#x27;, {</pre></li>
+    <li id="L131"><pre>          image,</pre></li>
+    <li id="L132"><pre>          options: {},</pre></li>
+    <li id="L133"><pre>          output: { text: true, blocks: true },</pre></li>
+    <li id="L134"><pre>        })</pre></li>
+    <li id="L135"><pre>        if (</pre></li>
+    <li id="L136"><pre>          !result ||</pre></li>
+    <li id="L137"><pre>          typeof result !== &#x27;object&#x27; ||</pre></li>
+    <li id="L138"><pre>          !(&#x27;text&#x27; in result) ||</pre></li>
+    <li id="L139"><pre>          typeof result.text !== &#x27;string&#x27;</pre></li>
+    <li id="L140"><pre>        )</pre></li>
+    <li id="L141"><pre>          throw new Error(&#x27;本地识别引擎未返回有效文字&#x27;)</pre></li>
+    <li id="L142"><pre>        return result as OcrPageData</pre></li>
+    <li id="L143"><pre>      },</pre></li>
+    <li id="L144">
+      <pre>
+      terminate: () =&gt; stop(new DOMException(&#x27;识别已结束&#x27;, &#x27;AbortError&#x27;)),</pre>
+    </li>
+    <li id="L145"><pre>    }</pre></li>
+    <li id="L146"><pre>  } catch (error) {</pre></li>
+    <li id="L147"><pre>    stop(error)</pre></li>
+    <li id="L148"><pre>    throw error</pre></li>
+    <li id="L149"><pre>  }</pre></li>
+    <li id="L150"><pre>}</pre></li>
+    <li id="L151"><pre></pre></li>
+    <li id="L152">
+      <pre>
+/** Abort waiting without destroying shared PDF.js documents or leaving a rejected promise unobserved. */</pre>
+    </li>
+    <li id="L153">
+      <pre>
+export function pdfOcrAbortable&lt;T&gt;(promise: Promise&lt;T&gt;, signal: AbortSignal): Promise&lt;T&gt; {</pre>
+    </li>
+    <li id="L154"><pre>  return new Promise((resolve, reject) =&gt; {</pre></li>
+    <li id="L155">
+      <pre>
+    const abort = () =&gt; reject(signal.reason ?? new DOMException(&#x27;已停止识别&#x27;, &#x27;AbortError&#x27;))</pre>
+    </li>
+    <li id="L156">
+      <pre>    signal.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre>
+    </li>
+    <li id="L157"><pre>    if (signal.aborted) abort()</pre></li>
+    <li id="L158">
+      <pre>
+    promise.then(resolve, reject).finally(() =&gt; signal.removeEventListener(&#x27;abort&#x27;, abort))</pre>
+    </li>
+    <li id="L159"><pre>  })</pre></li>
+    <li id="L160"><pre>}</pre></li>
+  </ol>
+</html>

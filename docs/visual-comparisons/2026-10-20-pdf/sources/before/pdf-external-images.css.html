@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-external-images.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-external-images.css</h1>
+    <p>before真实源码 · SHA256 7bf224d12f41052aff137f87d0e7899404a9ad83a43398d863099e7d3a8565cf</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-image-source {</pre></li>
+    <li id="L2"><pre>  display: grid;</pre></li>
+    <li id="L3"><pre>  min-width: 0;</pre></li>
+    <li id="L4"><pre>  gap: 12px;</pre></li>
+    <li id="L5"><pre>}</pre></li>
+    <li id="L6"><pre>.mimir-pdf-image-source__actions {</pre></li>
+    <li id="L7"><pre>  display: flex;</pre></li>
+    <li id="L8"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L9"><pre>  gap: 8px;</pre></li>
+    <li id="L10"><pre>}</pre></li>
+    <li id="L11"><pre>.mimir-pdf-image-source__results {</pre></li>
+    <li id="L12"><pre>  display: grid;</pre></li>
+    <li id="L13"><pre>  grid-template-columns: repeat(2, minmax(0, 1fr));</pre></li>
+    <li id="L14"><pre>  gap: 8px;</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre>.mimir-pdf-image-source__result {</pre></li>
+    <li id="L17"><pre>  display: grid;</pre></li>
+    <li id="L18"><pre>  align-content: start;</pre></li>
+    <li id="L19"><pre>  gap: 6px;</pre></li>
+    <li id="L20"><pre>  min-width: 0;</pre></li>
+    <li id="L21"><pre>  padding: 6px;</pre></li>
+    <li id="L22"><pre>  border: 1px solid var(--me-border);</pre></li>
+    <li id="L23"><pre>  border-radius: var(--me-radius, 6px);</pre></li>
+    <li id="L24"><pre>  color: var(--me-text);</pre></li>
+    <li id="L25"><pre>  background: var(--me-surface);</pre></li>
+    <li id="L26"><pre>  text-align: start;</pre></li>
+    <li id="L27"><pre>  cursor: pointer;</pre></li>
+    <li id="L28"><pre>  font: inherit;</pre></li>
+    <li id="L29"><pre>}</pre></li>
+    <li id="L30"><pre>.mimir-pdf-image-source__result[aria-pressed=&#x27;true&#x27;] {</pre></li>
+    <li id="L31"><pre>  border-color: var(--me-accent, #00834d);</pre></li>
+    <li id="L32"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L33"><pre>}</pre></li>
+    <li id="L34"><pre>.mimir-pdf-image-source__result:focus-visible {</pre></li>
+    <li id="L35"><pre>  outline: 2px solid var(--me-accent, #00834d);</pre></li>
+    <li id="L36"><pre>  outline-offset: 2px;</pre></li>
+    <li id="L37"><pre>}</pre></li>
+    <li id="L38"><pre>.mimir-pdf-image-source__result img {</pre></li>
+    <li id="L39"><pre>  display: block;</pre></li>
+    <li id="L40"><pre>  width: 100%;</pre></li>
+    <li id="L41"><pre>  height: 88px;</pre></li>
+    <li id="L42"><pre>  object-fit: contain;</pre></li>
+    <li id="L43"><pre>}</pre></li>
+    <li id="L44"><pre>.mimir-pdf-image-source__result span {</pre></li>
+    <li id="L45"><pre>  display: -webkit-box;</pre></li>
+    <li id="L46"><pre>  overflow: hidden;</pre></li>
+    <li id="L47"><pre>  -webkit-line-clamp: 2;</pre></li>
+    <li id="L48"><pre>  -webkit-box-orient: vertical;</pre></li>
+    <li id="L49"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L50"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L51"><pre>  line-height: 1.5;</pre></li>
+    <li id="L52"><pre>}</pre></li>
+    <li id="L53"><pre>.mimir-pdf-image-source__preview {</pre></li>
+    <li id="L54"><pre>  display: grid;</pre></li>
+    <li id="L55"><pre>  gap: 8px;</pre></li>
+    <li id="L56"><pre>  margin: 0;</pre></li>
+    <li id="L57"><pre>  min-width: 0;</pre></li>
+    <li id="L58"><pre>}</pre></li>
+    <li id="L59"><pre>.mimir-pdf-image-source__preview img {</pre></li>
+    <li id="L60"><pre>  display: block;</pre></li>
+    <li id="L61"><pre>  width: 100%;</pre></li>
+    <li id="L62"><pre>  max-height: 220px;</pre></li>
+    <li id="L63"><pre>  object-fit: contain;</pre></li>
+    <li id="L64"><pre>}</pre></li>
+    <li id="L65"><pre>.mimir-pdf-image-source__preview figcaption {</pre></li>
+    <li id="L66"><pre>  color: var(--me-text-weak);</pre></li>
+    <li id="L67"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L68"><pre>}</pre></li>
+    <li id="L69"><pre>.mimir-pdf-image-panel &gt; .mimir-pdf-inspector__footer {</pre></li>
+    <li id="L70"><pre>  flex: none;</pre></li>
+    <li id="L71"><pre>  margin: 0;</pre></li>
+    <li id="L72"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L73"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L74"><pre>}</pre></li>
+    <li id="L75"><pre></pre></li>
+    <li id="L76"><pre>.mimir-pdf-image-panel &gt; .mimir-pdf-inspector__content {</pre></li>
+    <li id="L77"><pre>  min-height: 0;</pre></li>
+    <li id="L78"><pre>  overflow: auto;</pre></li>
+    <li id="L79"><pre>}</pre></li>
+    <li id="L80"><pre>.mimir-pdf-image-panel .mimir-pdf-inspector__error,</pre></li>
+    <li id="L81"><pre>.mimir-pdf-image-panel .mimir-pdf-inspector__hint,</pre></li>
+    <li id="L82"><pre>.mimir-pdf-image-panel figcaption {</pre></li>
+    <li id="L83"><pre>  min-width: 0;</pre></li>
+    <li id="L84"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L85"><pre>}</pre></li>
+    <li id="L86"><pre>.mimir-pdf-image-upload {</pre></li>
+    <li id="L87"><pre>  display: grid;</pre></li>
+    <li id="L88"><pre>  min-width: 0;</pre></li>
+    <li id="L89"><pre>  gap: 12px;</pre></li>
+    <li id="L90"><pre>}</pre></li>
+    <li id="L91"><pre>.mimir-pdf-image-upload .mimir-pdf-image-source__preview img {</pre></li>
+    <li id="L92"><pre>  max-height: 140px;</pre></li>
+    <li id="L93"><pre>}</pre></li>
+    <li id="L94">
+      <pre>.mimir-pdf-image-panel &gt; .mimir-pdf-inspector__footer &gt; .ant-btn {</pre>
+    </li>
+    <li id="L95"><pre>  white-space: normal;</pre></li>
+    <li id="L96"><pre>  height: auto;</pre></li>
+    <li id="L97"><pre>  min-height: 32px;</pre></li>
+    <li id="L98"><pre>}</pre></li>
+  </ol>
+</html>

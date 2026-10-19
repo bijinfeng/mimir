@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfImageExportControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfImageExportControls.tsx</h1>
+    <p>current真实源码 · SHA256 df8d8607610f9bcda0ea8b58682eb0d5c1f15503179bfaae58d3e79e4a56d6bf</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Download, Image, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L2"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L3">
+      <pre>
+import { ToolbarButton, ToolbarSelect, ToolbarTextField } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>
+import { exportPdfPageImages, pdfImagePages, type PdfPageImageOutput } from &#x27;./pdf-image-export.js&#x27;</pre>
+    </li>
+    <li id="L5"><pre>import &#x27;./pdf-image-export.css&#x27;</pre></li>
+    <li id="L6"><pre></pre></li>
+    <li id="L7"><pre>export interface PdfImageExportProps {</pre></li>
+    <li id="L8"><pre>  identity: object</pre></li>
+    <li id="L9"><pre>  page: number</pre></li>
+    <li id="L10"><pre>  pageCount: number</pre></li>
+    <li id="L11"><pre>  blocked: boolean</pre></li>
+    <li id="L12"><pre>  getSnapshot(signal: AbortSignal): Promise&lt;Uint8Array&gt;</pre></li>
+    <li id="L13"><pre>  onClose(): void</pre></li>
+    <li id="L14"><pre>}</pre></li>
+    <li id="L15"><pre></pre></li>
+    <li id="L16"><pre>export function PdfImageExportControls({</pre></li>
+    <li id="L17"><pre>  identity,</pre></li>
+    <li id="L18"><pre>  page,</pre></li>
+    <li id="L19"><pre>  pageCount,</pre></li>
+    <li id="L20"><pre>  blocked,</pre></li>
+    <li id="L21"><pre>  getSnapshot,</pre></li>
+    <li id="L22"><pre>  onClose,</pre></li>
+    <li id="L23"><pre>}: PdfImageExportProps) {</pre></li>
+    <li id="L24"><pre>  const [scope, setScope] = useState(&#x27;current&#x27;)</pre></li>
+    <li id="L25"><pre>  const [range, setRange] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L26"><pre>  const [dpi, setDpi] = useState(&#x27;150&#x27;)</pre></li>
+    <li id="L27">
+      <pre>
+  const [running, setRunning] = useState&lt;{ identity: object; done: number; total: number } | null&gt;(</pre>
+    </li>
+    <li id="L28"><pre>    null,</pre></li>
+    <li id="L29"><pre>  )</pre></li>
+    <li id="L30">
+      <pre>
+  const [error, setError] = useState&lt;{ identity: object; message: string } | null&gt;(null)</pre>
+    </li>
+    <li id="L31"><pre>  const [prepared, setPrepared] = useState&lt;{</pre></li>
+    <li id="L32"><pre>    identity: object</pre></li>
+    <li id="L33"><pre>    config: string</pre></li>
+    <li id="L34"><pre>    output: PdfPageImageOutput</pre></li>
+    <li id="L35"><pre>    previewUrl: string</pre></li>
+    <li id="L36"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L37"><pre>  const controllerRef = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L38"><pre>  const previewRef = useRef&lt;string | null&gt;(null)</pre></li>
+    <li id="L39"><pre>  const liveIdentity = useRef(identity)</pre></li>
+    <li id="L40"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L41"><pre>    liveIdentity.current = identity</pre></li>
+    <li id="L42"><pre>    return () =&gt; {</pre></li>
+    <li id="L43"><pre>      controllerRef.current?.abort()</pre></li>
+    <li id="L44"><pre>      controllerRef.current = null</pre></li>
+    <li id="L45">
+      <pre>      if (previewRef.current) URL.revokeObjectURL(previewRef.current)</pre>
+    </li>
+    <li id="L46"><pre>      previewRef.current = null</pre></li>
+    <li id="L47"><pre>    }</pre></li>
+    <li id="L48"><pre>  }, [identity])</pre></li>
+    <li id="L49">
+      <pre>
+  const config = `${scope}:${range}:${dpi}:${scope === &#x27;current&#x27; ? page : &#x27;&#x27;}`</pre>
+    </li>
+    <li id="L50"><pre>  const busy = running?.identity === identity</pre></li>
+    <li id="L51">
+      <pre>
+  const ready = prepared?.identity === identity &amp;&amp; prepared.config === config ? prepared : null</pre>
+    </li>
+    <li id="L52"><pre>  let pages: number[] = []</pre></li>
+    <li id="L53"><pre>  let issue = &#x27;&#x27;</pre></li>
+    <li id="L54"><pre>  try {</pre></li>
+    <li id="L55"><pre>    pages = pdfImagePages(</pre></li>
+    <li id="L56">
+      <pre>
+      scope === &#x27;all&#x27; ? `1-${pageCount}` : scope === &#x27;current&#x27; ? `${page}` : range,</pre>
+    </li>
+    <li id="L57"><pre>      pageCount,</pre></li>
+    <li id="L58"><pre>    )</pre></li>
+    <li id="L59"><pre>  } catch (cause) {</pre></li>
+    <li id="L60"><pre>    issue = cause instanceof Error ? cause.message : String(cause)</pre></li>
+    <li id="L61"><pre>  }</pre></li>
+    <li id="L62"><pre>  const generate = async () =&gt; {</pre></li>
+    <li id="L63"><pre>    if (blocked || busy || issue) return</pre></li>
+    <li id="L64"><pre>    controllerRef.current?.abort()</pre></li>
+    <li id="L65"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L66"><pre>    controllerRef.current = controller</pre></li>
+    <li id="L67"><pre>    setRunning({ identity, done: 0, total: pages.length })</pre></li>
+    <li id="L68"><pre>    setError(null)</pre></li>
+    <li id="L69"><pre>    setPrepared(null)</pre></li>
+    <li id="L70"><pre>    if (previewRef.current) URL.revokeObjectURL(previewRef.current)</pre></li>
+    <li id="L71"><pre>    previewRef.current = null</pre></li>
+    <li id="L72"><pre>    const assertCurrent = () =&gt; {</pre></li>
+    <li id="L73"><pre>      controller.signal.throwIfAborted()</pre></li>
+    <li id="L74">
+      <pre>
+      if (liveIdentity.current !== identity) throw new Error(&#x27;文档已变化，请重新生成页面图像&#x27;)</pre>
+    </li>
+    <li id="L75"><pre>    }</pre></li>
+    <li id="L76"><pre>    try {</pre></li>
+    <li id="L77"><pre>      const bytes = await getSnapshot(controller.signal)</pre></li>
+    <li id="L78"><pre>      assertCurrent()</pre></li>
+    <li id="L79"><pre>      const output = await exportPdfPageImages({</pre></li>
+    <li id="L80"><pre>        bytes,</pre></li>
+    <li id="L81"><pre>        pages,</pre></li>
+    <li id="L82"><pre>        dpi: Number(dpi),</pre></li>
+    <li id="L83"><pre>        signal: controller.signal,</pre></li>
+    <li id="L84"><pre>        assertCurrent,</pre></li>
+    <li id="L85"><pre>        onProgress: (done, total) =&gt; {</pre></li>
+    <li id="L86"><pre>          assertCurrent()</pre></li>
+    <li id="L87"><pre>          setRunning({ identity, done, total })</pre></li>
+    <li id="L88"><pre>        },</pre></li>
+    <li id="L89"><pre>      })</pre></li>
+    <li id="L90"><pre>      assertCurrent()</pre></li>
+    <li id="L91"><pre>      const previewUrl = URL.createObjectURL(</pre></li>
+    <li id="L92">
+      <pre>        new Blob([output.preview.slice().buffer], { type: &#x27;image/png&#x27; }),</pre>
+    </li>
+    <li id="L93"><pre>      )</pre></li>
+    <li id="L94"><pre>      previewRef.current = previewUrl</pre></li>
+    <li id="L95"><pre>      setPrepared({ identity, config, output, previewUrl })</pre></li>
+    <li id="L96"><pre>    } catch (cause) {</pre></li>
+    <li id="L97">
+      <pre>      if (!controller.signal.aborted &amp;&amp; liveIdentity.current === identity)</pre>
+    </li>
+    <li id="L98">
+      <pre>
+        setError({ identity, message: cause instanceof Error ? cause.message : String(cause) })</pre>
+    </li>
+    <li id="L99"><pre>    } finally {</pre></li>
+    <li id="L100"><pre>      if (controllerRef.current === controller) {</pre></li>
+    <li id="L101"><pre>        controllerRef.current = null</pre></li>
+    <li id="L102"><pre>        setRunning(null)</pre></li>
+    <li id="L103"><pre>      }</pre></li>
+    <li id="L104"><pre>    }</pre></li>
+    <li id="L105"><pre>  }</pre></li>
+    <li id="L106"><pre>  const download = () =&gt; {</pre></li>
+    <li id="L107">
+      <pre>    if (!ready || blocked || busy || liveIdentity.current !== identity) return</pre>
+    </li>
+    <li id="L108"><pre>    const output = ready.output</pre></li>
+    <li id="L109">
+      <pre>
+    const url = URL.createObjectURL(new Blob([output.bytes.slice().buffer], { type: output.mime }))</pre>
+    </li>
+    <li id="L110"><pre>    const anchor = document.createElement(&#x27;a&#x27;)</pre></li>
+    <li id="L111"><pre>    anchor.href = url</pre></li>
+    <li id="L112"><pre>    anchor.download = output.name</pre></li>
+    <li id="L113"><pre>    anchor.click()</pre></li>
+    <li id="L114"><pre>    setTimeout(() =&gt; URL.revokeObjectURL(url), 30000)</pre></li>
+    <li id="L115"><pre>  }</pre></li>
+    <li id="L116"><pre>  return (</pre></li>
+    <li id="L117">
+      <pre>
+    &lt;section className=&quot;mimir-pdf-panel&quot; aria-label=&quot;页面图像导出面板&quot; aria-busy={busy}&gt;</pre>
+    </li>
+    <li id="L118">
+      <pre>      &lt;header className=&quot;mimir-pdf-inspector__header&quot;&gt;</pre>
+    </li>
+    <li id="L119"><pre>        &lt;div&gt;</pre></li>
+    <li id="L120"><pre>          &lt;h2&gt;导出页面图像&lt;/h2&gt;</pre></li>
+    <li id="L121">
+      <pre>          &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L122"><pre>            第 {page} 页 · 共 {pageCount} 页</pre></li>
+    <li id="L123"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L124"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L125">
+      <pre>        &lt;ToolbarButton label=&quot;关闭页面图像导出&quot; onClick={onClose}&gt;</pre>
+    </li>
+    <li id="L126"><pre>          &lt;X size={16} /&gt;</pre></li>
+    <li id="L127"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L128"><pre>      &lt;/header&gt;</pre></li>
+    <li id="L129">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L130">
+      <pre>
+        &lt;fieldset disabled={busy} className=&quot;mimir-pdf-image-export__fields&quot;&gt;</pre>
+    </li>
+    <li id="L131"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L132"><pre>            label=&quot;导出页面范围&quot;</pre></li>
+    <li id="L133"><pre>            value={scope}</pre></li>
+    <li id="L134"><pre>            disabled={busy}</pre></li>
+    <li id="L135"><pre>            onChange={setScope}</pre></li>
+    <li id="L136"><pre>            options={[</pre></li>
+    <li id="L137">
+      <pre>              { value: &#x27;current&#x27;, label: &#x27;当前页&#x27; },</pre>
+    </li>
+    <li id="L138">
+      <pre>              { value: &#x27;all&#x27;, label: &#x27;全部页&#x27; },</pre>
+    </li>
+    <li id="L139">
+      <pre>              { value: &#x27;custom&#x27;, label: &#x27;指定页码&#x27; },</pre>
+    </li>
+    <li id="L140"><pre>            ]}</pre></li>
+    <li id="L141"><pre>          /&gt;</pre></li>
+    <li id="L142"><pre>          {scope === &#x27;custom&#x27; &amp;&amp; (</pre></li>
+    <li id="L143"><pre>            &lt;ToolbarTextField</pre></li>
+    <li id="L144"><pre>              label=&quot;导出页码&quot;</pre></li>
+    <li id="L145"><pre>              value={range}</pre></li>
+    <li id="L146"><pre>              onChange={setRange}</pre></li>
+    <li id="L147"><pre>              placeholder=&quot;例如 1-3,5&quot;</pre></li>
+    <li id="L148"><pre>            /&gt;</pre></li>
+    <li id="L149"><pre>          )}</pre></li>
+    <li id="L150"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L151"><pre>            label=&quot;图像分辨率&quot;</pre></li>
+    <li id="L152"><pre>            value={dpi}</pre></li>
+    <li id="L153"><pre>            disabled={busy}</pre></li>
+    <li id="L154"><pre>            onChange={setDpi}</pre></li>
+    <li id="L155"><pre>            options={[</pre></li>
+    <li id="L156">
+      <pre>              { value: &#x27;72&#x27;, label: &#x27;72 dpi · 屏幕预览&#x27; },</pre>
+    </li>
+    <li id="L157">
+      <pre>              { value: &#x27;150&#x27;, label: &#x27;150 dpi · 标准&#x27; },</pre>
+    </li>
+    <li id="L158">
+      <pre>              { value: &#x27;300&#x27;, label: &#x27;300 dpi · 高清&#x27; },</pre>
+    </li>
+    <li id="L159"><pre>            ]}</pre></li>
+    <li id="L160"><pre>          /&gt;</pre></li>
+    <li id="L161"><pre>        &lt;/fieldset&gt;</pre></li>
+    <li id="L162"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L163">
+      <pre>
+          按当前页序导出，包含已应用的未保存修改、旋转和裁剪。单页下载 PNG，多页打包为 ZIP。</pre>
+    </li>
+    <li id="L164"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L165"><pre>        {issue &amp;&amp; (</pre></li>
+    <li id="L166">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L167"><pre>            {issue}</pre></li>
+    <li id="L168"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L169"><pre>        )}</pre></li>
+    <li id="L170"><pre>        {error?.identity === identity &amp;&amp; (</pre></li>
+    <li id="L171">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L172"><pre>            {error.message}</pre></li>
+    <li id="L173"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L174"><pre>        )}</pre></li>
+    <li id="L175">
+      <pre>        {prepared &amp;&amp; prepared.identity !== identity &amp;&amp; (</pre>
+    </li>
+    <li id="L176">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L177"><pre>            文档已变化，请重新生成页面图像。</pre></li>
+    <li id="L178"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L179"><pre>        )}</pre></li>
+    <li id="L180"><pre>        {busy &amp;&amp; (</pre></li>
+    <li id="L181">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L182"><pre>            正在生成 {running.done} / {running.total} 页…</pre></li>
+    <li id="L183"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L184"><pre>        )}</pre></li>
+    <li id="L185"><pre>        {ready &amp;&amp; (</pre></li>
+    <li id="L186">
+      <pre>          &lt;figure className=&quot;mimir-pdf-image-export__preview&quot;&gt;</pre>
+    </li>
+    <li id="L187">
+      <pre>
+            &lt;img src={ready.previewUrl} alt={`第 ${ready.output.pages[0]!.page} 页导出预览`} /&gt;</pre>
+    </li>
+    <li id="L188"><pre>            &lt;figcaption&gt;</pre></li>
+    <li id="L189">
+      <pre>
+              第 {ready.output.pages[0]!.page} 页 · {ready.output.pages[0]!.width} ×{&#x27; &#x27;}</pre>
+    </li>
+    <li id="L190"><pre>              {ready.output.pages[0]!.height} px</pre></li>
+    <li id="L191"><pre>            &lt;/figcaption&gt;</pre></li>
+    <li id="L192"><pre>          &lt;/figure&gt;</pre></li>
+    <li id="L193"><pre>        )}</pre></li>
+    <li id="L194"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L195">
+      <pre>      &lt;div className=&quot;mimir-pdf-image-export__actions&quot;&gt;</pre>
+    </li>
+    <li id="L196"><pre>        {ready &amp;&amp; (</pre></li>
+    <li id="L197">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__meta&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L198"><pre>            已生成 {ready.output.pages.length} 页 ·{&#x27; &#x27;}</pre></li>
+    <li id="L199">
+      <pre>            {(ready.output.bytes.byteLength / 1024).toFixed(1)} KiB</pre>
+    </li>
+    <li id="L200"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L201"><pre>        )}</pre></li>
+    <li id="L202"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L203">
+      <pre>
+          label={busy ? &#x27;正在生成页面图像&#x27; : ready ? &#x27;重新生成页面图像&#x27; : &#x27;生成页面图像&#x27;}</pre>
+    </li>
+    <li id="L204"><pre>          primary={!ready}</pre></li>
+    <li id="L205"><pre>          disabled={blocked || busy || !!issue}</pre></li>
+    <li id="L206"><pre>          disabledReason={issue || &#x27;PDF 正在处理&#x27;}</pre></li>
+    <li id="L207"><pre>          onClick={() =&gt; void generate()}</pre></li>
+    <li id="L208"><pre>        &gt;</pre></li>
+    <li id="L209"><pre>          &lt;Image size={16} /&gt;</pre></li>
+    <li id="L210"><pre>          {ready &amp;&amp; &#x27;重新生成&#x27;}</pre></li>
+    <li id="L211"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L212"><pre>        {ready &amp;&amp; (</pre></li>
+    <li id="L213"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L214">
+      <pre>
+            label={ready.output.mime === &#x27;image/png&#x27; ? &#x27;下载 PNG 图像&#x27; : &#x27;下载图像 ZIP&#x27;}</pre>
+    </li>
+    <li id="L215"><pre>            primary</pre></li>
+    <li id="L216"><pre>            disabled={blocked || busy}</pre></li>
+    <li id="L217"><pre>            onClick={download}</pre></li>
+    <li id="L218"><pre>          &gt;</pre></li>
+    <li id="L219"><pre>            &lt;Download size={16} /&gt;</pre></li>
+    <li id="L220"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L221"><pre>        )}</pre></li>
+    <li id="L222"><pre>        {busy &amp;&amp; (</pre></li>
+    <li id="L223">
+      <pre>
+          &lt;ToolbarButton label=&quot;取消页面图像生成&quot; onClick={() =&gt; controllerRef.current?.abort()}&gt;</pre>
+    </li>
+    <li id="L224"><pre>            取消生成</pre></li>
+    <li id="L225"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L226"><pre>        )}</pre></li>
+    <li id="L227"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L228"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L229"><pre>  )</pre></li>
+    <li id="L230"><pre>}</pre></li>
+  </ol>
+</html>

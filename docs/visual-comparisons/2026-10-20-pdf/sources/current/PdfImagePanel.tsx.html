@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfImagePanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfImagePanel.tsx</h1>
+    <p>current真实源码 · SHA256 0304843dbf17cb0ca31be0f8b7389983810b09f855fcf018fd3ef2102e2e309b</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button, Popconfirm, Skeleton } from &#x27;antd&#x27;</pre></li>
+    <li id="L2">
+      <pre>
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>import type { PdfImageSnapshot, PdfPageImage } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L4"><pre>import {</pre></li>
+    <li id="L5"><pre>  ToolbarFileButton,</pre></li>
+    <li id="L6"><pre>  ToolbarLabel,</pre></li>
+    <li id="L7"><pre>  ToolbarNumberField,</pre></li>
+    <li id="L8"><pre>  ToolbarSelect,</pre></li>
+    <li id="L9"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L10"><pre></pre></li>
+    <li id="L11">
+      <pre>
+import type { PdfHostAssetReadiness, PdfHostAssetPreview } from &#x27;../agent/pdf-asset-agent.js&#x27;</pre>
+    </li>
+    <li id="L12"><pre>import {</pre></li>
+    <li id="L13"><pre>  PdfExternalImageSource,</pre></li>
+    <li id="L14"><pre>  type PdfImageSource,</pre></li>
+    <li id="L15"><pre>  type PdfExternalSelection,</pre></li>
+    <li id="L16"><pre>  type PdfAssetAction,</pre></li>
+    <li id="L17"><pre>} from &#x27;./PdfExternalImageSource.js&#x27;</pre></li>
+    <li id="L18"><pre>import { PdfInspectorHeader } from &#x27;./PdfInspector.js&#x27;</pre></li>
+    <li id="L19"><pre></pre></li>
+    <li id="L20"><pre>const captions: Record&lt;string, string&gt; = {</pre></li>
+    <li id="L21"><pre>  &#x27;图片横坐标（pt）&#x27;: &#x27;横坐标 · pt&#x27;,</pre></li>
+    <li id="L22"><pre>  &#x27;图片纵坐标（pt）&#x27;: &#x27;纵坐标 · pt&#x27;,</pre></li>
+    <li id="L23"><pre>  &#x27;图片宽度（pt）&#x27;: &#x27;宽度 · pt&#x27;,</pre></li>
+    <li id="L24"><pre>  &#x27;图片高度（pt）&#x27;: &#x27;高度 · pt&#x27;,</pre></li>
+    <li id="L25"><pre>  &#x27;设置图片不透明度（%）&#x27;: &#x27;目标不透明度 · %&#x27;,</pre></li>
+    <li id="L26"><pre>  图片去背景容差: &#x27;背景容差&#x27;,</pre></li>
+    <li id="L27"><pre>  &#x27;图片左裁切（%）&#x27;: &#x27;左侧 · %&#x27;,</pre></li>
+    <li id="L28"><pre>  &#x27;图片上裁切（%）&#x27;: &#x27;上侧 · %&#x27;,</pre></li>
+    <li id="L29"><pre>  &#x27;图片右裁切（%）&#x27;: &#x27;右侧 · %&#x27;,</pre></li>
+    <li id="L30"><pre>  &#x27;图片下裁切（%）&#x27;: &#x27;下侧 · %&#x27;,</pre></li>
+    <li id="L31"><pre>}</pre></li>
+    <li id="L32">
+      <pre>function NumberControl(props: Parameters&lt;typeof ToolbarNumberField&gt;[0]) {</pre>
+    </li>
+    <li id="L33"><pre>  return (</pre></li>
+    <li id="L34">
+      <pre>    &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L35">
+      <pre>      &lt;span&gt;{captions[props.label] ?? props.label}&lt;/span&gt;</pre>
+    </li>
+    <li id="L36"><pre>      &lt;ToolbarNumberField {...props} /&gt;</pre></li>
+    <li id="L37"><pre>    &lt;/label&gt;</pre></li>
+    <li id="L38"><pre>  )</pre></li>
+    <li id="L39"><pre>}</pre></li>
+    <li id="L40"><pre></pre></li>
+    <li id="L41"><pre>const operations = [</pre></li>
+    <li id="L42">
+      <pre>
+  { value: &#x27;insert&#x27;, label: &#x27;插入图片&#x27;, action: &#x27;插入PDF图片&#x27; },</pre>
+    </li>
+    <li id="L43">
+      <pre>
+  { value: &#x27;replace&#x27;, label: &#x27;替换图片&#x27;, action: &#x27;替换所选PDF图片&#x27; },</pre>
+    </li>
+    <li id="L44">
+      <pre>
+  { value: &#x27;transform&#x27;, label: &#x27;位置与尺寸&#x27;, action: &#x27;应用图片位置和尺寸&#x27; },</pre>
+    </li>
+    <li id="L45">
+      <pre>
+  { value: &#x27;rotate&#x27;, label: &#x27;旋转&#x27;, action: &#x27;旋转所选PDF图片&#x27; },</pre>
+    </li>
+    <li id="L46">
+      <pre>
+  { value: &#x27;flip&#x27;, label: &#x27;翻转&#x27;, action: &#x27;翻转所选PDF图片&#x27; },</pre>
+    </li>
+    <li id="L47">
+      <pre>
+  { value: &#x27;opacity&#x27;, label: &#x27;不透明度&#x27;, action: &#x27;应用图片不透明度&#x27; },</pre>
+    </li>
+    <li id="L48">
+      <pre>
+  { value: &#x27;background&#x27;, label: &#x27;去除背景&#x27;, action: &#x27;去除图片背景&#x27; },</pre>
+    </li>
+    <li id="L49">
+      <pre>
+  { value: &#x27;crop&#x27;, label: &#x27;裁切&#x27;, action: &#x27;裁切所选PDF图片&#x27; },</pre>
+    </li>
+    <li id="L50">
+      <pre>
+  { value: &#x27;delete&#x27;, label: &#x27;删除图片&#x27;, action: &#x27;删除所选PDF图片&#x27; },</pre>
+    </li>
+    <li id="L51"><pre>] as const</pre></li>
+    <li id="L52"><pre>type Operation = (typeof operations)[number][&#x27;value&#x27;]</pre></li>
+    <li id="L53"><pre></pre></li>
+    <li id="L54"><pre>function ExternalImageApply({</pre></li>
+    <li id="L55"><pre>  disabled,</pre></li>
+    <li id="L56"><pre>  operation,</pre></li>
+    <li id="L57"><pre>  page,</pre></li>
+    <li id="L58"><pre>  imageNumber,</pre></li>
+    <li id="L59"><pre>  url,</pre></li>
+    <li id="L60"><pre>  getVersion,</pre></li>
+    <li id="L61"><pre>  onAction,</pre></li>
+    <li id="L62"><pre>}: {</pre></li>
+    <li id="L63"><pre>  disabled: boolean</pre></li>
+    <li id="L64"><pre>  operation: &#x27;insert&#x27; | &#x27;replace&#x27;</pre></li>
+    <li id="L65"><pre>  page: number</pre></li>
+    <li id="L66"><pre>  imageNumber?: number</pre></li>
+    <li id="L67"><pre>  url?: string</pre></li>
+    <li id="L68"><pre>  getVersion(): number</pre></li>
+    <li id="L69"><pre>  onAction: PdfAssetAction</pre></li>
+    <li id="L70"><pre>}) {</pre></li>
+    <li id="L71"><pre>  const [version] = useState(getVersion)</pre></li>
+    <li id="L72"><pre>  const [pending, setPending] = useState(false)</pre></li>
+    <li id="L73"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L74"><pre>  const alive = useRef(true)</pre></li>
+    <li id="L75"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L76"><pre>    alive.current = true</pre></li>
+    <li id="L77"><pre>    return () =&gt; {</pre></li>
+    <li id="L78"><pre>      alive.current = false</pre></li>
+    <li id="L79"><pre>      request.current?.abort()</pre></li>
+    <li id="L80"><pre>    }</pre></li>
+    <li id="L81"><pre>  }, [])</pre></li>
+    <li id="L82"><pre>  const apply = async () =&gt; {</pre></li>
+    <li id="L83">
+      <pre>    if (disabled || !url || request.current || version !== getVersion()) return</pre>
+    </li>
+    <li id="L84"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L85"><pre>    request.current = controller</pre></li>
+    <li id="L86"><pre>    setPending(true)</pre></li>
+    <li id="L87"><pre>    try {</pre></li>
+    <li id="L88"><pre>      await onAction(</pre></li>
+    <li id="L89">
+      <pre>
+        operation === &#x27;replace&#x27; ? &#x27;replace_image&#x27; : &#x27;insert_image&#x27;,</pre>
+    </li>
+    <li id="L90"><pre>        operation === &#x27;replace&#x27;</pre></li>
+    <li id="L91"><pre>          ? { page, image_number: imageNumber, url }</pre></li>
+    <li id="L92"><pre>          : { page, url, width: 180 },</pre></li>
+    <li id="L93"><pre>        version,</pre></li>
+    <li id="L94"><pre>        controller.signal,</pre></li>
+    <li id="L95"><pre>      )</pre></li>
+    <li id="L96"><pre>    } finally {</pre></li>
+    <li id="L97"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L98"><pre>        request.current = null</pre></li>
+    <li id="L99"><pre>        if (alive.current) setPending(false)</pre></li>
+    <li id="L100"><pre>      }</pre></li>
+    <li id="L101"><pre>    }</pre></li>
+    <li id="L102"><pre>  }</pre></li>
+    <li id="L103"><pre>  return (</pre></li>
+    <li id="L104">
+      <pre>
+    &lt;Button type=&quot;primary&quot; block loading={pending} disabled={disabled} onClick={() =&gt; void apply()}&gt;</pre>
+    </li>
+    <li id="L105">
+      <pre>
+      {operation === &#x27;replace&#x27; ? &#x27;替换所选图片&#x27; : &#x27;插入所选图片&#x27;}</pre>
+    </li>
+    <li id="L106"><pre>    &lt;/Button&gt;</pre></li>
+    <li id="L107"><pre>  )</pre></li>
+    <li id="L108"><pre>}</pre></li>
+    <li id="L109"><pre></pre></li>
+    <li id="L110"><pre>function ImageControls({</pre></li>
+    <li id="L111"><pre>  image,</pre></li>
+    <li id="L112"><pre>  page,</pre></li>
+    <li id="L113"><pre>  busy,</pre></li>
+    <li id="L114"><pre>  onAction,</pre></li>
+    <li id="L115"><pre>  getVersion,</pre></li>
+    <li id="L116"><pre>  children,</pre></li>
+    <li id="L117"><pre>  operation,</pre></li>
+    <li id="L118"><pre>}: {</pre></li>
+    <li id="L119"><pre>  image?: PdfPageImage</pre></li>
+    <li id="L120"><pre>  page: number</pre></li>
+    <li id="L121"><pre>  busy: boolean</pre></li>
+    <li id="L122"><pre>  onAction: PdfAssetAction</pre></li>
+    <li id="L123"><pre>  getVersion(): number</pre></li>
+    <li id="L124"><pre>  children: ReactNode</pre></li>
+    <li id="L125"><pre>  operation: Operation</pre></li>
+    <li id="L126"><pre>}) {</pre></li>
+    <li id="L127"><pre>  const [boundVersion] = useState(getVersion)</pre></li>
+    <li id="L128"><pre>  const initial = {</pre></li>
+    <li id="L129"><pre>    x: image?.x ?? 40,</pre></li>
+    <li id="L130"><pre>    y: image?.y ?? 40,</pre></li>
+    <li id="L131"><pre>    width: image?.width ?? 100,</pre></li>
+    <li id="L132"><pre>    height: image?.height ?? 50,</pre></li>
+    <li id="L133"><pre>    layer: image?.layer ?? &#x27;below_text&#x27;,</pre></li>
+    <li id="L134"><pre>    opacity: (image?.opacity ?? 1) * 100,</pre></li>
+    <li id="L135"><pre>    tolerance: 30,</pre></li>
+    <li id="L136"><pre>    left: 0,</pre></li>
+    <li id="L137"><pre>    top: 0,</pre></li>
+    <li id="L138"><pre>    right: 0,</pre></li>
+    <li id="L139"><pre>    bottom: 0,</pre></li>
+    <li id="L140"><pre>    direction: &#x27;cw&#x27;,</pre></li>
+    <li id="L141"><pre>    axis: &#x27;horizontal&#x27;,</pre></li>
+    <li id="L142"><pre>  }</pre></li>
+    <li id="L143"><pre>  const [draft, setDraft] = useState(initial)</pre></li>
+    <li id="L144">
+      <pre>
+  const [material, setMaterial] = useState&lt;{ file: File; url: string } | null&gt;(null)</pre>
+    </li>
+    <li id="L145"><pre>  const file = material?.file</pre></li>
+    <li id="L146"><pre>  const preview = material?.url</pre></li>
+    <li id="L147"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L148"><pre>  const [pending, setPending] = useState(false)</pre></li>
+    <li id="L149"><pre>  const [confirming, setConfirming] = useState(false)</pre></li>
+    <li id="L150"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L151"><pre>  const alive = useRef(true)</pre></li>
+    <li id="L152"><pre>  const picker = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L153"><pre>  const primary = useRef&lt;HTMLButtonElement&gt;(null)</pre></li>
+    <li id="L154"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L155"><pre>    alive.current = true</pre></li>
+    <li id="L156"><pre>    return () =&gt; {</pre></li>
+    <li id="L157"><pre>      alive.current = false</pre></li>
+    <li id="L158"><pre>      request.current?.abort()</pre></li>
+    <li id="L159"><pre>    }</pre></li>
+    <li id="L160"><pre>  }, [])</pre></li>
+    <li id="L161"><pre>  useEffect(</pre></li>
+    <li id="L162"><pre>    () =&gt; () =&gt; {</pre></li>
+    <li id="L163"><pre>      if (material) URL.revokeObjectURL(material.url)</pre></li>
+    <li id="L164"><pre>    },</pre></li>
+    <li id="L165"><pre>    [material],</pre></li>
+    <li id="L166"><pre>  )</pre></li>
+    <li id="L167">
+      <pre>
+  const update = &lt;K extends keyof typeof draft&gt;(key: K, value: (typeof draft)[K]) =&gt;</pre>
+    </li>
+    <li id="L168"><pre>    setDraft((current) =&gt; ({ ...current, [key]: value }))</pre></li>
+    <li id="L169">
+      <pre>
+  const blocked = busy || pending || (operation !== &#x27;insert&#x27; &amp;&amp; !image?.editable)</pre>
+    </li>
+    <li id="L170">
+      <pre>
+  const requiresFile = operation === &#x27;insert&#x27; || operation === &#x27;replace&#x27;</pre>
+    </li>
+    <li id="L171"><pre>  const cropInvalid =</pre></li>
+    <li id="L172">
+      <pre>
+    operation === &#x27;crop&#x27; &amp;&amp; (draft.left + draft.right &gt;= 100 || draft.top + draft.bottom &gt;= 100)</pre>
+    </li>
+    <li id="L173">
+      <pre>  const disabled = blocked || (requiresFile &amp;&amp; !file) || cropInvalid</pre>
+    </li>
+    <li id="L174"><pre>  const run = async () =&gt; {</pre></li>
+    <li id="L175"><pre>    if (disabled || request.current) return</pre></li>
+    <li id="L176"><pre>    if (getVersion() !== boundVersion) {</pre></li>
+    <li id="L177"><pre>      setError(&#x27;文档已变化，请重新选择图片后应用&#x27;)</pre></li>
+    <li id="L178"><pre>      return</pre></li>
+    <li id="L179"><pre>    }</pre></li>
+    <li id="L180"><pre>    const controller = new AbortController(),</pre></li>
+    <li id="L181"><pre>      version = getVersion()</pre></li>
+    <li id="L182"><pre>    request.current = controller</pre></li>
+    <li id="L183"><pre>    setPending(true)</pre></li>
+    <li id="L184"><pre>    setError(null)</pre></li>
+    <li id="L185"><pre>    setConfirming(false)</pre></li>
+    <li id="L186"><pre>    const target = { page, image_number: image?.image_number }</pre></li>
+    <li id="L187"><pre>    try {</pre></li>
+    <li id="L188"><pre>      let tool: string, args: Record&lt;string, unknown&gt;</pre></li>
+    <li id="L189"><pre>      if (requiresFile) {</pre></li>
+    <li id="L190"><pre>        if (!file) return</pre></li>
+    <li id="L191">
+      <pre>        const data = await new Promise&lt;string&gt;((resolve, reject) =&gt; {</pre>
+    </li>
+    <li id="L192"><pre>          const reader = new FileReader()</pre></li>
+    <li id="L193"><pre>          const abort = () =&gt; {</pre></li>
+    <li id="L194"><pre>            reader.abort()</pre></li>
+    <li id="L195"><pre>            reject(new Error(&#x27;已取消图片读取&#x27;))</pre></li>
+    <li id="L196"><pre>          }</pre></li>
+    <li id="L197">
+      <pre>
+          const cleanup = () =&gt; controller.signal.removeEventListener(&#x27;abort&#x27;, abort)</pre>
+    </li>
+    <li id="L198">
+      <pre>
+          controller.signal.addEventListener(&#x27;abort&#x27;, abort, { once: true })</pre>
+    </li>
+    <li id="L199"><pre>          reader.addEventListener(</pre></li>
+    <li id="L200"><pre>            &#x27;load&#x27;,</pre></li>
+    <li id="L201"><pre>            () =&gt; {</pre></li>
+    <li id="L202"><pre>              cleanup()</pre></li>
+    <li id="L203">
+      <pre>              const value = String(reader.result).split(&#x27;,&#x27;)[1]</pre>
+    </li>
+    <li id="L204"><pre>              if (value) resolve(value)</pre></li>
+    <li id="L205">
+      <pre>              else reject(new Error(&#x27;图片读取失败，请重新选择&#x27;))</pre>
+    </li>
+    <li id="L206"><pre>            },</pre></li>
+    <li id="L207"><pre>            { once: true },</pre></li>
+    <li id="L208"><pre>          )</pre></li>
+    <li id="L209"><pre>          reader.addEventListener(</pre></li>
+    <li id="L210"><pre>            &#x27;error&#x27;,</pre></li>
+    <li id="L211"><pre>            () =&gt; {</pre></li>
+    <li id="L212"><pre>              cleanup()</pre></li>
+    <li id="L213">
+      <pre>              reject(new Error(&#x27;图片读取失败，请重新选择&#x27;))</pre>
+    </li>
+    <li id="L214"><pre>            },</pre></li>
+    <li id="L215"><pre>            { once: true },</pre></li>
+    <li id="L216"><pre>          )</pre></li>
+    <li id="L217"><pre>          reader.addEventListener(</pre></li>
+    <li id="L218"><pre>            &#x27;abort&#x27;,</pre></li>
+    <li id="L219"><pre>            () =&gt; {</pre></li>
+    <li id="L220"><pre>              cleanup()</pre></li>
+    <li id="L221"><pre>              reject(new Error(&#x27;已取消图片读取&#x27;))</pre></li>
+    <li id="L222"><pre>            },</pre></li>
+    <li id="L223"><pre>            { once: true },</pre></li>
+    <li id="L224"><pre>          )</pre></li>
+    <li id="L225"><pre>          reader.readAsDataURL(file)</pre></li>
+    <li id="L226"><pre>        })</pre></li>
+    <li id="L227">
+      <pre>
+        if (controller.signal.aborted || !alive.current || version !== getVersion()) return</pre>
+    </li>
+    <li id="L228">
+      <pre>
+        tool = operation === &#x27;replace&#x27; ? &#x27;replace_image&#x27; : &#x27;insert_image&#x27;</pre>
+    </li>
+    <li id="L229"><pre>        args =</pre></li>
+    <li id="L230"><pre>          operation === &#x27;replace&#x27;</pre></li>
+    <li id="L231"><pre>            ? { ...target, image: data }</pre></li>
+    <li id="L232"><pre>            : {</pre></li>
+    <li id="L233"><pre>                page,</pre></li>
+    <li id="L234"><pre>                image: data,</pre></li>
+    <li id="L235"><pre>                x: draft.x,</pre></li>
+    <li id="L236"><pre>                y: draft.y,</pre></li>
+    <li id="L237"><pre>                width: draft.width,</pre></li>
+    <li id="L238"><pre>                height: draft.height,</pre></li>
+    <li id="L239"><pre>                layer: draft.layer,</pre></li>
+    <li id="L240"><pre>              }</pre></li>
+    <li id="L241"><pre>      } else {</pre></li>
+    <li id="L242">
+      <pre>
+        const choices: Record&lt;string, [string, Record&lt;string, unknown&gt;]&gt; = {</pre>
+    </li>
+    <li id="L243"><pre>          transform: [</pre></li>
+    <li id="L244"><pre>            &#x27;transform_image&#x27;,</pre></li>
+    <li id="L245"><pre>            {</pre></li>
+    <li id="L246"><pre>              x: draft.x,</pre></li>
+    <li id="L247"><pre>              y: draft.y,</pre></li>
+    <li id="L248"><pre>              width: draft.width,</pre></li>
+    <li id="L249"><pre>              height: draft.height,</pre></li>
+    <li id="L250"><pre>              layer: draft.layer,</pre></li>
+    <li id="L251"><pre>            },</pre></li>
+    <li id="L252"><pre>          ],</pre></li>
+    <li id="L253">
+      <pre>          rotate: [&#x27;rotate_image&#x27;, { direction: draft.direction }],</pre>
+    </li>
+    <li id="L254"><pre>          flip: [&#x27;flip_image&#x27;, { axis: draft.axis }],</pre></li>
+    <li id="L255">
+      <pre>
+          opacity: [&#x27;set_image_opacity&#x27;, { opacity: draft.opacity / 100 }],</pre>
+    </li>
+    <li id="L256">
+      <pre>
+          background: [&#x27;remove_image_background&#x27;, { tolerance: draft.tolerance }],</pre>
+    </li>
+    <li id="L257"><pre>          crop: [</pre></li>
+    <li id="L258"><pre>            &#x27;crop_image&#x27;,</pre></li>
+    <li id="L259"><pre>            {</pre></li>
+    <li id="L260"><pre>              left: draft.left / 100,</pre></li>
+    <li id="L261"><pre>              top: draft.top / 100,</pre></li>
+    <li id="L262"><pre>              right: draft.right / 100,</pre></li>
+    <li id="L263"><pre>              bottom: draft.bottom / 100,</pre></li>
+    <li id="L264"><pre>            },</pre></li>
+    <li id="L265"><pre>          ],</pre></li>
+    <li id="L266"><pre>          delete: [&#x27;delete_image&#x27;, {}],</pre></li>
+    <li id="L267"><pre>        }</pre></li>
+    <li id="L268"><pre>        const choice = choices[operation]!</pre></li>
+    <li id="L269"><pre>        tool = choice[0]</pre></li>
+    <li id="L270"><pre>        args = { ...target, ...choice[1] }</pre></li>
+    <li id="L271"><pre>      }</pre></li>
+    <li id="L272">
+      <pre>      const result = await onAction(tool, args, version, controller.signal)</pre>
+    </li>
+    <li id="L273"><pre>      if (!controller.signal.aborted &amp;&amp; alive.current) {</pre></li>
+    <li id="L274"><pre>        if (result?.ok &amp;&amp; requiresFile) setMaterial(null)</pre></li>
+    <li id="L275"><pre>      }</pre></li>
+    <li id="L276"><pre>    } catch (reason) {</pre></li>
+    <li id="L277"><pre>      if (!controller.signal.aborted &amp;&amp; alive.current)</pre></li>
+    <li id="L278">
+      <pre>
+        setError(reason instanceof Error ? reason.message : &#x27;图片读取失败，请重新选择&#x27;)</pre>
+    </li>
+    <li id="L279"><pre>    } finally {</pre></li>
+    <li id="L280"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L281"><pre>        request.current = null</pre></li>
+    <li id="L282"><pre>        if (alive.current) setPending(false)</pre></li>
+    <li id="L283"><pre>      }</pre></li>
+    <li id="L284"><pre>    }</pre></li>
+    <li id="L285"><pre>  }</pre></li>
+    <li id="L286"><pre>  const escape = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L287">
+      <pre>    if (event.key !== &#x27;Escape&#x27; || event.defaultPrevented) return</pre>
+    </li>
+    <li id="L288"><pre>    if (confirming) {</pre></li>
+    <li id="L289"><pre>      event.preventDefault()</pre></li>
+    <li id="L290"><pre>      event.stopPropagation()</pre></li>
+    <li id="L291"><pre>      setConfirming(false)</pre></li>
+    <li id="L292"><pre>      primary.current?.focus()</pre></li>
+    <li id="L293">
+      <pre>
+    } else if (pending || file || JSON.stringify(draft) !== JSON.stringify(initial)) {</pre>
+    </li>
+    <li id="L294"><pre>      event.preventDefault()</pre></li>
+    <li id="L295"><pre>      event.stopPropagation()</pre></li>
+    <li id="L296"><pre>      request.current?.abort()</pre></li>
+    <li id="L297"><pre>      request.current = null</pre></li>
+    <li id="L298"><pre>      setPending(false)</pre></li>
+    <li id="L299"><pre>      setMaterial(null)</pre></li>
+    <li id="L300"><pre>      setError(null)</pre></li>
+    <li id="L301"><pre>      setDraft(initial)</pre></li>
+    <li id="L302">
+      <pre>
+      if (pending) event.currentTarget.closest&lt;HTMLElement&gt;(&#x27;.mimir-pdf-inspector&#x27;)?.focus()</pre>
+    </li>
+    <li id="L303">
+      <pre>
+      else (picker.current?.querySelector&lt;HTMLButtonElement&gt;(&#x27;button&#x27;) ?? primary.current)?.focus()</pre>
+    </li>
+    <li id="L304"><pre>    }</pre></li>
+    <li id="L305"><pre>  }</pre></li>
+    <li id="L306"><pre>  const numberKeys = {</pre></li>
+    <li id="L307"><pre>    &#x27;图片横坐标（pt）&#x27;: &#x27;x&#x27;,</pre></li>
+    <li id="L308"><pre>    &#x27;图片纵坐标（pt）&#x27;: &#x27;y&#x27;,</pre></li>
+    <li id="L309"><pre>    &#x27;图片宽度（pt）&#x27;: &#x27;width&#x27;,</pre></li>
+    <li id="L310"><pre>    &#x27;图片高度（pt）&#x27;: &#x27;height&#x27;,</pre></li>
+    <li id="L311"><pre>    &#x27;设置图片不透明度（%）&#x27;: &#x27;opacity&#x27;,</pre></li>
+    <li id="L312"><pre>    图片去背景容差: &#x27;tolerance&#x27;,</pre></li>
+    <li id="L313"><pre>    &#x27;图片左裁切（%）&#x27;: &#x27;left&#x27;,</pre></li>
+    <li id="L314"><pre>    &#x27;图片上裁切（%）&#x27;: &#x27;top&#x27;,</pre></li>
+    <li id="L315"><pre>    &#x27;图片右裁切（%）&#x27;: &#x27;right&#x27;,</pre></li>
+    <li id="L316"><pre>    &#x27;图片下裁切（%）&#x27;: &#x27;bottom&#x27;,</pre></li>
+    <li id="L317"><pre>  } as const</pre></li>
+    <li id="L318">
+      <pre>  const numbers = (keys: Array&lt;keyof typeof numberKeys&gt;) =&gt;</pre>
+    </li>
+    <li id="L319"><pre>    keys.map((label) =&gt; {</pre></li>
+    <li id="L320"><pre>      const key = numberKeys[label]</pre></li>
+    <li id="L321">
+      <pre>
+      const percent = [&#x27;opacity&#x27;, &#x27;tolerance&#x27;, &#x27;left&#x27;, &#x27;top&#x27;, &#x27;right&#x27;, &#x27;bottom&#x27;].includes(key)</pre>
+    </li>
+    <li id="L322"><pre>      return (</pre></li>
+    <li id="L323"><pre>        &lt;NumberControl</pre></li>
+    <li id="L324"><pre>          key={label}</pre></li>
+    <li id="L325"><pre>          label={label}</pre></li>
+    <li id="L326">
+      <pre>          min={key === &#x27;width&#x27; || key === &#x27;height&#x27; ? 1 : 0}</pre>
+    </li>
+    <li id="L327">
+      <pre>
+          max={percent ? (key === &#x27;opacity&#x27; || key === &#x27;tolerance&#x27; ? 100 : 99) : undefined}</pre>
+    </li>
+    <li id="L328"><pre>          disabled={blocked}</pre></li>
+    <li id="L329"><pre>          value={draft[key]}</pre></li>
+    <li id="L330"><pre>          onCommit={(value) =&gt; update(key, value)}</pre></li>
+    <li id="L331"><pre>        /&gt;</pre></li>
+    <li id="L332"><pre>      )</pre></li>
+    <li id="L333"><pre>    })</pre></li>
+    <li id="L334">
+      <pre>
+  const primaryLabel = operations.find((item) =&gt; item.value === operation)!.action</pre>
+    </li>
+    <li id="L335"><pre>  return (</pre></li>
+    <li id="L336"><pre>    &lt;&gt;</pre></li>
+    <li id="L337">
+      <pre>
+      &lt;div className=&quot;mimir-pdf-inspector__content&quot; onKeyDown={escape}&gt;</pre>
+    </li>
+    <li id="L338"><pre>        {children}</pre></li>
+    <li id="L339"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L340">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L341"><pre>            {error}</pre></li>
+    <li id="L342"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L343"><pre>        )}</pre></li>
+    <li id="L344">
+      <pre>        {operation !== &#x27;insert&#x27; &amp;&amp; image?.reason &amp;&amp; (</pre>
+    </li>
+    <li id="L345">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;{image.reason}&lt;/p&gt;</pre>
+    </li>
+    <li id="L346"><pre>        )}</pre></li>
+    <li id="L347"><pre>        {requiresFile &amp;&amp; (</pre></li>
+    <li id="L348">
+      <pre>          &lt;div ref={picker} className=&quot;mimir-pdf-image-upload&quot;&gt;</pre>
+    </li>
+    <li id="L349"><pre>            &lt;ToolbarFileButton</pre></li>
+    <li id="L350"><pre>              label=&quot;选择PDF图片文件&quot;</pre></li>
+    <li id="L351"><pre>              accept=&quot;image/png,image/jpeg&quot;</pre></li>
+    <li id="L352"><pre>              disabled={blocked}</pre></li>
+    <li id="L353"><pre>              onPick={(next) =&gt; {</pre></li>
+    <li id="L354"><pre>                setError(null)</pre></li>
+    <li id="L355"><pre>                setMaterial(null)</pre></li>
+    <li id="L356">
+      <pre>
+                if (next.size &gt; 8 * 1024 * 1024) setError(&#x27;图片不得超过8MiB，请重新选择&#x27;)</pre>
+    </li>
+    <li id="L357">
+      <pre>
+                else if (![&#x27;image/png&#x27;, &#x27;image/jpeg&#x27;].includes(next.type))</pre>
+    </li>
+    <li id="L358"><pre>                  setError(&#x27;请选择 PNG 或 JPEG 图片&#x27;)</pre></li>
+    <li id="L359">
+      <pre>                else setMaterial({ file: next, url: URL.createObjectURL(next) })</pre>
+    </li>
+    <li id="L360"><pre>              }}</pre></li>
+    <li id="L361"><pre>            &gt;</pre></li>
+    <li id="L362"><pre>              选择图片</pre></li>
+    <li id="L363"><pre>            &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L364"><pre>            {file ? (</pre></li>
+    <li id="L365">
+      <pre>              &lt;figure className=&quot;mimir-pdf-image-source__preview&quot;&gt;</pre>
+    </li>
+    <li id="L366">
+      <pre>
+                {preview &amp;&amp; &lt;img src={preview} alt=&quot;待上传图片预览&quot; /&gt;}</pre>
+    </li>
+    <li id="L367"><pre>                &lt;figcaption&gt;{file.name}&lt;/figcaption&gt;</pre></li>
+    <li id="L368"><pre>              &lt;/figure&gt;</pre></li>
+    <li id="L369"><pre>            ) : (</pre></li>
+    <li id="L370">
+      <pre>              &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L371"><pre>                PNG 或 JPEG，最大 8MiB。选择后点击底部按钮应用。</pre></li>
+    <li id="L372"><pre>              &lt;/p&gt;</pre></li>
+    <li id="L373"><pre>            )}</pre></li>
+    <li id="L374"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L375"><pre>        )}</pre></li>
+    <li id="L376">
+      <pre>
+        {(operation === &#x27;insert&#x27; || operation === &#x27;transform&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L377">
+      <pre>          &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L378">
+      <pre>
+            {numbers([&#x27;图片横坐标（pt）&#x27;, &#x27;图片纵坐标（pt）&#x27;, &#x27;图片宽度（pt）&#x27;, &#x27;图片高度（pt）&#x27;])}</pre>
+    </li>
+    <li id="L379">
+      <pre>            &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L380"><pre>              &lt;span&gt;层次&lt;/span&gt;</pre></li>
+    <li id="L381"><pre>              &lt;ToolbarSelect</pre></li>
+    <li id="L382"><pre>                label=&quot;图片层次&quot;</pre></li>
+    <li id="L383"><pre>                value={draft.layer}</pre></li>
+    <li id="L384"><pre>                options={[</pre></li>
+    <li id="L385">
+      <pre>                  { value: &#x27;below_text&#x27;, label: &#x27;文字下方&#x27; },</pre>
+    </li>
+    <li id="L386">
+      <pre>                  { value: &#x27;above_text&#x27;, label: &#x27;文字上方&#x27; },</pre>
+    </li>
+    <li id="L387"><pre>                ]}</pre></li>
+    <li id="L388">
+      <pre>                onChange={(value) =&gt; update(&#x27;layer&#x27;, value)}</pre>
+    </li>
+    <li id="L389"><pre>                disabled={blocked}</pre></li>
+    <li id="L390"><pre>              /&gt;</pre></li>
+    <li id="L391"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L392"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L393"><pre>        )}</pre></li>
+    <li id="L394"><pre>        {operation === &#x27;rotate&#x27; &amp;&amp; (</pre></li>
+    <li id="L395">
+      <pre>          &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L396"><pre>            &lt;span&gt;旋转方向&lt;/span&gt;</pre></li>
+    <li id="L397"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L398"><pre>              label=&quot;PDF图片旋转方向&quot;</pre></li>
+    <li id="L399"><pre>              value={draft.direction}</pre></li>
+    <li id="L400"><pre>              disabled={blocked}</pre></li>
+    <li id="L401"><pre>              options={[</pre></li>
+    <li id="L402">
+      <pre>                { value: &#x27;cw&#x27;, label: &#x27;向右 90°&#x27; },</pre>
+    </li>
+    <li id="L403">
+      <pre>                { value: &#x27;ccw&#x27;, label: &#x27;向左 90°&#x27; },</pre>
+    </li>
+    <li id="L404">
+      <pre>                { value: &#x27;180&#x27;, label: &#x27;旋转 180°&#x27; },</pre>
+    </li>
+    <li id="L405"><pre>              ]}</pre></li>
+    <li id="L406">
+      <pre>              onChange={(value) =&gt; update(&#x27;direction&#x27;, value)}</pre>
+    </li>
+    <li id="L407"><pre>            /&gt;</pre></li>
+    <li id="L408"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L409"><pre>        )}</pre></li>
+    <li id="L410"><pre>        {operation === &#x27;flip&#x27; &amp;&amp; (</pre></li>
+    <li id="L411">
+      <pre>          &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L412"><pre>            &lt;span&gt;翻转方向&lt;/span&gt;</pre></li>
+    <li id="L413"><pre>            &lt;ToolbarSelect</pre></li>
+    <li id="L414"><pre>              label=&quot;PDF图片翻转方向&quot;</pre></li>
+    <li id="L415"><pre>              value={draft.axis}</pre></li>
+    <li id="L416"><pre>              disabled={blocked}</pre></li>
+    <li id="L417"><pre>              options={[</pre></li>
+    <li id="L418">
+      <pre>                { value: &#x27;horizontal&#x27;, label: &#x27;水平翻转&#x27; },</pre>
+    </li>
+    <li id="L419">
+      <pre>                { value: &#x27;vertical&#x27;, label: &#x27;垂直翻转&#x27; },</pre>
+    </li>
+    <li id="L420"><pre>              ]}</pre></li>
+    <li id="L421">
+      <pre>              onChange={(value) =&gt; update(&#x27;axis&#x27;, value)}</pre>
+    </li>
+    <li id="L422"><pre>            /&gt;</pre></li>
+    <li id="L423"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L424"><pre>        )}</pre></li>
+    <li id="L425"><pre>        {operation === &#x27;opacity&#x27; &amp;&amp; (</pre></li>
+    <li id="L426"><pre>          &lt;&gt;</pre></li>
+    <li id="L427"><pre>            {image?.opacity === undefined &amp;&amp; (</pre></li>
+    <li id="L428">
+      <pre>
+              &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;当前不透明度未读取；应用时使用所填数值。&lt;/p&gt;</pre>
+    </li>
+    <li id="L429"><pre>            )}</pre></li>
+    <li id="L430"><pre>            {numbers([&#x27;设置图片不透明度（%）&#x27;])}</pre></li>
+    <li id="L431"><pre>          &lt;/&gt;</pre></li>
+    <li id="L432"><pre>        )}</pre></li>
+    <li id="L433">
+      <pre>
+        {operation === &#x27;background&#x27; &amp;&amp; numbers([&#x27;图片去背景容差&#x27;])}</pre>
+    </li>
+    <li id="L434"><pre>        {operation === &#x27;crop&#x27; &amp;&amp; (</pre></li>
+    <li id="L435"><pre>          &lt;&gt;</pre></li>
+    <li id="L436">
+      <pre>            &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L437"><pre>              {numbers([</pre></li>
+    <li id="L438"><pre>                &#x27;图片左裁切（%）&#x27;,</pre></li>
+    <li id="L439"><pre>                &#x27;图片上裁切（%）&#x27;,</pre></li>
+    <li id="L440"><pre>                &#x27;图片右裁切（%）&#x27;,</pre></li>
+    <li id="L441"><pre>                &#x27;图片下裁切（%）&#x27;,</pre></li>
+    <li id="L442"><pre>              ])}</pre></li>
+    <li id="L443"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L444">
+      <pre>            &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L445"><pre>              按当前图片各边向内裁切；相对两侧之和须小于100%。</pre></li>
+    <li id="L446"><pre>            &lt;/p&gt;</pre></li>
+    <li id="L447"><pre>            {cropInvalid &amp;&amp; (</pre></li>
+    <li id="L448">
+      <pre>
+              &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L449"><pre>                裁切后须保留图片区域。</pre></li>
+    <li id="L450"><pre>              &lt;/p&gt;</pre></li>
+    <li id="L451"><pre>            )}</pre></li>
+    <li id="L452"><pre>          &lt;/&gt;</pre></li>
+    <li id="L453"><pre>        )}</pre></li>
+    <li id="L454"><pre>        {operation === &#x27;delete&#x27; &amp;&amp; (</pre></li>
+    <li id="L455">
+      <pre>          &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L456">
+      <pre>
+            删除第 {page} 页的图片{image?.image_number}，保存后写入文件。可通过撤销恢复。</pre>
+    </li>
+    <li id="L457"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L458"><pre>        )}</pre></li>
+    <li id="L459"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L460">
+      <pre>
+      &lt;div className=&quot;mimir-pdf-inspector__footer&quot; onKeyDown={escape}&gt;</pre>
+    </li>
+    <li id="L461"><pre>        &lt;Popconfirm</pre></li>
+    <li id="L462"><pre>          title=&quot;删除所选图片？&quot;</pre></li>
+    <li id="L463"><pre>          description=&quot;改动会在保存后写入文件&quot;</pre></li>
+    <li id="L464"><pre>          open={confirming}</pre></li>
+    <li id="L465"><pre>          onOpenChange={(value) =&gt; {</pre></li>
+    <li id="L466">
+      <pre>
+            if (operation === &#x27;delete&#x27; &amp;&amp; !disabled) setConfirming(value)</pre>
+    </li>
+    <li id="L467"><pre>          }}</pre></li>
+    <li id="L468"><pre>          okText=&quot;确认删除图片&quot;</pre></li>
+    <li id="L469"><pre>          cancelText=&quot;取消&quot;</pre></li>
+    <li id="L470"><pre>          okButtonProps={{ danger: true, autoInsertSpace: false }}</pre></li>
+    <li id="L471"><pre>          cancelButtonProps={{ autoInsertSpace: false }}</pre></li>
+    <li id="L472"><pre>          onConfirm={() =&gt; void run()}</pre></li>
+    <li id="L473"><pre>          onCancel={() =&gt; setConfirming(false)}</pre></li>
+    <li id="L474"><pre>        &gt;</pre></li>
+    <li id="L475"><pre>          &lt;Button</pre></li>
+    <li id="L476"><pre>            ref={primary}</pre></li>
+    <li id="L477"><pre>            type=&quot;primary&quot;</pre></li>
+    <li id="L478"><pre>            block</pre></li>
+    <li id="L479"><pre>            danger={operation === &#x27;delete&#x27;}</pre></li>
+    <li id="L480"><pre>            loading={pending}</pre></li>
+    <li id="L481"><pre>            aria-label={primaryLabel}</pre></li>
+    <li id="L482"><pre>            disabled={disabled}</pre></li>
+    <li id="L483"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L484"><pre>              if (operation !== &#x27;delete&#x27;) void run()</pre></li>
+    <li id="L485"><pre>            }}</pre></li>
+    <li id="L486"><pre>          &gt;</pre></li>
+    <li id="L487"><pre>            {primaryLabel}</pre></li>
+    <li id="L488"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L489"><pre>        &lt;/Popconfirm&gt;</pre></li>
+    <li id="L490"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L491"><pre>    &lt;/&gt;</pre></li>
+    <li id="L492"><pre>  )</pre></li>
+    <li id="L493"><pre>}</pre></li>
+    <li id="L494"><pre>export function PdfImagePanel({</pre></li>
+    <li id="L495"><pre>  sourceKey,</pre></li>
+    <li id="L496"><pre>  snapshot,</pre></li>
+    <li id="L497"><pre>  page,</pre></li>
+    <li id="L498"><pre>  selected,</pre></li>
+    <li id="L499"><pre>  busy,</pre></li>
+    <li id="L500"><pre>  onSelect,</pre></li>
+    <li id="L501"><pre>  onAction,</pre></li>
+    <li id="L502"><pre>  onClose,</pre></li>
+    <li id="L503"><pre>  getVersion,</pre></li>
+    <li id="L504"><pre>  contextVersion,</pre></li>
+    <li id="L505"><pre>  assetSessionId,</pre></li>
+    <li id="L506"><pre>  hostAssetReadiness,</pre></li>
+    <li id="L507"><pre>  hostAssetPreview,</pre></li>
+    <li id="L508"><pre>  onAssetSettings,</pre></li>
+    <li id="L509"><pre>  error: hostError,</pre></li>
+    <li id="L510"><pre>  onRefresh,</pre></li>
+    <li id="L511"><pre>}: {</pre></li>
+    <li id="L512"><pre>  sourceKey: string</pre></li>
+    <li id="L513"><pre>  contextVersion: number</pre></li>
+    <li id="L514"><pre>  assetSessionId: string</pre></li>
+    <li id="L515"><pre>  hostAssetReadiness?: PdfHostAssetReadiness</pre></li>
+    <li id="L516"><pre>  hostAssetPreview?: PdfHostAssetPreview</pre></li>
+    <li id="L517">
+      <pre>  onAssetSettings?(kind: &#x27;search&#x27; | &#x27;generate&#x27;): void</pre>
+    </li>
+    <li id="L518"><pre>  snapshot?: PdfImageSnapshot</pre></li>
+    <li id="L519"><pre>  page: number</pre></li>
+    <li id="L520"><pre>  selected: number | null</pre></li>
+    <li id="L521"><pre>  busy: boolean</pre></li>
+    <li id="L522"><pre>  onSelect(number: number | null): void</pre></li>
+    <li id="L523"><pre>  onRefresh?(): void</pre></li>
+    <li id="L524"><pre>  onAction: PdfAssetAction</pre></li>
+    <li id="L525"><pre>  error?: string | null</pre></li>
+    <li id="L526"><pre>  onClose(): void</pre></li>
+    <li id="L527"><pre>  getVersion(): number</pre></li>
+    <li id="L528"><pre>}) {</pre></li>
+    <li id="L529"><pre>  const targetKey = `${sourceKey}:${page}:${selected}`</pre></li>
+    <li id="L530">
+      <pre>  const [task, setTask] = useState&lt;{ key: string; operation: Operation }&gt;({</pre>
+    </li>
+    <li id="L531"><pre>    key: targetKey,</pre></li>
+    <li id="L532">
+      <pre>    operation: selected === null ? &#x27;insert&#x27; : &#x27;transform&#x27;,</pre>
+    </li>
+    <li id="L533"><pre>  })</pre></li>
+    <li id="L534"><pre>  if (task.key !== targetKey)</pre></li>
+    <li id="L535">
+      <pre>
+    setTask({ key: targetKey, operation: selected === null ? &#x27;insert&#x27; : &#x27;transform&#x27; })</pre>
+    </li>
+    <li id="L536"><pre>  const operation =</pre></li>
+    <li id="L537">
+      <pre>
+    task.key === targetKey ? task.operation : selected === null ? &#x27;insert&#x27; : &#x27;transform&#x27;</pre>
+    </li>
+    <li id="L538">
+      <pre>
+  const requiresMaterial = operation === &#x27;insert&#x27; || operation === &#x27;replace&#x27;</pre>
+    </li>
+    <li id="L539">
+      <pre>  const [source, setSource] = useState&lt;PdfImageSource&gt;(&#x27;upload&#x27;)</pre>
+    </li>
+    <li id="L540"><pre>  const identity = `${targetKey}:${operation}:${source}`</pre></li>
+    <li id="L541"><pre>  const externalKey = `${identity}:${contextVersion}`</pre></li>
+    <li id="L542"><pre>  const [external, setExternal] = useState&lt;{</pre></li>
+    <li id="L543"><pre>    key: string</pre></li>
+    <li id="L544"><pre>    selection: PdfExternalSelection | null</pre></li>
+    <li id="L545"><pre>  }&gt;({ key: externalKey, selection: null })</pre></li>
+    <li id="L546">
+      <pre>
+  if (external.key !== externalKey) setExternal({ key: externalKey, selection: null })</pre>
+    </li>
+    <li id="L547"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L548">
+      <pre>  const [feedback, setFeedback] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L549"><pre>  const live = useRef&lt;string | null&gt;(identity)</pre></li>
+    <li id="L550"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L551"><pre>    live.current = identity</pre></li>
+    <li id="L552"><pre>    return () =&gt; {</pre></li>
+    <li id="L553"><pre>      live.current = null</pre></li>
+    <li id="L554"><pre>    }</pre></li>
+    <li id="L555"><pre>  }, [identity])</pre></li>
+    <li id="L556">
+      <pre>
+  const perform: PdfAssetAction = async (tool, args, expectedVersion = getVersion(), signal) =&gt; {</pre>
+    </li>
+    <li id="L557"><pre>    setError(null)</pre></li>
+    <li id="L558"><pre>    setFeedback(null)</pre></li>
+    <li id="L559"><pre>    try {</pre></li>
+    <li id="L560">
+      <pre>      const result = await onAction(tool, args, expectedVersion, signal)</pre>
+    </li>
+    <li id="L561">
+      <pre>
+      if (live.current === identity &amp;&amp; !signal?.aborted &amp;&amp; result &amp;&amp; !result.ok)</pre>
+    </li>
+    <li id="L562"><pre>        setError(result.error ?? &#x27;图片操作失败，请重试&#x27;)</pre></li>
+    <li id="L563"><pre>      if (</pre></li>
+    <li id="L564"><pre>        live.current === identity &amp;&amp;</pre></li>
+    <li id="L565"><pre>        result?.ok &amp;&amp;</pre></li>
+    <li id="L566"><pre>        result.changed &amp;&amp;</pre></li>
+    <li id="L567"><pre>        getVersion() === expectedVersion + 1</pre></li>
+    <li id="L568"><pre>      )</pre></li>
+    <li id="L569"><pre>        setFeedback(&#x27;已应用到文档。&#x27;)</pre></li>
+    <li id="L570"><pre>      return result</pre></li>
+    <li id="L571"><pre>    } catch (reason) {</pre></li>
+    <li id="L572"><pre>      if (live.current === identity &amp;&amp; !signal?.aborted)</pre></li>
+    <li id="L573">
+      <pre>
+        setError(reason instanceof Error ? reason.message : &#x27;图片操作失败，请重试&#x27;)</pre>
+    </li>
+    <li id="L574"><pre>      return undefined</pre></li>
+    <li id="L575"><pre>    }</pre></li>
+    <li id="L576"><pre>  }</pre></li>
+    <li id="L577">
+      <pre>  const currentExternal = external.key === externalKey ? external.selection : null</pre>
+    </li>
+    <li id="L578">
+      <pre>  const images = snapshot?.images.filter((item) =&gt; item.page === page) ?? [],</pre>
+    </li>
+    <li id="L579">
+      <pre>    image = images.find((item) =&gt; item.image_number === selected)</pre>
+    </li>
+    <li id="L580"><pre>  const common = (</pre></li>
+    <li id="L581"><pre>    &lt;&gt;</pre></li>
+    <li id="L582"><pre>      {(error || hostError) &amp;&amp; (</pre></li>
+    <li id="L583">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L584"><pre>          {error || hostError}</pre></li>
+    <li id="L585"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L586"><pre>      )}</pre></li>
+    <li id="L587"><pre>      {feedback &amp;&amp; (</pre></li>
+    <li id="L588">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L589"><pre>          {feedback}</pre></li>
+    <li id="L590"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L591"><pre>      )}</pre></li>
+    <li id="L592"><pre>      {!snapshot &amp;&amp;</pre></li>
+    <li id="L593"><pre>        (busy ? (</pre></li>
+    <li id="L594"><pre>          &lt;Skeleton title={false} paragraph={{ rows: 3 }} /&gt;</pre></li>
+    <li id="L595"><pre>        ) : (</pre></li>
+    <li id="L596">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L597"><pre>            图片列表尚未读取，请刷新后选择目标。</pre></li>
+    <li id="L598"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L599"><pre>        ))}</pre></li>
+    <li id="L600">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L601"><pre>        &lt;span&gt;目标&lt;/span&gt;</pre></li>
+    <li id="L602"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L603"><pre>          label=&quot;选择PDF图片&quot;</pre></li>
+    <li id="L604">
+      <pre>          value={image ? String(image.image_number) : &#x27;&#x27;}</pre>
+    </li>
+    <li id="L605"><pre>          disabled={busy || !snapshot}</pre></li>
+    <li id="L606"><pre>          options={[</pre></li>
+    <li id="L607">
+      <pre>            { value: &#x27;&#x27;, label: &#x27;插入新图片&#x27; },</pre>
+    </li>
+    <li id="L608"><pre>            ...images.map((item) =&gt; ({</pre></li>
+    <li id="L609"><pre>              value: String(item.image_number),</pre></li>
+    <li id="L610">
+      <pre>
+              label: `图片${item.image_number} · ${Math.round(item.width)}×${Math.round(item.height)} pt${item.editable ? &#x27;&#x27; : &#x27;（只读）&#x27;}`,</pre>
+    </li>
+    <li id="L611"><pre>            })),</pre></li>
+    <li id="L612"><pre>          ]}</pre></li>
+    <li id="L613">
+      <pre>          onChange={(value) =&gt; onSelect(value ? Number(value) : null)}</pre>
+    </li>
+    <li id="L614"><pre>        /&gt;</pre></li>
+    <li id="L615"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L616">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L617"><pre>        &lt;span&gt;操作&lt;/span&gt;</pre></li>
+    <li id="L618"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L619"><pre>          label=&quot;PDF图片操作&quot;</pre></li>
+    <li id="L620"><pre>          value={operation}</pre></li>
+    <li id="L621"><pre>          disabled={busy || !snapshot}</pre></li>
+    <li id="L622"><pre>          options={operations.map((item) =&gt; ({</pre></li>
+    <li id="L623"><pre>            value: item.value,</pre></li>
+    <li id="L624"><pre>            label: item.label,</pre></li>
+    <li id="L625">
+      <pre>            disabled: item.value !== &#x27;insert&#x27; &amp;&amp; !image,</pre>
+    </li>
+    <li id="L626"><pre>          }))}</pre></li>
+    <li id="L627"><pre>          onChange={(value) =&gt; {</pre></li>
+    <li id="L628"><pre>            setTask({ key: targetKey, operation: value })</pre></li>
+    <li id="L629"><pre>            setSource(&#x27;upload&#x27;)</pre></li>
+    <li id="L630"><pre>            setError(null)</pre></li>
+    <li id="L631"><pre>            setFeedback(null)</pre></li>
+    <li id="L632"><pre>          }}</pre></li>
+    <li id="L633"><pre>        /&gt;</pre></li>
+    <li id="L634"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L635">
+      <pre>
+      {requiresMaterial &amp;&amp; source !== &#x27;upload&#x27; &amp;&amp; image?.reason &amp;&amp; (</pre>
+    </li>
+    <li id="L636">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;{image.reason}&lt;/p&gt;</pre>
+    </li>
+    <li id="L637"><pre>      )}</pre></li>
+    <li id="L638"><pre>      {snapshot?.unsupportedPages.includes(page) &amp;&amp; (</pre></li>
+    <li id="L639">
+      <pre>        &lt;ToolbarLabel&gt;此页含嵌套图片结构，暂不能编辑&lt;/ToolbarLabel&gt;</pre>
+    </li>
+    <li id="L640"><pre>      )}</pre></li>
+    <li id="L641"><pre>      {!images.length &amp;&amp; snapshot &amp;&amp; (</pre></li>
+    <li id="L642">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;本页没有图片，可上传 PNG 或 JPEG 插入。&lt;/p&gt;</pre>
+    </li>
+    <li id="L643"><pre>      )}</pre></li>
+    <li id="L644"><pre>      {requiresMaterial &amp;&amp; (</pre></li>
+    <li id="L645"><pre>        &lt;PdfExternalImageSource</pre></li>
+    <li id="L646"><pre>          key={externalKey}</pre></li>
+    <li id="L647"><pre>          source={source}</pre></li>
+    <li id="L648"><pre>          onSource={setSource}</pre></li>
+    <li id="L649"><pre>          getVersion={getVersion}</pre></li>
+    <li id="L650"><pre>          assetSessionId={assetSessionId}</pre></li>
+    <li id="L651"><pre>          readinessHost={hostAssetReadiness}</pre></li>
+    <li id="L652"><pre>          previewHost={hostAssetPreview}</pre></li>
+    <li id="L653"><pre>          onSettings={onAssetSettings}</pre></li>
+    <li id="L654">
+      <pre>
+          onSelection={(selection) =&gt; setExternal({ key: externalKey, selection })}</pre>
+    </li>
+    <li id="L655"><pre>          onAction={onAction}</pre></li>
+    <li id="L656"><pre>          busy={busy || !snapshot}</pre></li>
+    <li id="L657"><pre>        /&gt;</pre></li>
+    <li id="L658"><pre>      )}</pre></li>
+    <li id="L659"><pre>    &lt;/&gt;</pre></li>
+    <li id="L660"><pre>  )</pre></li>
+    <li id="L661"><pre>  return (</pre></li>
+    <li id="L662"><pre>    &lt;section</pre></li>
+    <li id="L663"><pre>      className=&quot;mimir-pdf-panel mimir-pdf-image-panel&quot;</pre></li>
+    <li id="L664"><pre>      role=&quot;region&quot;</pre></li>
+    <li id="L665"><pre>      aria-label=&quot;PDF 图片面板&quot;</pre></li>
+    <li id="L666"><pre>      aria-busy={busy}</pre></li>
+    <li id="L667"><pre>    &gt;</pre></li>
+    <li id="L668"><pre>      &lt;PdfInspectorHeader</pre></li>
+    <li id="L669"><pre>        title=&quot;图片&quot;</pre></li>
+    <li id="L670">
+      <pre>
+        detail={`第 ${page} 页 · ${snapshot ? `${images.length} 张图片` : busy ? &#x27;正在读取图片…&#x27; : &#x27;图片列表未读取&#x27;}`}</pre>
+    </li>
+    <li id="L671"><pre>        busy={busy}</pre></li>
+    <li id="L672"><pre>        refreshLabel=&quot;刷新PDF图片&quot;</pre></li>
+    <li id="L673"><pre>        closeLabel=&quot;关闭PDF图片面板&quot;</pre></li>
+    <li id="L674">
+      <pre>
+        onRefresh={() =&gt; (onRefresh ? onRefresh() : void perform(&#x27;list_page_images&#x27;, {}))}</pre>
+    </li>
+    <li id="L675"><pre>        onClose={onClose}</pre></li>
+    <li id="L676"><pre>      /&gt;</pre></li>
+    <li id="L677"><pre>      {!requiresMaterial || source === &#x27;upload&#x27; ? (</pre></li>
+    <li id="L678"><pre>        &lt;ImageControls</pre></li>
+    <li id="L679">
+      <pre>          key={`${externalKey}:${snapshot?.sha256 ?? &#x27;loading&#x27;}`}</pre>
+    </li>
+    <li id="L680"><pre>          operation={operation}</pre></li>
+    <li id="L681"><pre>          image={image}</pre></li>
+    <li id="L682"><pre>          page={page}</pre></li>
+    <li id="L683"><pre>          busy={busy || !snapshot}</pre></li>
+    <li id="L684"><pre>          onAction={perform}</pre></li>
+    <li id="L685"><pre>          getVersion={getVersion}</pre></li>
+    <li id="L686"><pre>        &gt;</pre></li>
+    <li id="L687"><pre>          {common}</pre></li>
+    <li id="L688"><pre>        &lt;/ImageControls&gt;</pre></li>
+    <li id="L689"><pre>      ) : (</pre></li>
+    <li id="L690">
+      <pre>
+        &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;{common}&lt;/div&gt;</pre>
+    </li>
+    <li id="L691"><pre>      )}</pre></li>
+    <li id="L692">
+      <pre>      {requiresMaterial &amp;&amp; source !== &#x27;upload&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L693">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__footer&quot;&gt;</pre>
+    </li>
+    <li id="L694"><pre>          &lt;ExternalImageApply</pre></li>
+    <li id="L695"><pre>            key={externalKey}</pre></li>
+    <li id="L696"><pre>            operation={operation}</pre></li>
+    <li id="L697"><pre>            page={page}</pre></li>
+    <li id="L698"><pre>            imageNumber={image?.image_number}</pre></li>
+    <li id="L699"><pre>            url={currentExternal?.url}</pre></li>
+    <li id="L700"><pre>            getVersion={getVersion}</pre></li>
+    <li id="L701"><pre>            onAction={perform}</pre></li>
+    <li id="L702"><pre>            disabled={</pre></li>
+    <li id="L703">
+      <pre>
+              busy || !snapshot || !currentExternal || (operation === &#x27;replace&#x27; &amp;&amp; !image?.editable)</pre>
+    </li>
+    <li id="L704"><pre>            }</pre></li>
+    <li id="L705"><pre>          /&gt;</pre></li>
+    <li id="L706"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L707"><pre>      )}</pre></li>
+    <li id="L708"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L709"><pre>  )</pre></li>
+    <li id="L710"><pre>}</pre></li>
+  </ol>
+</html>

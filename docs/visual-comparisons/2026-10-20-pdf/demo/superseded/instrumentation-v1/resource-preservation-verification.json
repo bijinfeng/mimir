@@ -1,0 +1,9 @@
+{
+  "scope": "Superseded instrumentation-v1 resource preservation only; not final screenshot evidence.",
+  "restoredByExactOriginalManifest": true,
+  "allResourceHashesAndSizesMatchOriginal": true,
+  "resources": 206,
+  "aggregateSha256": "57f5f6b24847e4af6b3b6444c0295d3e822310487c3625041fd31c4e2a7f4213",
+  "archivePath": "demo/superseded/instrumentation-v1/dist/before",
+  "reason": "Existing **/dist/** exclusion applies. Original Vite build and installed dependency assets restored the original byte-for-byte hashes after an accidental local formatter pass. No final v2 resource or screenshot changed."
+}

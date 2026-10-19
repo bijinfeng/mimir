@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-redaction-copy.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-redaction-copy.css</h1>
+    <p>current真实源码 · SHA256 132ec91b7306ebfadbf89af89791bdd46c16cf108d06526008d24e36154bd0cf</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-redaction-overlay {</pre></li>
+    <li id="L2"><pre>  position: absolute;</pre></li>
+    <li id="L3"><pre>  inset: 0;</pre></li>
+    <li id="L4"><pre>  z-index: 3;</pre></li>
+    <li id="L5"><pre>  cursor: crosshair;</pre></li>
+    <li id="L6"><pre>  touch-action: none;</pre></li>
+    <li id="L7"><pre>  outline-offset: -2px;</pre></li>
+    <li id="L8"><pre>}</pre></li>
+    <li id="L9"><pre>.mimir-pdf-redaction-overlay[data-disabled] {</pre></li>
+    <li id="L10"><pre>  pointer-events: none;</pre></li>
+    <li id="L11"><pre>}</pre></li>
+    <li id="L12"><pre>.mimir-pdf-redaction-region {</pre></li>
+    <li id="L13"><pre>  position: absolute;</pre></li>
+    <li id="L14">
+      <pre>  background: color-mix(in srgb, var(--me-accent, #2563eb) 25%, transparent);</pre>
+    </li>
+    <li id="L15"><pre>  border: 2px dashed var(--me-accent, #2563eb);</pre></li>
+    <li id="L16"><pre>  pointer-events: none;</pre></li>
+    <li id="L17"><pre>}</pre></li>
+    <li id="L18"><pre>.mimir-pdf-redaction-region[data-draft] {</pre></li>
+    <li id="L19"><pre>  border-style: solid;</pre></li>
+    <li id="L20"><pre>}</pre></li>
+    <li id="L21"><pre>.mimir-pdf-redaction-list {</pre></li>
+    <li id="L22"><pre>  list-style: none;</pre></li>
+    <li id="L23"><pre>  margin: 16px 0;</pre></li>
+    <li id="L24"><pre>  padding: 0;</pre></li>
+    <li id="L25"><pre>}</pre></li>
+    <li id="L26"><pre>.mimir-pdf-redaction-list li {</pre></li>
+    <li id="L27"><pre>  display: flex;</pre></li>
+    <li id="L28"><pre>  align-items: center;</pre></li>
+    <li id="L29"><pre>  justify-content: space-between;</pre></li>
+    <li id="L30"><pre>  gap: 8px;</pre></li>
+    <li id="L31"><pre>  padding-block: 4px;</pre></li>
+    <li id="L32"><pre>}</pre></li>
+    <li id="L33"><pre>.mimir-pdf-redaction-list li[data-current] {</pre></li>
+    <li id="L34"><pre>  font-weight: 600;</pre></li>
+    <li id="L35"><pre>}</pre></li>
+    <li id="L36"><pre>.mimir-pdf-redaction-list .me-tb {</pre></li>
+    <li id="L37"><pre>  flex: none;</pre></li>
+    <li id="L38"><pre>}</pre></li>
+    <li id="L39"><pre>.mimir-pdf-redaction-footer {</pre></li>
+    <li id="L40"><pre>  flex: none;</pre></li>
+    <li id="L41"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L42"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L43"><pre>}</pre></li>
+    <li id="L44"><pre>.mimir-pdf-redaction-footer &gt; .me-tb {</pre></li>
+    <li id="L45"><pre>  width: 100%;</pre></li>
+    <li id="L46"><pre>}</pre></li>
+  </ol>
+</html>

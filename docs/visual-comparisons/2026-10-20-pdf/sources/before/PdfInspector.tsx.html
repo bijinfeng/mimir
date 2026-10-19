@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfInspector.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfInspector.tsx</h1>
+    <p>before真实源码 · SHA256 ff9dd989ceebcd83d717a48cee52208400a4f7779e8cb714577c346d3ee06aa0</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Button } from &#x27;antd&#x27;</pre></li>
+    <li id="L2"><pre>import { RefreshCw, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L3">
+      <pre>import { useEffect, useRef, type ReactNode, type RefObject } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L4"><pre></pre></li>
+    <li id="L5"><pre>export interface PdfPanelResult {</pre></li>
+    <li id="L6"><pre>  ok: boolean</pre></li>
+    <li id="L7"><pre>  changed: boolean</pre></li>
+    <li id="L8"><pre>  error?: string</pre></li>
+    <li id="L9"><pre>}</pre></li>
+    <li id="L10"><pre>export type PdfPanelAction = (</pre></li>
+    <li id="L11"><pre>  tool: string,</pre></li>
+    <li id="L12"><pre>  args: Record&lt;string, unknown&gt;,</pre></li>
+    <li id="L13"><pre>) =&gt; Promise&lt;PdfPanelResult | undefined&gt;</pre></li>
+    <li id="L14"><pre></pre></li>
+    <li id="L15"><pre>export function focusPdfInspectorTrigger(</pre></li>
+    <li id="L16"><pre>  trigger: Element | null,</pre></li>
+    <li id="L17"><pre>  editor: Element | null,</pre></li>
+    <li id="L18"><pre>  sectionKey?: string,</pre></li>
+    <li id="L19"><pre>) {</pre></li>
+    <li id="L20">
+      <pre>
+  if (trigger instanceof HTMLButtonElement &amp;&amp; trigger.isConnected &amp;&amp; !trigger.disabled) {</pre>
+    </li>
+    <li id="L21"><pre>    trigger.focus()</pre></li>
+    <li id="L22"><pre>    if (document.activeElement === trigger) return</pre></li>
+    <li id="L23"><pre>  }</pre></li>
+    <li id="L24">
+      <pre>
+  const group = Array.from(editor?.querySelectorAll&lt;HTMLElement&gt;(&#x27;[data-section-key]&#x27;) ?? []).find(</pre>
+    </li>
+    <li id="L25"><pre>    (element) =&gt; element.dataset.sectionKey === sectionKey,</pre></li>
+    <li id="L26"><pre>  )</pre></li>
+    <li id="L27">
+      <pre>
+  group?.querySelector&lt;HTMLButtonElement&gt;(&#x27;button:not(:disabled)&#x27;)?.focus()</pre>
+    </li>
+    <li id="L28"><pre>}</pre></li>
+    <li id="L29"><pre></pre></li>
+    <li id="L30"><pre>export function PdfInspector({</pre></li>
+    <li id="L31"><pre>  children,</pre></li>
+    <li id="L32"><pre>  onClose,</pre></li>
+    <li id="L33"><pre>  onEscape = onClose,</pre></li>
+    <li id="L34"><pre>  triggerRef,</pre></li>
+    <li id="L35"><pre>  fallbackSectionKey,</pre></li>
+    <li id="L36"><pre>}: {</pre></li>
+    <li id="L37"><pre>  children: ReactNode</pre></li>
+    <li id="L38"><pre>  onClose(): void</pre></li>
+    <li id="L39"><pre>  onEscape?(): void</pre></li>
+    <li id="L40"><pre>  triggerRef: RefObject&lt;HTMLButtonElement | null&gt;</pre></li>
+    <li id="L41"><pre>  fallbackSectionKey?: string</pre></li>
+    <li id="L42"><pre>}) {</pre></li>
+    <li id="L43"><pre>  const root = useRef&lt;HTMLElement&gt;(null)</pre></li>
+    <li id="L44"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L45"><pre>    const previous = triggerRef.current ?? document.activeElement</pre></li>
+    <li id="L46"><pre>    const panel = root.current</pre></li>
+    <li id="L47">
+      <pre>    const editor = panel?.closest(&#x27;.mimir-editor&#x27;) ?? null</pre>
+    </li>
+    <li id="L48">
+      <pre>    const entryTab = editor?.querySelector&lt;HTMLButtonElement&gt;(</pre>
+    </li>
+    <li id="L49">
+      <pre>
+      &#x27;.mimir-compact-toolbar__tabs [role=&quot;tab&quot;][aria-selected=&quot;true&quot;]&#x27;,</pre>
+    </li>
+    <li id="L50"><pre>    )</pre></li>
+    <li id="L51"><pre>    panel?.focus()</pre></li>
+    <li id="L52"><pre>    return () =&gt; {</pre></li>
+    <li id="L53">
+      <pre>      // Preserve focus if the user already chose a control outside the panel.</pre>
+    </li>
+    <li id="L54"><pre>      const active = document.activeElement</pre></li>
+    <li id="L55">
+      <pre>
+      if (active !== document.body &amp;&amp; active !== panel &amp;&amp; !panel?.contains(active)) return</pre>
+    </li>
+    <li id="L56">
+      <pre>      focusPdfInspectorTrigger(previous, editor, fallbackSectionKey)</pre>
+    </li>
+    <li id="L57"><pre>      const entryGroupVisible = Array.from(</pre></li>
+    <li id="L58">
+      <pre>
+        editor?.querySelectorAll&lt;HTMLElement&gt;(&#x27;[data-section-key]&#x27;) ?? [],</pre>
+    </li>
+    <li id="L59">
+      <pre>      ).some((group) =&gt; group.dataset.sectionKey === fallbackSectionKey)</pre>
+    </li>
+    <li id="L60"><pre>      if (</pre></li>
+    <li id="L61"><pre>        !entryGroupVisible &amp;&amp;</pre></li>
+    <li id="L62"><pre>        entryTab?.isConnected &amp;&amp;</pre></li>
+    <li id="L63">
+      <pre>
+        (document.activeElement === active || document.activeElement === document.body)</pre>
+    </li>
+    <li id="L64"><pre>      )</pre></li>
+    <li id="L65"><pre>        entryTab.focus()</pre></li>
+    <li id="L66"><pre>    }</pre></li>
+    <li id="L67"><pre>  }, [triggerRef, fallbackSectionKey])</pre></li>
+    <li id="L68"><pre>  return (</pre></li>
+    <li id="L69"><pre>    &lt;aside</pre></li>
+    <li id="L70"><pre>      className=&quot;mimir-pdf-inspector&quot;</pre></li>
+    <li id="L71"><pre>      aria-label=&quot;PDF 属性工具&quot;</pre></li>
+    <li id="L72"><pre>      ref={root}</pre></li>
+    <li id="L73"><pre>      tabIndex={-1}</pre></li>
+    <li id="L74"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L75">
+      <pre>        if (event.key === &#x27;Escape&#x27; &amp;&amp; !event.defaultPrevented) {</pre>
+    </li>
+    <li id="L76"><pre>          event.stopPropagation()</pre></li>
+    <li id="L77"><pre>          onEscape()</pre></li>
+    <li id="L78"><pre>        }</pre></li>
+    <li id="L79"><pre>      }}</pre></li>
+    <li id="L80"><pre>    &gt;</pre></li>
+    <li id="L81"><pre>      {children}</pre></li>
+    <li id="L82"><pre>    &lt;/aside&gt;</pre></li>
+    <li id="L83"><pre>  )</pre></li>
+    <li id="L84"><pre>}</pre></li>
+    <li id="L85"><pre></pre></li>
+    <li id="L86"><pre>export function PdfInspectorHeader({</pre></li>
+    <li id="L87"><pre>  title,</pre></li>
+    <li id="L88"><pre>  detail,</pre></li>
+    <li id="L89"><pre>  busy,</pre></li>
+    <li id="L90"><pre>  refreshLabel,</pre></li>
+    <li id="L91"><pre>  closeLabel,</pre></li>
+    <li id="L92"><pre>  onRefresh,</pre></li>
+    <li id="L93"><pre>  onClose,</pre></li>
+    <li id="L94"><pre>}: {</pre></li>
+    <li id="L95"><pre>  title: string</pre></li>
+    <li id="L96"><pre>  detail?: string</pre></li>
+    <li id="L97"><pre>  busy: boolean</pre></li>
+    <li id="L98"><pre>  refreshLabel: string</pre></li>
+    <li id="L99"><pre>  closeLabel: string</pre></li>
+    <li id="L100"><pre>  onRefresh(): void</pre></li>
+    <li id="L101"><pre>  onClose(): void</pre></li>
+    <li id="L102"><pre>}) {</pre></li>
+    <li id="L103"><pre>  return (</pre></li>
+    <li id="L104">
+      <pre>    &lt;header className=&quot;mimir-pdf-inspector__header&quot;&gt;</pre>
+    </li>
+    <li id="L105"><pre>      &lt;div&gt;</pre></li>
+    <li id="L106"><pre>        &lt;h2&gt;{title}&lt;/h2&gt;</pre></li>
+    <li id="L107">
+      <pre>
+        {detail &amp;&amp; &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;{detail}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L108"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L109">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__header-actions&quot;&gt;</pre>
+    </li>
+    <li id="L110"><pre>        &lt;Button</pre></li>
+    <li id="L111"><pre>          type=&quot;text&quot;</pre></li>
+    <li id="L112"><pre>          icon={&lt;RefreshCw size={16} /&gt;}</pre></li>
+    <li id="L113"><pre>          aria-label={refreshLabel}</pre></li>
+    <li id="L114"><pre>          title={refreshLabel}</pre></li>
+    <li id="L115"><pre>          disabled={busy}</pre></li>
+    <li id="L116"><pre>          onClick={(event) =&gt; {</pre></li>
+    <li id="L117">
+      <pre>            // The refresh button becomes disabled during the request. Keep</pre>
+    </li>
+    <li id="L118">
+      <pre>            // focus on the stable inspector so Escape still reaches it.</pre>
+    </li>
+    <li id="L119">
+      <pre>
+            event.currentTarget.closest&lt;HTMLElement&gt;(&#x27;.mimir-pdf-inspector&#x27;)?.focus()</pre>
+    </li>
+    <li id="L120"><pre>            onRefresh()</pre></li>
+    <li id="L121"><pre>          }}</pre></li>
+    <li id="L122"><pre>        /&gt;</pre></li>
+    <li id="L123"><pre>        &lt;Button</pre></li>
+    <li id="L124"><pre>          type=&quot;text&quot;</pre></li>
+    <li id="L125"><pre>          icon={&lt;X size={16} /&gt;}</pre></li>
+    <li id="L126"><pre>          aria-label={closeLabel}</pre></li>
+    <li id="L127"><pre>          title={closeLabel}</pre></li>
+    <li id="L128"><pre>          onClick={onClose}</pre></li>
+    <li id="L129"><pre>        /&gt;</pre></li>
+    <li id="L130"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L131"><pre>    &lt;/header&gt;</pre></li>
+    <li id="L132"><pre>  )</pre></li>
+    <li id="L133"><pre>}</pre></li>
+  </ol>
+</html>

@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfLocalPanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfLocalPanel.tsx</h1>
+    <p>current真实源码 · SHA256 7c41c4c135357b7ba085979939d7888e1786fcc01dfe6b2cff729a7280a9b4c1</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <pre>import { Button, Checkbox, Collapse, Input, InputNumber } from &#x27;antd&#x27;</pre>
+    </li>
+    <li id="L2">
+      <pre>import { Download, FileOutput, Printer } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L3">
+      <pre>import { useEffect, useRef, useState, type ReactNode } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L4">
+      <pre>import type { PdfLocalInfo, PdfDrawingInput } from &#x27;@mimir/shared&#x27;</pre>
+    </li>
+    <li id="L5">
+      <pre>
+import { ToolbarFileButton, ToolbarSelect } from &#x27;../shell/EditorShell.js&#x27;</pre>
+    </li>
+    <li id="L6">
+      <pre>
+import { PdfInspectorHeader, type PdfPanelAction } from &#x27;./PdfInspector.js&#x27;</pre>
+    </li>
+    <li id="L7">
+      <pre>import type { PdfLocalOutput } from &#x27;../agent/pdf-local-agent.js&#x27;</pre>
+    </li>
+    <li id="L8">
+      <pre>
+export type PdfLocalPanelMode = &#x27;pages&#x27; | &#x27;drawing&#x27; | &#x27;stamps&#x27; | &#x27;properties&#x27; | &#x27;signature&#x27;</pre>
+    </li>
+    <li id="L9"><pre>const labels = {</pre></li>
+    <li id="L10"><pre>  signature: &#x27;签名与印章&#x27;,</pre></li>
+    <li id="L11"><pre>  pages: &#x27;页面&#x27;,</pre></li>
+    <li id="L12"><pre>  drawing: &#x27;绘图&#x27;,</pre></li>
+    <li id="L13"><pre>  stamps: &#x27;水印与页眉&#x27;,</pre></li>
+    <li id="L14"><pre>  properties: &#x27;文档属性&#x27;,</pre></li>
+    <li id="L15"><pre>}</pre></li>
+    <li id="L16"><pre>function printOutput(output: PdfLocalOutput) {</pre></li>
+    <li id="L17"><pre>  const url = URL.createObjectURL(</pre></li>
+    <li id="L18">
+      <pre>    new Blob([output.bytes.slice().buffer], { type: &#x27;application/pdf&#x27; }),</pre>
+    </li>
+    <li id="L19"><pre>  )</pre></li>
+    <li id="L20"><pre>  const frame = document.createElement(&#x27;iframe&#x27;)</pre></li>
+    <li id="L21"><pre>  frame.title = &#x27;PDF 打印&#x27;</pre></li>
+    <li id="L22"><pre>  frame.style.position = &#x27;fixed&#x27;</pre></li>
+    <li id="L23"><pre>  frame.style.width = &#x27;1px&#x27;</pre></li>
+    <li id="L24"><pre>  frame.style.height = &#x27;1px&#x27;</pre></li>
+    <li id="L25"><pre>  frame.style.left = &#x27;-10000px&#x27;</pre></li>
+    <li id="L26"><pre>  frame.src = url</pre></li>
+    <li id="L27"><pre>  frame.addEventListener(</pre></li>
+    <li id="L28"><pre>    &#x27;load&#x27;,</pre></li>
+    <li id="L29"><pre>    () =&gt; {</pre></li>
+    <li id="L30"><pre>      frame.contentWindow?.focus()</pre></li>
+    <li id="L31"><pre>      frame.contentWindow?.print()</pre></li>
+    <li id="L32"><pre>    },</pre></li>
+    <li id="L33"><pre>    { once: true },</pre></li>
+    <li id="L34"><pre>  )</pre></li>
+    <li id="L35"><pre>  document.body.append(frame)</pre></li>
+    <li id="L36"><pre>  setTimeout(() =&gt; {</pre></li>
+    <li id="L37"><pre>    frame.remove()</pre></li>
+    <li id="L38"><pre>    URL.revokeObjectURL(url)</pre></li>
+    <li id="L39"><pre>  }, 120000)</pre></li>
+    <li id="L40"><pre>}</pre></li>
+    <li id="L41"><pre>function download(output: PdfLocalOutput) {</pre></li>
+    <li id="L42"><pre>  const url = URL.createObjectURL(</pre></li>
+    <li id="L43">
+      <pre>    new Blob([output.bytes.slice().buffer], { type: &#x27;application/pdf&#x27; }),</pre>
+    </li>
+    <li id="L44"><pre>  )</pre></li>
+    <li id="L45"><pre>  const a = document.createElement(&#x27;a&#x27;)</pre></li>
+    <li id="L46"><pre>  a.href = url</pre></li>
+    <li id="L47"><pre>  a.download = output.name</pre></li>
+    <li id="L48"><pre>  a.click()</pre></li>
+    <li id="L49"><pre>  setTimeout(() =&gt; URL.revokeObjectURL(url), 30000)</pre></li>
+    <li id="L50"><pre>}</pre></li>
+    <li id="L51"><pre>interface NumberFieldProps {</pre></li>
+    <li id="L52"><pre>  label: string</pre></li>
+    <li id="L53"><pre>  value: number</pre></li>
+    <li id="L54"><pre>  onChange: (n: number) =&gt; void</pre></li>
+    <li id="L55"><pre>  min?: number</pre></li>
+    <li id="L56"><pre>  max?: number</pre></li>
+    <li id="L57"><pre>  step?: number</pre></li>
+    <li id="L58"><pre>  disabled?: boolean</pre></li>
+    <li id="L59"><pre>}</pre></li>
+    <li id="L60"><pre>function NumberField(props: NumberFieldProps) {</pre></li>
+    <li id="L61"><pre>  return (</pre></li>
+    <li id="L62">
+      <pre>    &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L63"><pre>      &lt;span&gt;{props.label}&lt;/span&gt;</pre></li>
+    <li id="L64"><pre>      &lt;ConciseNumberInput key={props.value} {...props} /&gt;</pre></li>
+    <li id="L65"><pre>    &lt;/label&gt;</pre></li>
+    <li id="L66"><pre>  )</pre></li>
+    <li id="L67"><pre>}</pre></li>
+    <li id="L68"><pre>function ConciseNumberInput({</pre></li>
+    <li id="L69"><pre>  label,</pre></li>
+    <li id="L70"><pre>  value,</pre></li>
+    <li id="L71"><pre>  onChange,</pre></li>
+    <li id="L72"><pre>  min = 0,</pre></li>
+    <li id="L73"><pre>  max = 14400,</pre></li>
+    <li id="L74"><pre>  step = 1,</pre></li>
+    <li id="L75"><pre>  disabled = false,</pre></li>
+    <li id="L76"><pre>}: NumberFieldProps) {</pre></li>
+    <li id="L77">
+      <pre>  // Format only the view: unrelated edits must retain the exact source geometry.</pre>
+    </li>
+    <li id="L78"><pre>  const display = String(Number(value.toPrecision(6)))</pre></li>
+    <li id="L79"><pre>  const [draft, setDraft] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L80"><pre>  const commit = () =&gt; {</pre></li>
+    <li id="L81"><pre>    if (disabled) return</pre></li>
+    <li id="L82"><pre>    setDraft(null)</pre></li>
+    <li id="L83"><pre>    if (draft === null || draft.trim() === &#x27;&#x27;) return</pre></li>
+    <li id="L84"><pre>    const parsed = Number(draft)</pre></li>
+    <li id="L85">
+      <pre>    if (!Number.isFinite(parsed) || parsed === Number(display)) return</pre>
+    </li>
+    <li id="L86"><pre>    const next = Math.min(max, Math.max(min, parsed))</pre></li>
+    <li id="L87"><pre>    if (next !== value) onChange(next)</pre></li>
+    <li id="L88"><pre>  }</pre></li>
+    <li id="L89"><pre>  return (</pre></li>
+    <li id="L90"><pre>    &lt;InputNumber&lt;string&gt;</pre></li>
+    <li id="L91"><pre>      disabled={disabled}</pre></li>
+    <li id="L92"><pre>      style={{ width: &#x27;100%&#x27; }}</pre></li>
+    <li id="L93"><pre>      aria-label={label}</pre></li>
+    <li id="L94"><pre>      title={label}</pre></li>
+    <li id="L95"><pre>      stringMode</pre></li>
+    <li id="L96"><pre>      value={draft ?? display}</pre></li>
+    <li id="L97"><pre>      min={String(min)}</pre></li>
+    <li id="L98"><pre>      max={String(max)}</pre></li>
+    <li id="L99"><pre>      step={String(step)}</pre></li>
+    <li id="L100"><pre>      controls={false}</pre></li>
+    <li id="L101">
+      <pre>      // InputNumber otherwise expands tiny exponent values into long zero strings.</pre>
+    </li>
+    <li id="L102">
+      <pre>
+      formatter={(_, info) =&gt; (info.userTyping ? info.input : (draft ?? display))}</pre>
+    </li>
+    <li id="L103"><pre>      onInput={setDraft}</pre></li>
+    <li id="L104"><pre>      onBlur={commit}</pre></li>
+    <li id="L105"><pre>      onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L106"><pre>        if (event.key === &#x27;Enter&#x27;) commit()</pre></li>
+    <li id="L107"><pre>        if (event.key === &#x27;Escape&#x27;) setDraft(null)</pre></li>
+    <li id="L108"><pre>      }}</pre></li>
+    <li id="L109"><pre>    /&gt;</pre></li>
+    <li id="L110"><pre>  )</pre></li>
+    <li id="L111"><pre>}</pre></li>
+    <li id="L112"><pre>function Field({</pre></li>
+    <li id="L113"><pre>  disabled,</pre></li>
+    <li id="L114"><pre>  label,</pre></li>
+    <li id="L115"><pre>  value,</pre></li>
+    <li id="L116"><pre>  onChange,</pre></li>
+    <li id="L117"><pre>}: {</pre></li>
+    <li id="L118"><pre>  disabled?: boolean</pre></li>
+    <li id="L119"><pre>  label: string</pre></li>
+    <li id="L120"><pre>  value: string</pre></li>
+    <li id="L121"><pre>  onChange: (s: string) =&gt; void</pre></li>
+    <li id="L122"><pre>}) {</pre></li>
+    <li id="L123"><pre>  return (</pre></li>
+    <li id="L124">
+      <pre>    &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L125"><pre>      &lt;span&gt;{label}&lt;/span&gt;</pre></li>
+    <li id="L126"><pre>      &lt;Input</pre></li>
+    <li id="L127"><pre>        disabled={disabled}</pre></li>
+    <li id="L128"><pre>        value={value}</pre></li>
+    <li id="L129"><pre>        aria-label={label}</pre></li>
+    <li id="L130"><pre>        onChange={(e) =&gt; onChange(e.target.value)}</pre></li>
+    <li id="L131"><pre>      /&gt;</pre></li>
+    <li id="L132"><pre>    &lt;/label&gt;</pre></li>
+    <li id="L133"><pre>  )</pre></li>
+    <li id="L134"><pre>}</pre></li>
+    <li id="L135"><pre>export function PdfLocalPanel({</pre></li>
+    <li id="L136"><pre>  mode: initial,</pre></li>
+    <li id="L137"><pre>  page,</pre></li>
+    <li id="L138"><pre>  pageCount,</pre></li>
+    <li id="L139"><pre>  info,</pre></li>
+    <li id="L140"><pre>  outputs,</pre></li>
+    <li id="L141"><pre>  busy,</pre></li>
+    <li id="L142"><pre>  error,</pre></li>
+    <li id="L143"><pre>  onClose,</pre></li>
+    <li id="L144"><pre>  onAction,</pre></li>
+    <li id="L145"><pre>  onModeChange,</pre></li>
+    <li id="L146"><pre>  drawingControls,</pre></li>
+    <li id="L147"><pre>  drawingFooter,</pre></li>
+    <li id="L148"><pre>  selectedDrawingId,</pre></li>
+    <li id="L149"><pre>  onSelectDrawing,</pre></li>
+    <li id="L150"><pre>}: {</pre></li>
+    <li id="L151"><pre>  mode: PdfLocalPanelMode</pre></li>
+    <li id="L152"><pre>  onModeChange?(mode: PdfLocalPanelMode): void</pre></li>
+    <li id="L153"><pre>  drawingControls?: ReactNode</pre></li>
+    <li id="L154"><pre>  drawingFooter?: ReactNode</pre></li>
+    <li id="L155"><pre>  selectedDrawingId?: string | null</pre></li>
+    <li id="L156"><pre>  onSelectDrawing?(id: string | null): void</pre></li>
+    <li id="L157"><pre>  page: number</pre></li>
+    <li id="L158"><pre>  pageCount: number</pre></li>
+    <li id="L159"><pre>  info?: PdfLocalInfo</pre></li>
+    <li id="L160"><pre>  outputs: PdfLocalOutput[]</pre></li>
+    <li id="L161"><pre>  busy: boolean</pre></li>
+    <li id="L162"><pre>  error: string | null</pre></li>
+    <li id="L163"><pre>  onClose: () =&gt; void</pre></li>
+    <li id="L164"><pre>  onAction: PdfPanelAction</pre></li>
+    <li id="L165"><pre>}) {</pre></li>
+    <li id="L166"><pre>  const contentRef = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L167"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L168">
+      <pre>
+    if (outputs.length) contentRef.current?.scrollTo?.({ top: 0, behavior: &#x27;smooth&#x27; })</pre>
+    </li>
+    <li id="L169"><pre>  }, [outputs])</pre></li>
+    <li id="L170"><pre>  const [mode, setMode] = useState(initial)</pre></li>
+    <li id="L171">
+      <pre>  const [feedback, setFeedback] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L172">
+      <pre>  const act = async (tool: string, args: Record&lt;string, unknown&gt;) =&gt; {</pre>
+    </li>
+    <li id="L173"><pre>    setFeedback(null)</pre></li>
+    <li id="L174"><pre>    const result = await onAction(tool, args)</pre></li>
+    <li id="L175"><pre>    if (result?.ok)</pre></li>
+    <li id="L176"><pre>      setFeedback(</pre></li>
+    <li id="L177"><pre>        result.changed</pre></li>
+    <li id="L178"><pre>          ? &#x27;已应用&#x27;</pre></li>
+    <li id="L179"><pre>          : tool === &#x27;get_document_properties&#x27;</pre></li>
+    <li id="L180"><pre>            ? &#x27;已刷新文档属性&#x27;</pre></li>
+    <li id="L181"><pre>            : &#x27;输出已就绪，可在面板顶部下载&#x27;,</pre></li>
+    <li id="L182"><pre>      )</pre></li>
+    <li id="L183"><pre>  }</pre></li>
+    <li id="L184"><pre>  return (</pre></li>
+    <li id="L185"><pre>    &lt;section</pre></li>
+    <li id="L186"><pre>      className=&quot;mimir-pdf-panel mimir-pdf-local-panel&quot;</pre></li>
+    <li id="L187"><pre>      role=&quot;region&quot;</pre></li>
+    <li id="L188"><pre>      aria-label=&quot;PDF 文档工具面板&quot;</pre></li>
+    <li id="L189"><pre>    &gt;</pre></li>
+    <li id="L190"><pre>      &lt;PdfInspectorHeader</pre></li>
+    <li id="L191"><pre>        title={labels[mode]}</pre></li>
+    <li id="L192"><pre>        detail={`当前第 ${page} 页 · 共 ${pageCount} 页`}</pre></li>
+    <li id="L193"><pre>        busy={busy}</pre></li>
+    <li id="L194"><pre>        refreshLabel=&quot;刷新文档属性&quot;</pre></li>
+    <li id="L195"><pre>        closeLabel=&quot;关闭文档工具&quot;</pre></li>
+    <li id="L196">
+      <pre>        onRefresh={() =&gt; void onAction(&#x27;get_document_properties&#x27;, {})}</pre>
+    </li>
+    <li id="L197"><pre>        onClose={onClose}</pre></li>
+    <li id="L198"><pre>      /&gt;</pre></li>
+    <li id="L199">
+      <pre>
+      &lt;div className=&quot;mimir-pdf-inspector__content&quot; ref={contentRef}&gt;</pre>
+    </li>
+    <li id="L200"><pre>        &lt;div</pre></li>
+    <li id="L201"><pre>          className=&quot;mimir-pdf-local-tabs&quot;</pre></li>
+    <li id="L202"><pre>          role=&quot;tablist&quot;</pre></li>
+    <li id="L203"><pre>          aria-label=&quot;文档工具类别&quot;</pre></li>
+    <li id="L204"><pre>          onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L205">
+      <pre>            const keys = Object.keys(labels) as PdfLocalPanelMode[]</pre>
+    </li>
+    <li id="L206"><pre>            const current = keys.indexOf(mode)</pre></li>
+    <li id="L207"><pre>            const next =</pre></li>
+    <li id="L208">
+      <pre>
+              event.key === &#x27;ArrowRight&#x27; || event.key === &#x27;ArrowDown&#x27;</pre>
+    </li>
+    <li id="L209"><pre>                ? (current + 1) % keys.length</pre></li>
+    <li id="L210">
+      <pre>
+                : event.key === &#x27;ArrowLeft&#x27; || event.key === &#x27;ArrowUp&#x27;</pre>
+    </li>
+    <li id="L211"><pre>                  ? (current + keys.length - 1) % keys.length</pre></li>
+    <li id="L212"><pre>                  : event.key === &#x27;Home&#x27;</pre></li>
+    <li id="L213"><pre>                    ? 0</pre></li>
+    <li id="L214"><pre>                    : event.key === &#x27;End&#x27;</pre></li>
+    <li id="L215"><pre>                      ? keys.length - 1</pre></li>
+    <li id="L216"><pre>                      : null</pre></li>
+    <li id="L217"><pre>            if (next === null) return</pre></li>
+    <li id="L218"><pre>            event.preventDefault()</pre></li>
+    <li id="L219"><pre>            setMode(keys[next]!)</pre></li>
+    <li id="L220"><pre>            onModeChange?.(keys[next]!)</pre></li>
+    <li id="L221"><pre>            setFeedback(null)</pre></li>
+    <li id="L222">
+      <pre>
+            event.currentTarget.querySelectorAll&lt;HTMLButtonElement&gt;(&#x27;button&#x27;)[next]?.focus()</pre>
+    </li>
+    <li id="L223"><pre>          }}</pre></li>
+    <li id="L224"><pre>        &gt;</pre></li>
+    <li id="L225">
+      <pre>
+          {(Object.entries(labels) as Array&lt;[PdfLocalPanelMode, string]&gt;).map(([key, label]) =&gt; (</pre>
+    </li>
+    <li id="L226"><pre>            &lt;Button</pre></li>
+    <li id="L227"><pre>              key={key}</pre></li>
+    <li id="L228"><pre>              role=&quot;tab&quot;</pre></li>
+    <li id="L229"><pre>              aria-selected={mode === key}</pre></li>
+    <li id="L230"><pre>              tabIndex={mode === key ? 0 : -1}</pre></li>
+    <li id="L231">
+      <pre>              type={mode === key ? &#x27;primary&#x27; : &#x27;text&#x27;}</pre>
+    </li>
+    <li id="L232"><pre>              onClick={() =&gt; {</pre></li>
+    <li id="L233"><pre>                setMode(key)</pre></li>
+    <li id="L234"><pre>                onModeChange?.(key)</pre></li>
+    <li id="L235"><pre>                setFeedback(null)</pre></li>
+    <li id="L236"><pre>              }}</pre></li>
+    <li id="L237"><pre>            &gt;</pre></li>
+    <li id="L238"><pre>              {label}</pre></li>
+    <li id="L239"><pre>            &lt;/Button&gt;</pre></li>
+    <li id="L240"><pre>          ))}</pre></li>
+    <li id="L241"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L242"><pre>        {error &amp;&amp; (</pre></li>
+    <li id="L243">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__error&quot; role=&quot;alert&quot;&gt;</pre>
+    </li>
+    <li id="L244"><pre>            {error}</pre></li>
+    <li id="L245"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L246"><pre>        )}</pre></li>
+    <li id="L247"><pre>        {feedback &amp;&amp; (</pre></li>
+    <li id="L248">
+      <pre>
+          &lt;p className=&quot;mimir-pdf-inspector__hint&quot; role=&quot;status&quot;&gt;</pre>
+    </li>
+    <li id="L249"><pre>            {feedback}</pre></li>
+    <li id="L250"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L251"><pre>        )}</pre></li>
+    <li id="L252">
+      <pre>        {mode === &#x27;pages&#x27; &amp;&amp; outputs.length &gt; 0 &amp;&amp; (</pre>
+    </li>
+    <li id="L253"><pre>          &lt;&gt;</pre></li>
+    <li id="L254">
+      <pre>
+            &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;输出文件（{outputs.length}）&lt;/h3&gt;</pre>
+    </li>
+    <li id="L255">
+      <pre>            &lt;div className=&quot;mimir-pdf-local-outputs&quot;&gt;</pre>
+    </li>
+    <li id="L256"><pre>              {outputs.map((o) =&gt; (</pre></li>
+    <li id="L257">
+      <pre>
+                &lt;div key={o.name} className=&quot;mimir-pdf-local-actions&quot;&gt;</pre>
+    </li>
+    <li id="L258">
+      <pre>
+                  &lt;Button icon={&lt;Download size={14} /&gt;} onClick={() =&gt; download(o)}&gt;</pre>
+    </li>
+    <li id="L259"><pre>                    {o.name}</pre></li>
+    <li id="L260"><pre>                  &lt;/Button&gt;</pre></li>
+    <li id="L261"><pre>                  &lt;Button</pre></li>
+    <li id="L262"><pre>                    icon={&lt;Printer size={14} /&gt;}</pre></li>
+    <li id="L263"><pre>                    aria-label={`打印 ${o.name}`}</pre></li>
+    <li id="L264"><pre>                    onClick={() =&gt; printOutput(o)}</pre></li>
+    <li id="L265"><pre>                  &gt;</pre></li>
+    <li id="L266"><pre>                    打印</pre></li>
+    <li id="L267"><pre>                  &lt;/Button&gt;</pre></li>
+    <li id="L268"><pre>                &lt;/div&gt;</pre></li>
+    <li id="L269"><pre>              ))}</pre></li>
+    <li id="L270"><pre>            &lt;/div&gt;</pre></li>
+    <li id="L271"><pre>          &lt;/&gt;</pre></li>
+    <li id="L272"><pre>        )}</pre></li>
+    <li id="L273"><pre>        {mode === &#x27;pages&#x27; ? (</pre></li>
+    <li id="L274">
+      <pre>
+          &lt;PageTools page={page} pageCount={pageCount} busy={busy} act={act} /&gt;</pre>
+    </li>
+    <li id="L275"><pre>        ) : mode === &#x27;drawing&#x27; ? (</pre></li>
+    <li id="L276"><pre>          &lt;&gt;</pre></li>
+    <li id="L277"><pre>            {drawingControls}</pre></li>
+    <li id="L278"><pre>            &lt;Collapse</pre></li>
+    <li id="L279"><pre>              ghost</pre></li>
+    <li id="L280"><pre>              size=&quot;small&quot;</pre></li>
+    <li id="L281"><pre>              items={[</pre></li>
+    <li id="L282"><pre>                {</pre></li>
+    <li id="L283"><pre>                  key: &#x27;precise-drawing&#x27;,</pre></li>
+    <li id="L284"><pre>                  label: &#x27;精确数值绘图&#x27;,</pre></li>
+    <li id="L285"><pre>                  children: (</pre></li>
+    <li id="L286"><pre>                    &lt;&gt;</pre></li>
+    <li id="L287">
+      <pre>                      &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre>
+    </li>
+    <li id="L288">
+      <pre>                        新建或选择已应用的绘图。这里的参数不会修改画布草稿。</pre>
+    </li>
+    <li id="L289"><pre>                      &lt;/p&gt;</pre></li>
+    <li id="L290"><pre>                      &lt;DrawingTools</pre></li>
+    <li id="L291"><pre>                        key={page}</pre></li>
+    <li id="L292"><pre>                        page={page}</pre></li>
+    <li id="L293"><pre>                        info={info}</pre></li>
+    <li id="L294"><pre>                        busy={busy || !info}</pre></li>
+    <li id="L295"><pre>                        act={act}</pre></li>
+    <li id="L296"><pre>                        selectedId={selectedDrawingId}</pre></li>
+    <li id="L297"><pre>                        onSelect={onSelectDrawing}</pre></li>
+    <li id="L298"><pre>                      /&gt;</pre></li>
+    <li id="L299"><pre>                    &lt;/&gt;</pre></li>
+    <li id="L300"><pre>                  ),</pre></li>
+    <li id="L301"><pre>                },</pre></li>
+    <li id="L302"><pre>              ]}</pre></li>
+    <li id="L303"><pre>            /&gt;</pre></li>
+    <li id="L304"><pre>          &lt;/&gt;</pre></li>
+    <li id="L305"><pre>        ) : mode === &#x27;stamps&#x27; ? (</pre></li>
+    <li id="L306"><pre>          &lt;StampTools</pre></li>
+    <li id="L307">
+      <pre>            key={JSON.stringify([info?.watermark, info?.headerFooter])}</pre>
+    </li>
+    <li id="L308"><pre>            info={info}</pre></li>
+    <li id="L309"><pre>            busy={busy || !info}</pre></li>
+    <li id="L310"><pre>            act={act}</pre></li>
+    <li id="L311"><pre>          /&gt;</pre></li>
+    <li id="L312"><pre>        ) : (</pre></li>
+    <li id="L313"><pre>          &lt;PropertyTools</pre></li>
+    <li id="L314"><pre>            key={JSON.stringify([info?.metadata, info?.outline])}</pre></li>
+    <li id="L315"><pre>            info={info}</pre></li>
+    <li id="L316"><pre>            busy={busy || !info}</pre></li>
+    <li id="L317"><pre>            act={act}</pre></li>
+    <li id="L318"><pre>          /&gt;</pre></li>
+    <li id="L319"><pre>        )}</pre></li>
+    <li id="L320"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L321"><pre>      {mode === &#x27;drawing&#x27; &amp;&amp; drawingFooter}</pre></li>
+    <li id="L322"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L323"><pre>  )</pre></li>
+    <li id="L324"><pre>}</pre></li>
+    <li id="L325">
+      <pre>
+type Act = (tool: string, args: Record&lt;string, unknown&gt;) =&gt; Promise&lt;void&gt;</pre>
+    </li>
+    <li id="L326"><pre>function PageTools({</pre></li>
+    <li id="L327"><pre>  page,</pre></li>
+    <li id="L328"><pre>  pageCount,</pre></li>
+    <li id="L329"><pre>  busy,</pre></li>
+    <li id="L330"><pre>  act,</pre></li>
+    <li id="L331"><pre>}: {</pre></li>
+    <li id="L332"><pre>  page: number</pre></li>
+    <li id="L333"><pre>  pageCount: number</pre></li>
+    <li id="L334"><pre>  busy: boolean</pre></li>
+    <li id="L335"><pre>  act: Act</pre></li>
+    <li id="L336"><pre>}) {</pre></li>
+    <li id="L337"><pre>  const [range, setRange] = useState(String(page)),</pre></li>
+    <li id="L338"><pre>    [sourceRange, setSourceRange] = useState(&#x27;all&#x27;),</pre></li>
+    <li id="L339"><pre>    [file, setFile] = useState&lt;File | null&gt;(null),</pre></li>
+    <li id="L340"><pre>    [count, setCount] = useState(1),</pre></li>
+    <li id="L341"><pre>    [grid, setGrid] = useState(&#x27;4&#x27;),</pre></li>
+    <li id="L342"><pre>    [perSheet, setPerSheet] = useState(4),</pre></li>
+    <li id="L343"><pre>    [direction, setDirection] = useState(&#x27;horizontal&#x27;),</pre></li>
+    <li id="L344"><pre>    [separator, setSeparator] = useState(false),</pre></li>
+    <li id="L345">
+      <pre>    [crop, setCrop] = useState({ left: 0.1, top: 0.1, right: 0.9, bottom: 0.9 })</pre>
+    </li>
+    <li id="L346"><pre>  return (</pre></li>
+    <li id="L347"><pre>    &lt;&gt;</pre></li>
+    <li id="L348"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L349"><pre>        &lt;Button</pre></li>
+    <li id="L350"><pre>          icon={&lt;Download size={14} /&gt;}</pre></li>
+    <li id="L351"><pre>          disabled={busy}</pre></li>
+    <li id="L352"><pre>          onClick={() =&gt; void act(&#x27;export_pdf&#x27;, {})}</pre></li>
+    <li id="L353"><pre>        &gt;</pre></li>
+    <li id="L354"><pre>          导出当前 PDF / 打印</pre></li>
+    <li id="L355"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L356">
+      <pre>
+        &lt;Field disabled={busy} label=&quot;目标页码&quot; value={range} onChange={setRange} /&gt;</pre>
+    </li>
+    <li id="L357">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;例如 1-3,5；all 表示全部页面。&lt;/p&gt;</pre>
+    </li>
+    <li id="L358"><pre>        &lt;Button</pre></li>
+    <li id="L359"><pre>          icon={&lt;FileOutput size={14} /&gt;}</pre></li>
+    <li id="L360"><pre>          disabled={busy}</pre></li>
+    <li id="L361">
+      <pre>          onClick={() =&gt; void act(&#x27;extract_pages&#x27;, { pages: range })}</pre>
+    </li>
+    <li id="L362"><pre>        &gt;</pre></li>
+    <li id="L363"><pre>          抽取为新 PDF</pre></li>
+    <li id="L364"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L365"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L366"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L367">
+      <pre>
+        &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;导入与替换&lt;/h3&gt;</pre>
+    </li>
+    <li id="L368"><pre>        &lt;ToolbarFileButton</pre></li>
+    <li id="L369"><pre>          label=&quot;选择来源 PDF&quot;</pre></li>
+    <li id="L370"><pre>          accept=&quot;application/pdf,.pdf&quot;</pre></li>
+    <li id="L371"><pre>          disabled={busy}</pre></li>
+    <li id="L372"><pre>          onPick={setFile}</pre></li>
+    <li id="L373"><pre>        &gt;</pre></li>
+    <li id="L374"><pre>          选择来源 PDF</pre></li>
+    <li id="L375"><pre>        &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L376"><pre>        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre></li>
+    <li id="L377">
+      <pre>          {file?.name ?? &#x27;选择另一份 PDF，保留当前原件。&#x27;}</pre>
+    </li>
+    <li id="L378"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L379">
+      <pre>
+        &lt;Field disabled={busy} label=&quot;来源页码&quot; value={sourceRange} onChange={setSourceRange} /&gt;</pre>
+    </li>
+    <li id="L380"><pre>        &lt;div className=&quot;mimir-pdf-local-actions&quot;&gt;</pre></li>
+    <li id="L381"><pre>          &lt;Button</pre></li>
+    <li id="L382"><pre>            type=&quot;primary&quot;</pre></li>
+    <li id="L383"><pre>            disabled={busy || !file}</pre></li>
+    <li id="L384"><pre>            onClick={() =&gt;</pre></li>
+    <li id="L385"><pre>              void act(&#x27;import_pages&#x27;, {</pre></li>
+    <li id="L386"><pre>                after_page: page,</pre></li>
+    <li id="L387"><pre>                source_pages: sourceRange,</pre></li>
+    <li id="L388"><pre>                assetFile: file,</pre></li>
+    <li id="L389"><pre>              })</pre></li>
+    <li id="L390"><pre>            }</pre></li>
+    <li id="L391"><pre>          &gt;</pre></li>
+    <li id="L392"><pre>            插入当前页后</pre></li>
+    <li id="L393"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L394"><pre>          &lt;Button</pre></li>
+    <li id="L395"><pre>            disabled={busy || !file}</pre></li>
+    <li id="L396"><pre>            onClick={() =&gt;</pre></li>
+    <li id="L397"><pre>              void act(&#x27;replace_pages&#x27;, {</pre></li>
+    <li id="L398"><pre>                pages: range,</pre></li>
+    <li id="L399"><pre>                source_pages: sourceRange,</pre></li>
+    <li id="L400"><pre>                assetFile: file,</pre></li>
+    <li id="L401"><pre>              })</pre></li>
+    <li id="L402"><pre>            }</pre></li>
+    <li id="L403"><pre>          &gt;</pre></li>
+    <li id="L404"><pre>            替换目标页</pre></li>
+    <li id="L405"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L406"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L407"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L408"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L409">
+      <pre>
+        &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;按份拆分&lt;/h3&gt;</pre>
+    </li>
+    <li id="L410"><pre>        &lt;NumberField</pre></li>
+    <li id="L411"><pre>          disabled={busy}</pre></li>
+    <li id="L412"><pre>          label=&quot;每份页数&quot;</pre></li>
+    <li id="L413"><pre>          value={count}</pre></li>
+    <li id="L414"><pre>          min={1}</pre></li>
+    <li id="L415"><pre>          max={Math.max(1, pageCount - 1)}</pre></li>
+    <li id="L416"><pre>          onChange={setCount}</pre></li>
+    <li id="L417"><pre>        /&gt;</pre></li>
+    <li id="L418"><pre>        &lt;Button</pre></li>
+    <li id="L419"><pre>          disabled={busy || pageCount &lt; 2}</pre></li>
+    <li id="L420">
+      <pre>
+          onClick={() =&gt; void act(&#x27;split_pdf&#x27;, { pages_per_file: count })}</pre>
+    </li>
+    <li id="L421"><pre>        &gt;</pre></li>
+    <li id="L422"><pre>          拆分为多个文件</pre></li>
+    <li id="L423"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L424"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L425"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L426">
+      <pre>
+        &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;裁切与拼版&lt;/h3&gt;</pre>
+    </li>
+    <li id="L427">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L428"><pre>          &lt;span&gt;每页拆为&lt;/span&gt;</pre></li>
+    <li id="L429"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L430"><pre>            disabled={busy}</pre></li>
+    <li id="L431"><pre>            label=&quot;拆页网格&quot;</pre></li>
+    <li id="L432"><pre>            value={grid}</pre></li>
+    <li id="L433"><pre>            options={[</pre></li>
+    <li id="L434"><pre>              { value: &#x27;2&#x27;, label: &#x27;2 页&#x27; },</pre></li>
+    <li id="L435">
+      <pre>              { value: &#x27;4&#x27;, label: &#x27;4 页（2 × 2）&#x27; },</pre>
+    </li>
+    <li id="L436">
+      <pre>              { value: &#x27;9&#x27;, label: &#x27;9 页（3 × 3）&#x27; },</pre>
+    </li>
+    <li id="L437"><pre>            ]}</pre></li>
+    <li id="L438"><pre>            onChange={setGrid}</pre></li>
+    <li id="L439"><pre>          /&gt;</pre></li>
+    <li id="L440"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L441">
+      <pre>
+        &lt;Button disabled={busy} onClick={() =&gt; void act(&#x27;split_pages&#x27;, { per_page: Number(grid) })}&gt;</pre>
+    </li>
+    <li id="L442"><pre>          拆页为新 PDF</pre></li>
+    <li id="L443"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L444"><pre>        &lt;NumberField</pre></li>
+    <li id="L445"><pre>          disabled={busy}</pre></li>
+    <li id="L446"><pre>          label=&quot;每张纸页数&quot;</pre></li>
+    <li id="L447"><pre>          value={perSheet}</pre></li>
+    <li id="L448"><pre>          min={2}</pre></li>
+    <li id="L449"><pre>          max={16}</pre></li>
+    <li id="L450"><pre>          onChange={setPerSheet}</pre></li>
+    <li id="L451"><pre>        /&gt;</pre></li>
+    <li id="L452"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L453"><pre>          disabled={busy}</pre></li>
+    <li id="L454"><pre>          label=&quot;拼版方向&quot;</pre></li>
+    <li id="L455"><pre>          value={direction}</pre></li>
+    <li id="L456"><pre>          options={[</pre></li>
+    <li id="L457">
+      <pre>            { value: &#x27;horizontal&#x27;, label: &#x27;从左向右&#x27; },</pre>
+    </li>
+    <li id="L458">
+      <pre>            { value: &#x27;vertical&#x27;, label: &#x27;从上向下&#x27; },</pre>
+    </li>
+    <li id="L459"><pre>          ]}</pre></li>
+    <li id="L460"><pre>          onChange={setDirection}</pre></li>
+    <li id="L461"><pre>        /&gt;</pre></li>
+    <li id="L462"><pre>        &lt;Checkbox</pre></li>
+    <li id="L463"><pre>          disabled={busy}</pre></li>
+    <li id="L464"><pre>          checked={separator}</pre></li>
+    <li id="L465"><pre>          onChange={(e) =&gt; setSeparator(e.target.checked)}</pre></li>
+    <li id="L466"><pre>        &gt;</pre></li>
+    <li id="L467"><pre>          绘制分隔线</pre></li>
+    <li id="L468"><pre>        &lt;/Checkbox&gt;</pre></li>
+    <li id="L469"><pre>        &lt;Button</pre></li>
+    <li id="L470"><pre>          disabled={busy}</pre></li>
+    <li id="L471">
+      <pre>
+          onClick={() =&gt; void act(&#x27;merge_pages&#x27;, { per_sheet: perSheet, direction, separator })}</pre>
+    </li>
+    <li id="L472"><pre>        &gt;</pre></li>
+    <li id="L473"><pre>          拼版为新 PDF</pre></li>
+    <li id="L474"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L475"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L476"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L477">
+      <pre>
+        &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;精确裁剪&lt;/h3&gt;</pre>
+    </li>
+    <li id="L478">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;保留区域，按页面宽高的 0–1 比例。&lt;/p&gt;</pre>
+    </li>
+    <li id="L479">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L480">
+      <pre>
+          {([&#x27;left&#x27;, &#x27;top&#x27;, &#x27;right&#x27;, &#x27;bottom&#x27;] as const).map((k, i) =&gt; (</pre>
+    </li>
+    <li id="L481"><pre>            &lt;NumberField</pre></li>
+    <li id="L482"><pre>              disabled={busy}</pre></li>
+    <li id="L483"><pre>              key={k}</pre></li>
+    <li id="L484">
+      <pre>
+              label={[&#x27;左边界&#x27;, &#x27;上边界&#x27;, &#x27;右边界&#x27;, &#x27;下边界&#x27;][i]!}</pre>
+    </li>
+    <li id="L485"><pre>              value={crop[k]}</pre></li>
+    <li id="L486"><pre>              max={1}</pre></li>
+    <li id="L487"><pre>              step={0.05}</pre></li>
+    <li id="L488"><pre>              onChange={(v) =&gt; setCrop({ ...crop, [k]: v })}</pre></li>
+    <li id="L489"><pre>            /&gt;</pre></li>
+    <li id="L490"><pre>          ))}</pre></li>
+    <li id="L491"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L492"><pre>        &lt;Button</pre></li>
+    <li id="L493"><pre>          type=&quot;primary&quot;</pre></li>
+    <li id="L494"><pre>          disabled={busy}</pre></li>
+    <li id="L495">
+      <pre>
+          onClick={() =&gt; void act(&#x27;crop_pages&#x27;, { pages: range, ...crop })}</pre>
+    </li>
+    <li id="L496"><pre>        &gt;</pre></li>
+    <li id="L497"><pre>          裁剪目标页</pre></li>
+    <li id="L498"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L499"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L500"><pre>    &lt;/&gt;</pre></li>
+    <li id="L501"><pre>  )</pre></li>
+    <li id="L502"><pre>}</pre></li>
+    <li id="L503"><pre>function DrawingTools({</pre></li>
+    <li id="L504"><pre>  selectedId,</pre></li>
+    <li id="L505"><pre>  onSelect,</pre></li>
+    <li id="L506"><pre>  page,</pre></li>
+    <li id="L507"><pre>  info,</pre></li>
+    <li id="L508"><pre>  busy,</pre></li>
+    <li id="L509"><pre>  act,</pre></li>
+    <li id="L510"><pre>}: {</pre></li>
+    <li id="L511"><pre>  page: number</pre></li>
+    <li id="L512"><pre>  info?: PdfLocalInfo</pre></li>
+    <li id="L513"><pre>  busy: boolean</pre></li>
+    <li id="L514"><pre>  act: Act</pre></li>
+    <li id="L515"><pre>  selectedId?: string | null</pre></li>
+    <li id="L516"><pre>  onSelect?(id: string | null): void</pre></li>
+    <li id="L517"><pre>}) {</pre></li>
+    <li id="L518"><pre>  const [localId, setLocalId] = useState(&#x27;new&#x27;)</pre></li>
+    <li id="L519">
+      <pre>  const id = selectedId === undefined ? localId : (selectedId ?? &#x27;new&#x27;)</pre>
+    </li>
+    <li id="L520"><pre>  const setId = (value: string) =&gt; {</pre></li>
+    <li id="L521"><pre>    setLocalId(value)</pre></li>
+    <li id="L522"><pre>    onSelect?.(value === &#x27;new&#x27; ? null : value)</pre></li>
+    <li id="L523"><pre>  }</pre></li>
+    <li id="L524">
+      <pre>  const drawings = info?.drawings.filter((d) =&gt; d.page === page) ?? []</pre>
+    </li>
+    <li id="L525"><pre>  const selected = drawings.find((d) =&gt; d.id === id)</pre></li>
+    <li id="L526"><pre>  const sourceKey = JSON.stringify(selected)</pre></li>
+    <li id="L527"><pre>  const [edit, setEdit] = useState&lt;{</pre></li>
+    <li id="L528"><pre>    id: string</pre></li>
+    <li id="L529"><pre>    sourceKey: string | undefined</pre></li>
+    <li id="L530"><pre>    value: PdfDrawingInput</pre></li>
+    <li id="L531"><pre>  } | null&gt;(null)</pre></li>
+    <li id="L532"><pre>  const original: PdfDrawingInput = selected</pre></li>
+    <li id="L533"><pre>    ? (({ id: _, ...value }) =&gt; value)(selected)</pre></li>
+    <li id="L534"><pre>    : {</pre></li>
+    <li id="L535"><pre>        kind: &#x27;rect&#x27;,</pre></li>
+    <li id="L536"><pre>        page,</pre></li>
+    <li id="L537"><pre>        x: 40,</pre></li>
+    <li id="L538"><pre>        y: 60,</pre></li>
+    <li id="L539"><pre>        width: 120,</pre></li>
+    <li id="L540"><pre>        height: 60,</pre></li>
+    <li id="L541"><pre>        color: &#x27;#2563EB&#x27;,</pre></li>
+    <li id="L542"><pre>        thickness: 2,</pre></li>
+    <li id="L543"><pre>        opacity: 1,</pre></li>
+    <li id="L544"><pre>      }</pre></li>
+    <li id="L545">
+      <pre>  // Discard an old source&#x27;s draft permanently. Merely hiding it would revive</pre>
+    </li>
+    <li id="L546">
+      <pre>  // the applied edit when undo returns to the same source values later.</pre>
+    </li>
+    <li id="L547">
+      <pre>  const sameSource = edit?.id === id &amp;&amp; edit.sourceKey === sourceKey</pre>
+    </li>
+    <li id="L548"><pre>  if (edit &amp;&amp; !sameSource) setEdit(null)</pre></li>
+    <li id="L549"><pre>  const draft = sameSource ? edit.value : original</pre></li>
+    <li id="L550"><pre>  const patch = (p: Partial&lt;PdfDrawingInput&gt;) =&gt;</pre></li>
+    <li id="L551"><pre>    setEdit({ id, sourceKey, value: { ...draft, ...p } })</pre></li>
+    <li id="L552"><pre>  return (</pre></li>
+    <li id="L553"><pre>    &lt;&gt;</pre></li>
+    <li id="L554"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L555"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L556"><pre>          disabled={busy}</pre></li>
+    <li id="L557"><pre>          label=&quot;选择绘图&quot;</pre></li>
+    <li id="L558"><pre>          value={id}</pre></li>
+    <li id="L559"><pre>          options={[</pre></li>
+    <li id="L560">
+      <pre>            { value: &#x27;new&#x27;, label: &#x27;新建绘图&#x27; },</pre>
+    </li>
+    <li id="L561"><pre>            ...drawings.map((d, i) =&gt; ({</pre></li>
+    <li id="L562"><pre>              value: d.id,</pre></li>
+    <li id="L563">
+      <pre>
+              label: `${i + 1}. ${{ rect: &#x27;矩形&#x27;, ellipse: &#x27;椭圆&#x27;, line: &#x27;直线&#x27;, arrow: &#x27;箭头&#x27;, ink: &#x27;自由笔迹&#x27;, check: &#x27;勾选标记&#x27;, cross: &#x27;叉号标记&#x27; }[d.kind]}`,</pre>
+    </li>
+    <li id="L564"><pre>            })),</pre></li>
+    <li id="L565"><pre>          ]}</pre></li>
+    <li id="L566"><pre>          onChange={setId}</pre></li>
+    <li id="L567"><pre>        /&gt;</pre></li>
+    <li id="L568"><pre>        &lt;ToolbarSelect</pre></li>
+    <li id="L569"><pre>          disabled={busy}</pre></li>
+    <li id="L570"><pre>          label=&quot;绘图形状&quot;</pre></li>
+    <li id="L571"><pre>          value={draft.kind}</pre></li>
+    <li id="L572"><pre>          options={[</pre></li>
+    <li id="L573"><pre>            { value: &#x27;rect&#x27;, label: &#x27;矩形&#x27; },</pre></li>
+    <li id="L574">
+      <pre>            { value: &#x27;ellipse&#x27;, label: &#x27;椭圆&#x27; },</pre>
+    </li>
+    <li id="L575"><pre>            { value: &#x27;line&#x27;, label: &#x27;直线&#x27; },</pre></li>
+    <li id="L576"><pre>            { value: &#x27;arrow&#x27;, label: &#x27;箭头&#x27; },</pre></li>
+    <li id="L577">
+      <pre>            { value: &#x27;check&#x27;, label: &#x27;静态勾选标记&#x27; },</pre>
+    </li>
+    <li id="L578">
+      <pre>            { value: &#x27;cross&#x27;, label: &#x27;静态叉号标记&#x27; },</pre>
+    </li>
+    <li id="L579">
+      <pre>
+            ...(draft.kind === &#x27;ink&#x27; ? [{ value: &#x27;ink&#x27;, label: &#x27;自由笔迹&#x27; }] : []),</pre>
+    </li>
+    <li id="L580"><pre>          ]}</pre></li>
+    <li id="L581">
+      <pre>
+          onChange={(v) =&gt; patch({ kind: v as PdfDrawingInput[&#x27;kind&#x27;] })}</pre>
+    </li>
+    <li id="L582"><pre>        /&gt;</pre></li>
+    <li id="L583">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L584"><pre>          &lt;NumberField</pre></li>
+    <li id="L585"><pre>            disabled={busy}</pre></li>
+    <li id="L586"><pre>            label=&quot;左侧距离 pt&quot;</pre></li>
+    <li id="L587"><pre>            value={draft.x}</pre></li>
+    <li id="L588"><pre>            min={id === &#x27;new&#x27; ? 0 : -Number.MAX_VALUE}</pre></li>
+    <li id="L589"><pre>            max={Number.MAX_VALUE}</pre></li>
+    <li id="L590"><pre>            onChange={(x) =&gt; patch({ x })}</pre></li>
+    <li id="L591"><pre>          /&gt;</pre></li>
+    <li id="L592"><pre>          &lt;NumberField</pre></li>
+    <li id="L593"><pre>            disabled={busy}</pre></li>
+    <li id="L594"><pre>            label=&quot;顶部距离 pt&quot;</pre></li>
+    <li id="L595"><pre>            value={draft.y}</pre></li>
+    <li id="L596"><pre>            min={id === &#x27;new&#x27; ? 0 : -Number.MAX_VALUE}</pre></li>
+    <li id="L597"><pre>            max={Number.MAX_VALUE}</pre></li>
+    <li id="L598"><pre>            onChange={(y) =&gt; patch({ y })}</pre></li>
+    <li id="L599"><pre>          /&gt;</pre></li>
+    <li id="L600"><pre>          &lt;NumberField</pre></li>
+    <li id="L601"><pre>            disabled={busy}</pre></li>
+    <li id="L602"><pre>            label=&quot;宽度 pt&quot;</pre></li>
+    <li id="L603"><pre>            value={draft.width}</pre></li>
+    <li id="L604"><pre>            min={Number.MIN_VALUE}</pre></li>
+    <li id="L605">
+      <pre>            max={id === &#x27;new&#x27; ? 14400 : Number.MAX_VALUE}</pre>
+    </li>
+    <li id="L606"><pre>            onChange={(width) =&gt; patch({ width })}</pre></li>
+    <li id="L607"><pre>          /&gt;</pre></li>
+    <li id="L608"><pre>          &lt;NumberField</pre></li>
+    <li id="L609"><pre>            disabled={busy}</pre></li>
+    <li id="L610"><pre>            label=&quot;高度 pt&quot;</pre></li>
+    <li id="L611"><pre>            value={draft.height}</pre></li>
+    <li id="L612"><pre>            min={Number.MIN_VALUE}</pre></li>
+    <li id="L613">
+      <pre>            max={id === &#x27;new&#x27; ? 14400 : Number.MAX_VALUE}</pre>
+    </li>
+    <li id="L614"><pre>            onChange={(height) =&gt; patch({ height })}</pre></li>
+    <li id="L615"><pre>          /&gt;</pre></li>
+    <li id="L616"><pre>          &lt;NumberField</pre></li>
+    <li id="L617"><pre>            disabled={busy}</pre></li>
+    <li id="L618"><pre>            label=&quot;线宽 pt&quot;</pre></li>
+    <li id="L619"><pre>            value={draft.thickness}</pre></li>
+    <li id="L620"><pre>            min={id === &#x27;new&#x27; ? 0.25 : Number.MIN_VALUE}</pre></li>
+    <li id="L621"><pre>            max={id === &#x27;new&#x27; ? 50 : Number.MAX_VALUE}</pre></li>
+    <li id="L622"><pre>            step={0.25}</pre></li>
+    <li id="L623"><pre>            onChange={(thickness) =&gt; patch({ thickness })}</pre></li>
+    <li id="L624"><pre>          /&gt;</pre></li>
+    <li id="L625"><pre>          &lt;NumberField</pre></li>
+    <li id="L626"><pre>            disabled={busy}</pre></li>
+    <li id="L627"><pre>            label=&quot;不透明度&quot;</pre></li>
+    <li id="L628"><pre>            value={draft.opacity}</pre></li>
+    <li id="L629"><pre>            max={1}</pre></li>
+    <li id="L630"><pre>            step={0.1}</pre></li>
+    <li id="L631"><pre>            onChange={(opacity) =&gt; patch({ opacity })}</pre></li>
+    <li id="L632"><pre>          /&gt;</pre></li>
+    <li id="L633"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L634"><pre>        {draft.kind !== &#x27;ink&#x27; &amp;&amp; (</pre></li>
+    <li id="L635"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L636"><pre>            disabled={busy}</pre></li>
+    <li id="L637"><pre>            label=&quot;绘图方向&quot;</pre></li>
+    <li id="L638"><pre>            value={String(draft.rotation ?? 0)}</pre></li>
+    <li id="L639">
+      <pre>
+            options={[0, 90, 180, 270].map((r) =&gt; ({ value: String(r), label: `${r}°` }))}</pre>
+    </li>
+    <li id="L640">
+      <pre>
+            onChange={(v) =&gt; patch({ rotation: Number(v) as 0 | 90 | 180 | 270 })}</pre>
+    </li>
+    <li id="L641"><pre>          /&gt;</pre></li>
+    <li id="L642"><pre>        )}</pre></li>
+    <li id="L643"><pre>        &lt;Field</pre></li>
+    <li id="L644"><pre>          disabled={busy}</pre></li>
+    <li id="L645"><pre>          label=&quot;线条颜色&quot;</pre></li>
+    <li id="L646"><pre>          value={draft.color}</pre></li>
+    <li id="L647"><pre>          onChange={(color) =&gt; patch({ color })}</pre></li>
+    <li id="L648"><pre>        /&gt;</pre></li>
+    <li id="L649"><pre>        &lt;Field</pre></li>
+    <li id="L650"><pre>          disabled={busy}</pre></li>
+    <li id="L651"><pre>          label=&quot;填充颜色（可留空）&quot;</pre></li>
+    <li id="L652"><pre>          value={draft.fill ?? &#x27;&#x27;}</pre></li>
+    <li id="L653">
+      <pre>          onChange={(fill) =&gt; patch({ fill: fill || undefined })}</pre>
+    </li>
+    <li id="L654"><pre>        /&gt;</pre></li>
+    <li id="L655"><pre>        &lt;Button</pre></li>
+    <li id="L656">
+      <pre>          type={onSelect ? &#x27;default&#x27; : &#x27;primary&#x27;}</pre>
+    </li>
+    <li id="L657"><pre>          block</pre></li>
+    <li id="L658"><pre>          disabled={busy}</pre></li>
+    <li id="L659"><pre>          onClick={() =&gt;</pre></li>
+    <li id="L660">
+      <pre>
+            void act(id === &#x27;new&#x27; ? &#x27;add_drawing&#x27; : &#x27;update_drawing&#x27;, {</pre>
+    </li>
+    <li id="L661"><pre>              ...(id === &#x27;new&#x27; ? {} : { id }),</pre></li>
+    <li id="L662"><pre>              drawing: draft,</pre></li>
+    <li id="L663"><pre>            })</pre></li>
+    <li id="L664"><pre>          }</pre></li>
+    <li id="L665"><pre>        &gt;</pre></li>
+    <li id="L666">
+      <pre>          {id === &#x27;new&#x27; ? &#x27;添加绘图&#x27; : &#x27;应用绘图&#x27;}</pre>
+    </li>
+    <li id="L667"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L668"><pre>        {id !== &#x27;new&#x27; &amp;&amp; (</pre></li>
+    <li id="L669"><pre>          &lt;Button</pre></li>
+    <li id="L670"><pre>            danger</pre></li>
+    <li id="L671"><pre>            disabled={busy}</pre></li>
+    <li id="L672"><pre>            onClick={() =&gt; {</pre></li>
+    <li id="L673"><pre>              void act(&#x27;delete_drawing&#x27;, { id })</pre></li>
+    <li id="L674"><pre>              setId(&#x27;new&#x27;)</pre></li>
+    <li id="L675"><pre>            }}</pre></li>
+    <li id="L676"><pre>          &gt;</pre></li>
+    <li id="L677"><pre>            删除绘图</pre></li>
+    <li id="L678"><pre>          &lt;/Button&gt;</pre></li>
+    <li id="L679"><pre>        )}</pre></li>
+    <li id="L680"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L681"><pre>    &lt;/&gt;</pre></li>
+    <li id="L682"><pre>  )</pre></li>
+    <li id="L683"><pre>}</pre></li>
+    <li id="L684">
+      <pre>
+function StampTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; act: Act }) {</pre>
+    </li>
+    <li id="L685"><pre>  const [wm, setWm] = useState(</pre></li>
+    <li id="L686">
+      <pre>
+    info?.watermark ?? { text: &#x27;&#x27;, angle: 45, opacity: 0.15, color: &#x27;#808080&#x27;, size_ratio: 0.15 },</pre>
+    </li>
+    <li id="L687"><pre>  )</pre></li>
+    <li id="L688"><pre>  const [hf, setHf] = useState(</pre></li>
+    <li id="L689"><pre>    info?.headerFooter ?? {</pre></li>
+    <li id="L690"><pre>      header_left: &#x27;&#x27;,</pre></li>
+    <li id="L691"><pre>      header_center: &#x27;&#x27;,</pre></li>
+    <li id="L692"><pre>      header_right: &#x27;&#x27;,</pre></li>
+    <li id="L693"><pre>      footer_left: &#x27;&#x27;,</pre></li>
+    <li id="L694"><pre>      footer_center: &#x27;&#x27;,</pre></li>
+    <li id="L695"><pre>      footer_right: &#x27;&#x27;,</pre></li>
+    <li id="L696"><pre>      page_number: false,</pre></li>
+    <li id="L697"><pre>      start_at: 1,</pre></li>
+    <li id="L698"><pre>      font_size: 10,</pre></li>
+    <li id="L699"><pre>      color: &#x27;#555555&#x27;,</pre></li>
+    <li id="L700"><pre>    },</pre></li>
+    <li id="L701"><pre>  )</pre></li>
+    <li id="L702"><pre>  return (</pre></li>
+    <li id="L703"><pre>    &lt;&gt;</pre></li>
+    <li id="L704"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L705"><pre>        &lt;Field</pre></li>
+    <li id="L706"><pre>          disabled={busy}</pre></li>
+    <li id="L707"><pre>          label=&quot;水印文字&quot;</pre></li>
+    <li id="L708"><pre>          value={wm.text}</pre></li>
+    <li id="L709"><pre>          onChange={(text) =&gt; setWm({ ...wm, text })}</pre></li>
+    <li id="L710"><pre>        /&gt;</pre></li>
+    <li id="L711">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L712"><pre>          &lt;NumberField</pre></li>
+    <li id="L713"><pre>            disabled={busy}</pre></li>
+    <li id="L714"><pre>            label=&quot;旋转角度&quot;</pre></li>
+    <li id="L715"><pre>            value={wm.angle}</pre></li>
+    <li id="L716"><pre>            min={-180}</pre></li>
+    <li id="L717"><pre>            max={180}</pre></li>
+    <li id="L718"><pre>            onChange={(angle) =&gt; setWm({ ...wm, angle })}</pre></li>
+    <li id="L719"><pre>          /&gt;</pre></li>
+    <li id="L720"><pre>          &lt;NumberField</pre></li>
+    <li id="L721"><pre>            disabled={busy}</pre></li>
+    <li id="L722"><pre>            label=&quot;水印不透明度&quot;</pre></li>
+    <li id="L723"><pre>            value={wm.opacity}</pre></li>
+    <li id="L724"><pre>            max={1}</pre></li>
+    <li id="L725"><pre>            step={0.05}</pre></li>
+    <li id="L726"><pre>            onChange={(opacity) =&gt; setWm({ ...wm, opacity })}</pre></li>
+    <li id="L727"><pre>          /&gt;</pre></li>
+    <li id="L728"><pre>          &lt;NumberField</pre></li>
+    <li id="L729"><pre>            disabled={busy}</pre></li>
+    <li id="L730"><pre>            label=&quot;相对页面宽度&quot;</pre></li>
+    <li id="L731"><pre>            value={wm.size_ratio}</pre></li>
+    <li id="L732"><pre>            min={0.02}</pre></li>
+    <li id="L733"><pre>            max={0.5}</pre></li>
+    <li id="L734"><pre>            step={0.01}</pre></li>
+    <li id="L735">
+      <pre>            onChange={(size_ratio) =&gt; setWm({ ...wm, size_ratio })}</pre>
+    </li>
+    <li id="L736"><pre>          /&gt;</pre></li>
+    <li id="L737"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L738"><pre>        &lt;Field</pre></li>
+    <li id="L739"><pre>          disabled={busy}</pre></li>
+    <li id="L740"><pre>          label=&quot;水印颜色&quot;</pre></li>
+    <li id="L741"><pre>          value={wm.color}</pre></li>
+    <li id="L742"><pre>          onChange={(color) =&gt; setWm({ ...wm, color })}</pre></li>
+    <li id="L743"><pre>        /&gt;</pre></li>
+    <li id="L744">
+      <pre>
+        &lt;Button type=&quot;primary&quot; disabled={busy} onClick={() =&gt; void act(&#x27;set_watermark&#x27;, wm)}&gt;</pre>
+    </li>
+    <li id="L745"><pre>          应用水印</pre></li>
+    <li id="L746"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L747">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;清空文字可移除本编辑器添加的水印。&lt;/p&gt;</pre>
+    </li>
+    <li id="L748"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L749"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L750">
+      <pre>
+        &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;页眉与页脚&lt;/h3&gt;</pre>
+    </li>
+    <li id="L751"><pre>        {(</pre></li>
+    <li id="L752"><pre>          [</pre></li>
+    <li id="L753"><pre>            &#x27;header_left&#x27;,</pre></li>
+    <li id="L754"><pre>            &#x27;header_center&#x27;,</pre></li>
+    <li id="L755"><pre>            &#x27;header_right&#x27;,</pre></li>
+    <li id="L756"><pre>            &#x27;footer_left&#x27;,</pre></li>
+    <li id="L757"><pre>            &#x27;footer_center&#x27;,</pre></li>
+    <li id="L758"><pre>            &#x27;footer_right&#x27;,</pre></li>
+    <li id="L759"><pre>          ] as const</pre></li>
+    <li id="L760"><pre>        ).map((key, i) =&gt; (</pre></li>
+    <li id="L761"><pre>          &lt;Field</pre></li>
+    <li id="L762"><pre>            disabled={busy}</pre></li>
+    <li id="L763"><pre>            key={key}</pre></li>
+    <li id="L764">
+      <pre>
+            label={[&#x27;页眉左&#x27;, &#x27;页眉中&#x27;, &#x27;页眉右&#x27;, &#x27;页脚左&#x27;, &#x27;页脚中&#x27;, &#x27;页脚右&#x27;][i]!}</pre>
+    </li>
+    <li id="L765"><pre>            value={hf[key]}</pre></li>
+    <li id="L766"><pre>            onChange={(v) =&gt; setHf({ ...hf, [key]: v })}</pre></li>
+    <li id="L767"><pre>          /&gt;</pre></li>
+    <li id="L768"><pre>        ))}</pre></li>
+    <li id="L769"><pre>        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;</pre></li>
+    <li id="L770">
+      <pre>          使用 {&#x27;{page}&#x27;} 和 {&#x27;{total}&#x27;} 插入页码与总页数。</pre>
+    </li>
+    <li id="L771"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L772"><pre>        &lt;Checkbox</pre></li>
+    <li id="L773"><pre>          disabled={busy}</pre></li>
+    <li id="L774"><pre>          checked={hf.page_number}</pre></li>
+    <li id="L775">
+      <pre>          onChange={(e) =&gt; setHf({ ...hf, page_number: e.target.checked })}</pre>
+    </li>
+    <li id="L776"><pre>        &gt;</pre></li>
+    <li id="L777"><pre>          页脚居中显示页码</pre></li>
+    <li id="L778"><pre>        &lt;/Checkbox&gt;</pre></li>
+    <li id="L779">
+      <pre>        &lt;div className=&quot;mimir-pdf-inspector__grid&quot;&gt;</pre>
+    </li>
+    <li id="L780"><pre>          &lt;NumberField</pre></li>
+    <li id="L781"><pre>            disabled={busy}</pre></li>
+    <li id="L782"><pre>            label=&quot;起始页码&quot;</pre></li>
+    <li id="L783"><pre>            value={hf.start_at}</pre></li>
+    <li id="L784"><pre>            max={1000000}</pre></li>
+    <li id="L785"><pre>            onChange={(start_at) =&gt; setHf({ ...hf, start_at })}</pre></li>
+    <li id="L786"><pre>          /&gt;</pre></li>
+    <li id="L787"><pre>          &lt;NumberField</pre></li>
+    <li id="L788"><pre>            disabled={busy}</pre></li>
+    <li id="L789"><pre>            label=&quot;页眉页脚字号&quot;</pre></li>
+    <li id="L790"><pre>            value={hf.font_size}</pre></li>
+    <li id="L791"><pre>            min={6}</pre></li>
+    <li id="L792"><pre>            max={72}</pre></li>
+    <li id="L793">
+      <pre>            onChange={(font_size) =&gt; setHf({ ...hf, font_size })}</pre>
+    </li>
+    <li id="L794"><pre>          /&gt;</pre></li>
+    <li id="L795"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L796"><pre>        &lt;Field</pre></li>
+    <li id="L797"><pre>          disabled={busy}</pre></li>
+    <li id="L798"><pre>          label=&quot;页眉页脚颜色&quot;</pre></li>
+    <li id="L799"><pre>          value={hf.color}</pre></li>
+    <li id="L800"><pre>          onChange={(color) =&gt; setHf({ ...hf, color })}</pre></li>
+    <li id="L801"><pre>        /&gt;</pre></li>
+    <li id="L802">
+      <pre>
+        &lt;Button type=&quot;primary&quot; disabled={busy} onClick={() =&gt; void act(&#x27;set_header_footer&#x27;, hf)}&gt;</pre>
+    </li>
+    <li id="L803"><pre>          应用页眉页脚</pre></li>
+    <li id="L804"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L805"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L806"><pre>    &lt;/&gt;</pre></li>
+    <li id="L807"><pre>  )</pre></li>
+    <li id="L808"><pre>}</pre></li>
+    <li id="L809">
+      <pre>
+function PropertyTools({ info, busy, act }: { info?: PdfLocalInfo; busy: boolean; act: Act }) {</pre>
+    </li>
+    <li id="L810"><pre>  const [metadata, setMetadata] = useState(</pre></li>
+    <li id="L811">
+      <pre>
+    info?.metadata ?? { title: &#x27;&#x27;, author: &#x27;&#x27;, subject: &#x27;&#x27;, keywords: &#x27;&#x27; },</pre>
+    </li>
+    <li id="L812"><pre>  )</pre></li>
+    <li id="L813"><pre>  const [outline, setOutline] = useState(</pre></li>
+    <li id="L814">
+      <pre>
+    (info?.outline ?? []).map((e) =&gt; `${&#x27;  &#x27;.repeat(e.level)}${e.page} | ${e.title}`).join(&#x27;\n&#x27;),</pre>
+    </li>
+    <li id="L815"><pre>  )</pre></li>
+    <li id="L816"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L817"><pre>  return (</pre></li>
+    <li id="L818"><pre>    &lt;&gt;</pre></li>
+    <li id="L819"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L820">
+      <pre>
+        {([&#x27;title&#x27;, &#x27;author&#x27;, &#x27;subject&#x27;, &#x27;keywords&#x27;] as const).map((key, i) =&gt; (</pre>
+    </li>
+    <li id="L821"><pre>          &lt;Field</pre></li>
+    <li id="L822"><pre>            disabled={busy}</pre></li>
+    <li id="L823"><pre>            key={key}</pre></li>
+    <li id="L824">
+      <pre>
+            label={[&#x27;标题&#x27;, &#x27;作者&#x27;, &#x27;主题&#x27;, &#x27;关键词&#x27;][i]!}</pre>
+    </li>
+    <li id="L825"><pre>            value={metadata[key] ?? &#x27;&#x27;}</pre></li>
+    <li id="L826">
+      <pre>            onChange={(v) =&gt; setMetadata({ ...metadata, [key]: v })}</pre>
+    </li>
+    <li id="L827"><pre>          /&gt;</pre></li>
+    <li id="L828"><pre>        ))}</pre></li>
+    <li id="L829"><pre>        &lt;Button</pre></li>
+    <li id="L830"><pre>          type=&quot;primary&quot;</pre></li>
+    <li id="L831"><pre>          disabled={busy}</pre></li>
+    <li id="L832">
+      <pre>          onClick={() =&gt; void act(&#x27;set_metadata&#x27;, { metadata })}</pre>
+    </li>
+    <li id="L833"><pre>        &gt;</pre></li>
+    <li id="L834"><pre>          应用文档属性</pre></li>
+    <li id="L835"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L836"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L837"><pre>      &lt;div className=&quot;mimir-pdf-local-group&quot;&gt;</pre></li>
+    <li id="L838">
+      <pre>
+        &lt;h3 className=&quot;mimir-pdf-inspector__section-title&quot;&gt;书签目录&lt;/h3&gt;</pre>
+    </li>
+    <li id="L839">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;每行“页码 | 标题”；两空格缩进一级。&lt;/p&gt;</pre>
+    </li>
+    <li id="L840"><pre>        &lt;Input.TextArea</pre></li>
+    <li id="L841"><pre>          disabled={busy}</pre></li>
+    <li id="L842"><pre>          rows={7}</pre></li>
+    <li id="L843"><pre>          value={outline}</pre></li>
+    <li id="L844"><pre>          aria-label=&quot;书签目录&quot;</pre></li>
+    <li id="L845"><pre>          onChange={(e) =&gt; setOutline(e.target.value)}</pre></li>
+    <li id="L846"><pre>        /&gt;</pre></li>
+    <li id="L847">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L848"><pre>        &lt;Button</pre></li>
+    <li id="L849"><pre>          disabled={busy}</pre></li>
+    <li id="L850"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L851"><pre>            try {</pre></li>
+    <li id="L852"><pre>              const entries = outline.trim()</pre></li>
+    <li id="L853"><pre>                ? outline</pre></li>
+    <li id="L854"><pre>                    .split(&#x27;\n&#x27;)</pre></li>
+    <li id="L855"><pre>                    .filter((s) =&gt; s.trim())</pre></li>
+    <li id="L856"><pre>                    .map((s) =&gt; {</pre></li>
+    <li id="L857"><pre>                      const m = /^( *)(\d+)\s*\|\s*(.+)$/.exec(s)</pre></li>
+    <li id="L858"><pre>                      if (!m || m[1]!.length % 2)</pre></li>
+    <li id="L859">
+      <pre>
+                        throw new Error(&#x27;请按“页码 | 标题”填写，层级用两个空格缩进&#x27;)</pre>
+    </li>
+    <li id="L860">
+      <pre>
+                      return { page: Number(m[2]), title: m[3]!, level: m[1]!.length / 2 }</pre>
+    </li>
+    <li id="L861"><pre>                    })</pre></li>
+    <li id="L862"><pre>                : []</pre></li>
+    <li id="L863"><pre>              setError(null)</pre></li>
+    <li id="L864"><pre>              void act(&#x27;set_outline&#x27;, { entries })</pre></li>
+    <li id="L865"><pre>            } catch (e) {</pre></li>
+    <li id="L866"><pre>              setError(String(e))</pre></li>
+    <li id="L867"><pre>            }</pre></li>
+    <li id="L868"><pre>          }}</pre></li>
+    <li id="L869"><pre>        &gt;</pre></li>
+    <li id="L870"><pre>          应用书签目录</pre></li>
+    <li id="L871"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L872"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L873"><pre>    &lt;/&gt;</pre></li>
+    <li id="L874"><pre>  )</pre></li>
+    <li id="L875"><pre>}</pre></li>
+    <li id="L876"><pre></pre></li>
+    <li id="L877"><pre>export function PdfLocalAssetRequest({</pre></li>
+    <li id="L878"><pre>  tool,</pre></li>
+    <li id="L879"><pre>  onContinue,</pre></li>
+    <li id="L880"><pre>  onCancel,</pre></li>
+    <li id="L881"><pre>}: {</pre></li>
+    <li id="L882"><pre>  tool: string</pre></li>
+    <li id="L883"><pre>  onContinue(file: File): void</pre></li>
+    <li id="L884"><pre>  onCancel(): void</pre></li>
+    <li id="L885"><pre>}) {</pre></li>
+    <li id="L886"><pre>  const [file, setFile] = useState&lt;File | null&gt;(null)</pre></li>
+    <li id="L887"><pre>  const [error, setError] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L888"><pre>  return (</pre></li>
+    <li id="L889">
+      <pre>
+    &lt;section className=&quot;mimir-pdf-panel&quot; role=&quot;region&quot; aria-label=&quot;选择 PDF 来源文件&quot;&gt;</pre>
+    </li>
+    <li id="L890"><pre>      &lt;PdfInspectorHeader</pre></li>
+    <li id="L891">
+      <pre>
+        title={tool === &#x27;replace_pages&#x27; ? &#x27;替换页面&#x27; : &#x27;导入页面&#x27;}</pre>
+    </li>
+    <li id="L892"><pre>        detail=&quot;AI 正在等待您选择来源文件&quot;</pre></li>
+    <li id="L893"><pre>        busy={false}</pre></li>
+    <li id="L894"><pre>        refreshLabel=&quot;清除来源文件&quot;</pre></li>
+    <li id="L895"><pre>        closeLabel=&quot;取消文件选择&quot;</pre></li>
+    <li id="L896"><pre>        onRefresh={() =&gt; setFile(null)}</pre></li>
+    <li id="L897"><pre>        onClose={onCancel}</pre></li>
+    <li id="L898"><pre>      /&gt;</pre></li>
+    <li id="L899">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L900">
+      <pre>
+        &lt;p&gt;选择一份 PDF，确认后继续{tool === &#x27;replace_pages&#x27; ? &#x27;替换指定页面&#x27; : &#x27;插入页面&#x27;}。&lt;/p&gt;</pre>
+    </li>
+    <li id="L901"><pre>        &lt;ToolbarFileButton</pre></li>
+    <li id="L902"><pre>          label=&quot;选择来源 PDF 文件&quot;</pre></li>
+    <li id="L903"><pre>          accept=&quot;application/pdf,.pdf&quot;</pre></li>
+    <li id="L904"><pre>          onPick={(selectedFile) =&gt; {</pre></li>
+    <li id="L905">
+      <pre>            if (selectedFile.size &gt; 50 * 1024 * 1024 || !selectedFile.size) {</pre>
+    </li>
+    <li id="L906"><pre>              setError(&#x27;请选择 50 MiB 以内的非空 PDF&#x27;)</pre></li>
+    <li id="L907"><pre>              return</pre></li>
+    <li id="L908"><pre>            }</pre></li>
+    <li id="L909"><pre>            setFile(selectedFile)</pre></li>
+    <li id="L910"><pre>            setError(null)</pre></li>
+    <li id="L911"><pre>          }}</pre></li>
+    <li id="L912"><pre>        &gt;</pre></li>
+    <li id="L913"><pre>          选择来源 PDF</pre></li>
+    <li id="L914"><pre>        &lt;/ToolbarFileButton&gt;</pre></li>
+    <li id="L915">
+      <pre>
+        &lt;p className=&quot;mimir-pdf-inspector__meta&quot;&gt;{file?.name ?? &#x27;仅限 PDF，最大 50 MiB。&#x27;}&lt;/p&gt;</pre>
+    </li>
+    <li id="L916">
+      <pre>        {error &amp;&amp; &lt;p role=&quot;alert&quot;&gt;{error}&lt;/p&gt;}</pre>
+    </li>
+    <li id="L917"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L918">
+      <pre>      &lt;footer className=&quot;mimir-pdf-inspector__footer&quot;&gt;</pre>
+    </li>
+    <li id="L919">
+      <pre>
+        &lt;Button type=&quot;primary&quot; block disabled={!file} onClick={() =&gt; file &amp;&amp; onContinue(file)}&gt;</pre>
+    </li>
+    <li id="L920"><pre>          使用此文件继续</pre></li>
+    <li id="L921"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L922"><pre>        &lt;Button block onClick={onCancel}&gt;</pre></li>
+    <li id="L923"><pre>          取消操作</pre></li>
+    <li id="L924"><pre>        &lt;/Button&gt;</pre></li>
+    <li id="L925"><pre>      &lt;/footer&gt;</pre></li>
+    <li id="L926"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L927"><pre>  )</pre></li>
+    <li id="L928"><pre>}</pre></li>
+  </ol>
+</html>

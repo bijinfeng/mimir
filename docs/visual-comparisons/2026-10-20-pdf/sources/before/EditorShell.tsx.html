@@ -1,0 +1,3858 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/shell/EditorShell.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/shell/EditorShell.tsx</h1>
+    <p>before真实源码 · SHA256 dfd9033878e28660a0a41c0074a1e32eaf60d8a765dd7006a782993b923e3c4e</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>/**</pre></li>
+    <li id="L2"><pre> * 编辑器外壳：六种编辑器共用的布局与控件原语。</pre></li>
+    <li id="L3"><pre> *</pre></li>
+    <li id="L4"><pre> * ## 为什么要有这一层</pre></li>
+    <li id="L5"><pre> *</pre></li>
+    <li id="L6">
+      <pre> * 改之前四种格式各有一套自己的顶栏：docx 是 antd `Space` + 一排 icon 按钮，</pre>
+    </li>
+    <li id="L7">
+      <pre> * pptx 是顶栏 + 右侧面板，xlsx 是顶栏 + 表格上方的编辑行，笔记干脆没有顶栏</pre>
+    </li>
+    <li id="L8">
+      <pre>
+ * （只有跟随选区的气泡菜单）。同一个应用里四套观感，&quot;不伦不类&quot;就是这么来的。</pre>
+    </li>
+    <li id="L9"><pre> *</pre></li>
+    <li id="L10">
+      <pre> * 统一成办公软件那一套：**上面工具条、中间编辑区、下面状态行**。六种格式</pre>
+    </li>
+    <li id="L11"><pre> * 用的是同一组组件，所以「一样」不靠约定，靠实现。</pre></li>
+    <li id="L12"><pre> *</pre></li>
+    <li id="L13"><pre> * ## 边界：外壳只管框架，不管业务</pre></li>
+    <li id="L14"><pre> *</pre></li>
+    <li id="L15"><pre> * 这里没有任何格式知识——不知道什么是幻灯片、什么是工作表。它只提供</pre></li>
+    <li id="L16"><pre> * 槽位与一组控件，各编辑器往里填。所以加第七种编辑器不需要改这里。</pre></li>
+    <li id="L17"><pre> *</pre></li>
+    <li id="L18"><pre> * ## 控件用 antd（D-064）</pre></li>
+    <li id="L19"><pre> *</pre></li>
+    <li id="L20">
+      <pre> * 工具条里的**控件**（按钮、下拉、数字框、分段控件、文本框、文件选择）由</pre>
+    </li>
+    <li id="L21">
+      <pre> * antd 渲染：高度、内边距、圆角、边框、hover、焦点环、禁用态、字号都由</pre>
+    </li>
+    <li id="L22">
+      <pre> * `--ant-*` 承担。这些正是「同一排三种高度 / 三种焦点环」的来源，交给一个</pre>
+    </li>
+    <li id="L23"><pre> * 实现就不会漂移。</pre></li>
+    <li id="L24"><pre> *</pre></li>
+    <li id="L25">
+      <pre>
+ * **尺寸档由 `EditorShell` 里那层 `ConfigProvider componentSize=&quot;small&quot;` 给**</pre>
+    </li>
+    <li id="L26">
+      <pre> * （只传 componentSize、不传 theme——传 theme 会让 antd 重算 cssVar 的 key，</pre>
+    </li>
+    <li id="L27">
+      <pre>
+ * `--ant-*` 变量名跟着变，引用处静默失效，见 `.trellis/spec/renderer/frontend/conventions.md` 第 5 条）。</pre>
+    </li>
+    <li id="L28"><pre> *</pre></li>
+    <li id="L29"><pre> * 下面这几样**故意不用 antd**，每一条都有理由：</pre></li>
+    <li id="L30"><pre> *</pre></li>
+    <li id="L31"><pre> * | 原语 | 为什么不用 antd |</pre></li>
+    <li id="L32"><pre> * |---|---|</pre></li>
+    <li id="L33">
+      <pre> * | `useToolbarState` | 它订阅 Tiptap 的**外部可变状态**，antd 没有对应物 |</pre>
+    </li>
+    <li id="L34">
+      <pre>
+ * | `ToolbarMenu` / `ToolbarColorPicker` | 面板必须**就地渲染**（portal 会离开 `--me-*` 子树，深色下退回浅色回退值）；antd 的 Dropdown/ColorPicker 都会 portal，且 Dropdown 不给 `aria-expanded` |</pre>
+    </li>
+    <li id="L35">
+      <pre>
+ * | `ToolbarGroup` / `ToolbarSpacer` / `ToolbarLabel` / `ToolbarNote` / `ToolbarNotice` | 纯布局与文字；antd 的 Space 会给每个子项包一层、Typography 会把字号阶梯改到 antd 那边 |</pre>
+    </li>
+    <li id="L36">
+      <pre>
+ * | `ToolbarTabs` | antd 的 Tabs 会把页签渲染成 div 而不是 button，并多一个隐藏的 `.ant-tabs-nav-more` |</pre>
+    </li>
+    <li id="L37">
+      <pre>
+ * | `ToolbarGridPicker` | 格子是 18px 的方块；antd 没有这个档（small 档按钮实测 24px），要它就得用字面量覆盖 `.ant-btn-sm`——那条路 D-064 明确否决。与 `.me-tab` / `.me-color__cell` 同一类 |</pre>
+    </li>
+    <li id="L38">
+      <pre>
+ * | `EditorState` | 是「居中、不占满高度」的状态块，antd 的 Spin/Result 都会改掉形状 |</pre>
+    </li>
+    <li id="L39"><pre> *</pre></li>
+    <li id="L40"><pre> * ## 两条写这个文件的规矩</pre></li>
+    <li id="L41"><pre> *</pre></li>
+    <li id="L42">
+      <pre> * 1. **不抑制 React 规则**——`eslint-disable` 关 hook 规则会让 React Compiler</pre>
+    </li>
+    <li id="L43"><pre> *    静默跳过整个组件（改代码结构，别关诊断）</pre></li>
+    <li id="L44">
+      <pre> * 2. **渲染期不读 ref**——同样会被判违规。ref 只在事件与 effect 里读</pre>
+    </li>
+    <li id="L45"><pre> *</pre></li>
+    <li id="L46"><pre> * 下面几个需要「打开/关闭」的原语（菜单、颜色选择器）都走同一个</pre></li>
+    <li id="L47">
+      <pre> * `useToolbarPopup`：一份定位 + 键盘 + 关闭的实现，三处抄一遍必然漂移。</pre>
+    </li>
+    <li id="L48"><pre> */</pre></li>
+    <li id="L49"><pre></pre></li>
+    <li id="L50"><pre>import {</pre></li>
+    <li id="L51"><pre>  createContext,</pre></li>
+    <li id="L52"><pre>  useContext,</pre></li>
+    <li id="L53"><pre>  useEffect,</pre></li>
+    <li id="L54"><pre>  useId,</pre></li>
+    <li id="L55"><pre>  useRef,</pre></li>
+    <li id="L56"><pre>  useState,</pre></li>
+    <li id="L57"><pre>  useSyncExternalStore,</pre></li>
+    <li id="L58"><pre>} from &#x27;react&#x27;</pre></li>
+    <li id="L59"><pre>import type {</pre></li>
+    <li id="L60"><pre>  ComponentProps,</pre></li>
+    <li id="L61"><pre>  KeyboardEvent as ReactKeyboardEvent,</pre></li>
+    <li id="L62"><pre>  MouseEvent as ReactMouseEvent,</pre></li>
+    <li id="L63"><pre>  ReactNode,</pre></li>
+    <li id="L64"><pre>} from &#x27;react&#x27;</pre></li>
+    <li id="L65"><pre>import { useEditorState } from &#x27;@tiptap/react&#x27;</pre></li>
+    <li id="L66"><pre>import type { Editor } from &#x27;@tiptap/core&#x27;</pre></li>
+    <li id="L67"><pre>import {</pre></li>
+    <li id="L68"><pre>  Button,</pre></li>
+    <li id="L69"><pre>  ConfigProvider,</pre></li>
+    <li id="L70"><pre>  Divider,</pre></li>
+    <li id="L71"><pre>  Input,</pre></li>
+    <li id="L72"><pre>  InputNumber,</pre></li>
+    <li id="L73"><pre>  Popconfirm,</pre></li>
+    <li id="L74"><pre>  Segmented,</pre></li>
+    <li id="L75"><pre>  Select,</pre></li>
+    <li id="L76"><pre>  Upload,</pre></li>
+    <li id="L77"><pre>} from &#x27;antd&#x27;</pre></li>
+    <li id="L78"><pre>import type { InputRef } from &#x27;antd&#x27;</pre></li>
+    <li id="L79"><pre>import type { FindOptions } from &#x27;../shims/ui.js&#x27;</pre></li>
+    <li id="L80"><pre>import {</pre></li>
+    <li id="L81"><pre>  CheckIcon,</pre></li>
+    <li id="L82"><pre>  ChevronDownIcon,</pre></li>
+    <li id="L83"><pre>  ChevronLeftIcon,</pre></li>
+    <li id="L84"><pre>  ChevronRightIcon,</pre></li>
+    <li id="L85"><pre>  CloseIcon,</pre></li>
+    <li id="L86"><pre>} from &#x27;./icons.js&#x27;</pre></li>
+    <li id="L87"><pre></pre></li>
+    <li id="L88"><pre>const PropertyFormContext = createContext(false)</pre></li>
+    <li id="L89"><pre></pre></li>
+    <li id="L90">
+      <pre>/** Property panels show labels; ribbon controls keep their compact layout. */</pre>
+    </li>
+    <li id="L91"><pre>export function ToolbarPropertyForm({</pre></li>
+    <li id="L92"><pre>  children,</pre></li>
+    <li id="L93"><pre>  columns = 2,</pre></li>
+    <li id="L94"><pre>}: {</pre></li>
+    <li id="L95"><pre>  children: ReactNode</pre></li>
+    <li id="L96"><pre>  columns?: 1 | 2</pre></li>
+    <li id="L97"><pre>}) {</pre></li>
+    <li id="L98"><pre>  return (</pre></li>
+    <li id="L99"><pre>    &lt;PropertyFormContext value={true}&gt;</pre></li>
+    <li id="L100">
+      <pre>      &lt;div className=&quot;me-property-form&quot; data-columns={columns}&gt;</pre>
+    </li>
+    <li id="L101"><pre>        {children}</pre></li>
+    <li id="L102"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L103"><pre>    &lt;/PropertyFormContext&gt;</pre></li>
+    <li id="L104"><pre>  )</pre></li>
+    <li id="L105"><pre>}</pre></li>
+    <li id="L106"><pre></pre></li>
+    <li id="L107"><pre>function ToolbarPropertyField({</pre></li>
+    <li id="L108"><pre>  label,</pre></li>
+    <li id="L109"><pre>  children,</pre></li>
+    <li id="L110"><pre>  multiline = false,</pre></li>
+    <li id="L111"><pre>}: {</pre></li>
+    <li id="L112"><pre>  label: string</pre></li>
+    <li id="L113"><pre>  children: ReactNode</pre></li>
+    <li id="L114"><pre>  multiline?: boolean</pre></li>
+    <li id="L115"><pre>}) {</pre></li>
+    <li id="L116"><pre>  const visible = useContext(PropertyFormContext)</pre></li>
+    <li id="L117"><pre>  if (!visible) return children</pre></li>
+    <li id="L118"><pre>  return (</pre></li>
+    <li id="L119">
+      <pre>
+    &lt;div className=&quot;me-property-field&quot; data-multiline={multiline || undefined}&gt;</pre>
+    </li>
+    <li id="L120">
+      <pre>
+      &lt;span className=&quot;me-property-field__label&quot;&gt;{label}&lt;/span&gt;</pre>
+    </li>
+    <li id="L121">
+      <pre>
+      &lt;div className=&quot;me-property-field__control&quot;&gt;{children}&lt;/div&gt;</pre>
+    </li>
+    <li id="L122"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L123"><pre>  )</pre></li>
+    <li id="L124"><pre>}</pre></li>
+    <li id="L125"><pre></pre></li>
+    <li id="L126"><pre>export interface EditorShellProps {</pre></li>
+    <li id="L127"><pre>  /** 顶栏（工具条）。一般不直接放裸子元素，用下面的控件原语摆 */</pre></li>
+    <li id="L128"><pre>  toolbar?: ReactNode</pre></li>
+    <li id="L129"><pre>  /**</pre></li>
+    <li id="L130">
+      <pre>   * 次工具条（工具条下面那一行）。查找替换栏、pptx 的幻灯片导航、xlsx 的</pre>
+    </li>
+    <li id="L131"><pre>   * 公式栏都落在这里。</pre></li>
+    <li id="L132"><pre>   *</pre></li>
+    <li id="L133">
+      <pre>   * **它与工具条同包在 `.mimir-editor__chrome` 里**，那个容器才是 sticky 的。</pre>
+    </li>
+    <li id="L134">
+      <pre>   * 让 subbar 自己再写一条 `position: sticky; top: 0` 是不行的：工具条已经占了</pre>
+    </li>
+    <li id="L135"><pre>   * `top: 0` 且 z-index 更高、DOM 在后，subbar 会盖住工具条</pre></li>
+    <li id="L136">
+      <pre>   * （这一点实测过）。也不要给 subbar 写死 `top: 32px` 之类——工具条是</pre>
+    </li>
+    <li id="L137"><pre>   * `flex-wrap` 的，窄窗口下会折成两行，写死的高度立刻错位。</pre></li>
+    <li id="L138"><pre>   */</pre></li>
+    <li id="L139"><pre>  subbar?: ReactNode</pre></li>
+    <li id="L140">
+      <pre>  /** 编辑区。**滚动容器由调用方决定**——分页、缩放、表格的滚动方式各不相同 */</pre>
+    </li>
+    <li id="L141"><pre>  children: ReactNode</pre></li>
+    <li id="L142"><pre>  /** 内容下方的附属面板（pptx 的段落编辑、xlsx 的单元格编辑） */</pre></li>
+    <li id="L143"><pre>  footer?: ReactNode</pre></li>
+    <li id="L144"><pre>  /** 状态行两侧的内容。左：状态/说明；右：页码、字数这类计数 */</pre></li>
+    <li id="L145"><pre>  status?: ReactNode</pre></li>
+    <li id="L146"><pre>  /**</pre></li>
+    <li id="L147">
+      <pre>   * 贴边模式：去掉外框与圆角，用于它已经在面板里（文档详情右栏）的场景。</pre>
+    </li>
+    <li id="L148">
+      <pre>   * 留一个框会在面板里出现「框套框」，看起来像两个可以分别滚动的东西。</pre>
+    </li>
+    <li id="L149"><pre>   */</pre></li>
+    <li id="L150"><pre>  flush?: boolean</pre></li>
+    <li id="L151"><pre>  /** 仅 Markdown 笔记使用的紧凑单行工具栏外观 */</pre></li>
+    <li id="L152"><pre>  variant?: &#x27;note&#x27;</pre></li>
+    <li id="L153"><pre>  /**</pre></li>
+    <li id="L154"><pre>   * 编辑区**右侧**的固定列（如笔记的大纲导航）。</pre></li>
+    <li id="L155"><pre>   *</pre></li>
+    <li id="L156">
+      <pre>   * 给出时 body 变成「主列 + 侧列」两栏：工具条与状态行仍然**整行**，</pre>
+    </li>
+    <li id="L157">
+      <pre>   * 侧列夹在它们之间——这是语雀式阅读布局的形状（工具条下面、正文右边），</pre>
+    </li>
+    <li id="L158"><pre>   * 而不是把侧列放在外壳外面、与工具条并排（那样工具条被挤窄，</pre></li>
+    <li id="L159"><pre>   * 与头部和状态行的整行宽度对不上）。</pre></li>
+    <li id="L160"><pre>   *</pre></li>
+    <li id="L161"><pre>   * 侧列自己滚：外壳不管它的内容与滚动方式。</pre></li>
+    <li id="L162"><pre>   */</pre></li>
+    <li id="L163"><pre>  bodySide?: ReactNode</pre></li>
+    <li id="L164"><pre>}</pre></li>
+    <li id="L165"><pre></pre></li>
+    <li id="L166"><pre>/**</pre></li>
+    <li id="L167"><pre> * 外壳本体。</pre></li>
+    <li id="L168"><pre> *</pre></li>
+    <li id="L169">
+      <pre> * 五层自上而下：`toolbar` → `subbar` → `children` → `footer` → `status`</pre>
+    </li>
+    <li id="L170">
+      <pre> * （工具条与次工具条同包在一条 sticky 容器里，所以视觉上是四行）。</pre>
+    </li>
+    <li id="L171">
+      <pre> * 没传的槽位不渲染——**不留空占位**：一条空的次工具条会让人以为这里本来</pre>
+    </li>
+    <li id="L172"><pre> * 应该有东西而没显示出来。</pre></li>
+    <li id="L173"><pre> *</pre></li>
+    <li id="L174">
+      <pre> * ## 那层 `ConfigProvider`：只传 `componentSize`，**绝不传 `theme`**</pre>
+    </li>
+    <li id="L175"><pre> *</pre></li>
+    <li id="L176">
+      <pre> * 它把这一棵子树里的 antd 控件降到 small 档（六种编辑器、三个就地渲染的</pre>
+    </li>
+    <li id="L177"><pre> * 弹层面板一处改完）。两条不能动的边界：</pre></li>
+    <li id="L178"><pre> *</pre></li>
+    <li id="L179">
+      <pre> *  1. **不传 `theme`**：antd 会按传入的 theme 重算 `cssVar` 的 key，</pre>
+    </li>
+    <li id="L180"><pre> *     `--ant-*` 变量名跟着变，所有引用变量的地方**静默失效**</pre></li>
+    <li id="L181">
+      <pre>
+ *     （`.trellis/spec/renderer/frontend/conventions.md` 第 5 条）。尺寸档不是主题。</pre>
+    </li>
+    <li id="L182">
+      <pre> *  2. **它不产生 DOM 节点**（实测 `host.childElementCount` 渲染前后都是 1），</pre>
+    </li>
+    <li id="L183">
+      <pre> *     所以 `.mimir-editor` 的高度链与宽度链不受影响——那两条链断过两次，</pre>
+    </li>
+    <li id="L184">
+      <pre> *     见 `shell.css` 与`.trellis/spec/project/pitfalls.md` 的坑表。</pre>
+    </li>
+    <li id="L185"><pre> *</pre></li>
+    <li id="L186">
+      <pre> * 注意它**不是** antd 的 compactAlgorithm 那种全应用密度开关：只把控件降到</pre>
+    </li>
+    <li id="L187">
+      <pre> * small 档，间距仍由 `shell.css` 的 `.mimir-editor__bar { gap: 2px }` 管。</pre>
+    </li>
+    <li id="L188"><pre> */</pre></li>
+    <li id="L189"><pre>export function EditorShell({</pre></li>
+    <li id="L190"><pre>  toolbar,</pre></li>
+    <li id="L191"><pre>  subbar,</pre></li>
+    <li id="L192"><pre>  children,</pre></li>
+    <li id="L193"><pre>  footer,</pre></li>
+    <li id="L194"><pre>  status,</pre></li>
+    <li id="L195"><pre>  flush = false,</pre></li>
+    <li id="L196"><pre>  variant,</pre></li>
+    <li id="L197"><pre>  bodySide,</pre></li>
+    <li id="L198"><pre>}: EditorShellProps) {</pre></li>
+    <li id="L199"><pre>  const hasChrome = toolbar !== undefined || subbar !== undefined</pre></li>
+    <li id="L200"><pre>  return (</pre></li>
+    <li id="L201"><pre>    &lt;ConfigProvider componentSize=&quot;small&quot;&gt;</pre></li>
+    <li id="L202"><pre>      &lt;div</pre></li>
+    <li id="L203">
+      <pre>
+        className={`mimir-editor${flush ? &#x27; mimir-editor--flush&#x27; : &#x27;&#x27;}${variant === &#x27;note&#x27; ? &#x27; mimir-editor--note&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L204"><pre>      &gt;</pre></li>
+    <li id="L205"><pre>        {hasChrome &amp;&amp; (</pre></li>
+    <li id="L206"><pre>          &lt;div className=&quot;mimir-editor__chrome&quot;&gt;</pre></li>
+    <li id="L207"><pre>            {toolbar !== undefined &amp;&amp; (</pre></li>
+    <li id="L208">
+      <pre>
+              &lt;div className=&quot;mimir-editor__bar&quot; role=&quot;group&quot; aria-label=&quot;编辑工具&quot;&gt;</pre>
+    </li>
+    <li id="L209">
+      <pre>
+                &lt;div className=&quot;mimir-editor__tools&quot;&gt;{toolbar}&lt;/div&gt;</pre>
+    </li>
+    <li id="L210"><pre>              &lt;/div&gt;</pre></li>
+    <li id="L211"><pre>            )}</pre></li>
+    <li id="L212">
+      <pre>
+            {subbar !== undefined &amp;&amp; &lt;div className=&quot;mimir-editor__subbar&quot;&gt;{subbar}&lt;/div&gt;}</pre>
+    </li>
+    <li id="L213"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L214"><pre>        )}</pre></li>
+    <li id="L215"><pre>        {bodySide !== undefined ? (</pre></li>
+    <li id="L216">
+      <pre>
+          &lt;div className=&quot;mimir-editor__body mimir-editor__body--split&quot;&gt;</pre>
+    </li>
+    <li id="L217"><pre>            {children}</pre></li>
+    <li id="L218">
+      <pre>            {/* 侧列是 **浮层**：绝对定位钉在 body 右上角，不参与布局——</pre>
+    </li>
+    <li id="L219">
+      <pre>                滚动仍由主内容自己的容器承担（滚动条在画布最右缘），</pre>
+    </li>
+    <li id="L220">
+      <pre>                大纲不随内容滚走（语雀式）。内容侧由 padding 让出它的位置 */}</pre>
+    </li>
+    <li id="L221">
+      <pre>
+            &lt;div className=&quot;mimir-editor__side&quot;&gt;{bodySide}&lt;/div&gt;</pre>
+    </li>
+    <li id="L222"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L223"><pre>        ) : (</pre></li>
+    <li id="L224">
+      <pre>
+          &lt;div className=&quot;mimir-editor__body&quot;&gt;{children}&lt;/div&gt;</pre>
+    </li>
+    <li id="L225"><pre>        )}</pre></li>
+    <li id="L226">
+      <pre>
+        {footer !== undefined &amp;&amp; &lt;div className=&quot;mimir-editor__footer&quot;&gt;{footer}&lt;/div&gt;}</pre>
+    </li>
+    <li id="L227"><pre>        {status !== undefined &amp;&amp; (</pre></li>
+    <li id="L228"><pre>          &lt;div className=&quot;mimir-editor__status&quot;&gt;</pre></li>
+    <li id="L229">
+      <pre>
+            &lt;div className=&quot;mimir-editor__status-content&quot;&gt;{status}&lt;/div&gt;</pre>
+    </li>
+    <li id="L230"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L231"><pre>        )}</pre></li>
+    <li id="L232"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L233"><pre>    &lt;/ConfigProvider&gt;</pre></li>
+    <li id="L234"><pre>  )</pre></li>
+    <li id="L235"><pre>}</pre></li>
+    <li id="L236"><pre></pre></li>
+    <li id="L237"><pre>/**</pre></li>
+    <li id="L238">
+      <pre> * 订阅编辑器的状态，`selector` 每次事务后重新算一次，返回**字符串**。</pre>
+    </li>
+    <li id="L239"><pre> *</pre></li>
+    <li id="L240"><pre> * ## 为什么必须用它，而不是在渲染期直接读 `editor.isActive`</pre></li>
+    <li id="L241"><pre> *</pre></li>
+    <li id="L242"><pre> * Tiptap v3 的 `useEditor` **默认不在事务上重渲染**</pre></li>
+    <li id="L243">
+      <pre> * （`shouldRerenderOnTransaction` 默认 false，为了性能）。所以渲染期读</pre>
+    </li>
+    <li id="L244">
+      <pre> * `isActive` 会停在旧值：把光标移进一段加粗文字，加粗按钮不会亮起来。</pre>
+    </li>
+    <li id="L245">
+      <pre> * 它不报错，只是按钮状态永远是打开文档那一刻的——正是这个仓库最在意的</pre>
+    </li>
+    <li id="L246"><pre> * 那类静默出错。</pre></li>
+    <li id="L247"><pre> *</pre></li>
+    <li id="L248"><pre> * ## 为什么 selector 返回字符串而不是对象</pre></li>
+    <li id="L249"><pre> *</pre></li>
+    <li id="L250">
+      <pre> * 默认的相等判断是深比较，字符串比它更省也更不容易出意外（对象每次新建，</pre>
+    </li>
+    <li id="L251">
+      <pre> * 万一相等判断被换掉就会每次事务都重渲染）。这也是 `MarkdownEditor` 里</pre>
+    </li>
+    <li id="L252"><pre> * 那版的做法（`MARK_KEYS.filter(...).join(&#x27; &#x27;)`）。</pre></li>
+    <li id="L253"><pre> *</pre></li>
+    <li id="L254"><pre> * ## 为什么 docx 也要用</pre></li>
+    <li id="L255"><pre> *</pre></li>
+    <li id="L256">
+      <pre> * `DocxEditor` 之前只在 `useEditor` 上开了 `onUpdate`，工具条按钮的激活态</pre>
+    </li>
+    <li id="L257">
+      <pre> * 因此不跟着光标走。工具条「显示当前状态」的那批按钮**全部以这个 hook 为</pre>
+    </li>
+    <li id="L258"><pre> * 前提**——绕过它写的按钮在把光标移进加粗文字时不会亮。</pre></li>
+    <li id="L259"><pre> */</pre></li>
+    <li id="L260"><pre>export function useToolbarState(</pre></li>
+    <li id="L261"><pre>  editor: Editor | null,</pre></li>
+    <li id="L262"><pre>  selector: (editor: Editor) =&gt; string,</pre></li>
+    <li id="L263"><pre>): string {</pre></li>
+    <li id="L264"><pre>  const value = useEditorState({</pre></li>
+    <li id="L265"><pre>    editor,</pre></li>
+    <li id="L266">
+      <pre>
+    selector: ({ editor: instance }) =&gt; (instance === null ? &#x27;&#x27; : selector(instance)),</pre>
+    </li>
+    <li id="L267"><pre>  })</pre></li>
+    <li id="L268">
+      <pre>  // `useEditorState` 在 editor 为 null 时返回 null（它在挂载前拿不到快照）</pre>
+    </li>
+    <li id="L269"><pre>  return value ?? &#x27;&#x27;</pre></li>
+    <li id="L270"><pre>}</pre></li>
+    <li id="L271"><pre></pre></li>
+    <li id="L272"><pre>export interface ToolbarButtonProps {</pre></li>
+    <li id="L273">
+      <pre>  /** 提示文字。用原生 `title`——它同时是**无障碍名称**的来源，读屏会念它 */</pre>
+    </li>
+    <li id="L274"><pre>  label: string</pre></li>
+    <li id="L275"><pre>  /** 图标元素（宿主传 antd 图标进来）。省略时按钮只显示文字 */</pre></li>
+    <li id="L276"><pre>  children?: ReactNode</pre></li>
+    <li id="L277">
+      <pre>  /** 按下态（加粗生效时按钮是「按下去」的样子）。**只有真切换按钮才传** */</pre>
+    </li>
+    <li id="L278"><pre>  active?: boolean</pre></li>
+    <li id="L279"><pre>  disabled?: boolean</pre></li>
+    <li id="L280"><pre>  /**</pre></li>
+    <li id="L281"><pre>   * 禁用的**原因**（「这个方言没有表格节点」「选中不是列表」）。</pre></li>
+    <li id="L282"><pre>   *</pre></li>
+    <li id="L283">
+      <pre>   * **必须显示，不能只是禁用**：一个灰着的按钮等于让人猜。禁用时按钮自己的</pre>
+    </li>
+    <li id="L284">
+      <pre>   * `title` 让给原因，`aria-label` 仍是 `label`——读屏用户听到的是「加粗，</pre>
+    </li>
+    <li id="L285"><pre>   * 不可用」，鼠标用户看到的是「这个方言没有加粗」。</pre></li>
+    <li id="L286"><pre>   *</pre></li>
+    <li id="L287">
+      <pre>   * 注意：部分浏览器不给 `disabled` 元素弹 `title`（原生行为），所以原因</pre>
+    </li>
+    <li id="L288">
+      <pre>   * **不要只写在这里**——真正需要解释的地方（M1 未实现的动作）还要在状态行</pre>
+    </li>
+    <li id="L289"><pre>   * 或菜单里说一遍。</pre></li>
+    <li id="L290"><pre>   */</pre></li>
+    <li id="L291"><pre>  disabledReason?: string</pre></li>
+    <li id="L292"><pre>  /** 主按钮（保存）。整条工具条最多一个 */</pre></li>
+    <li id="L293"><pre>  primary?: boolean</pre></li>
+    <li id="L294"><pre>  /**</pre></li>
+    <li id="L295">
+      <pre>   * 点击。**可以不给**：文件选择按钮就靠 rc-upload 挂在祖先上的处理器</pre>
+    </li>
+    <li id="L296">
+      <pre>   * 打开选择器，自己再挂一个空处理函数只会让人以为这里还有事要做。</pre>
+    </li>
+    <li id="L297"><pre>   */</pre></li>
+    <li id="L298"><pre>  onClick?: () =&gt; void</pre></li>
+    <li id="L299"><pre>  /**</pre></li>
+    <li id="L300"><pre>   * 转发给 antd `Button` 的 ref。</pre></li>
+    <li id="L301"><pre>   *</pre></li>
+    <li id="L302">
+      <pre>   * **必须真的转下去**（React 19 的 ref-as-prop）：`ToolbarConfirm` 这类</pre>
+    </li>
+    <li id="L303">
+      <pre>   * 包一层的原语用 `cloneElement(child, { ref })` 拿触发元素来定位弹层，</pre>
+    </li>
+    <li id="L304">
+      <pre>   * 而丢掉 ref 之后弹层会静默留在 `left: -1000vw; top: -1000vh`——DOM 里</pre>
+    </li>
+    <li id="L305"><pre>   * 看得到、截图里看不见（见下面 `ToolbarButton` 里的实测值）。</pre></li>
+    <li id="L306"><pre>   */</pre></li>
+    <li id="L307"><pre>  ref?: ComponentProps&lt;typeof Button&gt;[&#x27;ref&#x27;]</pre></li>
+    <li id="L308"><pre>}</pre></li>
+    <li id="L309"><pre></pre></li>
+    <li id="L310"><pre>/**</pre></li>
+    <li id="L311"><pre> * 工具条按钮（antd `Button`）。</pre></li>
+    <li id="L312"><pre> *</pre></li>
+    <li id="L313"><pre> * 四件必须做对的事：</pre></li>
+    <li id="L314"><pre> *</pre></li>
+    <li id="L315">
+      <pre> *  1. **是 `&lt;button&gt;`**，不是带 onClick 的 div——键盘、焦点环、读屏都靠它</pre>
+    </li>
+    <li id="L316">
+      <pre> *     （antd 渲染的就是 `&lt;button type=&quot;button&quot;&gt;`）</pre>
+    </li>
+    <li id="L317">
+      <pre> *  2. **用 `onMouseDown` 阻止默认行为**：点按钮会让编辑区失焦，选区随之</pre>
+    </li>
+    <li id="L318">
+      <pre> *     被清掉，于是「给选中的文字加粗」作用不到任何东西（Word 也是这么做的）</pre>
+    </li>
+    <li id="L319">
+      <pre> *  3. **激活态写进 `aria-pressed`**，样式选择器也读它——状态只留一个真相。</pre>
+    </li>
+    <li id="L320">
+      <pre> *     **antd 的 Button 不认这个属性**（它只在 hover/active 上着色），</pre>
+    </li>
+    <li id="L321">
+      <pre> *     所以按下态由 `shell.css` 的 `.me-tb[aria-pressed=&#x27;true&#x27;]` 画。</pre>
+    </li>
+    <li id="L322"><pre> *</pre></li>
+    <li id="L323">
+      <pre> *     **`active` 只给真切换按钮（`aria-pressed` 随之只在这些按钮上出现）**：</pre>
+    </li>
+    <li id="L324">
+      <pre> *     保存、上一页、A+/A− 这类一次性动作没有「按下 / 没按下」两个状态，无条件</pre>
+    </li>
+    <li id="L325">
+      <pre>
+ *     下发 `aria-pressed=&quot;false&quot;` 会让读屏把它们报成「未按下的切换按钮」。不给</pre>
+    </li>
+    <li id="L326">
+      <pre>
+ *     `active` 时 React 整个属性都不渲染，而样式只匹配 `&#x27;true&#x27;`，所以外观不变。</pre>
+    </li>
+    <li id="L327"><pre> *  4. **两种外观两种写法，不能混**：</pre></li>
+    <li id="L328">
+      <pre>
+ *     - 普通按钮：`variant=&quot;text&quot; color=&quot;default&quot;`，**不要同时传 `type`**</pre>
+    </li>
+    <li id="L329">
+      <pre> *     - 主按钮（保存）：**只传 `type=&quot;primary&quot;`**，不要传 color/variant</pre>
+    </li>
+    <li id="L330"><pre> *</pre></li>
+    <li id="L331">
+      <pre>
+ * 第 4 条是 antd 的一条静默陷阱：`button.js` 的分支是「先看 color &amp;&amp; variant，</pre>
+    </li>
+    <li id="L332">
+      <pre>
+ * 都给了就直接用」，于是 `&lt;Button type=&quot;primary&quot; variant=&quot;text&quot; color=&quot;default&quot;&gt;`</pre>
+    </li>
+    <li id="L333">
+      <pre> * 会同时带上 `ant-btn-primary` 与 text/default 两个类——**渲染出来是透明的</pre>
+    </li>
+    <li id="L334">
+      <pre> * 「保存」**，而它不报任何警告。所以两条路各写一支，且「保存」的断言要同时</pre>
+    </li>
+    <li id="L335"><pre> * 盯 `ant-btn-color-primary` 与 `ant-btn-variant-solid`。</pre></li>
+    <li id="L336"><pre> *</pre></li>
+    <li id="L337">
+      <pre> * `autoInsertSpace={false}` 也是必需的：antd 默认会往**两个汉字之间插一个</pre>
+    </li>
+    <li id="L338">
+      <pre>
+ * 空格**（`&lt;Button&gt;替换&lt;/Button&gt;` 的 textContent 是 &quot;替 换&quot;），而工具条上有</pre>
+    </li>
+    <li id="L339"><pre> * 两处按 textContent 认文案的断言。</pre></li>
+    <li id="L340"><pre> */</pre></li>
+    <li id="L341">
+      <pre>
+/** Flush pending form drafts before the click while keeping document selections intact. */</pre>
+    </li>
+    <li id="L342">
+      <pre>function preserveEditorSelection(event: ReactMouseEvent&lt;HTMLElement&gt;) {</pre>
+    </li>
+    <li id="L343"><pre>  const focused = event.currentTarget.ownerDocument.activeElement</pre></li>
+    <li id="L344">
+      <pre>
+  if (focused instanceof HTMLElement &amp;&amp; focused.matches(&#x27;input, textarea, select&#x27;)) focused.blur()</pre>
+    </li>
+    <li id="L345"><pre>  event.preventDefault()</pre></li>
+    <li id="L346"><pre>}</pre></li>
+    <li id="L347"><pre></pre></li>
+    <li id="L348"><pre>export function ToolbarButton({</pre></li>
+    <li id="L349"><pre>  label,</pre></li>
+    <li id="L350"><pre>  children,</pre></li>
+    <li id="L351"><pre>  active,</pre></li>
+    <li id="L352"><pre>  disabled = false,</pre></li>
+    <li id="L353"><pre>  disabledReason,</pre></li>
+    <li id="L354"><pre>  primary = false,</pre></li>
+    <li id="L355"><pre>  onClick,</pre></li>
+    <li id="L356"><pre>  ref,</pre></li>
+    <li id="L357"><pre>}: ToolbarButtonProps) {</pre></li>
+    <li id="L358"><pre>  return (</pre></li>
+    <li id="L359"><pre>    &lt;Button</pre></li>
+    <li id="L360"><pre>      /*</pre></li>
+    <li id="L361">
+      <pre>       * **ref 要转到 antd 的 Button 上**（React 19 的 ref-as-prop：函数组件直接</pre>
+    </li>
+    <li id="L362"><pre>       * 收 `ref`，不再是 `forwardRef`）。</pre></li>
+    <li id="L363"><pre>       *</pre></li>
+    <li id="L364">
+      <pre>       * 不转的话包在 `ToolbarConfirm` / 将来的 Tooltip 里会**静默错位**：</pre>
+    </li>
+    <li id="L365">
+      <pre>       * rc-trigger 用 `cloneElement(child, { ref })` 拿触发元素来定位，而</pre>
+    </li>
+    <li id="L366">
+      <pre>       * 函数组件把 `ref` 丢掉之后 `targetEle` 是 null，`onAlign` 直接返回</pre>
+    </li>
+    <li id="L367">
+      <pre>       * ——弹层留在初始位置 `left: -1000vw; top: -1000vh`（实测：真实浏览器里</pre>
+    </li>
+    <li id="L368">
+      <pre>       * 确认框的 rect 是 x=-14400、y=-9000，屏幕上根本看不见，而 DOM 里</pre>
+    </li>
+    <li id="L369"><pre>       * 一切正常、点确认也能走到 `onConfirm`）。</pre></li>
+    <li id="L370"><pre>       */</pre></li>
+    <li id="L371"><pre>      ref={ref}</pre></li>
+    <li id="L372"><pre>      /*</pre></li>
+    <li id="L373">
+      <pre>       * 主按钮只传 `type`；其余只传 `variant` + `color`。两者的分支在 antd</pre>
+    </li>
+    <li id="L374"><pre>       * 里是互斥的糖（见上），混着传会得到透明的实心按钮。</pre></li>
+    <li id="L375"><pre>       */</pre></li>
+    <li id="L376"><pre>      {...(primary</pre></li>
+    <li id="L377"><pre>        ? { type: &#x27;primary&#x27; as const }</pre></li>
+    <li id="L378">
+      <pre>
+        : { variant: &#x27;text&#x27; as const, color: &#x27;default&#x27; as const })}</pre>
+    </li>
+    <li id="L379"><pre>      className=&quot;me-tb&quot;</pre></li>
+    <li id="L380"><pre>      autoInsertSpace={false}</pre></li>
+    <li id="L381">
+      <pre>
+      // 禁用时 title 让给原因，aria-label 仍是动作名（读屏听到的是「加粗，不可用」）</pre>
+    </li>
+    <li id="L382">
+      <pre>
+      title={disabled &amp;&amp; disabledReason !== undefined ? disabledReason : label}</pre>
+    </li>
+    <li id="L383"><pre>      aria-label={label}</pre></li>
+    <li id="L384"><pre>      aria-pressed={active}</pre></li>
+    <li id="L385"><pre>      disabled={disabled}</pre></li>
+    <li id="L386"><pre>      onMouseDown={preserveEditorSelection}</pre></li>
+    <li id="L387"><pre>      onClick={onClick}</pre></li>
+    <li id="L388"><pre>    &gt;</pre></li>
+    <li id="L389">
+      <pre>
+      {children !== undefined &amp;&amp; &lt;span className=&quot;me-btn__icon&quot;&gt;{children}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L390"><pre>      {primary &amp;&amp; label}</pre></li>
+    <li id="L391"><pre>    &lt;/Button&gt;</pre></li>
+    <li id="L392"><pre>  )</pre></li>
+    <li id="L393"><pre>}</pre></li>
+    <li id="L394"><pre></pre></li>
+    <li id="L395"><pre>/**</pre></li>
+    <li id="L396"><pre> * 按钮组的边界盒。</pre></li>
+    <li id="L397"><pre> *</pre></li>
+    <li id="L398"><pre> * **不是装饰**：它把「这一批按钮是一件事的几种取值」表达给读屏</pre></li>
+    <li id="L399">
+      <pre>
+ * （`role=&quot;group&quot;` + 名字），而 `ToolbarDivider` 只是兄弟 flex 项——工具条是</pre>
+    </li>
+    <li id="L400">
+      <pre> * `flex-wrap` 的，换行时那 1px 分隔线会落在行末或行首，看起来像没画对。</pre>
+    </li>
+    <li id="L401"><pre> */</pre></li>
+    <li id="L402">
+      <pre>
+export function ToolbarGroup({ label, children }: { label: string; children: ReactNode }) {</pre>
+    </li>
+    <li id="L403"><pre>  return (</pre></li>
+    <li id="L404">
+      <pre>
+    &lt;div className=&quot;me-group&quot; role=&quot;group&quot; aria-label={label}&gt;</pre>
+    </li>
+    <li id="L405"><pre>      {children}</pre></li>
+    <li id="L406">
+      <pre>
+      &lt;span className=&quot;me-group__caption&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L407"><pre>        {label}</pre></li>
+    <li id="L408"><pre>      &lt;/span&gt;</pre></li>
+    <li id="L409"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L410"><pre>  )</pre></li>
+    <li id="L411"><pre>}</pre></li>
+    <li id="L412"><pre></pre></li>
+    <li id="L413">
+      <pre>/** 分组分隔线。相邻但不同类的一组操作之间用它，不要每两个按钮都插一条 */</pre>
+    </li>
+    <li id="L414"><pre>export function ToolbarDivider() {</pre></li>
+    <li id="L415"><pre>  /*</pre></li>
+    <li id="L416"><pre>   * antd 的 `Divider`。两点要注意：</pre></li>
+    <li id="L417"><pre>   *</pre></li>
+    <li id="L418">
+      <pre>
+   *  1. **`orientation=&quot;vertical&quot;`，不是 `type=&quot;vertical&quot;`**——后者是 v5 的</pre>
+    </li>
+    <li id="L419"><pre>   *     写法，在 v6 里已废弃，实测会在 console.error 打</pre></li>
+    <li id="L420">
+      <pre>
+   *     `Warning: [antd: Divider] type is deprecated. Please use orientation instead.`</pre>
+    </li>
+    <li id="L421">
+      <pre>
+   *  2. **`aria-hidden` 要自己加**：antd 自带 `role=&quot;separator&quot;`，不加的话</pre>
+    </li>
+    <li id="L422"><pre>   *     读屏会把工具条上每一处分隔线都念一遍（docx 有 17 处）</pre></li>
+    <li id="L423"><pre>   *</pre></li>
+    <li id="L424">
+      <pre>   * 不传 `className`：`.me-sep` 是「1px 宽 + background」的画法，而 antd 画的是</pre>
+    </li>
+    <li id="L425">
+      <pre>   * `border-inline-start` ——两个属性不重叠、特异性相同、都生效，结果会是内容盒</pre>
+    </li>
+    <li id="L426">
+      <pre>   * 1px 加左边框 1px，且颜色的来源变成两套。**这一条是从两边的源码推的**：</pre>
+    </li>
+    <li id="L427">
+      <pre>   * happy-dom 对 `border-inline-start-width` 取不到值，要在真浏览器里核。</pre>
+    </li>
+    <li id="L428"><pre>   * 不传 className 就没有这个风险。</pre></li>
+    <li id="L429"><pre>   */</pre></li>
+    <li id="L430">
+      <pre>
+  return &lt;Divider orientation=&quot;vertical&quot; aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L431"><pre>}</pre></li>
+    <li id="L432"><pre></pre></li>
+    <li id="L433"><pre>/**</pre></li>
+    <li id="L434"><pre> * 撑开剩余空间，把后面的内容推到右边。</pre></li>
+    <li id="L435"><pre> *</pre></li>
+    <li id="L436"><pre> * 只在普通工具内容或附属面板里需要弹性占位时使用。</pre></li>
+    <li id="L437"><pre> */</pre></li>
+    <li id="L438"><pre>export function ToolbarSpacer() {</pre></li>
+    <li id="L439"><pre>  return &lt;span className=&quot;me-spacer&quot; /&gt;</pre></li>
+    <li id="L440"><pre>}</pre></li>
+    <li id="L441"><pre></pre></li>
+    <li id="L442"><pre>/** 工具条上的次要文字（状态、计数） */</pre></li>
+    <li id="L443">
+      <pre>export function ToolbarLabel({ children }: { children: ReactNode }) {</pre>
+    </li>
+    <li id="L444">
+      <pre>  return &lt;span className=&quot;me-label&quot;&gt;{children}&lt;/span&gt;</pre>
+    </li>
+    <li id="L445"><pre>}</pre></li>
+    <li id="L446"><pre></pre></li>
+    <li id="L447"><pre>/**</pre></li>
+    <li id="L448"><pre> * 说明性的一整段文字（放在 `footer` 槽位，或者状态行里）。</pre></li>
+    <li id="L449"><pre> *</pre></li>
+    <li id="L450"><pre> * ## 为什么不能拿 `ToolbarLabel` 凑</pre></li>
+    <li id="L451"><pre> *</pre></li>
+    <li id="L452">
+      <pre> * 那个原语是给工具条上的**短标签**的（页码、字数、`第 3 / 4 页`），它带</pre>
+    </li>
+    <li id="L453">
+      <pre> * `white-space: nowrap`——工具条上换行会把一行拆成两行，所以才这么定。但</pre>
+    </li>
+    <li id="L454">
+      <pre> * 「保存会重写整个文件」「裁剪只改可视区」这类说明往往有一两百字，nowrap 会</pre>
+    </li>
+    <li id="L455">
+      <pre> * 让它**一路撑出外壳**：实测 420px 宽的窗口下 footer 的 `scrollWidth` 是 2150</pre>
+    </li>
+    <li id="L456"><pre> * 对 `clientWidth` 418，整页横向滚动、操作区会被推出可视区。</pre></li>
+    <li id="L457"><pre> *</pre></li>
+    <li id="L458"><pre> * 两种文字的形状不同（一个是标签，一个是段落），所以是两个原语。</pre></li>
+    <li id="L459"><pre> */</pre></li>
+    <li id="L460">
+      <pre>export function ToolbarNote({ children }: { children: ReactNode }) {</pre>
+    </li>
+    <li id="L461">
+      <pre>  return &lt;p className=&quot;me-note&quot;&gt;{children}&lt;/p&gt;</pre>
+    </li>
+    <li id="L462"><pre>}</pre></li>
+    <li id="L463"><pre></pre></li>
+    <li id="L464"><pre>/**</pre></li>
+    <li id="L465">
+      <pre> * 状态行上的一次性提示：**动作的结果没成**（图片读不出尺寸、导进来的页面</pre>
+    </li>
+    <li id="L466"><pre> * 是空的之类）。</pre></li>
+    <li id="L467"><pre> *</pre></li>
+    <li id="L468"><pre> * ## 为什么不是 `ToolbarLabel` 也不是 `ToolbarNote`</pre></li>
+    <li id="L469"><pre> *</pre></li>
+    <li id="L470"><pre> * 三个原语是三件事，形状各不相同：</pre></li>
+    <li id="L471"><pre> *</pre></li>
+    <li id="L472"><pre> * | 原语 | 形状 | 场景 |</pre></li>
+    <li id="L473"><pre> * |---|---|---|</pre></li>
+    <li id="L474">
+      <pre> * | `ToolbarLabel` | nowrap 的次要文字 | 页码、字数（一行里的短标签） |</pre>
+    </li>
+    <li id="L475">
+      <pre> * | `ToolbarNote` | 能折行的灰色段落（`&lt;p&gt;`） | 说明「保存会重写整个文件」 |</pre>
+    </li>
+    <li id="L476">
+      <pre>
+ * | `ToolbarNotice` | 危险色、能断词的行内文字 | **刚才那个动作失败了，原因是什么** |</pre>
+    </li>
+    <li id="L477"><pre> *</pre></li>
+    <li id="L478">
+      <pre> * 用前两个顶这一档都出过问题：状态行是 `flex` + `space-between`，`ToolbarLabel`</pre>
+    </li>
+    <li id="L479">
+      <pre> * 的 `nowrap` 会让一条长原因把这一行撑破，而 `ToolbarNote` 是段落、放进</pre>
+    </li>
+    <li id="L480"><pre> * 状态行里与相邻的标签不在一个基线上。所以这一档单列一个原语。</pre></li>
+    <li id="L481"><pre> *</pre></li>
+    <li id="L482">
+      <pre> * **不弹窗**：提示是编辑动作的直接结果，落在状态行上与「保存失败」同一个位置，</pre>
+    </li>
+    <li id="L483">
+      <pre> * 不打断正在做的事。docx 之前自己造了一个 `span.mimir-docx-notice`（全仓库只有</pre>
+    </li>
+    <li id="L484">
+      <pre> * 它一个消费者），而 pdf 拿 `ToolbarNote` 顶——同一档文案两处分叉，收进这里。</pre>
+    </li>
+    <li id="L485"><pre> */</pre></li>
+    <li id="L486">
+      <pre>export function ToolbarNotice({ children }: { children: ReactNode }) {</pre>
+    </li>
+    <li id="L487">
+      <pre>  return &lt;span className=&quot;me-notice&quot;&gt;{children}&lt;/span&gt;</pre>
+    </li>
+    <li id="L488"><pre>}</pre></li>
+    <li id="L489"><pre></pre></li>
+    <li id="L490"><pre>export interface ToolbarConfirmProps {</pre></li>
+    <li id="L491"><pre>  /** 问句。一句话说清要发生什么（「删掉这一页？」） */</pre></li>
+    <li id="L492"><pre>  title: string</pre></li>
+    <li id="L493"><pre>  /**</pre></li>
+    <li id="L494">
+      <pre>   * 后果。**必须有**：这一档不是「确认一下」，而是「这件事没有退路、退路是</pre>
+    </li>
+    <li id="L495"><pre>   * 什么」——用户在按下之前要知道代价。</pre></li>
+    <li id="L496"><pre>   */</pre></li>
+    <li id="L497"><pre>  description: string</pre></li>
+    <li id="L498">
+      <pre>  /** 确认按钮的文案。写成动作本身（「删除这一页」）而不是「确定」 */</pre>
+    </li>
+    <li id="L499"><pre>  confirmLabel: string</pre></li>
+    <li id="L500">
+      <pre>  /** 取消的文案。默认「算了」——比「取消」更像人话，也说得清它是「不做了」 */</pre>
+    </li>
+    <li id="L501"><pre>  cancelLabel?: string</pre></li>
+    <li id="L502"><pre>  /** 禁用时不弹（按钮自己已经灰了、且写着原因） */</pre></li>
+    <li id="L503"><pre>  disabled?: boolean</pre></li>
+    <li id="L504"><pre>  onConfirm: () =&gt; void</pre></li>
+    <li id="L505">
+      <pre>  /** 触发按钮。**必须是一个能渲染 `title` 与 `aria-label` 的 `&lt;button&gt;`** */</pre>
+    </li>
+    <li id="L506"><pre>  children: ReactNode</pre></li>
+    <li id="L507"><pre>}</pre></li>
+    <li id="L508"><pre></pre></li>
+    <li id="L509"><pre>/**</pre></li>
+    <li id="L510"><pre> * 不可逆动作的**就地确认**（antd `Popconfirm`）。</pre></li>
+    <li id="L511"><pre> *</pre></li>
+    <li id="L512"><pre> * ## 为什么要有这个原语</pre></li>
+    <li id="L513"><pre> *</pre></li>
+    <li id="L514">
+      <pre> * 工具条上有几处动作没有撤销：pdf 的「删除这一页」就是。它与左右两个按钮</pre>
+    </li>
+    <li id="L515">
+      <pre> * （插入空白页、导入页面）都是纯图标、并排一排，代价却完全不对称——一次</pre>
+    </li>
+    <li id="L516">
+      <pre> * 误点就少一页，而 pdf 这条工具条**没有别的格式都有的撤销**，唯一的路是</pre>
+    </li>
+    <li id="L517"><pre> * 「不保存、退出、重进」。</pre></li>
+    <li id="L518"><pre> *</pre></li>
+    <li id="L519"><pre> * 三处约束的来源：</pre></li>
+    <li id="L520"><pre> *</pre></li>
+    <li id="L521">
+      <pre> *  1. **别自己写一个二次确认**（改按钮文案、第一次点变「再点一次」之类）：</pre>
+    </li>
+    <li id="L522"><pre> *     那是一套只有这一个控件懂的状态，键盘用户与读屏用户都拿不到</pre></li>
+    <li id="L523">
+      <pre> *  2. **弹层 portal 到 body 是显式的例外**——`.mimir-editor` 是 `overflow: clip`，</pre>
+    </li>
+    <li id="L524">
+      <pre> *     就地渲染会被裁掉；antd 的弹层自带 `css-var-root`，`--ant-*` 由它自己提供，</pre>
+    </li>
+    <li id="L525">
+      <pre> *     深色下不会退回浅色回退值（与 `ToolbarSelect` 同一条，见那里的长注释）</pre>
+    </li>
+    <li id="L526">
+      <pre> *  3. **编辑器不直接 import antd**（`pdf-toolbar-render.test.tsx` 有一条静态守护</pre>
+    </li>
+    <li id="L527"><pre> *     在守它）：所以这一档收进外壳，与其余控件同一个出处</pre></li>
+    <li id="L528"><pre> *</pre></li>
+    <li id="L529"><pre> * ## 为什么不用 `Modal.confirm`</pre></li>
+    <li id="L530"><pre> *</pre></li>
+    <li id="L531">
+      <pre> * 命令式的 `Modal.confirm` 拿的是自己的状态，与 React 树脱开——`PdfEditor`</pre>
+    </li>
+    <li id="L532">
+      <pre> * 里那些「改哪一页」的判据都在闭包里，命令式那条路要么把状态再读一遍、要么</pre>
+    </li>
+    <li id="L533">
+      <pre> * 拿到过期的值。声明式的 `Popconfirm` 就在这棵子树里，点确认时它调用的函数</pre>
+    </li>
+    <li id="L534"><pre> * 与按钮上的那个是同一次渲染的。</pre></li>
+    <li id="L535"><pre> */</pre></li>
+    <li id="L536"><pre>export function ToolbarConfirm({</pre></li>
+    <li id="L537"><pre>  title,</pre></li>
+    <li id="L538"><pre>  description,</pre></li>
+    <li id="L539"><pre>  confirmLabel,</pre></li>
+    <li id="L540"><pre>  cancelLabel = &#x27;算了&#x27;,</pre></li>
+    <li id="L541"><pre>  disabled,</pre></li>
+    <li id="L542"><pre>  onConfirm,</pre></li>
+    <li id="L543"><pre>  children,</pre></li>
+    <li id="L544"><pre>}: ToolbarConfirmProps) {</pre></li>
+    <li id="L545"><pre>  return (</pre></li>
+    <li id="L546"><pre>    &lt;Popconfirm</pre></li>
+    <li id="L547"><pre>      title={title}</pre></li>
+    <li id="L548"><pre>      description={description}</pre></li>
+    <li id="L549"><pre>      okText={confirmLabel}</pre></li>
+    <li id="L550"><pre>      cancelText={cancelLabel}</pre></li>
+    <li id="L551">
+      <pre>      // 确认按钮是危险动作，用危险色——它与「取消」只差一个位置，颜色是唯一</pre>
+    </li>
+    <li id="L552"><pre>      // 提示「这一下真的会删掉东西」</pre></li>
+    <li id="L553"><pre>      okButtonProps={{ danger: true, autoInsertSpace: false }}</pre></li>
+    <li id="L554"><pre>      /*</pre></li>
+    <li id="L555">
+      <pre>        `autoInsertSpace: false` 与 `ToolbarButton` 那一条同一个理由：antd 会在</pre>
+    </li>
+    <li id="L556">
+      <pre>        **两个汉字**的按钮文案里插一个空格（「算了」→「算 了」），而这条工具条</pre>
+    </li>
+    <li id="L557">
+      <pre>        上其余控件都没有那个空格。这一档是 antd 自己建的按钮，只能在这里关。</pre>
+    </li>
+    <li id="L558"><pre>      */</pre></li>
+    <li id="L559"><pre>      cancelButtonProps={{ autoInsertSpace: false }}</pre></li>
+    <li id="L560"><pre>      disabled={disabled === true}</pre></li>
+    <li id="L561"><pre>      onConfirm={onConfirm}</pre></li>
+    <li id="L562"><pre>    &gt;</pre></li>
+    <li id="L563"><pre>      {children}</pre></li>
+    <li id="L564"><pre>    &lt;/Popconfirm&gt;</pre></li>
+    <li id="L565"><pre>  )</pre></li>
+    <li id="L566"><pre>}</pre></li>
+    <li id="L567"><pre></pre></li>
+    <li id="L568"><pre>export interface ToolbarTextButtonProps {</pre></li>
+    <li id="L569"><pre>  /**</pre></li>
+    <li id="L570">
+      <pre>   * 文字。**它同时是可见文案、`title` 与无障碍名称**——这一档没有图标，文字</pre>
+    </li>
+    <li id="L571">
+      <pre>   * 就是它的名字，所以只有一个真相、不存在「读屏念的」与「眼睛看的」不一致。</pre>
+    </li>
+    <li id="L572"><pre>   *</pre></li>
+    <li id="L573">
+      <pre>   * （`ToolbarButton` 需要 `label` + `children` 分开，是因为那个是方框按钮、</pre>
+    </li>
+    <li id="L574">
+      <pre>   * 通常只有图标。这一档不拆——拆开就等于把一句话的可见部分与朗读部分分别维护。）</pre>
+    </li>
+    <li id="L575"><pre>   *</pre></li>
+    <li id="L576">
+      <pre>   * 用整句话（「保存失败：磁盘已满 · 点此重试」）是**对的**：这一档是状态文字</pre>
+    </li>
+    <li id="L577">
+      <pre>   * 的延伸，读屏用户听到的应该与屏幕上写的一样。想给一个短名字的动作用</pre>
+    </li>
+    <li id="L578"><pre>   * `ToolbarButton`。</pre></li>
+    <li id="L579"><pre>   */</pre></li>
+    <li id="L580"><pre>  label: string</pre></li>
+    <li id="L581"><pre>  /** 危险色（动作与一次失败绑在一起）。默认是普通文字色 */</pre></li>
+    <li id="L582"><pre>  danger?: boolean</pre></li>
+    <li id="L583"><pre>  disabled?: boolean</pre></li>
+    <li id="L584"><pre>  /**</pre></li>
+    <li id="L585">
+      <pre>   * 禁用的原因。与 `ToolbarButton` 同一条规矩：禁用时 `title` 让给原因，</pre>
+    </li>
+    <li id="L586"><pre>   * `aria-label` 仍是动作名。</pre></li>
+    <li id="L587"><pre>   */</pre></li>
+    <li id="L588"><pre>  disabledReason?: string</pre></li>
+    <li id="L589"><pre>  onClick?: () =&gt; void</pre></li>
+    <li id="L590"><pre>}</pre></li>
+    <li id="L591"><pre></pre></li>
+    <li id="L592"><pre>/**</pre></li>
+    <li id="L593"><pre> * 状态行上的**可点文字**：一段说明 + 一个动作合成一档</pre></li>
+    <li id="L594">
+      <pre> * （「保存失败：磁盘已满 · 点此重试」、「插图失败：文件太大 · 点此关闭」）。</pre>
+    </li>
+    <li id="L595"><pre> *</pre></li>
+    <li id="L596"><pre> * ## 为什么它长得不像按钮</pre></li>
+    <li id="L597"><pre> *</pre></li>
+    <li id="L598">
+      <pre> * 它是状态行那句话本身的延伸，不是一个方框控件。同一条状态行里已经有</pre>
+    </li>
+    <li id="L599">
+      <pre> * `ToolbarLabel`（页码、字数）与 `ToolbarNotice`（失败原因），把动作画成一个</pre>
+    </li>
+    <li id="L600">
+      <pre> * 24px 的方框按钮会让这一行看起来像第二条工具条。所以：无边框、无底色、</pre>
+    </li>
+    <li id="L601"><pre> * 内边距为零、危险色 + 下划线——**它就是文字，只是可点**。</pre></li>
+    <li id="L602"><pre> *</pre></li>
+    <li id="L603"><pre> * ## 与 `ToolbarNotice` / `ToolbarButton` 的分工</pre></li>
+    <li id="L604"><pre> *</pre></li>
+    <li id="L605"><pre> * | 原语 | 形状 | 有没有动作 |</pre></li>
+    <li id="L606"><pre> * |---|---|---|</pre></li>
+    <li id="L607"><pre> * | `ToolbarNotice` | 危险色的行内文字 | 没有（只说明原因） |</pre></li>
+    <li id="L608">
+      <pre>
+ * | `ToolbarTextButton` | 危险色的行内文字 + 下划线 | **有**（重试 / 关掉这条提示） |</pre>
+    </li>
+    <li id="L609"><pre> * | `ToolbarButton` | 24px 的方框按钮 | 有（工具条上的动作） |</pre></li>
+    <li id="L610"><pre> *</pre></li>
+    <li id="L611"><pre> * 「保存失败」这一档以前两个格式各写各的：markdown 是状态行里的裸</pre></li>
+    <li id="L612">
+      <pre>
+ * `&lt;button className=&quot;me-status-action&quot;&gt;`（原生控件，D-064 要消掉的那种），</pre>
+    </li>
+    <li id="L613">
+      <pre> * pdf 是一条 `ToolbarNotice` 加一个方框「知道了」。现在两边的**动作文字**这一</pre>
+    </li>
+    <li id="L614"><pre> * 半收进这里，`ToolbarNotice` 负责说明那一半。</pre></li>
+    <li id="L615"><pre> *</pre></li>
+    <li id="L616"><pre> * ## 仍然是 antd 的 `Button`（D-064）</pre></li>
+    <li id="L617"><pre> *</pre></li>
+    <li id="L618">
+      <pre>
+ * 尺寸、焦点环、hover、禁用态由 antd 承担；`variant=&quot;link&quot;` 本来就没有边框与</pre>
+    </li>
+    <li id="L619">
+      <pre>
+ * 底色，且 `isUnBorderedButtonVariant(&#x27;link&#x27;)` 为真——antd 不会往两个汉字之间</pre>
+    </li>
+    <li id="L620">
+      <pre> * 插空格（`autoInsertSpace` 再显式关一次，`textContent` 与可见文案一字不差）。</pre>
+    </li>
+    <li id="L621">
+      <pre> * `.me-text-btn` 只改「像一个控件」的那几处：高度、内边距、边框、字号、nowrap。</pre>
+    </li>
+    <li id="L622"><pre> *</pre></li>
+    <li id="L623">
+      <pre> * **不要把它挂到实心按钮上**：`.me-text-btn` 会用自己的底色与字色盖掉 antd 的</pre>
+    </li>
+    <li id="L624"><pre> * 实心外观（与 `.me-btn` 挂到 antd 按钮上是同一类坑）。</pre></li>
+    <li id="L625"><pre> *</pre></li>
+    <li id="L626"><pre> * 三条与 `ToolbarButton` 一致的语义：</pre></li>
+    <li id="L627"><pre> *</pre></li>
+    <li id="L628">
+      <pre> *  1. **`onMouseDown` 阻止默认行为**：点它不该把焦点从正文里拿走——重试/关掉</pre>
+    </li>
+    <li id="L629"><pre> *     提示之后用户往往接着打字，而失焦会让光标位置在界面上消失</pre></li>
+    <li id="L630"><pre> *  2. 禁用时 `title` 让给原因（「可点而无事发生是最坏的一种」）</pre></li>
+    <li id="L631">
+      <pre> *  3. **字号取 `--me-font-size-sm`（12px）是有意的例外**：这一档是**状态文字</pre>
+    </li>
+    <li id="L632">
+      <pre> *     的一部分**，必须与同一行的 `ToolbarLabel` 同号；跟着 antd 的 small 档</pre>
+    </li>
+    <li id="L633">
+      <pre> *     （14px）会让状态行左右两半的字号不一致。高度仍是 `auto`——它是文字，</pre>
+    </li>
+    <li id="L634"><pre> *     不是那一排 24px 的控件</pre></li>
+    <li id="L635"><pre> */</pre></li>
+    <li id="L636"><pre>export function ToolbarTextButton({</pre></li>
+    <li id="L637"><pre>  label,</pre></li>
+    <li id="L638"><pre>  danger = false,</pre></li>
+    <li id="L639"><pre>  disabled = false,</pre></li>
+    <li id="L640"><pre>  disabledReason,</pre></li>
+    <li id="L641"><pre>  onClick,</pre></li>
+    <li id="L642"><pre>}: ToolbarTextButtonProps) {</pre></li>
+    <li id="L643"><pre>  return (</pre></li>
+    <li id="L644"><pre>    &lt;Button</pre></li>
+    <li id="L645"><pre>      /*</pre></li>
+    <li id="L646">
+      <pre>       * `link` 而不是 `text`：text 档的 hover 底色是 `colorErrorBg`（一块浅红</pre>
+    </li>
+    <li id="L647">
+      <pre>       * 底），而这一档要的是「文字」——link 档的 hover 只是字色加深</pre>
+    </li>
+    <li id="L648">
+      <pre>       * （`linkHoverBg: &#x27;transparent&#x27;`），与下划线是同一套语言。</pre>
+    </li>
+    <li id="L649"><pre>       */</pre></li>
+    <li id="L650"><pre>      variant=&quot;link&quot;</pre></li>
+    <li id="L651"><pre>      color={danger ? &#x27;danger&#x27; : &#x27;default&#x27;}</pre></li>
+    <li id="L652">
+      <pre>      // 危险态单列一个类：`.me-text-btn--danger` 把字色钉在宿主校准过的</pre>
+    </li>
+    <li id="L653">
+      <pre>
+      // `--me-danger` 上（antd 的 `color=&quot;danger&quot;` 只给 hover/active 阶，</pre>
+    </li>
+    <li id="L654"><pre>      // 那两个由 error 种子派生，没走过宿主那次校准）</pre></li>
+    <li id="L655">
+      <pre>
+      className={danger ? &#x27;me-text-btn me-text-btn--danger&#x27; : &#x27;me-text-btn&#x27;}</pre>
+    </li>
+    <li id="L656"><pre>      autoInsertSpace={false}</pre></li>
+    <li id="L657">
+      <pre>
+      title={disabled &amp;&amp; disabledReason !== undefined ? disabledReason : label}</pre>
+    </li>
+    <li id="L658"><pre>      aria-label={label}</pre></li>
+    <li id="L659"><pre>      disabled={disabled}</pre></li>
+    <li id="L660"><pre>      onMouseDown={preserveEditorSelection}</pre></li>
+    <li id="L661"><pre>      onClick={onClick}</pre></li>
+    <li id="L662"><pre>    &gt;</pre></li>
+    <li id="L663"><pre>      {label}</pre></li>
+    <li id="L664"><pre>    &lt;/Button&gt;</pre></li>
+    <li id="L665"><pre>  )</pre></li>
+    <li id="L666"><pre>}</pre></li>
+    <li id="L667"><pre></pre></li>
+    <li id="L668">
+      <pre>/** `ToolbarSelect` 的一项。`disabled` 用于「有这一档但当前文档用不了」 */</pre>
+    </li>
+    <li id="L669"><pre>export interface ToolbarSelectOption&lt;T extends string&gt; {</pre></li>
+    <li id="L670"><pre>  value: T</pre></li>
+    <li id="L671"><pre>  label: string</pre></li>
+    <li id="L672"><pre>  disabled?: boolean</pre></li>
+    <li id="L673"><pre>}</pre></li>
+    <li id="L674"><pre></pre></li>
+    <li id="L675"><pre>export interface ToolbarSelectProps&lt;T extends string&gt; {</pre></li>
+    <li id="L676"><pre>  /** 这组取值是什么（读屏用）。如「字号」「段落样式」 */</pre></li>
+    <li id="L677"><pre>  label: string</pre></li>
+    <li id="L678"><pre>  disabled?: boolean</pre></li>
+    <li id="L679"><pre>  disabledReason?: string</pre></li>
+    <li id="L680"><pre>  /**</pre></li>
+    <li id="L681">
+      <pre>   * 当前值。**`null` 表示「不是选项里的任何一个」**（混合选区、光标在</pre>
+    </li>
+    <li id="L682">
+      <pre>   * 两种格式之间）——那不是错误状态，所以有一个单独的显示（见 `fallbackLabel`）。</pre>
+    </li>
+    <li id="L683"><pre>   */</pre></li>
+    <li id="L684"><pre>  value: T | null</pre></li>
+    <li id="L685"><pre>  options: readonly ToolbarSelectOption&lt;T&gt;[]</pre></li>
+    <li id="L686"><pre>  onChange: (value: T) =&gt; void</pre></li>
+    <li id="L687"><pre>  /** `value` 不在选项里时显示什么。默认 `—` */</pre></li>
+    <li id="L688"><pre>  fallbackLabel?: string</pre></li>
+    <li id="L689"><pre>  /**</pre></li>
+    <li id="L690"><pre>   * `value === null` 时显示什么。省略时用 `fallbackLabel`。</pre></li>
+    <li id="L691"><pre>   *</pre></li>
+    <li id="L692"><pre>   * ## 为什么这一档要能与 `fallbackLabel` 分开</pre></li>
+    <li id="L693"><pre>   *</pre></li>
+    <li id="L694"><pre>   * 那是**两件不同的事**，而它们现在共用一个说法：</pre></li>
+    <li id="L695"><pre>   *</pre></li>
+    <li id="L696">
+      <pre>   *   - `value === null`：这一处**没有直接取值**，实际值继承自别处</pre>
+    </li>
+    <li id="L697"><pre>   *     （docx 的字号继承自段落样式）——用户什么都没选</pre></li>
+    <li id="L698">
+      <pre>   *   - 值不在选项里：**有一个具体的值**，只是不在预设档位里（docx 半磅 22 =</pre>
+    </li>
+    <li id="L699"><pre>   *     11 磅，档位表里没有）</pre></li>
+    <li id="L700"><pre>   *</pre></li>
+    <li id="L701">
+      <pre>   * 用同一个词（docx 原先两处共用一个「其它」）时，第一句会被读成第二句：</pre>
+    </li>
+    <li id="L702">
+      <pre>   * 「我（不知何时）选了别的字号」，而事实是「这里没有字号，跟着样式走」。</pre>
+    </li>
+    <li id="L703"><pre>   */</pre></li>
+    <li id="L704"><pre>  emptyLabel?: string</pre></li>
+    <li id="L705"><pre>}</pre></li>
+    <li id="L706"><pre></pre></li>
+    <li id="L707"><pre>/**</pre></li>
+    <li id="L708"><pre> * 枚举下拉（antd `Select`）。</pre></li>
+    <li id="L709"><pre> *</pre></li>
+    <li id="L710"><pre> * ## 为什么是下拉而不是一排按钮</pre></li>
+    <li id="L711"><pre> *</pre></li>
+    <li id="L712">
+      <pre> * 按钮只有布尔态，而这里**显示区本身就是状态**（当前是几号字）。21 档字号</pre>
+    </li>
+    <li id="L713"><pre> * 用按钮要 21 个，还占掉整条工具条。</pre></li>
+    <li id="L714"><pre> *</pre></li>
+    <li id="L715"><pre> * ## 三条与 antd 默认行为不同的地方</pre></li>
+    <li id="L716"><pre> *</pre></li>
+    <li id="L717">
+      <pre> *  1. **值不在选项里时不显示原值**：旧实现显示 `值（—）`，而 antd 默认显示</pre>
+    </li>
+    <li id="L718">
+      <pre> *     原值本身。理由不是怀旧——docx 的「字号」存的是**半磅**（`w:sz` 的单位），</pre>
+    </li>
+    <li id="L719">
+      <pre> *     直接显示 `22` 会让界面说一个用户从没见过的数（他填的是 11 磅）。所以用</pre>
+    </li>
+    <li id="L720">
+      <pre> *     `labelRender` 把这种状态标成 `22（其它）`，与 `fallbackLabel` 同一个说法。</pre>
+    </li>
+    <li id="L721">
+      <pre>
+ *  2. **`suffixIcon` 必须给**：antd 的默认箭头带 `aria-label=&quot;down&quot;`，同一条</pre>
+    </li>
+    <li id="L722">
+      <pre> *     工具条上有几个下拉就有几个同名控件，docx 的「无障碍名称不得重复」</pre>
+    </li>
+    <li id="L723"><pre> *     会直接红（实测 9 个下拉 → 9 个 &quot;down&quot;）。</pre></li>
+    <li id="L724">
+      <pre> *  3. **`title` 要一起给**：工具条上唯一的悬停说明就是它，漏了就只剩读屏</pre>
+    </li>
+    <li id="L725"><pre> *     知道这是什么。</pre></li>
+    <li id="L726">
+      <pre> *  4. **选项列表不跟随触发器变窄**：Ribbon 里的「正文」「等线」等触发器</pre>
+    </li>
+    <li id="L727">
+      <pre> *     只有六十几像素；默认的 `popupMatchSelectWidth` 会让弹层同宽，把选项截成</pre>
+    </li>
+    <li id="L728"><pre> *     「标…」「微…」。弹层按内容展开，并保留一个可读的最小宽度。</pre></li>
+    <li id="L729"><pre> *</pre></li>
+    <li id="L730"><pre> * ## 下拉弹层会 portal 到 body（**这一条是显式例外**）</pre></li>
+    <li id="L731"><pre> *</pre></li>
+    <li id="L732">
+      <pre> * 打开后 `document.body.childElementCount` 会 +1，弹层的祖先链离开了</pre>
+    </li>
+    <li id="L733">
+      <pre> * `--me-*` 子树（实测弹层上 `--me-accent` 是空串）。**这不影响颜色**：弹层</pre>
+    </li>
+    <li id="L734">
+      <pre> * 自带 `css-var-root` / `ant-select-css-var` 类，`--ant-*` 由它自己提供。</pre>
+    </li>
+    <li id="L735"><pre> *</pre></li>
+    <li id="L736">
+      <pre> * 改 `getPopupContainer` 就地渲染是不行的：antd 弹层在 getPopupContainer 下</pre>
+    </li>
+    <li id="L737">
+      <pre> * 用 `position: absolute`，而 `.mimir-editor` 是 `overflow: clip`——会被裁掉。</pre>
+    </li>
+    <li id="L738">
+      <pre> * **所以「弹层内容要用 `--me-*` 上色」的控件（菜单、颜色面板）必须继续用我们</pre>
+    </li>
+    <li id="L739">
+      <pre> * 自己的就地渲染 + `position: fixed`**，那是 `ToolbarMenu` / `ToolbarColorPicker`</pre>
+    </li>
+    <li id="L740"><pre> * 不迁的硬理由。</pre></li>
+    <li id="L741"><pre> *</pre></li>
+    <li id="L742">
+      <pre> * `virtual={false}` 是**有意的**：antd 默认只渲染可视区那十几项（虚拟列表），</pre>
+    </li>
+    <li id="L743">
+      <pre> * 于是「这个下拉到底列了哪些档」在 DOM 里读不全——段落样式的「只列文档里真的</pre>
+    </li>
+    <li id="L744">
+      <pre> * 存在的标题级别」、字号的「21 档」这两条断言就会退化成「至少能看到几项」。</pre>
+    </li>
+    <li id="L745"><pre> * 字体与字号这类列表最长几十项，全渲染的代价可以忽略。</pre></li>
+    <li id="L746"><pre> */</pre></li>
+    <li id="L747"><pre>export function ToolbarSelect&lt;T extends string&gt;({</pre></li>
+    <li id="L748"><pre>  label,</pre></li>
+    <li id="L749"><pre>  disabled = false,</pre></li>
+    <li id="L750"><pre>  disabledReason,</pre></li>
+    <li id="L751"><pre>  value,</pre></li>
+    <li id="L752"><pre>  options,</pre></li>
+    <li id="L753"><pre>  onChange,</pre></li>
+    <li id="L754"><pre>  fallbackLabel = &#x27;—&#x27;,</pre></li>
+    <li id="L755"><pre>  emptyLabel,</pre></li>
+    <li id="L756"><pre>}: ToolbarSelectProps&lt;T&gt;) {</pre></li>
+    <li id="L757">
+      <pre>
+  const known = value !== null &amp;&amp; options.some((option) =&gt; option.value === value)</pre>
+    </li>
+    <li id="L758"><pre>  return (</pre></li>
+    <li id="L759"><pre>    &lt;ToolbarPropertyField label={label}&gt;</pre></li>
+    <li id="L760"><pre>      &lt;Select</pre></li>
+    <li id="L761"><pre>        aria-label={label}</pre></li>
+    <li id="L762">
+      <pre>        title={disabled &amp;&amp; disabledReason ? disabledReason : label}</pre>
+    </li>
+    <li id="L763"><pre>        disabled={disabled}</pre></li>
+    <li id="L764"><pre>        virtual={false}</pre></li>
+    <li id="L765"><pre>        popupMatchSelectWidth={false}</pre></li>
+    <li id="L766">
+      <pre>
+        styles={{ popup: { root: { minWidth: 180, maxWidth: &#x27;calc(100vw - 16px)&#x27; } } }}</pre>
+    </li>
+    <li id="L767">
+      <pre>        // 值不在选项里时把 value 交给 placeholder——**不要传原值当 value**：</pre>
+    </li>
+    <li id="L768">
+      <pre>        // antd 会把原值原样显示出来，而不在档位里时那往往是一个内部单位</pre>
+    </li>
+    <li id="L769"><pre>        // （docx 的字号存半磅，直接显示 22 而用户填的是 11 磅）</pre></li>
+    <li id="L770"><pre>        value={known ? value : null}</pre></li>
+    <li id="L771">
+      <pre>        // 两种「不是档位里的值」各有各的说法：`null` 是「这里没有直接取值」，</pre>
+    </li>
+    <li id="L772">
+      <pre>        // 其余是「有一个具体的值，只是不在预设档位里」（见 `emptyLabel` 的说明）</pre>
+    </li>
+    <li id="L773"><pre>        placeholder={</pre></li>
+    <li id="L774">
+      <pre>
+          value === null ? (emptyLabel ?? fallbackLabel) : `${value}（${fallbackLabel}）`</pre>
+    </li>
+    <li id="L775"><pre>        }</pre></li>
+    <li id="L776"><pre>        suffixIcon={&lt;ChevronDownIcon /&gt;}</pre></li>
+    <li id="L777"><pre>        options={options.map((option) =&gt; ({</pre></li>
+    <li id="L778"><pre>          value: option.value,</pre></li>
+    <li id="L779"><pre>          label: option.label,</pre></li>
+    <li id="L780"><pre>          disabled: option.disabled === true,</pre></li>
+    <li id="L781"><pre>        }))}</pre></li>
+    <li id="L782"><pre>        onChange={(next) =&gt; onChange(next as T)}</pre></li>
+    <li id="L783"><pre>      /&gt;</pre></li>
+    <li id="L784"><pre>    &lt;/ToolbarPropertyField&gt;</pre></li>
+    <li id="L785"><pre>  )</pre></li>
+    <li id="L786"><pre>}</pre></li>
+    <li id="L787"><pre></pre></li>
+    <li id="L788"><pre>/** `ToolbarToggleGroup` 的一项 */</pre></li>
+    <li id="L789"><pre>export interface ToolbarToggleOption&lt;T extends string&gt; {</pre></li>
+    <li id="L790"><pre>  value: T</pre></li>
+    <li id="L791"><pre>  label: string</pre></li>
+    <li id="L792"><pre>  /** 图标。省略时按钮只显示 label（建议总是给，工具条位置紧） */</pre></li>
+    <li id="L793"><pre>  icon?: ReactNode</pre></li>
+    <li id="L794"><pre>  disabled?: boolean</pre></li>
+    <li id="L795"><pre>}</pre></li>
+    <li id="L796"><pre></pre></li>
+    <li id="L797"><pre>export interface ToolbarToggleGroupProps&lt;T extends string&gt; {</pre></li>
+    <li id="L798">
+      <pre>  /** 这组按钮是什么（读屏用）。如「对齐方式」「html 的设备预览」 */</pre>
+    </li>
+    <li id="L799"><pre>  label: string</pre></li>
+    <li id="L800"><pre>  value: T</pre></li>
+    <li id="L801"><pre>  options: readonly ToolbarToggleOption&lt;T&gt;[]</pre></li>
+    <li id="L802"><pre>  onChange: (value: T) =&gt; void</pre></li>
+    <li id="L803"><pre>}</pre></li>
+    <li id="L804"><pre></pre></li>
+    <li id="L805"><pre>/**</pre></li>
+    <li id="L806">
+      <pre> * 互斥图标按钮组：**一个 value 进、一个 value 出**（antd `Segmented`）。</pre>
+    </li>
+    <li id="L807"><pre> *</pre></li>
+    <li id="L808"><pre> * ## 为什么不能是一排 `ToolbarButton`</pre></li>
+    <li id="L809"><pre> *</pre></li>
+    <li id="L810">
+      <pre> * 那样「当前是哪一个」会退化成「每个按钮各自读一次当前状态」——写错一处就是</pre>
+    </li>
+    <li id="L811">
+      <pre> * 两个同时亮（或者一个都不亮），而界面不会报错，只是看着奇怪。互斥关系由</pre>
+    </li>
+    <li id="L812"><pre> * 这一个 `value` 表达，就只有一个地方可能写错。</pre></li>
+    <li id="L813"><pre> *</pre></li>
+    <li id="L814"><pre> * ## 选中态的载体变了，语义没变</pre></li>
+    <li id="L815"><pre> *</pre></li>
+    <li id="L816">
+      <pre>
+ * 旧实现是三个 `aria-pressed` 的按钮，现在是 `role=&quot;radiogroup&quot;` + 每项一个</pre>
+    </li>
+    <li id="L817">
+      <pre> * `radio`（antd 的选中态由它自己画）。互斥仍然只有一个真相：`value`。</pre>
+    </li>
+    <li id="L818"><pre> *</pre></li>
+    <li id="L819"><pre> * ## 三条与旧实现不同的地方（都是有意接受的）</pre></li>
+    <li id="L820"><pre> *</pre></li>
+    <li id="L821">
+      <pre> *  1. **`onMouseDown` 必须显式阻止默认行为**：antd 的 Segmented 项本身**不**</pre>
+    </li>
+    <li id="L822">
+      <pre> *     preventDefault（实测 `SEG_MOUSEDOWN_PREVENTED: false`），落点是一个</pre>
+    </li>
+    <li id="L823">
+      <pre> *     可聚焦的 `&lt;input type=radio&gt;`。不拦的话点一下就可能把编辑区失焦、</pre>
+    </li>
+    <li id="L824">
+      <pre> *     选区被清（工具条里最容易静默坏掉的一条）。拦在根元素上，事件冒泡到</pre>
+    </li>
+    <li id="L825"><pre> *     根时被吃掉，与旧实现等效。</pre></li>
+    <li id="L826">
+      <pre> *  2. **禁用项的原因没法用 `title` 表达**：antd 把 `title` 让给 label 文本了</pre>
+    </li>
+    <li id="L827">
+      <pre> *     （实测禁用项的 title 就是它自己的名字）。将来要给某档加 `disabled` 时，</pre>
+    </li>
+    <li id="L828">
+      <pre> *     原因得另找地方说——现在这 4 个调用点**都没有禁用档**，所以这风险还没兑现。</pre>
+    </li>
+    <li id="L829">
+      <pre> *  3. **图标档只有图标，但名称不能丢**：antd 的 `icon` + `label` 会两个都画</pre>
+    </li>
+    <li id="L830">
+      <pre> *     （工具条位置紧，不能显示文字），所以文字不能直接当 `label` 传。但</pre>
+    </li>
+    <li id="L831">
+      <pre> *     `label` 又**不能不给**——`title` 挂在内层 label 的 div 上，可聚焦的是</pre>
+    </li>
+    <li id="L832">
+      <pre> *     `&lt;input type=radio&gt;`，两者不关联。实测真 Chromium 的 AX 树：只传</pre>
+    </li>
+    <li id="L833">
+      <pre>
+ *     `title` 时 6 个档全部 `name: &quot;&quot;`（把 title 挪到 input 上也仍然是空），</pre>
+    </li>
+    <li id="L834">
+      <pre> *     读屏只念「单选按钮 1 of 3」。所以文字用 `.me-sr-only` 塞进 label 元素</pre>
+    </li>
+    <li id="L835"><pre> *     ——它留在无障碍树里给出名称，视觉上不占位。</pre></li>
+    <li id="L836"><pre> */</pre></li>
+    <li id="L837"><pre>export function ToolbarToggleGroup&lt;T extends string&gt;({</pre></li>
+    <li id="L838"><pre>  label,</pre></li>
+    <li id="L839"><pre>  value,</pre></li>
+    <li id="L840"><pre>  options,</pre></li>
+    <li id="L841"><pre>  onChange,</pre></li>
+    <li id="L842"><pre>}: ToolbarToggleGroupProps&lt;T&gt;) {</pre></li>
+    <li id="L843"><pre>  return (</pre></li>
+    <li id="L844"><pre>    &lt;Segmented</pre></li>
+    <li id="L845"><pre>      aria-label={label}</pre></li>
+    <li id="L846"><pre>      value={value}</pre></li>
+    <li id="L847"><pre>      onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L848"><pre>      options={options.map((option) =&gt;</pre></li>
+    <li id="L849"><pre>        option.icon === undefined</pre></li>
+    <li id="L850">
+      <pre>          ? // 没有图标时退回 label 文字：只传 icon 的那一支会渲染成一个空档</pre>
+    </li>
+    <li id="L851"><pre>            {</pre></li>
+    <li id="L852"><pre>              value: option.value,</pre></li>
+    <li id="L853"><pre>              label: option.label,</pre></li>
+    <li id="L854"><pre>              title: option.label,</pre></li>
+    <li id="L855"><pre>              disabled: option.disabled === true,</pre></li>
+    <li id="L856"><pre>            }</pre></li>
+    <li id="L857"><pre>          : {</pre></li>
+    <li id="L858"><pre>              value: option.value,</pre></li>
+    <li id="L859"><pre>              icon: option.icon,</pre></li>
+    <li id="L860"><pre>              // 文字只给读屏（`.me-sr-only`），档上只显示图标</pre></li>
+    <li id="L861">
+      <pre>
+              label: &lt;span className=&quot;me-sr-only&quot;&gt;{option.label}&lt;/span&gt;,</pre>
+    </li>
+    <li id="L862"><pre>              title: option.label,</pre></li>
+    <li id="L863"><pre>              disabled: option.disabled === true,</pre></li>
+    <li id="L864"><pre>            },</pre></li>
+    <li id="L865"><pre>      )}</pre></li>
+    <li id="L866"><pre>      onChange={(next) =&gt; onChange(next as T)}</pre></li>
+    <li id="L867"><pre>    /&gt;</pre></li>
+    <li id="L868"><pre>  )</pre></li>
+    <li id="L869"><pre>}</pre></li>
+    <li id="L870"><pre></pre></li>
+    <li id="L871"><pre>export interface ToolbarNumberFieldProps {</pre></li>
+    <li id="L872"><pre>  /** 这是什么（读屏用）。如「页码」「字号」 */</pre></li>
+    <li id="L873"><pre>  label: string</pre></li>
+    <li id="L874"><pre>  disabled?: boolean</pre></li>
+    <li id="L875"><pre>  disabledReason?: string</pre></li>
+    <li id="L876"><pre>  value: number</pre></li>
+    <li id="L877"><pre>  onCommit: (value: number) =&gt; void</pre></li>
+    <li id="L878"><pre>  min?: number</pre></li>
+    <li id="L879"><pre>  max?: number</pre></li>
+    <li id="L880"><pre>  step?: number</pre></li>
+    <li id="L881"><pre>  /** 跟在输入后面的单位（`pt`、`页`） */</pre></li>
+    <li id="L882"><pre>  suffix?: string</pre></li>
+    <li id="L883"><pre>}</pre></li>
+    <li id="L884"><pre></pre></li>
+    <li id="L885"><pre>/**</pre></li>
+    <li id="L886"><pre> * 连续取值的输入框（页码、字号、缩放百分比）。</pre></li>
+    <li id="L887"><pre> *</pre></li>
+    <li id="L888"><pre> * ## 为什么不是一个下拉或一排按钮</pre></li>
+    <li id="L889"><pre> *</pre></li>
+    <li id="L890">
+      <pre> * 取值空间是**连续**的，而且上界随文档变（页码是 1..N，N 打开才知道）。</pre>
+    </li>
+    <li id="L891"><pre> * 下拉要枚举 N 项，按钮要点 N 次。</pre></li>
+    <li id="L892"><pre> *</pre></li>
+    <li id="L893"><pre> * ## 三条提交规矩仍由这一层管，antd 只管画（D-064）</pre></li>
+    <li id="L894"><pre> *</pre></li>
+    <li id="L895"><pre> * | 动作 | 结果 |</pre></li>
+    <li id="L896"><pre> * |---|---|</pre></li>
+    <li id="L897"><pre> * | 回车 / 失焦 | 提交，并**夹到 `[min, max]`** |</pre></li>
+    <li id="L898"><pre> * | Esc | 还原（丢掉草稿，显示回到外部值） |</pre></li>
+    <li id="L899">
+      <pre>
+ * | 非数字 / 空 | **不提交**——`Number(&#x27;&#x27;)` 是 0，不拦会把页码静默改成 0 |</pre>
+    </li>
+    <li id="L900"><pre> *</pre></li>
+    <li id="L901"><pre> * 这三条不能交给 antd 的 `InputNumber`（实测）：</pre></li>
+    <li id="L902"><pre> *</pre></li>
+    <li id="L903">
+      <pre> *  1. 清空输入框它立刻报 `onChange(null)`，而**失焦后输入框仍是空的**——</pre>
+    </li>
+    <li id="L904">
+      <pre> *     照「空值不提交」的规矩走，界面显示空、模型还是 12，**界面说了假话**；</pre>
+    </li>
+    <li id="L905"><pre> *     只有外部 value 变化才重新同步</pre></li>
+    <li id="L906"><pre> *  2. **Esc 没有还原语义**（输入 99 按 Esc 仍是 &quot;99&quot;）</pre></li>
+    <li id="L907"><pre> *  3. 夹区间只发生在它自己的解析路径上，表达不了「值没变不提交」</pre></li>
+    <li id="L908"><pre> *</pre></li>
+    <li id="L909">
+      <pre> * 所以草稿（`string | null`）留在我们这边，`InputNumber` 只是一个渲染外壳。</pre>
+    </li>
+    <li id="L910"><pre> *</pre></li>
+    <li id="L911"><pre> * ## `controls={false}` 不是可选项</pre></li>
+    <li id="L912"><pre> *</pre></li>
+    <li id="L913">
+      <pre>
+ * 默认它会渲染两个 `&lt;span role=&quot;button&quot; aria-label=&quot;Increase Value&quot;&gt;` /</pre>
+    </li>
+    <li id="L914">
+      <pre> * `&quot;Decrease Value&quot;`——10 个数字框就是 10 组重复的无障碍名，docx 那条</pre>
+    </li>
+    <li id="L915"><pre> * 「名字不得重复」会直接红。视觉上也与原来一致（原来是</pre></li>
+    <li id="L916"><pre> * `appearance: textfield` 去掉的上下箭头）。</pre></li>
+    <li id="L917"><pre> *</pre></li>
+    <li id="L918"><pre> * ## 草稿为 `null` 时直接显示外部值</pre></li>
+    <li id="L919"><pre> *</pre></li>
+    <li id="L920">
+      <pre> * **不把外部值复制进 state**：复制一份就要在外部值变化时同步回来（渲染期</pre>
+    </li>
+    <li id="L921">
+      <pre> * setState 或 effect 二选一），而「没在编辑时读外部值」天然是对的——页码</pre>
+    </li>
+    <li id="L922"><pre> * 随翻页变、字号随选区变，一个都不用写同步代码。</pre></li>
+    <li id="L923"><pre> */</pre></li>
+    <li id="L924"><pre>export function ToolbarNumberField({</pre></li>
+    <li id="L925"><pre>  label,</pre></li>
+    <li id="L926"><pre>  disabled = false,</pre></li>
+    <li id="L927"><pre>  disabledReason,</pre></li>
+    <li id="L928"><pre>  value,</pre></li>
+    <li id="L929"><pre>  onCommit,</pre></li>
+    <li id="L930"><pre>  min,</pre></li>
+    <li id="L931"><pre>  max,</pre></li>
+    <li id="L932"><pre>  step,</pre></li>
+    <li id="L933"><pre>  suffix,</pre></li>
+    <li id="L934"><pre>}: ToolbarNumberFieldProps) {</pre></li>
+    <li id="L935"><pre>  const [draft, setDraft] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L936"><pre></pre></li>
+    <li id="L937"><pre>  const commit = () =&gt; {</pre></li>
+    <li id="L938"><pre>    if (disabled || draft === null) return</pre></li>
+    <li id="L939"><pre>    setDraft(null)</pre></li>
+    <li id="L940"><pre>    const text = draft.trim()</pre></li>
+    <li id="L941"><pre>    const parsed = Number(text)</pre></li>
+    <li id="L942">
+      <pre>    // 空串也要拦：`Number(&#x27;&#x27;)` 是 0，不拦就等于「清空输入框 = 提交 0」</pre>
+    </li>
+    <li id="L943"><pre>    if (text === &#x27;&#x27; || !Number.isFinite(parsed)) return</pre></li>
+    <li id="L944"><pre>    let clamped = parsed</pre></li>
+    <li id="L945"><pre>    if (min !== undefined) clamped = Math.max(min, clamped)</pre></li>
+    <li id="L946"><pre>    if (max !== undefined) clamped = Math.min(max, clamped)</pre></li>
+    <li id="L947"><pre>    if (clamped !== value) onCommit(clamped)</pre></li>
+    <li id="L948"><pre>  }</pre></li>
+    <li id="L949"><pre></pre></li>
+    <li id="L950"><pre>  /*</pre></li>
+    <li id="L951">
+      <pre>   * 把输入框里的**文本**读回来。用 `onInput` 而不是 `onChange` 的第二参：</pre>
+    </li>
+    <li id="L952"><pre>   * 后者在「清空」时给的是 `undefined`（实测），而草稿是字符串。</pre></li>
+    <li id="L953"><pre>   */</pre></li>
+    <li id="L954"><pre>  const onInput = (text: string) =&gt; {</pre></li>
+    <li id="L955">
+      <pre>    setDraft(typeof text === &#x27;string&#x27; ? text : String(text))</pre>
+    </li>
+    <li id="L956"><pre>  }</pre></li>
+    <li id="L957"><pre></pre></li>
+    <li id="L958"><pre>  return (</pre></li>
+    <li id="L959"><pre>    &lt;ToolbarPropertyField label={label}&gt;</pre></li>
+    <li id="L960"><pre>      &lt;span className=&quot;me-field&quot;&gt;</pre></li>
+    <li id="L961"><pre>        {/*</pre></li>
+    <li id="L962">
+      <pre>        **`stringMode`**：值按字符串进出。作用是让草稿里的中间态原样留着——</pre>
+    </li>
+    <li id="L963">
+      <pre>        输入框清空时显示空（不是跳回外部值）、输入 `abc` 时显示 `abc`（不是</pre>
+    </li>
+    <li id="L964">
+      <pre>        被解析器吃掉半个），而夹区间与格式化留给提交那一刻。这正好对上</pre>
+    </li>
+    <li id="L965">
+      <pre>        「草稿 `string | null`」那套语义，也让 min/max 能跟着草稿类型走。</pre>
+    </li>
+    <li id="L966"><pre>      */}</pre></li>
+    <li id="L967"><pre>        &lt;InputNumber&lt;string&gt;</pre></li>
+    <li id="L968"><pre>          className=&quot;me-input--num&quot;</pre></li>
+    <li id="L969"><pre>          aria-label={label}</pre></li>
+    <li id="L970">
+      <pre>          title={disabled &amp;&amp; disabledReason ? disabledReason : label}</pre>
+    </li>
+    <li id="L971"><pre>          stringMode</pre></li>
+    <li id="L972"><pre>          value={draft ?? String(value)}</pre></li>
+    <li id="L973"><pre>          min={min === undefined ? undefined : String(min)}</pre></li>
+    <li id="L974"><pre>          max={max === undefined ? undefined : String(max)}</pre></li>
+    <li id="L975"><pre>          disabled={disabled}</pre></li>
+    <li id="L976"><pre>          step={step === undefined ? undefined : String(step)}</pre></li>
+    <li id="L977"><pre>          controls={false}</pre></li>
+    <li id="L978"><pre>          onInput={onInput}</pre></li>
+    <li id="L979"><pre>          onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L980"><pre>            if (event.key === &#x27;Enter&#x27;) commit()</pre></li>
+    <li id="L981"><pre>            if (event.key === &#x27;Escape&#x27;) setDraft(null)</pre></li>
+    <li id="L982"><pre>          }}</pre></li>
+    <li id="L983"><pre>          onBlur={commit}</pre></li>
+    <li id="L984"><pre>        /&gt;</pre></li>
+    <li id="L985">
+      <pre>
+        {suffix !== undefined &amp;&amp; &lt;span className=&quot;me-field__suffix&quot;&gt;{suffix}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L986"><pre>      &lt;/span&gt;</pre></li>
+    <li id="L987"><pre>    &lt;/ToolbarPropertyField&gt;</pre></li>
+    <li id="L988"><pre>  )</pre></li>
+    <li id="L989"><pre>}</pre></li>
+    <li id="L990"><pre></pre></li>
+    <li id="L991"><pre>export interface ToolbarTextFieldProps {</pre></li>
+    <li id="L992"><pre>  /** 这是什么（读屏用）。如「查找内容」「链接地址」 */</pre></li>
+    <li id="L993"><pre>  label: string</pre></li>
+    <li id="L994"><pre>  value: string</pre></li>
+    <li id="L995"><pre>  onChange: (value: string) =&gt; void</pre></li>
+    <li id="L996">
+      <pre>  /** 回车。**含义各处不同**（查找是「下一个」、链接是「应用」），所以回调化 */</pre>
+    </li>
+    <li id="L997"><pre>  onSubmit?: () =&gt; void</pre></li>
+    <li id="L998"><pre>  /** Esc */</pre></li>
+    <li id="L999"><pre>  onCancel?: () =&gt; void</pre></li>
+    <li id="L1000"><pre>  placeholder?: string</pre></li>
+    <li id="L1001"><pre>  /**</pre></li>
+    <li id="L1002">
+      <pre>   * 这是「查找」输入框。挂上之后 `useFindHotkey` 能按 Ctrl+F 把焦点送进来</pre>
+    </li>
+    <li id="L1003">
+      <pre>   * （标记走 `data-find-input`，**不看 className 或 aria-label**——那两样</pre>
+    </li>
+    <li id="L1004">
+      <pre>   * 都会被无关的样式/文案调整改掉，而改掉的那一刻快捷键是静默失效的）。</pre>
+    </li>
+    <li id="L1005"><pre>   */</pre></li>
+    <li id="L1006"><pre>  findInput?: boolean</pre></li>
+    <li id="L1007"><pre>}</pre></li>
+    <li id="L1008"><pre></pre></li>
+    <li id="L1009">
+      <pre>/** `Input` 的 ref 形状（`.select()` 拿它做「打开就选中已有查询」） */</pre>
+    </li>
+    <li id="L1010"><pre>export type ToolbarInputRef = InputRef</pre></li>
+    <li id="L1011"><pre></pre></li>
+    <li id="L1012"><pre>/**</pre></li>
+    <li id="L1013"><pre> * 文本输入框（antd `Input`）。</pre></li>
+    <li id="L1014"><pre> *</pre></li>
+    <li id="L1015"><pre> * ## 为什么必须共用这一个</pre></li>
+    <li id="L1016"><pre> *</pre></li>
+    <li id="L1017">
+      <pre> * 同一排里出现三种高度 / 三种焦点环（原生 input 裸着放、`me-input`、自绘的</pre>
+    </li>
+    <li id="L1018">
+      <pre> * 假输入框）正是 D-054 要消掉的漂移：字号、圆角、焦点环、禁用态各写一遍，</pre>
+    </li>
+    <li id="L1019"><pre> * 只在用户眼里对上。凡是工具条里的文本输入都走这里。</pre></li>
+    <li id="L1020"><pre> *</pre></li>
+    <li id="L1021"><pre> * 两个与 antd 默认行为不同的地方：</pre></li>
+    <li id="L1022"><pre> *</pre></li>
+    <li id="L1023">
+      <pre> *  1. **Esc 要自己判**：`Input` 没有对应的 prop，`onKeyDown` 是唯一入口</pre>
+    </li>
+    <li id="L1024">
+      <pre> *  2. **宽度靠 `className`**：antd 的 Input 自带 `width: 100%`，而这个原语</pre>
+    </li>
+    <li id="L1025">
+      <pre> *     的约定是「工具条上一行不拉满」（180px）；面板里的调用点再覆盖成 100%</pre>
+    </li>
+    <li id="L1026">
+      <pre> *     （`.me-link .me-input--text`）。两份样式特异性相同、项目样式在 head 里</pre>
+    </li>
+    <li id="L1027"><pre> *     更靠后，所以能压过 antd。</pre></li>
+    <li id="L1028"><pre> */</pre></li>
+    <li id="L1029"><pre>export function ToolbarTextField({</pre></li>
+    <li id="L1030"><pre>  label,</pre></li>
+    <li id="L1031"><pre>  value,</pre></li>
+    <li id="L1032"><pre>  onChange,</pre></li>
+    <li id="L1033"><pre>  onSubmit,</pre></li>
+    <li id="L1034"><pre>  onCancel,</pre></li>
+    <li id="L1035"><pre>  placeholder,</pre></li>
+    <li id="L1036"><pre>  findInput = false,</pre></li>
+    <li id="L1037"><pre>}: ToolbarTextFieldProps) {</pre></li>
+    <li id="L1038"><pre>  return (</pre></li>
+    <li id="L1039"><pre>    &lt;ToolbarPropertyField label={label}&gt;</pre></li>
+    <li id="L1040"><pre>      &lt;Input</pre></li>
+    <li id="L1041"><pre>        className=&quot;me-input--text&quot;</pre></li>
+    <li id="L1042"><pre>        type=&quot;text&quot;</pre></li>
+    <li id="L1043"><pre>        aria-label={label}</pre></li>
+    <li id="L1044"><pre>        title={label}</pre></li>
+    <li id="L1045"><pre>        placeholder={placeholder}</pre></li>
+    <li id="L1046"><pre>        value={value}</pre></li>
+    <li id="L1047">
+      <pre>        {...(findInput ? { &#x27;data-find-input&#x27;: true } : {})}</pre>
+    </li>
+    <li id="L1048"><pre>        // 查找框 / 链接地址被拼写检查划红线是纯噪音</pre></li>
+    <li id="L1049"><pre>        spellCheck={false}</pre></li>
+    <li id="L1050"><pre>        onChange={(event) =&gt; onChange(event.target.value)}</pre></li>
+    <li id="L1051"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L1052"><pre>          if (event.key === &#x27;Enter&#x27;) onSubmit?.()</pre></li>
+    <li id="L1053"><pre>          if (event.key === &#x27;Escape&#x27;) onCancel?.()</pre></li>
+    <li id="L1054"><pre>        }}</pre></li>
+    <li id="L1055"><pre>      /&gt;</pre></li>
+    <li id="L1056"><pre>    &lt;/ToolbarPropertyField&gt;</pre></li>
+    <li id="L1057"><pre>  )</pre></li>
+    <li id="L1058"><pre>}</pre></li>
+    <li id="L1059"><pre></pre></li>
+    <li id="L1060"><pre>/**</pre></li>
+    <li id="L1061"><pre> * Ctrl / Cmd+F 打开查找。</pre></li>
+    <li id="L1062"><pre> *</pre></li>
+    <li id="L1063"><pre> * ## 为什么要有这条</pre></li>
+    <li id="L1064"><pre> *</pre></li>
+    <li id="L1065">
+      <pre> * docx 的工具条上写着「查找和替换 **(Ctrl+F)**」，而按下去实际弹出的是</pre>
+    </li>
+    <li id="L1066">
+      <pre> * **浏览器自带的查找**（那是找整个页面的，不是找文档内容）——标签承诺了</pre>
+    </li>
+    <li id="L1067"><pre> * 一个不存在的动作（实测发现，D-096）。xlsx 的查找框是常驻的，而</pre></li>
+    <li id="L1068"><pre> * markdown 笔记根本没有查找。</pre></li>
+    <li id="L1069"><pre> *</pre></li>
+    <li id="L1070"><pre> * ## 焦点由这里统一送</pre></li>
+    <li id="L1071"><pre> *</pre></li>
+    <li id="L1072"><pre> * `onReveal` 只负责「把查找栏显示出来」——各编辑器的打开方式不同</pre></li>
+    <li id="L1073"><pre> * （docx/html 是隐藏的栏，xlsx 常驻不用开）。焦点统一送到</pre></li>
+    <li id="L1074"><pre> * `[data-find-input]`（两种查找框都挂了），**并且 `select()`**：</pre></li>
+    <li id="L1075">
+      <pre> * 与浏览器 Ctrl+F 的行为一致，再按一次是「改掉上次的查询」而不是追加。</pre>
+    </li>
+    <li id="L1076"><pre> *</pre></li>
+    <li id="L1077">
+      <pre> * `preventDefault` 是必须的：不拦的话浏览器自带的查找条会同时弹出来，</pre>
+    </li>
+    <li id="L1078">
+      <pre> * 两层查找叠在一起。唯一拦不住的场景是 html 编辑器的**预览 iframe 里**</pre>
+    </li>
+    <li id="L1079">
+      <pre> * ——焦点在 iframe 内时按键事件到不了宿主窗口，那一层留给浏览器原生查找</pre>
+    </li>
+    <li id="L1080"><pre> * （在状态行也没承诺过那种情况下可用）。</pre></li>
+    <li id="L1081"><pre> */</pre></li>
+    <li id="L1082"><pre>export function useFindHotkey(onReveal?: () =&gt; void): void {</pre></li>
+    <li id="L1083"><pre>  const revealRef = useRef(onReveal)</pre></li>
+    <li id="L1084"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L1085"><pre>    revealRef.current = onReveal</pre></li>
+    <li id="L1086"><pre>  })</pre></li>
+    <li id="L1087"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L1088"><pre>    const handler = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L1089">
+      <pre>
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== &#x27;f&#x27;) return</pre>
+    </li>
+    <li id="L1090"><pre>      event.preventDefault()</pre></li>
+    <li id="L1091"><pre>      revealRef.current?.()</pre></li>
+    <li id="L1092"><pre>      /**</pre></li>
+    <li id="L1093"><pre>       * 用 **setTimeout 而不是 requestAnimationFrame**。</pre></li>
+    <li id="L1094"><pre>       *</pre></li>
+    <li id="L1095">
+      <pre>       * 与 `pagination.ts` 里那条同一个坑：rAF 在**不可见**（后台标签页、</pre>
+    </li>
+    <li id="L1096">
+      <pre>       * 某些内嵌 webview）时根本不派发帧——实测 IAB 里 `rafFired === false`，</pre>
+    </li>
+    <li id="L1097">
+      <pre>       * 于是焦点永远送不到查找框（症状是「Ctrl+F 什么都不发生」）。</pre>
+    </li>
+    <li id="L1098">
+      <pre>       * 这里只需要「等这一次渲染落地」，`setTimeout(0)` 与 rAF 等价且不受</pre>
+    </li>
+    <li id="L1099"><pre>       * 可见性影响。</pre></li>
+    <li id="L1100"><pre>       */</pre></li>
+    <li id="L1101"><pre>      setTimeout(() =&gt; {</pre></li>
+    <li id="L1102">
+      <pre>
+        const input = document.querySelector&lt;HTMLInputElement&gt;(&#x27;[data-find-input]&#x27;)</pre>
+    </li>
+    <li id="L1103"><pre>        input?.focus()</pre></li>
+    <li id="L1104"><pre>        input?.select()</pre></li>
+    <li id="L1105"><pre>      }, 0)</pre></li>
+    <li id="L1106"><pre>    }</pre></li>
+    <li id="L1107"><pre>    window.addEventListener(&#x27;keydown&#x27;, handler)</pre></li>
+    <li id="L1108">
+      <pre>    return () =&gt; window.removeEventListener(&#x27;keydown&#x27;, handler)</pre>
+    </li>
+    <li id="L1109"><pre>  }, [])</pre></li>
+    <li id="L1110"><pre>}</pre></li>
+    <li id="L1111"><pre></pre></li>
+    <li id="L1112"><pre>export interface ToolbarTextAreaProps {</pre></li>
+    <li id="L1113"><pre>  /** 这是什么（读屏用）。如「第 1 段」 */</pre></li>
+    <li id="L1114"><pre>  label: string</pre></li>
+    <li id="L1115"><pre>  value: string</pre></li>
+    <li id="L1116"><pre>  onChange: (value: string) =&gt; void</pre></li>
+    <li id="L1117"><pre>  placeholder?: string</pre></li>
+    <li id="L1118"><pre>  /**</pre></li>
+    <li id="L1119">
+      <pre>
+   * 初始可见行数。默认 1——**1 行不等于单行输入框**：它仍是一个 `&lt;textarea&gt;`，</pre>
+    </li>
+    <li id="L1120">
+      <pre>   * 所以框里的换行都保得住。见下面「为什么不能用 `ToolbarTextField`」。</pre>
+    </li>
+    <li id="L1121"><pre>   */</pre></li>
+    <li id="L1122"><pre>  rows?: number</pre></li>
+    <li id="L1123"><pre>}</pre></li>
+    <li id="L1124"><pre></pre></li>
+    <li id="L1125"><pre>/**</pre></li>
+    <li id="L1126"><pre> * 多行文本输入（antd `Input.TextArea`）。</pre></li>
+    <li id="L1127"><pre> *</pre></li>
+    <li id="L1128"><pre> * ## 为什么单列一个原语：`ToolbarTextField` 顶不了</pre></li>
+    <li id="L1129"><pre> *</pre></li>
+    <li id="L1130">
+      <pre>
+ * 那个原语是 `type=&quot;text&quot;`（单行，没有 `rows`、没有 resize），而**一段文字</pre>
+    </li>
+    <li id="L1131"><pre> * 天生可能带换行**。换行不是某一种格式的属性：</pre></li>
+    <li id="L1132"><pre> *</pre></li>
+    <li id="L1133"><pre> * | 场景 | 换行从哪来 |</pre></li>
+    <li id="L1134"><pre> * |---|---|</pre></li>
+    <li id="L1135">
+      <pre>
+ * | pptx 的一个段落 | 软换行 `&lt;a:br/&gt;` 在模型里就是一条 `text === &#x27;\n&#x27;` 的 run |</pre>
+    </li>
+    <li id="L1136"><pre> * | 将来别的格式 | 段落/单元格里的硬换行 |</pre></li>
+    <li id="L1137"><pre> *</pre></li>
+    <li id="L1138">
+      <pre> * 硬换一个单行 `Input` 的代价是**静默的**：HTML 的值消毒算法会把 `\n` 直接从</pre>
+    </li>
+    <li id="L1139">
+      <pre> * `input.value` 里删掉，于是「改一个字」顺手把那一处软换行也删了，而界面不会</pre>
+    </li>
+    <li id="L1140">
+      <pre> * 报错（文件里少了 `&lt;a:br/&gt;`，要对着 XML 看才发现）。所以多行必须是真的</pre>
+    </li>
+    <li id="L1141"><pre> * textarea。</pre></li>
+    <li id="L1142"><pre> *</pre></li>
+    <li id="L1143">
+      <pre> * 它进外壳而不是留在编辑器里：留在调用点就会像上一版 pptx 那样再长出一套</pre>
+    </li>
+    <li id="L1144">
+      <pre> * 自己的高度 / 字号 / 焦点环（`.mimir-paras__item`），而那正是 D-064 要消掉的</pre>
+    </li>
+    <li id="L1145"><pre> * 漂移——「换行」是文本的属性，不是幻灯片的属性。</pre></li>
+    <li id="L1146"><pre> *</pre></li>
+    <li id="L1147"><pre> * ## 两条如实记录的差别（都不是漏配）</pre></li>
+    <li id="L1148"><pre> *</pre></li>
+    <li id="L1149">
+      <pre> *  1. **它比工具条那一排高**：antd 给原生 textarea 的 `min-height` 取</pre>
+    </li>
+    <li id="L1150">
+      <pre> *     `controlHeight`（32px）且**不随 size 档变小**（`input/style/textarea.js`</pre>
+    </li>
+    <li id="L1151">
+      <pre> *     的 `textarea.ant-input` 规则；small 档只改内边距与字号），而工具条那一排</pre>
+    </li>
+    <li id="L1152">
+      <pre> *     控件是 24px。两者不在同一行里——这个原语目前只用在内容下方的附属面板</pre>
+    </li>
+    <li id="L1153">
+      <pre> *     （一段一个框、自己成一列），所以「同一排三种高度」不成立。要把它压到</pre>
+    </li>
+    <li id="L1154">
+      <pre> *     24px 只能覆盖 antd 的 `min-height`，那正是 D-064 否决的「拿自己的样式</pre>
+    </li>
+    <li id="L1155"><pre> *     覆盖控件观感」。</pre></li>
+    <li id="L1156">
+      <pre> *  2. **`resize` 用 antd 的默认值**（`vertical`）：与上一版手写的那条</pre>
+    </li>
+    <li id="L1157">
+      <pre> *     `resize: vertical` 一致，所以「拖高一点看整段」这个动作还在。</pre>
+    </li>
+    <li id="L1158"><pre> */</pre></li>
+    <li id="L1159"><pre>export function ToolbarTextArea({</pre></li>
+    <li id="L1160"><pre>  label,</pre></li>
+    <li id="L1161"><pre>  value,</pre></li>
+    <li id="L1162"><pre>  onChange,</pre></li>
+    <li id="L1163"><pre>  placeholder,</pre></li>
+    <li id="L1164"><pre>  rows = 1,</pre></li>
+    <li id="L1165"><pre>}: ToolbarTextAreaProps) {</pre></li>
+    <li id="L1166"><pre>  return (</pre></li>
+    <li id="L1167"><pre>    &lt;ToolbarPropertyField label={label} multiline&gt;</pre></li>
+    <li id="L1168"><pre>      &lt;Input.TextArea</pre></li>
+    <li id="L1169"><pre>        rows={rows}</pre></li>
+    <li id="L1170"><pre>        aria-label={label}</pre></li>
+    <li id="L1171"><pre>        title={label}</pre></li>
+    <li id="L1172"><pre>        placeholder={placeholder}</pre></li>
+    <li id="L1173"><pre>        value={value}</pre></li>
+    <li id="L1174"><pre>        onChange={(event) =&gt; onChange(event.target.value)}</pre></li>
+    <li id="L1175"><pre>      /&gt;</pre></li>
+    <li id="L1176"><pre>    &lt;/ToolbarPropertyField&gt;</pre></li>
+    <li id="L1177"><pre>  )</pre></li>
+    <li id="L1178"><pre>}</pre></li>
+    <li id="L1179"><pre></pre></li>
+    <li id="L1180"><pre>export interface ToolbarFileButtonProps {</pre></li>
+    <li id="L1181">
+      <pre>  /** 按钮名字。也是可见按钮的无障碍名称（隐藏 input 不进无障碍树，不需要名字） */</pre>
+    </li>
+    <li id="L1182"><pre>  label: string</pre></li>
+    <li id="L1183"><pre>  /** 交给系统文件选择器的过滤条件，如 `image/png,image/jpeg` */</pre></li>
+    <li id="L1184"><pre>  accept?: string</pre></li>
+    <li id="L1185"><pre>  disabled?: boolean</pre></li>
+    <li id="L1186">
+      <pre>  /** 选中文件后的处理（docx 插图、pdf 导入页面）。可以是异步的 */</pre>
+    </li>
+    <li id="L1187"><pre>  onPick: (file: File) =&gt; void | Promise&lt;void&gt;</pre></li>
+    <li id="L1188"><pre>  /** 图标。省略时按钮显示 label 文字 */</pre></li>
+    <li id="L1189"><pre>  children?: ReactNode</pre></li>
+    <li id="L1190"><pre>}</pre></li>
+    <li id="L1191"><pre></pre></li>
+    <li id="L1192"><pre>/**</pre></li>
+    <li id="L1193"><pre> * 按钮 + 隐藏的 `input[type=file]`（antd `Upload`）。</pre></li>
+    <li id="L1194"><pre> *</pre></li>
+    <li id="L1195"><pre> * ## 为什么不能用一个 `ToolbarButton` 加个 onClick</pre></li>
+    <li id="L1196"><pre> *</pre></li>
+    <li id="L1197">
+      <pre> * 它开不了系统文件选择器。真要做就得每个调用点自己藏一个 input，并且</pre>
+    </li>
+    <li id="L1198">
+      <pre> * **每次选完记得把 `input.value` 清空**——不清的话，第二次选同一个文件</pre>
+    </li>
+    <li id="L1199">
+      <pre> * 不触发 `change`，症状是「点了没反应」，而代码看不出问题。这条清理是同一个</pre>
+    </li>
+    <li id="L1200"><pre> * 坑，所以只写一遍。</pre></li>
+    <li id="L1201"><pre> *</pre></li>
+    <li id="L1202"><pre> * ## 为什么用 `Upload` 而不是自己藏 input</pre></li>
+    <li id="L1203"><pre> *</pre></li>
+    <li id="L1204">
+      <pre> * 上面那条「清空」在 antd 里是**换 key 重挂 input**（`AjaxUploader` 的</pre>
+    </li>
+    <li id="L1205">
+      <pre> * `reset()` 改 uid、`uid` 当 input 的 key）——目标一致、机制不同。自己再写</pre>
+    </li>
+    <li id="L1206"><pre> * 一遍清 value 就成了同一件事的第二份实现。</pre></li>
+    <li id="L1207"><pre> *</pre></li>
+    <li id="L1208"><pre> * 两处要注意：</pre></li>
+    <li id="L1209"><pre> *</pre></li>
+    <li id="L1210">
+      <pre> *  1. **`beforeUpload` 返回 `false` 拦截上传**：我们只要文件本身，不要它替我们</pre>
+    </li>
+    <li id="L1211">
+      <pre> *     POST 到哪去。返回 `false` 之后 antd **不会**再上传，`onChange` 也不走</pre>
+    </li>
+    <li id="L1212">
+      <pre> *     上传路径——所以 `onPick` 就写在 `beforeUpload` 里（这是唯一拿得到文件的</pre>
+    </li>
+    <li id="L1213"><pre> *     地方，且只调一次）。</pre></li>
+    <li id="L1214">
+      <pre> *  2. **`showUploadList={false}`**：antd 默认会在按钮下面列出「已上传文件」</pre>
+    </li>
+    <li id="L1215">
+      <pre> *     的列表，而我们的文件去向由调用方自己管（docx 插图、pdf 导入页面），</pre>
+    </li>
+    <li id="L1216"><pre> *     显示一个永远转圈的列表是假状态。</pre></li>
+    <li id="L1217"><pre> *</pre></li>
+    <li id="L1218">
+      <pre> * `disabled` 仍由我们那个带 label 的按钮表达（Upload 自身没有 size 档，</pre>
+    </li>
+    <li id="L1219"><pre> * 也没法把 `className` 给到里面那个 button）。</pre></li>
+    <li id="L1220"><pre> */</pre></li>
+    <li id="L1221"><pre>export function ToolbarFileButton({</pre></li>
+    <li id="L1222"><pre>  label,</pre></li>
+    <li id="L1223"><pre>  accept,</pre></li>
+    <li id="L1224"><pre>  disabled = false,</pre></li>
+    <li id="L1225"><pre>  onPick,</pre></li>
+    <li id="L1226"><pre>  children,</pre></li>
+    <li id="L1227"><pre>}: ToolbarFileButtonProps) {</pre></li>
+    <li id="L1228"><pre>  return (</pre></li>
+    <li id="L1229"><pre>    &lt;span className=&quot;me-file&quot;&gt;</pre></li>
+    <li id="L1230"><pre>      &lt;Upload</pre></li>
+    <li id="L1231"><pre>        accept={accept}</pre></li>
+    <li id="L1232"><pre>        showUploadList={false}</pre></li>
+    <li id="L1233"><pre>        disabled={disabled}</pre></li>
+    <li id="L1234"><pre>        beforeUpload={(file) =&gt; {</pre></li>
+    <li id="L1235"><pre>          void onPick(file)</pre></li>
+    <li id="L1236"><pre>          // 不要上传：文件由调用方处理（保存路径各不相同）</pre></li>
+    <li id="L1237"><pre>          return false</pre></li>
+    <li id="L1238"><pre>        }}</pre></li>
+    <li id="L1239"><pre>      &gt;</pre></li>
+    <li id="L1240"><pre>        &lt;ToolbarButton label={label} disabled={disabled}&gt;</pre></li>
+    <li id="L1241"><pre>          {children}</pre></li>
+    <li id="L1242"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1243"><pre>      &lt;/Upload&gt;</pre></li>
+    <li id="L1244"><pre>    &lt;/span&gt;</pre></li>
+    <li id="L1245"><pre>  )</pre></li>
+    <li id="L1246"><pre>}</pre></li>
+    <li id="L1247"><pre></pre></li>
+    <li id="L1248">
+      <pre>/* ── 弹出层（菜单 / 颜色面板共用） ─────────────────────────────── */</pre>
+    </li>
+    <li id="L1249"><pre></pre></li>
+    <li id="L1250"><pre>interface PopupPosition {</pre></li>
+    <li id="L1251"><pre>  top?: number</pre></li>
+    <li id="L1252"><pre>  bottom?: number</pre></li>
+    <li id="L1253"><pre>  left: number</pre></li>
+    <li id="L1254"><pre>}</pre></li>
+    <li id="L1255"><pre></pre></li>
+    <li id="L1256">
+      <pre>/** 面板最小可用宽度，与 `shell.css` 的 `.me-menu__panel` 保持一致 */</pre>
+    </li>
+    <li id="L1257"><pre>const POPUP_MIN_WIDTH = 176</pre></li>
+    <li id="L1258"><pre>/** 面板高度估计值：打开那一刻它还没挂载，量不到真实高度 */</pre></li>
+    <li id="L1259"><pre>const POPUP_EST_HEIGHT = 240</pre></li>
+    <li id="L1260"><pre></pre></li>
+    <li id="L1261"><pre>/**</pre></li>
+    <li id="L1262">
+      <pre> * 目标算不算「面板里的东西」——**包括从面板里的控件 portal 出去的弹层**。</pre>
+    </li>
+    <li id="L1263"><pre> *</pre></li>
+    <li id="L1264">
+      <pre> * 面板里的 antd `Select` 打开后弹层挂在 body 上（见 `ToolbarSelect` 的说明），</pre>
+    </li>
+    <li id="L1265">
+      <pre> * 祖先链不在面板里。只按祖先判断的话，按选项、滚选项都会被当成「点了外面」：</pre>
+    </li>
+    <li id="L1266">
+      <pre> * 面板一关、弹层跟着卸载，选项永远点不中——界面不报错，只是点了没反应。</pre>
+    </li>
+    <li id="L1267"><pre> *</pre></li>
+    <li id="L1268">
+      <pre> * 判据用 antd 自己写的 `aria-controls` / `aria-owns`：它把弹层与触发它的</pre>
+    </li>
+    <li id="L1269">
+      <pre> * 输入框连了起来（`${id}_list`）。「属于面板」= 目标、目标的祖先、或目标的</pre>
+    </li>
+    <li id="L1270">
+      <pre> * 后代，是面板里某个控件声明拥有的元素。不用类名：类名等 antd 改版就失效。</pre>
+    </li>
+    <li id="L1271"><pre> */</pre></li>
+    <li id="L1272">
+      <pre>function insidePanel(panel: HTMLElement | null, target: Node): boolean {</pre>
+    </li>
+    <li id="L1273"><pre>  if (panel === null) return false</pre></li>
+    <li id="L1274"><pre>  if (panel.contains(target)) return true</pre></li>
+    <li id="L1275"><pre>  const ids = new Set&lt;string&gt;()</pre></li>
+    <li id="L1276">
+      <pre>
+  for (const element of panel.querySelectorAll(&#x27;[aria-controls], [aria-owns]&#x27;)) {</pre>
+    </li>
+    <li id="L1277">
+      <pre>
+    for (const attribute of [&#x27;aria-controls&#x27;, &#x27;aria-owns&#x27;] as const) {</pre>
+    </li>
+    <li id="L1278">
+      <pre>
+      for (const id of (element.getAttribute(attribute) ?? &#x27;&#x27;).split(/\s+/)) {</pre>
+    </li>
+    <li id="L1279"><pre>        if (id !== &#x27;&#x27;) ids.add(id)</pre></li>
+    <li id="L1280"><pre>      }</pre></li>
+    <li id="L1281"><pre>    }</pre></li>
+    <li id="L1282"><pre>  }</pre></li>
+    <li id="L1283"><pre>  for (const id of ids) {</pre></li>
+    <li id="L1284"><pre>    const owned = document.getElementById(id)</pre></li>
+    <li id="L1285"><pre>    if (owned === null) continue</pre></li>
+    <li id="L1286">
+      <pre>
+    if (owned === target || owned.contains(target) || target.contains(owned)) return true</pre>
+    </li>
+    <li id="L1287"><pre>  }</pre></li>
+    <li id="L1288"><pre>  return false</pre></li>
+    <li id="L1289"><pre>}</pre></li>
+    <li id="L1290"><pre></pre></li>
+    <li id="L1291"><pre>/**</pre></li>
+    <li id="L1292"><pre> * 一条弹出层的定位 + 键盘 + 关闭。</pre></li>
+    <li id="L1293"><pre> *</pre></li>
+    <li id="L1294"><pre> * ## 为什么**不 portal 到 body**</pre></li>
+    <li id="L1295"><pre> *</pre></li>
+    <li id="L1296">
+      <pre> * portal 会把面板移出 `--me-*` 所在的那棵子树，于是深色主题下弹层退回浅色</pre>
+    </li>
+    <li id="L1297">
+      <pre> * 回退值（这个包不依赖 antd，回退值是浅色的）。就地渲染 + `position: fixed`</pre>
+    </li>
+    <li id="L1298">
+      <pre> * 是等价的：fixed 的包含块是**视口**，所以外壳的 `overflow: clip`</pre>
+    </li>
+    <li id="L1299"><pre> * （见 `shell.css` 的 `.mimir-editor`）裁不到它。</pre></li>
+    <li id="L1300"><pre> *</pre></li>
+    <li id="L1301">
+      <pre> * 一个前提：祖先里不能有 `transform` / `filter` / `will-change`——有的话</pre>
+    </li>
+    <li id="L1302">
+      <pre> * fixed 会相对那个祖先定位。外壳这一层没有，宿主往上加的时候要知道。</pre>
+    </li>
+    <li id="L1303"><pre> *</pre></li>
+    <li id="L1304"><pre> * ## 为什么滚动就关</pre></li>
+    <li id="L1305"><pre> *</pre></li>
+    <li id="L1306">
+      <pre> * 坐标是**打开那一刻**算出来的。滚动之后触发按钮已经不在原处，面板还悬在</pre>
+    </li>
+    <li id="L1307"><pre> * 旧位置——比关掉更让人困惑。改窗口大小同理。</pre></li>
+    <li id="L1308"><pre> */</pre></li>
+    <li id="L1309">
+      <pre>
+function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH, estimatedHeight = POPUP_EST_HEIGHT) {</pre>
+    </li>
+    <li id="L1310"><pre>  const triggerRef = useRef&lt;HTMLButtonElement&gt;(null)</pre></li>
+    <li id="L1311"><pre>  const panelRef = useRef&lt;HTMLDivElement&gt;(null)</pre></li>
+    <li id="L1312">
+      <pre>  const [position, setPosition] = useState&lt;PopupPosition | null&gt;(null)</pre>
+    </li>
+    <li id="L1313"><pre>  const open = position !== null</pre></li>
+    <li id="L1314"><pre></pre></li>
+    <li id="L1315"><pre>  const toggle = () =&gt; {</pre></li>
+    <li id="L1316"><pre>    if (position !== null) {</pre></li>
+    <li id="L1317"><pre>      setPosition(null)</pre></li>
+    <li id="L1318"><pre>      return</pre></li>
+    <li id="L1319"><pre>    }</pre></li>
+    <li id="L1320">
+      <pre>    // 位置在**事件里**算：渲染期读 ref 会被 React Compiler 判违规</pre>
+    </li>
+    <li id="L1321"><pre>    const rect = triggerRef.current?.getBoundingClientRect()</pre></li>
+    <li id="L1322"><pre>    if (rect === undefined) {</pre></li>
+    <li id="L1323"><pre>      setPosition({ top: 0, left: 0 })</pre></li>
+    <li id="L1324"><pre>      return</pre></li>
+    <li id="L1325"><pre>    }</pre></li>
+    <li id="L1326"><pre>    const width = Math.min(panelWidth, window.innerWidth - 16)</pre></li>
+    <li id="L1327">
+      <pre>    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))</pre>
+    </li>
+    <li id="L1328"><pre>    const below = window.innerHeight - rect.bottom</pre></li>
+    <li id="L1329"><pre>    setPosition(</pre></li>
+    <li id="L1330"><pre>      below &lt; estimatedHeight &amp;&amp; rect.top &gt; below</pre></li>
+    <li id="L1331">
+      <pre>
+        ? // 下方放不下就往上展开：用 `bottom` 锚定，面板实际高度与估计值不同也不会越过按钮</pre>
+    </li>
+    <li id="L1332"><pre>          { bottom: window.innerHeight - rect.top + 4, left }</pre></li>
+    <li id="L1333"><pre>        : { top: rect.bottom + 4, left },</pre></li>
+    <li id="L1334"><pre>    )</pre></li>
+    <li id="L1335"><pre>  }</pre></li>
+    <li id="L1336"><pre></pre></li>
+    <li id="L1337"><pre>  /** 关掉并把焦点还给触发按钮（键盘用户不能掉到 body 上） */</pre></li>
+    <li id="L1338"><pre>  const close = () =&gt; {</pre></li>
+    <li id="L1339"><pre>    setPosition(null)</pre></li>
+    <li id="L1340"><pre>    triggerRef.current?.focus()</pre></li>
+    <li id="L1341"><pre>  }</pre></li>
+    <li id="L1342"><pre></pre></li>
+    <li id="L1343"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L1344"><pre>    if (!open) return</pre></li>
+    <li id="L1345"><pre>    const dismiss = (returnFocus: boolean) =&gt; {</pre></li>
+    <li id="L1346"><pre>      setPosition(null)</pre></li>
+    <li id="L1347"><pre>      if (returnFocus) triggerRef.current?.focus()</pre></li>
+    <li id="L1348"><pre>    }</pre></li>
+    <li id="L1349"><pre>    const onPointerDown = (event: PointerEvent) =&gt; {</pre></li>
+    <li id="L1350"><pre>      const target = event.target as Node | null</pre></li>
+    <li id="L1351"><pre>      if (target === null) return</pre></li>
+    <li id="L1352">
+      <pre>      // 面板内（含它 portal 出去的弹层）与触发按钮上的按下不算「点外部」</pre>
+    </li>
+    <li id="L1353"><pre>      // ——触发按钮自己会 toggle</pre></li>
+    <li id="L1354"><pre>      if (insidePanel(panelRef.current, target)) return</pre></li>
+    <li id="L1355"><pre>      if (triggerRef.current?.contains(target) === true) return</pre></li>
+    <li id="L1356"><pre>      dismiss(false)</pre></li>
+    <li id="L1357"><pre>    }</pre></li>
+    <li id="L1358"><pre>    const onKeyDown = (event: KeyboardEvent) =&gt; {</pre></li>
+    <li id="L1359">
+      <pre>      // Escape 关闭并**还焦点**：焦点留在被卸载的元素上会让键盘用户掉到 body</pre>
+    </li>
+    <li id="L1360"><pre>      if (event.key !== &#x27;Escape&#x27;) return</pre></li>
+    <li id="L1361"><pre>      const nearestMenu =</pre></li>
+    <li id="L1362"><pre>        event.target instanceof Element</pre></li>
+    <li id="L1363">
+      <pre>
+          ? event.target.closest(&#x27;[role=&quot;menu&quot;], [data-toolbar-popup]&#x27;)</pre>
+    </li>
+    <li id="L1364"><pre>          : null</pre></li>
+    <li id="L1365">
+      <pre>      if (nearestMenu &amp;&amp; nearestMenu !== panelRef.current) return</pre>
+    </li>
+    <li id="L1366">
+      <pre>      if (panelRef.current?.hasAttribute(&#x27;data-toolbar-popup&#x27;)) {</pre>
+    </li>
+    <li id="L1367">
+      <pre>        // Consume the nearest custom color layer before an enclosing Inspector</pre>
+    </li>
+    <li id="L1368"><pre>        // sees this key and closes itself along with the picker.</pre></li>
+    <li id="L1369"><pre>        event.preventDefault()</pre></li>
+    <li id="L1370"><pre>        event.stopPropagation()</pre></li>
+    <li id="L1371"><pre>      }</pre></li>
+    <li id="L1372"><pre>      dismiss(true)</pre></li>
+    <li id="L1373"><pre>    }</pre></li>
+    <li id="L1374"><pre>    const onScroll = (event: Event) =&gt; {</pre></li>
+    <li id="L1375"><pre>      const target = event.target as Node | null</pre></li>
+    <li id="L1376"><pre>      // 面板自己内部滚动（max-height）不算「外面滚了」；</pre></li>
+    <li id="L1377"><pre>      // portal 出去的弹层同理（它也有 max-height）</pre></li>
+    <li id="L1378">
+      <pre>      if (target !== null &amp;&amp; insidePanel(panelRef.current, target)) return</pre>
+    </li>
+    <li id="L1379"><pre>      dismiss(false)</pre></li>
+    <li id="L1380"><pre>    }</pre></li>
+    <li id="L1381"><pre>    const onResize = () =&gt; dismiss(false)</pre></li>
+    <li id="L1382">
+      <pre>    document.addEventListener(&#x27;pointerdown&#x27;, onPointerDown, true)</pre>
+    </li>
+    <li id="L1383">
+      <pre>    document.addEventListener(&#x27;keydown&#x27;, onKeyDown, true)</pre>
+    </li>
+    <li id="L1384"><pre>    document.addEventListener(&#x27;scroll&#x27;, onScroll, true)</pre></li>
+    <li id="L1385"><pre>    window.addEventListener(&#x27;resize&#x27;, onResize)</pre></li>
+    <li id="L1386"><pre>    return () =&gt; {</pre></li>
+    <li id="L1387">
+      <pre>      document.removeEventListener(&#x27;pointerdown&#x27;, onPointerDown, true)</pre>
+    </li>
+    <li id="L1388">
+      <pre>      document.removeEventListener(&#x27;keydown&#x27;, onKeyDown, true)</pre>
+    </li>
+    <li id="L1389">
+      <pre>      document.removeEventListener(&#x27;scroll&#x27;, onScroll, true)</pre>
+    </li>
+    <li id="L1390"><pre>      window.removeEventListener(&#x27;resize&#x27;, onResize)</pre></li>
+    <li id="L1391"><pre>    }</pre></li>
+    <li id="L1392"><pre>  }, [open])</pre></li>
+    <li id="L1393"><pre></pre></li>
+    <li id="L1394">
+      <pre>  // 打开后把焦点交给面板：键盘用户要能直接按方向键（读屏也会念出这是一条菜单）</pre>
+    </li>
+    <li id="L1395"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L1396"><pre>    if (!open) return</pre></li>
+    <li id="L1397"><pre>    panelRef.current?.focus()</pre></li>
+    <li id="L1398"><pre>  }, [open])</pre></li>
+    <li id="L1399"><pre></pre></li>
+    <li id="L1400"><pre>  return { open, position, triggerRef, panelRef, toggle, close }</pre></li>
+    <li id="L1401"><pre>}</pre></li>
+    <li id="L1402"><pre></pre></li>
+    <li id="L1403"><pre>/** 面板里能被方向键选中的项（`role` 是判据，不是类名） */</pre></li>
+    <li id="L1404">
+      <pre>const ITEM_SELECTOR = &#x27;[role=&quot;menuitem&quot;]:not([disabled])&#x27;</pre>
+    </li>
+    <li id="L1405"><pre></pre></li>
+    <li id="L1406"><pre>/**</pre></li>
+    <li id="L1407"><pre> * 面板里的**表单控件**。</pre></li>
+    <li id="L1408"><pre> *</pre></li>
+    <li id="L1409">
+      <pre> * 判据是「事件从哪来」，不是「它在哪个类名的容器里」：类名要每个调用点自己记得</pre>
+    </li>
+    <li id="L1410">
+      <pre> * 挂，漏一个就静默失效一次。docx 曾经靠 `MenuFields` 的 `stopPropagation` 绕过</pre>
+    </li>
+    <li id="L1411">
+      <pre> * 方向键处理器，而 markdown 的两个面板（`.me-link` / `.me-insert`）没有那一层</pre>
+    </li>
+    <li id="L1412">
+      <pre> * ——地址框里按上下键、Home、End 全被菜单吃掉，输入框还在，只是键按不动。</pre>
+    </li>
+    <li id="L1413"><pre> */</pre></li>
+    <li id="L1414"><pre>const FORM_CONTROL_SELECTOR =</pre></li>
+    <li id="L1415">
+      <pre>
+  &#x27;input, textarea, select, [role=&quot;textbox&quot;], [role=&quot;spinbutton&quot;], [role=&quot;combobox&quot;], [role=&quot;listbox&quot;]&#x27;</pre>
+    </li>
+    <li id="L1416"><pre></pre></li>
+    <li id="L1417">
+      <pre>/** 这个按键是不是来自面板里的表单控件（是的话菜单别抢，见 `onPanelKeyDown`） */</pre>
+    </li>
+    <li id="L1418">
+      <pre>
+function fromFormControl(event: ReactKeyboardEvent&lt;HTMLDivElement&gt;): boolean {</pre>
+    </li>
+    <li id="L1419"><pre>  const target = event.target</pre></li>
+    <li id="L1420">
+      <pre>
+  return target instanceof Element &amp;&amp; target.closest(FORM_CONTROL_SELECTOR) !== null</pre>
+    </li>
+    <li id="L1421"><pre>}</pre></li>
+    <li id="L1422"><pre></pre></li>
+    <li id="L1423"><pre>/** `ToolbarMenu` 的一项 */</pre></li>
+    <li id="L1424"><pre>export interface ToolbarMenuItem {</pre></li>
+    <li id="L1425"><pre>  /** 稳定标识。做 React key */</pre></li>
+    <li id="L1426"><pre>  key: string</pre></li>
+    <li id="L1427"><pre>  label: string</pre></li>
+    <li id="L1428"><pre>  onSelect?: () =&gt; void</pre></li>
+    <li id="L1429">
+      <pre>  /** 当前值（打勾）。配合 `disabled` 表达 DESIGN §8.4 的「当前值禁用」 */</pre>
+    </li>
+    <li id="L1430"><pre>  active?: boolean</pre></li>
+    <li id="L1431"><pre>  disabled?: boolean</pre></li>
+    <li id="L1432">
+      <pre>  /** 禁用原因。**必须给**：可点而无事发生是最坏的一种（DESIGN §8.4） */</pre>
+    </li>
+    <li id="L1433"><pre>  disabledReason?: string</pre></li>
+    <li id="L1434"><pre>  /** 分组线。分的是「类别」，不是「每两项之间」 */</pre></li>
+    <li id="L1435"><pre>  separator?: boolean</pre></li>
+    <li id="L1436"><pre>}</pre></li>
+    <li id="L1437"><pre></pre></li>
+    <li id="L1438"><pre>export interface ToolbarMenuProps {</pre></li>
+    <li id="L1439"><pre>  /** 触发按钮的名字。也是面板的无障碍名称 */</pre></li>
+    <li id="L1440"><pre>  label: string</pre></li>
+    <li id="L1441">
+      <pre>  /** 触发按钮上的文字（可选，如「插入」）。省略时只有图标 + 箭头 */</pre>
+    </li>
+    <li id="L1442"><pre>  text?: string</pre></li>
+    <li id="L1443"><pre>  icon?: ReactNode</pre></li>
+    <li id="L1444"><pre>  items?: readonly ToolbarMenuItem[]</pre></li>
+    <li id="L1445"><pre>  /**</pre></li>
+    <li id="L1446"><pre>   * 自定义面板（颜色网格、图层列表这类 `items` 表达不了的）。</pre></li>
+    <li id="L1447">
+      <pre>   * `close` 由外壳给——**别自己想办法关**，否则焦点不会回到触发按钮。</pre>
+    </li>
+    <li id="L1448"><pre>   */</pre></li>
+    <li id="L1449"><pre>  renderPanel?: (close: () =&gt; void) =&gt; ReactNode</pre></li>
+    <li id="L1450"><pre>  /** 自定义面板需要更宽时，用实际宽度参与视口边缘定位。 */</pre></li>
+    <li id="L1451"><pre>  panelWidth?: number</pre></li>
+    <li id="L1452">
+      <pre>  /** 没有可选项时那条禁用说明的文字（DESIGN §8.4 规矩 1：不留空子菜单） */</pre>
+    </li>
+    <li id="L1453"><pre>  emptyLabel?: string</pre></li>
+    <li id="L1454"><pre>}</pre></li>
+    <li id="L1455"><pre></pre></li>
+    <li id="L1456"><pre>export interface ToolbarMenuItemRowProps {</pre></li>
+    <li id="L1457"><pre>  item: ToolbarMenuItem</pre></li>
+    <li id="L1458"><pre>  /**</pre></li>
+    <li id="L1459"><pre>   * 选中之后关掉面板。</pre></li>
+    <li id="L1460"><pre>   *</pre></li>
+    <li id="L1461">
+      <pre>   * **可以不给**：`renderPanel` 里那些与菜单项混排的控件（连着用的动作、输入框）</pre>
+    </li>
+    <li id="L1462">
+      <pre>   * 不该被一次点击带走——docx 的「修订」面板就是这个形状（上一处/下一处要点着</pre>
+    </li>
+    <li id="L1463"><pre>   * 连看，点一下就收面板等于每看一处都要重开一次）。</pre></li>
+    <li id="L1464"><pre>   */</pre></li>
+    <li id="L1465"><pre>  close?: () =&gt; void</pre></li>
+    <li id="L1466"><pre>}</pre></li>
+    <li id="L1467"><pre></pre></li>
+    <li id="L1468"><pre>/**</pre></li>
+    <li id="L1469"><pre> * 一条菜单项（`role=&quot;menuitem&quot;`）。</pre></li>
+    <li id="L1470"><pre> *</pre></li>
+    <li id="L1471"><pre> * ## 为什么要单独导出</pre></li>
+    <li id="L1472"><pre> *</pre></li>
+    <li id="L1473">
+      <pre> * `ToolbarMenu` 的面板只能是 `items` **或** `renderPanel` 二者之一，而</pre>
+    </li>
+    <li id="L1474">
+      <pre> * `renderPanel` 拿到的是裸 `close`——没有「把这一条渲染成菜单项」的手段。于是</pre>
+    </li>
+    <li id="L1475">
+      <pre> * 「菜单项 + 输入框混在同一个面板里」的表格菜单 / 修订面板只能照着 `items`</pre>
+    </li>
+    <li id="L1476"><pre> * 那一支的 markup 手抄一遍，而**抄的正好是三件静默错的事**：</pre></li>
+    <li id="L1477"><pre> *</pre></li>
+    <li id="L1478"><pre> *  1. `aria-current` 表达「当前值是这一项」</pre></li>
+    <li id="L1479"><pre> *  2. 禁用时把 `title` 让给原因（一个灰着的行等于让人猜）</pre></li>
+    <li id="L1480"><pre> *  3. 点完关面板（自己想办法关的话焦点不会回到触发按钮）</pre></li>
+    <li id="L1481"><pre> *</pre></li>
+    <li id="L1482">
+      <pre> * 所以收进原语：`items` 分支用它，调用方的 `renderPanel` 也用它——两边不可能</pre>
+    </li>
+    <li id="L1483">
+      <pre> * 再漂移。docx 的 `TableActions` / `RevisionsPanel` 因此各删掉一份手抄。</pre>
+    </li>
+    <li id="L1484"><pre> */</pre></li>
+    <li id="L1485">
+      <pre>export function ToolbarMenuItemRow({ item, close }: ToolbarMenuItemRowProps) {</pre>
+    </li>
+    <li id="L1486">
+      <pre>  if (item.separator === true) return &lt;ToolbarMenuSeparator /&gt;</pre>
+    </li>
+    <li id="L1487"><pre>  return (</pre></li>
+    <li id="L1488"><pre>    &lt;button</pre></li>
+    <li id="L1489"><pre>      type=&quot;button&quot;</pre></li>
+    <li id="L1490"><pre>      role=&quot;menuitem&quot;</pre></li>
+    <li id="L1491"><pre>      className=&quot;me-menu__item&quot;</pre></li>
+    <li id="L1492">
+      <pre>      aria-current={item.active === true ? &#x27;true&#x27; : undefined}</pre>
+    </li>
+    <li id="L1493">
+      <pre>      // 禁用时 title 让给原因，可用时 title 就是名字（悬停说明与读屏名称同源）</pre>
+    </li>
+    <li id="L1494"><pre>      title={</pre></li>
+    <li id="L1495">
+      <pre>        item.disabled === true &amp;&amp; item.disabledReason !== undefined</pre>
+    </li>
+    <li id="L1496"><pre>          ? item.disabledReason</pre></li>
+    <li id="L1497"><pre>          : item.label</pre></li>
+    <li id="L1498"><pre>      }</pre></li>
+    <li id="L1499"><pre>      disabled={item.disabled === true}</pre></li>
+    <li id="L1500"><pre>      onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L1501"><pre>      onClick={() =&gt; {</pre></li>
+    <li id="L1502"><pre>        item.onSelect?.()</pre></li>
+    <li id="L1503"><pre>        close?.()</pre></li>
+    <li id="L1504"><pre>      }}</pre></li>
+    <li id="L1505"><pre>    &gt;</pre></li>
+    <li id="L1506">
+      <pre>
+      &lt;span className=&quot;me-menu__check&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L1507"><pre>        {item.active === true ? &lt;CheckIcon /&gt; : null}</pre></li>
+    <li id="L1508"><pre>      &lt;/span&gt;</pre></li>
+    <li id="L1509">
+      <pre>      &lt;span className=&quot;me-menu__label&quot;&gt;{item.label}&lt;/span&gt;</pre>
+    </li>
+    <li id="L1510"><pre>    &lt;/button&gt;</pre></li>
+    <li id="L1511"><pre>  )</pre></li>
+    <li id="L1512"><pre>}</pre></li>
+    <li id="L1513"><pre></pre></li>
+    <li id="L1514"><pre>/**</pre></li>
+    <li id="L1515"><pre> * 面板里的一道分组线（分的是「类别」，不是「每两项之间」）。</pre></li>
+    <li id="L1516"><pre> *</pre></li>
+    <li id="L1517">
+      <pre> * 与 `ToolbarMenuItem` 的 `separator` 是同一件事——单独导出是给 `renderPanel`</pre>
+    </li>
+    <li id="L1518">
+      <pre> * 用的：它拿不到 items 的渲染器，但同样要能把面板里的几组控件分开。</pre>
+    </li>
+    <li id="L1519"><pre> */</pre></li>
+    <li id="L1520"><pre>export function ToolbarMenuSeparator() {</pre></li>
+    <li id="L1521">
+      <pre>
+  return &lt;div className=&quot;me-menu__sep&quot; role=&quot;separator&quot; /&gt;</pre>
+    </li>
+    <li id="L1522"><pre>}</pre></li>
+    <li id="L1523"><pre></pre></li>
+    <li id="L1524"><pre>/**</pre></li>
+    <li id="L1525"><pre> * 面板里的一组**普通控件**（输入框、下拉，而不是菜单项）。</pre></li>
+    <li id="L1526"><pre> *</pre></li>
+    <li id="L1527">
+      <pre> * 与 `ToolbarMenuSeparator` 同一个理由单独导出：`renderPanel` 拿不到 items 的</pre>
+    </li>
+    <li id="L1528">
+      <pre> * 渲染器，但同样要把面板里的「标签 + 控件」摆成一行行。**样式与 markup 都归</pre>
+    </li>
+    <li id="L1529">
+      <pre> * 这里**——`.me-menu__fields` 原来住在 `shell.css` 却由调用方手写 div，于是</pre>
+    </li>
+    <li id="L1530">
+      <pre> * 「shell.css 定义、外壳不产出」的类又多一处（那正是 `ToolbarGridPicker` 要</pre>
+    </li>
+    <li id="L1531"><pre> * 消掉的那件事）。</pre></li>
+    <li id="L1532"><pre> *</pre></li>
+    <li id="L1533">
+      <pre> * 键盘规矩**不在这里**：方向键那条已经收进 `ToolbarMenu` 的 `onPanelKeyDown`</pre>
+    </li>
+    <li id="L1534"><pre> * （按事件来源判断，表单控件里的一律不抢）。</pre></li>
+    <li id="L1535"><pre> */</pre></li>
+    <li id="L1536">
+      <pre>
+export function ToolbarMenuFields({ label, children }: { label: string; children: ReactNode }) {</pre>
+    </li>
+    <li id="L1537"><pre>  const propertyForm = useContext(PropertyFormContext)</pre></li>
+    <li id="L1538"><pre>  return (</pre></li>
+    <li id="L1539"><pre>    &lt;div</pre></li>
+    <li id="L1540">
+      <pre>
+      className={propertyForm ? &#x27;me-property-group&#x27; : &#x27;me-menu__fields&#x27;}</pre>
+    </li>
+    <li id="L1541"><pre>      role=&quot;group&quot;</pre></li>
+    <li id="L1542"><pre>      aria-label={label}</pre></li>
+    <li id="L1543"><pre>    &gt;</pre></li>
+    <li id="L1544">
+      <pre>
+      {propertyForm &amp;&amp; &lt;h3 className=&quot;me-property-group__title&quot;&gt;{label}&lt;/h3&gt;}</pre>
+    </li>
+    <li id="L1545"><pre>      {children}</pre></li>
+    <li id="L1546"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L1547"><pre>  )</pre></li>
+    <li id="L1548"><pre>}</pre></li>
+    <li id="L1549"><pre></pre></li>
+    <li id="L1550">
+      <pre>/** 面板里的一句说明（说清这个开关是干什么的、或为什么某项给不了） */</pre>
+    </li>
+    <li id="L1551">
+      <pre>export function ToolbarMenuNote({ children }: { children: ReactNode }) {</pre>
+    </li>
+    <li id="L1552">
+      <pre>  return &lt;p className=&quot;me-menu__note&quot;&gt;{children}&lt;/p&gt;</pre>
+    </li>
+    <li id="L1553"><pre>}</pre></li>
+    <li id="L1554"><pre></pre></li>
+    <li id="L1555"><pre>/**</pre></li>
+    <li id="L1556"><pre> * 触发按钮 + 面板。</pre></li>
+    <li id="L1557"><pre> *</pre></li>
+    <li id="L1558"><pre> * 三条 DESIGN §8.4 的规矩在这里实现：</pre></li>
+    <li id="L1559"><pre> *</pre></li>
+    <li id="L1560">
+      <pre> *  1. **不留空子菜单**：`items` 为空（且没有 `renderPanel`）时给一条禁用的</pre>
+    </li>
+    <li id="L1561">
+      <pre> *     说明项，而不是渲染一个空面板——展开后什么都没有会让人以为坏了</pre>
+    </li>
+    <li id="L1562">
+      <pre> *  2. **当前值禁用**：由调用方给 `disabled` + `disabledReason`，外壳负责让</pre>
+    </li>
+    <li id="L1563"><pre> *     它在视觉与读屏上都表达出来（禁用时 `title` 让给原因）</pre></li>
+    <li id="L1564">
+      <pre> *  3. **危险动作不进这个菜单**：删除这类不可撤销的动作留在它该在的地方。</pre>
+    </li>
+    <li id="L1565"><pre> *     这条是调用方的纪律，外壳只能用注释守住</pre></li>
+    <li id="L1566"><pre> *</pre></li>
+    <li id="L1567">
+      <pre> * 键盘：方向键在项间移动、Home/End 到两端、Escape 关闭并还焦点、Tab 关闭。</pre>
+    </li>
+    <li id="L1568"><pre> */</pre></li>
+    <li id="L1569"><pre>export function ToolbarMenu({</pre></li>
+    <li id="L1570"><pre>  label,</pre></li>
+    <li id="L1571"><pre>  text,</pre></li>
+    <li id="L1572"><pre>  icon,</pre></li>
+    <li id="L1573"><pre>  items,</pre></li>
+    <li id="L1574"><pre>  renderPanel,</pre></li>
+    <li id="L1575"><pre>  panelWidth,</pre></li>
+    <li id="L1576"><pre>  emptyLabel = &#x27;没有可选项&#x27;,</pre></li>
+    <li id="L1577"><pre>}: ToolbarMenuProps) {</pre></li>
+    <li id="L1578">
+      <pre>
+  const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup(panelWidth)</pre>
+    </li>
+    <li id="L1579"><pre></pre></li>
+    <li id="L1580"><pre>  const enabledItems = (): HTMLElement[] =&gt; {</pre></li>
+    <li id="L1581">
+      <pre>
+    const list = panelRef.current?.querySelectorAll&lt;HTMLElement&gt;(ITEM_SELECTOR)</pre>
+    </li>
+    <li id="L1582"><pre>    return list === undefined ? [] : Array.from(list)</pre></li>
+    <li id="L1583"><pre>  }</pre></li>
+    <li id="L1584"><pre></pre></li>
+    <li id="L1585"><pre>  const moveFocus = (step: number) =&gt; {</pre></li>
+    <li id="L1586"><pre>    const all = enabledItems()</pre></li>
+    <li id="L1587"><pre>    if (all.length === 0) return</pre></li>
+    <li id="L1588">
+      <pre>    const index = all.findIndex((element) =&gt; element === document.activeElement)</pre>
+    </li>
+    <li id="L1589"><pre>    const next =</pre></li>
+    <li id="L1590">
+      <pre>
+      index === -1 ? (step &gt; 0 ? 0 : all.length - 1) : (index + step + all.length) % all.length</pre>
+    </li>
+    <li id="L1591"><pre>    all[next]?.focus()</pre></li>
+    <li id="L1592"><pre>  }</pre></li>
+    <li id="L1593"><pre></pre></li>
+    <li id="L1594">
+      <pre>  const focusEdge = (edge: &#x27;first&#x27; | &#x27;last&#x27;) =&gt; {</pre>
+    </li>
+    <li id="L1595"><pre>    const all = enabledItems()</pre></li>
+    <li id="L1596">
+      <pre>    const target = edge === &#x27;first&#x27; ? all[0] : all[all.length - 1]</pre>
+    </li>
+    <li id="L1597"><pre>    target?.focus()</pre></li>
+    <li id="L1598"><pre>  }</pre></li>
+    <li id="L1599"><pre></pre></li>
+    <li id="L1600">
+      <pre>  const onPanelKeyDown = (event: ReactKeyboardEvent&lt;HTMLDivElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L1601"><pre>    if (renderPanel !== undefined) {</pre></li>
+    <li id="L1602">
+      <pre>      // Collapsed ribbon groups contain ordinary controls as well as menuitems.</pre>
+    </li>
+    <li id="L1603"><pre>      const target = event.target as HTMLElement</pre></li>
+    <li id="L1604">
+      <pre>
+      if (target.closest(&#x27;[role=&quot;menu&quot;]&#x27;) !== event.currentTarget) return</pre>
+    </li>
+    <li id="L1605"><pre>      const controls = Array.from(</pre></li>
+    <li id="L1606"><pre>        event.currentTarget.querySelectorAll&lt;HTMLElement&gt;(</pre></li>
+    <li id="L1607">
+      <pre>
+          &#x27;button, input:not([type=&quot;hidden&quot;]), select, textarea, [tabindex]&#x27;,</pre>
+    </li>
+    <li id="L1608"><pre>        ),</pre></li>
+    <li id="L1609"><pre>      ).filter(</pre></li>
+    <li id="L1610"><pre>        (control) =&gt;</pre></li>
+    <li id="L1611"><pre>          control.tabIndex &gt;= 0 &amp;&amp;</pre></li>
+    <li id="L1612">
+      <pre>
+          !control.matches(&#x27;:disabled, [aria-disabled=&quot;true&quot;]&#x27;) &amp;&amp;</pre>
+    </li>
+    <li id="L1613">
+      <pre>          !control.closest(&#x27;[hidden], [aria-hidden=&quot;true&quot;]&#x27;),</pre>
+    </li>
+    <li id="L1614"><pre>      )</pre></li>
+    <li id="L1615"><pre>      const atPanel = target === event.currentTarget</pre></li>
+    <li id="L1616"><pre>      const enterWithArrow =</pre></li>
+    <li id="L1617"><pre>        atPanel &amp;&amp;</pre></li>
+    <li id="L1618"><pre>        enabledItems().length === 0 &amp;&amp;</pre></li>
+    <li id="L1619">
+      <pre>
+        [&#x27;ArrowDown&#x27;, &#x27;ArrowUp&#x27;, &#x27;Home&#x27;, &#x27;End&#x27;].includes(event.key)</pre>
+    </li>
+    <li id="L1620">
+      <pre>
+      if ((atPanel &amp;&amp; event.key === &#x27;Tab&#x27; &amp;&amp; !event.shiftKey) || enterWithArrow) {</pre>
+    </li>
+    <li id="L1621">
+      <pre>
+        const last = event.key === &#x27;ArrowUp&#x27; || event.key === &#x27;End&#x27;</pre>
+    </li>
+    <li id="L1622"><pre>        const control = last ? controls.at(-1) : controls[0]</pre></li>
+    <li id="L1623"><pre>        if (control) {</pre></li>
+    <li id="L1624"><pre>          event.preventDefault()</pre></li>
+    <li id="L1625"><pre>          control.focus()</pre></li>
+    <li id="L1626"><pre>          return</pre></li>
+    <li id="L1627"><pre>        }</pre></li>
+    <li id="L1628"><pre>      }</pre></li>
+    <li id="L1629"><pre>      if (event.key === &#x27;Tab&#x27;) {</pre></li>
+    <li id="L1630">
+      <pre>        const edge = event.shiftKey ? controls[0] : controls.at(-1)</pre>
+    </li>
+    <li id="L1631"><pre>        if (atPanel || target === edge) close()</pre></li>
+    <li id="L1632"><pre>        return</pre></li>
+    <li id="L1633"><pre>      }</pre></li>
+    <li id="L1634"><pre>    }</pre></li>
+    <li id="L1635"><pre>    /*</pre></li>
+    <li id="L1636">
+      <pre>     * **表单控件里的按键归它们自己**：数字框的上下键是改数、下拉的上下键是换档、</pre>
+    </li>
+    <li id="L1637">
+      <pre>     * Home/End 在输入框里是回到行首行尾。抢过来的话控件看着还在、就是按不动。</pre>
+    </li>
+    <li id="L1638"><pre>     *</pre></li>
+    <li id="L1639">
+      <pre>     * 这一层以前由调用方自己加（docx 的 `MenuFields` 挂了个 `stopPropagation`），</pre>
+    </li>
+    <li id="L1640">
+      <pre>     * 而 markdown 的两个面板漏了——所以规矩收进原语，别再靠每个调用点记得。</pre>
+    </li>
+    <li id="L1641">
+      <pre>     * Tab 也从这里走：焦点在面板内的控件上时，先让 Tab 在面板里正常走。</pre>
+    </li>
+    <li id="L1642"><pre>     */</pre></li>
+    <li id="L1643"><pre>    if (fromFormControl(event)) return</pre></li>
+    <li id="L1644"><pre>    if (event.key === &#x27;ArrowDown&#x27;) {</pre></li>
+    <li id="L1645"><pre>      event.preventDefault()</pre></li>
+    <li id="L1646"><pre>      moveFocus(1)</pre></li>
+    <li id="L1647"><pre>    } else if (event.key === &#x27;ArrowUp&#x27;) {</pre></li>
+    <li id="L1648"><pre>      event.preventDefault()</pre></li>
+    <li id="L1649"><pre>      moveFocus(-1)</pre></li>
+    <li id="L1650"><pre>    } else if (event.key === &#x27;Home&#x27;) {</pre></li>
+    <li id="L1651"><pre>      event.preventDefault()</pre></li>
+    <li id="L1652"><pre>      focusEdge(&#x27;first&#x27;)</pre></li>
+    <li id="L1653"><pre>    } else if (event.key === &#x27;End&#x27;) {</pre></li>
+    <li id="L1654"><pre>      event.preventDefault()</pre></li>
+    <li id="L1655"><pre>      focusEdge(&#x27;last&#x27;)</pre></li>
+    <li id="L1656"><pre>    } else if (event.key === &#x27;Tab&#x27;) {</pre></li>
+    <li id="L1657">
+      <pre>      // 关掉但**不抢焦点**：Tab 的默认行为接着把焦点交给触发按钮后面的控件</pre>
+    </li>
+    <li id="L1658"><pre>      close()</pre></li>
+    <li id="L1659"><pre>    }</pre></li>
+    <li id="L1660"><pre>  }</pre></li>
+    <li id="L1661"><pre></pre></li>
+    <li id="L1662">
+      <pre>  const hasItems = items !== undefined &amp;&amp; items.length &gt; 0</pre>
+    </li>
+    <li id="L1663"><pre></pre></li>
+    <li id="L1664"><pre>  return (</pre></li>
+    <li id="L1665"><pre>    &lt;span className=&quot;me-menu&quot;&gt;</pre></li>
+    <li id="L1666"><pre>      &lt;button</pre></li>
+    <li id="L1667"><pre>        ref={triggerRef}</pre></li>
+    <li id="L1668"><pre>        type=&quot;button&quot;</pre></li>
+    <li id="L1669"><pre>        /*</pre></li>
+    <li id="L1670">
+      <pre>
+         * **裸 `&lt;button className=&quot;me-btn&quot;&gt;`，不经过 `ToolbarButton`**：</pre>
+    </li>
+    <li id="L1671">
+      <pre>         * 这个触发器带 `aria-haspopup` / `aria-expanded`，而 antd 的 Button</pre>
+    </li>
+    <li id="L1672">
+      <pre>         * 不认那两个属性（也不认 `aria-pressed`），且我们要的就是这一份手写的</pre>
+    </li>
+    <li id="L1673">
+      <pre>         * 尺寸与焦点环（`.me-btn` 归这两个未迁移的弹层触发器用，见 shell.css）。</pre>
+    </li>
+    <li id="L1674"><pre>         */</pre></li>
+    <li id="L1675"><pre>        className=&quot;me-btn&quot;</pre></li>
+    <li id="L1676"><pre>        title={label}</pre></li>
+    <li id="L1677"><pre>        aria-label={label}</pre></li>
+    <li id="L1678"><pre>        aria-haspopup=&quot;menu&quot;</pre></li>
+    <li id="L1679"><pre>        aria-expanded={open}</pre></li>
+    <li id="L1680"><pre>        onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L1681"><pre>        onClick={toggle}</pre></li>
+    <li id="L1682"><pre>      &gt;</pre></li>
+    <li id="L1683">
+      <pre>
+        {icon !== undefined &amp;&amp; &lt;span className=&quot;me-btn__icon&quot;&gt;{icon}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L1684">
+      <pre>
+        {text !== undefined &amp;&amp; text !== &#x27;&#x27; &amp;&amp; &lt;span className=&quot;me-menu__text&quot;&gt;{text}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L1685">
+      <pre>        &lt;span className=&quot;me-btn__icon me-menu__caret&quot;&gt;</pre>
+    </li>
+    <li id="L1686"><pre>          &lt;ChevronDownIcon /&gt;</pre></li>
+    <li id="L1687"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L1688"><pre>      &lt;/button&gt;</pre></li>
+    <li id="L1689"><pre>      {open &amp;&amp; position !== null &amp;&amp; (</pre></li>
+    <li id="L1690"><pre>        &lt;div</pre></li>
+    <li id="L1691"><pre>          ref={panelRef}</pre></li>
+    <li id="L1692"><pre>          className=&quot;me-menu__panel&quot;</pre></li>
+    <li id="L1693"><pre>          role=&quot;menu&quot;</pre></li>
+    <li id="L1694"><pre>          aria-label={label}</pre></li>
+    <li id="L1695"><pre>          tabIndex={-1}</pre></li>
+    <li id="L1696"><pre>          onKeyDown={onPanelKeyDown}</pre></li>
+    <li id="L1697"><pre>          style={</pre></li>
+    <li id="L1698"><pre>            position.bottom === undefined</pre></li>
+    <li id="L1699"><pre>              ? {</pre></li>
+    <li id="L1700"><pre>                  top: position.top,</pre></li>
+    <li id="L1701"><pre>                  left: position.left,</pre></li>
+    <li id="L1702">
+      <pre>
+                  ...(panelWidth ? { width: Math.min(panelWidth, window.innerWidth - 16) } : {}),</pre>
+    </li>
+    <li id="L1703"><pre>                }</pre></li>
+    <li id="L1704"><pre>              : {</pre></li>
+    <li id="L1705"><pre>                  bottom: position.bottom,</pre></li>
+    <li id="L1706"><pre>                  left: position.left,</pre></li>
+    <li id="L1707">
+      <pre>
+                  ...(panelWidth ? { width: Math.min(panelWidth, window.innerWidth - 16) } : {}),</pre>
+    </li>
+    <li id="L1708"><pre>                }</pre></li>
+    <li id="L1709"><pre>          }</pre></li>
+    <li id="L1710"><pre>        &gt;</pre></li>
+    <li id="L1711"><pre>          {renderPanel !== undefined ? (</pre></li>
+    <li id="L1712"><pre>            renderPanel(close)</pre></li>
+    <li id="L1713"><pre>          ) : hasItems ? (</pre></li>
+    <li id="L1714">
+      <pre>
+            items.map((item) =&gt; &lt;ToolbarMenuItemRow key={item.key} item={item} close={close} /&gt;)</pre>
+    </li>
+    <li id="L1715"><pre>          ) : (</pre></li>
+    <li id="L1716"><pre>            // 规矩 1：空菜单要给一条**禁用的说明**，不是空面板</pre></li>
+    <li id="L1717"><pre>            &lt;ToolbarMenuItemRow</pre></li>
+    <li id="L1718">
+      <pre>
+              item={{ key: &#x27;empty&#x27;, label: emptyLabel, disabled: true, disabledReason: emptyLabel }}</pre>
+    </li>
+    <li id="L1719"><pre>            /&gt;</pre></li>
+    <li id="L1720"><pre>          )}</pre></li>
+    <li id="L1721"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L1722"><pre>      )}</pre></li>
+    <li id="L1723"><pre>    &lt;/span&gt;</pre></li>
+    <li id="L1724"><pre>  )</pre></li>
+    <li id="L1725"><pre>}</pre></li>
+    <li id="L1726"><pre></pre></li>
+    <li id="L1727"><pre>/** `ToolbarColorPicker` 的一档颜色 */</pre></li>
+    <li id="L1728"><pre>export interface ToolbarColorOption {</pre></li>
+    <li id="L1729"><pre>  /**</pre></li>
+    <li id="L1730">
+      <pre>   * 存进文档的值。docx 的突出显示存的是 **OOXML 色名**（`yellow` / `darkBlue`</pre>
+    </li>
+    <li id="L1731">
+      <pre>   * 这 16 个，见 `marks.ts` 的 `HIGHLIGHT_CSS`）——写错色名 Word 会静默忽略。</pre>
+    </li>
+    <li id="L1732"><pre>   */</pre></li>
+    <li id="L1733"><pre>  value: string</pre></li>
+    <li id="L1734"><pre>  label: string</pre></li>
+    <li id="L1735">
+      <pre>
+  /** 界面上显示的颜色（CSS 颜色）。**与 `value` 分开**：一个是存储格式，一个是显示 */</pre>
+    </li>
+    <li id="L1736"><pre>  swatch: string</pre></li>
+    <li id="L1737"><pre>}</pre></li>
+    <li id="L1738"><pre></pre></li>
+    <li id="L1739"><pre>export interface ToolbarColorPickerProps {</pre></li>
+    <li id="L1740"><pre>  /** 这是什么（读屏用）。如「字体颜色」「突出显示」 */</pre></li>
+    <li id="L1741"><pre>  label: string</pre></li>
+    <li id="L1742"><pre>  disabled?: boolean</pre></li>
+    <li id="L1743"><pre>  disabledReason?: string</pre></li>
+    <li id="L1744"><pre>  /** 当前值。`null` = **没有设置**（不是「默认色」） */</pre></li>
+    <li id="L1745"><pre>  value: string | null</pre></li>
+    <li id="L1746"><pre>  options: readonly ToolbarColorOption[]</pre></li>
+    <li id="L1747"><pre>  onPick: (value: string) =&gt; void</pre></li>
+    <li id="L1748">
+      <pre>  /** 给了才渲染「清除」。字体颜色可以「自动」、段落底纹可以「无」 */</pre>
+    </li>
+    <li id="L1749"><pre>  onClear?: () =&gt; void</pre></li>
+    <li id="L1750"><pre>  /**</pre></li>
+    <li id="L1751">
+      <pre>   * 触发器上的图标。**同一个工具条里有两个以上的取色器时必须给**：</pre>
+    </li>
+    <li id="L1752">
+      <pre>   * 没设置颜色时它们的触发器长得一模一样（都是一条斜线 + 箭头），</pre>
+    </li>
+    <li id="L1753">
+      <pre>   * 光看形状分不出哪个是字体颜色、哪个是段落底纹——只有悬停看 title 才知道。</pre>
+    </li>
+    <li id="L1754"><pre>   */</pre></li>
+    <li id="L1755"><pre>  icon?: ReactNode</pre></li>
+    <li id="L1756"><pre>  /**</pre></li>
+    <li id="L1757">
+      <pre>   * 内联形态：只渲染那排色块，不渲染触发器、不渲染弹层、不开 popup。</pre>
+    </li>
+    <li id="L1758">
+      <pre>   * 给「面板里的一小节」用——docx 的单元格底纹在**已经展开的表格菜单**里，</pre>
+    </li>
+    <li id="L1759"><pre>   * 那里再套一个「触发器 + 弹层」就成了面板里再开一层面板。</pre></li>
+    <li id="L1760"><pre>   *</pre></li>
+    <li id="L1761">
+      <pre>   * 两种形态共用同一份网格与同一条键盘/选中语义（见 `ToolbarColorGrid`），</pre>
+    </li>
+    <li id="L1762"><pre>   * 不内联的那一支只是把它包进弹层。</pre></li>
+    <li id="L1763"><pre>   */</pre></li>
+    <li id="L1764"><pre>  inline?: boolean</pre></li>
+    <li id="L1765"><pre>  /**</pre></li>
+    <li id="L1766"><pre>   * 「清除」那一格的说明。默认「清除颜色」。</pre></li>
+    <li id="L1767"><pre>   *</pre></li>
+    <li id="L1768">
+      <pre>   * 给了才需要它：同一个原语在两处当不同的东西用（字体颜色 / 突出显示 /</pre>
+    </li>
+    <li id="L1769">
+      <pre>   * 段落底纹 / 单元格底纹），读屏念出来的应当是对应的那件事——单元格底纹上</pre>
+    </li>
+    <li id="L1770"><pre>   * 念「清除颜色」是**界面说了假话**，只是不明显。</pre></li>
+    <li id="L1771"><pre>   */</pre></li>
+    <li id="L1772"><pre>  clearLabel?: string</pre></li>
+    <li id="L1773">
+      <pre>
+  /** Opt in only for storage contracts accepting six-digit RGB (#RRGGBB). No alpha. */</pre>
+    </li>
+    <li id="L1774"><pre>  allowCustomRgb?: boolean</pre></li>
+    <li id="L1775"><pre>}</pre></li>
+    <li id="L1776"><pre></pre></li>
+    <li id="L1777"><pre>function normalizedRgb(value: string | null): string | null {</pre></li>
+    <li id="L1778">
+      <pre>  const match = /^#?([\da-f]{6})$/i.exec(value?.trim() ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L1779"><pre>  return match ? `#${match[1]!.toUpperCase()}` : null</pre></li>
+    <li id="L1780"><pre>}</pre></li>
+    <li id="L1781"><pre></pre></li>
+    <li id="L1782">
+      <pre>
+/** A draft stays local until Enter or the explicit action; invalid input never picks. */</pre>
+    </li>
+    <li id="L1783"><pre>function ToolbarCustomRgb({</pre></li>
+    <li id="L1784"><pre>  label,</pre></li>
+    <li id="L1785"><pre>  value,</pre></li>
+    <li id="L1786"><pre>  disabled,</pre></li>
+    <li id="L1787"><pre>  onPick,</pre></li>
+    <li id="L1788"><pre>  onPicked,</pre></li>
+    <li id="L1789"><pre>}: {</pre></li>
+    <li id="L1790"><pre>  label: string</pre></li>
+    <li id="L1791"><pre>  value: string | null</pre></li>
+    <li id="L1792"><pre>  disabled: boolean</pre></li>
+    <li id="L1793"><pre>  onPick: (value: string) =&gt; void</pre></li>
+    <li id="L1794"><pre>  onPicked?: () =&gt; void</pre></li>
+    <li id="L1795"><pre>}) {</pre></li>
+    <li id="L1796"><pre>  const inputId = useId()</pre></li>
+    <li id="L1797">
+      <pre>  const [draft, setDraft] = useState(normalizedRgb(value) ?? &#x27;&#x27;)</pre>
+    </li>
+    <li id="L1798"><pre>  const color = normalizedRgb(draft)</pre></li>
+    <li id="L1799">
+      <pre>  const invalid = draft.trim() !== &#x27;&#x27; &amp;&amp; color === null</pre>
+    </li>
+    <li id="L1800"><pre>  const pick = () =&gt; {</pre></li>
+    <li id="L1801"><pre>    if (!color || disabled) return</pre></li>
+    <li id="L1802"><pre>    onPick(color)</pre></li>
+    <li id="L1803"><pre>    onPicked?.()</pre></li>
+    <li id="L1804"><pre>  }</pre></li>
+    <li id="L1805"><pre>  return (</pre></li>
+    <li id="L1806"><pre>    &lt;div className=&quot;me-color__custom&quot;&gt;</pre></li>
+    <li id="L1807">
+      <pre>
+      &lt;label className=&quot;me-property-field__label&quot; htmlFor={inputId}&gt;</pre>
+    </li>
+    <li id="L1808"><pre>        自定义 RGB</pre></li>
+    <li id="L1809"><pre>      &lt;/label&gt;</pre></li>
+    <li id="L1810"><pre>      &lt;Input</pre></li>
+    <li id="L1811"><pre>        id={inputId}</pre></li>
+    <li id="L1812"><pre>        aria-label={`${label}自定义 RGB`}</pre></li>
+    <li id="L1813"><pre>        value={draft}</pre></li>
+    <li id="L1814"><pre>        placeholder=&quot;#RRGGBB&quot;</pre></li>
+    <li id="L1815"><pre>        disabled={disabled}</pre></li>
+    <li id="L1816"><pre>        spellCheck={false}</pre></li>
+    <li id="L1817"><pre>        autoComplete=&quot;off&quot;</pre></li>
+    <li id="L1818"><pre>        aria-invalid={invalid}</pre></li>
+    <li id="L1819"><pre>        status={invalid ? &#x27;error&#x27; : undefined}</pre></li>
+    <li id="L1820"><pre>        onChange={(event) =&gt; setDraft(event.target.value)}</pre></li>
+    <li id="L1821"><pre>        onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L1822">
+      <pre>
+          if (event.key === &#x27;Enter&#x27; &amp;&amp; !event.nativeEvent.isComposing) {</pre>
+    </li>
+    <li id="L1823"><pre>            event.preventDefault()</pre></li>
+    <li id="L1824"><pre>            pick()</pre></li>
+    <li id="L1825"><pre>          }</pre></li>
+    <li id="L1826"><pre>        }}</pre></li>
+    <li id="L1827"><pre>      /&gt;</pre></li>
+    <li id="L1828"><pre>      &lt;ToolbarMenuNote&gt;</pre></li>
+    <li id="L1829">
+      <pre>
+        {invalid ? &#x27;请输入六位 RGB，例如 #4472C4&#x27; : &#x27;六位 RGB，不含透明度&#x27;}</pre>
+    </li>
+    <li id="L1830"><pre>      &lt;/ToolbarMenuNote&gt;</pre></li>
+    <li id="L1831"><pre>      &lt;ToolbarButton</pre></li>
+    <li id="L1832"><pre>        label={`使用${label}自定义颜色`}</pre></li>
+    <li id="L1833"><pre>        disabled={!color || disabled}</pre></li>
+    <li id="L1834"><pre>        disabledReason=&quot;请输入六位 RGB&quot;</pre></li>
+    <li id="L1835"><pre>        onClick={pick}</pre></li>
+    <li id="L1836"><pre>      &gt;</pre></li>
+    <li id="L1837"><pre>        使用颜色</pre></li>
+    <li id="L1838"><pre>      &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L1839"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L1840"><pre>  )</pre></li>
+    <li id="L1841"><pre>}</pre></li>
+    <li id="L1842"><pre></pre></li>
+    <li id="L1843"><pre>/**</pre></li>
+    <li id="L1844">
+      <pre> * 色块那一排。**`ToolbarColorPicker` 的两种形态共用它**——这是「面板里手抄</pre>
+    </li>
+    <li id="L1845">
+      <pre> * 一份内部 markup」不再发生的原因：抄的那份会漏掉 `aria-pressed`（全仓库</pre>
+    </li>
+    <li id="L1846"><pre> * 一度一处都没有），于是「当前是哪个颜色」在界面与读屏上都丢了。</pre></li>
+    <li id="L1847"><pre> *</pre></li>
+    <li id="L1848">
+      <pre>
+ * 用 `role=&quot;group&quot;` + 一排真 `&lt;button&gt;`，不用 `role=&quot;menu&quot;`：颜色网格里方向键</pre>
+    </li>
+    <li id="L1849">
+      <pre> * 的语义（上下是同一列还是相邻色）没有共识，而真按钮的 Tab / Enter / 空格是</pre>
+    </li>
+    <li id="L1850"><pre> * 浏览器给的、不用自己实现一半。</pre></li>
+    <li id="L1851"><pre> *</pre></li>
+    <li id="L1852">
+      <pre> * `onPicked` 是**选中之后**的钩子：弹层形态拿它关面板，内联形态不给（面板</pre>
+    </li>
+    <li id="L1853"><pre> * 是调用方的，关不关由调用方决定）。</pre></li>
+    <li id="L1854"><pre> */</pre></li>
+    <li id="L1855"><pre>function ToolbarColorGrid({</pre></li>
+    <li id="L1856"><pre>  label,</pre></li>
+    <li id="L1857"><pre>  value,</pre></li>
+    <li id="L1858"><pre>  options,</pre></li>
+    <li id="L1859"><pre>  onPick,</pre></li>
+    <li id="L1860"><pre>  onClear,</pre></li>
+    <li id="L1861"><pre>  clearLabel = &#x27;清除颜色&#x27;,</pre></li>
+    <li id="L1862"><pre>  disabled = false,</pre></li>
+    <li id="L1863"><pre>  disabledReason,</pre></li>
+    <li id="L1864"><pre>  onPicked,</pre></li>
+    <li id="L1865"><pre>}: {</pre></li>
+    <li id="L1866"><pre>  label: string</pre></li>
+    <li id="L1867"><pre>  value: string | null</pre></li>
+    <li id="L1868"><pre>  options: readonly ToolbarColorOption[]</pre></li>
+    <li id="L1869"><pre>  onPick: (value: string) =&gt; void</pre></li>
+    <li id="L1870"><pre>  onClear?: () =&gt; void</pre></li>
+    <li id="L1871"><pre>  clearLabel?: string</pre></li>
+    <li id="L1872"><pre>  disabled?: boolean</pre></li>
+    <li id="L1873"><pre>  disabledReason?: string</pre></li>
+    <li id="L1874"><pre>  onPicked?: () =&gt; void</pre></li>
+    <li id="L1875"><pre>}) {</pre></li>
+    <li id="L1876"><pre>  return (</pre></li>
+    <li id="L1877">
+      <pre>
+    &lt;div className=&quot;me-picker-grid&quot; role=&quot;group&quot; aria-label={label}&gt;</pre>
+    </li>
+    <li id="L1878"><pre>      {options.map((option) =&gt; (</pre></li>
+    <li id="L1879"><pre>        &lt;button</pre></li>
+    <li id="L1880"><pre>          key={option.value}</pre></li>
+    <li id="L1881"><pre>          type=&quot;button&quot;</pre></li>
+    <li id="L1882"><pre>          disabled={disabled}</pre></li>
+    <li id="L1883"><pre>          className=&quot;me-color__cell&quot;</pre></li>
+    <li id="L1884">
+      <pre>
+          title={disabled &amp;&amp; disabledReason ? disabledReason : option.label}</pre>
+    </li>
+    <li id="L1885"><pre>          aria-label={option.label}</pre></li>
+    <li id="L1886"><pre>          /*</pre></li>
+    <li id="L1887">
+      <pre>           * 选中的那一档。**这是网格上唯一的「当前值」表达**——原来只有</pre>
+    </li>
+    <li id="L1888">
+      <pre>           * 弹层形态有它，内联那一份（docx 的单元格底纹）漏了，于是「这一格</pre>
+    </li>
+    <li id="L1889">
+      <pre>           * 现在是什么颜色」在界面上读不出来。两种形态共用这里就不可能再漏。</pre>
+    </li>
+    <li id="L1890"><pre>           */</pre></li>
+    <li id="L1891"><pre>          aria-pressed={option.value === value}</pre></li>
+    <li id="L1892"><pre>          onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L1893"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L1894"><pre>            onPick(option.value)</pre></li>
+    <li id="L1895"><pre>            onPicked?.()</pre></li>
+    <li id="L1896"><pre>          }}</pre></li>
+    <li id="L1897"><pre>        &gt;</pre></li>
+    <li id="L1898">
+      <pre>
+          &lt;span className=&quot;me-color__swatch&quot; style={{ background: option.swatch }} /&gt;</pre>
+    </li>
+    <li id="L1899"><pre>        &lt;/button&gt;</pre></li>
+    <li id="L1900"><pre>      ))}</pre></li>
+    <li id="L1901"><pre>      {onClear !== undefined &amp;&amp; (</pre></li>
+    <li id="L1902"><pre>        &lt;button</pre></li>
+    <li id="L1903"><pre>          type=&quot;button&quot;</pre></li>
+    <li id="L1904"><pre>          disabled={disabled}</pre></li>
+    <li id="L1905">
+      <pre>          className=&quot;me-color__cell me-color__cell--clear&quot;</pre>
+    </li>
+    <li id="L1906">
+      <pre>          title={disabled &amp;&amp; disabledReason ? disabledReason : clearLabel}</pre>
+    </li>
+    <li id="L1907"><pre>          aria-label={clearLabel}</pre></li>
+    <li id="L1908"><pre>          onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L1909"><pre>          onClick={() =&gt; {</pre></li>
+    <li id="L1910"><pre>            onClear()</pre></li>
+    <li id="L1911"><pre>            onPicked?.()</pre></li>
+    <li id="L1912"><pre>          }}</pre></li>
+    <li id="L1913"><pre>        &gt;</pre></li>
+    <li id="L1914"><pre>          &lt;CloseIcon /&gt;</pre></li>
+    <li id="L1915"><pre>        &lt;/button&gt;</pre></li>
+    <li id="L1916"><pre>      )}</pre></li>
+    <li id="L1917"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L1918"><pre>  )</pre></li>
+    <li id="L1919"><pre>}</pre></li>
+    <li id="L1920"><pre></pre></li>
+    <li id="L1921"><pre>/**</pre></li>
+    <li id="L1922"><pre> * 色块触发器 + 调色板（或者只有调色板，见 `inline`）。</pre></li>
+    <li id="L1923"><pre> *</pre></li>
+    <li id="L1924">
+      <pre> * 触发器上显示**当前颜色**（这就是它不能是一个普通按钮的原因：按钮只有</pre>
+    </li>
+    <li id="L1925"><pre> * 按下/没按下，而这里要显示一个值）。</pre></li>
+    <li id="L1926"><pre> *</pre></li>
+    <li id="L1927"><pre> * ## 内联形态（`inline`）</pre></li>
+    <li id="L1928"><pre> *</pre></li>
+    <li id="L1929">
+      <pre> * 它存在的理由是「面板里的一小节」：docx 的单元格底纹长在**已经展开的表格</pre>
+    </li>
+    <li id="L1930">
+      <pre> * 菜单**里，那个位置没法再套一个弹层。之前只能照着这里的内部 markup 手抄一份</pre>
+    </li>
+    <li id="L1931">
+      <pre> * `me-color__cell`——抄漏了 `aria-pressed`，于是「当前底纹是什么」在界面与读屏</pre>
+    </li>
+    <li id="L1932">
+      <pre> * 上都读不出来（那个 bug 是静默的，看着只是「这排色块没反应」）。</pre>
+    </li>
+    <li id="L1933"><pre> *</pre></li>
+    <li id="L1934">
+      <pre> * 内联形态**仍然要 `label`**：它给那排色块当 `role=&quot;group&quot;` 的组名。</pre>
+    </li>
+    <li id="L1935"><pre> */</pre></li>
+    <li id="L1936"><pre>export function ToolbarColorPicker({</pre></li>
+    <li id="L1937"><pre>  label,</pre></li>
+    <li id="L1938"><pre>  disabled = false,</pre></li>
+    <li id="L1939"><pre>  disabledReason,</pre></li>
+    <li id="L1940"><pre>  value,</pre></li>
+    <li id="L1941"><pre>  options,</pre></li>
+    <li id="L1942"><pre>  onPick,</pre></li>
+    <li id="L1943"><pre>  onClear,</pre></li>
+    <li id="L1944"><pre>  icon,</pre></li>
+    <li id="L1945"><pre>  inline = false,</pre></li>
+    <li id="L1946"><pre>  clearLabel,</pre></li>
+    <li id="L1947"><pre>  allowCustomRgb = false,</pre></li>
+    <li id="L1948"><pre>}: ToolbarColorPickerProps) {</pre></li>
+    <li id="L1949">
+      <pre>  const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup(</pre>
+    </li>
+    <li id="L1950"><pre>    allowCustomRgb ? 260 : undefined,</pre></li>
+    <li id="L1951"><pre>    allowCustomRgb ? 340 : undefined,</pre></li>
+    <li id="L1952"><pre>  )</pre></li>
+    <li id="L1953">
+      <pre>  const current = options.find((option) =&gt; option.value === value)</pre>
+    </li>
+    <li id="L1954">
+      <pre>
+  const currentSwatch = current?.swatch ?? (allowCustomRgb ? normalizedRgb(value) : null)</pre>
+    </li>
+    <li id="L1955"><pre></pre></li>
+    <li id="L1956"><pre>  const grid = (</pre></li>
+    <li id="L1957"><pre>    &lt;ToolbarColorGrid</pre></li>
+    <li id="L1958"><pre>      label={label}</pre></li>
+    <li id="L1959"><pre>      value={value}</pre></li>
+    <li id="L1960"><pre>      options={options}</pre></li>
+    <li id="L1961"><pre>      onPick={onPick}</pre></li>
+    <li id="L1962"><pre>      onClear={onClear}</pre></li>
+    <li id="L1963"><pre>      clearLabel={clearLabel}</pre></li>
+    <li id="L1964"><pre>      disabled={disabled}</pre></li>
+    <li id="L1965"><pre>      disabledReason={disabledReason}</pre></li>
+    <li id="L1966"><pre>      /*</pre></li>
+    <li id="L1967">
+      <pre>       * 弹层里选完要关；内联形态**不关**——它没有自己的弹层可关，`close` 是</pre>
+    </li>
+    <li id="L1968">
+      <pre>       * 调用方的 `ToolbarMenu` 的那个（关掉整个表格菜单会让人没法连着改几个</pre>
+    </li>
+    <li id="L1969"><pre>       * 格子上的底纹）。</pre></li>
+    <li id="L1970"><pre>       */</pre></li>
+    <li id="L1971"><pre>      onPicked={inline ? undefined : close}</pre></li>
+    <li id="L1972"><pre>    /&gt;</pre></li>
+    <li id="L1973"><pre>  )</pre></li>
+    <li id="L1974"><pre></pre></li>
+    <li id="L1975"><pre>  // 内联：不渲染触发器、不开 popup，只是把那排色块交出去</pre></li>
+    <li id="L1976"><pre>  if (inline)</pre></li>
+    <li id="L1977"><pre>    return (</pre></li>
+    <li id="L1978"><pre>      &lt;ToolbarPropertyField label={label}&gt;</pre></li>
+    <li id="L1979"><pre>        {grid}</pre></li>
+    <li id="L1980"><pre>        {allowCustomRgb &amp;&amp; (</pre></li>
+    <li id="L1981"><pre>          &lt;ToolbarCustomRgb</pre></li>
+    <li id="L1982"><pre>            key={value}</pre></li>
+    <li id="L1983"><pre>            label={label}</pre></li>
+    <li id="L1984"><pre>            value={value}</pre></li>
+    <li id="L1985"><pre>            disabled={disabled}</pre></li>
+    <li id="L1986"><pre>            onPick={onPick}</pre></li>
+    <li id="L1987"><pre>          /&gt;</pre></li>
+    <li id="L1988"><pre>        )}</pre></li>
+    <li id="L1989"><pre>      &lt;/ToolbarPropertyField&gt;</pre></li>
+    <li id="L1990"><pre>    )</pre></li>
+    <li id="L1991"><pre></pre></li>
+    <li id="L1992"><pre>  return (</pre></li>
+    <li id="L1993"><pre>    &lt;ToolbarPropertyField label={label}&gt;</pre></li>
+    <li id="L1994"><pre>      &lt;span className=&quot;me-menu&quot;&gt;</pre></li>
+    <li id="L1995"><pre>        &lt;button</pre></li>
+    <li id="L1996"><pre>          ref={triggerRef}</pre></li>
+    <li id="L1997"><pre>          type=&quot;button&quot;</pre></li>
+    <li id="L1998"><pre>          className=&quot;me-btn&quot;</pre></li>
+    <li id="L1999">
+      <pre>          title={disabled &amp;&amp; disabledReason ? disabledReason : label}</pre>
+    </li>
+    <li id="L2000"><pre>          aria-label={label}</pre></li>
+    <li id="L2001"><pre>          disabled={disabled}</pre></li>
+    <li id="L2002"><pre>          aria-haspopup=&quot;true&quot;</pre></li>
+    <li id="L2003"><pre>          aria-expanded={open}</pre></li>
+    <li id="L2004"><pre>          onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L2005"><pre>          onClick={toggle}</pre></li>
+    <li id="L2006"><pre>        &gt;</pre></li>
+    <li id="L2007">
+      <pre>
+          {icon !== undefined &amp;&amp; &lt;span className=&quot;me-btn__icon&quot;&gt;{icon}&lt;/span&gt;}</pre>
+    </li>
+    <li id="L2008"><pre>          &lt;span className=&quot;me-btn__icon&quot;&gt;</pre></li>
+    <li id="L2009"><pre>            {!currentSwatch ? (</pre></li>
+    <li id="L2010">
+      <pre>              // 没设置（或值不在选项里）时画一条斜线，**不能**显示成第一个颜色</pre>
+    </li>
+    <li id="L2011">
+      <pre>
+              &lt;span className=&quot;me-color__swatch me-color__swatch--none&quot; /&gt;</pre>
+    </li>
+    <li id="L2012"><pre>            ) : (</pre></li>
+    <li id="L2013">
+      <pre>
+              &lt;span className=&quot;me-color__swatch&quot; style={{ background: currentSwatch }} /&gt;</pre>
+    </li>
+    <li id="L2014"><pre>            )}</pre></li>
+    <li id="L2015"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L2016">
+      <pre>          &lt;span className=&quot;me-btn__icon me-menu__caret&quot;&gt;</pre>
+    </li>
+    <li id="L2017"><pre>            &lt;ChevronDownIcon /&gt;</pre></li>
+    <li id="L2018"><pre>          &lt;/span&gt;</pre></li>
+    <li id="L2019"><pre>        &lt;/button&gt;</pre></li>
+    <li id="L2020"><pre>        {open &amp;&amp; position !== null &amp;&amp; (</pre></li>
+    <li id="L2021"><pre>          &lt;div</pre></li>
+    <li id="L2022"><pre>            ref={panelRef}</pre></li>
+    <li id="L2023">
+      <pre>
+            className={`me-menu__panel me-color__panel${allowCustomRgb ? &#x27; me-color__panel--custom&#x27; : &#x27;&#x27;}`}</pre>
+    </li>
+    <li id="L2024">
+      <pre>            data-toolbar-popup={allowCustomRgb ? &#x27;&#x27; : undefined}</pre>
+    </li>
+    <li id="L2025"><pre>            /*</pre></li>
+    <li id="L2026">
+      <pre>
+             * **面板这一层不带 `role` / `aria-label`**：语义（`role=&quot;group&quot;` +</pre>
+    </li>
+    <li id="L2027">
+      <pre>             * 名字）在那排色块自己的 `ToolbarColorGrid` 上。两层都挂同一个名字</pre>
+    </li>
+    <li id="L2028">
+      <pre>             * 会让读屏把「突出显示」念两遍，而定位于那个名字的辅助软件会命中</pre>
+    </li>
+    <li id="L2029"><pre>             * 外面这层不可点的容器。</pre></li>
+    <li id="L2030"><pre>             */</pre></li>
+    <li id="L2031"><pre>            tabIndex={-1}</pre></li>
+    <li id="L2032"><pre>            onKeyDown={(event) =&gt; {</pre></li>
+    <li id="L2033"><pre>              if (event.key !== &#x27;Tab&#x27;) return</pre></li>
+    <li id="L2034"><pre>              if (!allowCustomRgb) {</pre></li>
+    <li id="L2035"><pre>                close()</pre></li>
+    <li id="L2036"><pre>                return</pre></li>
+    <li id="L2037"><pre>              }</pre></li>
+    <li id="L2038"><pre>              const controls = [</pre></li>
+    <li id="L2039">
+      <pre>                ...event.currentTarget.querySelectorAll&lt;HTMLElement&gt;(</pre>
+    </li>
+    <li id="L2040">
+      <pre>                  &#x27;button:not(:disabled), input:not(:disabled)&#x27;,</pre>
+    </li>
+    <li id="L2041"><pre>                ),</pre></li>
+    <li id="L2042"><pre>              ]</pre></li>
+    <li id="L2043"><pre>              if (</pre></li>
+    <li id="L2044">
+      <pre>                (event.shiftKey &amp;&amp; event.target === controls[0]) ||</pre>
+    </li>
+    <li id="L2045">
+      <pre>                (!event.shiftKey &amp;&amp; event.target === controls.at(-1))</pre>
+    </li>
+    <li id="L2046"><pre>              )</pre></li>
+    <li id="L2047"><pre>                close()</pre></li>
+    <li id="L2048"><pre>            }}</pre></li>
+    <li id="L2049"><pre>            style={{</pre></li>
+    <li id="L2050"><pre>              ...position,</pre></li>
+    <li id="L2051"><pre>              ...(allowCustomRgb</pre></li>
+    <li id="L2052"><pre>                ? {</pre></li>
+    <li id="L2053">
+      <pre>
+                    maxHeight: `calc(100dvh - ${position.top ?? position.bottom ?? 0}px - 8px)`,</pre>
+    </li>
+    <li id="L2054"><pre>                  }</pre></li>
+    <li id="L2055"><pre>                : {}),</pre></li>
+    <li id="L2056"><pre>            }}</pre></li>
+    <li id="L2057"><pre>          &gt;</pre></li>
+    <li id="L2058"><pre>            {grid}</pre></li>
+    <li id="L2059"><pre>            {allowCustomRgb &amp;&amp; (</pre></li>
+    <li id="L2060"><pre>              &lt;ToolbarCustomRgb</pre></li>
+    <li id="L2061"><pre>                label={label}</pre></li>
+    <li id="L2062"><pre>                value={value}</pre></li>
+    <li id="L2063"><pre>                disabled={disabled}</pre></li>
+    <li id="L2064"><pre>                onPick={onPick}</pre></li>
+    <li id="L2065"><pre>                onPicked={close}</pre></li>
+    <li id="L2066"><pre>              /&gt;</pre></li>
+    <li id="L2067"><pre>            )}</pre></li>
+    <li id="L2068"><pre>          &lt;/div&gt;</pre></li>
+    <li id="L2069"><pre>        )}</pre></li>
+    <li id="L2070"><pre>      &lt;/span&gt;</pre></li>
+    <li id="L2071"><pre>    &lt;/ToolbarPropertyField&gt;</pre></li>
+    <li id="L2072"><pre>  )</pre></li>
+    <li id="L2073"><pre>}</pre></li>
+    <li id="L2074"><pre></pre></li>
+    <li id="L2075"><pre>export interface ToolbarGridPickerProps {</pre></li>
+    <li id="L2076"><pre>  /** 这一组格子是什么（读屏用）。如「插入表格的大小」 */</pre></li>
+    <li id="L2077"><pre>  label: string</pre></li>
+    <li id="L2078"><pre>  rows: number</pre></li>
+    <li id="L2079"><pre>  columns: number</pre></li>
+    <li id="L2080">
+      <pre>  /** 某一格的说明。每一格都用它当 `title` 与 `aria-label`（不用数格子） */</pre>
+    </li>
+    <li id="L2081"><pre>  cellLabel: (row: number, column: number) =&gt; string</pre></li>
+    <li id="L2082"><pre>  /** 点某一格（行列都从 1 起） */</pre></li>
+    <li id="L2083"><pre>  onPick: (row: number, column: number) =&gt; void</pre></li>
+    <li id="L2084"><pre>}</pre></li>
+    <li id="L2085"><pre></pre></li>
+    <li id="L2086"><pre>/**</pre></li>
+    <li id="L2087">
+      <pre> * 格子选择器（docx 的「插入表格」：8×8 的方块，点哪一格就插多大的表）。</pre>
+    </li>
+    <li id="L2088"><pre> *</pre></li>
+    <li id="L2089"><pre> * ## 为什么它不是 antd 的控件</pre></li>
+    <li id="L2090"><pre> *</pre></li>
+    <li id="L2091">
+      <pre> * 格子是 **18px** 的方块，antd 最小的档（small）实测 24px——要 18px 就得写</pre>
+    </li>
+    <li id="L2092">
+      <pre> * 字面量覆盖 `.ant-btn-sm`，而那条路 D-064 明确否决（不覆写 antd 内部结构）。</pre>
+    </li>
+    <li id="L2093">
+      <pre> * 它与 `.me-tab` / `.me-color__cell` 是同一类：**不是 antd 控件的自绘小方块**。</pre>
+    </li>
+    <li id="L2094"><pre> *</pre></li>
+    <li id="L2095"><pre> * ## 为什么收进外壳而不是留在 docx 里</pre></li>
+    <li id="L2096"><pre> *</pre></li>
+    <li id="L2097">
+      <pre> * 那套 `.me-table-grid*` 的样式本来就住在 `shell.css`（原语的样式表）里，却</pre>
+    </li>
+    <li id="L2098">
+      <pre> * 没有任何原语产出这些类名——全仓库仅有的「shell.css 定义、`EditorShell.tsx`</pre>
+    </li>
+    <li id="L2099">
+      <pre> * 完全不用」的几个类之一。样式在原语里、markup 在调用方，就等于每一处新</pre>
+    </li>
+    <li id="L2100">
+      <pre> * 调用点都要把 markup 再抄一遍（每一格手写 `title` 与 `aria-label`）。</pre>
+    </li>
+    <li id="L2101"><pre> */</pre></li>
+    <li id="L2102"><pre>export function ToolbarGridPicker({</pre></li>
+    <li id="L2103"><pre>  label,</pre></li>
+    <li id="L2104"><pre>  rows,</pre></li>
+    <li id="L2105"><pre>  columns,</pre></li>
+    <li id="L2106"><pre>  cellLabel,</pre></li>
+    <li id="L2107"><pre>  onPick,</pre></li>
+    <li id="L2108"><pre>}: ToolbarGridPickerProps) {</pre></li>
+    <li id="L2109"><pre>  return (</pre></li>
+    <li id="L2110">
+      <pre>
+    &lt;div className=&quot;me-picker-grid&quot; role=&quot;group&quot; aria-label={label}&gt;</pre>
+    </li>
+    <li id="L2111"><pre>      {Array.from({ length: rows }, (_unusedRow, r) =&gt; (</pre></li>
+    <li id="L2112"><pre>        &lt;div key={r} className=&quot;me-table-grid&quot;&gt;</pre></li>
+    <li id="L2113">
+      <pre>          {Array.from({ length: columns }, (_unusedColumn, c) =&gt; (</pre>
+    </li>
+    <li id="L2114"><pre>            &lt;button</pre></li>
+    <li id="L2115"><pre>              key={c}</pre></li>
+    <li id="L2116"><pre>              type=&quot;button&quot;</pre></li>
+    <li id="L2117"><pre>              className=&quot;me-table-grid__cell&quot;</pre></li>
+    <li id="L2118"><pre>              // 每一格自己说明白点它会做什么——不用数格子</pre></li>
+    <li id="L2119"><pre>              title={cellLabel(r + 1, c + 1)}</pre></li>
+    <li id="L2120"><pre>              aria-label={cellLabel(r + 1, c + 1)}</pre></li>
+    <li id="L2121"><pre>              onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L2122"><pre>              onClick={() =&gt; onPick(r + 1, c + 1)}</pre></li>
+    <li id="L2123"><pre>            /&gt;</pre></li>
+    <li id="L2124"><pre>          ))}</pre></li>
+    <li id="L2125"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L2126"><pre>      ))}</pre></li>
+    <li id="L2127"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L2128"><pre>  )</pre></li>
+    <li id="L2129"><pre>}</pre></li>
+    <li id="L2130"><pre></pre></li>
+    <li id="L2131">
+      <pre>/* ── 查找 / 替换 ──────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L2132"><pre></pre></li>
+    <li id="L2133"><pre>/**</pre></li>
+    <li id="L2134"><pre> * 查找面板对编辑器的适配接口。</pre></li>
+    <li id="L2135"><pre> *</pre></li>
+    <li id="L2136">
+      <pre> * **形状与 vendored 的 `FindTarget` 一致**（`src/shims/ui.ts`，来自上游</pre>
+    </li>
+    <li id="L2137">
+      <pre> * `packages/ui/src/find-panel.tsx`）——所以 html 那边现成的 `cmFindTarget`</pre>
+    </li>
+    <li id="L2138"><pre> * 可以**零适配**直接传进来。</pre></li>
+    <li id="L2139"><pre> */</pre></li>
+    <li id="L2140"><pre>export interface FindAdapter {</pre></li>
+    <li id="L2141"><pre>  /**</pre></li>
+    <li id="L2142">
+      <pre>   * 重新扫描并高亮，返回匹配数。`activeIndex` 是当前要高亮的那一个（0 起）。</pre>
+    </li>
+    <li id="L2143"><pre>   * 上游把 `FindOptions` 放在**第二个**参数，这里保持一致。</pre></li>
+    <li id="L2144"><pre>   */</pre></li>
+    <li id="L2145">
+      <pre>  search(query: string, options: FindOptions, activeIndex: number): number</pre>
+    </li>
+    <li id="L2146"><pre>  /** 把当前匹配挪到 `index` 并滚进视野 */</pre></li>
+    <li id="L2147"><pre>  activate(index: number): void</pre></li>
+    <li id="L2148"><pre>  /** 清掉所有高亮 */</pre></li>
+    <li id="L2149"><pre>  clear(): void</pre></li>
+    <li id="L2150"><pre>  /** 文档变化后回调（拿它重新扫描）。返回取消订阅 */</pre></li>
+    <li id="L2151"><pre>  onDocChanged?: (listener: () =&gt; void) =&gt; () =&gt; void</pre></li>
+    <li id="L2152"><pre>}</pre></li>
+    <li id="L2153"><pre></pre></li>
+    <li id="L2154"><pre>/**</pre></li>
+    <li id="L2155">
+      <pre> * 带替换的适配器。**替换是可选的**：pdf 只有查找（改文字要 PDFium 的 WASM，</pre>
+    </li>
+    <li id="L2156">
+      <pre> * 见 TECH §15.12）。上一版把 `replaceOne` / `replaceAll` 定成必选又要</pre>
+    </li>
+    <li id="L2157"><pre> * 「pdf 只有查找」，那会逼 pdf 塞两个空实现——空实现点了没反应，</pre></li>
+    <li id="L2158"><pre> * 正是这个仓库最讨厌的那种按钮。</pre></li>
+    <li id="L2159"><pre> */</pre></li>
+    <li id="L2160"><pre>export interface FindReplaceAdapter extends FindAdapter {</pre></li>
+    <li id="L2161"><pre>  /** 替换第 `index` 个匹配。方法不存在 = 这条栏不渲染替换区 */</pre></li>
+    <li id="L2162"><pre>  replaceOne?(index: number, replacement: string): void</pre></li>
+    <li id="L2163"><pre>  /** 全部替换 */</pre></li>
+    <li id="L2164"><pre>  replaceAll?(replacement: string): void</pre></li>
+    <li id="L2165"><pre>}</pre></li>
+    <li id="L2166"><pre></pre></li>
+    <li id="L2167"><pre>export interface FindReplaceBarProps {</pre></li>
+    <li id="L2168">
+      <pre>  /** 匹配与替换的落点。`null` = 还没有可查的内容（还在解析），整条栏空转 */</pre>
+    </li>
+    <li id="L2169"><pre>  adapter: FindReplaceAdapter | null</pre></li>
+    <li id="L2170"><pre>  /**</pre></li>
+    <li id="L2171">
+      <pre>   * 查询串。**受控**：「打开时带上选中的文字」这类行为只有调用方知道，</pre>
+    </li>
+    <li id="L2172"><pre>   * 在这里再存一份就会有两个真相。</pre></li>
+    <li id="L2173"><pre>   */</pre></li>
+    <li id="L2174"><pre>  query: string</pre></li>
+    <li id="L2175"><pre>  onQueryChange: (query: string) =&gt; void</pre></li>
+    <li id="L2176"><pre>  /** 替换文本。不给的话栏自己存（`onReplaceChange` 同理） */</pre></li>
+    <li id="L2177"><pre>  replace?: string</pre></li>
+    <li id="L2178"><pre>  onReplaceChange?: (value: string) =&gt; void</pre></li>
+    <li id="L2179"><pre>  /**</pre></li>
+    <li id="L2180">
+      <pre>   * 查找选项。**给了才渲染那两个开关**——pdf 是按页取文本再自己比，</pre>
+    </li>
+    <li id="L2181"><pre>   * 全词匹配不一定实现得了，不该让它显示一个做不到的开关。</pre></li>
+    <li id="L2182"><pre>   */</pre></li>
+    <li id="L2183"><pre>  options?: FindOptions</pre></li>
+    <li id="L2184"><pre>  onOptionsChange?: (options: FindOptions) =&gt; void</pre></li>
+    <li id="L2185"><pre>  /** 关掉这条栏（宿主控制显隐）。Esc 也走这里 */</pre></li>
+    <li id="L2186"><pre>  onClose?: () =&gt; void</pre></li>
+    <li id="L2187"><pre>  /** 挂载时把焦点给查询框并选中已有内容（默认 true） */</pre></li>
+    <li id="L2188"><pre>  autoFocus?: boolean</pre></li>
+    <li id="L2189"><pre>  /** 整条栏的无障碍名称 */</pre></li>
+    <li id="L2190"><pre>  label?: string</pre></li>
+    <li id="L2191"><pre>}</pre></li>
+    <li id="L2192"><pre></pre></li>
+    <li id="L2193">
+      <pre>/** 查找结果的快照：`count` 是文档给的，`active` 是当前要高亮的那一个 */</pre>
+    </li>
+    <li id="L2194"><pre>interface FindSnapshot {</pre></li>
+    <li id="L2195"><pre>  count: number</pre></li>
+    <li id="L2196"><pre>  active: number</pre></li>
+    <li id="L2197"><pre>}</pre></li>
+    <li id="L2198"><pre></pre></li>
+    <li id="L2199"><pre>/**</pre></li>
+    <li id="L2200"><pre> * 匹配结果的 store。</pre></li>
+    <li id="L2201"><pre> *</pre></li>
+    <li id="L2202"><pre> * ## 为什么不直接用 `useState` 存数量</pre></li>
+    <li id="L2203"><pre> *</pre></li>
+    <li id="L2204">
+      <pre> * `count` **不是这个组件内部算出来的**，而是外部系统（编辑器）报回来的。</pre>
+    </li>
+    <li id="L2205">
+      <pre> * 用 `useState` 就意味着「在 effect 里同步 `setState`」，而那有两重代价：</pre>
+    </li>
+    <li id="L2206"><pre> *</pre></li>
+    <li id="L2207"><pre> *  1. 级联渲染（`react(set-state-in-effect)` 报的就是这个）</pre></li>
+    <li id="L2208">
+      <pre> *  2. **React Compiler 会因此跳过整个组件**——这个仓库的铁律之一。它不报错，</pre>
+    </li>
+    <li id="L2209"><pre> *     只是这个组件不再被优化，正是「以为没问题的时候悄悄地错」</pre></li>
+    <li id="L2210"><pre> *</pre></li>
+    <li id="L2211">
+      <pre> * `useSyncExternalStore` 是 React 给「读外部可变来源」的答案：订阅在适配器上、</pre>
+    </li>
+    <li id="L2212">
+      <pre> * 快照只在本组件读，两边不会读到不一致的值。数量与下标一起进快照，是因为</pre>
+    </li>
+    <li id="L2213"><pre> * 「第几个」在数量变小的时候必须跟着夹回来——两个值分开存就会出现</pre></li>
+    <li id="L2214"><pre> * 「12 / 3」这种中间态。</pre></li>
+    <li id="L2215"><pre> */</pre></li>
+    <li id="L2216"><pre>function createFindStore() {</pre></li>
+    <li id="L2217"><pre>  let snapshot: FindSnapshot = { count: 0, active: 0 }</pre></li>
+    <li id="L2218"><pre>  const listeners = new Set&lt;() =&gt; void&gt;()</pre></li>
+    <li id="L2219"><pre>  return {</pre></li>
+    <li id="L2220"><pre>    subscribe(listener: () =&gt; void) {</pre></li>
+    <li id="L2221"><pre>      listeners.add(listener)</pre></li>
+    <li id="L2222"><pre>      return () =&gt; {</pre></li>
+    <li id="L2223"><pre>        listeners.delete(listener)</pre></li>
+    <li id="L2224"><pre>      }</pre></li>
+    <li id="L2225"><pre>    },</pre></li>
+    <li id="L2226"><pre>    getSnapshot: () =&gt; snapshot,</pre></li>
+    <li id="L2227"><pre>    publish(next: FindSnapshot) {</pre></li>
+    <li id="L2228">
+      <pre>      // 值没变就不通知：`useSyncExternalStore` 会因为一次无意义的通知重新读快照</pre>
+    </li>
+    <li id="L2229">
+      <pre>
+      if (next.count === snapshot.count &amp;&amp; next.active === snapshot.active) return</pre>
+    </li>
+    <li id="L2230"><pre>      snapshot = next</pre></li>
+    <li id="L2231"><pre>      for (const listener of listeners) listener()</pre></li>
+    <li id="L2232"><pre>    },</pre></li>
+    <li id="L2233"><pre>  }</pre></li>
+    <li id="L2234"><pre>}</pre></li>
+    <li id="L2235"><pre></pre></li>
+    <li id="L2236"><pre>/**</pre></li>
+    <li id="L2237"><pre> * 跑一次匹配，返回新快照。</pre></li>
+    <li id="L2238"><pre> *</pre></li>
+    <li id="L2239">
+      <pre> * **会画高亮**（`activate`），所以只能在事件与订阅回调里调，不能在渲染期调。</pre>
+    </li>
+    <li id="L2240">
+      <pre> * `activate` 为假时不挪高亮（文档变化后的重扫用它：挪动会派发事务，</pre>
+    </li>
+    <li id="L2241"><pre> * 而事务又触发 `onDocChanged`——那是一个转不停的循环）。</pre></li>
+    <li id="L2242"><pre> */</pre></li>
+    <li id="L2243"><pre>function searchNow(</pre></li>
+    <li id="L2244"><pre>  adapter: FindReplaceAdapter,</pre></li>
+    <li id="L2245"><pre>  query: string,</pre></li>
+    <li id="L2246"><pre>  options: FindOptions,</pre></li>
+    <li id="L2247"><pre>  requested: number,</pre></li>
+    <li id="L2248"><pre>  activate: boolean,</pre></li>
+    <li id="L2249"><pre>): FindSnapshot {</pre></li>
+    <li id="L2250"><pre>  const count = adapter.search(query, options, requested)</pre></li>
+    <li id="L2251"><pre>  const active = count === 0 ? 0 : Math.min(requested, count - 1)</pre></li>
+    <li id="L2252"><pre>  if (activate &amp;&amp; count &gt; 0) adapter.activate(active)</pre></li>
+    <li id="L2253"><pre>  return { count, active }</pre></li>
+    <li id="L2254"><pre>}</pre></li>
+    <li id="L2255"><pre></pre></li>
+    <li id="L2256"><pre>/**</pre></li>
+    <li id="L2257"><pre> * 查找 / 替换栏。六种格式共用**同一条**，差别只在谁来匹配：</pre></li>
+    <li id="L2258"><pre> *</pre></li>
+    <li id="L2259"><pre> * | 格式 | 适配器怎么来 |</pre></li>
+    <li id="L2260"><pre> * |---|---|</pre></li>
+    <li id="L2261"><pre> * | docx | `searchPluginKey` 的 decoration + 自己比块文本 |</pre></li>
+    <li id="L2262"><pre> * | pptx | `setText` 循环 |</pre></li>
+    <li id="L2263"><pre> * | html | vendored 的 `cmFindTarget`（**零适配**） |</pre></li>
+    <li id="L2264"><pre> * | pdf | `getTextContent` 取文本后自己比（没有替换） |</pre></li>
+    <li id="L2265"><pre> *</pre></li>
+    <li id="L2266">
+      <pre> * 匹配与索引的状态**在适配器里**，这条栏只知道数量与下标：`search` 返回几个、</pre>
+    </li>
+    <li id="L2267">
+      <pre> * `activate` 挪到第几个。所以它不需要知道任何一个格式的文档长什么样。</pre>
+    </li>
+    <li id="L2268"><pre> */</pre></li>
+    <li id="L2269"><pre>export function FindReplaceBar({</pre></li>
+    <li id="L2270"><pre>  adapter,</pre></li>
+    <li id="L2271"><pre>  query,</pre></li>
+    <li id="L2272"><pre>  onQueryChange,</pre></li>
+    <li id="L2273"><pre>  replace,</pre></li>
+    <li id="L2274"><pre>  onReplaceChange,</pre></li>
+    <li id="L2275"><pre>  options,</pre></li>
+    <li id="L2276"><pre>  onOptionsChange,</pre></li>
+    <li id="L2277"><pre>  onClose,</pre></li>
+    <li id="L2278"><pre>  autoFocus = true,</pre></li>
+    <li id="L2279"><pre>  label = &#x27;查找与替换&#x27;,</pre></li>
+    <li id="L2280"><pre>}: FindReplaceBarProps) {</pre></li>
+    <li id="L2281"><pre>  const [store] = useState(createFindStore)</pre></li>
+    <li id="L2282">
+      <pre>
+  const { count, active } = useSyncExternalStore(store.subscribe, store.getSnapshot)</pre>
+    </li>
+    <li id="L2283"><pre>  const [localReplace, setLocalReplace] = useState(&#x27;&#x27;)</pre></li>
+    <li id="L2284"><pre>  const queryRef = useRef&lt;InputRef&gt;(null)</pre></li>
+    <li id="L2285"><pre></pre></li>
+    <li id="L2286"><pre>  const matchCase = options?.matchCase ?? false</pre></li>
+    <li id="L2287"><pre>  const wholeWord = options?.wholeWord ?? false</pre></li>
+    <li id="L2288"><pre>  const replaceText = replace ?? localReplace</pre></li>
+    <li id="L2289"><pre>  const setReplaceText = onReplaceChange ?? setLocalReplace</pre></li>
+    <li id="L2290"><pre></pre></li>
+    <li id="L2291"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L2292"><pre>    if (adapter === null) {</pre></li>
+    <li id="L2293"><pre>      store.publish({ count: 0, active: 0 })</pre></li>
+    <li id="L2294"><pre>      return</pre></li>
+    <li id="L2295"><pre>    }</pre></li>
+    <li id="L2296"><pre>    /*</pre></li>
+    <li id="L2297">
+      <pre>     * 查询串是**受控 prop**，所以「它变了要重扫」只能在这里做（挂载时也要）。</pre>
+    </li>
+    <li id="L2298">
+      <pre>     * 结果不走 `setState` 而是进 store——见 `createFindStore` 的说明。</pre>
+    </li>
+    <li id="L2299"><pre>     *</pre></li>
+    <li id="L2300">
+      <pre>     * `options` 对象每次渲染都是新的，所以按它的**两个字段**做依赖、在 effect</pre>
+    </li>
+    <li id="L2301">
+      <pre>     * 里现构——把对象本身放进依赖数组会让这个 effect 每渲染都重跑。</pre>
+    </li>
+    <li id="L2302"><pre>     */</pre></li>
+    <li id="L2303"><pre>    const current = store.getSnapshot().active</pre></li>
+    <li id="L2304"><pre>    const searchOptions: FindOptions = { matchCase, wholeWord }</pre></li>
+    <li id="L2305">
+      <pre>    store.publish(searchNow(adapter, query, searchOptions, current, true))</pre>
+    </li>
+    <li id="L2306"><pre></pre></li>
+    <li id="L2307"><pre>    // 文档变了要重扫（只重算，不挪高亮——见 searchNow 的说明）</pre></li>
+    <li id="L2308"><pre>    return adapter.onDocChanged?.(() =&gt; {</pre></li>
+    <li id="L2309"><pre>      const at = store.getSnapshot().active</pre></li>
+    <li id="L2310">
+      <pre>      store.publish(searchNow(adapter, query, searchOptions, at, false))</pre>
+    </li>
+    <li id="L2311"><pre>    })</pre></li>
+    <li id="L2312"><pre>  }, [adapter, query, matchCase, wholeWord, store])</pre></li>
+    <li id="L2313"><pre></pre></li>
+    <li id="L2314">
+      <pre>  // 高亮是**画在编辑器上**的：这条栏卸载时要自己擦掉，否则关掉查找之后</pre>
+    </li>
+    <li id="L2315"><pre>  // 那些高亮会一直留在文档里（看着像文档本身带了底色）</pre></li>
+    <li id="L2316"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L2317"><pre>    if (adapter === null) return</pre></li>
+    <li id="L2318"><pre>    return () =&gt; adapter.clear()</pre></li>
+    <li id="L2319"><pre>  }, [adapter])</pre></li>
+    <li id="L2320"><pre></pre></li>
+    <li id="L2321"><pre>  useEffect(() =&gt; {</pre></li>
+    <li id="L2322"><pre>    if (!autoFocus) return</pre></li>
+    <li id="L2323"><pre>    // select() 会一并聚焦：打开就输入等于替换掉旧查询</pre></li>
+    <li id="L2324"><pre>    queryRef.current?.select()</pre></li>
+    <li id="L2325"><pre>  }, [autoFocus])</pre></li>
+    <li id="L2326"><pre></pre></li>
+    <li id="L2327"><pre>  const canReplaceOne = adapter?.replaceOne !== undefined</pre></li>
+    <li id="L2328"><pre>  const canReplaceAll = adapter?.replaceAll !== undefined</pre></li>
+    <li id="L2329"><pre>  const hasReplace = canReplaceOne || canReplaceAll</pre></li>
+    <li id="L2330"><pre></pre></li>
+    <li id="L2331"><pre>  /**</pre></li>
+    <li id="L2332">
+      <pre>   * 当前查找选项。**在事件里现构**，不在渲染期存一份：`options` 是对象，</pre>
+    </li>
+    <li id="L2333">
+      <pre>   * 每次渲染都是新的引用，存下来就得处理同步（而环境里那两个开关的值就在</pre>
+    </li>
+    <li id="L2334"><pre>   * `matchCase` / `wholeWord` 两个 prop 里，现取就够了）。</pre></li>
+    <li id="L2335"><pre>   */</pre></li>
+    <li id="L2336">
+      <pre>  const optionsNow = (): FindOptions =&gt; ({ matchCase, wholeWord })</pre>
+    </li>
+    <li id="L2337"><pre></pre></li>
+    <li id="L2338"><pre>  const step = (delta: number) =&gt; {</pre></li>
+    <li id="L2339"><pre>    if (adapter === null || count === 0) return</pre></li>
+    <li id="L2340"><pre>    const next = (active + delta + count) % count</pre></li>
+    <li id="L2341">
+      <pre>    store.publish(searchNow(adapter, query, optionsNow(), next, true))</pre>
+    </li>
+    <li id="L2342"><pre>  }</pre></li>
+    <li id="L2343"><pre></pre></li>
+    <li id="L2344"><pre>  const replaceCurrent = () =&gt; {</pre></li>
+    <li id="L2345"><pre>    if (adapter === null || count === 0) return</pre></li>
+    <li id="L2346"><pre>    adapter.replaceOne?.(active, replaceText)</pre></li>
+    <li id="L2347">
+      <pre>    // 替换会改文档，所以重扫一次（不能等 onDocChanged：它是可选的）</pre>
+    </li>
+    <li id="L2348">
+      <pre>    store.publish(searchNow(adapter, query, optionsNow(), active, true))</pre>
+    </li>
+    <li id="L2349"><pre>  }</pre></li>
+    <li id="L2350"><pre></pre></li>
+    <li id="L2351"><pre>  const replaceEvery = () =&gt; {</pre></li>
+    <li id="L2352"><pre>    if (adapter === null || count === 0) return</pre></li>
+    <li id="L2353"><pre>    adapter.replaceAll?.(replaceText)</pre></li>
+    <li id="L2354">
+      <pre>    store.publish(searchNow(adapter, query, optionsNow(), 0, true))</pre>
+    </li>
+    <li id="L2355"><pre>  }</pre></li>
+    <li id="L2356"><pre></pre></li>
+    <li id="L2357">
+      <pre>
+  const countLabel = query === &#x27;&#x27; ? &#x27;—&#x27; : count === 0 ? &#x27;无匹配&#x27; : `${active + 1} / ${count}`</pre>
+    </li>
+    <li id="L2358"><pre></pre></li>
+    <li id="L2359"><pre>  /**</pre></li>
+    <li id="L2360">
+      <pre>   * 这几个按钮禁用时给的原因。**必须给**（DESIGN §8.4）：它们灰着的判据是</pre>
+    </li>
+    <li id="L2361">
+      <pre>   * `count === 0`，而那有两种情形——还没输查询词、输了但没找到。不说清的</pre>
+    </li>
+    <li id="L2362"><pre>   * 话 `title` 落回按钮自己的名字，用户只能猜是哪一种。</pre></li>
+    <li id="L2363"><pre>   */</pre></li>
+    <li id="L2364">
+      <pre>
+  const findReason = query === &#x27;&#x27; ? &#x27;先输入要查找的内容&#x27; : &#x27;没有匹配的内容&#x27;</pre>
+    </li>
+    <li id="L2365"><pre></pre></li>
+    <li id="L2366">
+      <pre>  /** 查询框：回车 = 下一个（Shift+回车 = 上一个），与浏览器自带的查找一致 */</pre>
+    </li>
+    <li id="L2367">
+      <pre>
+  const onQueryKeyDown = (event: ReactKeyboardEvent&lt;HTMLInputElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L2368"><pre>    if (event.key === &#x27;Enter&#x27;) {</pre></li>
+    <li id="L2369"><pre>      event.preventDefault()</pre></li>
+    <li id="L2370"><pre>      step(event.shiftKey ? -1 : 1)</pre></li>
+    <li id="L2371"><pre>    }</pre></li>
+    <li id="L2372"><pre>    if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L2373"><pre>      event.preventDefault()</pre></li>
+    <li id="L2374"><pre>      onClose?.()</pre></li>
+    <li id="L2375"><pre>    }</pre></li>
+    <li id="L2376"><pre>  }</pre></li>
+    <li id="L2377"><pre></pre></li>
+    <li id="L2378">
+      <pre>  /** 替换框：回车 = 替换这一个（不是「下一个」——那样会连替换一起跳过） */</pre>
+    </li>
+    <li id="L2379">
+      <pre>
+  const onReplaceKeyDown = (event: ReactKeyboardEvent&lt;HTMLInputElement&gt;) =&gt; {</pre>
+    </li>
+    <li id="L2380"><pre>    if (event.key === &#x27;Enter&#x27;) {</pre></li>
+    <li id="L2381"><pre>      event.preventDefault()</pre></li>
+    <li id="L2382"><pre>      replaceCurrent()</pre></li>
+    <li id="L2383"><pre>    }</pre></li>
+    <li id="L2384"><pre>    if (event.key === &#x27;Escape&#x27;) {</pre></li>
+    <li id="L2385"><pre>      event.preventDefault()</pre></li>
+    <li id="L2386"><pre>      onClose?.()</pre></li>
+    <li id="L2387"><pre>    }</pre></li>
+    <li id="L2388"><pre>  }</pre></li>
+    <li id="L2389"><pre></pre></li>
+    <li id="L2390"><pre>  return (</pre></li>
+    <li id="L2391">
+      <pre>
+    &lt;div className=&quot;me-find&quot; role=&quot;search&quot; aria-label={label}&gt;</pre>
+    </li>
+    <li id="L2392"><pre>      &lt;div className=&quot;me-find__row&quot;&gt;</pre></li>
+    <li id="L2393"><pre>        {/*</pre></li>
+    <li id="L2394">
+      <pre>          这里用 antd 的 `Input` 而**不是** `ToolbarTextField`：查询框要</pre>
+    </li>
+    <li id="L2395">
+      <pre>          `ref`（挂载时 select 已有内容）且回车要区分 Shift（上一个 / 下一个），</pre>
+    </li>
+    <li id="L2396">
+      <pre>          而那个原语的两个入口都表达不了。属性集与它保持一致（aria-label +</pre>
+    </li>
+    <li id="L2397"><pre>          title + spellCheck），宽度走 `.me-find__query`（原语的</pre></li>
+    <li id="L2398"><pre>          `.me-input--text` 是 180px 固定宽，这一格要弹性）。</pre></li>
+    <li id="L2399"><pre>        */}</pre></li>
+    <li id="L2400"><pre>        &lt;Input</pre></li>
+    <li id="L2401"><pre>          ref={queryRef}</pre></li>
+    <li id="L2402"><pre>          className=&quot;me-find__query&quot;</pre></li>
+    <li id="L2403"><pre>          type=&quot;text&quot;</pre></li>
+    <li id="L2404"><pre>          value={query}</pre></li>
+    <li id="L2405"><pre>          aria-label=&quot;查找内容&quot;</pre></li>
+    <li id="L2406"><pre>          title=&quot;查找内容&quot;</pre></li>
+    <li id="L2407"><pre>          placeholder=&quot;查找&quot;</pre></li>
+    <li id="L2408"><pre>          spellCheck={false}</pre></li>
+    <li id="L2409">
+      <pre>          /* Ctrl+F 的焦点落点（`useFindHotkey` 查这个属性，不看类名） */</pre>
+    </li>
+    <li id="L2410"><pre>          data-find-input=&quot;true&quot;</pre></li>
+    <li id="L2411">
+      <pre>          onChange={(event) =&gt; onQueryChange(event.target.value)}</pre>
+    </li>
+    <li id="L2412"><pre>          onKeyDown={onQueryKeyDown}</pre></li>
+    <li id="L2413"><pre>        /&gt;</pre></li>
+    <li id="L2414">
+      <pre>        {/* aria-live：匹配数变化要念出来——它是「有没有找到」的唯一反馈 */}</pre>
+    </li>
+    <li id="L2415">
+      <pre>
+        &lt;span className=&quot;me-find__count&quot; aria-live=&quot;polite&quot;&gt;</pre>
+    </li>
+    <li id="L2416"><pre>          {countLabel}</pre></li>
+    <li id="L2417"><pre>        &lt;/span&gt;</pre></li>
+    <li id="L2418"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L2419"><pre>          label=&quot;上一个匹配&quot;</pre></li>
+    <li id="L2420"><pre>          disabled={count === 0}</pre></li>
+    <li id="L2421"><pre>          disabledReason={findReason}</pre></li>
+    <li id="L2422"><pre>          onClick={() =&gt; step(-1)}</pre></li>
+    <li id="L2423"><pre>        &gt;</pre></li>
+    <li id="L2424"><pre>          &lt;ChevronLeftIcon /&gt;</pre></li>
+    <li id="L2425"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2426"><pre>        &lt;ToolbarButton</pre></li>
+    <li id="L2427"><pre>          label=&quot;下一个匹配&quot;</pre></li>
+    <li id="L2428"><pre>          disabled={count === 0}</pre></li>
+    <li id="L2429"><pre>          disabledReason={findReason}</pre></li>
+    <li id="L2430"><pre>          onClick={() =&gt; step(1)}</pre></li>
+    <li id="L2431"><pre>        &gt;</pre></li>
+    <li id="L2432"><pre>          &lt;ChevronRightIcon /&gt;</pre></li>
+    <li id="L2433"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2434">
+      <pre>
+        {options !== undefined &amp;&amp; onOptionsChange !== undefined &amp;&amp; (</pre>
+    </li>
+    <li id="L2435"><pre>          &lt;ToolbarGroup label=&quot;查找选项&quot;&gt;</pre></li>
+    <li id="L2436"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L2437"><pre>              label=&quot;区分大小写&quot;</pre></li>
+    <li id="L2438"><pre>              active={matchCase}</pre></li>
+    <li id="L2439">
+      <pre>
+              onClick={() =&gt; onOptionsChange({ matchCase: !matchCase, wholeWord })}</pre>
+    </li>
+    <li id="L2440"><pre>            &gt;</pre></li>
+    <li id="L2441"><pre>              Aa</pre></li>
+    <li id="L2442"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2443"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L2444"><pre>              label=&quot;全词匹配&quot;</pre></li>
+    <li id="L2445"><pre>              active={wholeWord}</pre></li>
+    <li id="L2446">
+      <pre>
+              onClick={() =&gt; onOptionsChange({ matchCase, wholeWord: !wholeWord })}</pre>
+    </li>
+    <li id="L2447"><pre>            &gt;</pre></li>
+    <li id="L2448"><pre>              ab</pre></li>
+    <li id="L2449"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2450"><pre>          &lt;/ToolbarGroup&gt;</pre></li>
+    <li id="L2451"><pre>        )}</pre></li>
+    <li id="L2452"><pre>        {onClose !== undefined &amp;&amp; (</pre></li>
+    <li id="L2453">
+      <pre>          &lt;ToolbarButton label=&quot;关闭查找&quot; onClick={onClose}&gt;</pre>
+    </li>
+    <li id="L2454"><pre>            &lt;CloseIcon /&gt;</pre></li>
+    <li id="L2455"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2456"><pre>        )}</pre></li>
+    <li id="L2457"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L2458"><pre>      {hasReplace &amp;&amp; (</pre></li>
+    <li id="L2459"><pre>        &lt;div className=&quot;me-find__row&quot;&gt;</pre></li>
+    <li id="L2460"><pre>          &lt;Input</pre></li>
+    <li id="L2461"><pre>            className=&quot;me-find__query&quot;</pre></li>
+    <li id="L2462"><pre>            type=&quot;text&quot;</pre></li>
+    <li id="L2463"><pre>            value={replaceText}</pre></li>
+    <li id="L2464"><pre>            aria-label=&quot;替换为&quot;</pre></li>
+    <li id="L2465"><pre>            title=&quot;替换为&quot;</pre></li>
+    <li id="L2466"><pre>            placeholder=&quot;替换为&quot;</pre></li>
+    <li id="L2467"><pre>            spellCheck={false}</pre></li>
+    <li id="L2468">
+      <pre>            onChange={(event) =&gt; setReplaceText(event.target.value)}</pre>
+    </li>
+    <li id="L2469"><pre>            onKeyDown={onReplaceKeyDown}</pre></li>
+    <li id="L2470"><pre>          /&gt;</pre></li>
+    <li id="L2471"><pre>          {canReplaceOne &amp;&amp; (</pre></li>
+    <li id="L2472"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L2473"><pre>              label=&quot;替换这一个&quot;</pre></li>
+    <li id="L2474"><pre>              disabled={count === 0}</pre></li>
+    <li id="L2475"><pre>              disabledReason={findReason}</pre></li>
+    <li id="L2476"><pre>              onClick={replaceCurrent}</pre></li>
+    <li id="L2477"><pre>            &gt;</pre></li>
+    <li id="L2478"><pre>              替换</pre></li>
+    <li id="L2479"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2480"><pre>          )}</pre></li>
+    <li id="L2481"><pre>          {canReplaceAll &amp;&amp; (</pre></li>
+    <li id="L2482"><pre>            &lt;ToolbarButton</pre></li>
+    <li id="L2483"><pre>              label=&quot;全部替换&quot;</pre></li>
+    <li id="L2484"><pre>              disabled={count === 0}</pre></li>
+    <li id="L2485"><pre>              disabledReason={findReason}</pre></li>
+    <li id="L2486"><pre>              onClick={replaceEvery}</pre></li>
+    <li id="L2487"><pre>            &gt;</pre></li>
+    <li id="L2488"><pre>              全部替换</pre></li>
+    <li id="L2489"><pre>            &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L2490"><pre>          )}</pre></li>
+    <li id="L2491"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L2492"><pre>      )}</pre></li>
+    <li id="L2493"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L2494"><pre>  )</pre></li>
+    <li id="L2495"><pre>}</pre></li>
+    <li id="L2496"><pre></pre></li>
+    <li id="L2497">
+      <pre>export interface ToolbarTabsProps&lt;T extends string | number&gt; {</pre>
+    </li>
+    <li id="L2498"><pre>  items: readonly { value: T; label: string }[]</pre></li>
+    <li id="L2499"><pre>  value: T</pre></li>
+    <li id="L2500"><pre>  onChange: (value: T) =&gt; void</pre></li>
+    <li id="L2501"><pre>  /** 这组页签是什么（读屏用）。如「工作表」「幻灯片」 */</pre></li>
+    <li id="L2502"><pre>  label: string</pre></li>
+    <li id="L2503"><pre>}</pre></li>
+    <li id="L2504"><pre></pre></li>
+    <li id="L2505"><pre>/**</pre></li>
+    <li id="L2506"><pre> * 页签（xlsx 的工作表、pptx 的翻页）。</pre></li>
+    <li id="L2507"><pre> *</pre></li>
+    <li id="L2508">
+      <pre> * 值用 `aria-selected` 表达选中而不是另加类名——与按钮同一条规矩。</pre>
+    </li>
+    <li id="L2509"><pre> */</pre></li>
+    <li id="L2510"><pre>export function ToolbarTabs&lt;T extends string | number&gt;({</pre></li>
+    <li id="L2511"><pre>  items,</pre></li>
+    <li id="L2512"><pre>  value,</pre></li>
+    <li id="L2513"><pre>  onChange,</pre></li>
+    <li id="L2514"><pre>  label,</pre></li>
+    <li id="L2515"><pre>}: ToolbarTabsProps&lt;T&gt;) {</pre></li>
+    <li id="L2516"><pre>  return (</pre></li>
+    <li id="L2517">
+      <pre>
+    &lt;div className=&quot;me-tabs&quot; role=&quot;tablist&quot; aria-label={label}&gt;</pre>
+    </li>
+    <li id="L2518"><pre>      {items.map((item) =&gt; (</pre></li>
+    <li id="L2519"><pre>        &lt;button</pre></li>
+    <li id="L2520"><pre>          key={item.value}</pre></li>
+    <li id="L2521"><pre>          type=&quot;button&quot;</pre></li>
+    <li id="L2522"><pre>          role=&quot;tab&quot;</pre></li>
+    <li id="L2523"><pre>          className=&quot;me-tab&quot;</pre></li>
+    <li id="L2524"><pre>          aria-selected={item.value === value}</pre></li>
+    <li id="L2525"><pre>          onMouseDown={(event) =&gt; event.preventDefault()}</pre></li>
+    <li id="L2526"><pre>          onClick={() =&gt; onChange(item.value)}</pre></li>
+    <li id="L2527"><pre>        &gt;</pre></li>
+    <li id="L2528"><pre>          {item.label}</pre></li>
+    <li id="L2529"><pre>        &lt;/button&gt;</pre></li>
+    <li id="L2530"><pre>      ))}</pre></li>
+    <li id="L2531"><pre>    &lt;/div&gt;</pre></li>
+    <li id="L2532"><pre>  )</pre></li>
+    <li id="L2533"><pre>}</pre></li>
+    <li id="L2534"><pre></pre></li>
+    <li id="L2535">
+      <pre>/** 居中状态块（骨架、空、错误）。错误态用 `tone=&quot;error&quot;` */</pre>
+    </li>
+    <li id="L2536"><pre>export function EditorState({</pre></li>
+    <li id="L2537"><pre>  children,</pre></li>
+    <li id="L2538"><pre>  tone = &#x27;muted&#x27;,</pre></li>
+    <li id="L2539"><pre>}: {</pre></li>
+    <li id="L2540"><pre>  children: ReactNode</pre></li>
+    <li id="L2541"><pre>  tone?: &#x27;muted&#x27; | &#x27;error&#x27;</pre></li>
+    <li id="L2542"><pre>}) {</pre></li>
+    <li id="L2543"><pre>  return (</pre></li>
+    <li id="L2544">
+      <pre>
+    &lt;div className={tone === &#x27;error&#x27; ? &#x27;me-state me-state--error&#x27; : &#x27;me-state&#x27;}&gt;{children}&lt;/div&gt;</pre>
+    </li>
+    <li id="L2545"><pre>  )</pre></li>
+    <li id="L2546"><pre>}</pre></li>
+  </ol>
+</html>

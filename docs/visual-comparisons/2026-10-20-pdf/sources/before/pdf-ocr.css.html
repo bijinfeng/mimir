@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/pdf-ocr.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/pdf-ocr.css</h1>
+    <p>before真实源码 · SHA256 feb28c842f6273df74e14ef5b4ad056401bf7e6747e6ab3cbbdf0e58ce342f52</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>.mimir-pdf-ocr-panel {</pre></li>
+    <li id="L2"><pre>  display: flex;</pre></li>
+    <li id="L3"><pre>  flex-direction: column;</pre></li>
+    <li id="L4"><pre>  flex: 1;</pre></li>
+    <li id="L5"><pre>  min-height: 0;</pre></li>
+    <li id="L6"><pre>  min-width: 0;</pre></li>
+    <li id="L7"><pre>}</pre></li>
+    <li id="L8"><pre>.mimir-pdf-ocr-panel &gt; .mimir-pdf-inspector__footer {</pre></li>
+    <li id="L9"><pre>  flex: none;</pre></li>
+    <li id="L10"><pre>  margin: 0;</pre></li>
+    <li id="L11"><pre>  padding: 12px 16px 16px;</pre></li>
+    <li id="L12"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L13"><pre>}</pre></li>
+    <li id="L14">
+      <pre>
+.mimir-pdf-ocr-panel &gt; .mimir-pdf-inspector__footer &gt; [role=&#x27;alert&#x27;] {</pre>
+    </li>
+    <li id="L15"><pre>  max-height: 4.5em;</pre></li>
+    <li id="L16"><pre>  overflow: auto;</pre></li>
+    <li id="L17"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L18"><pre>}</pre></li>
+    <li id="L19"><pre>.mimir-pdf-ocr-scope {</pre></li>
+    <li id="L20"><pre>  display: grid;</pre></li>
+    <li id="L21"><pre>  gap: 8px;</pre></li>
+    <li id="L22"><pre>}</pre></li>
+    <li id="L23"><pre>.mimir-pdf-ocr-preview {</pre></li>
+    <li id="L24"><pre>  white-space: pre-wrap;</pre></li>
+    <li id="L25"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L26"><pre>  font: inherit;</pre></li>
+    <li id="L27"><pre>  line-height: 1.6;</pre></li>
+    <li id="L28"><pre>  margin: 0;</pre></li>
+    <li id="L29"><pre>  max-height: 220px;</pre></li>
+    <li id="L30"><pre>  overflow: auto;</pre></li>
+    <li id="L31"><pre>  user-select: text;</pre></li>
+    <li id="L32"><pre>}</pre></li>
+    <li id="L33"><pre>.mimir-pdf-ocr-actions {</pre></li>
+    <li id="L34"><pre>  display: flex;</pre></li>
+    <li id="L35"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L36"><pre>  gap: 8px;</pre></li>
+    <li id="L37"><pre>}</pre></li>
+    <li id="L38"><pre>.mimir-pdf-ocr-overlay {</pre></li>
+    <li id="L39"><pre>  position: absolute;</pre></li>
+    <li id="L40"><pre>  inset: 0;</pre></li>
+    <li id="L41"><pre>  width: 100%;</pre></li>
+    <li id="L42"><pre>  height: 100%;</pre></li>
+    <li id="L43"><pre>  z-index: 3;</pre></li>
+    <li id="L44"><pre>  user-select: text;</pre></li>
+    <li id="L45"><pre>  cursor: text;</pre></li>
+    <li id="L46"><pre>}</pre></li>
+    <li id="L47"><pre>.mimir-pdf-ocr-overlay &gt; text {</pre></li>
+    <li id="L48"><pre>  fill: transparent;</pre></li>
+    <li id="L49"><pre>  white-space: pre;</pre></li>
+    <li id="L50"><pre>  font-family: sans-serif;</pre></li>
+    <li id="L51"><pre>  pointer-events: all;</pre></li>
+    <li id="L52"><pre>}</pre></li>
+    <li id="L53"><pre>.mimir-pdf-ocr-overlay &gt; text::selection {</pre></li>
+    <li id="L54"><pre>  fill: transparent;</pre></li>
+    <li id="L55">
+      <pre>  background: color-mix(in srgb, var(--me-accent, #1677ff) 32%, transparent);</pre>
+    </li>
+    <li id="L56"><pre>}</pre></li>
+  </ol>
+</html>

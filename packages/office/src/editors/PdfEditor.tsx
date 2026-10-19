@@ -2613,6 +2613,247 @@ export function PdfEditor({
       便笺与标注
     </ToolbarButton>
   )
+  const ocrTrigger = (close?: () => void) => (
+    <ToolbarButton
+      ref={ocrTriggerRef}
+      label="识别扫描文字"
+      active={ocrShown}
+      disabled={!ready || contentBusy || source.saving}
+      disabledReason="PDF 尚未就绪或正在处理"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setImageExportOpen(false)
+        setLocalMode(null)
+        setInsertMode(false)
+        setSelectTextMode(false)
+        setPendingEditorOpen(false)
+        setOcrSelection(null)
+        if (ocrShown) ocr.session.stop()
+        setOcrOpen(!ocrShown)
+      }}
+    >
+      <ScanText size={16} />
+    </ToolbarButton>
+  )
+  const redactionTrigger = (close?: () => void) => (
+    <ToolbarButton
+      ref={redactionTriggerRef}
+      label="标记涂黑副本"
+      active={redactionShown}
+      disabled={!ready || contentBusy || source.saving || !hostLocal}
+      disabledReason={!hostLocal ? 'PDF 本地工具宿主未连接' : 'PDF 尚未就绪或正在处理'}
+      onClick={() => {
+        close?.()
+        if (redactionIssue) {
+          setNotice(redactionIssue)
+          return
+        }
+        setBlocksOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setImageExportOpen(false)
+        setLocalMode(null)
+        setInsertMode(false)
+        setSelectTextMode(false)
+        setPendingEditorOpen(false)
+        setSelectedText(null)
+        setInsertPoint(null)
+        setNotice(null)
+        setRedactionOpen(!redactionShown)
+      }}
+    >
+      涂黑副本
+    </ToolbarButton>
+  )
+  const imageExportTrigger = (close?: () => void) => (
+    <ToolbarButton
+      ref={imageExportTriggerRef}
+      label="导出页面图像"
+      active={imageExportShown}
+      disabled={!ready || contentBusy || source.saving}
+      disabledReason="PDF 尚未就绪或正在处理"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setLocalMode(null)
+        setImageExportOpen(true)
+      }}
+    >
+      导出页面图像
+    </ToolbarButton>
+  )
+  const drawingTrigger = (close?: () => void) => (
+    <ToolbarButton
+      label="打开画布绘图"
+      active={drawingEnabled}
+      disabled={!ready || contentBusy || source.saving || !hostLocal}
+      disabledReason="PDF 正在处理或本地工具宿主未连接"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setInsertMode(false)
+        setSelectTextMode(false)
+        setLocalMode('drawing')
+      }}
+    >
+      <PdfDrawingRibbonIcon />
+      画布绘图
+    </ToolbarButton>
+  )
+  const localTrigger = (close?: () => void) => (
+    <ToolbarButton
+      ref={localTriggerRef}
+      label="页面、绘图与文档属性"
+      active={localMode !== null}
+      disabled={!ready || contentBusy || !hostLocal}
+      disabledReason={!hostLocal ? 'PDF 本地工具宿主未连接' : 'PDF 正在处理'}
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setLocalOutputs([])
+        setLocalMode('pages')
+        void runManualContentTool('get_document_properties', {})
+      }}
+    >
+      页面与文档工具
+    </ToolbarButton>
+  )
+  const textToolsTriggers = (close?: () => void) => (
+    <>
+      <ToolbarButton
+        label="插入文字"
+        ref={textInsertTriggerRef}
+        active={insertMode}
+        disabled={!canInsertText || contentBusy}
+        disabledReason={contentBusy ? '文字正在写入' : insertReason}
+        onClick={() => {
+          close?.()
+          setBlocksOpen(false)
+          setRedactionOpen(false)
+          setAnnotationsOpen(false)
+          setInsertMode((value) => !value)
+          setSelectTextMode(false)
+          setPendingEditorOpen(false)
+          setImagesOpen(false)
+          setFormsOpen(false)
+          setLocalMode(null)
+          setImageExportOpen(false)
+          setOcrOpen(false)
+          setInsertPoint(null)
+          setInsertFormat((format) => ({ ...format, x: undefined, y: undefined }))
+          setNotice(null)
+        }}
+      >
+        插入文字
+      </ToolbarButton>
+      <ToolbarButton
+        label="编辑待保存文字"
+        ref={pendingTriggerRef}
+        active={pendingEditorOpen}
+        disabled={pendingInserts.length === 0 || contentBusy}
+        disabledReason={contentBusy ? '文字正在写入' : '当前没有待保存的插入文字'}
+        onClick={() => {
+          close?.()
+          setRedactionOpen(false)
+          setPendingEditorOpen((value) => !value)
+          setSelectTextMode(false)
+          setInsertMode(false)
+          setBlocksOpen(false)
+          setAnnotationsOpen(false)
+          setImagesOpen(false)
+          setFormsOpen(false)
+          setLocalMode(null)
+          setImageExportOpen(false)
+          setOcrOpen(false)
+        }}
+      >
+        编辑插字
+      </ToolbarButton>
+      <ToolbarButton
+        label="定位原文"
+        ref={textSelectionTriggerRef}
+        active={selectTextMode}
+        disabled={!ready || contentBusy}
+        disabledReason={contentBusy ? '文字正在写入' : 'PDF 尚未读取完成'}
+        onClick={() => {
+          close?.()
+          setBlocksOpen(false)
+          setRedactionOpen(false)
+          setAnnotationsOpen(false)
+          setSelectTextMode((value) => !value)
+          inspectRequestRef.current++
+          setInspectingText(false)
+          setInsertMode(false)
+          setSelectedText(null)
+          setReplacementDraft('')
+          setNotice(null)
+        }}
+      >
+        定位／标注原文
+      </ToolbarButton>
+    </>
+  )
+  const blocksTrigger = (close?: () => void) => (
+    <ToolbarButton
+      ref={blocksTriggerRef}
+      label="原文段落编辑"
+      active={blocksShown}
+      disabled={!ready || !hostBlocks || contentBusy || source.saving}
+      disabledReason={!hostBlocks ? 'PDF 原文段落宿主未连接' : 'PDF 正在处理'}
+      onClick={() => {
+        close?.()
+        const open = !blocksShown
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setImageExportOpen(false)
+        setLocalMode(null)
+        setInsertMode(false)
+        setSelectTextMode(false)
+        setBlocksOpen(open)
+        setBlockSelection(null)
+        setNotice(null)
+      }}
+    >
+      原文段落
+    </ToolbarButton>
+  )
+  const imagesTrigger = (close?: () => void) => (
+    <ToolbarButton
+      label="PDF图片工具"
+      ref={imagesTriggerRef}
+      disabled={!hostImages || contentBusy}
+      disabledReason="PDF图片宿主未连接或正在处理"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setImagesOpen(!imagesOpen)
+      }}
+    >
+      图片
+    </ToolbarButton>
+  )
   const replaceSelectedOriginal = async () => {
     const run = activeSelectedText
     if (!run || !verifiedSelection) return
@@ -3295,11 +3536,15 @@ export function PdfEditor({
       onClose={() => closeInspector()}
     />
   ) : annotationsOpen ? (
-    <section className="mimir-pdf-panel" role="region" aria-label="PDF 批注面板">
+    <section
+      className="mimir-pdf-panel mimir-pdf-annotations-panel"
+      role="region"
+      aria-label="PDF 批注面板"
+    >
       <PdfInspectorHeader
         title="批注"
         detail={`第 ${at + 1} 页`}
-        busy={contentBusy}
+        busy={contentBusy || source.saving}
         refreshLabel="刷新批注"
         closeLabel="关闭批注面板"
         onRefresh={() => void runManualContentTool('read_annotations', {})}
@@ -3315,6 +3560,7 @@ export function PdfEditor({
           <span className="mimir-pdf-inspector__meta">选择批注</span>
           <ToolbarSelect
             label="选择批注"
+            disabled={contentBusy || source.saving}
             value={noteId}
             options={[
               { value: '', label: '选择便笺或标注' },
@@ -3331,113 +3577,35 @@ export function PdfEditor({
             }}
           />
         </div>
-        <label className="mimir-pdf-inspector__control">
-          <span>批注内容</span>
-          <ToolbarTextArea label="批注内容" value={noteDraft} onChange={setNoteDraft} rows={2} />
-        </label>
-        <h3 className="mimir-pdf-inspector__section-title">新便笺位置</h3>
-        <div className="mimir-pdf-inspector__grid">
+        <fieldset className="mimir-pdf-annotations__fields" disabled={contentBusy || source.saving}>
           <label className="mimir-pdf-inspector__control">
-            <span>横坐标 · pt</span>
-            <ToolbarNumberField
-              label="便笺横坐标（pt）"
-              value={noteX}
-              min={0}
-              onCommit={setNoteX}
-            />
+            <span>批注内容</span>
+            <ToolbarTextArea label="批注内容" value={noteDraft} onChange={setNoteDraft} rows={2} />
           </label>
-          <label className="mimir-pdf-inspector__control">
-            <span>纵坐标 · pt</span>
-            <ToolbarNumberField
-              label="便笺纵坐标（pt）"
-              value={noteY}
-              min={0}
-              onCommit={setNoteY}
-            />
-          </label>
-        </div>
-        <div className="mimir-pdf-annotations__actions">
-          <ToolbarButton
-            label="添加便笺"
-            primary
-            disabled={contentBusy || !noteDraft.trim()}
-            onClick={() =>
-              void runManualContentTool('add_note', {
-                page: at + 1,
-                text: noteDraft,
-                x: noteX,
-                y: noteY,
-              })
-            }
-          />
-          {(() => {
-            const selected =
-              annotationList?.bytes === currentBytes
-                ? annotationList.items.find((entry) => entry.id === noteId && entry.page === at + 1)
-                : undefined
-            if (!selected) return null
-            return (
-              <div className="mimir-pdf-annotations__context-actions">
-                <ToolbarButton
-                  label="回复便笺"
-                  disabled={
-                    contentBusy ||
-                    !noteDraft.trim() ||
-                    selected?.type !== 'note' ||
-                    !!selected.parentId
-                  }
-                  onClick={() =>
-                    void runManualContentTool('reply_note', {
-                      page: at + 1,
-                      note_id: noteId,
-                      text: noteDraft,
-                    })
-                  }
-                >
-                  回复
-                </ToolbarButton>
-                <ToolbarButton
-                  label="修改批注内容"
-                  disabled={contentBusy || !noteDraft.trim() || selected?.type !== 'note'}
-                  onClick={() =>
-                    void runManualContentTool('edit_note', {
-                      page: at + 1,
-                      note_id: noteId,
-                      text: noteDraft,
-                    })
-                  }
-                >
-                  修改
-                </ToolbarButton>
-                <ToolbarConfirm
-                  title="删除所选批注？"
-                  description="删除便笺也会删除其回复，保存前可放弃保存退出。"
-                  confirmLabel="删除批注"
-                  disabled={contentBusy || !!selected.parentId}
-                  onConfirm={() =>
-                    void runManualContentTool(
-                      selected.type === 'note' ? 'delete_note' : 'delete_markup',
-                      {
-                        page: at + 1,
-                        ...(selected.type === 'note'
-                          ? { note_id: noteId }
-                          : { markup_ids: [noteId] }),
-                      },
-                    )
-                  }
-                >
-                  <ToolbarButton
-                    label="删除所选批注"
-                    disabled={contentBusy || !!selected.parentId}
-                    disabledReason={contentBusy ? 'PDF 操作正在执行' : '请选择主批注后删除'}
-                  >
-                    删除
-                  </ToolbarButton>
-                </ToolbarConfirm>
-              </div>
-            )
-          })()}
-        </div>
+          <h3 className="mimir-pdf-inspector__section-title">新便笺位置</h3>
+          <div className="mimir-pdf-inspector__grid">
+            <label className="mimir-pdf-inspector__control">
+              <span>横坐标 · pt</span>
+              <ToolbarNumberField
+                label="便笺横坐标（pt）"
+                disabled={contentBusy || source.saving}
+                value={noteX}
+                min={0}
+                onCommit={setNoteX}
+              />
+            </label>
+            <label className="mimir-pdf-inspector__control">
+              <span>纵坐标 · pt</span>
+              <ToolbarNumberField
+                label="便笺纵坐标（pt）"
+                disabled={contentBusy || source.saving}
+                value={noteY}
+                min={0}
+                onCommit={setNoteY}
+              />
+            </label>
+          </div>
+        </fieldset>
         <ul className="mimir-pdf-annotations__threads" aria-label="本页批注与回复">
           {(annotationList?.bytes === currentBytes ? annotationList.items : [])
             .filter((entry) => entry.page === at + 1)
@@ -3448,6 +3616,93 @@ export function PdfEditor({
               </li>
             ))}
         </ul>
+      </div>
+      <div className="mimir-pdf-inspector__footer mimir-pdf-annotations__actions">
+        <ToolbarButton
+          label="添加便笺"
+          primary
+          disabled={contentBusy || source.saving || !noteDraft.trim()}
+          onClick={() =>
+            void runManualContentTool('add_note', {
+              page: at + 1,
+              text: noteDraft,
+              x: noteX,
+              y: noteY,
+            })
+          }
+        />
+        {(() => {
+          const selected =
+            annotationList?.bytes === currentBytes
+              ? annotationList.items.find((entry) => entry.id === noteId && entry.page === at + 1)
+              : undefined
+          if (!selected) return null
+          return (
+            <div className="mimir-pdf-annotations__context-actions">
+              <ToolbarButton
+                label="回复便笺"
+                disabled={
+                  contentBusy ||
+                  source.saving ||
+                  !noteDraft.trim() ||
+                  selected?.type !== 'note' ||
+                  !!selected.parentId
+                }
+                onClick={() =>
+                  void runManualContentTool('reply_note', {
+                    page: at + 1,
+                    note_id: noteId,
+                    text: noteDraft,
+                  })
+                }
+              >
+                回复
+              </ToolbarButton>
+              <ToolbarButton
+                label="修改批注内容"
+                disabled={
+                  contentBusy || source.saving || !noteDraft.trim() || selected?.type !== 'note'
+                }
+                onClick={() =>
+                  void runManualContentTool('edit_note', {
+                    page: at + 1,
+                    note_id: noteId,
+                    text: noteDraft,
+                  })
+                }
+              >
+                修改
+              </ToolbarButton>
+              <ToolbarConfirm
+                title="删除所选批注？"
+                description="删除便笺也会删除其回复，保存前可放弃保存退出。"
+                confirmLabel="删除批注"
+                disabled={contentBusy || source.saving || !!selected.parentId}
+                onConfirm={() =>
+                  void runManualContentTool(
+                    selected.type === 'note' ? 'delete_note' : 'delete_markup',
+                    {
+                      page: at + 1,
+                      ...(selected.type === 'note'
+                        ? { note_id: noteId }
+                        : { markup_ids: [noteId] }),
+                    },
+                  )
+                }
+              >
+                <ToolbarButton
+                  label="删除所选批注"
+                  disabled={contentBusy || source.saving || !!selected.parentId}
+                  disabledReason={
+                    contentBusy || source.saving ? 'PDF 操作正在执行' : '请选择主批注后删除'
+                  }
+                >
+                  删除
+                </ToolbarButton>
+              </ToolbarConfirm>
+            </div>
+          )
+        })()}
       </div>
     </section>
   ) : blocksShown && currentBytes && hostBlocks ? (
@@ -3553,94 +3808,24 @@ export function PdfEditor({
               label: '扫描文字',
               tab: 'view',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  ref={ocrTriggerRef}
-                  label="识别扫描文字"
-                  active={ocrShown}
-                  disabled={!ready || contentBusy || source.saving}
-                  disabledReason="PDF 尚未就绪或正在处理"
-                  onClick={() => {
-                    setBlocksOpen(false)
-                    setRedactionOpen(false)
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setImageExportOpen(false)
-                    setLocalMode(null)
-                    setInsertMode(false)
-                    setSelectTextMode(false)
-                    setPendingEditorOpen(false)
-                    setOcrSelection(null)
-                    if (ocrShown) ocr.session.stop()
-                    setOcrOpen(!ocrShown)
-                  }}
-                >
-                  <ScanText size={16} />
-                </ToolbarButton>
-              ),
+              content: ocrTrigger(),
+              collapsedContent: (close) => ocrTrigger(close),
             },
             {
               key: 'redaction-copy',
               label: '涂黑副本',
               tab: 'edit',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  ref={redactionTriggerRef}
-                  label="标记涂黑副本"
-                  active={redactionShown}
-                  disabled={!ready || contentBusy || source.saving || !hostLocal}
-                  disabledReason={!hostLocal ? 'PDF 本地工具宿主未连接' : 'PDF 尚未就绪或正在处理'}
-                  onClick={() => {
-                    if (redactionIssue) {
-                      setNotice(redactionIssue)
-                      return
-                    }
-                    setBlocksOpen(false)
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setImageExportOpen(false)
-                    setLocalMode(null)
-                    setInsertMode(false)
-                    setSelectTextMode(false)
-                    setPendingEditorOpen(false)
-                    setSelectedText(null)
-                    setInsertPoint(null)
-                    setNotice(null)
-                    setRedactionOpen(!redactionShown)
-                  }}
-                >
-                  涂黑副本
-                </ToolbarButton>
-              ),
+              content: redactionTrigger(),
+              collapsedContent: (close) => redactionTrigger(close),
             },
             {
               key: 'page-images',
               label: '页面图像',
               tab: 'view',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  ref={imageExportTriggerRef}
-                  label="导出页面图像"
-                  active={imageExportShown}
-                  disabled={!ready || contentBusy || source.saving}
-                  disabledReason="PDF 尚未就绪或正在处理"
-                  onClick={() => {
-                    setBlocksOpen(false)
-                    setRedactionOpen(false)
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setLocalMode(null)
-                    setImageExportOpen(true)
-                  }}
-                >
-                  导出页面图像
-                </ToolbarButton>
-              ),
+              content: imageExportTrigger(),
+              collapsedContent: (close) => imageExportTrigger(close),
             },
             {
               key: 'visual-signature',
@@ -3655,54 +3840,16 @@ export function PdfEditor({
               label: '画布绘图',
               tab: 'draw',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  label="打开画布绘图"
-                  active={drawingEnabled}
-                  disabled={!ready || contentBusy || source.saving || !hostLocal}
-                  disabledReason="PDF 正在处理或本地工具宿主未连接"
-                  onClick={() => {
-                    setBlocksOpen(false)
-                    setRedactionOpen(false)
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setInsertMode(false)
-                    setSelectTextMode(false)
-                    setLocalMode('drawing')
-                  }}
-                >
-                  <PdfDrawingRibbonIcon />
-                  画布绘图
-                </ToolbarButton>
-              ),
+              content: drawingTrigger(),
+              collapsedContent: (close) => drawingTrigger(close),
             },
             {
               key: 'document-tools',
               label: '文档工具',
               tab: 'page',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  ref={localTriggerRef}
-                  label="页面、绘图与文档属性"
-                  active={localMode !== null}
-                  disabled={!ready || contentBusy || !hostLocal}
-                  disabledReason={!hostLocal ? 'PDF 本地工具宿主未连接' : 'PDF 正在处理'}
-                  onClick={() => {
-                    setBlocksOpen(false)
-                    setRedactionOpen(false)
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setLocalOutputs([])
-                    setLocalMode('pages')
-                    void runManualContentTool('get_document_properties', {})
-                  }}
-                >
-                  页面与文档工具
-                </ToolbarButton>
-              ),
+              content: localTrigger(),
+              collapsedContent: (close) => localTrigger(close),
             },
             {
               key: 'navigation',
@@ -3716,78 +3863,8 @@ export function PdfEditor({
               label: '文字',
               tab: 'edit',
               minWidth: 0,
-              content: (
-                <>
-                  <ToolbarButton
-                    label="插入文字"
-                    ref={textInsertTriggerRef}
-                    active={insertMode}
-                    disabled={!canInsertText || contentBusy}
-                    disabledReason={contentBusy ? '文字正在写入' : insertReason}
-                    onClick={() => {
-                      setBlocksOpen(false)
-                      setRedactionOpen(false)
-                      setAnnotationsOpen(false)
-                      setInsertMode((value) => !value)
-                      setSelectTextMode(false)
-                      setPendingEditorOpen(false)
-                      setImagesOpen(false)
-                      setFormsOpen(false)
-                      setLocalMode(null)
-                      setImageExportOpen(false)
-                      setOcrOpen(false)
-                      setInsertPoint(null)
-                      setInsertFormat((format) => ({ ...format, x: undefined, y: undefined }))
-                      setNotice(null)
-                    }}
-                  >
-                    插入文字
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="编辑待保存文字"
-                    ref={pendingTriggerRef}
-                    active={pendingEditorOpen}
-                    disabled={pendingInserts.length === 0 || contentBusy}
-                    disabledReason={contentBusy ? '文字正在写入' : '当前没有待保存的插入文字'}
-                    onClick={() => {
-                      setRedactionOpen(false)
-                      setPendingEditorOpen((value) => !value)
-                      setSelectTextMode(false)
-                      setInsertMode(false)
-                      setBlocksOpen(false)
-                      setAnnotationsOpen(false)
-                      setImagesOpen(false)
-                      setFormsOpen(false)
-                      setLocalMode(null)
-                      setImageExportOpen(false)
-                      setOcrOpen(false)
-                    }}
-                  >
-                    编辑插字
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="定位原文"
-                    ref={textSelectionTriggerRef}
-                    active={selectTextMode}
-                    disabled={!ready || contentBusy}
-                    disabledReason={contentBusy ? '文字正在写入' : 'PDF 尚未读取完成'}
-                    onClick={() => {
-                      setBlocksOpen(false)
-                      setRedactionOpen(false)
-                      setAnnotationsOpen(false)
-                      setSelectTextMode((value) => !value)
-                      inspectRequestRef.current++
-                      setInspectingText(false)
-                      setInsertMode(false)
-                      setSelectedText(null)
-                      setReplacementDraft('')
-                      setNotice(null)
-                    }}
-                  >
-                    定位／标注原文
-                  </ToolbarButton>
-                </>
-              ),
+              content: textToolsTriggers(),
+              collapsedContent: (close) => textToolsTriggers(close),
             },
             {
               key: 'page-rotate',
@@ -3810,53 +3887,16 @@ export function PdfEditor({
               label: '原文段落',
               tab: 'edit',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  ref={blocksTriggerRef}
-                  label="原文段落编辑"
-                  active={blocksShown}
-                  disabled={!ready || !hostBlocks || contentBusy || source.saving}
-                  disabledReason={!hostBlocks ? 'PDF 原文段落宿主未连接' : 'PDF 正在处理'}
-                  onClick={() => {
-                    const open = !blocksShown
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setImageExportOpen(false)
-                    setLocalMode(null)
-                    setInsertMode(false)
-                    setSelectTextMode(false)
-                    setBlocksOpen(open)
-                    setBlockSelection(null)
-                    setNotice(null)
-                  }}
-                >
-                  原文段落
-                </ToolbarButton>
-              ),
+              content: blocksTrigger(),
+              collapsedContent: (close) => blocksTrigger(close),
             },
             {
               key: 'images',
               label: '图片',
               tab: 'edit',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  label="PDF图片工具"
-                  ref={imagesTriggerRef}
-                  disabled={!hostImages || contentBusy}
-                  disabledReason="PDF图片宿主未连接或正在处理"
-                  onClick={() => {
-                    setBlocksOpen(false)
-                    setRedactionOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(false)
-                    setImagesOpen(!imagesOpen)
-                  }}
-                >
-                  图片
-                </ToolbarButton>
-              ),
+              content: imagesTrigger(),
+              collapsedContent: (close) => imagesTrigger(close),
             },
             {
               key: 'forms',

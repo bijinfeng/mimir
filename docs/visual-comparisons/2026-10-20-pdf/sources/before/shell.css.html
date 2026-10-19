@@ -1,0 +1,1619 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/shell/shell.css</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/shell/shell.css</h1>
+    <p>before真实源码 · SHA256 ef000dab5bcb473c3b25bf9c686c15388817aa876acd2ddf0d74e08b5040808f</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>/*</pre></li>
+    <li id="L2">
+      <pre> * 编辑器外壳的样式。六种编辑器（docx / xlsx / pptx / html / pdf / markdown）共用。</pre>
+    </li>
+    <li id="L3"><pre> *</pre></li>
+    <li id="L4"><pre> * ## 为什么这个包里有手写的 CSS</pre></li>
+    <li id="L5"><pre> *</pre></li>
+    <li id="L6">
+      <pre> * 界面组件与样式一起放在 `@mimir/office` 里，是 D-054 的决定：六种格式的</pre>
+    </li>
+    <li id="L7">
+      <pre> * 外壳共用同一份实现；笔记通过 `.mimir-editor--note` 收敛工具栏高度，</pre>
+    </li>
+    <li id="L8"><pre> * 其他格式仍沿用 Office 外观。</pre></li>
+    <li id="L9"><pre> *</pre></li>
+    <li id="L10"><pre> * ## 分工：控件观感归 antd，布局与弹层归这里（D-064）</pre></li>
+    <li id="L11"><pre> *</pre></li>
+    <li id="L12">
+      <pre> * 工具条里的**控件**（按钮、下拉、数字框、分段控件、文件选择）由 antd 渲染，</pre>
+    </li>
+    <li id="L13">
+      <pre> * 高度、内边距、圆角、边框、hover、焦点环、禁用态、字号全部由 `--ant-*` 承担</pre>
+    </li>
+    <li id="L14">
+      <pre> * ——这些正是「同一排三种高度 / 三种焦点环」的来源，交给一个实现就不会漂移。</pre>
+    </li>
+    <li id="L15"><pre> *</pre></li>
+    <li id="L16"><pre> * 这份 CSS 只管 antd 管不到的三件事：</pre></li>
+    <li id="L17"><pre> *</pre></li>
+    <li id="L18">
+      <pre> *  1. **布局**：`.mimir-editor` 的四条约束（`flex:1` / `min-height:0` /</pre>
+    </li>
+    <li id="L19">
+      <pre> *     `min-width:0` / `overflow:clip`）、组与状态行的摆法，以及笔记单行工具栏</pre>
+    </li>
+    <li id="L20">
+      <pre> *  2. **弹层**：`.me-menu*` / `.me-color*` —— 就地渲染 + `position: fixed`，</pre>
+    </li>
+    <li id="L21">
+      <pre> *     **不 portal 到 body**（portal 会离开 `--me-*` 子树，深色下退回浅色回退值）</pre>
+    </li>
+    <li id="L22">
+      <pre> *  3. **不是 antd 控件的东西**：色块、斜线、页签、状态块、说明段落，</pre>
+    </li>
+    <li id="L23"><pre> *     以及两个未迁移的弹层触发按钮（`.me-btn`）</pre></li>
+    <li id="L24"><pre> *</pre></li>
+    <li id="L25"><pre> * ## 主题值一律走自定义属性</pre></li>
+    <li id="L26"><pre> *</pre></li>
+    <li id="L27">
+      <pre> * 颜色不在这里写死：宿主（apps/web）把 antd token 填进 `--me-*`（见</pre>
+    </li>
+    <li id="L28">
+      <pre> * `apps/web/src/theme/editor-theme-bridge.ts`），于是浅色/深色、品牌色、圆角</pre>
+    </li>
+    <li id="L29"><pre> * 都跟着界面走。每个属性都带一个中性回退值，所以包能脱离宿主渲染</pre></li>
+    <li id="L30"><pre> * （测试、静态预览）。</pre></li>
+    <li id="L31"><pre> *</pre></li>
+    <li id="L32">
+      <pre> * 下表是**全部** `--me-*`（宿主填 21 个，见 `editor-theme-bridge.ts`）：</pre>
+    </li>
+    <li id="L33"><pre> *</pre></li>
+    <li id="L34"><pre> * ```</pre></li>
+    <li id="L35">
+      <pre>
+ * --me-text            主文字                    --me-accent          主色（激活态描边与文字）</pre>
+    </li>
+    <li id="L36">
+      <pre>
+ * --me-text-weak       次要文字（状态行、计数）    --me-accent-bg       主色浅底（激活态底）</pre>
+    </li>
+    <li id="L37">
+      <pre>
+ * --me-border          描边                     --me-accent-border   焦点环描边（弹层面板）</pre>
+    </li>
+    <li id="L38">
+      <pre> * --me-bar-bg          工具条底色                --me-danger          错误态文字</pre>
+    </li>
+    <li id="L39">
+      <pre> * --me-surface         内容区底色                --me-danger-bg       错误态底</pre>
+    </li>
+    <li id="L40">
+      <pre>
+ * --me-hover           悬停底                    --me-stage-bg        工作台底（纸张之外）</pre>
+    </li>
+    <li id="L41">
+      <pre> * --me-radius          圆角                     --me-content-width   正文列宽</pre>
+    </li>
+    <li id="L42">
+      <pre> * --me-shadow          弹层阴影（菜单、颜色面板）  --me-font            正文字体栈</pre>
+    </li>
+    <li id="L43">
+      <pre> * --me-page-shadow     纸张阴影（docx 的纸）      --me-font-size       正文档字号</pre>
+    </li>
+    <li id="L44">
+      <pre> * --me-font-mono       等宽字体栈                --me-font-size-sm    辅助档字号</pre>
+    </li>
+    <li id="L45"><pre> * --me-icon-size       图标字形（**非文本**）</pre></li>
+    <li id="L46"><pre> * ```</pre></li>
+    <li id="L47"><pre> *</pre></li>
+    <li id="L48">
+      <pre> * `--me-accent-hover` 已删（D-064）：它唯一的读者是 `.me-btn--primary:hover`，</pre>
+    </li>
+    <li id="L49">
+      <pre> * 而主按钮（保存）改由 antd 的 `type=&quot;primary&quot;` 负责——主色的 hover 阶由</pre>
+    </li>
+    <li id="L50"><pre> * antd 自己派生。</pre></li>
+    <li id="L51"><pre> *</pre></li>
+    <li id="L52"><pre> * 另有**一个不来自主题**的尺寸变量（这一层自己定的，宿主不必填）：</pre></li>
+    <li id="L53"><pre> *</pre></li>
+    <li id="L54"><pre> * ```</pre></li>
+    <li id="L55">
+      <pre> * --me-control-height  工具条里控件的高度。24px = antd 的 small 档按钮实高，</pre>
+    </li>
+    <li id="L56">
+      <pre> *                      也是 .me-tab / .me-color__cell 的高度——同一排一个高度。</pre>
+    </li>
+    <li id="L57">
+      <pre> *                      读者只剩两个：未迁移的 .me-btn（弹层触发器）与</pre>
+    </li>
+    <li id="L58">
+      <pre> *                      .me-menu__item。antd 的控件不吃它，走自己的 size。</pre>
+    </li>
+    <li id="L59"><pre> * ```</pre></li>
+    <li id="L60"><pre> *</pre></li>
+    <li id="L61">
+      <pre> * 字号默认值对应 mimir 的阶梯（`theme/tokens.ts` 的 body 与 note 两档），</pre>
+    </li>
+    <li id="L62">
+      <pre> * 宿主会覆盖成阶梯里的值——这里留 px 是因为包不能 import 宿主的 token。</pre>
+    </li>
+    <li id="L63"><pre> */</pre></li>
+    <li id="L64"><pre></pre></li>
+    <li id="L65"><pre>.mimir-editor {</pre></li>
+    <li id="L66"><pre>  display: flex;</pre></li>
+    <li id="L67"><pre>  flex-direction: column;</pre></li>
+    <li id="L68"><pre>  /*</pre></li>
+    <li id="L69">
+      <pre>   * 工具条里控件的高度。**现在是 24px**：antd 的 small 档按钮实测计算高度</pre>
+    </li>
+    <li id="L70">
+      <pre>   * 就是 24px，而 `.me-tab` 与 `.me-color__cell` 本来就是 24px——原来写 28</pre>
+    </li>
+    <li id="L71">
+      <pre>   * 时同一排真实存在三种高度（28 / 24 / 24），改这一个数就收成一档。</pre>
+    </li>
+    <li id="L72"><pre>   *</pre></li>
+    <li id="L73">
+      <pre>   * **antd 的控件不吃它**（它们走自己 size 档的 token），它只服务两个未迁移</pre>
+    </li>
+    <li id="L74">
+      <pre>   * 的消费者：`.me-btn`（弹层触发按钮）与 `.me-menu__item`。所以它必须与</pre>
+    </li>
+    <li id="L75">
+      <pre>   * antd small 档同值，否则未迁移的触发按钮会在相邻的 antd 按钮旁边高 4px。</pre>
+    </li>
+    <li id="L76"><pre>   */</pre></li>
+    <li id="L77"><pre>  --me-control-height: 24px;</pre></li>
+    <li id="L78"><pre>  /*</pre></li>
+    <li id="L79">
+      <pre>   * **撑满父容器**。宿主把编辑器放在一个 flex 列里（`DocumentPanel` 的内容列</pre>
+    </li>
+    <li id="L80">
+      <pre>   * 就是），`flex: 1` 让它吃掉剩余高度——表格与幻灯片因此能一直铺到窗口底，</pre>
+    </li>
+    <li id="L81"><pre>   * 而不是在内容下方留一大片空白。</pre></li>
+    <li id="L82"><pre>   *</pre></li>
+    <li id="L83">
+      <pre>   * `min-height: 0` 是 flex 子项能真正收缩的前提；缺了它，里面的滚动容器</pre>
+    </li>
+    <li id="L84">
+      <pre>   * 会把整块撑到内容高度，滚动条跑到页面上、工具条跟着滚走（实测踩过）。</pre>
+    </li>
+    <li id="L85"><pre>   */</pre></li>
+    <li id="L86"><pre>  flex: 1;</pre></li>
+    <li id="L87"><pre>  min-height: 0;</pre></li>
+    <li id="L88"><pre>  /*</pre></li>
+    <li id="L89">
+      <pre>   * **`min-width: 0` 不能少**（实测：420px 窗口里外壳量出 932px）。</pre>
+    </li>
+    <li id="L90"><pre>   *</pre></li>
+    <li id="L91">
+      <pre>   * 这个元素是宿主布局里的 flex 子项，而 `min-width: auto` 会让它**不会缩到</pre>
+    </li>
+    <li id="L92">
+      <pre>   * 比内容更窄**——里面有一张 900px 的 pdf 页面（或一张宽表格），于是窄窗口下</pre>
+    </li>
+    <li id="L93">
+      <pre>   * 整块外壳比视口宽、顶部快捷操作与底部状态被推出可视区。它看起来像「工具条</pre>
+    </li>
+    <li id="L94"><pre>   * 没折行」，其实是外壳的宽度下界。</pre></li>
+    <li id="L95"><pre>   *</pre></li>
+    <li id="L96">
+      <pre>   * 为什么 `overflow: clip` 挡不住它：Chrome 只对 `hidden`/`auto`/`scroll`</pre>
+    </li>
+    <li id="L97">
+      <pre>   * 把 flex 子项的自动最小尺寸算作 0，`clip` 不在其列（实测把 clip 换成</pre>
+    </li>
+    <li id="L98"><pre>   * hidden 也会缩到 418）。而 `clip` 是**必需的**——见下一条。</pre></li>
+    <li id="L99"><pre>   */</pre></li>
+    <li id="L100"><pre>  min-width: 0;</pre></li>
+    <li id="L101"><pre>  /*</pre></li>
+    <li id="L102">
+      <pre>   * **`clip` 而不是 `hidden`**，这个区别是必需的：`overflow: hidden` 会让</pre>
+    </li>
+    <li id="L103">
+      <pre>   * 这个元素变成一个滚动容器，于是里面的 `position: sticky` 会相对它定位</pre>
+    </li>
+    <li id="L104">
+      <pre>   * ——而它和内容一样高，等于不粘。`clip` 只裁剪、不建立滚动容器，工具条</pre>
+    </li>
+    <li id="L105"><pre>   * 因此能相对**外面真正滚动的那一层**（文档面板）粘住。</pre></li>
+    <li id="L106"><pre>   * 两者都照样裁掉圆角外的内容。</pre></li>
+    <li id="L107"><pre>   */</pre></li>
+    <li id="L108"><pre>  overflow: clip;</pre></li>
+    <li id="L109"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L110"><pre>  border-radius: var(--me-radius, 8px);</pre></li>
+    <li id="L111"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L112"><pre>  font-family: var(--me-font, inherit);</pre></li>
+    <li id="L113"><pre>  font-size: var(--me-font-size, 13px);</pre></li>
+    <li id="L114"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L115"><pre>}</pre></li>
+    <li id="L116"><pre></pre></li>
+    <li id="L117"><pre>/* 贴在面板里（文档详情右栏）时不要外框——它已经是面板的一部分 */</pre></li>
+    <li id="L118"><pre>.mimir-editor--flush {</pre></li>
+    <li id="L119"><pre>  border: none;</pre></li>
+    <li id="L120"><pre>  border-radius: 0;</pre></li>
+    <li id="L121"><pre>}</pre></li>
+    <li id="L122"><pre></pre></li>
+    <li id="L123">
+      <pre>/* ── 顶栏 ─────────────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L124"><pre></pre></li>
+    <li id="L125"><pre>/*</pre></li>
+    <li id="L126">
+      <pre> * 工具条与状态行**常驻**（Word 也是这样）：它们跟着文档一起滚走的话，</pre>
+    </li>
+    <li id="L127"><pre> * 「改到一半想改格式」就得先滚回顶部——而长文档里滚回去要好几屏。</pre></li>
+    <li id="L128"><pre> *</pre></li>
+    <li id="L129">
+      <pre> * 工具条与**次工具条**（查找栏、幻灯片导航、公式栏）同包在这一层里，sticky</pre>
+    </li>
+    <li id="L130">
+      <pre> * 也写在它上面。两行各自 sticky 是不行的：第二行写 `top: 0` 会与工具条重叠</pre>
+    </li>
+    <li id="L131"><pre> * （工具条 z-index 相同但 DOM 在后，于是命令被盖住，实测过），</pre></li>
+    <li id="L132">
+      <pre> * 写死 `top: 32px` 也不行——工具条是 `flex-wrap` 的，窄窗口下会折成两行，</pre>
+    </li>
+    <li id="L133"><pre> * 折了之后写死的偏移立刻错位。</pre></li>
+    <li id="L134"><pre> *</pre></li>
+    <li id="L135"><pre> * 背景是**两层合成**的：`--me-bar-bg` 是 antd 的半透明填充</pre></li>
+    <li id="L136">
+      <pre> * （`colorFillQuaternary` → `rgba(255,255,255,0.04)`），半透明的话下面的</pre>
+    </li>
+    <li id="L137">
+      <pre> * 正文会透出来。所以先用 `--me-surface` 铺一层不透明底，再把那个填充叠上去</pre>
+    </li>
+    <li id="L138"><pre> * ——保留了「比内容底亮一档」的分层，同时不透明。</pre></li>
+    <li id="L139"><pre> */</pre></li>
+    <li id="L140"><pre>.mimir-editor__chrome {</pre></li>
+    <li id="L141"><pre>  position: sticky;</pre></li>
+    <li id="L142"><pre>  top: 0;</pre></li>
+    <li id="L143"><pre>  z-index: 2;</pre></li>
+    <li id="L144"><pre>  flex: none;</pre></li>
+    <li id="L145"><pre>  border-bottom: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L146">
+      <pre>
+  /* A slightly clearer edge separates the ribbon from the canvas in both themes. */</pre>
+    </li>
+    <li id="L147">
+      <pre>
+  border-bottom-color: color-mix(in srgb, var(--me-border, #d9d9d9) 88%, var(--me-text, #262626));</pre>
+    </li>
+    <li id="L148"><pre>  background-color: var(--me-surface, #fff);</pre></li>
+    <li id="L149">
+      <pre>
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));</pre>
+    </li>
+    <li id="L150"><pre>}</pre></li>
+    <li id="L151"><pre></pre></li>
+    <li id="L152"><pre>/*</pre></li>
+    <li id="L153">
+      <pre> * 窄屏：常规工具条的高度上限。六格式分类工具栏各自横向滚动命令区，</pre>
+    </li>
+    <li id="L154"><pre> * 不按宽度隐藏按钮；这里仍约束未采用分类条的工具区高度。</pre></li>
+    <li id="L155"><pre> *</pre></li>
+    <li id="L156">
+      <pre> * 断点与宿主应用的窄屏断点同值（880px，`packages/renderer/src/theme/tokens.ts` 的</pre>
+    </li>
+    <li id="L157">
+      <pre> * `NAV_NARROW_QUERY`）——这个包不认识宿主的断点常量，值写在这里并注明出处：</pre>
+    </li>
+    <li id="L158"><pre> * 宿主改断点时这里要一起看。</pre></li>
+    <li id="L159"><pre> */</pre></li>
+    <li id="L160"><pre>.mimir-editor__bar {</pre></li>
+    <li id="L161"><pre>  display: flex;</pre></li>
+    <li id="L162"><pre>  align-items: stretch;</pre></li>
+    <li id="L163"><pre>  gap: 12px;</pre></li>
+    <li id="L164"><pre>  min-height: 58px;</pre></li>
+    <li id="L165"><pre>  padding: 8px 12px 5px;</pre></li>
+    <li id="L166"><pre>}</pre></li>
+    <li id="L167"><pre></pre></li>
+    <li id="L168"><pre>.mimir-editor__tools {</pre></li>
+    <li id="L169"><pre>  display: flex;</pre></li>
+    <li id="L170"><pre>  align-items: center;</pre></li>
+    <li id="L171"><pre>  align-content: start;</pre></li>
+    <li id="L172"><pre>  flex: 1;</pre></li>
+    <li id="L173"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L174"><pre>  gap: 6px;</pre></li>
+    <li id="L175"><pre>  min-width: 0;</pre></li>
+    <li id="L176"><pre>}</pre></li>
+    <li id="L177"><pre></pre></li>
+    <li id="L178"><pre>/* 笔记使用连续的单行命令轨；仅命令区滚动。 */</pre></li>
+    <li id="L179"><pre>.mimir-editor--note .mimir-editor__bar {</pre></li>
+    <li id="L180"><pre>  align-items: center;</pre></li>
+    <li id="L181"><pre>  gap: 8px;</pre></li>
+    <li id="L182"><pre>  min-height: 40px;</pre></li>
+    <li id="L183"><pre>  padding: 5px 10px;</pre></li>
+    <li id="L184"><pre>}</pre></li>
+    <li id="L185"><pre></pre></li>
+    <li id="L186"><pre>.mimir-editor--note .mimir-editor__tools {</pre></li>
+    <li id="L187"><pre>  flex-wrap: nowrap;</pre></li>
+    <li id="L188"><pre>  overflow-x: auto;</pre></li>
+    <li id="L189"><pre>  overflow-y: hidden;</pre></li>
+    <li id="L190"><pre>  scrollbar-width: thin;</pre></li>
+    <li id="L191"><pre>  white-space: nowrap;</pre></li>
+    <li id="L192"><pre>}</pre></li>
+    <li id="L193"><pre></pre></li>
+    <li id="L194"><pre>.mimir-editor--note .mimir-editor__tools &gt; .me-group {</pre></li>
+    <li id="L195"><pre>  flex: none;</pre></li>
+    <li id="L196"><pre>  flex-wrap: nowrap;</pre></li>
+    <li id="L197"><pre>  min-height: 0;</pre></li>
+    <li id="L198"><pre>  padding: 2px;</pre></li>
+    <li id="L199"><pre>}</pre></li>
+    <li id="L200"><pre></pre></li>
+    <li id="L201"><pre>.mimir-editor--note .mimir-editor__tools &gt; .me-group:hover {</pre></li>
+    <li id="L202"><pre>  background: transparent;</pre></li>
+    <li id="L203"><pre>}</pre></li>
+    <li id="L204"><pre></pre></li>
+    <li id="L205">
+      <pre>.mimir-editor--note .mimir-editor__tools &gt; .me-group &gt; .me-group__caption {</pre>
+    </li>
+    <li id="L206"><pre>  display: none;</pre></li>
+    <li id="L207"><pre>}</pre></li>
+    <li id="L208"><pre></pre></li>
+    <li id="L209"><pre>/* 只滚动命令区，次工具条仍保持可见。 */</pre></li>
+    <li id="L210"><pre>@media (max-width: 880px) {</pre></li>
+    <li id="L211"><pre>  .mimir-editor__bar {</pre></li>
+    <li id="L212"><pre>    gap: 8px;</pre></li>
+    <li id="L213"><pre>    padding: 6px 8px;</pre></li>
+    <li id="L214"><pre>  }</pre></li>
+    <li id="L215"><pre></pre></li>
+    <li id="L216"><pre>  .mimir-editor__tools {</pre></li>
+    <li id="L217"><pre>    max-height: min(128px, 22vh);</pre></li>
+    <li id="L218"><pre>    overflow-y: auto;</pre></li>
+    <li id="L219"><pre>    scrollbar-width: thin;</pre></li>
+    <li id="L220"><pre>  }</pre></li>
+    <li id="L221"><pre></pre></li>
+    <li id="L222"><pre>  .mimir-editor--note .mimir-editor__tools {</pre></li>
+    <li id="L223"><pre>    max-height: none;</pre></li>
+    <li id="L224"><pre>    overflow-y: hidden;</pre></li>
+    <li id="L225"><pre>  }</pre></li>
+    <li id="L226"><pre>}</pre></li>
+    <li id="L227"><pre></pre></li>
+    <li id="L228">
+      <pre>/* 次工具条（查找替换栏、幻灯片导航）。分隔线只画在「上面确实有工具条」时：</pre>
+    </li>
+    <li id="L229"><pre>   单独出现时它在 chrome 顶端，再画一条就成了顶部凭空一条线 */</pre></li>
+    <li id="L230"><pre>.mimir-editor__bar + .mimir-editor__subbar {</pre></li>
+    <li id="L231"><pre>  border-top: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L232"><pre>}</pre></li>
+    <li id="L233"><pre></pre></li>
+    <li id="L234"><pre>.mimir-editor__subbar {</pre></li>
+    <li id="L235"><pre>  display: flex;</pre></li>
+    <li id="L236"><pre>  align-items: center;</pre></li>
+    <li id="L237"><pre>  gap: 4px;</pre></li>
+    <li id="L238"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L239"><pre>  min-height: 32px;</pre></li>
+    <li id="L240"><pre>  padding: 4px 8px;</pre></li>
+    <li id="L241"><pre>}</pre></li>
+    <li id="L242"><pre></pre></li>
+    <li id="L243">
+      <pre>/* 内容区。**必须是 flex 子项且 min-height:0**——否则里面的滚动容器会把</pre>
+    </li>
+    <li id="L244">
+      <pre>   整块撑到内容高度，滚动条跑到页面上、工具条跟着滚走（实测踩过） */</pre>
+    </li>
+    <li id="L245"><pre>.mimir-editor__body {</pre></li>
+    <li id="L246"><pre>  display: flex;</pre></li>
+    <li id="L247"><pre>  flex-direction: column;</pre></li>
+    <li id="L248"><pre>  flex: 1;</pre></li>
+    <li id="L249"><pre>  min-height: 0;</pre></li>
+    <li id="L250">
+      <pre>
+  /* Canvas decorations stay below ribbon popups, regardless of their local z-index. */</pre>
+    </li>
+    <li id="L251"><pre>  isolation: isolate;</pre></li>
+    <li id="L252"><pre>}</pre></li>
+    <li id="L253"><pre></pre></li>
+    <li id="L254">
+      <pre>/* 贴边模式（编辑器已在面板里、无外框）时，body 自己也不再有外层容器托底，</pre>
+    </li>
+    <li id="L255"><pre>   所以它必须能吃掉剩余高度 */</pre></li>
+    <li id="L256"><pre>.mimir-editor--flush .mimir-editor__body {</pre></li>
+    <li id="L257"><pre>  min-height: 0;</pre></li>
+    <li id="L258"><pre>}</pre></li>
+    <li id="L259"><pre></pre></li>
+    <li id="L260"><pre>/* bodySide 给出时：主滚动层保持整幅（滚动条在画布最右缘），</pre></li>
+    <li id="L261">
+      <pre>   侧列是钉在右上角的**浮层**——不随内容滚走。主内容用 padding-right</pre>
+    </li>
+    <li id="L262"><pre>   让出侧列的位置（.me-scroll 上，居中的正文因此整体左移）。 */</pre></li>
+    <li id="L263"><pre>.mimir-editor__body--split {</pre></li>
+    <li id="L264"><pre>  position: relative;</pre></li>
+    <li id="L265"><pre>}</pre></li>
+    <li id="L266"><pre></pre></li>
+    <li id="L267"><pre>.mimir-editor__body--split &gt; .me-scroll {</pre></li>
+    <li id="L268"><pre>  padding-right: 220px;</pre></li>
+    <li id="L269"><pre>}</pre></li>
+    <li id="L270"><pre></pre></li>
+    <li id="L271"><pre>.mimir-editor__side {</pre></li>
+    <li id="L272"><pre>  position: absolute;</pre></li>
+    <li id="L273"><pre>  top: 8px;</pre></li>
+    <li id="L274"><pre>  right: 16px;</pre></li>
+    <li id="L275"><pre>  bottom: 8px;</pre></li>
+    <li id="L276"><pre>  width: 196px;</pre></li>
+    <li id="L277"><pre>  overflow-y: auto;</pre></li>
+    <li id="L278"><pre>  box-sizing: border-box;</pre></li>
+    <li id="L279"><pre>}</pre></li>
+    <li id="L280"><pre></pre></li>
+    <li id="L281"><pre>/* 内容下方的附属面板（pptx 的段落编辑、xlsx 的单元格编辑） */</pre></li>
+    <li id="L282"><pre>.mimir-editor__footer {</pre></li>
+    <li id="L283"><pre>  flex: none;</pre></li>
+    <li id="L284"><pre>  padding: 8px 10px;</pre></li>
+    <li id="L285"><pre>  border-top: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L286"><pre>  background-color: var(--me-surface, #fff);</pre></li>
+    <li id="L287">
+      <pre>
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));</pre>
+    </li>
+    <li id="L288"><pre>}</pre></li>
+    <li id="L289"><pre></pre></li>
+    <li id="L290"><pre>/* 状态行。说明与计数可以换行，保存操作在顶部 Ribbon 快捷区。 */</pre></li>
+    <li id="L291"><pre>.mimir-editor__status {</pre></li>
+    <li id="L292"><pre>  position: sticky;</pre></li>
+    <li id="L293"><pre>  bottom: 0;</pre></li>
+    <li id="L294"><pre>  z-index: 2;</pre></li>
+    <li id="L295"><pre>  display: flex;</pre></li>
+    <li id="L296"><pre>  align-items: center;</pre></li>
+    <li id="L297"><pre>  justify-content: space-between;</pre></li>
+    <li id="L298"><pre>  gap: 12px;</pre></li>
+    <li id="L299"><pre>  flex: none;</pre></li>
+    <li id="L300"><pre>  min-height: 24px;</pre></li>
+    <li id="L301"><pre>  padding: 3px 10px;</pre></li>
+    <li id="L302"><pre>  border-top: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L303"><pre>  background-color: var(--me-surface, #fff);</pre></li>
+    <li id="L304">
+      <pre>
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));</pre>
+    </li>
+    <li id="L305"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L306"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L307"><pre>}</pre></li>
+    <li id="L308"><pre></pre></li>
+    <li id="L309"><pre>.mimir-editor__status-content {</pre></li>
+    <li id="L310"><pre>  display: flex;</pre></li>
+    <li id="L311"><pre>  align-items: center;</pre></li>
+    <li id="L312"><pre>  justify-content: space-between;</pre></li>
+    <li id="L313"><pre>  flex: 1;</pre></li>
+    <li id="L314"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L315"><pre>  gap: 4px 12px;</pre></li>
+    <li id="L316"><pre>  min-width: 0;</pre></li>
+    <li id="L317"><pre>}</pre></li>
+    <li id="L318"><pre></pre></li>
+    <li id="L319"><pre>/* 长状态说明（尤其 XLSX/PPTX）不能撑开外壳。 */</pre></li>
+    <li id="L320"><pre>.mimir-editor__status-content &gt; .me-label {</pre></li>
+    <li id="L321"><pre>  white-space: normal;</pre></li>
+    <li id="L322"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L323"><pre>}</pre></li>
+    <li id="L324"><pre></pre></li>
+    <li id="L325">
+      <pre>/* ── 工具条里的控件 ────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L326"><pre></pre></li>
+    <li id="L327"><pre>/*</pre></li>
+    <li id="L328"><pre> * `.me-btn` **只服务两个未迁移的弹层触发器**：`ToolbarMenu` 与</pre></li>
+    <li id="L329">
+      <pre> * `ToolbarColorPicker` 的裸 `&lt;button className=&quot;me-btn&quot;&gt;`</pre>
+    </li>
+    <li id="L330">
+      <pre> * （EditorShell.tsx 的 `ToolbarMenu` / `ToolbarColorPicker`）。它们不经过</pre>
+    </li>
+    <li id="L331"><pre> * `ToolbarButton`，antd 接管不到。</pre></li>
+    <li id="L332"><pre> *</pre></li>
+    <li id="L333">
+      <pre> * **不要再把它挂到 antd 的按钮上**：`.me-btn` 的 `height` 与 antd 的</pre>
+    </li>
+    <li id="L334">
+      <pre> * `:where(...).ant-btn-sm` 特异性相同（都是 (0,1,0)）而这份样式在 head 里更靠后，</pre>
+    </li>
+    <li id="L335">
+      <pre> * 挂上之后 small 档按钮会被拉成 24px 之外的值；它的 `background: transparent`</pre>
+    </li>
+    <li id="L336">
+      <pre> * 还会压过 antd 的实心 `type=&quot;primary&quot;`（症状：透明的「保存」）。</pre>
+    </li>
+    <li id="L337">
+      <pre> * antd 按钮要按下态就挂 `.me-tb`（见下），那是两套互不重叠的样式。</pre>
+    </li>
+    <li id="L338"><pre> *</pre></li>
+    <li id="L339">
+      <pre> * 仍然必须是**真 button**：键盘可达、有焦点环、读屏读得到 —— 用 div 加</pre>
+    </li>
+    <li id="L340"><pre> * onClick 的写法在工具条里很常见，代价是键盘用户点不到它。</pre></li>
+    <li id="L341"><pre> */</pre></li>
+    <li id="L342"><pre>.me-btn {</pre></li>
+    <li id="L343"><pre>  display: inline-flex;</pre></li>
+    <li id="L344"><pre>  align-items: center;</pre></li>
+    <li id="L345"><pre>  justify-content: center;</pre></li>
+    <li id="L346"><pre>  gap: 5px;</pre></li>
+    <li id="L347"><pre>  min-width: var(--me-control-height, 24px);</pre></li>
+    <li id="L348"><pre>  height: var(--me-control-height, 24px);</pre></li>
+    <li id="L349"><pre>  padding: 0 7px;</pre></li>
+    <li id="L350"><pre>  border: 1px solid transparent;</pre></li>
+    <li id="L351"><pre>  border-radius: 4px;</pre></li>
+    <li id="L352"><pre>  background: transparent;</pre></li>
+    <li id="L353"><pre>  color: inherit;</pre></li>
+    <li id="L354"><pre>  font: inherit;</pre></li>
+    <li id="L355"><pre>  font-size: var(--me-font-size, 13px);</pre></li>
+    <li id="L356"><pre>  line-height: 1;</pre></li>
+    <li id="L357"><pre>  cursor: pointer;</pre></li>
+    <li id="L358"><pre>  transition:</pre></li>
+    <li id="L359"><pre>    background 0.15s ease,</pre></li>
+    <li id="L360"><pre>    color 0.15s ease,</pre></li>
+    <li id="L361"><pre>    border-color 0.15s ease;</pre></li>
+    <li id="L362"><pre>}</pre></li>
+    <li id="L363"><pre></pre></li>
+    <li id="L364"><pre>.me-btn:hover:not(:disabled) {</pre></li>
+    <li id="L365"><pre>  background: var(--me-hover, #f0f0f0);</pre></li>
+    <li id="L366"><pre>}</pre></li>
+    <li id="L367"><pre></pre></li>
+    <li id="L368">
+      <pre>/* 焦点环与禁用态。**不能跟着 `.me-btn` 一起删**：这两个触发按钮没有 antd</pre>
+    </li>
+    <li id="L369">
+      <pre>   的样式兜底，删掉之后键盘用户按 Tab 走到「段落样式」上什么都不显示 */</pre>
+    </li>
+    <li id="L370"><pre>.me-btn:focus-visible {</pre></li>
+    <li id="L371"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L372"><pre>  outline-offset: 1px;</pre></li>
+    <li id="L373"><pre>}</pre></li>
+    <li id="L374"><pre></pre></li>
+    <li id="L375"><pre>.me-btn:disabled {</pre></li>
+    <li id="L376"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L377"><pre>  opacity: 0.45;</pre></li>
+    <li id="L378"><pre>  cursor: not-allowed;</pre></li>
+    <li id="L379"><pre>}</pre></li>
+    <li id="L380"><pre></pre></li>
+    <li id="L381"><pre>/*</pre></li>
+    <li id="L382">
+      <pre> * 按下态。**这是 33 个 active 工具条按钮的唯一外观来源**：antd 的 Button</pre>
+    </li>
+    <li id="L383">
+      <pre> * 不认 `aria-pressed`（全仓库 grep antd 的 es/ 只有 input/Password.js 用到</pre>
+    </li>
+    <li id="L384">
+      <pre> * 这个属性），按下与没按下长得一样。所以 `ToolbarButton` 把 `aria-pressed`</pre>
+    </li>
+    <li id="L385"><pre> * 原样透传给 antd 的按钮，而这一条负责把它画出来。</pre></li>
+    <li id="L386"><pre> *</pre></li>
+    <li id="L387">
+      <pre>
+ * `:hover` 的伴随选择器是**必需的**：antd 的 `.ant-btn-variant-text:hover:not(:disabled)`</pre>
+    </li>
+    <li id="L388">
+      <pre>
+ * 是 (0,3,0)，只写 `.me-tb[aria-pressed=&#x27;true&#x27;]`（(0,2,0)）的话鼠标一悬停</pre>
+    </li>
+    <li id="L389"><pre> * 按下态就被 hover 底色盖掉。</pre></li>
+    <li id="L390"><pre> */</pre></li>
+    <li id="L391"><pre>.me-tb[aria-pressed=&#x27;true&#x27;],</pre></li>
+    <li id="L392"><pre>.me-tb[aria-pressed=&#x27;true&#x27;]:hover:not(:disabled) {</pre></li>
+    <li id="L393"><pre>  border-color: var(--me-accent, #00834d);</pre></li>
+    <li id="L394"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L395"><pre>  /*</pre></li>
+    <li id="L396">
+      <pre>   * 文字色走 `--me-accent-text`（= colorLink），不是 `--me-accent`。</pre>
+    </li>
+    <li id="L397"><pre>   *</pre></li>
+    <li id="L398"><pre>   * **主色是填充角色，不能当文字用**（DESIGN §3.5）：实测按下态</pre></li>
+    <li id="L399">
+      <pre>   * `#1668dc` on `#15325b` 只有 2.47:1（浅色 3.66:1），33 个按钮的</pre>
+    </li>
+    <li id="L400"><pre>   * 激活态全都偏难认。链接色在同一个底上是 5.50 / 6.17。</pre></li>
+    <li id="L401"><pre>   * 回退值也换成链接色，脱离宿主时保持一致。</pre></li>
+    <li id="L402"><pre>   */</pre></li>
+    <li id="L403"><pre>  color: var(--me-accent-text, #007a45);</pre></li>
+    <li id="L404"><pre>}</pre></li>
+    <li id="L405"><pre></pre></li>
+    <li id="L406">
+      <pre>/* 按钮里的图标字形。字号是**图标尺寸**，不是文本字号——所以单列一个变量，</pre>
+    </li>
+    <li id="L407"><pre>   避免被当成「又一个随手写的 font-size」 */</pre></li>
+    <li id="L408"><pre>.me-btn__icon {</pre></li>
+    <li id="L409"><pre>  display: inline-flex;</pre></li>
+    <li id="L410"><pre>  align-items: center;</pre></li>
+    <li id="L411"><pre>  font-size: var(--me-icon-size, 15px);</pre></li>
+    <li id="L412"><pre>  line-height: 1;</pre></li>
+    <li id="L413"><pre>}</pre></li>
+    <li id="L414"><pre></pre></li>
+    <li id="L415"><pre>/*</pre></li>
+    <li id="L416">
+      <pre>
+ * `.me-sep` 已删（D-064）：分隔线改成 antd 的 `Divider orientation=&quot;vertical&quot;`</pre>
+    </li>
+    <li id="L417">
+      <pre> * 之后它没有消费者了，而**留着它正是个陷阱**——它的画法是「1px 宽 +</pre>
+    </li>
+    <li id="L418">
+      <pre> * background」，与 antd 的 `border-inline-start` 不重叠、特异性相同、都生效，</pre>
+    </li>
+    <li id="L419"><pre> * 挂上去就是 1px 内容盒 + 1px 边框 = 画出 2px 的线。</pre></li>
+    <li id="L420"><pre> * `EditorShell.test.tsx` 有一条断言守着「分隔线不再挂这个类」。</pre></li>
+    <li id="L421"><pre> */</pre></li>
+    <li id="L422"><pre></pre></li>
+    <li id="L423"><pre>.me-spacer {</pre></li>
+    <li id="L424"><pre>  flex: 1;</pre></li>
+    <li id="L425"><pre>  min-width: 4px;</pre></li>
+    <li id="L426"><pre>}</pre></li>
+    <li id="L427"><pre></pre></li>
+    <li id="L428"><pre>.me-label {</pre></li>
+    <li id="L429"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L430"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L431"><pre>  white-space: nowrap;</pre></li>
+    <li id="L432"><pre>}</pre></li>
+    <li id="L433"><pre></pre></li>
+    <li id="L434"><pre>/* 说明性的一整段文字（footer 槽位、状态行里的长说明）。</pre></li>
+    <li id="L435">
+      <pre>   **与 .me-label 的关键差别是没有 `white-space: nowrap`**：说明了「为什么」</pre>
+    </li>
+    <li id="L436">
+      <pre>   的段落要能折行，否则它会撑破外壳（见 EditorShell.tsx 的 ToolbarNote） */</pre>
+    </li>
+    <li id="L437"><pre>.me-note {</pre></li>
+    <li id="L438"><pre>  margin: 0;</pre></li>
+    <li id="L439"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L440"><pre>  line-height: 1.6;</pre></li>
+    <li id="L441"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L442"><pre>  /* 长英文单词/URL 也要能断，不然一个长 token 同样撑破 */</pre></li>
+    <li id="L443"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L444"><pre>}</pre></li>
+    <li id="L445"><pre></pre></li>
+    <li id="L446"><pre>/*</pre></li>
+    <li id="L447"><pre> * 状态行上的一次性提示（动作失败的原因）。</pre></li>
+    <li id="L448"><pre> *</pre></li>
+    <li id="L449">
+      <pre> * 危险色、像 `.me-label` 一样是行内的一小段，但**不 nowrap**：原因是整句话</pre>
+    </li>
+    <li id="L450">
+      <pre> * （「只支持 PNG / JPEG / GIF 图片」），nowrap 会把状态行撑破——而状态内容区是</pre>
+    </li>
+    <li id="L451">
+      <pre> * `flex-wrap` 的，撑破的那一行会把右端的计数推走。断词规矩与 `.me-note` 同。</pre>
+    </li>
+    <li id="L452"><pre> */</pre></li>
+    <li id="L453"><pre>.me-notice {</pre></li>
+    <li id="L454"><pre>  color: var(--me-danger, #cf1322);</pre></li>
+    <li id="L455"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L456"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L457"><pre>}</pre></li>
+    <li id="L458"><pre></pre></li>
+    <li id="L459"><pre>/*</pre></li>
+    <li id="L460">
+      <pre> * 状态行上的**可点文字**（`ToolbarTextButton`：「保存失败：… · 点此重试」）。</pre>
+    </li>
+    <li id="L461"><pre> *</pre></li>
+    <li id="L462">
+      <pre> * 它是状态那句话的延伸，不是一个方框控件：同一条状态行里已经有 `.me-label`</pre>
+    </li>
+    <li id="L463">
+      <pre> * 与 `.me-notice`，把动作画成 24px 的方框按钮会让这一行看起来像第二条工具条。</pre>
+    </li>
+    <li id="L464">
+      <pre>
+ * 所以高度、内边距、边框、底色全部收掉，只留下划线。antd 的 `variant=&quot;link&quot;`</pre>
+    </li>
+    <li id="L465"><pre> * 本来就没有边框与底色，这里把它剩下的「控件外形」也收掉。</pre></li>
+    <li id="L466"><pre> *</pre></li>
+    <li id="L467"><pre> * ## 与 antd 的五处竞态，都靠「同特异性 + 更靠后」压住</pre></li>
+    <li id="L468"><pre> *</pre></li>
+    <li id="L469">
+      <pre> * antd 的按钮样式是 `:where(.css-…).ant-btn`（(0,1,0)——`:where()` 不贡献特异</pre>
+    </li>
+    <li id="L470">
+      <pre>
+ * 性）。宿主没开 antd 的 `layer`，那些样式按 `prepend: &#x27;queue&#x27;` 插在 head 开头，</pre>
+    </li>
+    <li id="L471">
+      <pre> * 而这份样式在 head 里更靠后，同特异性时后者胜（`.me-btn` / `.me-input--text`</pre>
+    </li>
+    <li id="L472"><pre> * 的注释记着同一条机制，实测过）。要压的是这五处：</pre></li>
+    <li id="L473"><pre> *</pre></li>
+    <li id="L474"><pre> * | antd 的声明 | 不压的后果 |</pre></li>
+    <li id="L475"><pre> * |---|---|</pre></li>
+    <li id="L476">
+      <pre>
+ * | `.ant-btn` / `.ant-btn-sm` 的 `height: var(--ant-control-height…)` | 变成 24px 的控件，状态行被顶高一档 |</pre>
+    </li>
+    <li id="L477">
+      <pre> * | 同上的 `padding: 0 var(…)` | 一段文字左右各多出 7–15px，与相邻标签对不齐 |</pre>
+    </li>
+    <li id="L478">
+      <pre> * | `.ant-btn` 的 `border` / `background-color` | 一个描边 + 底色的方框 |</pre>
+    </li>
+    <li id="L479">
+      <pre>
+ * | `.ant-btn` 的 `white-space: nowrap` | **一长条错误信息不能折行**——它是状态行里的 a flex 项，`min-width: auto` 下 min-content 就是整句，撑破的是整行、被外壳的 `overflow: clip` 裁掉（`.me-label` 那条坑的同一类） |</pre>
+    </li>
+    <li id="L480">
+      <pre>
+ * | `.ant-btn` 的 `font-size` | small 档是 14px，与同一行的 `.me-label`（12px）不齐 |</pre>
+    </li>
+    <li id="L481"><pre> *</pre></li>
+    <li id="L482">
+      <pre> * 字号取 `--me-font-size-sm`（12px）**是有意的例外**：这一档是状态文字的一部分，</pre>
+    </li>
+    <li id="L483">
+      <pre> * 必须与同一行的 `.me-label` / `.me-notice` 同号。色值同理——默认 `color: inherit`</pre>
+    </li>
+    <li id="L484"><pre> * 继承状态行的 `--me-text-weak`，只有危险态单列。</pre></li>
+    <li id="L485"><pre> *</pre></li>
+    <li id="L486"><pre> * ## 危险色要连着 `:hover` / `:active` 一起钉</pre></li>
+    <li id="L487"><pre> *</pre></li>
+    <li id="L488">
+      <pre> * `--me-danger` 是宿主校准过的语义错误色（`colorErrorText`，DESIGN §3.4 的色对），</pre>
+    </li>
+    <li id="L489">
+      <pre> * 而 antd 的 hover / active 会换成 `--ant-color-error-hover` / `-active`（由 error</pre>
+    </li>
+    <li id="L490"><pre> * 种子派生，没走过宿主那次校准）。那两条是</pre></li>
+    <li id="L491">
+      <pre> * `.ant-btn:not(:disabled):not(.ant-btn-disabled):hover`（(0,3,0)），所以必须写</pre>
+    </li>
+    <li id="L492">
+      <pre>
+ * 同特异性的伴随选择器——与 `.me-tb[aria-pressed=&#x27;true&#x27;]` 那一对同一个理由、</pre>
+    </li>
+    <li id="L493"><pre> * 同一个写法（那里漏掉 `:hover` 会让悬停盖掉按下态）。</pre></li>
+    <li id="L494"><pre> *</pre></li>
+    <li id="L495">
+      <pre> * `white-space: normal` 之后**必须**给 `overflow-wrap: anywhere`：断词规矩与</pre>
+    </li>
+    <li id="L496">
+      <pre> * `.me-note` / `.me-notice` 一致，否则一条带长 URL 的错误信息仍然撑破。</pre>
+    </li>
+    <li id="L497"><pre> */</pre></li>
+    <li id="L498"><pre>.me-text-btn {</pre></li>
+    <li id="L499"><pre>  height: auto;</pre></li>
+    <li id="L500"><pre>  padding: 0;</pre></li>
+    <li id="L501"><pre>  border: none;</pre></li>
+    <li id="L502"><pre>  background: none;</pre></li>
+    <li id="L503"><pre>  color: inherit;</pre></li>
+    <li id="L504"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L505"><pre>  /* 行高与基线交给状态行，这里不自己定 */</pre></li>
+    <li id="L506"><pre>  line-height: inherit;</pre></li>
+    <li id="L507"><pre>  white-space: normal;</pre></li>
+    <li id="L508"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L509"><pre>  text-align: left;</pre></li>
+    <li id="L510"><pre>  text-decoration: underline;</pre></li>
+    <li id="L511"><pre>  text-underline-offset: 2px;</pre></li>
+    <li id="L512"><pre>}</pre></li>
+    <li id="L513"><pre></pre></li>
+    <li id="L514"><pre>.me-text-btn--danger,</pre></li>
+    <li id="L515"><pre>.me-text-btn--danger:hover:not(:disabled),</pre></li>
+    <li id="L516"><pre>.me-text-btn--danger:active:not(:disabled) {</pre></li>
+    <li id="L517"><pre>  color: var(--me-danger, #cf1322);</pre></li>
+    <li id="L518"><pre>}</pre></li>
+    <li id="L519"><pre></pre></li>
+    <li id="L520"><pre>/*</pre></li>
+    <li id="L521">
+      <pre> * `.me-input` 的**整套观感规则已删**（D-064 分工：控件观感归 `--ant-*`）。</pre>
+    </li>
+    <li id="L522"><pre> *</pre></li>
+    <li id="L523">
+      <pre> * 它的历史：这一段的 height / padding / border / border-radius / background /</pre>
+    </li>
+    <li id="L524">
+      <pre>
+ * font 原来是给原生 `&lt;input&gt;` 手写的。最后一个原生消费者（xlsx footer 的格内容</pre>
+    </li>
+    <li id="L525">
+      <pre> * 编辑框）迁到 `ToolbarTextField` 之后，这套规则落在了四个 antd `Input` 上</pre>
+    </li>
+    <li id="L526">
+      <pre> * （`ToolbarTextField` 一个、`FindReplaceBar` 两个、xlsx 的格内容框一个），</pre>
+    </li>
+    <li id="L527">
+      <pre> * 压过 antd small 档——实测同一排里输入框 12px / 按钮 14px、圆角 4 对 8</pre>
+    </li>
+    <li id="L528"><pre> * （真 Chromium）。所以**连类名一起摘掉**：antd 的 Input 只挂</pre></li>
+    <li id="L529">
+      <pre> * `.me-input--text` / `.me-find__query` 这种**宽度/弹性**类，观感归 antd。</pre>
+    </li>
+    <li id="L530"><pre> */</pre></li>
+    <li id="L531"><pre></pre></li>
+    <li id="L532">
+      <pre>/* 数字输入：窄、居中、表格式数字。挂在 `ToolbarNumberField` 的 antd</pre>
+    </li>
+    <li id="L533">
+      <pre>   InputNumber 上（它 `controls={false}`，所以没有上下箭头要处理）。</pre>
+    </li>
+    <li id="L534"><pre>   `appearance: textfield` 那两条随原生 number 输入框一起去掉了 */</pre></li>
+    <li id="L535"><pre>.me-input--num {</pre></li>
+    <li id="L536"><pre>  width: 56px;</pre></li>
+    <li id="L537"><pre>  flex: none;</pre></li>
+    <li id="L538"><pre>}</pre></li>
+    <li id="L539"><pre></pre></li>
+    <li id="L540"><pre>/*</pre></li>
+    <li id="L541">
+      <pre> * 工具条上的文本输入宽度（链接面板里那条会把它覆盖成 100%，见文件末尾）。</pre>
+    </li>
+    <li id="L542">
+      <pre> * `ToolbarTextField` 把它挂在 antd 的 Input 上：`.me-input--text`（(0,1,0)）</pre>
+    </li>
+    <li id="L543">
+      <pre> * 与 antd 的 `:where(.css-…).ant-input` 特异性相同，而这份样式在 head 里更靠后</pre>
+    </li>
+    <li id="L544"><pre> * ——所以 180px 生效，而不是 antd 的 `width: 100%`。</pre></li>
+    <li id="L545"><pre> *</pre></li>
+    <li id="L546">
+      <pre> * `min-width: 0` 是从被删的 `.me-input` 那里**留下来的唯一一条**：它是 flex 子项</pre>
+    </li>
+    <li id="L547">
+      <pre>
+ * 能收缩的前提（默认 `min-width: auto` 下 `&lt;input&gt;` 的固有宽度会让它顶住不缩，</pre>
+    </li>
+    <li id="L548">
+      <pre>
+ * 窄窗口里把这一行撑破——`.trellis/spec/office/frontend/shell/pitfalls.md` 坑表里那条「窄窗口下工具条右端看不见」是</pre>
+    </li>
+    <li id="L549">
+      <pre> * 同一类）。xlsx 的格内容框把它覆写成 `flex: 1` 之后正是靠它才能跟着窗口缩。</pre>
+    </li>
+    <li id="L550"><pre> */</pre></li>
+    <li id="L551"><pre>.me-input--text {</pre></li>
+    <li id="L552"><pre>  width: 180px;</pre></li>
+    <li id="L553"><pre>  flex: none;</pre></li>
+    <li id="L554"><pre>  min-width: 0;</pre></li>
+    <li id="L555"><pre>}</pre></li>
+    <li id="L556"><pre></pre></li>
+    <li id="L557"><pre>/* 带单位的输入（字号 pt、页码 / 共 N 页） */</pre></li>
+    <li id="L558"><pre>.me-field {</pre></li>
+    <li id="L559"><pre>  display: inline-flex;</pre></li>
+    <li id="L560"><pre>  align-items: center;</pre></li>
+    <li id="L561"><pre>  gap: 4px;</pre></li>
+    <li id="L562"><pre>}</pre></li>
+    <li id="L563"><pre></pre></li>
+    <li id="L564"><pre>.me-field__suffix {</pre></li>
+    <li id="L565"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L566"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L567"><pre>  white-space: nowrap;</pre></li>
+    <li id="L568"><pre>}</pre></li>
+    <li id="L569"><pre></pre></li>
+    <li id="L570">
+      <pre>/* 按钮组的边界盒。**不是分隔线**：工具条是 flex-wrap 的，分隔线换行时会</pre>
+    </li>
+    <li id="L571"><pre>   落在行末或行首（看着像没画对），而组在换行时整组一起走 */</pre></li>
+    <li id="L572"><pre>.me-group {</pre></li>
+    <li id="L573"><pre>  display: inline-flex;</pre></li>
+    <li id="L574"><pre>  align-items: center;</pre></li>
+    <li id="L575"><pre>  gap: 2px;</pre></li>
+    <li id="L576"><pre>  /*</pre></li>
+    <li id="L577">
+      <pre>   * 组**自己也能换行**。组是一个 flex 项，而 flex 项的自动最小宽度是</pre>
+    </li>
+    <li id="L578">
+      <pre>   * min-content——不换行的组最小就是「所有子项排一行」那么宽，窄窗口下</pre>
+    </li>
+    <li id="L579"><pre>   * 它撑破工具条（工具条的 flex-wrap 对它没用：它整体是一个项）。</pre></li>
+    <li id="L580"><pre>   *</pre></li>
+    <li id="L581">
+      <pre>   * 加上 wrap 之后组的最小宽度变成**最宽的那个子项**（xlsx 的查找组里是</pre>
+    </li>
+    <li id="L582">
+      <pre>   * 那个 180px 的输入框），于是窄窗口下组内自己折成两行，而不是把外壳撑破。</pre>
+    </li>
+    <li id="L583"><pre>   */</pre></li>
+    <li id="L584"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L585"><pre>}</pre></li>
+    <li id="L586"><pre></pre></li>
+    <li id="L587"><pre>.me-group__caption {</pre></li>
+    <li id="L588"><pre>  display: none;</pre></li>
+    <li id="L589"><pre>}</pre></li>
+    <li id="L590"><pre></pre></li>
+    <li id="L591">
+      <pre>/* Office 式功能区：真实命令按组呈现，组名可见且不增加虚构页签。 */</pre>
+    </li>
+    <li id="L592"><pre>.mimir-editor__tools &gt; .me-group {</pre></li>
+    <li id="L593"><pre>  position: relative;</pre></li>
+    <li id="L594"><pre>  min-height: 42px;</pre></li>
+    <li id="L595"><pre>  padding: 2px 4px 17px;</pre></li>
+    <li id="L596"><pre>  border-radius: calc(var(--me-radius, 8px) / 2);</pre></li>
+    <li id="L597"><pre>}</pre></li>
+    <li id="L598"><pre></pre></li>
+    <li id="L599"><pre>.mimir-editor__tools &gt; .me-group:hover {</pre></li>
+    <li id="L600"><pre>  background: var(--me-hover, #f0f0f0);</pre></li>
+    <li id="L601"><pre>}</pre></li>
+    <li id="L602"><pre></pre></li>
+    <li id="L603"><pre>.mimir-editor__tools &gt; .me-group &gt; .me-group__caption {</pre></li>
+    <li id="L604"><pre>  position: absolute;</pre></li>
+    <li id="L605"><pre>  right: 3px;</pre></li>
+    <li id="L606"><pre>  bottom: 1px;</pre></li>
+    <li id="L607"><pre>  left: 3px;</pre></li>
+    <li id="L608"><pre>  display: block;</pre></li>
+    <li id="L609"><pre>  overflow: hidden;</pre></li>
+    <li id="L610"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L611"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L612"><pre>  line-height: 14px;</pre></li>
+    <li id="L613"><pre>  text-align: center;</pre></li>
+    <li id="L614"><pre>  text-overflow: ellipsis;</pre></li>
+    <li id="L615"><pre>  white-space: nowrap;</pre></li>
+    <li id="L616"><pre>  pointer-events: none;</pre></li>
+    <li id="L617"><pre>}</pre></li>
+    <li id="L618"><pre></pre></li>
+    <li id="L619">
+      <pre>/* ── 弹出层：菜单与颜色面板 ─────────────────────────────────────── */</pre>
+    </li>
+    <li id="L620"><pre></pre></li>
+    <li id="L621"><pre>/*</pre></li>
+    <li id="L622">
+      <pre> * 就地渲染、`position: fixed`。**不要 portal 到 body**：portal 会把面板</pre>
+    </li>
+    <li id="L623"><pre> * 移出 `--me-*` 所在的那棵子树，深色主题下弹层就退回浅色回退值</pre></li>
+    <li id="L624"><pre> * （这个包不依赖 antd，回退值是浅色的）。fixed 的包含块是视口，</pre></li>
+    <li id="L625"><pre> * 所以外壳的 `overflow: clip` 也裁不到它。</pre></li>
+    <li id="L626"><pre> */</pre></li>
+    <li id="L627"><pre>.me-menu {</pre></li>
+    <li id="L628"><pre>  position: relative;</pre></li>
+    <li id="L629"><pre>  display: inline-flex;</pre></li>
+    <li id="L630"><pre>}</pre></li>
+    <li id="L631"><pre></pre></li>
+    <li id="L632"><pre>/* `[[` 内链建议跟随光标；固定定位避免被正文滚动层或外壳裁掉。 */</pre></li>
+    <li id="L633"><pre>.me-note-link-picker {</pre></li>
+    <li id="L634"><pre>  position: fixed;</pre></li>
+    <li id="L635"><pre>  z-index: 24;</pre></li>
+    <li id="L636"><pre>  width: min(280px, calc(100vw - 16px));</pre></li>
+    <li id="L637"><pre>  max-height: 180px;</pre></li>
+    <li id="L638"><pre>  overflow-y: auto;</pre></li>
+    <li id="L639"><pre>  padding: 4px;</pre></li>
+    <li id="L640"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L641"><pre>  border-radius: var(--me-radius, 8px);</pre></li>
+    <li id="L642"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L643"><pre>  box-shadow: var(--me-shadow, 0 8px 24px rgb(0 0 0 / 0.12));</pre></li>
+    <li id="L644"><pre>}</pre></li>
+    <li id="L645"><pre></pre></li>
+    <li id="L646"><pre>.me-note-link-picker__item {</pre></li>
+    <li id="L647"><pre>  display: block;</pre></li>
+    <li id="L648"><pre>  width: 100%;</pre></li>
+    <li id="L649"><pre>  padding: 6px 8px;</pre></li>
+    <li id="L650"><pre>  border: 0;</pre></li>
+    <li id="L651"><pre>  border-radius: calc(var(--me-radius, 8px) / 2);</pre></li>
+    <li id="L652"><pre>  background: transparent;</pre></li>
+    <li id="L653"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L654"><pre>  font: inherit;</pre></li>
+    <li id="L655"><pre>  text-align: left;</pre></li>
+    <li id="L656"><pre>  cursor: pointer;</pre></li>
+    <li id="L657"><pre>}</pre></li>
+    <li id="L658"><pre></pre></li>
+    <li id="L659"><pre>.me-note-link-picker__item:hover,</pre></li>
+    <li id="L660"><pre>.me-note-link-picker__item[aria-selected=&#x27;true&#x27;] {</pre></li>
+    <li id="L661"><pre>  background: var(--me-hover, #f0f0f0);</pre></li>
+    <li id="L662"><pre>}</pre></li>
+    <li id="L663"><pre></pre></li>
+    <li id="L664"><pre>.me-note-link-picker__item:focus-visible {</pre></li>
+    <li id="L665"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L666"><pre>  outline-offset: -2px;</pre></li>
+    <li id="L667"><pre>}</pre></li>
+    <li id="L668"><pre></pre></li>
+    <li id="L669"><pre>.me-note-link-picker__hint {</pre></li>
+    <li id="L670"><pre>  padding: 6px 8px;</pre></li>
+    <li id="L671"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L672"><pre>}</pre></li>
+    <li id="L673"><pre></pre></li>
+    <li id="L674"><pre>.me-menu__text {</pre></li>
+    <li id="L675"><pre>  white-space: nowrap;</pre></li>
+    <li id="L676"><pre>}</pre></li>
+    <li id="L677"><pre></pre></li>
+    <li id="L678"><pre>.me-menu__caret {</pre></li>
+    <li id="L679"><pre>  font-size: 11px;</pre></li>
+    <li id="L680"><pre>  opacity: 0.7;</pre></li>
+    <li id="L681"><pre>}</pre></li>
+    <li id="L682"><pre></pre></li>
+    <li id="L683"><pre>.me-menu__panel {</pre></li>
+    <li id="L684"><pre>  position: fixed;</pre></li>
+    <li id="L685"><pre>  z-index: 20;</pre></li>
+    <li id="L686"><pre>  min-width: 176px;</pre></li>
+    <li id="L687"><pre>  max-height: 60vh;</pre></li>
+    <li id="L688"><pre>  overflow-y: auto;</pre></li>
+    <li id="L689"><pre>  padding: 4px;</pre></li>
+    <li id="L690"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L691"><pre>  border-radius: var(--me-radius, 8px);</pre></li>
+    <li id="L692"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L693"><pre>  box-shadow: var(--me-shadow, 0 6px 16px rgb(0 0 0 / 12%));</pre></li>
+    <li id="L694"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L695"><pre>  font-family: var(--me-font, inherit);</pre></li>
+    <li id="L696"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L697"><pre>}</pre></li>
+    <li id="L698"><pre></pre></li>
+    <li id="L699"><pre>.me-menu__panel:focus-visible {</pre></li>
+    <li id="L700"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L701"><pre>  outline-offset: -2px;</pre></li>
+    <li id="L702"><pre>}</pre></li>
+    <li id="L703"><pre></pre></li>
+    <li id="L704"><pre>.me-menu__item {</pre></li>
+    <li id="L705"><pre>  display: flex;</pre></li>
+    <li id="L706"><pre>  align-items: center;</pre></li>
+    <li id="L707"><pre>  gap: 6px;</pre></li>
+    <li id="L708"><pre>  width: 100%;</pre></li>
+    <li id="L709"><pre>  min-height: var(--me-control-height, 24px);</pre></li>
+    <li id="L710"><pre>  padding: 0 8px;</pre></li>
+    <li id="L711"><pre>  border: none;</pre></li>
+    <li id="L712"><pre>  border-radius: 4px;</pre></li>
+    <li id="L713"><pre>  background: transparent;</pre></li>
+    <li id="L714"><pre>  color: inherit;</pre></li>
+    <li id="L715"><pre>  font: inherit;</pre></li>
+    <li id="L716"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L717"><pre>  text-align: left;</pre></li>
+    <li id="L718"><pre>  cursor: pointer;</pre></li>
+    <li id="L719"><pre>}</pre></li>
+    <li id="L720"><pre></pre></li>
+    <li id="L721"><pre>.me-menu__item:hover:not(:disabled) {</pre></li>
+    <li id="L722"><pre>  background: var(--me-hover, #f0f0f0);</pre></li>
+    <li id="L723"><pre>}</pre></li>
+    <li id="L724"><pre></pre></li>
+    <li id="L725"><pre>.me-menu__item:focus-visible {</pre></li>
+    <li id="L726"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L727"><pre>  outline-offset: -2px;</pre></li>
+    <li id="L728"><pre>}</pre></li>
+    <li id="L729"><pre></pre></li>
+    <li id="L730"><pre>.me-menu__item:disabled {</pre></li>
+    <li id="L731"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L732"><pre>  opacity: 0.55;</pre></li>
+    <li id="L733"><pre>  cursor: not-allowed;</pre></li>
+    <li id="L734"><pre>}</pre></li>
+    <li id="L735"><pre></pre></li>
+    <li id="L736"><pre>/* 当前值：`aria-current` 是状态来源，样式读它，不另加类。</pre></li>
+    <li id="L737"><pre>   文字色同 `.me-tb` 那条：主色是填充角色，当 12px 文字用不达标</pre></li>
+    <li id="L738">
+      <pre>   （实测浅色 4.10:1、深色 3.50:1）——走 --me-accent-text（colorLink） */</pre>
+    </li>
+    <li id="L739"><pre>.me-menu__item[aria-current=&#x27;true&#x27;] {</pre></li>
+    <li id="L740"><pre>  color: var(--me-accent-text, #007a45);</pre></li>
+    <li id="L741"><pre>  font-weight: 600;</pre></li>
+    <li id="L742"><pre>}</pre></li>
+    <li id="L743"><pre></pre></li>
+    <li id="L744">
+      <pre>/* 打勾那一格**常驻**（不选中的项也留位）：否则选中时整行文字会右移 */</pre>
+    </li>
+    <li id="L745"><pre>.me-menu__check {</pre></li>
+    <li id="L746"><pre>  display: inline-flex;</pre></li>
+    <li id="L747"><pre>  align-items: center;</pre></li>
+    <li id="L748"><pre>  width: 14px;</pre></li>
+    <li id="L749"><pre>  font-size: 13px;</pre></li>
+    <li id="L750"><pre>}</pre></li>
+    <li id="L751"><pre></pre></li>
+    <li id="L752"><pre>.me-menu__label {</pre></li>
+    <li id="L753"><pre>  flex: 1;</pre></li>
+    <li id="L754"><pre>  min-width: 0;</pre></li>
+    <li id="L755"><pre>  overflow: hidden;</pre></li>
+    <li id="L756"><pre>  text-overflow: ellipsis;</pre></li>
+    <li id="L757"><pre>  white-space: nowrap;</pre></li>
+    <li id="L758"><pre>}</pre></li>
+    <li id="L759"><pre></pre></li>
+    <li id="L760"><pre>.me-menu__sep {</pre></li>
+    <li id="L761"><pre>  height: 1px;</pre></li>
+    <li id="L762"><pre>  margin: 4px 6px;</pre></li>
+    <li id="L763"><pre>  background: var(--me-border, #d9d9d9);</pre></li>
+    <li id="L764"><pre>}</pre></li>
+    <li id="L765"><pre></pre></li>
+    <li id="L766"><pre>/*</pre></li>
+    <li id="L767"><pre> * 面板里的一组**普通控件**（输入框、下拉，而不是菜单项）。</pre></li>
+    <li id="L768"><pre> *</pre></li>
+    <li id="L769">
+      <pre> * 键盘规矩**不在这里**，已经收进 `ToolbarMenu` 的 `onPanelKeyDown`：来自表单</pre>
+    </li>
+    <li id="L770">
+      <pre> * 控件的按键（`input` / `textarea` / `select` / combobox 那类 role）一律不抢，</pre>
+    </li>
+    <li id="L771">
+      <pre> * 因为输入框里按上下键是想改数字、在下拉里按上下键是想换一档。以前这靠调用方</pre>
+    </li>
+    <li id="L772">
+      <pre> * 自己挂一层 `onKeyDown` + `stopPropagation`，docx 挂了、markdown 的两个面板</pre>
+    </li>
+    <li id="L773">
+      <pre> * 没挂——同一件事两处漂移。CSS 这一层只负责把它摆成一行行的「标签 + 控件」。</pre>
+    </li>
+    <li id="L774"><pre> */</pre></li>
+    <li id="L775"><pre>.me-menu__fields {</pre></li>
+    <li id="L776"><pre>  display: flex;</pre></li>
+    <li id="L777"><pre>  flex-direction: column;</pre></li>
+    <li id="L778"><pre>  gap: 6px;</pre></li>
+    <li id="L779"><pre>  padding: 4px 6px 6px;</pre></li>
+    <li id="L780"><pre>}</pre></li>
+    <li id="L781"><pre></pre></li>
+    <li id="L782">
+      <pre>
+/* Explicit property forms keep field names visible without widening ribbon controls. */</pre>
+    </li>
+    <li id="L783"><pre>.me-property-form {</pre></li>
+    <li id="L784"><pre>  min-width: 0;</pre></li>
+    <li id="L785"><pre>  padding: 8px;</pre></li>
+    <li id="L786"><pre>  container-type: inline-size;</pre></li>
+    <li id="L787"><pre>}</pre></li>
+    <li id="L788"><pre></pre></li>
+    <li id="L789"><pre>.me-property-group {</pre></li>
+    <li id="L790"><pre>  display: grid;</pre></li>
+    <li id="L791"><pre>  grid-template-columns: repeat(2, minmax(0, 1fr));</pre></li>
+    <li id="L792"><pre>  gap: 12px;</pre></li>
+    <li id="L793"><pre>  min-width: 0;</pre></li>
+    <li id="L794"><pre>}</pre></li>
+    <li id="L795"><pre></pre></li>
+    <li id="L796"><pre>.me-property-group + .me-property-group {</pre></li>
+    <li id="L797"><pre>  margin-top: 20px;</pre></li>
+    <li id="L798"><pre>}</pre></li>
+    <li id="L799"><pre></pre></li>
+    <li id="L800"><pre>.me-property-group &gt; :not(.me-property-field),</pre></li>
+    <li id="L801"><pre>.me-property-field[data-multiline] {</pre></li>
+    <li id="L802"><pre>  grid-column: 1 / -1;</pre></li>
+    <li id="L803"><pre>}</pre></li>
+    <li id="L804"><pre></pre></li>
+    <li id="L805"><pre>.me-property-group__title {</pre></li>
+    <li id="L806"><pre>  margin: 0 0 4px;</pre></li>
+    <li id="L807"><pre>  color: var(--me-text);</pre></li>
+    <li id="L808"><pre>  font-size: var(--me-font-size, 13px);</pre></li>
+    <li id="L809"><pre>  font-weight: 600;</pre></li>
+    <li id="L810"><pre>  line-height: 1.5;</pre></li>
+    <li id="L811"><pre>}</pre></li>
+    <li id="L812"><pre></pre></li>
+    <li id="L813"><pre>.me-property-field {</pre></li>
+    <li id="L814"><pre>  display: flex;</pre></li>
+    <li id="L815"><pre>  flex-direction: column;</pre></li>
+    <li id="L816"><pre>  gap: 6px;</pre></li>
+    <li id="L817"><pre>  min-width: 0;</pre></li>
+    <li id="L818"><pre>}</pre></li>
+    <li id="L819"><pre></pre></li>
+    <li id="L820"><pre>.me-property-field__label {</pre></li>
+    <li id="L821"><pre>  color: var(--me-text);</pre></li>
+    <li id="L822"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L823"><pre>  line-height: 1.5;</pre></li>
+    <li id="L824"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L825"><pre>}</pre></li>
+    <li id="L826"><pre></pre></li>
+    <li id="L827"><pre>.me-property-field__control,</pre></li>
+    <li id="L828"><pre>.me-property-field__control &gt; *,</pre></li>
+    <li id="L829"><pre>.me-property-field__control .me-input--num {</pre></li>
+    <li id="L830"><pre>  width: 100%;</pre></li>
+    <li id="L831"><pre>  min-width: 0;</pre></li>
+    <li id="L832"><pre>  max-width: 100%;</pre></li>
+    <li id="L833"><pre>}</pre></li>
+    <li id="L834"><pre></pre></li>
+    <li id="L835"><pre>.me-property-form[data-columns=&#x27;1&#x27;] .me-property-group {</pre></li>
+    <li id="L836"><pre>  grid-template-columns: minmax(0, 1fr);</pre></li>
+    <li id="L837"><pre>}</pre></li>
+    <li id="L838"><pre></pre></li>
+    <li id="L839"><pre>.me-property-group .me-menu__note {</pre></li>
+    <li id="L840"><pre>  margin: 0;</pre></li>
+    <li id="L841"><pre>}</pre></li>
+    <li id="L842"><pre></pre></li>
+    <li id="L843"><pre>@container (max-width: 230px) {</pre></li>
+    <li id="L844"><pre>  .me-property-group {</pre></li>
+    <li id="L845"><pre>    grid-template-columns: minmax(0, 1fr);</pre></li>
+    <li id="L846"><pre>  }</pre></li>
+    <li id="L847"><pre>}</pre></li>
+    <li id="L848"><pre></pre></li>
+    <li id="L849">
+      <pre>/* 面板里的一句说明（说清这个开关是干什么的、或为什么某项给不了） */</pre>
+    </li>
+    <li id="L850"><pre>.me-menu__note {</pre></li>
+    <li id="L851"><pre>  margin: 4px 6px 2px;</pre></li>
+    <li id="L852"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L853"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L854"><pre>  line-height: 1.5;</pre></li>
+    <li id="L855"><pre>  white-space: normal;</pre></li>
+    <li id="L856"><pre>  overflow-wrap: anywhere;</pre></li>
+    <li id="L857"><pre>}</pre></li>
+    <li id="L858"><pre></pre></li>
+    <li id="L859"><pre>/*</pre></li>
+    <li id="L860">
+      <pre> * 一排「小方块选择器」的容器。两个消费者：`ToolbarColorGrid`（色块）与</pre>
+    </li>
+    <li id="L861">
+      <pre> * `ToolbarGridPicker`（插入表格的尺寸网格）。**只负责摆**——方块自己长什么样</pre>
+    </li>
+    <li id="L862">
+      <pre> * 归 `.me-color__cell` / `.me-table-grid__cell`，两者的尺寸不同（24px 对 18px，</pre>
+    </li>
+    <li id="L863"><pre> * 一个是能点的色块、一个是划选的格子）。</pre></li>
+    <li id="L864"><pre> */</pre></li>
+    <li id="L865"><pre>.me-picker-grid {</pre></li>
+    <li id="L866"><pre>  display: flex;</pre></li>
+    <li id="L867"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L868"><pre>  gap: 4px;</pre></li>
+    <li id="L869"><pre>}</pre></li>
+    <li id="L870"><pre></pre></li>
+    <li id="L871"><pre>/*</pre></li>
+    <li id="L872">
+      <pre> * 插入表格的尺寸网格：8×8 的方块，点哪一格就插多大的表（`ToolbarGridPicker`）。</pre>
+    </li>
+    <li id="L873">
+      <pre> * **比一个「行数 / 列数」两个输入框好**：Word 里挑表格大小就是划过一片格子，</pre>
+    </li>
+    <li id="L874">
+      <pre> * 数格子比读两个数字再想一下直观得多。markdown 那边是数字框（它的方言要显式</pre>
+    </li>
+    <li id="L875"><pre> * 给行数），两条路各自合理。</pre></li>
+    <li id="L876"><pre> *</pre></li>
+    <li id="L877">
+      <pre> * **markup 都归原语**：这一组（`.me-table-grid*`）由 `ToolbarGridPicker` 产出，</pre>
+    </li>
+    <li id="L878">
+      <pre> * 面板里的表单（`.me-menu__fields` / `.me-menu__note`）由 `ToolbarMenuFields` /</pre>
+    </li>
+    <li id="L879">
+      <pre> * `ToolbarMenuNote` 产出——`shell.css` 里已经没有任何「定义了却只由调用方手写</pre>
+    </li>
+    <li id="L880">
+      <pre> * markup 使用」的类（那是这套原语最初要消掉的耦合，最后这两处是随本轮迁移一起</pre>
+    </li>
+    <li id="L881"><pre> * 收进来的）。</pre></li>
+    <li id="L882"><pre> */</pre></li>
+    <li id="L883"><pre>.me-table-grid {</pre></li>
+    <li id="L884"><pre>  display: flex;</pre></li>
+    <li id="L885"><pre>  gap: 2px;</pre></li>
+    <li id="L886"><pre>}</pre></li>
+    <li id="L887"><pre></pre></li>
+    <li id="L888"><pre>.me-table-grid__cell {</pre></li>
+    <li id="L889"><pre>  width: 18px;</pre></li>
+    <li id="L890"><pre>  height: 18px;</pre></li>
+    <li id="L891"><pre>  padding: 0;</pre></li>
+    <li id="L892"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L893"><pre>  border-radius: 2px;</pre></li>
+    <li id="L894"><pre>  background: transparent;</pre></li>
+    <li id="L895"><pre>  cursor: pointer;</pre></li>
+    <li id="L896"><pre>}</pre></li>
+    <li id="L897"><pre></pre></li>
+    <li id="L898"><pre>.me-table-grid__cell:hover {</pre></li>
+    <li id="L899"><pre>  border-color: var(--me-accent, #00834d);</pre></li>
+    <li id="L900"><pre>  background: var(--me-accent-bg, #e6f4ec);</pre></li>
+    <li id="L901"><pre>}</pre></li>
+    <li id="L902"><pre></pre></li>
+    <li id="L903"><pre>.me-table-grid__cell:focus-visible {</pre></li>
+    <li id="L904"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L905"><pre>  outline-offset: 1px;</pre></li>
+    <li id="L906"><pre>}</pre></li>
+    <li id="L907"><pre></pre></li>
+    <li id="L908"><pre>/* 颜色面板：只定宽与内边距，**摆放交给里面的 `.me-picker-grid`**</pre></li>
+    <li id="L909">
+      <pre>   （原来这一层自己 flex-wrap，现在色块那排是一个独立组件——它也要能内联</pre>
+    </li>
+    <li id="L910">
+      <pre>   长在别人的面板里，所以「摆」这件事不能留在这一层）。宽一点：16 个 OOXML</pre>
+    </li>
+    <li id="L911"><pre>   色名要摆成 8 列 */</pre></li>
+    <li id="L912"><pre>.me-color__panel {</pre></li>
+    <li id="L913"><pre>  width: 196px;</pre></li>
+    <li id="L914"><pre>  padding: 8px;</pre></li>
+    <li id="L915"><pre>  min-width: 0;</pre></li>
+    <li id="L916"><pre>}</pre></li>
+    <li id="L917"><pre></pre></li>
+    <li id="L918"><pre>.me-color__panel--custom {</pre></li>
+    <li id="L919"><pre>  width: min(260px, calc(100vw - 16px));</pre></li>
+    <li id="L920"><pre>}</pre></li>
+    <li id="L921"><pre>.me-color__custom {</pre></li>
+    <li id="L922"><pre>  display: grid;</pre></li>
+    <li id="L923"><pre>  min-width: 0;</pre></li>
+    <li id="L924"><pre>  gap: 8px;</pre></li>
+    <li id="L925"><pre>  margin-top: 12px;</pre></li>
+    <li id="L926"><pre>  padding-top: 12px;</pre></li>
+    <li id="L927"><pre>  border-top: 1px solid var(--me-border);</pre></li>
+    <li id="L928"><pre>}</pre></li>
+    <li id="L929"><pre>.me-color__custom &gt; .me-tb {</pre></li>
+    <li id="L930"><pre>  justify-self: end;</pre></li>
+    <li id="L931"><pre>}</pre></li>
+    <li id="L932"><pre></pre></li>
+    <li id="L933"><pre>.me-color__cell {</pre></li>
+    <li id="L934"><pre>  display: inline-flex;</pre></li>
+    <li id="L935"><pre>  align-items: center;</pre></li>
+    <li id="L936"><pre>  justify-content: center;</pre></li>
+    <li id="L937"><pre>  width: 24px;</pre></li>
+    <li id="L938"><pre>  height: 24px;</pre></li>
+    <li id="L939"><pre>  padding: 0;</pre></li>
+    <li id="L940"><pre>  border: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L941"><pre>  border-radius: 4px;</pre></li>
+    <li id="L942"><pre>  background: transparent;</pre></li>
+    <li id="L943"><pre>  cursor: pointer;</pre></li>
+    <li id="L944"><pre>}</pre></li>
+    <li id="L945"><pre></pre></li>
+    <li id="L946"><pre>.me-color__cell:hover:not(:disabled) {</pre></li>
+    <li id="L947"><pre>  border-color: var(--me-accent, #00834d);</pre></li>
+    <li id="L948"><pre>}</pre></li>
+    <li id="L949"><pre></pre></li>
+    <li id="L950"><pre>.me-color__cell:focus-visible {</pre></li>
+    <li id="L951"><pre>  outline: 2px solid var(--me-accent-border, #00834d);</pre></li>
+    <li id="L952"><pre>  outline-offset: 1px;</pre></li>
+    <li id="L953"><pre>}</pre></li>
+    <li id="L954"><pre></pre></li>
+    <li id="L955"><pre>.me-color__cell[aria-pressed=&#x27;true&#x27;] {</pre></li>
+    <li id="L956"><pre>  border-color: var(--me-accent, #00834d);</pre></li>
+    <li id="L957"><pre>  box-shadow: 0 0 0 1px var(--me-accent, #00834d) inset;</pre></li>
+    <li id="L958"><pre>}</pre></li>
+    <li id="L959"><pre></pre></li>
+    <li id="L960"><pre>.me-color__cell--clear {</pre></li>
+    <li id="L961"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L962"><pre>  font-size: 13px;</pre></li>
+    <li id="L963"><pre>}</pre></li>
+    <li id="L964"><pre></pre></li>
+    <li id="L965"><pre>/* 色块本身。**只负责显示**——面板外那一格（触发器上）也用它 */</pre></li>
+    <li id="L966"><pre>.me-color__swatch {</pre></li>
+    <li id="L967"><pre>  display: inline-block;</pre></li>
+    <li id="L968"><pre>  width: 14px;</pre></li>
+    <li id="L969"><pre>  height: 14px;</pre></li>
+    <li id="L970"><pre>  border-radius: 3px;</pre></li>
+    <li id="L971"><pre>  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 18%);</pre></li>
+    <li id="L972"><pre>}</pre></li>
+    <li id="L973"><pre></pre></li>
+    <li id="L974">
+      <pre>/* 「没设置」：一条斜线，而不是某个颜色。用 border 斜切（不引图片资源） */</pre>
+    </li>
+    <li id="L975"><pre>.me-color__swatch--none {</pre></li>
+    <li id="L976"><pre>  background: linear-gradient(</pre></li>
+    <li id="L977"><pre>      to top right,</pre></li>
+    <li id="L978"><pre>      transparent calc(50% - 1px),</pre></li>
+    <li id="L979"><pre>      var(--me-text-weak, #8c8c8c) calc(50% - 1px),</pre></li>
+    <li id="L980"><pre>      var(--me-text-weak, #8c8c8c) calc(50% + 1px),</pre></li>
+    <li id="L981"><pre>      transparent calc(50% + 1px)</pre></li>
+    <li id="L982"><pre>    )</pre></li>
+    <li id="L983"><pre>    transparent;</pre></li>
+    <li id="L984"><pre>}</pre></li>
+    <li id="L985"><pre></pre></li>
+    <li id="L986">
+      <pre>/* ── 文件选择按钮 ─────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L987"><pre></pre></li>
+    <li id="L988">
+      <pre>/* 只负责把 Upload 与它旁边的东西摆成一行。里面那个隐藏 input 归 antd 管：</pre>
+    </li>
+    <li id="L989"><pre>   它用 `display: none` + `el.click()` 程序化触发，所以原来那条</pre></li>
+    <li id="L990">
+      <pre>   「input 必须留在布局里、只是挪到 0 尺寸」的规矩（`.me-file__input`）没有</pre>
+    </li>
+    <li id="L991"><pre>   对象了——**删掉的是规则，不是那个坑的解释**：那个坑在</pre></li>
+    <li id="L992">
+      <pre>   `ToolbarFileButton` 的注释里，它讲的是「同一个文件连选两次都要触发」，</pre>
+    </li>
+    <li id="L993">
+      <pre>   现在由 rc-upload 的「换 key 重挂 input」负责（测试里有一条断言守着）。 */</pre>
+    </li>
+    <li id="L994"><pre>.me-file {</pre></li>
+    <li id="L995"><pre>  position: relative;</pre></li>
+    <li id="L996"><pre>  display: inline-flex;</pre></li>
+    <li id="L997"><pre>}</pre></li>
+    <li id="L998"><pre></pre></li>
+    <li id="L999">
+      <pre>/* ── 查找 / 替换栏 ─────────────────────────────────────────────── */</pre>
+    </li>
+    <li id="L1000"><pre></pre></li>
+    <li id="L1001"><pre>.me-find {</pre></li>
+    <li id="L1002"><pre>  display: flex;</pre></li>
+    <li id="L1003"><pre>  flex-direction: column;</pre></li>
+    <li id="L1004"><pre>  gap: 4px;</pre></li>
+    <li id="L1005"><pre>  width: 100%;</pre></li>
+    <li id="L1006"><pre>}</pre></li>
+    <li id="L1007"><pre></pre></li>
+    <li id="L1008"><pre>.me-find__row {</pre></li>
+    <li id="L1009"><pre>  display: flex;</pre></li>
+    <li id="L1010"><pre>  align-items: center;</pre></li>
+    <li id="L1011"><pre>  gap: 4px;</pre></li>
+    <li id="L1012"><pre>  flex-wrap: wrap;</pre></li>
+    <li id="L1013"><pre>}</pre></li>
+    <li id="L1014"><pre></pre></li>
+    <li id="L1015"><pre>.me-find__query {</pre></li>
+    <li id="L1016"><pre>  flex: 1;</pre></li>
+    <li id="L1017"><pre>  min-width: 140px;</pre></li>
+    <li id="L1018"><pre>  max-width: 320px;</pre></li>
+    <li id="L1019"><pre>}</pre></li>
+    <li id="L1020"><pre></pre></li>
+    <li id="L1021">
+      <pre>/* 匹配数。**留固定宽度**：从「12 / 345」跳到「无匹配」时长度变化会把</pre>
+    </li>
+    <li id="L1022"><pre>   后面的按钮推来推去 */</pre></li>
+    <li id="L1023"><pre>.me-find__count {</pre></li>
+    <li id="L1024"><pre>  min-width: 64px;</pre></li>
+    <li id="L1025"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L1026"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L1027"><pre>  text-align: right;</pre></li>
+    <li id="L1028"><pre>  white-space: nowrap;</pre></li>
+    <li id="L1029"><pre>  font-variant-numeric: tabular-nums;</pre></li>
+    <li id="L1030"><pre>}</pre></li>
+    <li id="L1031"><pre></pre></li>
+    <li id="L1032">
+      <pre>/* 页签（xlsx 的工作表）。横向可滚，不换行——表多的时候换行会把表体挤下去 */</pre>
+    </li>
+    <li id="L1033"><pre>.me-tabs {</pre></li>
+    <li id="L1034"><pre>  display: flex;</pre></li>
+    <li id="L1035"><pre>  align-items: center;</pre></li>
+    <li id="L1036"><pre>  gap: 2px;</pre></li>
+    <li id="L1037"><pre>  overflow-x: auto;</pre></li>
+    <li id="L1038"><pre>  scrollbar-width: thin;</pre></li>
+    <li id="L1039"><pre>}</pre></li>
+    <li id="L1040"><pre></pre></li>
+    <li id="L1041"><pre>.me-tab {</pre></li>
+    <li id="L1042"><pre>  flex: none;</pre></li>
+    <li id="L1043"><pre>  height: 24px;</pre></li>
+    <li id="L1044"><pre>  padding: 0 10px;</pre></li>
+    <li id="L1045"><pre>  border: 1px solid transparent;</pre></li>
+    <li id="L1046"><pre>  border-radius: 4px;</pre></li>
+    <li id="L1047"><pre>  background: transparent;</pre></li>
+    <li id="L1048"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L1049"><pre>  font: inherit;</pre></li>
+    <li id="L1050"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L1051"><pre>  cursor: pointer;</pre></li>
+    <li id="L1052"><pre>  white-space: nowrap;</pre></li>
+    <li id="L1053"><pre>}</pre></li>
+    <li id="L1054"><pre></pre></li>
+    <li id="L1055"><pre>.me-tab:hover {</pre></li>
+    <li id="L1056"><pre>  background: var(--me-hover, #f0f0f0);</pre></li>
+    <li id="L1057"><pre>}</pre></li>
+    <li id="L1058"><pre></pre></li>
+    <li id="L1059"><pre>.me-tab[aria-selected=&#x27;true&#x27;] {</pre></li>
+    <li id="L1060"><pre>  border-color: var(--me-border, #d9d9d9);</pre></li>
+    <li id="L1061"><pre>  background: var(--me-surface, #fff);</pre></li>
+    <li id="L1062"><pre>  color: var(--me-text, #262626);</pre></li>
+    <li id="L1063"><pre>  font-weight: 600;</pre></li>
+    <li id="L1064"><pre>}</pre></li>
+    <li id="L1065"><pre></pre></li>
+    <li id="L1066">
+      <pre>/* ── 内容区的两种通用状态 ──────────────────────────────────────── */</pre>
+    </li>
+    <li id="L1067"><pre></pre></li>
+    <li id="L1068">
+      <pre>/* 居中的骨架/空/错误态。**不占满高度**：一块 40px 的说明配 600px 的空白</pre>
+    </li>
+    <li id="L1069"><pre>   会让人以为内容加载失败 */</pre></li>
+    <li id="L1070"><pre>.me-state {</pre></li>
+    <li id="L1071"><pre>  padding: 40px 16px;</pre></li>
+    <li id="L1072"><pre>  text-align: center;</pre></li>
+    <li id="L1073"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L1074"><pre>  font-size: var(--me-font-size, 13px);</pre></li>
+    <li id="L1075"><pre>}</pre></li>
+    <li id="L1076"><pre></pre></li>
+    <li id="L1077"><pre>.me-state--error {</pre></li>
+    <li id="L1078"><pre>  color: var(--me-danger, #cf1322);</pre></li>
+    <li id="L1079"><pre>}</pre></li>
+    <li id="L1080"><pre></pre></li>
+    <li id="L1081"><pre>/*</pre></li>
+    <li id="L1082">
+      <pre> * 可滚动的画布容器（pptx 的幻灯片、docx 的纸张、pdf 的页面、xlsx 的网格）。</pre>
+    </li>
+    <li id="L1083"><pre> *</pre></li>
+    <li id="L1084"><pre> * ## `min-*: 0` 两条都要写（宽度那一条实测踩过）</pre></li>
+    <li id="L1085"><pre> *</pre></li>
+    <li id="L1086">
+      <pre>
+ * `min-height: 0` 是「高度链」的那一环（见 .trellis/spec/office/frontend/shell/pitfalls.md 的坑表）：flex 子项的</pre>
+    </li>
+    <li id="L1087">
+      <pre> * 默认 `min-height: auto` 会让里面的滚动容器把整块撑到内容高度，滚动条跑到</pre>
+    </li>
+    <li id="L1088"><pre> * 页面上、工具条跟着滚走。</pre></li>
+    <li id="L1089"><pre> *</pre></li>
+    <li id="L1090">
+      <pre> * **宽度是同一个问题的另一条轴，而它的症状更隐蔽**：默认 `min-width: auto`</pre>
+    </li>
+    <li id="L1091">
+      <pre> * 让这一层不会缩到比内容（900px 的 pdf 页面、宽表格）更窄——于是窄窗口下</pre>
+    </li>
+    <li id="L1092">
+      <pre> * **整块外壳比视口宽**（实测 420px 窗口里外壳 932px），顶部快捷保存和</pre>
+    </li>
+    <li id="L1093">
+      <pre> * 底部状态都会被推出可视区，而那看起来像工具条问题，不像布局宽度问题。</pre>
+    </li>
+    <li id="L1094"><pre> */</pre></li>
+    <li id="L1095"><pre>.me-scroll {</pre></li>
+    <li id="L1096"><pre>  flex: 1;</pre></li>
+    <li id="L1097"><pre>  min-height: 0;</pre></li>
+    <li id="L1098"><pre>  min-width: 0;</pre></li>
+    <li id="L1099"><pre>  overflow: auto;</pre></li>
+    <li id="L1100"><pre>}</pre></li>
+    <li id="L1101"><pre></pre></li>
+    <li id="L1102">
+      <pre>/* ── 弹出面板里的表单（链接、插入表格） ─────────────────────────── */</pre>
+    </li>
+    <li id="L1103"><pre></pre></li>
+    <li id="L1104"><pre>/*</pre></li>
+    <li id="L1105">
+      <pre> * 面板里的竖排表单。**不复用 `me-menu__item`**：那个类是给菜单项的（整行</pre>
+    </li>
+    <li id="L1106">
+      <pre> * 可点、有 hover 态、左端留打勾格），套在输入框上会让「输入框整行可点」。</pre>
+    </li>
+    <li id="L1107"><pre> * 所以表单自己一个小类，只负责竖排与间距。</pre></li>
+    <li id="L1108"><pre> */</pre></li>
+    <li id="L1109"><pre>.me-link,</pre></li>
+    <li id="L1110"><pre>.me-insert {</pre></li>
+    <li id="L1111"><pre>  display: flex;</pre></li>
+    <li id="L1112"><pre>  flex-direction: column;</pre></li>
+    <li id="L1113"><pre>  gap: 6px;</pre></li>
+    <li id="L1114"><pre>  padding: 4px;</pre></li>
+    <li id="L1115"><pre>}</pre></li>
+    <li id="L1116"><pre></pre></li>
+    <li id="L1117"><pre>.me-link__row,</pre></li>
+    <li id="L1118"><pre>.me-insert__row {</pre></li>
+    <li id="L1119"><pre>  display: flex;</pre></li>
+    <li id="L1120"><pre>  align-items: center;</pre></li>
+    <li id="L1121"><pre>  gap: 6px;</pre></li>
+    <li id="L1122"><pre>}</pre></li>
+    <li id="L1123"><pre></pre></li>
+    <li id="L1124">
+      <pre>/* 表单里的地址框**占满面板宽度**：`.me-input--text` 的 180px 是给工具条那一排</pre>
+    </li>
+    <li id="L1125"><pre>   定的，而面板本身只有 176px 起——不覆盖的话输入框会顶破面板 */</pre></li>
+    <li id="L1126"><pre>.me-link .me-input--text {</pre></li>
+    <li id="L1127"><pre>  width: 100%;</pre></li>
+    <li id="L1128"><pre>}</pre></li>
+    <li id="L1129"><pre></pre></li>
+    <li id="L1130"><pre>.me-link__notes {</pre></li>
+    <li id="L1131"><pre>  padding-top: 6px;</pre></li>
+    <li id="L1132"><pre>  border-top: 1px solid var(--me-border, #d9d9d9);</pre></li>
+    <li id="L1133"><pre>}</pre></li>
+    <li id="L1134"><pre></pre></li>
+    <li id="L1135"><pre>.me-link__section {</pre></li>
+    <li id="L1136"><pre>  margin-bottom: 6px;</pre></li>
+    <li id="L1137"><pre>  color: var(--me-text-weak, #8c8c8c);</pre></li>
+    <li id="L1138"><pre>  font-size: var(--me-font-size-sm, 12px);</pre></li>
+    <li id="L1139"><pre>}</pre></li>
+    <li id="L1140"><pre></pre></li>
+    <li id="L1141"><pre>.me-link__note-list {</pre></li>
+    <li id="L1142"><pre>  max-height: 156px;</pre></li>
+    <li id="L1143"><pre>  overflow-y: auto;</pre></li>
+    <li id="L1144"><pre>  margin-top: 4px;</pre></li>
+    <li id="L1145"><pre>}</pre></li>
+    <li id="L1146"><pre></pre></li>
+    <li id="L1147">
+      <pre>/* ── 只给读屏的一小段文字 ──────────────────────────────────────── */</pre>
+    </li>
+    <li id="L1148"><pre></pre></li>
+    <li id="L1149"><pre>/*</pre></li>
+    <li id="L1150">
+      <pre> * 视觉上不占位、但留在无障碍树里。现在的唯一消费者是 `ToolbarToggleGroup`</pre>
+    </li>
+    <li id="L1151">
+      <pre> * 的**图标档**：图标-only 的档位在 antd `Segmented` 里没有可及名称</pre>
+    </li>
+    <li id="L1152">
+      <pre> * （`title` 挂在内层 label 的 div 上，可聚焦的是 `&lt;input type=radio&gt;`，</pre>
+    </li>
+    <li id="L1153">
+      <pre> * 两者不关联）——实测真 Chromium 的 AX 树里 `radio × 6` 全部 `name: &quot;&quot;`，</pre>
+    </li>
+    <li id="L1154">
+      <pre> * 读屏只念「单选按钮 1 of 3」。把 label 文字用这个类塞进 label 元素里，</pre>
+    </li>
+    <li id="L1155">
+      <pre> * 名称就回来了，而工具条上仍然只显示图标（位置紧，不能显示文字）。</pre>
+    </li>
+    <li id="L1156"><pre> *</pre></li>
+    <li id="L1157">
+      <pre> * 用 `clip-path` 而不是 `display: none` / `visibility: hidden`：后两者会把</pre>
+    </li>
+    <li id="L1158"><pre> * 文字从无障碍树里也去掉，而这里的全部目的就是让它留在树里。</pre></li>
+    <li id="L1159"><pre> */</pre></li>
+    <li id="L1160"><pre>.me-sr-only {</pre></li>
+    <li id="L1161"><pre>  position: absolute;</pre></li>
+    <li id="L1162"><pre>  width: 1px;</pre></li>
+    <li id="L1163"><pre>  height: 1px;</pre></li>
+    <li id="L1164"><pre>  margin: -1px;</pre></li>
+    <li id="L1165"><pre>  padding: 0;</pre></li>
+    <li id="L1166"><pre>  border: 0;</pre></li>
+    <li id="L1167"><pre>  overflow: hidden;</pre></li>
+    <li id="L1168"><pre>  clip-path: inset(50%);</pre></li>
+    <li id="L1169"><pre>  white-space: nowrap;</pre></li>
+    <li id="L1170"><pre>}</pre></li>
+  </ol>
+</html>

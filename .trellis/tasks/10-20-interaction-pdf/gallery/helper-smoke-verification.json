@@ -1,0 +1,108 @@
+{
+  "scope": "Native loopback service reads and explicit remote rejection; not GUI acceptance, history or save validation.",
+  "checks": [
+    {
+      "variant": "before",
+      "kind": "annotations",
+      "fixture": "annotations",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": 3,
+      "responseKeys": [
+        "bytes",
+        "annotations",
+        "version"
+      ]
+    },
+    {
+      "variant": "before",
+      "kind": "forms",
+      "fixture": "forms",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": 3,
+      "responseKeys": [
+        "forms",
+        "version"
+      ]
+    },
+    {
+      "variant": "before",
+      "kind": "images",
+      "fixture": "image",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": 1,
+      "responseKeys": [
+        "images",
+        "version"
+      ]
+    },
+    {
+      "variant": "before",
+      "kind": "local",
+      "fixture": "text",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": null,
+      "responseKeys": [
+        "info",
+        "version"
+      ]
+    },
+    {
+      "variant": "after",
+      "kind": "annotations",
+      "fixture": "annotations",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": 3,
+      "responseKeys": [
+        "bytes",
+        "annotations",
+        "version"
+      ]
+    },
+    {
+      "variant": "after",
+      "kind": "forms",
+      "fixture": "forms",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": 3,
+      "responseKeys": [
+        "forms",
+        "version"
+      ]
+    },
+    {
+      "variant": "after",
+      "kind": "images",
+      "fixture": "image",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": 1,
+      "responseKeys": [
+        "images",
+        "version"
+      ]
+    },
+    {
+      "variant": "after",
+      "kind": "local",
+      "fixture": "text",
+      "passed": true,
+      "unchangedReadVersion": 0,
+      "nativeSnapshotCount": null,
+      "responseKeys": [
+        "info",
+        "version"
+      ]
+    },
+    {
+      "kind": "external-image-url",
+      "passed": true,
+      "result": "explicit loopback harness rejection before native operation; no remote fetch"
+    }
+  ]
+}

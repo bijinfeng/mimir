@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/office/src/editors/PdfTextMarkupPanel.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">完整来源索引</a>
+    <h1>packages/office/src/editors/PdfTextMarkupPanel.tsx</h1>
+    <p>before真实源码 · SHA256 6ad4b208988b0cee5cea135798e60d245baabfd94b37f0377f3f2f199c3f5c87</p>
+  </header>
+  <ol>
+    <li id="L1"><pre>import { Check, X } from &#x27;lucide-react&#x27;</pre></li>
+    <li id="L2"><pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre></li>
+    <li id="L3"><pre>import {</pre></li>
+    <li id="L4"><pre>  ToolbarButton,</pre></li>
+    <li id="L5"><pre>  ToolbarSelect,</pre></li>
+    <li id="L6"><pre>  ToolbarTextArea,</pre></li>
+    <li id="L7"><pre>  ToolbarTextField,</pre></li>
+    <li id="L8"><pre>} from &#x27;../shell/EditorShell.js&#x27;</pre></li>
+    <li id="L9"><pre>import type { PdfPanelResult } from &#x27;./PdfInspector.js&#x27;</pre></li>
+    <li id="L10"><pre>import &#x27;./pdf-text-controls.css&#x27;</pre></li>
+    <li id="L11"><pre></pre></li>
+    <li id="L12"><pre>export function PdfTextMarkupPanel({</pre></li>
+    <li id="L13"><pre>  selectedText,</pre></li>
+    <li id="L14"><pre>  page,</pre></li>
+    <li id="L15"><pre>  getVersion,</pre></li>
+    <li id="L16"><pre>  busy,</pre></li>
+    <li id="L17"><pre>  blocked,</pre></li>
+    <li id="L18"><pre>  onApply,</pre></li>
+    <li id="L19"><pre>  onClose,</pre></li>
+    <li id="L20"><pre>}: {</pre></li>
+    <li id="L21"><pre>  selectedText: string</pre></li>
+    <li id="L22"><pre>  page: number</pre></li>
+    <li id="L23"><pre>  getVersion(): number</pre></li>
+    <li id="L24"><pre>  busy: boolean</pre></li>
+    <li id="L25"><pre>  blocked?: string</pre></li>
+    <li id="L26"><pre>  onApply(</pre></li>
+    <li id="L27"><pre>    args: Record&lt;string, unknown&gt;,</pre></li>
+    <li id="L28"><pre>    version: number,</pre></li>
+    <li id="L29"><pre>    signal: AbortSignal,</pre></li>
+    <li id="L30">
+      <pre>  ): Promise&lt;(PdfPanelResult &amp; { data?: unknown }) | undefined&gt;</pre>
+    </li>
+    <li id="L31"><pre>  onClose(): void</pre></li>
+    <li id="L32"><pre>}) {</pre></li>
+    <li id="L33"><pre>  const [text, setText] = useState(selectedText),</pre></li>
+    <li id="L34">
+      <pre>
+    [type, setType] = useState&lt;&#x27;highlight&#x27; | &#x27;underline&#x27; | &#x27;strikeout&#x27;&gt;(&#x27;highlight&#x27;),</pre>
+    </li>
+    <li id="L35"><pre>    [color, setColor] = useState(&#x27;#FFE04D&#x27;),</pre></li>
+    <li id="L36"><pre>    [all, setAll] = useState(false),</pre></li>
+    <li id="L37"><pre>    [pending, setPending] = useState(false),</pre></li>
+    <li id="L38"><pre>    [feedback, setFeedback] = useState&lt;string | null&gt;(null)</pre></li>
+    <li id="L39"><pre>  const request = useRef&lt;AbortController | null&gt;(null)</pre></li>
+    <li id="L40"><pre>  useEffect(() =&gt; () =&gt; request.current?.abort(), [])</pre></li>
+    <li id="L41"><pre>  const apply = async () =&gt; {</pre></li>
+    <li id="L42">
+      <pre>
+    if (request.current || busy || blocked || !text.trim() || !/^#[0-9a-fA-F]{6}$/.test(color))</pre>
+    </li>
+    <li id="L43"><pre>      return</pre></li>
+    <li id="L44"><pre>    const controller = new AbortController()</pre></li>
+    <li id="L45"><pre>    request.current = controller</pre></li>
+    <li id="L46"><pre>    setPending(true)</pre></li>
+    <li id="L47"><pre>    setFeedback(null)</pre></li>
+    <li id="L48"><pre>    try {</pre></li>
+    <li id="L49"><pre>      const result = await onApply(</pre></li>
+    <li id="L50"><pre>        { page, text, type, color, all },</pre></li>
+    <li id="L51"><pre>        getVersion(),</pre></li>
+    <li id="L52"><pre>        controller.signal,</pre></li>
+    <li id="L53"><pre>      )</pre></li>
+    <li id="L54"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L55"><pre>        setFeedback(</pre></li>
+    <li id="L56"><pre>          result?.ok</pre></li>
+    <li id="L57">
+      <pre>            ? `已添加 ${(result.data as { count?: number })?.count ?? 1} 处标注`</pre>
+    </li>
+    <li id="L58"><pre>            : (result?.error ?? &#x27;标注失败，请重试&#x27;),</pre></li>
+    <li id="L59"><pre>        )</pre></li>
+    <li id="L60"><pre>    } catch (cause) {</pre></li>
+    <li id="L61"><pre>      if (!controller.signal.aborted)</pre></li>
+    <li id="L62">
+      <pre>        setFeedback(cause instanceof Error ? cause.message : String(cause))</pre>
+    </li>
+    <li id="L63"><pre>    } finally {</pre></li>
+    <li id="L64"><pre>      if (request.current === controller) {</pre></li>
+    <li id="L65"><pre>        request.current = null</pre></li>
+    <li id="L66"><pre>        if (!controller.signal.aborted) setPending(false)</pre></li>
+    <li id="L67"><pre>      }</pre></li>
+    <li id="L68"><pre>    }</pre></li>
+    <li id="L69"><pre>  }</pre></li>
+    <li id="L70"><pre>  const disabled = busy || pending</pre></li>
+    <li id="L71"><pre>  return (</pre></li>
+    <li id="L72">
+      <pre>
+    &lt;section className=&quot;mimir-pdf-panel mimir-pdf-text-controls&quot; aria-label=&quot;文字标注面板&quot;&gt;</pre>
+    </li>
+    <li id="L73">
+      <pre>      &lt;header className=&quot;mimir-pdf-inspector__header&quot;&gt;</pre>
+    </li>
+    <li id="L74"><pre>        &lt;div&gt;</pre></li>
+    <li id="L75"><pre>          &lt;h2&gt;文字标注&lt;/h2&gt;</pre></li>
+    <li id="L76">
+      <pre>
+          &lt;span className=&quot;mimir-pdf-inspector__meta&quot;&gt;第 {page} 页&lt;/span&gt;</pre>
+    </li>
+    <li id="L77"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L78">
+      <pre>        &lt;ToolbarButton label=&quot;关闭文字标注&quot; onClick={onClose}&gt;</pre>
+    </li>
+    <li id="L79"><pre>          &lt;X /&gt;</pre></li>
+    <li id="L80"><pre>        &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L81"><pre>      &lt;/header&gt;</pre></li>
+    <li id="L82">
+      <pre>      &lt;div className=&quot;mimir-pdf-inspector__content&quot;&gt;</pre>
+    </li>
+    <li id="L83">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L84"><pre>          &lt;span&gt;原文片段&lt;/span&gt;</pre></li>
+    <li id="L85"><pre>          &lt;ToolbarTextArea</pre></li>
+    <li id="L86"><pre>            label=&quot;标注原文片段&quot;</pre></li>
+    <li id="L87"><pre>            value={text}</pre></li>
+    <li id="L88"><pre>            onChange={(value) =&gt; {</pre></li>
+    <li id="L89"><pre>              if (!disabled) setText(value)</pre></li>
+    <li id="L90"><pre>            }}</pre></li>
+    <li id="L91"><pre>          /&gt;</pre></li>
+    <li id="L92"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L93">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L94"><pre>          &lt;span&gt;标注类型&lt;/span&gt;</pre></li>
+    <li id="L95"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L96"><pre>            label=&quot;文字标注类型&quot;</pre></li>
+    <li id="L97"><pre>            value={type}</pre></li>
+    <li id="L98"><pre>            onChange={setType}</pre></li>
+    <li id="L99"><pre>            options={[</pre></li>
+    <li id="L100">
+      <pre>              { value: &#x27;highlight&#x27;, label: &#x27;高亮&#x27; },</pre>
+    </li>
+    <li id="L101">
+      <pre>              { value: &#x27;underline&#x27;, label: &#x27;下划线&#x27; },</pre>
+    </li>
+    <li id="L102">
+      <pre>              { value: &#x27;strikeout&#x27;, label: &#x27;删除线&#x27; },</pre>
+    </li>
+    <li id="L103"><pre>            ]}</pre></li>
+    <li id="L104"><pre>            disabled={disabled}</pre></li>
+    <li id="L105"><pre>          /&gt;</pre></li>
+    <li id="L106"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L107">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L108"><pre>          &lt;span&gt;颜色 · #RRGGBB&lt;/span&gt;</pre></li>
+    <li id="L109"><pre>          &lt;ToolbarTextField</pre></li>
+    <li id="L110"><pre>            label=&quot;标注颜色&quot;</pre></li>
+    <li id="L111"><pre>            value={color}</pre></li>
+    <li id="L112"><pre>            onChange={(value) =&gt; {</pre></li>
+    <li id="L113"><pre>              if (!disabled) setColor(value)</pre></li>
+    <li id="L114"><pre>            }}</pre></li>
+    <li id="L115"><pre>          /&gt;</pre></li>
+    <li id="L116"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L117">
+      <pre>        &lt;label className=&quot;mimir-pdf-inspector__control&quot;&gt;</pre>
+    </li>
+    <li id="L118"><pre>          &lt;span&gt;匹配范围&lt;/span&gt;</pre></li>
+    <li id="L119"><pre>          &lt;ToolbarSelect</pre></li>
+    <li id="L120"><pre>            label=&quot;文字标注范围&quot;</pre></li>
+    <li id="L121"><pre>            value={all ? &#x27;all&#x27; : &#x27;first&#x27;}</pre></li>
+    <li id="L122"><pre>            options={[</pre></li>
+    <li id="L123">
+      <pre>              { value: &#x27;first&#x27;, label: &#x27;仅第一处&#x27; },</pre>
+    </li>
+    <li id="L124">
+      <pre>              { value: &#x27;all&#x27;, label: &#x27;当前页全部匹配&#x27; },</pre>
+    </li>
+    <li id="L125"><pre>            ]}</pre></li>
+    <li id="L126">
+      <pre>            onChange={(value) =&gt; setAll(value === &#x27;all&#x27;)}</pre>
+    </li>
+    <li id="L127"><pre>            disabled={disabled}</pre></li>
+    <li id="L128"><pre>          /&gt;</pre></li>
+    <li id="L129"><pre>        &lt;/label&gt;</pre></li>
+    <li id="L130"><pre>        &lt;p className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre></li>
+    <li id="L131">
+      <pre>
+          可点击纸面填入整段文字，再修改为部分片段。跨行按原文字形定位，扫描图片的临时 OCR</pre>
+    </li>
+    <li id="L132"><pre>          不能用作标注目标。</pre></li>
+    <li id="L133"><pre>        &lt;/p&gt;</pre></li>
+    <li id="L134"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L135">
+      <pre>      &lt;div className=&quot;mimir-pdf-text-controls__footer&quot;&gt;</pre>
+    </li>
+    <li id="L136"><pre>        {(feedback || blocked) &amp;&amp; (</pre></li>
+    <li id="L137">
+      <pre>
+          &lt;p role=&quot;status&quot; className=&quot;mimir-pdf-inspector__hint&quot;&gt;</pre>
+    </li>
+    <li id="L138"><pre>            {feedback ?? blocked}</pre></li>
+    <li id="L139"><pre>          &lt;/p&gt;</pre></li>
+    <li id="L140"><pre>        )}</pre></li>
+    <li id="L141">
+      <pre>        &lt;div className=&quot;mimir-pdf-text-controls__actions&quot;&gt;</pre>
+    </li>
+    <li id="L142"><pre>          &lt;ToolbarButton</pre></li>
+    <li id="L143"><pre>            primary</pre></li>
+    <li id="L144"><pre>            label=&quot;添加标注&quot;</pre></li>
+    <li id="L145">
+      <pre>
+            disabled={disabled || !!blocked || !text.trim() || !/^#[0-9a-fA-F]{6}$/.test(color)}</pre>
+    </li>
+    <li id="L146">
+      <pre>            disabledReason={blocked ?? &#x27;请输入原文片段与有效颜色&#x27;}</pre>
+    </li>
+    <li id="L147"><pre>            onClick={() =&gt; void apply()}</pre></li>
+    <li id="L148"><pre>          &gt;</pre></li>
+    <li id="L149"><pre>            &lt;Check /&gt;</pre></li>
+    <li id="L150"><pre>          &lt;/ToolbarButton&gt;</pre></li>
+    <li id="L151"><pre>        &lt;/div&gt;</pre></li>
+    <li id="L152"><pre>      &lt;/div&gt;</pre></li>
+    <li id="L153"><pre>    &lt;/section&gt;</pre></li>
+    <li id="L154"><pre>  )</pre></li>
+    <li id="L155"><pre>}</pre></li>
+  </ol>
+</html>
