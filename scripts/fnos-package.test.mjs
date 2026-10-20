@@ -39,8 +39,8 @@ test('fnOS install stores owner credentials only in protected persistent config'
     TRIM_PKGETC: etc,
     TRIM_PKGVAR: varDir,
     TRIM_TEMP_LOGFILE: errorLog,
-    wizard_owner_email: 'Owner@Example.com',
-    wizard_owner_password: 'correct horse battery staple',
+    wizard_owner_email: 'Admin@Example.com',
+    wizard_owner_password: '12345678',
   }
   const install = run('install_callback', [], env)
   assert.equal(install.status, 0, install.stderr)
@@ -49,7 +49,7 @@ test('fnOS install stores owner credentials only in protected persistent config'
 
   const configPath = path.join(etc, 'config.json')
   const config = JSON.parse(await readFile(configPath, 'utf8'))
-  assert.equal(config.ownerEmail, 'owner@example.com')
+  assert.equal(config.ownerEmail, 'admin@example.com')
   assert.equal(config.ownerPassword, env.wizard_owner_password)
   assert.match(config.authSecret, /^[a-f0-9]{64}$/)
   assert.equal((await stat(configPath)).mode & 0o777, 0o600)
@@ -75,7 +75,7 @@ test('fnOS install stores owner credentials only in protected persistent config'
   const start = run('main', ['start'], env)
   assert.equal(start.status, 1)
   assert.match(await readFile(errorLog, 'utf8'), /权限过宽/)
-  assert.doesNotMatch(await readFile(errorLog, 'utf8'), /correct horse/)
+  assert.doesNotMatch(await readFile(errorLog, 'utf8'), /12345678/)
 })
 
 test('fnOS install rejects invalid owner input without writing credentials', async (t) => {
@@ -168,8 +168,8 @@ test('fnOS lifecycle starts on a Unix socket and stops idempotently', async (t) 
     TRIM_PKGETC: etc,
     TRIM_PKGVAR: varDir,
     TRIM_TEMP_LOGFILE: path.join(temporary, 'error.log'),
-    wizard_owner_email: 'owner@example.com',
-    wizard_owner_password: 'long-secret-password',
+    wizard_owner_email: 'admin@example.com',
+    wizard_owner_password: '12345678',
     MIMIR_LOCAL_MODE: '1',
     MIMIR_LOCAL_TOKEN: 'must-not-leak',
   }
@@ -182,7 +182,7 @@ test('fnOS lifecycle starts on a Unix socket and stops idempotently', async (t) 
   const boot = JSON.parse(await readFile(path.join(varDir, 'data/boot.json'), 'utf8'))
   assert.equal(boot.socket, path.join(appDest, 'app.sock'))
   assert.equal(boot.basePath, '/app/mimir')
-  assert.equal(boot.owner, 'owner@example.com')
+  assert.equal(boot.owner, 'admin@example.com')
   assert.equal(boot.localMode, null)
 
   assert.equal(run('main', ['stop'], env).status, 0)

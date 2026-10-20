@@ -1349,7 +1349,7 @@ node apps/server/scripts/sqlite-backup.mjs restore <备份目录> <不存在的�
 
 | 入口 | 契约 |
 |---|---|
-| `pnpm fnos:build` | Linux x86_64 + Node 22 + 官方 `fnpack`；构建前后端、`pnpm deploy --prod`、加载原生模块并检查 ELF 架构，输出 `apps/fnos/release/*.fpk` |
+| `pnpm fnos:build` | Linux x86_64 + Node 22 + 固定官方 `fnpack`；构建前后端、`pnpm deploy --prod --node-linker hoisted`、资源树物化、加载原生模块并检查 ELF 架构，输出 `apps/fnos/release/mimir-VERSION-fnos-x64.fpk` |
 | `cmd/install_callback` | 用向导字段初始化持久配置；已有配置不覆盖 |
 | `cmd/main start\|stop\|status` | 启停 `app/launch.mjs`，管理 PID、日志与 `app.sock`；`status` 运行返回 0，否则返回 3 |
 | `startServer()` | 设置 `MIMIR_FNOS_SOCKET` 时只监听 Unix Socket；先迁移 SQLite、确认所有者，再开放 Socket |
@@ -1357,6 +1357,8 @@ node apps/server/scripts/sqlite-backup.mjs restore <备份目录> <不存在的�
 
 #### 3. Contracts
 
+- `.github/workflows/fnos-build.yml` 支持 `workflow_call(version:string)` 和独立 `workflow_dispatch`；Ubuntu 24.04 原生 x64/Node22，构建版本必须与已提交 desktop/package.json 和 fnOS manifest 相同。只读仓库，上传 `fnos-x64` artifact 14 天；桌面发布工作流将其与四客户端一并汇总。
+- `node scripts/fnos-fnpack.mjs <absolute-output>` 只下载官方 `fnpack-1.2.3-linux-amd64`，SHA-256 固定 `54b97fa7b70968c4d05c79840f5daeff508957d0bb2062fdb0376d00d9615c93`，不接受未知 PATH 工具。`node scripts/verify-fnos.mjs <version>` 解包真实 FPK 与 app.tgz，拒绝越界和链接，验证 appname=mimir/platform=x86/install_dep_apps=nodejs_v22 及相同 version；拒绝重复 manifest 字段。
 - 向导输入：`wizard_owner_email` 是合法邮箱（最长 254 字符）；
   `wizard_owner_password` 至少 8 字符且不含 NUL。安装脚本原子写入
   `TRIM_PKGETC/config.json`（`0600`），字段为 `ownerEmail`、`ownerPassword`、
@@ -1378,7 +1380,7 @@ node apps/server/scripts/sqlite-backup.mjs restore <备份目录> <不存在的�
 
 | 条件 | 结果 |
 |---|---|
-| 非 Linux x86_64、非 Node 22、缺少生产依赖或原生模块非 x86_64 ELF | 构建失败，不生成可发布包 |
+| 非 Linux x86_64、非 Node 22、fnpack 摘要错误、版本不符、缺少生产依赖或原生模块非 x86_64 ELF | 构建失败，不生成可发布包 |
 | 缺少 fnOS 目录、配置缺失或权限比 `0600` 宽、所有者凭据不合法 | 安装或启动失败，错误写入 `TRIM_TEMP_LOGFILE` 或 `TRIM_PKGVAR/mimir.log` |
 | 所有者建号失败或与现有数据库账号不一致 | 启动失败，不开放网关 Socket |
 | 非 `/app/mimir` 网关路径 | HTTP 404 |
@@ -1396,9 +1398,9 @@ node apps/server/scripts/sqlite-backup.mjs restore <备份目录> <不存在的�
 #### 6. Tests Required
 
 - `pnpm check`：断言生命周期脚本、路径前缀、Socket 与认证边界；
-  `scripts/fnos-package.test.mjs` 校验包源结构。
+  `scripts/fnos-package.test.mjs` 校验包源结构；`scripts/fnos-build.test.mjs` 使用真实嵌套 tar 夹具覆盖验包、版本和链接拒绝。
 - Linux x86_64 上执行 `pnpm fnos:build`：检查 `*.fpk`、Web 资源前缀，
-  `better-sqlite3`、`sqlite-vec`、`@node-rs/jieba` 实际加载的 ELF 架构。
+  `better-sqlite3`、`sqlite-vec`、`@node-rs/jieba`、Canvas 实际加载的 ELF 架构。解包后通过真实生命周期启动 Unix Socket 宿主，断言健康页、带前缀 Web、未授权 401、HTTP/代理 HTTPS 登录 Cookie Path/Secure 和认证文档；测试配置只在包生成后写临时目录，最后停止宿主。
 - fnOS x86_64 设备上验证首装、HTTPS 内嵌登录、编辑/上传/下载/检索、
   重启、覆盖升级、Socket 异常与卸载保留；本地测试不能替代实机结论。
 

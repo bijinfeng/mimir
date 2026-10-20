@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { createRequire } from 'node:module'
@@ -8,13 +8,15 @@ import { parse, stringify } from 'yaml'
 import {
   aggregateArtifacts,
   hashFile,
+  releaseTargets,
   stageArtifacts,
   targets,
+  validateCommittedReleaseVersion,
   validateMetadata,
   validateVersion,
 } from './release-artifacts.mjs'
 import { nativeArtifactName, signingConfiguration } from './package.mjs'
-import { publishRelease } from './publish-release.mjs'
+import { publishRelease, validateReleaseDirectory } from './publish-release.mjs'
 
 const version = '1.2.3'
 
@@ -52,7 +54,7 @@ async function fixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'mimir-release-'))
   t.after(() => rm(root, { recursive: true, force: true }))
   const inputDir = path.join(root, 'incoming')
-  for (const [targetKey, target] of Object.entries(targets)) {
+  for (const [targetKey, target] of Object.entries(releaseTargets)) {
     const releaseDir = path.join(root, targetKey)
     await mkdir(releaseDir)
     const files = []
@@ -62,23 +64,25 @@ async function fixture(t) {
       await writeFile(path.join(releaseDir, url), data)
       files.push({ url, size: data.length, sha512: await hashFile(path.join(releaseDir, url)) })
     }
-    const fallback = files.find((file) => file.url.endsWith('.zip')) ?? files[0]
-    await writeFile(
-      path.join(releaseDir, target.metadata),
-      stringify({
-        version,
-        files,
-        path: fallback.url,
-        sha512: fallback.sha512,
-        releaseDate: '2026-10-20T00:00:00Z',
-      }),
-    )
+    if (target.metadata) {
+      const fallback = files.find((file) => file.url.endsWith('.zip')) ?? files[0]
+      await writeFile(
+        path.join(releaseDir, target.metadata),
+        stringify({
+          version,
+          files,
+          path: fallback.url,
+          sha512: fallback.sha512,
+          releaseDate: '2026-10-20T00:00:00Z',
+        }),
+      )
+    }
     await stageArtifacts({
       releaseDir,
       outputDir: path.join(inputDir, targetKey),
       targetKey,
       version,
-      updateMode: target.platform === 'darwin' ? 'manual' : 'automatic',
+      updateMode: target.updateMode ?? (target.platform === 'darwin' ? 'manual' : 'automatic'),
     })
   }
   return { root, inputDir, outputDir: path.join(root, 'complete'), version, tag: `v${version}` }
@@ -92,7 +96,27 @@ test('stable versions require an exact tag and reject prereleases, padding and m
   assert.throws(() => validateVersion(version, '1.2.3'))
 })
 
-test('four real byte sets aggregate with both mac architectures and matching compatibility ZIP', async (t) => {
+test('committed desktop and fnOS versions must exactly agree before builds', () => {
+  assert.equal(
+    validateCommittedReleaseVersion(version, `appname=mimir\nversion=${version}\n`, `v${version}`),
+    version,
+  )
+  assert.equal(validateCommittedReleaseVersion(version, `version=${version}\r\n`), version)
+  for (const manifest of [
+    'version=1.2.4\n',
+    'appname=mimir\n',
+    `version=${version}\nversion=${version}\n`,
+    `version= ${version}\n`,
+    `version=${version} \n`,
+  ])
+    assert.throws(() => validateCommittedReleaseVersion(version, manifest), /fnOS manifest version/)
+  assert.throws(
+    () => validateCommittedReleaseVersion(version, `version=${version}\n`, 'v1.2.4'),
+    /Tag/,
+  )
+})
+
+test('desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP', async (t) => {
   const setup = await fixture(t)
   const manifest = await aggregateArtifacts(setup)
   const metadata = parse(await readFile(path.join(setup.outputDir, 'latest-mac.yml'), 'utf8'))
@@ -101,9 +125,113 @@ test('four real byte sets aggregate with both mac architectures and matching com
   assert.ok(metadata.files.some((file) => file.url.endsWith('-arm64.zip')))
   const names = metadata.files.map((file) => file.url)
   await validateMetadata(setup.outputDir, 'latest-mac.yml', version, names)
-  assert.equal(manifest.assets.length, 9)
+  assert.equal(manifest.assets.length, 10)
+  const fpk = `mimir-${version}-fnos-x64.fpk`
+  assert.deepEqual(
+    await readFile(path.join(setup.outputDir, fpk)),
+    await readFile(path.join(setup.inputDir, 'fnos-x64', fpk)),
+  )
+  for (const name of ['latest-mac.yml', 'latest.yml', 'latest-linux.yml']) {
+    const platformMetadata = parse(await readFile(path.join(setup.outputDir, name), 'utf8'))
+    assert.ok(platformMetadata.files.every((file) => !file.url.endsWith('.fpk')))
+  }
   for (const asset of manifest.assets)
     assert.equal(await hashFile(path.join(setup.outputDir, asset.name)), asset.sha512)
+})
+
+test('fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata', async (t) => {
+  const setup = await fixture(t)
+  const dir = path.join(setup.inputDir, 'fnos-x64')
+  assert.deepEqual((await readdir(dir)).toSorted(), [
+    'build-manifest.json',
+    `mimir-${version}-fnos-x64.fpk`,
+  ])
+  const manifest = JSON.parse(await readFile(path.join(dir, 'build-manifest.json'), 'utf8'))
+  assert.deepEqual(
+    [manifest.platform, manifest.arch, manifest.updateMode],
+    ['linux', 'x64', 'manual'],
+  )
+  const staging = (updateMode = 'manual') =>
+    stageArtifacts({
+      releaseDir: path.join(setup.root, 'fnos-x64'),
+      outputDir: path.join(setup.root, 'invalid-fnos'),
+      targetKey: 'fnos-x64',
+      version,
+      updateMode,
+    })
+  await assert.rejects(staging('automatic'), /identity/)
+  await rm(path.join(setup.root, 'fnos-x64', `mimir-${version}-fnos-x64.fpk`))
+  await writeFile(path.join(setup.root, 'fnos-x64', 'mimir-1.2.4-fnos-x64.fpk'), 'wrong version')
+  await assert.rejects(staging(), /ENOENT/)
+  await writeFile(path.join(setup.root, 'fnos-x64', `mimir-${version}-fnos-x64.fpk`), '')
+  await assert.rejects(staging(), /empty/)
+  await assert.rejects(readdir(path.join(setup.root, 'invalid-fnos')), { code: 'ENOENT' })
+})
+
+test('missing fnOS and tampered FPK bytes block the entire release before output creation', async (t) => {
+  for (const mutation of ['missing', 'bytes']) {
+    const setup = await fixture(t)
+    const dir = path.join(setup.inputDir, 'fnos-x64')
+    if (mutation === 'missing') await rm(dir, { recursive: true })
+    else await writeFile(path.join(dir, `mimir-${version}-fnos-x64.fpk`), 'tampered FPK')
+    await assert.rejects(aggregateArtifacts(setup))
+    await assert.rejects(readdir(setup.outputDir), { code: 'ENOENT' })
+  }
+})
+
+test('fnOS wrong identity, architecture, hashes and Electron metadata fail closed', async (t) => {
+  for (const mutate of [
+    (manifest) => {
+      manifest.targetKey = 'linux-x64'
+    },
+    (manifest) => {
+      manifest.platform = 'darwin'
+    },
+    (manifest) => {
+      manifest.arch = 'arm64'
+    },
+    (manifest) => {
+      delete manifest.arch
+    },
+    (manifest) => {
+      manifest.version = '1.2.4'
+    },
+    (manifest) => {
+      manifest.updateMode = 'automatic'
+    },
+    (manifest) => {
+      manifest.assets = []
+    },
+    (manifest) => {
+      manifest.assets[0].sha512 = 'incorrect'
+    },
+    (manifest) => {
+      manifest.assets[0].sha256 = 'a'.repeat(64)
+    },
+    (manifest) => {
+      manifest.assets[0].size++
+    },
+    (manifest) => {
+      manifest.assets[0].name = `mimir-${version}-fnos-arm64.fpk`
+    },
+    (manifest) => {
+      manifest.assets.push({ ...manifest.assets[0], name: 'latest-linux.yml' })
+    },
+    (manifest) => {
+      manifest.assets.push({ ...manifest.assets[0], name: `${manifest.assets[0].name}.blockmap` })
+    },
+    (manifest) => {
+      manifest.assets.push(manifest.assets[0])
+    },
+  ]) {
+    const setup = await fixture(t)
+    const file = path.join(setup.inputDir, 'fnos-x64', 'build-manifest.json')
+    const manifest = JSON.parse(await readFile(file, 'utf8'))
+    mutate(manifest)
+    await writeFile(file, JSON.stringify(manifest))
+    await assert.rejects(aggregateArtifacts(setup))
+    await assert.rejects(readdir(setup.outputDir), { code: 'ENOENT' })
+  }
 })
 
 test('missing platform, stale manifest and modified bytes cannot form a release', async (t) => {
@@ -196,6 +324,8 @@ function fakeApi({
   existingAssets = [],
   failUpload = false,
   badDigest = false,
+  failUploadAsset,
+  badDigestAsset,
 } = {}) {
   const calls = []
   const uploaded = [...existingAssets]
@@ -221,12 +351,12 @@ function fakeApi({
     },
     async upload(_release, asset) {
       calls.push(`upload:${asset.name}`)
-      if (failUpload) throw new Error('network failure')
+      if (failUpload || asset.name === failUploadAsset) throw new Error('network failure')
       uploaded.push({ ...asset, id: uploaded.length })
     },
     async digest(asset) {
       calls.push(`verify:${asset.name}`)
-      return badDigest ? 'incorrect' : asset.sha256
+      return badDigest || asset.name === badDigestAsset ? 'incorrect' : asset.sha256
     },
     async publish() {
       calls.push('publish')
@@ -243,6 +373,44 @@ test('draft publishes only after every remote asset passes validation', async (t
   assert.equal(calls[0], 'draft')
   assert.equal(calls.at(-1), 'publish')
   assert.equal(calls.filter((call) => call.startsWith('verify:')).length, manifest.assets.length)
+  assert.ok(calls.includes(`verify:mimir-${version}-fnos-x64.fpk`))
+})
+
+test('missing fnOS or its remote upload/digest failure never publishes a partial desktop release', async (t) => {
+  const setup = await fixture(t)
+  const manifest = await aggregateArtifacts(setup)
+  const fpk = `mimir-${version}-fnos-x64.fpk`
+  const incomplete = structuredClone(manifest)
+  incomplete.assets = incomplete.assets.filter((asset) => asset.name !== fpk)
+  const missing = fakeApi()
+  await assert.rejects(
+    publishRelease({ api: missing.api, manifest: incomplete, commit: 'a'.repeat(40) }),
+    /missing/,
+  )
+  assert.deepEqual(missing.calls, [])
+  for (const options of [{ failUploadAsset: fpk }, { badDigestAsset: fpk }]) {
+    const { api, calls } = fakeApi(options)
+    await assert.rejects(publishRelease({ api, manifest, commit: 'a'.repeat(40) }))
+    assert.ok(calls.includes(`upload:${fpk}`))
+    assert.ok(!calls.includes('publish'))
+  }
+})
+
+test('downloaded release directory rechecks FPK bytes, size and both digests before remote mutations', async (t) => {
+  for (const mutation of ['bytes', 'size', 'sha256', 'sha512']) {
+    const setup = await fixture(t)
+    const manifest = await aggregateArtifacts(setup)
+    await validateReleaseDirectory(setup.outputDir, manifest)
+    const fpk = manifest.assets.find((asset) => asset.name.endsWith('.fpk'))
+    if (mutation === 'bytes') await writeFile(path.join(setup.outputDir, fpk.name), 'tampered')
+    else if (mutation === 'size') fpk.size++
+    else if (mutation === 'sha256') fpk.sha256 = 'a'.repeat(64)
+    else fpk.sha512 = 'A'.repeat(86) + '=='
+    await assert.rejects(
+      validateReleaseDirectory(setup.outputDir, manifest),
+      /Local asset mismatch/,
+    )
+  }
 })
 
 test('upload failure or remote digest mismatch leaves the release unpublished', async (t) => {

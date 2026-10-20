@@ -41,6 +41,10 @@ userData 目录，免登录但仍使用仅本机可用的令牌鉴权；云端�
 | macOS Intel | `mimir-版本-mac-x64.dmg` |
 | Windows x64 | `mimir-版本-win-x64.exe`（NSIS 安装器） |
 | Linux x64 | `mimir-版本-linux-x64.AppImage` |
+| fnOS x86_64 | `mimir-版本-fnos-x64.fpk`（原生应用包） |
+
+fnOS 包通过系统的手动安装入口导入，后续升级也由 fnOS 应用管理完成；
+FPK 与同版本客户端一起发布，不使用桌面客户端的自动更新器。
 
 首个带更新器的版本必须手动安装。此后 Windows 安装版与可写位置的 Linux AppImage
 在启动后及每 6 小时检查稳定版，默认后台下载，可在“软件更新”中关闭自动下载。
@@ -58,16 +62,22 @@ Linux AppImage 需要可执行权限，在只读位置运行时使用手动更�
 
 `.github/workflows/desktop-release.yml` 在四个原生 runner 上构建 macOS arm64/x64、
 Windows x64 和 Linux x64，并对解包后的真实应用执行启动自检。
+同时调用 `.github/workflows/fnos-build.yml`，在 Ubuntu x86_64 / Node 22 上构建、
+校验 fnOS 原生 FPK。该复用工作流也可手动运行，仅生成 `fnos-x64` artifact。
 手动运行 **Desktop release** 只产生保留 14 天的 Actions artifacts，不修改 Releases。
 本地 `pnpm desktop:build` 也永远不发布。
 
-正式发布时，先修改并提交 `apps/desktop/package.json` 中的稳定版本（仅 `X.Y.Z`），
-按需要更新 lockfile，再推送相同的 `vX.Y.Z` 标签。标签必须与已提交的桌面版本完全一致；
+正式发布时，先同步并提交 `apps/desktop/package.json` 和 `apps/fnos/manifest`
+中的稳定版本（仅 `X.Y.Z`），按需要更新 lockfile，再推送相同的 `vX.Y.Z` 标签。
+标签与这两处已提交版本必须完全一致；仓库其他包无需连带改版本。
 预发布、前导零和不匹配的标签会失败。版本不能复用。
-全部构建和自检成功后，汇总作业校验每份安装包、SHA-512、版本与架构，
+四个客户端和 fnOS 的构建及自检全部成功后，汇总作业校验每份安装包、
+SHA-256、SHA-512、大小、版本、平台与架构，
 合并双架构 `latest-mac.yml`。独立发布作业才获得 `contents: write`，创建 draft、
 上传并核对全部资产后，一次发布为 stable/latest。客户端不包含发布 Token。
-上传或构建失败不会公开半成品；同 commit 的本工作流 draft 可重跑恢复，
+任一目标构建失败、缺失或校验不符均阻止新版本公开，包括 fnOS；
+FPK 没有 Electron 更新 YAML，也不会被写入客户端的下载列表。
+上传失败不会公开半成品；同 commit 的本工作流 draft 可重跑恢复，
 已有公开 Release 不会被覆盖，修复需要递增版本。
 
 默认测试构建不需要 Secrets。未来启用正式 macOS 签名与公证时，设置仓库变量
@@ -91,6 +101,7 @@ Windows x64 和 Linux x64，并对解包后的真实应用执行启动自检。
 工作流构建及启动自检不能替代各系统的安装器、系统信任提示与真实跨版本升级验收。
 首次发布后需单独验证匿名下载、NSIS 安装、AppImage 启动和用户资料保留，
 Windows/Linux 的本地模拟测试不能当作对应平台已通过。
+fnOS 的 Ubuntu 构建、原生模块和宿主检查也不能代替真实 fnOS 设备的安装与升级验收。
 
 已有两个公开稳定版本、且目标版本为官方 latest 后，可执行真实升级验收：
 

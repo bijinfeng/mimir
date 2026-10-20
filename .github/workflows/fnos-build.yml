@@ -1,0 +1,60 @@
+name: fnOS Build
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Verify native runner
+        run: node -e "if (process.platform !== 'linux' || process.arch !== 'x64' || process.versions.node.split('.')[0] !== '22') throw Error('fnOS requires native Linux x86_64 Node 22')"
+      - run: pnpm install --frozen-lockfile
+      - name: Validate committed release version
+        id: version
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -n "$EXPECTED_VERSION" ]]; then
+            version="$(node apps/desktop/scripts/release-artifacts.mjs version "v$EXPECTED_VERSION")"
+          else
+            version="$(node apps/desktop/scripts/release-artifacts.mjs version)"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Test fnOS packaging contracts
+        run: node --test scripts/fnos-package.test.mjs scripts/fnos-build.test.mjs
+      - name: Install pinned official fnpack
+        run: |
+          node scripts/fnos-fnpack.mjs "$RUNNER_TEMP/fnpack"
+          echo "FNOS_FNPACK=$RUNNER_TEMP/fnpack" >> "$GITHUB_ENV"
+      - name: Build real fnOS x86 package
+        run: pnpm fnos:build
+      - name: Verify extracted FPK and real Unix Socket host
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: node scripts/verify-fnos.mjs "$RELEASE_VERSION"
+      - name: Stage validated package
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: node apps/desktop/scripts/release-artifacts.mjs stage apps/fnos/release staged/fnos-x64 fnos-x64 "$RELEASE_VERSION" manual
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fnos-x64
+          path: staged/fnos-x64
+          if-no-files-found: error
+          retention-days: 14

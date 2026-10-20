@@ -1,9 +1,9 @@
 # 官方 macOS ARM64 手动更新验收入口
 
-2026-10-20。脚本已准备，**尚未运行真实发布版本**；主会话等待 v0.1.1/v0.1.2 发布成功后执行。只有实际运行输出 success=true 才能登记手动替换通过。
+2026-10-20。脚本已准备，**尚未运行真实发布版本**；主会话等待 v0.1.2/v0.1.3 发布成功后执行。只有实际运行输出 success=true 才能登记手动替换通过。
 
 ```sh
-BASE_VERSION=0.1.1 TARGET_VERSION=0.1.2 \
+BASE_VERSION=0.1.2 TARGET_VERSION=0.1.3 \
 MANUAL_UPDATE_EVIDENCE="$PWD/.trellis/tasks/10-20-desktop-release-updater/verification/mac-official-manual" \
 node apps/desktop/scripts/manual-update-smoke.mjs
 ```

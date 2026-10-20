@@ -36,6 +36,18 @@ export const targets = {
   },
 }
 
+// fnOS shares the stable release, but has no Electron update metadata or installer.
+export const releaseTargets = {
+  ...targets,
+  'fnos-x64': {
+    platform: 'linux',
+    arch: 'x64',
+    os: 'fnos',
+    extensions: ['fpk'],
+    updateMode: 'manual',
+  },
+}
+
 export function validateVersion(version, tag) {
   if (
     typeof version !== 'string' ||
@@ -45,6 +57,14 @@ export function validateVersion(version, tag) {
     throw new Error(`Not a stable version: ${version}`)
   if (tag !== undefined && tag !== `v${version}`)
     throw new Error(`Tag ${tag} must exactly match v${version}`)
+  return version
+}
+
+export function validateCommittedReleaseVersion(desktopVersion, fnosManifest, tag) {
+  const version = validateVersion(desktopVersion, tag)
+  const versions = fnosManifest.match(/^version=([^\r\n]*)\r?$/gm) ?? []
+  if (versions.length !== 1 || versions[0].replace(/^version=/, '').replace(/\r$/, '') !== version)
+    throw new Error('fnOS manifest version must exactly match the committed desktop version')
   return version
 }
 
@@ -77,15 +97,24 @@ function expectedNames(version, target) {
   return target.extensions.map((ext) => `mimir-${version}-${target.os}-${target.arch}.${ext}`)
 }
 
+function targetAssetNames(version, target) {
+  const installers = expectedNames(version, target)
+  return {
+    required: [...installers, ...(target.metadata ? [target.metadata] : [])],
+    supplemental: target.metadata ? installers.map((name) => `${name}.blockmap`) : [],
+  }
+}
+
 export function validateReleaseManifest(manifest) {
   validateVersion(manifest.version, manifest.tag)
   const required = new Set(['latest-mac.yml', 'latest.yml', 'latest-linux.yml'])
-  for (const target of Object.values(targets))
-    for (const name of expectedNames(manifest.version, target)) required.add(name)
-  const allowed = new Set([
-    ...required,
-    ...[...required].filter((name) => !name.endsWith('.yml')).map((name) => `${name}.blockmap`),
-  ])
+  const supplemental = []
+  for (const target of Object.values(releaseTargets)) {
+    const names = targetAssetNames(manifest.version, target)
+    for (const name of names.required) required.add(name)
+    supplemental.push(...names.supplemental)
+  }
+  const allowed = new Set([...required, ...supplemental])
   if (!Array.isArray(manifest.assets)) throw new Error('Release assets must be an array')
   const seen = new Set()
   for (const asset of manifest.assets) {
@@ -129,27 +158,32 @@ export async function validateMetadata(dir, metadataName, version, names) {
 
 export async function stageArtifacts({ releaseDir, outputDir, targetKey, version, updateMode }) {
   validateVersion(version)
-  const target = targets[targetKey]
-  if (!target || !['manual', 'automatic'].includes(updateMode))
+  const target = releaseTargets[targetKey]
+  if (
+    !target ||
+    !['manual', 'automatic'].includes(updateMode) ||
+    (target.updateMode && updateMode !== target.updateMode)
+  )
     throw new Error('Invalid build identity')
   const installers = expectedNames(version, target)
-  await validateMetadata(releaseDir, target.metadata, version, installers)
-  const names = [...installers, target.metadata]
-  for (const name of installers) {
-    const blockmap = `${name}.blockmap`
-    if ((await readdir(releaseDir)).includes(blockmap)) names.push(blockmap)
-  }
+  if (target.metadata) await validateMetadata(releaseDir, target.metadata, version, installers)
+  const { required, supplemental } = targetAssetNames(version, target)
+  const available = await readdir(releaseDir)
+  const names = [...required, ...supplemental.filter((name) => available.includes(name))]
+  // Validate even metadata-free packages before creating a staged directory.
+  const assets = await Promise.all(names.map((name) => describe(releaseDir, name)))
   await mkdir(path.dirname(outputDir), { recursive: true })
   await mkdir(outputDir, { recursive: false })
-  const assets = []
   for (const name of names) {
-    const asset = await describe(releaseDir, name)
     await copyFile(path.join(releaseDir, name), path.join(outputDir, name))
-    assets.push(asset)
   }
   await writeFile(
     path.join(outputDir, 'build-manifest.json'),
-    JSON.stringify({ targetKey, version, updateMode, assets }, null, 2),
+    JSON.stringify(
+      { targetKey, platform: target.platform, arch: target.arch, version, updateMode, assets },
+      null,
+      2,
+    ),
   )
 }
 
@@ -160,18 +194,23 @@ export async function aggregateArtifacts({ inputDir, outputDir, version, tag }) 
   const installers = []
   const unique = new Set()
   // Validate the entire set before making a distributable directory.
-  for (const [targetKey, target] of Object.entries(targets)) {
+  for (const [targetKey, target] of Object.entries(releaseTargets)) {
     const dir = path.join(inputDir, targetKey)
     const manifest = JSON.parse(await readFile(path.join(dir, 'build-manifest.json'), 'utf8'))
     if (
       manifest.targetKey !== targetKey ||
+      manifest.platform !== target.platform ||
+      manifest.arch !== target.arch ||
       manifest.version !== version ||
-      !['manual', 'automatic'].includes(manifest.updateMode)
+      !['manual', 'automatic'].includes(manifest.updateMode) ||
+      (target.updateMode && manifest.updateMode !== target.updateMode)
     )
       throw new Error(`Wrong build identity: ${targetKey}`)
     const names = expectedNames(version, target)
-    const allowed = new Set([...names, ...names.map((name) => `${name}.blockmap`), target.metadata])
+    const { required, supplemental } = targetAssetNames(version, target)
+    const allowed = new Set([...required, ...supplemental])
     const seen = new Set()
+    if (!Array.isArray(manifest.assets)) throw new Error(`Invalid build assets: ${targetKey}`)
     for (const asset of manifest.assets) {
       if (!allowed.has(asset.name) || seen.has(asset.name))
         throw new Error(`Unexpected manifest asset: ${asset.name}`)
@@ -189,9 +228,9 @@ export async function aggregateArtifacts({ inputDir, outputDir, version, tag }) 
         installers.push({ dir, ...actual })
       }
     }
-    if (![...names, target.metadata].every((name) => seen.has(name)))
-      throw new Error(`Incomplete build: ${targetKey}`)
-    metadataByTarget.set(targetKey, await validateMetadata(dir, target.metadata, version, names))
+    if (!required.every((name) => seen.has(name))) throw new Error(`Incomplete build: ${targetKey}`)
+    if (target.metadata)
+      metadataByTarget.set(targetKey, await validateMetadata(dir, target.metadata, version, names))
     manifests.push(manifest)
   }
   const macArm = metadataByTarget.get('mac-arm64')
@@ -220,6 +259,7 @@ export async function aggregateArtifacts({ inputDir, outputDir, version, tag }) 
   for (const name of (await readdir(outputDir)).toSorted())
     assets.push(await describe(outputDir, name))
   const manifest = { version, tag: `v${version}`, assets }
+  validateReleaseManifest(manifest)
   await writeFile(path.join(outputDir, 'release-manifest.json'), JSON.stringify(manifest, null, 2))
   return manifest
 }
@@ -228,7 +268,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const [command, ...args] = process.argv.slice(2)
   if (command === 'version') {
     const pkg = JSON.parse(await readFile('apps/desktop/package.json', 'utf8'))
-    console.log(validateVersion(pkg.version, args[0]))
+    const fnosManifest = await readFile('apps/fnos/manifest', 'utf8')
+    console.log(validateCommittedReleaseVersion(pkg.version, fnosManifest, args[0]))
   } else if (command === 'stage') {
     await stageArtifacts({
       releaseDir: args[0],

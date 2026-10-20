@@ -10,11 +10,11 @@
 - `pnpm desktop:build`：server build → desktop build → `scripts/deploy-server.mjs` → `scripts/package.mjs`。deploy 脚本只清理固定、被 gitignore 的 `apps/desktop/server-deploy` 再执行 `pnpm --filter @mimir/server deploy --prod --node-linker hoisted` 生产依赖部署，以支持重复打包和可移植物理目录；根安装仍保持 isolated；不能接受调用方传入的清理路径。matrix build 强制原生 OS/CPU；`nativeArtifactName(process.arch)` 固定文件名架构为 Node 的 x64/arm64，仅保留 version/os/ext 宏，防止 AppImage 将 x64 重写为 x86_64；builder 始终 `publish: 'never'`。
 - `finalizeResourceTree(root): Promise<{files:number, materialized:number}>`：afterPack 对完整可信 server 资源树执行；内部相对文件别名物化，目录/绝对/越界/损坏链接均使构建失败，不递归解引用依赖图。返回成功的资源树须无链接，才能压 NSIS/签名。
 - `extractArchiveFile(archive, entry, extractFile)`：ASAR 3.4.1 目录遍历使用宿主 `path.sep`，所有固定 archive entry 先 native normalize；`listPackage` 是宿主路径展示，禁止匹配固定正斜杠后缀来判断依赖。`verifyPackagedUpdater(archive, extractFile)` 必须读取根 updater 的真实 manifest name/version 与非空且不越界的 main 文件；缺文件、错版本和仅外层声明均失败。
-- `node apps/desktop/scripts/release-artifacts.mjs version [vX.Y.Z]`：校验 desktop/package.json 的稳定版本，tag 必须匹配已提交的桌面版本。
-- `stage <releaseDir> <outputDir> <target> <version> <mode>`、`aggregate <incomingDir> <outputDir> <version>`：收集并验证真实产物后生成完整发布目录；target 是 `mac-arm64|mac-x64|win-x64|linux-x64`。
+- `node apps/desktop/scripts/release-artifacts.mjs version [vX.Y.Z]`：校验 desktop/package.json 与 apps/fnos/manifest 的稳定版本完全一致，tag 必须匹配已提交版本。`validateCommittedReleaseVersion(desktopVersion, fnosManifestText, tag?)` 拒绝缺失、重复、带空白及不一致的 fnOS version。
+- `stage <releaseDir> <outputDir> <target> <version> <mode>`、`aggregate <incomingDir> <outputDir> <version>`：收集并验证真实产物后生成完整发布目录；`targets` 仅含四个 Electron 目标；`releaseTargets` 为 `mac-arm64|mac-x64|win-x64|linux-x64|fnos-x64`。fnOS 固定 linux/x64/manual、文件 `mimir-VERSION-fnos-x64.fpk`，不进入 Electron YAML。
 - `BASE_VERSION=X.Y.Z TARGET_VERSION=X.Y.Z node apps/desktop/scripts/update-smoke.mjs`：仅一次性 GitHub x64 Windows/Linux runner 可执行的真实升级验收；独立 `desktop-update-verify.yml` 映射同名输入。客户端不包含验收开关。
 - `BASE_VERSION=X.Y.Z TARGET_VERSION=X.Y.Z MANUAL_UPDATE_EVIDENCE=<绝对目录> node apps/desktop/scripts/manual-update-smoke.mjs`：本机 mac ARM64 官方 ZIP 手动更新验收；只启动/替换 mkdtemp 下专用 app 副本和同一隔离 userData，正常窗口关闭后才替换，记录真实 CDP HTML/PNG。固定官方匿名下载及摘要；不打开用户系统下载目录，不声称自动安装、Gatekeeper、公证或原生通知投递。
-- `.github/workflows/desktop-release.yml`：`workflow_dispatch` 仅产 artifacts；稳定 `vX.Y.Z` tag 才进入单独 `publish` job。
+- `.github/workflows/desktop-release.yml`：`workflow_dispatch` 仅产 artifacts；稳定 `vX.Y.Z` tag 才进入单独 `publish` job。调用 `fnos-build.yml` 复用工作流，aggregate 必须等待四桌面目标和 fnOS 全部通过。
 - `DesktopUpdateApi`（shared）：工作区 `getState/open/setAppearance/onState/onPrepare/respondPrepare/onPrepareCancelled`；它没有检查、下载、安装动作。appearance 只接收 auto/light/dark 枚举，本地主题快照可通知主进程供原生菜单复用；云端详情始终跟随系统。
 - `MimirUpdaterBridge`：仅专用 `preload/updater.ts` 暴露 `getState/check/download/install/setAutoDownload/onState/openRelease/returnToDocument/close`。
 
@@ -28,6 +28,7 @@
 - `MIMIR_MAC_SIGNING=adhoc`（默认）：ad-hoc 测试签名，包内 `desktopUpdateMode=manual`，产 DMG + ZIP；用户下载并替换应用。
 - `MIMIR_MAC_SIGNING=signed`：必须提供 CSC_LINK/CSC_KEY_PASSWORD/CSC_NAME、APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID；正式签名、公证及验证均成功才允许包内 automatic。afterPack 不能再用 ad-hoc 覆盖它。
 - workflow 对应仓库变量 `MIMIR_MAC_SIGNING`，Secrets `MAC_CSC_LINK/MAC_CSC_KEY_PASSWORD/MAC_CSC_NAME` 与上述 APPLE_*；只在打包步骤注入。
+- 每目标 `build-manifest.json` 声明 targetKey/platform/arch/version/updateMode 及资产 size/SHA-256/SHA-512；aggregate 对五目标身份和真实字节全部复验。`validateReleaseDirectory(dir, manifest)` 在任何远端写入前再次核对普通文件、大小及双摘要，上传后再核对 GitHub 资产摘要，最后才公开 draft。
 - 发布凭据只在 publish job 使用短期 `GITHUB_TOKEN`、contents:write；其余 jobs contents:read。
 - Windows x64 产 assisted NSIS（`oneClick=false`、`runAfterFinish=true`）；显式更新的正常 Finish 页面保留启动应用选项。首次 `/S` 且没有 `--force-run` 不能自行启动，普通退出仍由 `autoInstallOnAppQuit=false` 禁止安装。
 - Linux x64 产 AppImage。Linux 非 AppImage 或安装位置不可写时降为 manual。
@@ -50,14 +51,14 @@
 | 宿主关闭失败或超时 | 阻止安装，展示恢复指引；超时不能视为关闭成功 |
 | 安装器启动通过 error 事件失败 | 工作区已关闭时进入 blocked/recoveryRequired，展示重新启动指引，不停在 restarting；不能只依赖 quitAndInstall 的同步异常 |
 | 生产资源含目录/junction/绝对/越界/损坏链接 | 构建失败并定位链接；不得将 runner 绝对路径带入安装包，或全图解引用掩盖循环 |
-| 任一 matrix 失败、版本/哈希/架构文件不符 | 停在 publish 之前 |
+| 任一桌面 matrix 或 fnOS 构建失败、缺 FPK、版本/哈希/架构文件不符 | 停在 publish 之前 |
 | 两份 latest-mac.yml | 验证同版本并合并 files，文件名唯一；不能后下载覆盖前下载 |
 | 真实升级验收的版本不稳定/target不是官方latest/资产摘要不匹配/runner已有userData | 验收立即失败，不复用用户库或注入自定义feed，不使用直接安装或伪造保存ACK补成通过 |
 | 已公开 tag 重跑 | 拒绝覆盖已发布 release；draft 验证完整上传后才公开 |
 
 ## 5. Good / Base / Bad
 
-- Good：四个原生 runner 分别打包、验证 app 和 smoke；汇总文件及 SHA 校验成功，单点 draft 上传后设为 stable latest。
+- Good：四个原生 runner 分别打包、验证 app 和 smoke；加一个 fnOS 原生 runner 验证真实 FPK 和 Socket 宿主；五目标汇总文件及 SHA 校验成功，单点 draft 上传后设为 stable latest。
 - Base：没有证书的 macOS 首版支持检查和正确架构的官方手动下载；不能把 ZIP 的存在解释为自动安装可用。
 - Bad：收到 downloaded 就打开模态或调用 quitAndInstall；矩阵各 job 直接发布 latest；renderer 传 URL；为了升级给云端注入安装桥。
 
@@ -68,7 +69,8 @@
 - renderer 测试覆盖自动/手动保存、无句柄、失败、新改动、编辑器切换；保存 ACK 不等于忽略 beforeunload。
 - 资源复制测试必须覆盖迁移后 require、同名嵌套依赖版本、内部文件别名物化、目录循环/绝对/越界/损坏链接拒绝；真实包原生模块和安装后 smoke 仍不可省略。
 - ASAR 校验回归使用真实 archive，覆盖两种输入分隔符、正确/缺失根依赖、错版本、缺入口和越界入口；不能用列表展示路径代替真实字节验证。
-- 发布脚本测试用真实 fixture 字节验证 hash、缺文件、非法 tag、双架构冲突和元数据汇总；不能只匹配 YAML 文本。
+- 发布脚本测试用真实 fixture 字节验证五目标 hash、缺 FPK、非法 tag、版本不一致、错架构/mode、重复条目、双架构冲突和元数据汇总；缺失或篡改 FPK 必须在远端写入前失败，上传/远端摘要失败不能公开 draft；不能只匹配 YAML 文本。
+- fnOS 官方工具、原生模块、解包及 Socket 契约唯一归属 [architecture §8.6.1](../../project/architecture.md#861-fnos-原生包部署契约x86_64)；Ubuntu 验包不代表 fnOS 设备安装或覆盖升级已通过。
 - `pnpm check`、desktop build、实际打包与 `MIMIR_SMOKE_EXECUTABLE=<绝对路径> node apps/desktop/scripts/smoke.mjs`；界面实际截图/HTML归档。
 - 真实更新验收必须从官方匿名资产安装基线，驱动真实更新 UI；验证普通退出未替换安装文件、真实编辑阻止并取消安装、保存后重启安装、旧进程消失与新进程拉起、版本和原文档/模式保留。Windows 校验实际 updater 缓存安装包摘要；Linux 校验替换后的 AppImage 摘要。头部完成通知和系统焦点仍需原生桌面证据，不能用 CDP 无详情窗口替代。
 - 本机 mac 不能代表 Windows/Linux runner 或真实跨版本更新已通过；未执行的远端验证必须明确记录。

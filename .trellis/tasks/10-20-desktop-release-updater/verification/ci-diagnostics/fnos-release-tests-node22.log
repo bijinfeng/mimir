@@ -1,0 +1,122 @@
+# cwd=/Users/admin/Desktop/mimir
+$ /Users/admin/.nvm/versions/node/v22.23.1/bin/node --test apps/desktop/scripts/release-artifacts.test.mjs
+TAP version 13
+# Subtest: native artifact names survive builder extension-specific architecture mapping
+ok 1 - native artifact names survive builder extension-specific architecture mapping
+  ---
+  duration_ms: 648.60175
+  type: 'test'
+  ...
+# Subtest: stable versions require an exact tag and reject prereleases, padding and malformed input
+ok 2 - stable versions require an exact tag and reject prereleases, padding and malformed input
+  ---
+  duration_ms: 0.220709
+  type: 'test'
+  ...
+# Subtest: committed desktop and fnOS versions must exactly agree before builds
+ok 3 - committed desktop and fnOS versions must exactly agree before builds
+  ---
+  duration_ms: 0.162792
+  type: 'test'
+  ...
+# Subtest: desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP
+ok 4 - desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP
+  ---
+  duration_ms: 63.150667
+  type: 'test'
+  ...
+# Subtest: fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata
+ok 5 - fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata
+  ---
+  duration_ms: 20.866875
+  type: 'test'
+  ...
+# Subtest: missing fnOS and tampered FPK bytes block the entire release before output creation
+ok 6 - missing fnOS and tampered FPK bytes block the entire release before output creation
+  ---
+  duration_ms: 58.473959
+  type: 'test'
+  ...
+# Subtest: fnOS wrong identity, architecture, hashes and Electron metadata fail closed
+ok 7 - fnOS wrong identity, architecture, hashes and Electron metadata fail closed
+  ---
+  duration_ms: 648.337
+  type: 'test'
+  ...
+# Subtest: missing platform, stale manifest and modified bytes cannot form a release
+ok 8 - missing platform, stale manifest and modified bytes cannot form a release
+  ---
+  duration_ms: 53.83075
+  type: 'test'
+  ...
+# Subtest: malicious references, duplicate files and invalid metadata SHA-512 are rejected
+ok 9 - malicious references, duplicate files and invalid metadata SHA-512 are rejected
+  ---
+  duration_ms: 24.605666
+  type: 'test'
+  ...
+# Subtest: mismatched mac signing mode cannot publish a mixed channel
+ok 10 - mismatched mac signing mode cannot publish a mixed channel
+  ---
+  duration_ms: 24.800625
+  type: 'test'
+  ...
+# Subtest: macOS signed mode is explicit and fails closed without full credentials
+ok 11 - macOS signed mode is explicit and fails closed without full credentials
+  ---
+  duration_ms: 0.21175
+  type: 'test'
+  ...
+# Subtest: draft publishes only after every remote asset passes validation
+ok 12 - draft publishes only after every remote asset passes validation
+  ---
+  duration_ms: 25.859542
+  type: 'test'
+  ...
+# Subtest: missing fnOS or its remote upload/digest failure never publishes a partial desktop release
+ok 13 - missing fnOS or its remote upload/digest failure never publishes a partial desktop release
+  ---
+  duration_ms: 26.273417
+  type: 'test'
+  ...
+# Subtest: downloaded release directory rechecks FPK bytes, size and both digests before remote mutations
+ok 14 - downloaded release directory rechecks FPK bytes, size and both digests before remote mutations
+  ---
+  duration_ms: 118.475292
+  type: 'test'
+  ...
+# Subtest: upload failure or remote digest mismatch leaves the release unpublished
+ok 15 - upload failure or remote digest mismatch leaves the release unpublished
+  ---
+  duration_ms: 27.676125
+  type: 'test'
+  ...
+# Subtest: published releases and unrelated drafts are immutable on rerun
+ok 16 - published releases and unrelated drafts are immutable on rerun
+  ---
+  duration_ms: 27.85425
+  type: 'test'
+  ...
+# Subtest: incomplete manifest fails before creating a draft
+ok 17 - incomplete manifest fails before creating a draft
+  ---
+  duration_ms: 32.849291
+  type: 'test'
+  ...
+# Subtest: only an owned draft can replace partial uploads; unknown draft assets stop recovery
+ok 18 - only an owned draft can replace partial uploads; unknown draft assets stop recovery
+  ---
+  duration_ms: 25.001875
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1956.363667
+
+# Observed tool exit status: 0

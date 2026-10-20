@@ -1,8 +1,12 @@
 import { spawnSync } from 'node:child_process'
-import { cp, mkdir, readFile, readdir, rm, stat } from 'node:fs/promises'
+import { cp, mkdir, readFile, readdir, rename, rm, stat } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { validateCommittedReleaseVersion } from '../apps/desktop/scripts/release-artifacts.mjs'
+import { finalizeResourceTree } from '../apps/desktop/scripts/resource-tree.mjs'
+import { verifyFnpack } from './fnos-fnpack.mjs'
+import { verifyFnosManifest } from './fnos-artifacts.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const source = path.join(root, 'apps/fnos')
@@ -41,11 +45,15 @@ async function main() {
     throw new Error('fnOS 包必须用 Node 22 构建并验证。')
   }
 
-  const rootPackage = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'))
+  const desktopPackage = JSON.parse(
+    await readFile(path.join(root, 'apps/desktop/package.json'), 'utf8'),
+  )
   const manifest = await readFile(path.join(source, 'manifest'), 'utf8')
-  if (!manifest.includes(`version=${rootPackage.version}\n`)) {
-    throw new Error('fnOS manifest 版本与根 package.json 不一致。')
-  }
+  const version = validateCommittedReleaseVersion(desktopPackage.version, manifest)
+  verifyFnosManifest(manifest, version)
+  const fnpack = process.env.FNOS_FNPACK
+  if (!fnpack) throw new Error('Set FNOS_FNPACK to the verified official fnpack 1.2.3 binary')
+  verifyFnpack(await readFile(fnpack))
   if (await present(staging)) await rm(staging, { recursive: true, force: true })
   if (await present(release)) await rm(release, { recursive: true, force: true })
   await mkdir(staging, { recursive: true })
@@ -57,8 +65,17 @@ async function main() {
   run('pnpm', ['--filter', '@mimir/server', 'build'])
   await copySource()
   const server = path.join(staging, 'app/server')
-  run('pnpm', ['--filter', '@mimir/server', 'deploy', '--prod', server])
+  run('pnpm', [
+    '--filter',
+    '@mimir/server',
+    'deploy',
+    '--prod',
+    '--node-linker',
+    'hoisted',
+    path.relative(root, server),
+  ])
   await cp(path.join(root, 'apps/web/dist'), path.join(server, 'web/dist'), { recursive: true })
+  console.log('[fnOS] portable resources', await finalizeResourceTree(server))
 
   for (const file of [
     'dist/index.js',
@@ -74,37 +91,14 @@ async function main() {
   if (!index.includes('/app/mimir/assets/')) {
     throw new Error('Web 构建未使用 /app/mimir/ 资源前缀。')
   }
-  // better-sqlite3 intentionally ships prebuilds for several platforms. Inspect
-  // only the binaries actually selected by Node on this Linux x86_64 host.
-  const nativeCheck = `
-    const fs = await import('node:fs');
-    const path = await import('node:path');
-    const require = (await import('node:module')).createRequire(${JSON.stringify(path.join(server, 'package.json'))});
-    const Database = require('better-sqlite3');
-    const db = new Database(':memory:');
-    const sqliteVec = require('sqlite-vec');
-    sqliteVec.load(db);
-    db.close();
-    require('@node-rs/jieba');
-    const binaries = [...Object.keys(require.cache).filter((file) => file.endsWith('.node')), sqliteVec.getLoadablePath()];
-    if (binaries.length < 3) throw new Error('Native dependency did not load');
-    for (const file of binaries) {
-      const actual = fs.realpathSync(file);
-      if (!actual.startsWith(${JSON.stringify(`${server}/`)})) throw new Error('Native module escapes deploy: ' + actual);
-      const header = fs.readFileSync(actual).subarray(0, 20);
-      if (header.toString('hex', 0, 4) !== '7f454c46' || header.readUInt16LE(18) !== 62) {
-        throw new Error('Native module is not Linux x86_64: ' + actual);
-      }
-    }
-    console.log('[fnOS] loaded ' + binaries.length + ' Linux x86_64 native binaries');
-  `
-  run(process.execPath, ['--input-type=module', '-e', nativeCheck], { cwd: server })
+  run(process.execPath, [path.join(root, 'scripts/fnos-native.mjs'), server])
 
-  const fnpack = process.env.FNOS_FNPACK || 'fnpack'
   run(fnpack, ['build', '--directory', staging], { cwd: release })
   const packages = (await readdir(release)).filter((file) => file.endsWith('.fpk'))
-  if (packages.length === 0) throw new Error('fnpack 未在 apps/fnos/release/ 生成 .fpk 文件。')
-  console.log(`[fnOS] 生成 ${packages.map((file) => path.join(release, file)).join(', ')}`)
+  if (packages.length !== 1) throw new Error('fnpack must generate exactly one .fpk')
+  const output = path.join(release, `mimir-${version}-fnos-x64.fpk`)
+  await rename(path.join(release, packages[0]), output)
+  console.log(`[fnOS] 生成 ${output}`)
 }
 
 main().catch((error) => {

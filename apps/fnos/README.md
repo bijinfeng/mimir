@@ -4,14 +4,26 @@
 
 ## 构建
 
-在 Linux x86_64 上安装 Node 22、pnpm 12.4.2 和官方 `fnpack`，并确保 `fnpack` 在 `PATH` 中。于仓库根目录执行：
+在原生 Linux x86_64 上安装 Node 22 和 pnpm 12.4.2。下载脚本使用官方固定版本 `fnpack 1.2.3`，先校验 SHA-256 和 ELF 架构，再写入指定位置。于仓库根目录执行：
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm fnos:build
+node scripts/fnos-fnpack.mjs /tmp/mimir-fnpack
+FNOS_FNPACK=/tmp/mimir-fnpack pnpm fnos:build
+node scripts/verify-fnos.mjs <已提交版本号>
 ```
 
-也可用 `FNOS_FNPACK=/path/to/fnpack pnpm fnos:build` 指定工具路径。脚本构建前后端，用 `pnpm deploy --prod` 收集服务端依赖，检查 Linux x86_64 原生模块，最后调用 `fnpack build`。中间目录位于 `apps/fnos/staging/`，包输出位于 `apps/fnos/release/`。两者均不提交到 Git。构建机架构不匹配时脚本会直接拒绝，以免把 macOS 或 ARM 模块装进 x86 包。
+`FNOS_FNPACK` 必须显式指定，构建时会再次校验同一个官方二进制。工具下载地址和校验值在 `scripts/fnos-fnpack.mjs` 中维护。构建要求 `apps/fnos/manifest` 与 `apps/desktop/package.json` 的版本完全一致；修改源码并提交版本后再发布，CI 不会临时改版本。
+
+脚本构建带 `/app/mimir/` 前缀的 Web 页面和服务端，仅在打包阶段用 `pnpm deploy --prod --node-linker hoisted` 收集生产依赖，校验资源树不依赖仓库或包缓存，实际加载 SQLite、向量扩展、Jieba 字典和 Canvas，并检查原生 ELF 为 Linux x86_64。中间目录位于 `apps/fnos/staging/`，输出为 `apps/fnos/release/mimir-<版本>-fnos-x64.fpk`，两者均不提交到 Git。
+
+验证脚本会解包真实 `.fpk`，检查包内版本、架构和运行时声明、资源完整性，再从解包目录启动服务，以统一测试账号验证 Unix Socket 网关、HTTP/HTTPS 代理登录 Cookie 和鉴权。测试配置与数据位于忽略的验证目录中，在打包完成后创建，不进入安装包。Ubuntu 原生构建和宿主烟测不能替代 fnOS 设备安装、桌面入口或覆盖升级验收。
+
+## GitHub Actions 分发
+
+`.github/workflows/fnos-build.yml` 提供手动构建和可复用工作流，使用 Ubuntu 24.04 x64 / Node 22。手动运行只生成 `fnos-x64` Actions artifact。稳定版由 `desktop-release.yml` 传入同一版本，等待 fnOS 与四个客户端全部构建、解包烟测和产物校验成功后，在同一个 GitHub Release 公开发布。
+
+fnOS `.fpk` 使用应用中心手动安装和升级，不进入 Electron 自动更新安装路径。
 
 ## 安装与数据
 

@@ -102,3 +102,28 @@ CSS 修复使用既有生成器，在共享 Vite preset 的 buildStart 阶段、
 按主会话要求，仅启动一次完整门：PATH 前置 `/Users/admin/.nvm/versions/node/v22.23.1/bin`，`PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check`。实际版本在日志首部记录为 **Node v22.23.1 / pnpm 12.4.2 / workspace-concurrency 1**。已结束且 **FINAL_EXIT_CODE=0**，完整日志 `github-local-node22-pnpm-check.log` 已关闭写入。
 
 lint/styles/format、全部 workspace typecheck、全部现行测试入口均通过：Office 2774、renderer 636、Server 1366（含新增真实OOM拒绝/termination）+local10/fnOS4/SQLite备份2、desktop110及根Node43。既有需显式S3环境的integration skip保持原样，无新增跳过、排除、超时或内存放宽。此结果证明本机Node22串行完整门通过；GitHub runner的Postgres/S3、正式资产及实际升级结果仍单独以远端证据验收。
+
+## fnOS 同版发布集成独立窄审
+
+已审 `release-artifacts.mjs/.test.mjs`、`publish-release.mjs`、desktop release workflow 接口、README 及 `fnos-release.md`。无新增代码问题，本审查未修改实现文件。
+
+- `targets` 保持四个Electron目标；`releaseTargets` 独立加入 `fnos-x64`（linux/x64/manual/FPK）。版本门要求已提交 desktop package 与 fnOS manifest 唯一、无填充版本完全匹配 stable tag。
+- 每个stage及aggregate验证目标键、platform、arch、version、mode和regular非空资产实际字节size/SHA256/SHA512。五目标缺一、FPK篡改或身份不符时输出目录尚未创建。FPK不产生或引用Electron YAML/blockmap。
+- 最终manifest强制FPK完整；publish实际入口在remote mutation前验证本地下载目录的regular file、size及两种hash。draft全部上传后逐件size/SHA256核验，FPK上传/摘要失败不能公开；已公开资产不可变。
+- desktop aggregate显式needs原四目标和fnos复用job，下载接口是`fnos-x64`；当前fnos-build workflow_call的version输入及artifact名与之匹配，manual dispatch仍不发布。
+- README与报告明确FPK经fnOS系统管理，不代表Electron自动更新，也未把fixture字节当作真实可安装FPK。
+
+独立 **Node22.23.1 release脚本18/18通过**；三个mjs lint、四文件format、git diff check通过。native fnOS build冻结后，两个workflow经actionlint v1.7.12与oxfmt联合检查均exit0；artifact保留期已由实现者统一为14天。此前全仓门保留，当前集成新增部分以本轮定向门为准。
+
+## fnOS 原生链独立补审
+
+按主会话追加范围，独立检查 `build-fnos.mjs`、`fnos-fnpack.mjs`、`fnos-artifacts.mjs`、`fnos-native.mjs`、`verify-fnos.mjs`、两份fnOS测试、源manifest、根test入口、最终复用workflow及两份README/`fnos-build.md`。无新增实现问题，本次仅补验收记录。
+
+- 原生Linux x64/Node22门在构建/验证入口均存在；固定官方fnpack 1.2.3 URL、SHA256与ELF检查，构建前再次核验。版本取已提交desktop与fnOS源manifest，最终FPK内manifest再核对appname/version/platform/runtime，不以文件名代替内容检查。
+- 仅生产部署使用hoisted，复用有限资源finalizer；构建和重新解包后均实际加载SQLite/vec/Jieba字典/Canvas，验证所选原生模块位于包内、为Linux x86_64 ELF，不接受仓库依赖回退。FPK路径和符号/硬链接检查先于解包；真实FPK内宿主与Web独立解包再验证，测试配置在FPK生成之后写入忽略的验证目录。
+- 真实Socket烟测通过原生命周期脚本安装/启动/停止；请求覆盖健康、Web、未登录401、HTTP/HTTPS登录Cookie Path/Secure与已登录文档读取，凭据使用统一 `admin@example.com / 12345678`。只读权限构建job中不注入发布凭据，外层timeout45分钟和HTTP15秒预算保留。
+- workflow顺序为真实打包→解包/原生模块/Socket烟测→stage真实字节hash→上传，五目标汇总/发布门保持；根test保留旧入口并加入新增fixture测试。README与报告均区分Ubuntu宿主验证与fnOS设备安装。
+
+独立运行 `/Users/admin/.nvm/versions/node/v22.23.1/bin/node --test scripts/fnos-build.test.mjs scripts/fnos-package.test.mjs`：**8/8通过**。七个mjs的oxlint、上述七文件加两workflow和根package.json共十文件oxfmt、两个workflow actionlint均exit0。本轮无TypeScript源码变化；此前Node22完整typecheck通过，本次不重复重型全仓门。规范同步建议已交主会话：architecture §8.6.1与desktop releases-updates须反映固定工具、验证入口和五目标发布。
+
+本机为macOS ARM64，未执行当前真实Linux fnpack或真实FPK Socket烟测；这两项等待GitHub runner。五目标公开发布/匿名下载及fnOS设备首装、HTTPS内嵌入口和覆盖升级保留资料，仍须各自真实证据，不以8项fixture/生命周期测试代替。

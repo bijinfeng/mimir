@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { createReadStream } from 'node:fs'
-import { readFile } from 'node:fs/promises'
+import { lstat, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { hashFile, validateReleaseManifest, validateVersion } from './release-artifacts.mjs'
@@ -26,7 +26,7 @@ export async function publishRelease({ api, manifest, commit }) {
       tag_name: manifest.tag,
       target_commitish: commit,
       name: `mimir ${manifest.version}`,
-      body: `${marker}\n\n桌面客户端安装包。macOS 默认是需手动更新的测试包；各平台限制和更新说明见仓库 README。`,
+      body: `${marker}\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。`,
       draft: true,
       prerelease: false,
       make_latest: 'false',
@@ -49,6 +49,22 @@ export async function publishRelease({ api, manifest, commit }) {
   return api.publish(release.id)
 }
 
+/** Recheck downloaded artifacts before creating or changing any remote draft. */
+export async function validateReleaseDirectory(dir, manifest) {
+  validateReleaseManifest(manifest)
+  for (const asset of manifest.assets) {
+    const file = path.join(dir, asset.name)
+    const stat = await lstat(file)
+    if (
+      !stat.isFile() ||
+      stat.size !== asset.size ||
+      (await hashFile(file, 'sha256', 'hex')) !== asset.sha256 ||
+      (await hashFile(file)) !== asset.sha512
+    )
+      throw new Error(`Local asset mismatch: ${asset.name}`)
+  }
+}
+
 async function publishDirectory(dir) {
   const token = process.env.GITHUB_TOKEN
   if (
@@ -59,22 +75,8 @@ async function publishDirectory(dir) {
   )
     throw new Error('Publishing is restricted to official tag workflow runs')
   const manifest = JSON.parse(await readFile(path.join(dir, 'release-manifest.json'), 'utf8'))
-  validateReleaseManifest(manifest)
   validateVersion(manifest.version, process.env.GITHUB_REF_NAME)
-  // Recheck downloaded inputs before any remote mutation.
-  const seen = new Set()
-  for (const asset of manifest.assets) {
-    if (
-      !/^[A-Za-z0-9._-]+$/.test(asset.name) ||
-      seen.has(asset.name) ||
-      asset.name === '.' ||
-      asset.name === '..'
-    )
-      throw new Error('Invalid release manifest asset')
-    seen.add(asset.name)
-    if ((await hashFile(path.join(dir, asset.name), 'sha256', 'hex')) !== asset.sha256)
-      throw new Error(`Local asset mismatch: ${asset.name}`)
-  }
+  await validateReleaseDirectory(dir, manifest)
   const headers = {
     Authorization: `Bearer ${token}`,
     'X-GitHub-Api-Version': '2022-11-28',

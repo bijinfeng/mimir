@@ -51,3 +51,9 @@ Node22 进一步诊断：相同 192/16MB worker 中，compiled JS 无 loader 能
 - Node22 loader/CI调度修复已提交推送 `7a5c720`，新CI [39383281565](https://github.com/bijinfeng/mimir/actions/runs/39383281565) 进行中；ae20981对应的旧CI被新push自动取消。
 - 独立最终本地完整门：Node22.23.1 / pnpm12.4.2 / PNPM_CONFIG_WORKSPACE_CONCURRENCY=1，pnpm check exit0。Office2774、renderer636、server1366及各模式、desktop110、根Node43通过；日志 github-local-node22-pnpm-check.log。fnOS新增流水线仍在实施，不能将该次门当其完整远端验收。
 - 用户新增 fnOS 同版发布已录入 PRD/design/implement；现有v0.1.1基线不移动，下一目标0.1.2开始统一包含四客户端与fnOS x64，正式fnOS设备安装仍按设备证据判断。
+
+## v0.1.1 Windows 安装后失败
+
+Windows strict ASAR/原生依赖检查与解包应用 A/B/C 全通过，但实际 NSIS 安装后的 A 本地模式失败，B 首启/C 云端仍通过：缺少 server/dist/node_modules/.pnpm 下 AWS SDK 的 check-content-length-header.js。日志 github-v011-windows-failed.log。NSIS 安装与卸载均返回，不能写成步骤卡死或安装版通过。
+
+包内真实资源问题阻止聚合/发布；v0.1.1 tag保持原始提交，不移动。已安排检查锁定NSIS临时7z-out路径、Vite第三方external契约以及安装前后全量资源对照。后续先完成五目标手动构建，再以新稳定版作为首个成功基线/后续补丁验证更新；预计版本顺延0.1.2→0.1.3，以实际成功发布为准。没有已公开Release被覆盖。
