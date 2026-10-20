@@ -1,0 +1,16 @@
+[
+  {
+    "version": "0.1.3",
+    "url": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.3",
+    "body": "Windows/Linux 使用提示：v0.1.3、v0.1.4 的更新重启存在窗口关闭错误，请先手动安装 [v0.1.5 或更新版](https://github.com/bijinfeng/mimir/releases/latest)，再使用后续自动更新。macOS 继续手动更新；fnOS 由系统安装和升级。\n\n<!-- mimir-desktop-build:c402ec5b8817764f14a68ef782049c9e42520a8e -->\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\n**Full Changelog**: https://github.com/bijinfeng/mimir/compare/v0.1.2...v0.1.3\n",
+    "assetsUnchanged": true,
+    "scope": "Release body only; no tag, asset, digest or latest changes"
+  },
+  {
+    "version": "0.1.4",
+    "url": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+    "body": "Windows/Linux 使用提示：v0.1.3、v0.1.4 的更新重启存在窗口关闭错误，请先手动安装 [v0.1.5 或更新版](https://github.com/bijinfeng/mimir/releases/latest)，再使用后续自动更新。macOS 继续手动更新；fnOS 由系统安装和升级。\n\n<!-- mimir-desktop-build:127d4b7af8d483521fea8e3ea3c9454a57535fc1 -->\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\n**Full Changelog**: https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4\n",
+    "assetsUnchanged": true,
+    "scope": "Release body only; no tag, asset, digest or latest changes"
+  }
+]

@@ -56,3 +56,7 @@
 [39402594994](https://github.com/bijinfeng/mimir/actions/runs/39402594994) attempt2整体success，五目标、aggregate和publisher均通过，15资产正式公开于[v0.1.4](https://github.com/bijinfeng/mimir/releases/tag/v0.1.4)。原始tag固定127d4b7，未移动或覆盖公开资产。
 
 匿名公开浏览器URL实际下载`mimir-0.1.4-fnos-x64.fpk`，大小 **170577526 bytes**，SHA256 **6d2896401949129658d10a11fe03757643b8d903df06e96b3dc7e92d55b38dc4**，与GitHub asset ID `659016028` 的公开digest完全一致。当前本机github.com曾3次连接超时，curl原样重试后成功，不含PAT或cookie；未将短暂网络故障冒充包校验问题。记录public-v0.1.4-release.json、public-v0.1.4-fpk.json及github-v014-published.json。fnOS设备的安装/升级仍未实测。
+
+## 修复基线0.1.5
+
+v0.1.5固定324aa7d，真实五目标run39413757346全completed/success；fnOS / build118598221380使用同一官方固定工具与原生FPK/UnixSocket门通过。FPK资产170576150字节、官方SHA25682e1dcdbf073b981a5de53e90acdaf997cd04bcef310a25d5421e2cce9348095，和四客户端共15资产完整公开。证据github-v015-published.json、github-v015-fnos-native.log、github-v015-publish-success.log、匿名public-v0.1.5-release.json；本条未声称该版FPK已本地下载或设备安装。
