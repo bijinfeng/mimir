@@ -302,36 +302,36 @@ apps/miniapp test: ℹ todo 0
 apps/miniapp test: ℹ duration_ms 286.315958
 apps/miniapp test: Done
 plugins/storage test$ vitest run
-plugins/provider test: 
+plugins/provider test:
 plugins/provider test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/plugins/provider
-plugins/provider test: 
-packages/chat test: 
+plugins/provider test:
+packages/chat test:
 packages/chat test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/chat
-packages/chat test: 
-packages/office test: 
+packages/chat test:
+packages/office test:
 packages/office test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
-packages/office test: 
-plugins/storage test: 
+packages/office test:
+plugins/storage test:
 plugins/storage test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/plugins/storage
-plugins/storage test: 
-plugins/provider test: 
+plugins/storage test:
+plugins/provider test:
 plugins/provider test:  Test Files  2 passed (2)
 plugins/provider test:       Tests  31 passed (31)
 plugins/provider test:    Start at  13:34:34
 plugins/provider test:    Duration  1.51s (import 82%, transform 14%, tests 3%, worker 1%)
-plugins/provider test: 
+plugins/provider test:
 plugins/provider test: Done
-plugins/storage test: 
+plugins/storage test:
 plugins/storage test:  Test Files  1 passed | 1 skipped (2)
 plugins/storage test:       Tests  13 passed | 2 skipped (15)
 plugins/storage test:    Start at  13:34:34
 plugins/storage test:    Duration  2.76s (import 57%, tests 30%, transform 10%, worker 3%)
-plugins/storage test: 
+plugins/storage test:
 plugins/storage test: Done
 apps/server test$ vitest run && vitest run --config vitest.local.config.ts && vitest run --config vitest.fnos.config.ts && node --test scripts/sqlite-backup.node-test.mjs
-apps/server test: 
+apps/server test:
 apps/server test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
-apps/server test: 
+apps/server test:
 packages/chat test: POST http://127.0.0.1:49294/api/chat 503 (Service Unavailable)
 packages/chat test: POST http://127.0.0.1:49298/api/chat 503 (Service Unavailable)
 packages/chat test: Error: socket hang up
@@ -340,27 +340,27 @@ packages/chat test:     at Socket.emit (node:events:521:24)
 packages/chat test:     at TCP.<anonymous> (node:net:350:12) {
 packages/chat test:   code: 'ECONNRESET'
 packages/chat test: }
-packages/chat test: 
+packages/chat test:
 packages/chat test:  Test Files  8 passed (8)
 packages/chat test:       Tests  88 passed (88)
 packages/chat test:    Start at  13:34:34
 packages/chat test:    Duration  20.33s (import 76%, environment 13%, tests 9%, transform 2%)
-packages/chat test: 
+packages/chat test:
 packages/chat test: Done
 packages/office test:  ❯ src/editors/DocxEditor.encryption.test.tsx (13 tests | 1 failed) 64516ms
 packages/office test:    × external standard body replacement saves through the actual encryption worker 7952ms
-packages/office test: 
+packages/office test:
 packages/office test: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
-packages/office test: 
+packages/office test:
 packages/office test:  FAIL  src/editors/DocxEditor.encryption.test.tsx > external standard body replacement saves through the actual encryption worker
 packages/office test: AssertionError: expected false to be true // Object.is equality
-packages/office test: 
+packages/office test:
 packages/office test: - Expected
 packages/office test: + Received
-packages/office test: 
+packages/office test:
 packages/office test: - true
 packages/office test: + false
-packages/office test: 
+packages/office test:
 packages/office test:  ❯ settle src/editors/DocxEditor.encryption.test.tsx:36:18
 packages/office test:      34|   for (let i = 0; i < 1200 && !done(); i++)
 packages/office test:      35|     await act(async () => new Promise((resolve) => setTimeout(resolve,…
@@ -370,18 +370,18 @@ packages/office test:      37| }
 packages/office test:      38| async function click(host: HTMLElement, label: string) {
 packages/office test:  ❯ saveAndWait src/editors/DocxEditor.encryption.test.tsx:121:3
 packages/office test:  ❯ src/editors/DocxEditor.encryption.test.tsx:162:20
-packages/office test: 
+packages/office test:
 packages/office test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
-packages/office test: 
-packages/office test: 
+packages/office test:
+packages/office test:
 packages/office test:  Test Files  1 failed | 234 passed (235)
 packages/office test:       Tests  1 failed | 2773 passed (2774)
 packages/office test:    Start at  13:34:34
 packages/office test:    Duration  233.17s (import 49%, tests 38%, environment 11%, transform 1%)
-packages/office test: 
+packages/office test:
 packages/office test:     Isolate  235 workers spawned · ~1.58s startup each (spawn + environment, per file)
 packages/office test:              at least ~39.63s faster with isolate: false — reuses workers across files instead of one per file
-packages/office test: 
+packages/office test:
 packages/office test: Failed
 [ELIFECYCLE] Test failed. See above for more details.
 apps/server test: Failed

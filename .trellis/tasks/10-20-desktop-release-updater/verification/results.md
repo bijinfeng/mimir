@@ -28,3 +28,5 @@
 ## 收尾
 
 UI 评审由 fresh default subagent 加载 shipped impeccable_finish_reviewer 角色完成，文档审查同样加载 shipped impeccable_documenter；宿主未注册专用 agent_type，未在构建线程自评。完整报告在 ui/finish-review.md 与 ui/documentation-review.md。Trellis 全范围复核与最终质量门已通过；代码、测试、规范和验收证据作为同一功能提交。此前 Office 加密保存等待断言曾失败，原文件复测、Office 整包和最终全仓检查均通过；保留原失败及复测日志，未放宽规则。任务保持 in_progress，等待上述外部验收；提交记录见 task.json 和开发日志。
+
+工作提交：`fef57cca565a6d73f7ea3a2bb9eb6c5c0b4e32c5`。归档日志仅移除终端 ANSI 控制码、行尾空白与末尾多余空行，保留诊断与测试结果；原始输出可从该工作提交恢复。

@@ -15,7 +15,7 @@
   "branch": "codex/desktop-release-updater",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "fef57cca565a6d73f7ea3a2bb9eb6c5c0b4e32c5",
   "pr_url": null,
   "subtasks": [],
   "children": [],

@@ -1531,3 +1531,42 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 54: Desktop release pipeline and guarded updates
+<!-- trellis-session: v=2 fp=87b67ac3159c6d8f -->
+
+**Date**: 2026-10-20
+**Task**: Desktop release pipeline and guarded updates
+**Package**: desktop
+**Branch**: `codex/desktop-release-updater`
+
+### Summary
+
+完成 GitHub Actions 四目标构建发布、独立更新界面、轻提示与保存保护；本地最终质量门和 mac ARM64 打包烟测通过，保留外部验收。
+
+### Main Changes
+
+- 发布资产与元数据完整校验后统一公开；手动 workflow 仅产出测试包。
+- 后台下载完成轻提示，由用户查看详情并决定重启；保存保护和宿主关闭成功后才安装，普通退出不安装。
+- macOS 无正式签名凭据时仅提供手动更新；归档真实组件前后对比、原生菜单 AX 证据及完整测试日志。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `fef57cc` | feat(desktop): add release pipeline and guarded updates |
+
+### Testing
+
+- [OK] 最终 pnpm check exit 0：桌面 109、renderer 634、Office 2774、根 Node 17（含发布脚本 11）通过；actionlint 通过。
+- [OK] 最终 mac ARM64 DMG/ZIP、包内原生依赖和真实 packaged smoke A/B/C 通过。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 保持任务 in_progress；后续授权推送后验证四目标 GitHub runner、匿名安装包下载、真实跨版本升级与系统通知。
+- 提供 Developer ID/公证凭据后验证 macOS 正式签名升级。本轮未推送、tag、dispatch 或发布。

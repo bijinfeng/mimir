@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 53
+- **Total Sessions**: 54
 - **Last Active**: 2026-10-20
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1533 | Active |
+| `journal-1.md` | ~1572 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 54 | 2026-10-20 | Desktop release pipeline and guarded updates | `fef57cc` | `codex/desktop-release-updater` |
 | 53 | 2026-10-20 | Pele 单引擎替换 Mermaid | `3e30562` | `codex/pele-mermaid-trial` |
 | 52 | 2026-10-20 | 试用 Pele 渲染 Mermaid 图表 | `388f1c0a5f6dc1852fcf1235e9e0e9be850d909e` | `codex/pele-mermaid-trial` |
 | 51 | 2026-10-20 | 实施并验收 Mimir 产品官网 | `2cc0f9c` | `codex/pele-mermaid-trial` |

@@ -3435,27 +3435,27 @@ dist/renderer/assets/tokens-CkQvOsaX.js                                1,297.85 
 dist/renderer/assets/model-viewer-CCr6FelT.js                          2,282.55 kB │ map:  4,518.57 kB
 dist/renderer/assets/FileFormatIcon-BNZF5emS.js                       12,248.00 kB │ map: 24,653.47 kB
 
-[33m[EVAL] [0mUse of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
-    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/wavedrom@3.7.0/node_modules/wavedrom/lib/eva.js:17:22 [38;5;246m][0m
-    [38;5;246m│[0m
- [38;5;246m17 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mo[0m[38;5;249mu[0m[38;5;249mr[0m[38;5;249mc[0m[38;5;249me[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0meval[38;5;249m([0m[38;5;249m'[0m[38;5;249m([0m[38;5;249m'[0m[38;5;249m [0m[38;5;249m+[0m[38;5;249m [0m[38;5;249mT[0m[38;5;249mh[0m[38;5;249me[0m[38;5;249mT[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249mB[0m[38;5;249mo[0m[38;5;249mx[0m[38;5;249m.[0m[38;5;249mv[0m[38;5;249ma[0m[38;5;249ml[0m[38;5;249mu[0m[38;5;249me[0m[38;5;249m [0m[38;5;249m+[0m[38;5;249m [0m[38;5;249m'[0m[38;5;249m)[0m[38;5;249m'[0m[38;5;249m)[0m[38;5;249m;[0m
- [38;5;240m   │[0m                      ──┬─  
- [38;5;240m   │[0m                        ╰─── Use of direct `eval` here.
- [38;5;240m   │[0m 
- [38;5;240m   │[0m [38;5;115mHelp[0m: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
-[38;5;246m────╯[0m
+[EVAL] Use of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
+    ╭─[ ../../node_modules/.pnpm/wavedrom@3.7.0/node_modules/wavedrom/lib/eva.js:17:22 ]
+    │
+ 17 │             source = eval('(' + TheTextBox.value + ')');
+    │                      ──┬─
+    │                        ╰─── Use of direct `eval` here.
+    │
+    │ Help: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+────╯
 
-[33m[EVAL] [0mUse of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
-    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m ../../node_modules/.pnpm/wavedrom@3.7.0/node_modules/wavedrom/lib/eva.js:23:22 [38;5;246m][0m
-    [38;5;246m│[0m
- [38;5;246m23 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249ms[0m[38;5;249mo[0m[38;5;249mu[0m[38;5;249mr[0m[38;5;249mc[0m[38;5;249me[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m [0meval[38;5;249m([0m[38;5;249m'[0m[38;5;249m([0m[38;5;249m'[0m[38;5;249m [0m[38;5;249m+[0m[38;5;249m [0m[38;5;249mT[0m[38;5;249mh[0m[38;5;249me[0m[38;5;249mT[0m[38;5;249me[0m[38;5;249mx[0m[38;5;249mt[0m[38;5;249mB[0m[38;5;249mo[0m[38;5;249mx[0m[38;5;249m.[0m[38;5;249mi[0m[38;5;249mn[0m[38;5;249mn[0m[38;5;249me[0m[38;5;249mr[0m[38;5;249mH[0m[38;5;249mT[0m[38;5;249mM[0m[38;5;249mL[0m[38;5;249m [0m[38;5;249m+[0m[38;5;249m [0m[38;5;249m'[0m[38;5;249m)[0m[38;5;249m'[0m[38;5;249m)[0m[38;5;249m;[0m
- [38;5;240m   │[0m                      ──┬─  
- [38;5;240m   │[0m                        ╰─── Use of direct `eval` here.
- [38;5;240m   │[0m 
- [38;5;240m   │[0m [38;5;115mHelp[0m: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
-[38;5;246m────╯[0m
+[EVAL] Use of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
+    ╭─[ ../../node_modules/.pnpm/wavedrom@3.7.0/node_modules/wavedrom/lib/eva.js:23:22 ]
+    │
+ 23 │             source = eval('(' + TheTextBox.innerHTML + ')');
+    │                      ──┬─
+    │                        ╰─── Use of direct `eval` here.
+    │
+    │ Help: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+────╯
 
-[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0m../../packages/office/src/editors/pdf-render.ts is dynamically imported by ../../packages/office/src/agent/pdf-content-agent.ts, ../../packages/office/src/agent/pdf-image-agent.ts but also statically imported by ../../packages/office/src/agent/pdf-batch.ts, ../../packages/office/src/editors/PdfEditor.tsx, ../../packages/office/src/editors/PdfRedactionCopy.tsx, ../../packages/office/src/editors/pdf-image-export.ts, dynamic import will not move module into another chunk.
+[INEFFECTIVE_DYNAMIC_IMPORT] ../../packages/office/src/editors/pdf-render.ts is dynamically imported by ../../packages/office/src/agent/pdf-content-agent.ts, ../../packages/office/src/agent/pdf-image-agent.ts but also statically imported by ../../packages/office/src/agent/pdf-batch.ts, ../../packages/office/src/editors/PdfEditor.tsx, ../../packages/office/src/editors/PdfRedactionCopy.tsx, ../../packages/office/src/editors/pdf-image-export.ts, dynamic import will not move module into another chunk.
 
 ✓ built in 7.12s
 Packages are cloned from the content-addressable store to the virtual store.
