@@ -46,11 +46,11 @@
 
 | 模块 | 状态 | 证据/提交 |
 | --- | --- | --- |
-| 17 桌面客户端与更新 | 已完成 | `docs/visual-comparisons/2026-10-20-desktop-client`；全仓 check exit 0 |
-| 18 设置页二级 | 已完成 | `docs/visual-comparisons/2026-10-20-settings-secondary`；待全仓 check |
-| 19 Markdown 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-markdown-secondary`；待全仓 check |
-| 20 HTML 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-html-secondary`；待全仓 check |
-| 21 DOCX 二级 | 待开始 | — |
+| 17 桌面客户端与更新 | 已完成 | `docs/visual-comparisons/2026-10-20-desktop-client`；`795fbe2`；全仓 check exit 0 |
+| 18 设置页二级 | 已完成 | `docs/visual-comparisons/2026-10-20-settings-secondary`；`cf3b767`；全仓 check exit 0 |
+| 19 Markdown 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-markdown-secondary`；`ad1fd6e`；全仓 check exit 0 |
+| 20 HTML 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-html-secondary`；`469f33e`；全仓 check exit 0 |
+| 21 DOCX 二级 | 进行中（下一模块） | — |
 | 22 XLSX 二级 | 待开始 | — |
 | 23 PPTX 二级 | 待开始 | — |
 | 24 PDF 二级 | 待开始 | — |
