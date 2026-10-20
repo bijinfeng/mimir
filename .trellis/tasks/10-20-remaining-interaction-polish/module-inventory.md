@@ -50,8 +50,8 @@
 | 18 设置页二级 | 已完成 | `docs/visual-comparisons/2026-10-20-settings-secondary`；`cf3b767`；全仓 check exit 0 |
 | 19 Markdown 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-markdown-secondary`；`ad1fd6e`；全仓 check exit 0 |
 | 20 HTML 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-html-secondary`；`469f33e`；全仓 check exit 0 |
-| 21 DOCX 二级 | 进行中（下一模块） | — |
-| 22 XLSX 二级 | 待开始 | — |
+| 21 DOCX 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-docx-secondary`；现状复核，无代码改动 |
+| 22 XLSX 二级 | 进行中（下一模块） | — |
 | 23 PPTX 二级 | 待开始 | — |
 | 24 PDF 二级 | 待开始 | — |
 | 25 共享浮层与短窗 | 待开始 | — |
