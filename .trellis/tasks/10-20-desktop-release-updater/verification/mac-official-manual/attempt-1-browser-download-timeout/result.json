@@ -1,0 +1,18 @@
+{
+  "base": "0.1.3",
+  "target": "0.1.4",
+  "root": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-gKnT6t",
+  "userData": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-gKnT6t/user-data",
+  "installation": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-gKnT6t/installation",
+  "evidence": "/Users/admin/Desktop/mimir/.trellis/tasks/10-20-desktop-release-updater/verification/mac-official-manual",
+  "checks": [],
+  "limitations": [
+    "This is a manual ZIP replacement of a disposable app copy, not an automatic installation.",
+    "Node downloads do not simulate Finder quarantine or validate Gatekeeper/notarization.",
+    "System notification delivery/focus is not asserted. Screenshots are actual packaged renderer CDP captures.",
+    "The manual download button is inspected; it is not clicked because opening the system browser would use the user default download directory."
+  ],
+  "success": false,
+  "error": "TypeError: fetch failed\n    at node:internal/deps/undici/undici:15141:13\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async download (file:///Users/admin/Desktop/mimir/apps/desktop/scripts/manual-update-smoke.mjs:123:22)\n    at async runManualUpdateSmoke (file:///Users/admin/Desktop/mimir/apps/desktop/scripts/manual-update-smoke.mjs:220:25)\n    at async file:///Users/admin/Desktop/mimir/apps/desktop/scripts/manual-update-smoke.mjs:354:3",
+  "appStillRunning": false
+}

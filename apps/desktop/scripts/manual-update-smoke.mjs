@@ -26,6 +26,11 @@ export function macZipAsset(release, version, arch) {
     asset.browser_download_url,
     `https://github.com/${officialRepository}/releases/download/v${version}/${name}`,
   )
+  assert.ok(Number.isSafeInteger(asset.id) && asset.id > 0)
+  assert.equal(
+    asset.url,
+    `https://api.github.com/repos/${officialRepository}/releases/assets/${asset.id}`,
+  )
   assert.match(asset.digest ?? '', /^sha256:[a-f0-9]{64}$/)
   assert.ok(Number.isSafeInteger(asset.size) && asset.size > 0)
   return asset
@@ -120,10 +125,14 @@ export async function runManualUpdateSmoke() {
   }
   async function download(asset) {
     const file = join(root, asset.name)
-    const response = await fetch(asset.browser_download_url, {
+    // The official anonymous asset API avoids a separate connection to github.com.
+    // The exact asset ID/source was checked against the official release metadata above.
+    const response = await fetch(asset.url, {
+      headers: { Accept: 'application/octet-stream' },
       signal: AbortSignal.timeout(900_000),
     })
     assert.equal(response.status, 200)
+    assert.match(response.headers.get('content-type') ?? '', /^application\/(octet-stream|zip)\b/)
     await pipeline(Readable.fromWeb(response.body), createWriteStream(file))
     assert.equal((await stat(file)).size, asset.size)
     assert.equal(`sha256:${await sha256(file)}`, asset.digest)

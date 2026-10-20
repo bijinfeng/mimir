@@ -4,6 +4,8 @@ import { macZipAsset, assertManualState } from './manual-update-smoke.mjs'
 
 test('mac manual verification pins the official stable ZIP and exact architecture', () => {
   const asset = {
+    id: 123,
+    url: 'https://api.github.com/repos/bijinfeng/mimir/releases/assets/123',
     name: 'mimir-0.1.0-mac-arm64.zip',
     size: 100,
     digest: `sha256:${'a'.repeat(64)}`,
@@ -18,6 +20,9 @@ test('mac manual verification pins the official stable ZIP and exact architectur
     { prerelease: true },
     { assets: [] },
     { assets: [{ ...asset, browser_download_url: 'https://example.com/mimir.zip' }] },
+    { assets: [{ ...asset, id: 0 }] },
+    { assets: [{ ...asset, id: 456 }] },
+    { assets: [{ ...asset, url: 'https://example.com/123' }] },
     { assets: [{ ...asset, digest: undefined }] },
   ])
     assert.throws(() => macZipAsset({ ...release, ...changed }, '0.1.0', 'arm64'))
