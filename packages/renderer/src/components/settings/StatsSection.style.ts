@@ -71,6 +71,27 @@ export const useHeatmapStyles = createStyles(({ css, token }) => ({
   chartScroll: css`
     overflow-x: auto;
     overflow-y: hidden;
+
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  `,
+
+  /**
+   * 只在窄屏出现。图本身必须保持列的日历形状，不能压缩成看不清的格子；
+   * 于是明确告诉用户这里可以滑动，而不是让图看起来被裁掉。
+   */
+  scrollHint: css`
+    display: none;
+    margin: 6px 0 0;
+    font-size: ${FONT_SIZE.badge}px;
+    line-height: 1.6;
+    color: ${token.colorTextTertiary};
+    @media (max-width: 575px) {
+      display: block;
+    }
   `,
 
   /**

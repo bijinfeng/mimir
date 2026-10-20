@@ -277,6 +277,33 @@ function WhenVisible({ children }: { children: React.ReactNode }) {
 
 export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
   const { styles } = useHeatmapStyles()
+  const chartScrollRef = useRef<HTMLDivElement>(null)
+
+  /**
+   * 窄屏默认停在最右端：用户打开“统计”想看的是最近的用量，而不是
+   * 一年前的一月。桌面端没有溢出，scrollLeft 保持 0。
+   * 依赖 days 是因为切到“统计”分区时组件重新挂载，范围数据也可能刷新。
+   */
+  useEffect(() => {
+    const node = chartScrollRef.current
+    if (!node) return
+    let done = false
+    const apply = () => {
+      if (done || node.scrollWidth <= node.clientWidth) return
+      done = true
+      node.scrollLeft = node.scrollWidth
+    }
+    // 图在 WhenVisible 的尺寸测量之后才挂载，ResizeObserver 负责那一拍。
+    apply()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(apply)
+    observer.observe(node)
+    const frame = requestAnimationFrame(apply)
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+    }
+  }, [days])
 
   /* 没有任何记录时给一句话，而不是 `return null`——上一层的 Panel 会照常
      渲染标题，留下一个只有「消耗热力图」四个字的空盒子（新实例上就是这个
@@ -326,7 +353,13 @@ export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.chartScroll}>
+      <div
+        ref={chartScrollRef}
+        className={styles.chartScroll}
+        role="region"
+        aria-label="用量热力图，可横向滚动查看全年"
+        tabIndex={0}
+      >
         {/* 容器有尺寸之后才挂载——见 WhenVisible 的注释 */}
         <WhenVisible>
           <HeatMap
@@ -348,6 +381,7 @@ export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
           />
         </WhenVisible>
       </div>
+      <p className={styles.scrollHint}>左右滑动查看全年 · 今天在最右</p>
 
       <div className={styles.legend}>
         <span className={styles.legendLabel}>少</span>

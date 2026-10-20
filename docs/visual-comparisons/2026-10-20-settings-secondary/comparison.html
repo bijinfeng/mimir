@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>设置二级弹窗与窄屏 · 真实前后</title>
+    <style>
+      :root {
+        font:
+          14px/1.6 system-ui,
+          -apple-system,
+          'PingFang SC',
+          sans-serif;
+        color: #242824;
+        background: #f5f6f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        padding: 24px 28px 16px;
+        border-bottom: 1px solid #dfe3df;
+        background: #fff;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 8px 0;
+        color: #555f57;
+        max-width: 95ch;
+      }
+      a {
+        color: #236648;
+      }
+      main {
+        padding: 20px 28px 40px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      select,
+      button {
+        font: inherit;
+        background: #fff;
+        color: inherit;
+        border: 1px solid #c8d0c9;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #e7f0e9;
+        color: #1d5f38;
+        border-color: #8aa992;
+      }
+      .meta {
+        margin: 0 0 16px;
+        color: #555f57;
+      }
+      .frames {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d8ded8;
+        background: #fff;
+      }
+      footer {
+        border-top: 1px solid #dfe3df;
+        padding: 18px 28px;
+        background: #fff;
+        color: #555f57;
+      }
+      @media (max-width: 760px) {
+        header,
+        main,
+        footer {
+          padding-inline: 16px;
+        }
+        .frames {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>设置二级弹窗与窄屏 · 真实前后</h1>
+      <p>
+        2026-10-20 · 6 组同账号、同夹具图片、同主题、同尺寸的真实产品截图。覆盖账号 ›
+        头像裁切（常规与 600×360 短窗口）与统计 › 用量热力图（390px 窄屏）。
+      </p>
+      <p>
+        前态为改动前源码；后态为当前源码。裁切弹窗的画布是运行时 canvas，HTML 快照不能替代截图；PNG
+        才是视觉证据。
+      </p>
+    </header>
+    <main>
+      <div class="toolbar">
+        <label
+          >场景
+          <select id="scene">
+            <option value="stats-390-dark">统计 · 用量热力图 · 390×844 · dark</option>
+            <option value="stats-390-light">统计 · 用量热力图 · 390×844 · light</option>
+            <option value="avatar-600x360-dark">账号 · 头像裁切 · 短窗口 600×360 · dark</option>
+            <option value="avatar-600x360-light">账号 · 头像裁切 · 短窗口 600×360 · light</option>
+            <option value="avatar-390-dark">账号 · 头像裁切 · 390×844 · dark</option>
+            <option value="avatar-390-light">账号 · 头像裁切 · 390×844 · light</option>
+          </select></label
+        >
+        <div role="group" aria-label="对比模式">
+          <button data-mode="compare" aria-pressed="true">前后并排</button
+          ><button data-mode="before" aria-pressed="false">修改前</button
+          ><button data-mode="after" aria-pressed="false">修改后</button>
+        </div>
+      </div>
+      <p class="meta" id="meta"></p>
+      <div class="frames" id="frames">
+        <figure>
+          <figcaption>修改前 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改前真实渲染" />
+        </figure>
+        <figure>
+          <figcaption>修改后 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改后真实渲染" />
+        </figure>
+      </div>
+    </main>
+    <footer>
+      账号数据与用量为本地测试账号；不声称验证真实头像上传、真实统计写入或微信开发者工具。
+    </footer>
+    <script>
+      const scenes = [
+        {
+          id: 'stats-390-dark',
+          module: '统计 · 用量热力图',
+          title: '390×844',
+          theme: 'dark',
+          width: 390,
+          height: 844,
+          before: 'before/stats-390-dark.png',
+          after: 'after/stats-390-dark.png',
+        },
+        {
+          id: 'stats-390-light',
+          module: '统计 · 用量热力图',
+          title: '390×844',
+          theme: 'light',
+          width: 390,
+          height: 844,
+          before: 'before/stats-390-light.png',
+          after: 'after/stats-390-light.png',
+        },
+        {
+          id: 'avatar-600x360-dark',
+          module: '账号 · 头像裁切',
+          title: '短窗口 600×360',
+          theme: 'dark',
+          width: 600,
+          height: 360,
+          before: 'before/avatar-600x360-dark.png',
+          after: 'after/avatar-600x360-dark.png',
+        },
+        {
+          id: 'avatar-600x360-light',
+          module: '账号 · 头像裁切',
+          title: '短窗口 600×360',
+          theme: 'light',
+          width: 600,
+          height: 360,
+          before: 'before/avatar-600x360-light.png',
+          after: 'after/avatar-600x360-light.png',
+        },
+        {
+          id: 'avatar-390-dark',
+          module: '账号 · 头像裁切',
+          title: '390×844',
+          theme: 'dark',
+          width: 390,
+          height: 844,
+          before: 'before/avatar-390-dark.png',
+          after: 'after/avatar-390-dark.png',
+        },
+        {
+          id: 'avatar-390-light',
+          module: '账号 · 头像裁切',
+          title: '390×844',
+          theme: 'light',
+          width: 390,
+          height: 844,
+          before: 'before/avatar-390-light.png',
+          after: 'after/avatar-390-light.png',
+        },
+      ]
+      const select = document.getElementById('scene')
+      const meta = document.getElementById('meta')
+      const figures = document.querySelectorAll('#frames figure')
+      const imgs = document.querySelectorAll('#frames img')
+      const links = document.querySelectorAll('#frames figcaption a')
+      let mode = 'compare'
+      function render() {
+        const s = scenes.find((x) => x.id === select.value) || scenes[0]
+        meta.textContent = `${s.module} · ${s.title} · ${s.theme}`
+        figures[0].style.display = mode === 'after' ? 'none' : 'block'
+        figures[1].style.display = mode === 'before' ? 'none' : 'block'
+        imgs[0].src = s.before
+        links[0].href = s.before
+        imgs[1].src = s.after
+        links[1].href = s.after
+      }
+      select.addEventListener('change', render)
+      document.querySelectorAll('[data-mode]').forEach((button) =>
+        button.addEventListener('click', () => {
+          mode = button.dataset.mode
+          document
+            .querySelectorAll('[data-mode]')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === button)))
+          render()
+        }),
+      )
+      render()
+    </script>
+  </body>
+</html>

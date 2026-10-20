@@ -55,13 +55,56 @@ export interface AvatarCropperProps {
   onCancel: () => void
 }
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css, token, prefixCls }) => ({
+  /**
+   * 短窗口先让出标题、说明与页脚的高度，再决定裁切区还能占多少。
+   * 不设下限时 600×360 会把“确定”挤出视口；180px 是仍可拖拽选区的底线。
+   */
+  modal: css`
+    && .${prefixCls}-modal {
+      top: 56px;
+      max-width: calc(100vw - 32px);
+    }
+    @media (max-width: 700px) {
+      && .${prefixCls}-modal {
+        top: 36px;
+      }
+    }
+    @media (max-width: 480px) {
+      && .${prefixCls}-modal {
+        top: 24px;
+        max-width: calc(100vw - 20px);
+      }
+    }
+    @media (max-height: 480px) {
+      && .${prefixCls}-modal {
+        top: 12px;
+      }
+    }
+  `,
+  dialog: css`
+    &&& {
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100dvh - 76px);
+    }
+    @media (max-height: 480px) {
+      &&& {
+        max-height: calc(100dvh - 24px);
+      }
+    }
+  `,
+  body: css`
+    min-height: 0;
+    overflow-y: auto;
+  `,
   /**
    * 裁切区容器。给一个固定高度让 cropperjs 有布局空间——
    * 不设高度的话 canvas 会坍缩成 0，用户看不到图。
    */
   cropperWrap: css`
-    height: 360px;
+    height: min(360px, calc(100dvh - 220px));
+    min-height: 180px;
     background: ${token.colorFillQuaternary};
     border-radius: ${token.borderRadius}px;
     overflow: hidden;
@@ -197,6 +240,9 @@ export function AvatarCropper({ file, onConfirm, onCancel }: AvatarCropperProps)
       confirmLoading={submitting}
       destroyOnHidden
       width={520}
+      className={styles.modal}
+      style={{ top: 'clamp(12px, 8vh, 56px)' }}
+      classNames={{ container: styles.dialog, body: styles.body }}
     >
       <div className={styles.cropperWrap}>
         {/*

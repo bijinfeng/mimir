@@ -110,6 +110,20 @@ describe('热力图的数据转换', () => {
   })
 })
 
+describe('窄屏提示', () => {
+  it('存在可横向滚动的区域与明确的滑动提示', async () => {
+    const days = makeDays(30)
+    const { host, unmount } = await render(
+      createElement(UsageHeatmap, { days, thresholds: [100], timezone: 'Asia/Shanghai' }),
+    )
+    const region = host.querySelector('[role="region"]')
+    expect(region?.getAttribute('aria-label')).toContain('横向滚动')
+    expect(region?.getAttribute('tabindex')).toBe('0')
+    expect(host.textContent).toContain('左右滑动查看全年')
+    await unmount()
+  })
+})
+
 describe('数字格式', () => {
   it('大数字用「万」，不用 k / M', () => {
     // 中文语境下「12.3 万」比「123.4k」读得快

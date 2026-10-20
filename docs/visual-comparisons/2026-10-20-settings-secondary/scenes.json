@@ -1,0 +1,62 @@
+[
+  {
+    "id": "stats-390-dark",
+    "module": "统计 · 用量热力图",
+    "title": "390×844",
+    "theme": "dark",
+    "width": 390,
+    "height": 844,
+    "before": "before/stats-390-dark.png",
+    "after": "after/stats-390-dark.png"
+  },
+  {
+    "id": "stats-390-light",
+    "module": "统计 · 用量热力图",
+    "title": "390×844",
+    "theme": "light",
+    "width": 390,
+    "height": 844,
+    "before": "before/stats-390-light.png",
+    "after": "after/stats-390-light.png"
+  },
+  {
+    "id": "avatar-600x360-dark",
+    "module": "账号 · 头像裁切",
+    "title": "短窗口 600×360",
+    "theme": "dark",
+    "width": 600,
+    "height": 360,
+    "before": "before/avatar-600x360-dark.png",
+    "after": "after/avatar-600x360-dark.png"
+  },
+  {
+    "id": "avatar-600x360-light",
+    "module": "账号 · 头像裁切",
+    "title": "短窗口 600×360",
+    "theme": "light",
+    "width": 600,
+    "height": 360,
+    "before": "before/avatar-600x360-light.png",
+    "after": "after/avatar-600x360-light.png"
+  },
+  {
+    "id": "avatar-390-dark",
+    "module": "账号 · 头像裁切",
+    "title": "390×844",
+    "theme": "dark",
+    "width": 390,
+    "height": 844,
+    "before": "before/avatar-390-dark.png",
+    "after": "after/avatar-390-dark.png"
+  },
+  {
+    "id": "avatar-390-light",
+    "module": "账号 · 头像裁切",
+    "title": "390×844",
+    "theme": "light",
+    "width": 390,
+    "height": 844,
+    "before": "before/avatar-390-light.png",
+    "after": "after/avatar-390-light.png"
+  }
+]
