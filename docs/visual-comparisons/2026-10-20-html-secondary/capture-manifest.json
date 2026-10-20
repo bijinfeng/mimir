@@ -1,0 +1,26 @@
+[
+  {
+    "id": "inspector-scrolled",
+    "title": "元素属性 · 600×360 滚到底",
+    "width": 600,
+    "height": 360,
+    "before": "before/inspector-scrolled.png",
+    "after": "after/inspector-scrolled.png",
+    "before_sha256": "38b6d69370697e47c18a030dffbaf4e08ac6d706c748631685a89abfa4869eb1",
+    "before_bytes": 53639,
+    "after_sha256": "ec0b5a739d46d40cca09836386e57c3f99049895d3bf3964316eb9ce243a615c",
+    "after_bytes": 55192
+  },
+  {
+    "id": "inspector-top",
+    "title": "元素属性 · 600×360 初始",
+    "width": 600,
+    "height": 360,
+    "before": "before/inspector-top.png",
+    "after": "after/inspector-top.png",
+    "before_sha256": "81f1e9ab9e514cbf9cf456d439208f06c36f3f5f5ae4529451e5f5c396e78c70",
+    "before_bytes": 53174,
+    "after_sha256": "9ebaacb30ecf48d0dddc2a8123f2da3f0451ae7c5810f0cd46abc9c4183caecc",
+    "after_bytes": 51800
+  }
+]

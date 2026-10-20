@@ -310,3 +310,19 @@
   color: var(--me-text-weak);
   font-size: 12px;
 }
+
+/*
+ * 600×360 等短窗口里，工作区本身只剩 ~170px：头部、标签和底部动作已经占满，
+ * 中间的滚动区被压成 0，字段看得到标题却打不开。短窗口改为整块检查器滚动，
+ * 让头部和动作随内容一起走，字段至少能被滚进视野。
+ */
+@media (max-height: 520px) {
+  .mimir-html-inspector {
+    overflow-y: auto;
+  }
+
+  .mimir-html-inspector__scroll {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+}

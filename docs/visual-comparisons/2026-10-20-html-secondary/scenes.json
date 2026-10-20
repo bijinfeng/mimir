@@ -1,0 +1,18 @@
+[
+  {
+    "id": "inspector-scrolled",
+    "title": "元素属性 · 600×360 滚到底",
+    "width": 600,
+    "height": 360,
+    "before": "before/inspector-scrolled.png",
+    "after": "after/inspector-scrolled.png"
+  },
+  {
+    "id": "inspector-top",
+    "title": "元素属性 · 600×360 初始",
+    "width": 600,
+    "height": 360,
+    "before": "before/inspector-top.png",
+    "after": "after/inspector-top.png"
+  }
+]

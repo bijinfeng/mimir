@@ -1,0 +1,1406 @@
+packages/office test: stderr | src/editors/DocxCaseControls.test.tsx > shows empty/stale disabled reasons, Escape restores the trigger, no-op does not mark dirty
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/DocxCaseControls.test.tsx (3 tests) 538ms
+packages/office test:    ✓ real Ribbon has four named actions with examples, freezes the selection, saves/reopens and restores via undo/redo after saving 357ms
+packages/office test:  ✓ src/editors/PdfTextBlockPanel.test.tsx (14 tests) 495ms
+packages/office test: stderr | src/editors/PptxGroupTextControls.test.tsx > does not steal external focus when a delayed accepted text apply completes
+packages/office test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxGroupTextControls.test.tsx (5 tests) 537ms
+packages/office test:  ✓ src/editors/pptx-selection.test.ts (5 tests) 472ms
+packages/office test:  ✓ src/editors/XlsxObjectControls.polish.test.tsx (15 tests) 532ms
+packages/office test:  ✓ src/editors/PptxIconControls.test.tsx (9 tests) 520ms
+packages/office test:  ✓ src/editors/PptxEditor.output.test.tsx (1 test) 492ms
+packages/office test:    ✓ downloads the live native copy without persistence or history reset, then saves and undoes/redoes subsequent edits 491ms
+packages/office test:  ✓ src/editors/DocxEditor.picture-history.test.tsx (1 test) 512ms
+packages/office test:    ✓ real DOCX editor preserves every custom-property entry through picture save → undo/save → redo/save 512ms
+packages/office test:  ✓ src/editors/XlsxFindControls.test.tsx (8 tests) 381ms
+packages/office test:  ✓ src/docx-protected-forms.test.ts (19 tests) 427ms
+packages/office test:  ✓ src/editors/PptxOutputControls.test.tsx (4 tests) 431ms
+packages/office test:  ✓ src/docx-ink.test.ts (13 tests) 433ms
+packages/office test:  ✓ src/editors/docx-image.test.ts (14 tests) 465ms
+packages/office test:  ✓ src/editors/docx-references.test.ts (9 tests) 420ms
+packages/office test:  ✓ src/pptx-text-range.test.ts (9 tests) 406ms
+packages/office test:  ✓ src/editors/XlsxDataControls.test.tsx (9 tests) 442ms
+packages/office test:  ✓ src/shell/EditorShell.test.tsx (122 tests) 397ms
+packages/office test:  ✓ src/editors/PptxParagraphControls.test.tsx (5 tests) 381ms
+packages/office test:  ✓ src/docx-protected-anchors.test.ts (9 tests) 374ms
+packages/office test:  ✓ src/editors/docx-toolbar.test.ts (18 tests) 332ms
+packages/office test:  ✓ src/editors/pptx-picture-bullets.test.ts (6 tests) 353ms
+packages/office test:  ✓ src/docx-protection.test.ts (48 tests) 310ms
+packages/office test:  ✓ src/editors/PptxSelectionGeometryControls.test.tsx (5 tests) 303ms
+packages/office test:  ✓ src/docx-image-save.test.ts (6 tests) 318ms
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-block-agent.test.ts (4 tests) 298ms
+packages/office test:  ✓ src/pptx-save.test.ts (13 tests) 311ms
+packages/office test:  ✓ src/pptx-structure.test.ts (7 tests) 308ms
+packages/office test:  ✓ src/editors/docx-design.test.ts (16 tests) 266ms
+packages/office test:  ✓ src/editors/pptx-group-picture-crop.test.ts (6 tests) 283ms
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > computes a complete dry candidate and returns the exact raw base when all T are removed
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-batch.test.ts (7 tests) 288ms
+packages/office test:  ✓ src/editors/PptxMediaControls.test.tsx (9 tests) 286ms
+packages/office test:  ✓ src/editors/HtmlAgentPrompt.test.tsx (10 tests) 283ms
+packages/office test:  ✓ src/pptx-image-display.test.ts (10 tests) 316ms
+packages/office test:  ✓ src/editors/PptxEditor.ai-snapshot.test.tsx (3 tests) 263ms
+packages/office test:  ✓ src/editors/PptxAnimationControls.test.tsx (6 tests) 261ms
+packages/office test:  ✓ src/editors/PptxClipboardControls.test.tsx (10 tests) 269ms
+packages/office test:  ✓ src/editors/PptxPictureCropCanvas.test.tsx (17 tests) 254ms
+packages/office test:  ✓ src/editors/PptxGroupPictureControls.test.tsx (8 tests) 237ms
+packages/office test: stderr | src/editors/PptxImageFormats.test.tsx > previews real gif locally, uploads its original File exactly once on apply
+packages/office test: An update to PptxImageFillControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/PptxImageFormats.test.tsx > previews real bmp locally, uploads its original File exactly once on apply
+packages/office test: An update to PptxImageFillControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/PptxImageFormats.test.tsx > previews real webp locally, uploads its original File exactly once on apply
+packages/office test: An update to PptxImageFillControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxImageFormats.test.tsx (8 tests) 247ms
+packages/office test:  ✓ src/editors/docx-find.test.ts (12 tests) 232ms
+packages/office test:  ✓ src/editors/docx-compare.test.ts (8 tests) 221ms
+packages/office test:  ✓ src/agent/pptx-script.test.ts (4 tests) 233ms
+packages/office test:  ✓ src/pptx-output-complete.test.ts (6 tests) 229ms
+packages/office test:  ✓ src/editors/docx-case.test.ts (25 tests) 218ms
+packages/office test:  ✓ src/pptx-picture-bullets-preview.test.ts (6 tests) 218ms
+packages/office test:  ✓ src/editors/PptxLocalPanels.test.tsx (5 tests) 208ms
+packages/office test:  ✓ src/editors/PptxZoomControls.test.tsx (5 tests) 197ms
+packages/office test:  ✓ src/docx-chart-save.test.ts (4 tests) 188ms
+packages/office test:  ✓ src/pptx-group-svg.test.ts (9 tests) 176ms
+packages/office test:  ✓ src/agent/pptx-agent.test.ts (6 tests) 187ms
+packages/office test:  ✓ src/editors/HtmlEditor.picture.test.tsx (1 test) 165ms
+packages/office test:  ✓ src/docx-styles.test.ts (2 tests) 147ms
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > anchors a note to a complete text item, replies and edits using stable IDs
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-content-agent.test.ts (3 tests) 159ms
+packages/office test:  ✓ src/editors/PptxClipboardBridge.test.tsx (7 tests) 151ms
+packages/office test:  ✓ src/editors/CompactToolbar.test.tsx (11 tests) 151ms
+packages/office test:  ✓ src/pptx.test.ts (15 tests) 138ms
+packages/office test:  ✓ src/docx-floating-table-layout.test.ts (14 tests) 132ms
+packages/office test:  ✓ src/pptx-history.test.ts (2 tests) 126ms
+packages/office test:  ✓ src/shell/ToolbarColorPicker.rgb.test.tsx (8 tests) 135ms
+packages/office test:  ✓ src/docx-encryption-container.test.ts (14 tests) 107ms
+packages/office test:  ✓ src/agent/pptx-agent.group-selection.test.ts (5 tests) 120ms
+packages/office test:  ✓ src/xlsx-shape-preview.test.ts (7 tests) 115ms
+packages/office test:  ✓ src/editors/pdf-page-image.test.ts (4 tests) 107ms
+packages/office test:  ✓ src/pagination-geometry.test.ts (10 tests) 105ms
+packages/office test:  ✓ src/xlsx-string-display.test.ts (8 tests) 119ms
+packages/office test:  ✓ src/editors/PptxAiControls.test.tsx (9 tests) 104ms
+packages/office test:  ✓ src/docx.test.ts (3 tests) 91ms
+packages/office test:  ✓ src/editors/pptx-picture-crop.test.ts (32 tests) 93ms
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的页序与旋转 > 同一来源页复制后，两份内容都保留且旋转彼此独立
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的页序与旋转 > 倒序 + 旋转 90 度：逐页对（用 pdf.js 读回，不是我们自己的模型）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的页序与旋转 > 插入空白页：位置对、尺寸是 A4、没有内容
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 同一导入页复制后保存并重开，两个页项均有内容
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 同一导入页复制后保存并重开，两个页项均有内容
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 裁剪：只改可视区，内容一字未动 > CropBox 按内缩量缩小，而内容流逐字节相同、文字一个点没动
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 裁剪：只改可视区，内容一字未动 > CropBox 按内缩量缩小，而内容流逐字节相同、文字一个点没动
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 裁剪：只改可视区，内容一字未动 > 裁掉的那一块**取不到文字**（pdf.js 按 CropBox 裁文本层，与实际看到的一致）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 换 A4：纸变成 A4，内容是等比放大（取小的一边，不拉伸）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 换 A4：纸变成 A4，内容是等比放大（取小的一边，不拉伸）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 先裁左边 50pt 再换纸型：内容绕**可视区左下角**缩放，不是绕原点
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 先裁左边 50pt 再换纸型：内容绕**可视区左下角**缩放，不是绕原点
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-pages.test.ts (34 tests) 93ms
+packages/office test:  ✓ src/editors/XlsxObjectLayer.test.tsx (5 tests) 92ms
+packages/office test:  ✓ src/editors/XlsxManualControls.test.tsx (5 tests) 96ms
+packages/office test:  ✓ src/editors/PptxInkControls.test.tsx (2 tests) 90ms
+packages/office test:  ✓ src/editors/docx-view.test.ts (14 tests) 89ms
+packages/office test:  ✓ src/pptx-selection-clipboard.test.ts (3 tests) 90ms
+packages/office test:  ✓ src/editors/PdfTextControls.test.tsx (4 tests) 87ms
+packages/office test:  ✓ src/editors/PptxShapeInsertCanvas.test.tsx (5 tests) 78ms
+packages/office test:  ✓ src/editors/PptxTextRangeEditor.test.tsx (5 tests) 75ms
+packages/office test:  ✓ src/pptx-format-brush.test.ts (3 tests) 77ms
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > applies a page batch atomically and saves bytes readable by pdf.js
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > inserts through the content hook, rejects a stale version and rolls back its round
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > inserts through the content hook, rejects a stale version and rolls back its round
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > lists, edits, moves and deletes only pending inserted text, with independently readable bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > lists, edits, moves and deletes only pending inserted text, with independently readable bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-agent.test.ts (5 tests) 81ms
+packages/office test:  ✓ src/editors/xlsx-pivot-controls.test.ts (5 tests) 73ms
+packages/office test:  ✓ src/xlsx-validation-list.test.ts (6 tests) 74ms
+packages/office test: stderr | src/editors/pdf-text.test.ts > buildPdfTextIndex > 取出每页的文字（页序就是布局顺序）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > buildPdfTextIndex > 白色页没有文字：索引里占位，页号不错位
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 点选只返回整段原文和 PDF 用户空间矩形，不使用搜索子串的近似裁切
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 旋转后点选仍指向原始 PDF 坐标；页外与重叠文字不产生候选
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 旋转后点选仍指向原始 PDF 坐标；页外与重叠文字不产生候选
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 不旋转时，命中矩形落在文字实际占的位置上
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 命中落在一段中间：按比例切，不把整段框上
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 旋转 90 度：矩形跟着转（宽高关系反过来）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 空白页与不存在的来源不会炸，也不报命中
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 空串不报匹配（否则每敲一下都「1 / 2847」）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 不区分大小写是默认；区分大小写时按原样比
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 全词匹配：英文按 ASCII 词边界
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 命中不重叠（`aaaaa` 里找 `aa` 报 2 处，与浏览器一致）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 命中的 text 是命中处的原文（状态行要显示它）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-text.test.ts (18 tests) 70ms
+packages/office test:  ✓ src/agent/xlsx-agent.test.ts (15 tests) 69ms
+packages/office test:  ✓ src/pptx-output.test.ts (3 tests) 57ms
+packages/office test:  ✓ src/xlsx-edit.test.ts (18 tests) 53ms
+packages/office test:  ✓ src/editors/DocxDesignPreview.lifecycle.test.tsx (1 test) 72ms
+packages/office test:  ✓ src/xlsx-inherited-styles.test.ts (7 tests) 55ms
+packages/office test: stderr | src/editors/pdf-text-blocks.test.ts > groups actual split runs and wrapped lines without bridging interleaved columns, then picks the full paragraph at every page rotation
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-text-blocks.test.ts (2 tests) 50ms
+packages/office test:  ✓ src/editors/pptx-ai-snapshot.test.ts (3 tests) 49ms
+packages/office test:  ✓ src/xlsx-range-rule-reading.test.ts (6 tests) 49ms
+packages/office test:  ✓ src/agent/pdf-page-layout.test.ts (3 tests) 46ms
+packages/office test:  ✓ src/editors/pdf-ocr.test.ts (10 tests) 42ms
+packages/office test:  ✓ src/agent/pdf-working-copy.test.ts (3 tests) 40ms
+packages/office test:  ✓ src/editors/pdf-redaction-copy.test.ts (5 tests) 37ms
+packages/office test:  ✓ src/xlsx-export.test.ts (3 tests) 35ms
+packages/office test:  ✓ src/xlsx.test.ts (36 tests) 33ms
+packages/office test:  ✓ src/docx-endnotes.test.ts (2 tests) 32ms
+packages/office test:  ✓ src/pptx-svg.test.ts (10 tests) 31ms
+packages/office test:  ✓ src/editors/pptx-ai-presets.test.ts (9 tests) 31ms
+packages/office test:  ✓ src/editors/MarkdownSuggestionPanel.test.tsx (2 tests) 29ms
+packages/office test:  ✓ src/xlsx-fill-layers.test.ts (2 tests) 28ms
+packages/office test:  ✓ src/editors/xlsx-object-layout.test.tsx (7 tests) 24ms
+packages/office test:  ✓ src/editors/markdown-slash.test.ts (2 tests) 25ms
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > samples scaled page coordinates and commits pen/highlighter once, with alpha preserved in PNG rasterization
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > samples scaled page coordinates and commits pen/highlighter once, with alpha preserved in PNG rasterization
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > samples scaled page coordinates and commits pen/highlighter once, with alpha preserved in PNG rasterization
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > cancels pointercancel, blur, source-version/page/tool changes and Escape without applying
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > cancels pointercancel, blur, source-version/page/tool changes and Escape without applying
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > hits a stroke crossed between fast samples and sends only own ink ids in one atomic erase
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > hits a stroke crossed between fast samples and sends only own ink ids in one atomic erase
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > hits a stroke crossed between fast samples and sends only own ink ids in one atomic erase
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxInkCanvas.test.tsx (4 tests) 23ms
+packages/office test:  ✓ src/docx-footnote-gaps.test.ts (3 tests) 23ms
+packages/office test:  ✓ src/editors/DocxImageCropPreview.test.tsx (5 tests) 23ms
+packages/office test:  ✓ src/docx-encryption-xml.test.ts (77 tests) 22ms
+packages/office test:  ✓ src/pptx-media-info.test.ts (39 tests) 24ms
+packages/office test:  ✓ src/agent/html-brief.test.ts (11 tests) 18ms
+packages/office test:  ✓ src/agent/html-agent.test.ts (20 tests) 19ms
+packages/office test:  ✓ src/editors/PptxSelectionCanvas.test.tsx (3 tests) 16ms
+packages/office test:  ✓ src/docx-encryption-controller.test.ts (17 tests) 13ms
+packages/office test:  ✓ src/editors/PdfOcrOverlay.test.tsx (3 tests) 13ms
+packages/office test:  ✓ src/zip-bounds.test.ts (7 tests) 12ms
+packages/office test:  ✓ src/pptx-tiff-safety.test.ts (24 tests) 13ms
+packages/office test:  ✓ src/xlsx-manual.test.ts (7 tests) 6ms
+packages/office test:  ✓ src/xlsx-clipboard.test.ts (18 tests) 11ms
+packages/office test:  ✓ src/docx-archive-save.test.ts (2 tests) 10ms
+packages/office test:  ✓ src/editors/markdown-controls.test.ts (5 tests) 6ms
+packages/office test:  ✓ src/pptx-image-info.test.ts (15 tests) 9ms
+packages/office test:  ✓ src/pptx-ink.test.ts (3 tests) 6ms
+packages/office test:  ✓ src/xlsx-fill.test.ts (29 tests) 7ms
+packages/office test:  ✓ src/editors/pdf-image-export.test.ts (3 tests) 6ms
+packages/office test:  ✓ src/xlsx-format.test.ts (3 tests) 6ms
+packages/office test:  ✓ src/xlsx-table-styles.test.ts (3 tests) 5ms
+packages/office test:  ✓ src/docx-footnote-flow.test.ts (2 tests) 5ms
+packages/office test:  ✓ src/editors/use-pdf-ocr.test.ts (7 tests) 6ms
+packages/office test:  ✓ src/editors/pdf-retention.test.ts (11 tests) 4ms
+packages/office test:  ✓ src/agent/pdf-asset-agent.test.ts (4 tests) 4ms
+packages/office test:  ✓ src/pptx-glb.test.ts (2 tests) 3ms
+packages/office test:  ✓ src/editors/pdf-ocr-worker.test.ts (5 tests) 4ms
+packages/office test:  ✓ src/pptx-group-placement.test.ts (10 tests) 5ms
+packages/office test:  ✓ src/editors/docx-readonly.test.ts (6 tests) 4ms
+packages/office test:  ✓ src/editors/pdf-render.test.ts (1 test) 5ms
+packages/office test:  ✓ src/editors/docx-image-crop.test.ts (13 tests) 3ms
+packages/office test:  ✓ src/xlsx-delimited.test.ts (3 tests) 3ms
+packages/office test:  ✓ src/editors/pptx-chart-colors.test.ts (4 tests) 2ms
+packages/office test:  ✓ src/pptx-media-frame.test.ts (8 tests) 2ms
+packages/office test:  ✓ src/editors/pdf-drawing-canvas.test.ts (8 tests) 2ms
+packages/office test:  ✓ src/xlsx-find.test.ts (3 tests) 2ms
+packages/office test:  ✓ src/editors/pptx-group-picture-preview.test.ts (11 tests) 2ms
+packages/office test:  ✓ src/pptx-paragraph-range.test.ts (3 tests) 2ms
+packages/office test:  ✓ src/editors/html-picture-ops.test.ts (1 test) 1ms
+packages/office test:  ✓ src/editors/shortcut-label.test.ts (2 tests) 1ms
+packages/office test:  ✓ src/xlsx-input.test.ts (1 test) 1ms
+packages/office test: 
+packages/office test:  Test Files  235 passed (235)
+packages/office test:       Tests  2778 passed (2778)
+packages/office test:    Start at  01:15:39
+packages/office test:    Duration  376.71s (tests 63%, import 30%, environment 6%, transform 1%)
+packages/office test: 
+packages/office test:      Import  1030 modules were evaluated 2355 times · 105.69s total, 30% of tracked time
+packages/office test:              ~59.47s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+packages/office test:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+packages/office test: 
+packages/office test: Done
+packages/renderer test$ vitest run --passWithNoTests
+packages/renderer test: 
+packages/renderer test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+packages/renderer test: 
+packages/renderer test: stderr | src/components/NavSidebar.test.tsx > 工作区读取恢复与账户保护 > 已保存的知识库改名保留脏笔记id与子路径，不触发离开确认
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/NavSidebar.test.tsx (25 tests) 8922ms
+packages/renderer test:    ✓ 统一工作区导航 (9)
+packages/renderer test:      ✓ 级联主题选择关闭全部弹层，重新打开显示当前勾选 1379ms
+packages/renderer test:      ✓ 窄屏覆盖进入焦点，X关闭并恢复触发点，释放滚动锁 1243ms
+packages/renderer test:      ✓ 窄屏 Escape 与遮罩均可关闭 771ms
+packages/renderer test:      ✓ 窄屏抽屉首尾 Tab 循环，阻止焦点进入浏览器外部 691ms
+packages/renderer test:      ✓ 未保存导航仅在保存并离开获准后关闭抽屉并导航 306ms
+packages/renderer test:    ✓ 工作区读取恢复与账户保护 (16)
+packages/renderer test:      ✓ 登出通过未保存保护，取消与保存失败均不发请求 483ms
+packages/renderer test:      ✓ 主题Escape逐层关闭并回焦，外点关闭不抢新目标焦点 381ms
+packages/renderer test:      ✓ 登出请求跨rail与Drawer重挂载保持单飞状态 364ms
+packages/renderer test:  ✓ src/editor/diagram-block.test.ts (10 tests) 2496ms
+packages/renderer test:    ✓ keeps normal code highlighting and wavedrom fenced source while rendering diagram previews 472ms
+packages/renderer test:    ✓ keeps normal code highlighting and mermaid fenced source while rendering diagram previews 432ms
+packages/renderer test:    ✓ edits the same wavedrom code block through Agent operations and keeps errors recoverable 686ms
+packages/renderer test:    ✓ edits the same mermaid code block through Agent operations and keeps errors recoverable 644ms
+packages/renderer test: stderr | src/components/CommandPalette.test.tsx > 最近12个ID中的笔记不截成6篇；部分失败保留可用项，403不泄露，重试恢复
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/CommandPalette.test.tsx > 搜索重试立即回到输入框，迟到的成功不会抢走用户后来移动的焦点
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/CommandPalette.test.tsx > 搜索重试立即回到输入框，迟到的成功不会抢走用户后来移动的焦点
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/CommandPalette.test.tsx (15 tests) 1496ms
+packages/renderer test: stderr | src/editor/markdown-controls.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-controls.test.tsx (7 tests) 1197ms
+packages/renderer test:    ✓ markdown 的控件契约（渲染层） (7)
+packages/renderer test:      ✓ 保存失败时状态行给一个可点的 antd 按钮，点它真的重试 1042ms
+packages/renderer test: stderr | src/components/library/LibraryView.interaction.test.tsx > 最后知识库已删除的旧scope显示创建恢复，不误显示空目录
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/library/LibraryView.interaction.test.tsx (13 tests) 801ms
+packages/renderer test:  ✓ src/components/document/DocumentHeader.test.tsx (7 tests) 757ms
+packages/renderer test: stderr | src/editor/MarkdownEditor.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/MarkdownEditor.test.tsx (27 tests) 626ms
+packages/renderer test:  ✓ src/theme/design.test.ts (109 tests) 622ms
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx > tag metadata never applies its body snapshot; failed refresh keeps editor and retries only GET
+packages/renderer test: Each child in a list should have a unique "key" prop.
+packages/renderer test: 
+packages/renderer test: Check the render method of `div`. It was passed a child from DocumentHeader. See https://react.dev/link/warning-keys for more information.
+packages/renderer test: 
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx > tag metadata never applies its body snapshot; failed refresh keeps editor and retries only GET
+packages/renderer test: Each child in a list should have a unique "key" prop.
+packages/renderer test: 
+packages/renderer test: Check the render method of `DocumentHeader`. See https://react.dev/link/warning-keys for more information.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.core.test.tsx (8 tests) 594ms
+packages/renderer test: stderr | src/editor/markdown-save.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-save.test.tsx (11 tests) 570ms
+packages/renderer test:  ✓ src/components/document/MarkdownBody.test.tsx (5 tests) 550ms
+packages/renderer test:    ✓ renders saved WaveDrom fences read-only and preserves source on a drawing error 480ms
+packages/renderer test:  ✓ src/components/library/LibraryView.test.tsx (6 tests) 540ms
+packages/renderer test: stderr | src/components/KnowledgeBaseCreateModal.test.tsx > 非法名称就地关联错误并聚焦，组合输入不提交；请求失败保留草稿可重试
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/KnowledgeBaseCreateModal.test.tsx (11 tests) 509ms
+packages/renderer test:  ✓ src/routes/-app-shell.test.tsx (13 tests) 432ms
+packages/renderer test:  ✓ src/components/document/DocumentCommandModal.test.tsx (9 tests) 353ms
+packages/renderer test: stderr | src/editor/markdown-slash-image.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-slash-image.test.tsx (5 tests) 368ms
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx > returns find and replace Escape/close focus to the live Markdown editor without changing content
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx > returns find and replace Escape/close focus to the live Markdown editor without changing content
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-find-focus.test.tsx (1 test) 362ms
+packages/renderer test:    ✓ returns find and replace Escape/close focus to the live Markdown editor without changing content 361ms
+packages/renderer test: stderr | src/components/UnsavedGuard.test.tsx > document leave guard > focuses continue first, excludes IME Escape/Enter and restores invoking focus
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/UnsavedGuard.test.tsx > document leave guard > focuses continue first, excludes IME Escape/Enter and restores invoking focus
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/UnsavedGuard.test.tsx (10 tests) 348ms
+packages/renderer test:  ✓ src/components/settings/SettingControl.test.tsx (10 tests) 308ms
+packages/renderer test:  ✓ src/components/library/SourceReplaceDialog.test.tsx (3 tests) 273ms
+packages/renderer test: stderr | src/editor/markdown-writing.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-writing.test.tsx (5 tests) 271ms
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 提交空表单后聚焦首个错误，输入与错误文本程序化关联
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 预设下拉填入连接与建议模型，并聚焦下一步显示名
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/settings/ProviderForm.test.tsx (4 tests) 258ms
+packages/renderer test: stderr | src/editor/markdown-toolbar.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-toolbar.test.ts (46 tests) 271ms
+packages/renderer test:  ✓ src/components/CaptureDialog.test.tsx (6 tests) 248ms
+packages/renderer test: stderr | src/components/nav/FolderSection.test.tsx > 编辑改名保留子目录位置，可通过专用回调保留打开的笔记：false
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/nav/FolderSection.test.tsx (3 tests) 248ms
+packages/renderer test: 裁剪样式：1414 → 439 条规则，107 KB
+packages/renderer test: 输出 src/generated/editor.css
+packages/renderer test:  ✓ vite-preset.test.ts (3 tests) 166ms
+packages/renderer test: stderr | src/routes/-login-recovery.test.tsx > setup error offers plain recovery guidance and retries into the real login form
+packages/renderer test: An update to LoginPage inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/routes/-login-recovery.test.tsx > setup error offers plain recovery guidance and retries into the real login form
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to EllipsisMeasure inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/routes/-login-recovery.test.tsx (4 tests) 177ms
+packages/renderer test: stderr | src/components/settings/ClientSection.test.tsx > 客户端设置 > 显示真实版本和当前使用方式，关于入口交给桌面路由
+packages/renderer test: An update to ClientSection inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ClientSection.test.tsx > 客户端设置 > 云端使用方式显示服务器来源
+packages/renderer test: An update to ClientSection inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/settings/ClientSection.test.tsx (3 tests) 179ms
+packages/renderer test: stderr | src/components/DocumentPanel.commands.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.commands.test.tsx (1 test) 153ms
+packages/renderer test:  ✓ src/components/nav/RecentNotes.test.tsx (1 test) 225ms
+packages/renderer test:  ✓ src/components/UploadPanel.test.tsx (5 tests) 163ms
+packages/renderer test:  ✓ src/components/document/DocumentTitle.test.tsx (3 tests) 141ms
+packages/renderer test:  ✓ src/components/library/LibraryView.drop.test.tsx (3 tests) 135ms
+packages/renderer test:  ✓ src/components/library/FolderNameModal.test.tsx (3 tests) 131ms
+packages/renderer test:  ✓ src/routes/-root-recovery.test.tsx (1 test) 139ms
+packages/renderer test:  ✓ src/editor/diagram-pele.test.ts (13 tests) 114ms
+packages/renderer test: stderr | src/editor/MarkdownImage.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/MarkdownImage.test.tsx (2 tests) 120ms
+packages/renderer test:  ✓ src/components/document/FilePreview.test.tsx (3 tests) 124ms
+packages/renderer test:  ✓ src/components/settings/ProviderList.test.tsx (1 test) 86ms
+packages/renderer test: stderr | src/editor/markdown-agent.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-agent.test.ts (21 tests) 82ms
+packages/renderer test:  ✓ src/lib/api-base-path.test.ts (2 tests) 78ms
+packages/renderer test:  ✓ src/components/settings/FeedsSection.test.tsx (1 test) 75ms
+packages/renderer test: stderr | src/routes/-settings-scroll.test.tsx > 设置分区使用独立滚动恢复目标，同分区重渲染保留位置而换分区回到顶部
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/routes/-settings-scroll.test.tsx (1 test) 78ms
+packages/renderer test: stderr | src/editor/round-trip.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/round-trip.test.ts (13 tests) 68ms
+packages/renderer test:  ✓ src/lib/pptx-deck-stream.test.ts (11 tests) 71ms
+packages/renderer test:  ✓ src/components/document/DocChatSidebar.test.tsx (2 tests) 58ms
+packages/renderer test:  ✓ src/components/confirm-danger.test.tsx (1 test) 61ms
+packages/renderer test: stderr | src/components/document/MarkdownHostSlots.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/document/MarkdownHostSlots.test.tsx (1 test) 59ms
+packages/renderer test:  ✓ src/components/library/FileFormatIcon.test.tsx (5 tests) 52ms
+packages/renderer test:  ✓ src/components/settings/UsageHeatmap.test.tsx (4 tests) 46ms
+packages/renderer test:  ✓ src/components/marketing/CitationDemo.test.tsx (1 test) 50ms
+packages/renderer test:  ✓ src/components/document/DocumentFooter.test.tsx (2 tests) 44ms
+packages/renderer test: stderr | src/editor/math-block.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/math-block.test.ts (3 tests) 43ms
+packages/renderer test:  ✓ src/components/document/DocxCapabilityStatus.test.tsx (4 tests) 42ms
+packages/renderer test: stderr | src/editor/note-links.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/note-links.test.ts (4 tests) 41ms
+packages/renderer test: stderr | src/editor/drift.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/drift.test.ts (2 tests) 33ms
+packages/renderer test:  ✓ src/editor/diagram-render.test.ts (9 tests) 36ms
+packages/renderer test:  ✓ src/lib/unsaved-update.test.tsx (7 tests) 15ms
+packages/renderer test:  ✓ src/lib/pdf-ocr-assets.test.ts (1 test) 30ms
+packages/renderer test: stderr | src/editor/markdown-find.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-find.test.ts (1 test) 23ms
+packages/renderer test:  ✓ src/components/document/DocChatGuide.test.tsx (1 test) 23ms
+packages/renderer test:  ✓ src/lib/nav-collapse.test.ts (4 tests) 13ms
+packages/renderer test:  ✓ src/components/nav/menu-items.test.ts (8 tests) 13ms
+packages/renderer test:  ✓ src/platform.test.tsx (3 tests) 11ms
+packages/renderer test:  ✓ src/routes/-public-home.test.tsx (11 tests) 10ms
+packages/renderer test:  ✓ src/lib/agent-media.test.ts (4 tests) 9ms
+packages/renderer test:  ✓ src/theme/appearance.test.ts (9 tests) 8ms
+packages/renderer test:  ✓ src/lib/markdown-writing-stream.test.ts (4 tests) 8ms
+packages/renderer test:  ✓ src/lib/html-writing-stream.test.ts (4 tests) 6ms
+packages/renderer test:  ✓ src/lib/docx-agent-api.test.ts (2 tests) 5ms
+packages/renderer test:  ✓ src/lib/agent-media.check.test.ts (5 tests) 4ms
+packages/renderer test:  ✓ src/lib/markdown-export.test.ts (1 test) 7ms
+packages/renderer test:  ✓ src/lib/recent-documents.test.ts (5 tests) 4ms
+packages/renderer test:  ✓ src/components/settings/model-config.test.ts (23 tests) 4ms
+packages/renderer test:  ✓ src/lib/xlsx-validation-api.test.ts (2 tests) 3ms
+packages/renderer test:  ✓ src/router-base-path.test.ts (1 test) 3ms
+packages/renderer test:  ✓ src/lib/chat-save-note.test.ts (5 tests) 3ms
+packages/renderer test:  ✓ src/lib/chat-attachments-api.test.ts (3 tests) 4ms
+packages/renderer test:  ✓ src/components/list-helpers.test.ts (17 tests) 3ms
+packages/renderer test:  ✓ src/lib/office-source-filename.test.ts (2 tests) 2ms
+packages/renderer test:  ✓ src/lib/app-path.test.ts (4 tests) 2ms
+packages/renderer test:  ✓ src/lib/docx-agent-contract.test.ts (2 tests) 2ms
+packages/renderer test:  ✓ src/components/document/headings.test.ts (2 tests) 2ms
+packages/renderer test: stderr | src/components/DocumentPanel.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.test.ts (3 tests) 1ms
+packages/renderer test:  ✓ src/lib/docx-agent-availability.test.ts (2 tests) 2ms
+packages/renderer test:  ✓ src/components/nav/folder-ops.test.ts (2 tests) 1ms
+packages/renderer test: 
+packages/renderer test:  Test Files  86 passed (86)
+packages/renderer test:       Tests  640 passed (640)
+packages/renderer test:    Start at  01:21:56
+packages/renderer test:    Duration  110.10s (import 58%, tests 26%, environment 14%, transform 1%)
+packages/renderer test: 
+packages/renderer test:      Import  901 modules were evaluated 1932 times · 58.90s total, 58% of tracked time
+packages/renderer test:              ~31.43s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+packages/renderer test:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+packages/renderer test: 
+packages/renderer test: Done
+apps/web test$ vitest run --passWithNoTests
+apps/desktop test$ vitest run
+apps/desktop test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+apps/desktop test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+apps/web test: 
+apps/web test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/web
+apps/web test: 
+apps/web test: No test files found, exiting with code 0
+apps/web test: 
+apps/web test: include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+apps/web test: exclude:  **/node_modules/**, **/.git/**
+apps/web test: 
+apps/desktop test: 
+apps/desktop test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/desktop
+apps/desktop test: 
+apps/web test: Done
+apps/desktop test:  ✓ |main| src/main/host.test.ts (7 tests) 321ms
+apps/desktop test:    ✓ waitForReady (1)
+apps/desktop test:      ✓ 超时明确报错，而不是静默等待 313ms
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > keeps session drain inside the shutdown budget and rejects late completion
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 工作区已关闭，但暂时无法完成重启，更新尚未安装。请关闭客户端并重新启动以恢复使用。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:196:23)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7) {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: true,
+apps/desktop test:   cause: Error: 宿主关闭超时
+apps/desktop test:       at /Users/admin/Desktop/mimir/apps/desktop/src/main/host-shutdown.ts:14:16
+apps/desktop test:       at callTimer (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5167:25)
+apps/desktop test:       at runTimersInRange (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5865:26)
+apps/desktop test:       at doTickInner (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5960:22)
+apps/desktop test:       at doTick (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5976:21)
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:6066:22
+apps/desktop test:       at Immediate.<anonymous> (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:6014:30)
+apps/desktop test:       at process.processImmediate (node:internal/timers:504:21)
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > refuses renderer false, unrelated requests, and replies from stale navigation
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 当前内容还没保存或准备已取消，暂未重启。请返回文档处理后重试。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:177:15)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:345:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > refuses renderer false, unrelated requests, and replies from stale navigation
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 当前内容还没保存或准备已取消，暂未重启。请返回文档处理后重试。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:177:15)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:349:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > honors beforeunload veto even after save permission and retains the workspace
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 文档阻止了关闭，请先保存当前内容。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:356:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > stops on window timeout or close exception
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 工作区未能关闭，请返回文档后重试。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7) {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > stops on window timeout or close exception
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: close error
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:374:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > requires manual saving confirmation in cloud and still honors its leave veto
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 请先返回文档保存内容，再确认重启。此服务器页面无法自动确认保存。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:146:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:15)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:26)
+apps/desktop test:     at UpdateController.install (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:284:27)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:380:30
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10) {
+apps/desktop test:   requiresSaveConfirmation: true,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > requires manual saving confirmation in cloud and still honors its leave veto
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 文档阻止了关闭，请先保存当前内容。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:390:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > marks failed host shutdown as recovery required and cannot retry an installer
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 工作区已关闭，但暂时无法完成重启，更新尚未安装。请关闭客户端并重新启动以恢复使用。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:196:23)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:401:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: true,
+apps/desktop test:   cause: Error: database close failed
+apps/desktop test:       at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:400:37
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:       at new Promise (<anonymous>)
+apps/desktop test:       at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10)
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3314:20
+apps/desktop test:       at new Promise (<anonymous>)
+apps/desktop test:       at runWithTimeout (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3272:10)
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3895:64
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > recovers from synchronous installer error events after the workspace has closed
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at EventEmitter.<anonymous> (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:419:37)
+apps/desktop test:     at EventEmitter.Mock [as quitAndInstall] (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/spy.DDMXghXv.js:353:40)
+apps/desktop test:     at Object.install (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:262:21)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:304:29)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:422:7
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at EventEmitter.<anonymous> (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:419:37)
+apps/desktop test:     at EventEmitter.Mock [as quitAndInstall] (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/spy.DDMXghXv.js:353:40)
+apps/desktop test:     at Object.install (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:262:21)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:304:29)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:422:7
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > recovers from late installer error events after the workspace has closed
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:423:56
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:423:56
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > packaged capability policy > only treats confirmed official HTTP 200 as error after provider failure
+apps/desktop test: [desktop:update] Error: No published versions on GitHub
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:461:41
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2882:64
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10)
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3314:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithTimeout (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3272:10)
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > packaged capability policy > only treats confirmed official HTTP 403 as error after provider failure
+apps/desktop test: [desktop:update] Error: No published versions on GitHub
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:461:41
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2882:64
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10)
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3314:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithTimeout (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3272:10)
+apps/desktop test: 
+apps/desktop test:  ✓ |main| src/main/native-updater.test.ts (24 tests) 71ms
+apps/desktop test:  ✓ |main| src/main/cloud.test.ts (14 tests) 26ms
+apps/desktop test:  ✓ |main| src/main/updater.test.ts (15 tests) 9ms
+apps/desktop test:  ✓ |main| src/main/config.test.ts (7 tests) 10ms
+apps/desktop test:  ✓ |main| src/main/artifacts.test.ts (4 tests) 7ms
+apps/desktop test:  ✓ |main| src/main/release-notes.test.ts (5 tests) 4ms
+apps/desktop test:  ✓ |main| src/main/workspace-close.test.ts (6 tests) 5ms
+apps/desktop test:  ✓ |main| src/main/host-shutdown.test.ts (1 test) 3ms
+apps/desktop test:  ✓ |main| src/main/security.test.ts (5 tests) 2ms
+apps/desktop test:  ✓ |renderer| src/renderer/setup/SetupPage.test.tsx (15 tests) 1221ms
+apps/desktop test:    ✓ 选择页 (15)
+apps/desktop test:      ✓ 读取期间保留品牌和可用窗口控件，不提前显示首启表单 719ms
+apps/desktop test:  ✓ |renderer| src/renderer/update/UpdatePage.test.tsx (12 tests) 227ms
+apps/desktop test:  ✓ |renderer| src/renderer/components/TitleBar.test.tsx (6 tests) 158ms
+apps/desktop test:  ✓ |renderer| src/renderer/routes/-about.test.tsx (1 test) 139ms
+apps/desktop test: 
+apps/desktop test:  Test Files  14 passed (14)
+apps/desktop test:       Tests  122 passed (122)
+apps/desktop test:    Start at  01:23:46
+apps/desktop test:    Duration  6.51s (tests 43%, import 43%, environment 12%, transform 1%, worker 1%)
+apps/desktop test: 
+apps/desktop test:     Isolate  14 workers spawned · ~142ms startup each (spawn + environment, per file)
+apps/desktop test:              at least ~1.84s faster with isolate: false — reuses workers across files instead of one per file
+apps/desktop test: 
+apps/desktop test: Done
+✔ mac manual verification pins the official stable ZIP and exact architecture (4.298209ms)
+✔ manual acceptance rejects automatic states, source drift or wrong versions (0.586583ms)
+✔ official ZIP download resumes exact ranges and only reuses a fully verified cache (18.279458ms)
+✔ official ZIP download rejects untrusted resume responses without modifying the partial file (3.676625ms)
+✔ official ZIP download verifies fresh and empty files and rejects corrupt or linked cache bytes (7.80675ms)
+✔ official ZIP download enforces stall and overall deadlines while preserving received bytes (49.255833ms)
+✔ download cache is restricted to real prior harness temporary roots (2.905333ms)
+✔ a relocated real resource tree retains every file and byte in a portable sorted manifest (19.846584ms)
+✔ verification reports precise missing, extra, size and same-size hash changes together (17.067375ms)
+✔ unsafe and duplicate manifest entries are rejected before resource traversal (0.747542ms)
+✔ resource links and linked roots cannot traverse outside the package (15.125083ms)
+✔ CLI writes only relative evidence, rejects differences and prevents self-inclusion (767.968291ms)
+✔ native artifact names survive builder extension-specific architecture mapping (784.726709ms)
+✔ stable versions require an exact tag and reject prereleases, padding and malformed input (0.222875ms)
+✔ committed desktop and fnOS versions must exactly agree before builds (0.213042ms)
+✔ desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP (50.184666ms)
+✔ fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata (25.302875ms)
+✔ missing fnOS and tampered FPK bytes block the entire release before output creation (64.779417ms)
+✔ fnOS wrong identity, architecture, hashes and Electron metadata fail closed (409.825708ms)
+✔ missing platform, stale manifest and modified bytes cannot form a release (44.976417ms)
+✔ malicious references, duplicate files and invalid metadata SHA-512 are rejected (21.825209ms)
+✔ mismatched mac signing mode cannot publish a mixed channel (23.630625ms)
+✔ macOS signed mode is explicit and fails closed without full credentials (0.21475ms)
+✔ draft publishes only after every remote asset passes validation (30.766458ms)
+✔ a missing or different remote tag stops all draft mutations (26.499333ms)
+✔ a remote tag moved during upload prevents publication (24.522167ms)
+✔ owned draft recovery uses the verified tag and marker, not target creation metadata (24.958583ms)
+✔ remote tag resolution peels annotated objects and rejects invalid or cyclic graphs (0.474875ms)
+✔ GitHub failures include operation, message, permission and request ID without secrets or URL queries (6.123375ms)
+✔ missing fnOS or its remote upload/digest failure never publishes a partial desktop release (28.958458ms)
+✔ downloaded release directory rechecks FPK bytes, size and both digests before remote mutations (115.014875ms)
+✔ upload failure or remote digest mismatch leaves the release unpublished (28.481042ms)
+✔ published releases and unrelated drafts are immutable on rerun (26.691833ms)
+✔ incomplete manifest fails before creating a draft (25.11725ms)
+✔ only an owned draft can replace partial uploads; unknown draft assets stop recovery (27.465ms)
+✔ hoisted resources keep nested versions and file aliases after source removal and relocation (51.783875ms)
+✔ non-portable absolute resource link aborts instead of following the graph (2.7995ms)
+✔ non-portable outside resource link aborts instead of following the graph (4.360375ms)
+✔ non-portable directory-cycle resource link aborts instead of following the graph (2.807625ms)
+✔ non-portable broken resource link aborts instead of following the graph (3.026042ms)
+✔ native close waits for a mapped closable window in the confirmed relaunched PID set before one request (7.745125ms)
+✔ native close cannot silently succeed without a confirmed target; cleanup records an optional absence (9.968708ms)
+✔ native close rejection, request errors and exit veto are audited and never cause a second close (0.614ms)
+✔ cleanup only observes an already-requested process after exit veto, even if its window identity changes (0.157875ms)
+✔ explicit launches get distinct available loopback endpoints and release their probes before use (6.770458ms)
+✔ OS reuse of a previous launch port is rejected, closed, and retried with a bounded allocation limit (0.517833ms)
+✔ debug endpoint allocation propagates bind/close errors and rejects non-loopback or invalid addresses (3.078541ms)
+✔ pins exact stable versions and rejects equal, lower or prerelease versions (0.307291ms)
+✔ only accepts complete, stable official public release asset with digest (0.27575ms)
+✔ hashes actual file bytes and detects changed package contents (5.28775ms)
+✔ bounded waits require the actual condition and retain the last failure (12.441042ms)
+✔ screenshot preview explicitly foregrounds its target before reading state or waiting for paint (0.37125ms)
+✔ screenshot preview identifies the failing phase and preserves target-close or timeout errors (0.158875ms)
+✔ screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners (0.239042ms)
+✔ screenshot paint helper runs as an isolated serialized browser expression (0.549333ms)
+✔ screenshot paint timeout and page errors fail capture and clean up their pending waits (0.112833ms)
+✔ CDP paint evaluation has an external five-second deadline even without any renderer response (9.939791ms)
+✔ CDP clears custom request timers on response, target closure and synchronous send failure (0.26525ms)
+✔ CDP correlates out-of-order replies and rejects interrupted requests (0.181625ms)
+✔ renderer exceptions fail the harness rather than becoming a false success (0.076084ms)
+✔ real close during mouse release needs explicit target disappearance confirmation (0.186791ms)
+✔ closing clicks still verify disappearance when CDP acknowledges the release (0.086541ms)
+✔ unexpected target closure and mouse/protocol failures are never accepted as clicks (0.116708ms)
+✔ verifies real root updater manifest and normalized main bytes without platform-specific listing (26.344125ms)
+✔ reads real ASAR entry bytes through either input separator convention (10.794959ms)
+✔ manifest declaration and a nested updater cannot replace the actual root dependency (9.727042ms)
+✔ wrong bundled updater version fails even when the outer declaration is correct (8.222ms)
+✔ updater manifest without executable entry bytes cannot pass package verification (8.199583ms)
+✔ updater entry escaping its package is rejected (15.975417ms)
+✔ 关闭 pnpm 包装进程时，监听端口的孙进程也退出 (490.075416ms)
+✔ pnpm 已退出后仍能清理监听端口的孙进程 (379.672334ms)
+✔ FPK manifest validates exact application, release version, architecture and runtime (0.655833ms)
+✔ fnpack source is fixed and downloaded bytes fail closed on mismatch (0.490291ms)
+✔ archive paths cannot escape the extraction tree (0.110625ms)
+✔ real nested FPK bytes are extracted and checked before installation smoke (1155.594792ms)
+✔ fnOS install stores owner credentials only in protected persistent config (1048.384667ms)
+✔ fnOS install rejects invalid owner input without writing credentials (157.083167ms)
+✔ fnOS package declares the gateway, x86 runtime and icons (3.265834ms)
+✔ fnOS lifecycle starts on a Unix socket and stops idempotently (1088.163166ms)
+✔ clean route generation prepares shared types and keeps desktop extras out of the base tree (1254.90125ms)
+ℹ tests 80
+ℹ suites 0
+ℹ pass 80
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2386.963667
+[status: completed, exit code: 0]
