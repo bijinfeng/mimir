@@ -91,6 +91,20 @@ export async function settleScreenshotPaint({ page = globalThis, timeoutMs = 500
   }
 }
 
+/** Explicit external preview: background/occluded windows may not receive animation frames. */
+export async function previewScreenshot(session, phase) {
+  await phase('bring-to-front')
+  await session.call('Page.bringToFront', {}, { timeoutMs: 5000 })
+  await phase('foreground-state')
+  const observed = await session.evaluate(
+    `({ visibilityState: document.visibilityState, hidden: document.hidden, hasFocus: document.hasFocus(), finiteAnimations: document.getAnimations().filter(animation => Number.isFinite(animation.effect?.getComputedTiming().endTime)).map(animation => ({ playState: animation.playState, pending: animation.pending, endTime: animation.effect.getComputedTiming().endTime })) })`,
+    { timeoutMs: 5000 },
+  )
+  await phase('paint-wait', observed)
+  await session.evaluate(`(${settleScreenshotPaint.toString()})()`, { timeoutMs: 5000 })
+  await phase('paint-ready')
+}
+
 export class CdpTargetClosedError extends Error {
   constructor() {
     super('CDP target closed')

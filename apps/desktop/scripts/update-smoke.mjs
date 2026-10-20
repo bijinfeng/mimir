@@ -18,8 +18,8 @@ import {
   Cdp,
   dispatchMouseClick,
   officialRepository,
+  previewScreenshot,
   releaseAsset,
-  settleScreenshotPaint,
   sha256,
   until,
   versionPair,
@@ -54,6 +54,7 @@ const result = {
   checks: [],
   limitations: [
     'Headless/session notification delivery and focus are not asserted by CDP.',
+    'Screenshot capture explicitly brings its target to the front; these previews are not evidence of automatic focus behavior.',
     'macOS ad-hoc builds remain manual; this test never claims macOS automatic installation.',
   ],
 }
@@ -127,13 +128,34 @@ async function state(session, updater = false) {
   )
 }
 async function screenshot(session, name) {
-  await session.evaluate(`(${settleScreenshotPaint.toString()})()`, { timeoutMs: 5000 })
-  const image = await session.call('Page.captureScreenshot', { format: 'png' })
-  await writeFile(join(evidence, `${name}.png`), Buffer.from(image.data, 'base64'))
-  await writeFile(
-    join(evidence, `${name}.html`),
-    await session.evaluate('document.documentElement.outerHTML'),
-  )
+  const capture = { name, targetId: session.targetId, explicitForegroundPreview: true, phases: [] }
+  result.screenshots ??= []
+  result.screenshots.push(capture)
+  const phase = async (stage, observed) => {
+    capture.phases.push({ stage, at: new Date().toISOString(), ...(observed ? { observed } : {}) })
+    await writeFile(
+      join(evidence, 'screenshot-phases.json'),
+      JSON.stringify(result.screenshots, null, 2),
+    )
+    console.log(`SCREENSHOT ${name}: ${stage}`)
+  }
+  try {
+    await previewScreenshot(session, phase)
+    await phase('capture-png')
+    const image = await session.call('Page.captureScreenshot', { format: 'png' })
+    await writeFile(join(evidence, `${name}.png`), Buffer.from(image.data, 'base64'))
+    await phase('capture-html')
+    await writeFile(
+      join(evidence, `${name}.html`),
+      await session.evaluate('document.documentElement.outerHTML'),
+    )
+    await phase('complete')
+  } catch (error) {
+    capture.failedPhase = capture.phases.at(-1)?.stage
+    capture.error = error.stack ?? String(error)
+    await phase('failed')
+    throw error
+  }
 }
 async function click(session, text, { closesTarget = false, closesApp = false } = {}) {
   await session.call('Page.bringToFront')

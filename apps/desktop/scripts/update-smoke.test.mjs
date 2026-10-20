@@ -8,6 +8,7 @@ import {
   Cdp,
   CdpTargetClosedError,
   dispatchMouseClick,
+  previewScreenshot,
   releaseAsset,
   settleScreenshotPaint,
   sha256,
@@ -122,6 +123,71 @@ function paintPage() {
     },
   }
 }
+
+test('screenshot preview explicitly foregrounds its target before reading state or waiting for paint', async () => {
+  const events = []
+  const observed = {
+    visibilityState: 'visible',
+    hidden: false,
+    hasFocus: true,
+    finiteAnimations: [],
+  }
+  const session = {
+    async call(method, params, options) {
+      events.push(method)
+      assert.deepEqual(params, {})
+      assert.equal(options.timeoutMs, 5000)
+    },
+    async evaluate(expression, options) {
+      assert.equal(options.timeoutMs, 5000)
+      if (expression.includes('visibilityState')) {
+        events.push('read-state')
+        return observed
+      }
+      assert.ok(expression.includes('settleScreenshotPaint'))
+      events.push('wait-paint')
+    },
+  }
+  await previewScreenshot(session, async (stage, state) => {
+    events.push(stage)
+    if (state) assert.deepEqual(state, observed)
+  })
+  assert.deepEqual(events, [
+    'bring-to-front',
+    'Page.bringToFront',
+    'foreground-state',
+    'read-state',
+    'paint-wait',
+    'wait-paint',
+    'paint-ready',
+  ])
+})
+
+test('screenshot preview identifies the failing phase and preserves target-close or timeout errors', async () => {
+  for (const failedAt of ['bring-to-front', 'foreground-state', 'paint-wait']) {
+    const phases = []
+    const error =
+      failedAt === 'bring-to-front' ? new CdpTargetClosedError() : new Error('CDP timeout')
+    const rejectAtPhase = () => {
+      if (phases.at(-1) === failedAt) throw error
+    }
+    const session = {
+      async call() {
+        rejectAtPhase()
+      },
+      async evaluate() {
+        rejectAtPhase()
+        return { visibilityState: 'visible' }
+      },
+    }
+    await assert.rejects(
+      previewScreenshot(session, async (stage) => phases.push(stage)),
+      (failure) => failure === error,
+    )
+    assert.equal(phases.at(-1), failedAt)
+    assert.ok(!phases.includes('paint-ready'))
+  }
+})
 
 function motion(endTime, playState = 'running', pending = false) {
   return { effect: { getComputedTiming: () => ({ endTime }) }, playState, pending }
