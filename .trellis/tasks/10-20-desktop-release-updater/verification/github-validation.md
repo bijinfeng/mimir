@@ -123,3 +123,7 @@ CI [39394323716](https://github.com/bijinfeng/mimir/actions/runs/39394323716) �
 0.1.3→0.1.4复验39409876470两平台均未通过。真实下载、普通退出不安装、保存保护与保存HTTP200已推进；窗口关闭后访问已销毁webContents getter使准备未完成。Electron44.7.0同源探针修前exit2、修后exit0，强fixture先红后绿；未改保存/veto/宿主顺序。原始失败截图/HTML/结果保存在update-attempt2，不能计为成功。
 
 75dd8c8提交产品修复与可读纯文本更新说明；b2bb972提交实网ZIP精确续传与NSIS诊断；324aa7d将desktop/fnOS同步准备0.1.5并推送master。新完整CI39413324883进行中。修复必须先手动安装为新基线，再用随后0.1.6验证真实自动更新，不能只修目标包。旧tag/资产保持原样，已给0.1.3/0.1.4公开说明添加已知问题提示。
+
+修复基线324aa7d的完整[CI39413324883](https://github.com/bijinfeng/mimir/actions/runs/39413324883) completed/success：完整pnpmcheck（desktop118、server1366等）、build、PG1366及local/fnOS模式、真实S3两项均通过。github-fixed-baseline-ci.json与去ANSI/行尾空白日志保存实际门；未扩大测试预算或删断言。
+
+mac ARM64官方3→4手动替换已完整成功，证据mac-official-manual/README.md与result.json。v0.1.5固定324aa7d已推tag，五目标发布run39413757346进行中；b58c149已推master准备version-only0.1.6，新CI39415625320触发，尚未推v0.1.6 tag。
