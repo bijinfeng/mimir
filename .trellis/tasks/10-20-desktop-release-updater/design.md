@@ -65,3 +65,10 @@
 ## 主要风险
 
 macOS 无证书会被 Gatekeeper 阻止、不能完成标准自动更新；Windows 无证书有信誉提示；GitHub 下载可达性依赖用户网络。Windows 和 Linux 的宿主依赖尚未验证。四平台依赖体积和安装成本需要真实 runner 证据。GitHub provider 与 builder 元数据必须选兼容版本，不能复制 v27 专属签名清单或新版 API。
+
+## fnOS 原生流水线扩展
+
+- 保留已启动 v0.1.1 基线；从下一稳定版本起，发布门包含四个桌面目标和 fnOS x86_64。桌面版本与 apps/fnos/manifest 的已提交版本须一致；仓库其他包版本不连带提升。
+- 新 fnos-build.yml 为可复用原生 Ubuntu x64/Node22 工作流，允许手动构建 artifact；只读权限，固定官方 fnpack 工具版本和下载校验，不独立公开 Release。已有 fnOS build 继续负责 Web 前缀、宿主部署、原生 ELF/模块加载及真实 fpk 结构。设备安装验收不能用 Ubuntu 运行代替。
+- 统一 stage contract：target fnos-x64、manual，产物 mimir-VERSION-fnos-x64.fpk 和 build-manifest.json，Actions artifact fnos-x64；汇总下载到 incoming/fnos-x64。fnOS 无 electron-updater yml，不改变桌面源和安装能力。
+- desktop-release 调用 fnOS 工作流，aggregate 必须同时等待该 job 和四平台 build。全部真实字节、版本、大小、SHA256/SHA512 验证完成后才进入原有单写者 draft/publish；任何 fnOS 错误均阻止公开新 latest。

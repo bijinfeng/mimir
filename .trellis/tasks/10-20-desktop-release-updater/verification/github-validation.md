@@ -44,3 +44,10 @@ Windows ASAR 修复已独立复核并提交 `239cf77`：按宿主分隔符读取
 CI 39380273533 已完成并失败：之前的 Office CSS/中文字体问题未复现；server 三项分别是附件 PDF worker 192MB OOM、PPTX/XLSX 既有 5s 超时。日志 github-ci-a98a0a5-failed.log。已发现本机默认 Node 25 与 .nvmrc/CI Node 22 不同；在空闲本机用 Node 22.23.1 单独运行真实附件 PDF 用例亦复现 OOM，不能仅解释为 CI 资源争用。本地全仓通过证据需按其实际 Node 25 环境理解。保持限制及断言，正在因果诊断。
 
 Node22 进一步诊断：相同 192/16MB worker 中，compiled JS 无 loader 能成功解析（heap约33.7MB），仅额外注册 tsx 即 OOM；两个超时文件在空闲 Node22 独跑 113/113 通过。生产 compiled 路径未受该 loader 问题影响。新稳定基线准备为 `v0.1.1`，后续目标 `v0.1.2`；原 v0.1.0 失败 tag 保留。
+
+## v0.1.1 基线与 Node22 完整门
+
+- `ae20981` 提交并推送，v0.1.1 tag保留原始提交；[39382724734](https://github.com/bijinfeng/mimir/actions/runs/39382724734) 正在执行四平台首个可发布基线。Linux完整成功，Windows已通过原生ASAR回归、包内文件/原生模块和解包应用smoke，正在实际NSIS安装版smoke；mac按run实际结果登记。
+- Node22 loader/CI调度修复已提交推送 `7a5c720`，新CI [39383281565](https://github.com/bijinfeng/mimir/actions/runs/39383281565) 进行中；ae20981对应的旧CI被新push自动取消。
+- 独立最终本地完整门：Node22.23.1 / pnpm12.4.2 / PNPM_CONFIG_WORKSPACE_CONCURRENCY=1，pnpm check exit0。Office2774、renderer636、server1366及各模式、desktop110、根Node43通过；日志 github-local-node22-pnpm-check.log。fnOS新增流水线仍在实施，不能将该次门当其完整远端验收。
+- 用户新增 fnOS 同版发布已录入 PRD/design/implement；现有v0.1.1基线不移动，下一目标0.1.2开始统一包含四客户端与fnOS x64，正式fnOS设备安装仍按设备证据判断。

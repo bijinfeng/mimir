@@ -95,3 +95,10 @@ CSS 修复使用既有生成器，在共享 Vite preset 的 buildStart 阶段、
 - 两TS文件 oxlint、三文件 oxfmt check、CI actionlint、git diff check 通过。
 
 此前全仓 exit0 日志保持，但它使用本机Node25，不能替代本轮新增Node22门；本次未重跑全仓。源码可冻结提交。新GitHub完整CI、Postgres/S3专项、原生构建及真实升级仍由主会话验收。
+
+
+## 最终 Node22 串行完整质量门
+
+按主会话要求，仅启动一次完整门：PATH 前置 `/Users/admin/.nvm/versions/node/v22.23.1/bin`，`PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check`。实际版本在日志首部记录为 **Node v22.23.1 / pnpm 12.4.2 / workspace-concurrency 1**。已结束且 **FINAL_EXIT_CODE=0**，完整日志 `github-local-node22-pnpm-check.log` 已关闭写入。
+
+lint/styles/format、全部 workspace typecheck、全部现行测试入口均通过：Office 2774、renderer 636、Server 1366（含新增真实OOM拒绝/termination）+local10/fnOS4/SQLite备份2、desktop110及根Node43。既有需显式S3环境的integration skip保持原样，无新增跳过、排除、超时或内存放宽。此结果证明本机Node22串行完整门通过；GitHub runner的Postgres/S3、正式资产及实际升级结果仍单独以远端证据验收。
