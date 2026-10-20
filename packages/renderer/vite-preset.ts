@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module'
+import { execFileSync } from 'node:child_process'
 import { copyFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
@@ -18,6 +19,24 @@ export const projectReactSources = [
   resolve(import.meta.dirname, '../chat/src'),
   resolve(import.meta.dirname, '../office/src'),
 ]
+
+/** Recreate ignored Office CSS from the committed vendor source on either host. */
+export function generateOfficeEditorCss(): Plugin {
+  return {
+    name: 'mimir:generate-office-editor-css',
+    buildStart() {
+      // Run before Vite resolves DocxEditor's CSS import, including on a fresh checkout.
+      // A failed generator must abort the build rather than reuse an older stylesheet.
+      execFileSync(
+        process.execPath,
+        [resolve(import.meta.dirname, '../office/scripts/trim-editor-css.mjs')],
+        {
+          stdio: 'inherit',
+        },
+      )
+    },
+  }
+}
 
 /** The emitted Carlito faces need their OFL notice in distributable output. */
 export function emitCarlitoLicense(): Plugin {
@@ -214,6 +233,7 @@ export function rendererPlugins(options: RendererPluginOptions): PluginOption[] 
      */
     copyPdfjsAssets(publicDir),
     copyPdfOcrAssets(publicDir),
+    generateOfficeEditorCss(),
     emitCarlitoLicense(),
     emitPhosphorLicense(),
     /**

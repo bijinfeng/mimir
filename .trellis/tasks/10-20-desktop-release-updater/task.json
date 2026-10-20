@@ -12,7 +12,7 @@
   "assignee": "jfbi",
   "createdAt": "2026-10-20",
   "completedAt": null,
-  "branch": "codex/desktop-release-updater",
+  "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
   "commit": "fef57cca565a6d73f7ea3a2bb9eb6c5c0b4e32c5",
@@ -21,6 +21,6 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "本地实现与全仓最终 pnpm check 已通过（exit 0）；最终 mac ARM64 打包/资源验证/packaged smoke、发布脚本 11 项与界面独立评审通过。保持 in_progress 等待外部验收：四目标 GitHub runner、首发匿名下载、真实跨版本更新、系统通知与正式 mac 签名。未推送/tag/dispatch/release。",
+  "notes": "用户新授权合并 master 并在 GitHub 验证全流程；master 已 fast-forward 到 e66c2c3 并推送。远端 CI 与四目标手动构建已启动；后续官方首发/补丁版与真实更新验收进行中。macOS 缺正式签名凭据时仍为 manual。",
   "meta": {}
 }

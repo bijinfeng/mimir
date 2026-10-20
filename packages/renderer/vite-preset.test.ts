@@ -1,8 +1,65 @@
 // @vitest-environment node
 import { readFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { build } from 'vite'
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { rendererPlugins } from './vite-preset'
+
+vi.mock('node:child_process', { spy: true })
+
+function officeCssPlugins() {
+  return rendererPlugins({ publicDir: '/unused', generatedRouteTree: '/unused/routes.ts' }).filter(
+    (plugin) =>
+      plugin &&
+      typeof plugin === 'object' &&
+      'name' in plugin &&
+      plugin.name === 'mimir:generate-office-editor-css',
+  )
+}
+
+it('generates usable Office CSS before resolving the renderer import', async () => {
+  const plugins = officeCssPlugins()
+  expect(plugins).toHaveLength(1)
+  const result = await build({
+    configFile: false,
+    logLevel: 'silent',
+    publicDir: false,
+    plugins,
+    build: {
+      write: false,
+      rollupOptions: {
+        input: fileURLToPath(new URL('../office/src/generated/editor.css', import.meta.url)),
+      },
+    },
+  })
+  if (Array.isArray(result) || !('output' in result)) throw new Error('Expected one bundle')
+  const stylesheet = result.output.find((item) => item.fileName.endsWith('.css'))
+  expect(stylesheet?.type).toBe('asset')
+  if (stylesheet?.type !== 'asset') throw new Error('Office stylesheet missing from bundle')
+  expect(String(stylesheet.source)).toContain('.page-dark')
+  expect(String(stylesheet.source)).toContain('.ProseMirror')
+})
+
+it('aborts the renderer build if Office CSS generation fails', async () => {
+  vi.mocked(execFileSync).mockImplementationOnce(() => {
+    throw new Error('Office vendor stylesheet unavailable')
+  })
+  await expect(
+    build({
+      configFile: false,
+      logLevel: 'silent',
+      publicDir: false,
+      plugins: officeCssPlugins(),
+      build: {
+        write: false,
+        rollupOptions: {
+          input: fileURLToPath(new URL('../office/src/generated/editor.css', import.meta.url)),
+        },
+      },
+    }),
+  ).rejects.toThrow('Office vendor stylesheet unavailable')
+})
 
 it('the shared host preset emits the full Phosphor MIT notice in the distributable bundle', async () => {
   const preset = rendererPlugins({ publicDir: '/unused', generatedRouteTree: '/unused/routes.ts' })

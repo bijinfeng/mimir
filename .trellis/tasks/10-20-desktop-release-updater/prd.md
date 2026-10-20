@@ -79,3 +79,7 @@ GitHub Actions 覆盖四个已确认系统/架构；安装包能启动本地知�
 AC1/AC2 的四目标真实 runner 和首发匿名下载、AC3 的系统通知投递/焦点、AC6 的真实跨版本保留资料，以及原生截图/正式 mac 签名等外部验收尚未完成，保留未勾选项与 in_progress。原生 CUA 已验证三个场景菜单与独立窗口，但截图接口不可用，仅保留 AX 交互记录。不得用本地模拟或组件截图替代这些未执行项。
 
 本轮授权范围不包含推送、tag、远端 workflow dispatch 或公开 Release，未执行这些操作。完整证据和局限见 `verification/results.md`、`release-validation.md` 与 `native/README.md`。
+
+## 远端验收授权（2026-10-20）
+
+用户要求“合并到 master 分支上，并在 github 上验证整个更新流程”。本轮授权合并/推送 master、触发 GitHub Actions、创建验证所需稳定版本 tag/公开 Releases，并执行官方公开分发源上的真实安装更新验收。先检查原生构建，再以首版和后续补丁版验证完整升级；不移动已公开版本标签、不覆盖已发布资产。原先“仅本地、不推送/发布”边界限于上一轮。无 mac 正式签名凭据的限制继续生效。

@@ -49,3 +49,12 @@
 2026-10-20：全仓 `pnpm check` exit 0；桌面端 109 项、renderer 634 项、Office 2774 项、根 Node 17 项（含发布脚本 11 项）通过。最终 mac ARM64 打包、包内原生模块校验和真实 packaged smoke A/B/C 通过；actionlint 通过。外部验收只完成登记，尚未执行 Windows/Linux/Intel runner 和真实升级。任务保持 in_progress，不归档；本轮不推送或发布。
 
 工作提交：`fef57cca565a6d73f7ea3a2bb9eb6c5c0b4e32c5`。提交和记录由项目 AGENTS.md「每轮实现与验收完成后，及时提交」授权；任务保留进行中，不执行归档。
+
+## GitHub 全流程验收（用户新授权）
+
+- [x] 检查远端 master 和工作区，以 fast-forward 合并已有实现并推送。
+- [ ] 运行 GitHub CI 和四目标原生构建，修复实际 runner 问题并复核。
+- [ ] 创建首版和后续稳定补丁版，验证完整资产统一发布与匿名下载。
+- [ ] 在真实 Windows 安装版、Linux AppImage 上通过独立外部驱动验证官方下载、普通退出不安装、显式重启安装及资料/模式保留。
+- [ ] 验证 macOS 检查更新与手动下载路径，明确无证书自动安装边界。
+- [ ] 复核新增测试/工作流，提交、推送规范与完整远端证据，按实际验收状态收尾。

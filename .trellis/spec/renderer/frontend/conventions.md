@@ -110,6 +110,13 @@ export type Platform =
 路由漏生成是某一页 404，pdf.js 资产漏拷是中文 PDF 整段空白，且都只在那一个
 平台上出现。
 
+`generateOfficeEditorCss(): Plugin` 同样由 `rendererPlugins` 注册，在 `buildStart`
+调用 `process.execPath` 执行已提交的 `packages/office/scripts/trim-editor-css.mjs`，
+从 vendor 生成被忽略的 `src/generated/editor.css`。生成失败必须中止构建；
+不得依赖本机曾运行 `sync-upstream`，也不能为打包重新同步上游或提交生成物。
+`vite-preset.test.ts` 用真实 Vite 输出和生成失败验证此契约；干净 checkout 的
+Web/desktop 构建必须能自行生成样式。
+
 GenOffice 的 `fonts.css` 仍引用 `@genoffice/ui/fonts/Carlito-*.ttf`，而 UI 包未进入
 vendor 闭包。两端 Vite 配置都要从本预设取 `genofficeFontAlias`，并用
 `rendererPlugins` 将随字体分发的 OFL 许可写入产物。字体文件在
