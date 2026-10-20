@@ -1454,3 +1454,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 51: 实施并验收 Mimir 产品官网
+<!-- trellis-session: v=2 fp=aee5733eb9962cef -->
+
+**Date**: 2026-10-20
+**Task**: 实施并验收 Mimir 产品官网
+**Branch**: `codex/pele-mermaid-trial`
+
+### Summary
+
+按已批准的问题带路方案实现 Web 公开官网、真实组件工作台与引用原文交互；保留桌面入口和受保护路由，补充路由及焦点回归测试。全仓 VITEST_MAX_WORKERS=1 pnpm check、Web/Desktop 生产构建通过，归档15组浅深/桌面/390px真实 HTML 与截图。Trellis 和 Impeccable 复核完成，工作提交2cc0f9c，仅官网范围，保留并行 Pele 未提交改动，未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2cc0f9c` | feat(web): add public Mimir official site |
+
+### Status
+
+[OK] **Completed**
