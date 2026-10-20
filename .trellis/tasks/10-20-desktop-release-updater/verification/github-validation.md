@@ -30,3 +30,11 @@
 第二轮 macOS ARM64 与 Intel x64 两项均完整通过；日志 github-second-mac-*.log、结果 github-second-build.json。Windows 因隔离依赖目录链接被 NSIS/7za 拒绝而失败；修复为打包专用 hoisted 部署并在 afterPack 有限物化文件别名、拒绝不可移植链接。真实资源迁移后 43,551 文件无链接，原生模块可加载；独立 17 项资源/发布回归通过。最终 Windows 安装器验收仍须新 runner。
 
 仓库 CI 39378386495 的 Office 失败已补干净测试 CSS 生成及 Ubuntu 真实 CJK 字体准备，未修改 PDF 生产代码或放宽断言。证据 github-ci-check-failed.log、github-ci-fixes.md 与 ci-diagnostics/font-probe.md。最终全仓本地检查及新远端运行进行中。
+
+## 最终本地门与首个 tag 构建
+
+- `a98a0a5` 已推送 master；本地完整 `pnpm check` exit 0（Office 2774、renderer 636、desktop 110、根 Node 29 和 server 各套件）。日志 github-local-pnpm-check.log；不将本地通过代替远端升级。
+- 首个 tag `v0.1.0` 指向 a98a0a5，触发 [39380282464](https://github.com/bijinfeng/mimir/actions/runs/39380282464)。Linux 构建、包资源检查、真实 AppImage smoke 和上传通过。
+- Windows 已完成 NSIS 打包，在 verify-package.mjs 的包内 electron-updater 存在性检查失败。严格发布门阻止汇总/公开版本；日志 github-v010-windows-failed.log。正在核查跨平台 ASAR 路径，不绕过检查。
+- 同提交 CI：[39380273533](https://github.com/bijinfeng/mimir/actions/runs/39380273533)，结果待完成。
+- 已推送 tag 保留，不移动或覆盖。若修复须新提交，首个成功稳定基线顺延 v0.1.1，后续更新目标 v0.1.2。

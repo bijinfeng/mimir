@@ -46,3 +46,27 @@ CSS 修复使用既有生成器，在共享 Vite preset 的 buildStart 阶段、
 独立检查 `package.mjs`：在现有原生平台/架构断言之后，以 `nativeArtifactName(process.arch)` 将唯一文件名中的架构固定为 Node 的 x64/arm64；继续由 builder 解析 version/os/ext 宏，没有改二进制目标架构，也未放松 publish 前的四目标文件/哈希检查。实际 build 入口使用该 config override，修复覆盖了 smoke、stage 和公开 Release 的统一文件名契约。
 
 独立运行 `node --test apps/desktop/scripts/release-artifacts.test.mjs` 12/12 通过；新增回归调用锁定 builder 的真实 `computeArtifactName`，复现旧 AppImage x86_64 映射，并验证修复后 mac 双架构 DMG/ZIP、Windows EXE、Linux AppImage 的实际宏展开。两个文件 oxlint/oxfmt check 和 git diff check 均通过。仅文档补审，无其他源码修改。真实 Linux AppImage 启动/升级仍需新构建远端验收。
+
+## Windows 资源与干净 CI 修复补审
+
+本轮生产源码范围：`deploy-server.mjs`、`after-pack.mjs`、`resource-tree.mjs`；测试/宿主准备：新资源测试、根 test 入口、Office Vitest config、CI 中文系统字体安装。独立审查未修改上述源码。
+
+- 生产 deploy 单独使用 `--node-linker hoisted`，没有改变仓库根依赖布局或供应链策略。afterPack 完成点目录复制后检查整个 server 树；只对 canonical root 内的相对文件别名执行一次物化，拒绝目录链接、绝对/越界目标、坏链接和特殊文件。没有采用解引用依赖图、修改版本解析或默许 runner 路径残留。
+- 新资源行为测试真实迁移目录、删除源树，再 require 两份嵌套依赖版本及隐藏 dist 内嵌模块；拒绝各类不可移植链接。独立运行资源+发布脚本 17/17 通过。
+- Office config 在 suite collection 前同步执行已提交生成器，绝对路径与 process.execPath 不依赖 shell；失败传播，不改变 timeout、测试范围或断言。CI 安装 `fonts-noto-cjk` 是原生字体宿主准备；真实 PDF 字形覆盖拒绝、中文换行及保存断言未放松。
+- 已检查实现代理 `github-ci-fixes.md` 及 Ubuntu 官方 TTC 的真实 vendor/PDFium 诊断证据；它支持字体缺失这一因果判断，不能替代新的 Ubuntu CI。
+- 受影响七文件 oxlint/oxfmt check 与 CI actionlint 独立通过。`git diff --check` 通过。实现代理真实迁移 43551 文件/零链接及 SQLite/vec/Jieba/dict/Canvas 加载记录已核对，本审查未重复重型打包，亦未声称 Windows 安装通过。
+
+最终全仓 `pnpm check` 已在无其他本机打包竞争时完成，**exit 0**；完整输出保留 `github-local-pnpm-check.log`，末行 `FINAL_EXIT_CODE=0`。未更改任何 timeout、规则或排除。
+
+实际通过：Office 235 files/2774 tests、renderer 85/636、server 122/1365 + local 10 + fnOS 4 + SQLite backup Node 2、desktop 12/110，根 Node 29（含新增资源及发布/E2E辅助测试）。Storage 中两个需显式 S3 环境的既有 integration 用例按原配置 skipped，不是本轮新增跳过；真实 S3 另由 CI 专项执行。lint、styles、format、全部 workspace typecheck 均通过。
+
+本报告覆盖本轮冻结的资源与 CI 修复；随后其他代理新增的 macOS manual smoke 文件不在此次独立源码审查范围。实际四平台 runner、NSIS 和官方跨版本更新仍按主会话远端验收记录判断。
+
+## macOS manual smoke 独立补审
+
+独立检查 `manual-update-smoke.mjs` / `.test.mjs` 与 `mac-manual-update-plan.md`：固定匿名官方稳定版及精确架构 URL、大小/SHA-256，启动/替换路径均为一次 mkdtemp 下代码拥有的 app 副本，userData 显式隔离；先正常窗口关闭并验证主进程 code 0/无 signal，再手工替换 ZIP 内 app。相同 userData 重启后验证 target 版本、manual 能力、local 模式及完整原文档，留存真实 renderer HTML/PNG。没有直接调用安装器、伪造保存响应、触碰已安装 /Applications 客户端或宣称自动更新。
+
+补审修复：TitleBar 原 `button.click()` 改为可见/启用/中心点 hit-test 后 CDP 真实鼠标事件；下载按钮可见性断言增加启用及布局/visibility 检查。新增 helper 测试加入根 test 命令。2/2 helper 测试、受影响 mjs oxlint、三文件 oxfmt check、Node syntax、git diff check 通过。
+
+此前完整 `pnpm check` exit 0 记录保持；本次只追加上述定向门，未重复全仓。实际官方双版本尚待发布后执行，不把脚本/辅助测试视作真实手工替换已通过。按钮未点击打开系统浏览器、Gatekeeper/quarantine/公证、原生通知焦点仍为明确限制；Node 官方 ZIP 下载只能验证手工替换分发链。
