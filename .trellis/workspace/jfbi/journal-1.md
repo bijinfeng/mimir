@@ -1570,3 +1570,49 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 
 - 保持任务 in_progress；后续授权推送后验证四目标 GitHub runner、匿名安装包下载、真实跨版本升级与系统通知。
 - 提供 Developer ID/公证凭据后验证 macOS 正式签名升级。本轮未推送、tag、dispatch 或发布。
+
+
+## Session 55: 五目标正式发布与官方桌面真实升级验收
+<!-- trellis-session: v=2 fp=a51946f88e61ebb0 -->
+
+**Date**: 2026-10-20
+**Task**: 五目标正式发布与官方桌面真实升级验收
+**Package**: desktop
+**Branch**: `master`
+
+### Summary
+
+四客户端与fnOS同版发布到0.1.8，Windows/Linux官方7→8真实更新及资料保留、完整CI和两版FPK匿名全量校验通过；系统通知/焦点和fnOS设备实测保持开放。
+
+### Main Changes
+
+- 修复Chromium Session预连接与production实际DB关闭，保留原15秒统一退出预算和保存/veto/失败守门；旧tag和公开资产不覆盖。
+- 外部验收使用独立可用CDP端口；真实自动新PID出现后等待所属原生窗口就绪，只发一次正常关闭，cleanup不重复，原始失败与成功分别归档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9fff1a1` | fix(desktop): drain workspace session within host shutdown budget |
+| `d70bb54` | fix(server): close actual production database clients |
+| `cc2911b` | fix(test): allocate a distinct loopback CDP port per native launch |
+| `e3a950f` | chore(release): prepare desktop and fnOS 0.1.8 update target |
+| `22bb647` | docs: preserve unified 0.1.7 and 0.1.8 releases and first native upgrade results |
+| `f86b1b8` | fix(test): wait for the relaunched native workspace before one close request |
+| `442cd13` | docs: record independent native close readiness review |
+| `0cc02b9` | docs: record verified native upgrades and fnOS distribution [skip ci] |
+
+### Testing
+
+- [OK] 精确442cd13的CI39441401694：pnpm check/build/PostgreSQL/S3全success；30项外部harness独立回归及PowerShell策略编译通过。
+- [OK] 真实7→8 run39441421036 Windows/Linux均success；原artifact ZIP/GitHub摘要和全部63文件逐字节核对、保存保护/NSIS/自动PID时序/正常退出/完整正文和模式保留均通过，关键PNG实际目视。
+- [OK] v0.1.7与v0.1.8均五目标15资产公开；两版FPK匿名HTTP200完整SHA匹配，最终8包170575967字节。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- AC3原生系统通知投递与自动焦点、fnOS设备安装升级仍待实测；mac无正式签名继续手动更新，当前任务in_progress不归档。
+- 其他会话界面打磨WIP保留未纳入本轮；后续证据与journal提交不改变442cd13已验源树。
