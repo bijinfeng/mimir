@@ -5,12 +5,19 @@ export class HostShutdown {
     private readonly closeHost: () => Promise<void>,
     private readonly timeoutMs = 15_000,
   ) {}
-  close(): Promise<void> {
+  close(beforeClose?: () => Promise<void>): Promise<void> {
     if (this.closing) return this.closing
     this.closing = new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('宿主关闭超时')), this.timeoutMs)
+      let timedOut = false
+      const timer = setTimeout(() => {
+        timedOut = true
+        reject(new Error('宿主关闭超时'))
+      }, this.timeoutMs)
       void Promise.resolve()
-        .then(this.closeHost)
+        .then(async () => {
+          await beforeClose?.()
+          if (!timedOut) await this.closeHost()
+        })
         .then(resolve, reject)
         .finally(() => clearTimeout(timer))
     })

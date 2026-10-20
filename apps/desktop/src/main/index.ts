@@ -75,13 +75,13 @@ const workspaceTransition = new WorkspaceTransition()
 let quitReady = false
 let updater: Awaited<ReturnType<typeof createNativeUpdater>> | null = null
 
-function closeHost(): Promise<void> {
+function closeHost(beforeClose?: () => Promise<void>): Promise<void> {
   shutdown ??= new HostShutdown(async () => {
     if (!host) return
     await host.close()
     host = null
   })
-  return shutdown.close()
+  return shutdown.close(beforeClose)
 }
 let bootInfo: DesktopBootInfo | null = null
 let win: BrowserWindow | null = null

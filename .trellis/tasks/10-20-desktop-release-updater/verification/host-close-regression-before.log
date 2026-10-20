@@ -1,0 +1,62 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/desktop
+
+ ❯ |main| src/main/native-updater.test.ts (23 tests | 2 failed) 71ms
+   ❯ native update authorization and restart sequence (14)
+     × closes the saved workspace before draining its session and awaiting host shutdown 5ms
+     × preserves session drain failures and never enters host shutdown or installation 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |main| src/main/native-updater.test.ts > native update authorization and restart sequence > closes the saved workspace before draining its session and awaiting host shutdown
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ ❯ src/main/native-updater.test.ts:252:36
+    250|     await flush()
+    251|     expect(workspace.destroyed).toBe(true)
+    252|     expect(mocks.closeConnections).toHaveBeenCalledOnce()
+       |                                    ^
+    253|     expect(closeHost).not.toHaveBeenCalled()
+    254|     expect(mocks.installed).not.toHaveBeenCalled()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |main| src/main/native-updater.test.ts > native update authorization and restart sequence > preserves session drain failures and never enters host shutdown or installation
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array []
+
+
+Number of calls: 1
+
+ ❯ src/main/native-updater.test.ts:268:29
+    266|       await active!.controller.install()
+    267|       expect(workspace.destroyed).toBe(true)
+    268|       expect(closeHost).not.toHaveBeenCalled()
+       |                             ^
+    269|       expect(mocks.installed).not.toHaveBeenCalled()
+    270|       expect(active!.controller.getState()).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 passed (23)
+   Start at  20:54:30
+   Duration  246ms (tests 53%, transform 33%, import 12%, worker 2%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/admin/Desktop/mimir/apps/desktop
+

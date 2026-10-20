@@ -1,0 +1,25 @@
+// Run from repository root on Node22:
+// node --input-type=module - v0.1.6 < <this-file>   (old source)
+// node --input-type=module - < <this-file>          (current source)
+// Then run desktop's Electron executable with the printed probe.cjs path.
+import { mkdtemp, readFile, writeFile, symlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { stripTypeScriptTypes } from 'node:module'
+import { execFileSync } from 'node:child_process'
+
+const ref = process.argv[2]
+const directory = await mkdtemp(join(tmpdir(), 'mimir-host-close-native-'))
+for (const name of ['host', 'artifacts', 'host-shutdown', 'workspace-close', 'native-updater', 'updater', 'release-notes']) {
+  const path = `apps/desktop/src/main/${name}.ts`
+  const source = ref ? execFileSync('git', ['show', `${ref}:${path}`], { encoding: 'utf8' }) : await readFile(path, 'utf8')
+  let code = stripTypeScriptTypes(source, { mode: 'transform' }).replace(/(from\s+'\.\/[^']+)\.js'/g, "$1.mjs'")
+  // Match electron-vite's CJS dependency interop while executing source-derived ESM in the probe.
+  code = code.replace("import { autoUpdater } from 'electron-updater';", "import updaterPackage from 'electron-updater'; const { autoUpdater } = updaterPackage;")
+  await writeFile(join(directory, `${name}.mjs`), code)
+}
+await symlink(resolve('apps/desktop/node_modules'), join(directory, 'node_modules'))
+const originalDirectory = '/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-ueYDjn'
+const template = await readFile('.trellis/tasks/10-20-desktop-release-updater/verification/host-close-probe.cjs.txt', 'utf8')
+await writeFile(join(directory, 'probe.cjs'), template.replaceAll(originalDirectory, directory).replaceAll('/Users/admin/Desktop/mimir', process.cwd()))
+console.log(join(directory, 'probe.cjs'))

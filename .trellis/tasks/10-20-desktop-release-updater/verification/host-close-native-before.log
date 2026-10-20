@@ -1,0 +1,22 @@
+已挂载前端静态资源
+mimir server 监听 http://localhost:63829
+  数据目录 /var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-bYYewh/data
+  数据库 sqlite（/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-bYYewh/data/mimir.db）
+  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听
+<-- GET /healthz
+--> GET /healthz 200 0ms
+NATIVE_HOST_READY Electron 44.7.0 Node 24.21.0
+<-- GET /healthz
+--> GET /healthz 200 0ms
+NATIVE_PRECONNECT_REQUESTED
+NATIVE_CLOSE_START
+HTTP_CLOSE_CALL 1792501313166
+HTTP_CONNECTIONS 3
+HOST_GATE_CAUSE Error: 宿主关闭超时
+    at Timeout._onTimeout (file:///private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-bYYewh/host-shutdown.mjs:12:49)
+    at listOnTimeout (node:internal/timers:685:17)
+    at process.processTimers (node:internal/timers:618:7)
+NATIVE_HOST_CLOSE_REJECTED Error: 工作区已关闭，但暂时无法完成重启，更新尚未安装。请关闭客户端并重新启动以恢复使用。
+    at prepareWorkspace (file:///private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-bYYewh/native-updater.mjs:143:19)
+    at async Object.prepareInstall (file:///private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-bYYewh/native-updater.mjs:201:17)
+    at async /private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-bYYewh/probe.cjs:13:554 CAUSE undefined

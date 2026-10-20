@@ -22,7 +22,7 @@ interface Workspace {
 }
 export interface NativeUpdaterOptions {
   workspace(): Workspace
-  closeHost(): Promise<void>
+  closeHost(beforeClose?: () => Promise<void>): Promise<void>
   setPreparing(value: boolean): void
   menuChanged(state: DesktopUpdateState): void
 }
@@ -179,6 +179,7 @@ export async function createNativeUpdater(options: NativeUpdaterOptions): Promis
     if (target !== options.workspace().window || target.isDestroyed()) {
       throw new UpdateBlocked('工作区已变化，请重新检查保存状态。')
     }
+    const workspaceSession = target.webContents.session
     options.setPreparing(true)
     try {
       await closeWorkspace(target)
@@ -188,13 +189,17 @@ export async function createNativeUpdater(options: NativeUpdaterOptions): Promis
       )
     }
     try {
-      await options.closeHost()
-    } catch {
-      throw new UpdateBlocked(
+      // Chromium keeps pooled/preconnected sockets alive after its window is destroyed.
+      // Drain only after save/beforeunload succeeds, before waiting for HTTP shutdown.
+      await options.closeHost(() => workspaceSession.closeAllConnections())
+    } catch (cause) {
+      const failure = new UpdateBlocked(
         '工作区已关闭，但暂时无法完成重启，更新尚未安装。请关闭客户端并重新启动以恢复使用。',
         false,
         true,
       )
+      failure.cause = cause
+      throw failure
     }
   }
 

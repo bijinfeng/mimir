@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BrowserWindow, IpcMainInvokeEvent } from 'electron'
 import { createNativeUpdater, trustedUpdateFrame } from './native-updater.js'
+import { HostShutdown } from './host-shutdown.js'
 
 const mocks = vi.hoisted(() => ({
   directory: '',
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   windows: [] as unknown[],
   handlers: new Map<string, (...args: unknown[]) => unknown>(),
   installed: vi.fn<() => void>(),
+  closeConnections: vi.fn<() => Promise<void>>(async () => {}),
   check: vi.fn<() => Promise<{ updateInfo: { version: string } }>>(async () => ({
     updateInfo: { version: '0.2.0' },
   })),
@@ -34,13 +36,20 @@ vi.mock('electron', async () => {
   class Window extends EventEmitter {
     destroyed = false
     closeMode = 'close'
-    webContents = Object.assign(new EventEmitter(), {
+    private readonly contents = Object.assign(new EventEmitter(), {
       mainFrame: { url: '', processId: 1, routingId: 1 },
       send: vi.fn<() => void>(),
       isLoadingMainFrame: () => false,
       setWindowOpenHandler: vi.fn<() => void>(),
-      session: { setPermissionRequestHandler: vi.fn<() => void>() },
+      session: {
+        setPermissionRequestHandler: vi.fn<() => void>(),
+        closeAllConnections: mocks.closeConnections,
+      },
     })
+    get webContents() {
+      if (this.destroyed) throw new Error('Object has been destroyed')
+      return this.contents
+    }
     show = vi.fn<() => void>()
     focus = vi.fn<() => void>()
     restore = vi.fn<() => void>()
@@ -118,11 +127,12 @@ const platformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform')!
 let active: Awaited<ReturnType<typeof createNativeUpdater>> | undefined
 let workspace: TestWindow
 let surface: 'local' | 'cloud' | 'setup'
-let closeHost: ReturnType<typeof vi.fn<() => Promise<void>>>
+let closeHost: ReturnType<typeof vi.fn<(beforeClose?: () => Promise<void>) => Promise<void>>>
 let preparing: ReturnType<typeof vi.fn<(value: boolean) => void>>
 let ipc: EventEmitter
 beforeEach(async () => {
   vi.clearAllMocks()
+  mocks.closeConnections.mockReset().mockResolvedValue(undefined)
   mocks.windows = []
   mocks.handlers.clear()
   mocks.packaged = true
@@ -138,7 +148,9 @@ beforeEach(async () => {
   ipc.removeAllListeners()
   workspace = new electron.BrowserWindow() as unknown as TestWindow
   surface = 'local'
-  closeHost = vi.fn<() => Promise<void>>(async () => {})
+  closeHost = vi.fn<(beforeClose?: () => Promise<void>) => Promise<void>>(async (beforeClose) => {
+    await beforeClose?.()
+  })
   preparing = vi.fn<() => void>()
   active = await createNativeUpdater({
     workspace: () => ({ window: workspace as unknown as BrowserWindow, surface }),
@@ -216,12 +228,12 @@ describe('native update authorization and restart sequence', () => {
   })
   it('awaits save acknowledgement and completed host shutdown before invoking installer', async () => {
     let finish!: () => void
-    closeHost.mockImplementation(
-      () =>
-        new Promise<void>((resolve) => {
-          finish = resolve
-        }),
-    )
+    closeHost.mockImplementation(async (beforeClose) => {
+      await beforeClose?.()
+      await new Promise<void>((resolve) => {
+        finish = resolve
+      })
+    })
     acknowledge()
     const operation = active!.controller.install()
     await flush()
@@ -231,6 +243,90 @@ describe('native update authorization and restart sequence', () => {
     finish()
     await operation
     expect(mocks.installed).toHaveBeenCalledExactlyOnceWith(false, true)
+  })
+  it('closes the saved workspace before draining its session and awaiting host shutdown', async () => {
+    const closeServer = vi.fn<() => Promise<void>>(async () => {})
+    const shutdown = new HostShutdown(closeServer)
+    closeHost.mockImplementation((beforeClose) => shutdown.close(beforeClose))
+    let drained!: () => void
+    mocks.closeConnections.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          expect(workspace.destroyed).toBe(true)
+          drained = resolve
+        }),
+    )
+    acknowledge()
+    const operation = active!.controller.install()
+    await flush()
+    expect(workspace.destroyed).toBe(true)
+    expect(mocks.closeConnections).toHaveBeenCalledOnce()
+    expect(closeHost).toHaveBeenCalledOnce()
+    expect(closeServer).not.toHaveBeenCalled()
+    expect(mocks.installed).not.toHaveBeenCalled()
+    drained()
+    await operation
+    expect(closeHost).toHaveBeenCalledOnce()
+    expect(closeServer).toHaveBeenCalledOnce()
+    expect(mocks.installed).toHaveBeenCalledExactlyOnceWith(false, true)
+  })
+  it('preserves session drain failures and never enters host shutdown or installation', async () => {
+    const closeServer = vi.fn<() => Promise<void>>(async () => {})
+    const shutdown = new HostShutdown(closeServer)
+    closeHost.mockImplementation((beforeClose) => shutdown.close(beforeClose))
+    const cause = new Error('session connection drain failed')
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      mocks.closeConnections.mockRejectedValueOnce(cause)
+      acknowledge()
+      await active!.controller.install()
+      expect(workspace.destroyed).toBe(true)
+      expect(closeHost).toHaveBeenCalledOnce()
+      expect(closeServer).not.toHaveBeenCalled()
+      expect(mocks.installed).not.toHaveBeenCalled()
+      expect(active!.controller.getState()).toMatchObject({
+        status: 'blocked',
+        recoveryRequired: true,
+        retry: undefined,
+      })
+      expect(warning).toHaveBeenCalledWith('[desktop:update]', expect.objectContaining({ cause }))
+      await active!.controller.install()
+      expect(mocks.closeConnections).toHaveBeenCalledOnce()
+    } finally {
+      warning.mockRestore()
+    }
+  })
+  it('keeps session drain inside the shutdown budget and rejects late completion', async () => {
+    vi.useFakeTimers()
+    const closeServer = vi.fn<() => Promise<void>>(async () => {})
+    const shutdown = new HostShutdown(closeServer)
+    closeHost.mockImplementation((beforeClose) => shutdown.close(beforeClose))
+    let drained!: () => void
+    mocks.closeConnections.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          drained = resolve
+        }),
+    )
+    acknowledge()
+    const operation = active!.controller.install()
+    await flush()
+    expect(mocks.closeConnections).toHaveBeenCalledOnce()
+    await vi.advanceTimersByTimeAsync(15_000)
+    await operation
+    expect(active!.controller.getState()).toMatchObject({
+      status: 'blocked',
+      recoveryRequired: true,
+      retry: undefined,
+    })
+    expect(closeServer).not.toHaveBeenCalled()
+    expect(mocks.installed).not.toHaveBeenCalled()
+    drained()
+    await flush()
+    await active!.controller.install()
+    expect(closeServer).not.toHaveBeenCalled()
+    expect(mocks.installed).not.toHaveBeenCalled()
+    expect(closeHost).toHaveBeenCalledOnce()
   })
   it('refuses renderer false, unrelated requests, and replies from stale navigation', async () => {
     vi.useFakeTimers()
@@ -259,6 +355,7 @@ describe('native update authorization and restart sequence', () => {
     workspace.closeMode = 'veto'
     await active!.controller.install()
     expect(workspace.destroyed).toBe(false)
+    expect(mocks.closeConnections).not.toHaveBeenCalled()
     expect(closeHost).not.toHaveBeenCalled()
     expect(mocks.installed).not.toHaveBeenCalled()
     expect(active!.controller.getState()).toMatchObject({ status: 'blocked', retry: 'install' })
