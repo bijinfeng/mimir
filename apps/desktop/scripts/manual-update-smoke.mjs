@@ -2,14 +2,24 @@
 import assert from 'node:assert/strict'
 import { spawn, execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { mkdtemp, mkdir, writeFile, readFile, rm, rename, stat } from 'node:fs/promises'
+import {
+  mkdtemp,
+  mkdir,
+  writeFile,
+  readFile,
+  rm,
+  rename,
+  stat,
+  lstat,
+  realpath,
+} from 'node:fs/promises'
 import { createWriteStream } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { join, resolve, basename, dirname, isAbsolute } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'node:net'
 import { pipeline } from 'node:stream/promises'
-import { Readable } from 'node:stream'
+import { Readable, Transform } from 'node:stream'
 import { Cdp, officialRepository, sha256, until, versionPair } from './update-smoke-lib.mjs'
 
 const exec = promisify(execFile)
@@ -52,6 +62,93 @@ export function assertManualState(state, currentVersion, availableVersion) {
   }
 }
 
+export async function manualDownloadDirectory(requested, root) {
+  if (!requested) return root
+  assert.ok(isAbsolute(requested), 'Download cache must be an explicit absolute temporary path')
+  const info = await lstat(requested)
+  assert.ok(info.isDirectory() && !info.isSymbolicLink(), 'Download cache must be a real directory')
+  const directory = await realpath(requested)
+  assert.equal(dirname(directory), await realpath(tmpdir()))
+  assert.match(basename(directory), /^mimir-official-manual-update-[a-zA-Z0-9]+$/)
+  return directory
+}
+
+export async function downloadOfficialZip(
+  asset,
+  directory,
+  { request = fetch, timeoutMs = 3_600_000, stallMs = 60_000 } = {},
+) {
+  assert.match(asset.name, /^mimir-\d+\.\d+\.\d+-mac-(arm64|x64)\.zip$/)
+  assert.ok(Number.isSafeInteger(asset.id) && asset.id > 0)
+  assert.equal(
+    asset.url,
+    `https://api.github.com/repos/${officialRepository}/releases/assets/${asset.id}`,
+  )
+  assert.ok(Number.isSafeInteger(asset.size) && asset.size > 0)
+  assert.match(asset.digest, /^sha256:[a-f0-9]{64}$/)
+  const file = join(directory, asset.name)
+  let offset = 0
+  let exists = false
+  try {
+    const info = await lstat(file)
+    assert.ok(info.isFile() && !info.isSymbolicLink(), 'Cached ZIP must be a regular file')
+    offset = info.size
+    exists = true
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+  }
+  assert.ok(offset <= asset.size, 'Cached ZIP exceeds the official size')
+  if (offset === asset.size) {
+    assert.equal(`sha256:${await sha256(file)}`, asset.digest, 'Cached ZIP digest mismatch')
+    return file
+  }
+  const stalled = new AbortController()
+  const signal = AbortSignal.any([AbortSignal.timeout(timeoutMs), stalled.signal])
+  let timer
+  function resetStall() {
+    clearTimeout(timer)
+    timer = setTimeout(() => stalled.abort(new Error('Official ZIP download stalled')), stallMs)
+    timer.unref()
+  }
+  resetStall()
+  try {
+    // Both the source and any resumed byte range belong to the official anonymous asset API.
+    const response = await request(asset.url, {
+      headers: {
+        Accept: 'application/octet-stream',
+        ...(offset ? { Range: `bytes=${offset}-` } : {}),
+      },
+      signal,
+    })
+    assert.equal(response.status, offset ? 206 : 200)
+    assert.match(response.headers.get('content-type') ?? '', /^application\/(octet-stream|zip)\b/)
+    if (offset)
+      assert.equal(
+        response.headers.get('content-range'),
+        `bytes ${offset}-${asset.size - 1}/${asset.size}`,
+        'Resume must return the exact remaining official byte range',
+      )
+    const progress = new Transform({
+      transform(chunk, encoding, callback) {
+        resetStall()
+        callback(null, chunk)
+      },
+    })
+    await pipeline(
+      Readable.fromWeb(response.body),
+      progress,
+      createWriteStream(file, { flags: exists ? 'a' : 'wx' }),
+      { signal },
+    )
+    assert.equal((await stat(file)).size, asset.size)
+    assert.equal(`sha256:${await sha256(file)}`, asset.digest)
+    return file
+  } finally {
+    clearTimeout(timer)
+    stalled.abort()
+  }
+}
+
 async function portNumber() {
   const server = createServer()
   await new Promise((accept, reject) => {
@@ -80,6 +177,10 @@ export async function runManualUpdateSmoke() {
   assert.equal(process.arch, 'arm64', 'This acceptance target is the current macOS ARM64 host')
   const { base, target } = versionPair(process.env.BASE_VERSION, process.env.TARGET_VERSION)
   const root = await mkdtemp(join(tmpdir(), 'mimir-official-manual-update-'))
+  const downloadDirectory = await manualDownloadDirectory(
+    process.env.MANUAL_UPDATE_DOWNLOAD_CACHE,
+    root,
+  )
   const evidence = process.env.MANUAL_UPDATE_EVIDENCE
     ? resolve(process.env.MANUAL_UPDATE_EVIDENCE)
     : join(root, 'evidence')
@@ -101,6 +202,7 @@ export async function runManualUpdateSmoke() {
     root,
     userData,
     installation,
+    downloadDirectory,
     evidence,
     checks: [],
     limitations: [
@@ -124,19 +226,7 @@ export async function runManualUpdateSmoke() {
     return info
   }
   async function download(asset) {
-    const file = join(root, asset.name)
-    // The official anonymous asset API avoids a separate connection to github.com.
-    // The exact asset ID/source was checked against the official release metadata above.
-    const response = await fetch(asset.url, {
-      headers: { Accept: 'application/octet-stream' },
-      signal: AbortSignal.timeout(900_000),
-    })
-    assert.equal(response.status, 200)
-    assert.match(response.headers.get('content-type') ?? '', /^application\/(octet-stream|zip)\b/)
-    await pipeline(Readable.fromWeb(response.body), createWriteStream(file))
-    assert.equal((await stat(file)).size, asset.size)
-    assert.equal(`sha256:${await sha256(file)}`, asset.digest)
-    return file
+    return downloadOfficialZip(asset, downloadDirectory)
   }
   async function targets() {
     const response = await fetch(`${endpoint}/json/list`, { signal: AbortSignal.timeout(3000) })

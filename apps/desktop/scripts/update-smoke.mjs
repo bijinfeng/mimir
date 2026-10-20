@@ -437,7 +437,15 @@ try {
   if (process.platform === 'win32') {
     wizard = spawn(
       'pwsh',
-      ['-NoProfile', '-File', join(scriptRoot, 'update-smoke-native.ps1'), '-Action', 'wizard'],
+      [
+        '-NoProfile',
+        '-File',
+        join(scriptRoot, 'update-smoke-native.ps1'),
+        '-Action',
+        'wizard',
+        '-EvidenceDirectory',
+        evidence,
+      ],
       { env, stdio: ['ignore', 'pipe', 'pipe'] },
     )
     const wizardLog = createWriteStream(join(evidence, 'nsis-update-wizard.log'))
