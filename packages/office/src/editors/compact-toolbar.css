@@ -224,3 +224,13 @@
 .mimir-compact-toolbar__panel > .me-menu__fields {
   flex-basis: 100%;
 }
+
+/*
+ * 390px 笔记页只有 4 个分类，却因为 12px 的左右内边距多出 11px 横向滚动。
+ * 收窄内边距后四个标签完整落在 205px 内；更多分类仍按既有规则横向滚动。
+ */
+@media (max-width: 480px) {
+  .mimir-compact-toolbar__tab {
+    padding-inline: 8px;
+  }
+}

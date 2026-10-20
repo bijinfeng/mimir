@@ -55,6 +55,6 @@
 | 23 PPTX 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-pptx-secondary`；现状复核，无代码改动 |
 | 24 PDF 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-pdf-secondary`；现状复核，无代码改动 |
 | 25 共享浮层与短窗 | 已完成 | `docs/visual-comparisons/2026-10-20-shared-dialogs`；全仓 check exit 0 |
-| 26 窄屏工作区 | 待开始（下一模块） | — |
-| 27 跨模块一致性 | 待开始 | — |
+| 26 窄屏工作区 | 已完成 | `docs/visual-comparisons/2026-10-20-narrow-workspace`；待全仓 check |
+| 27 跨模块一致性 | 进行中（下一模块） | — |
 | 28 小程序 | 待开始 | — |
