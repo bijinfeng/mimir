@@ -1,0 +1,101 @@
+[
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:46.659Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:46.917Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:47.174Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:47.431Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:47.691Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:47.956Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:48.216Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:48.517Z",
+    "windows": []
+  },
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:42:48.842Z",
+    "windows": [
+      {
+        "id": "0x00400003",
+        "pid": 4533,
+        "title": "mimir",
+        "mapped": true,
+        "closable": true,
+        "info": "\nxwininfo: Window id: 0x400003 \"mimir\"\n\n  Absolute upper-left X:  0\n  Absolute upper-left Y:  62\n  Relative upper-left X:  0\n  Relative upper-left Y:  0\n  Width: 1280\n  Height: 900\n  Depth: 24\n  Visual: 0x21\n  Visual Class: TrueColor\n  Border width: 0\n  Class: InputOutput\n  Colormap: 0x20 (installed)\n  Bit Gravity State: NorthWestGravity\n  Window Gravity State: NorthWestGravity\n  Backing Store State: NotUseful\n  Save Under State: no\n  Map State: IsViewable\n  Override Redirect State: no\n  Corners:  +0+62  -0+62  -0-62  +0-62\n  -geometry 1280x900+0+62\n\n",
+        "properties": "_NET_WM_PID(CARDINAL) = 4533\nWM_PROTOCOLS(ATOM): protocols  WM_DELETE_WINDOW, _NET_WM_PING, _NET_WM_SYNC_REQUEST\n",
+        "alreadyRequested": false
+      }
+    ]
+  },
+  {
+    "stage": "request",
+    "at": "2026-10-20T14:42:48.854Z",
+    "target": {
+      "id": "0x00400003",
+      "pid": 4533,
+      "title": "mimir",
+      "mapped": true,
+      "closable": true,
+      "info": "\nxwininfo: Window id: 0x400003 \"mimir\"\n\n  Absolute upper-left X:  0\n  Absolute upper-left Y:  62\n  Relative upper-left X:  0\n  Relative upper-left Y:  0\n  Width: 1280\n  Height: 900\n  Depth: 24\n  Visual: 0x21\n  Visual Class: TrueColor\n  Border width: 0\n  Class: InputOutput\n  Colormap: 0x20 (installed)\n  Bit Gravity State: NorthWestGravity\n  Window Gravity State: NorthWestGravity\n  Backing Store State: NotUseful\n  Save Under State: no\n  Map State: IsViewable\n  Override Redirect State: no\n  Corners:  +0+62  -0+62  -0-62  +0-62\n  -geometry 1280x900+0+62\n\n",
+      "properties": "_NET_WM_PID(CARDINAL) = 4533\nWM_PROTOCOLS(ATOM): protocols  WM_DELETE_WINDOW, _NET_WM_PING, _NET_WM_SYNC_REQUEST\n",
+      "alreadyRequested": false
+    }
+  },
+  {
+    "stage": "response",
+    "at": "2026-10-20T14:42:48.902Z",
+    "target": {
+      "id": "0x00400003",
+      "pid": 4533,
+      "title": "mimir",
+      "mapped": true,
+      "closable": true,
+      "info": "\nxwininfo: Window id: 0x400003 \"mimir\"\n\n  Absolute upper-left X:  0\n  Absolute upper-left Y:  62\n  Relative upper-left X:  0\n  Relative upper-left Y:  0\n  Width: 1280\n  Height: 900\n  Depth: 24\n  Visual: 0x21\n  Visual Class: TrueColor\n  Border width: 0\n  Class: InputOutput\n  Colormap: 0x20 (installed)\n  Bit Gravity State: NorthWestGravity\n  Window Gravity State: NorthWestGravity\n  Backing Store State: NotUseful\n  Save Under State: no\n  Map State: IsViewable\n  Override Redirect State: no\n  Corners:  +0+62  -0+62  -0-62  +0-62\n  -geometry 1280x900+0+62\n\n",
+      "properties": "_NET_WM_PID(CARDINAL) = 4533\nWM_PROTOCOLS(ATOM): protocols  WM_DELETE_WINDOW, _NET_WM_PING, _NET_WM_SYNC_REQUEST\n",
+      "alreadyRequested": false
+    },
+    "response": {
+      "accepted": true,
+      "method": "wmctrl -i -c",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  {
+    "stage": "exit-wait",
+    "at": "2026-10-20T14:42:48.951Z"
+  },
+  {
+    "stage": "exited",
+    "at": "2026-10-20T14:42:49.011Z"
+  }
+]

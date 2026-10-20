@@ -1,0 +1,79 @@
+[
+  {
+    "stage": "enumerate",
+    "at": "2026-10-20T14:49:51.841Z",
+    "windows": [
+      {
+        "mapped": false,
+        "title": "",
+        "pid": 2952,
+        "closable": false,
+        "id": "0",
+        "alreadyRequested": false
+      },
+      {
+        "mapped": false,
+        "title": "",
+        "pid": 3476,
+        "closable": false,
+        "id": "0",
+        "alreadyRequested": false
+      },
+      {
+        "mapped": false,
+        "title": "",
+        "pid": 8892,
+        "closable": false,
+        "id": "0",
+        "alreadyRequested": false
+      },
+      {
+        "mapped": true,
+        "title": "mimir",
+        "pid": 9184,
+        "closable": true,
+        "id": "590288",
+        "alreadyRequested": false
+      }
+    ]
+  },
+  {
+    "stage": "request",
+    "at": "2026-10-20T14:49:51.842Z",
+    "target": {
+      "mapped": true,
+      "title": "mimir",
+      "pid": 9184,
+      "closable": true,
+      "id": "590288",
+      "alreadyRequested": false
+    }
+  },
+  {
+    "stage": "response",
+    "at": "2026-10-20T14:49:53.364Z",
+    "target": {
+      "mapped": true,
+      "title": "mimir",
+      "pid": 9184,
+      "closable": true,
+      "id": "590288",
+      "alreadyRequested": false
+    },
+    "response": {
+      "accepted": true,
+      "method": "CloseMainWindow",
+      "pid": 9184,
+      "id": "590288",
+      "at": "2026-10-20T14:49:53.1333431Z"
+    }
+  },
+  {
+    "stage": "exit-wait",
+    "at": "2026-10-20T14:49:53.365Z"
+  },
+  {
+    "stage": "exited",
+    "at": "2026-10-20T14:49:54.024Z"
+  }
+]

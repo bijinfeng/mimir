@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-10-20T13:49:12.911628+00:00",
+  "anonymous": true,
+  "httpStatus": 200,
+  "core": {
+    "limit": 60,
+    "remaining": 0,
+    "reset": 1792504364,
+    "used": 60
+  }
+}

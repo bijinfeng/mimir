@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "e3a950fdd5a42bf02e83ab1fb40a6832c35f38c9",
+  "commit": "442cd13a4b75fdc207cf9f7c7e8025e490ddd0da",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "desktop/fnOS0.1.7与0.1.8已固定tag并正式五目标各15资产公开；完整CI39428258688/39431446416全部success。官方7→8第一轮39437731315 Windows真实升级/向导exit0/自动新PID/资料模式保留全部success，Linux完整目标SHA替换且自动新PID，但外部normalClose无就绪/初始动作证据，资料未核，保持false；正在修外部协调后原7→8复验。Session原15秒预算及production实际DB关闭已原生红绿/独立复核。7 FPK匿名全量SHA通过，8下载中。mac官方3→4手动替换成功；系统通知焦点和fnOS设备安装未实测，保持in_progress。",
+  "notes": "master442cd13完整CI39441401694全success(check/build/PG/S3)；官方7→8第二轮39441421036 Windows/Linux均success，真实保存保护/取消/HTTP保存200→安装→自动新PID→一次native close→显式重开0.1.8与全文/title/tags/folder/local保留、三launcher exit0全部通过，独立artifact/截图复核通过。desktop/fnOS7/8均固定tag五目标各15资产，FPK两版匿名全量SHA通过。旧失败原样保留。后续仅证据/任务/journal提交，其他UI WIP不混入。AC6/AC7完成；AC3通知投递焦点与fnOS设备安装未实测，macmanual，保持in_progress。",
   "meta": {}
 }

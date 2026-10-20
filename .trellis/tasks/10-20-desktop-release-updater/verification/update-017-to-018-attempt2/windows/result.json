@@ -1,0 +1,339 @@
+{
+  "base": "0.1.7",
+  "target": "0.1.8",
+  "platform": "win32",
+  "checks": [
+    {
+      "check": "official download verified; completion did not open a details window",
+      "at": "2026-10-20T14:45:11.059Z",
+      "downloaded": {
+        "status": "downloaded",
+        "currentVersion": "0.1.7",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.8",
+        "platform": "win32",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true,
+        "version": "0.1.8",
+        "releaseNotes": "桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\nFull Changelog: v0.1.7...v0.1.8",
+        "checkedAt": "2026-10-20T14:45:06.089Z"
+      }
+    },
+    {
+      "check": "ordinary UI close after download did not install",
+      "at": "2026-10-20T14:45:12.323Z"
+    },
+    {
+      "check": "pending real HTTP save triggered guard; continue editing canceled installation",
+      "at": "2026-10-20T14:45:34.502Z"
+    },
+    {
+      "check": "updater relaunched new processes after the old application exited",
+      "at": "2026-10-20T14:49:49.496Z",
+      "previousProcesses": [
+        904,
+        4340,
+        5500,
+        6932,
+        7564
+      ],
+      "relaunchedProcesses": [
+        3476,
+        8892,
+        9184
+      ]
+    },
+    {
+      "check": "real save-and-restart installed official target and relaunched; version, mode, Markdown, tags and folder retained",
+      "at": "2026-10-20T14:50:00.357Z",
+      "upgraded": {
+        "status": "idle",
+        "currentVersion": "0.1.8",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases",
+        "platform": "win32",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true
+      }
+    }
+  ],
+  "limitations": [
+    "Headless/session notification delivery and focus are not asserted by CDP.",
+    "Screenshot capture explicitly brings its target to the front; these previews are not evidence of automatic focus behavior.",
+    "macOS ad-hoc builds remain manual; this test never claims macOS automatic installation."
+  ],
+  "launches": [
+    {
+      "name": "baseline-first",
+      "pid": 3964,
+      "port": 62971,
+      "endpoint": "http://127.0.0.1:62971",
+      "at": "2026-10-20T14:44:44.787Z"
+    },
+    {
+      "name": "baseline-second",
+      "pid": 904,
+      "port": 62927,
+      "endpoint": "http://127.0.0.1:62927",
+      "at": "2026-10-20T14:45:12.334Z"
+    },
+    {
+      "name": "upgraded",
+      "pid": 9192,
+      "port": 49897,
+      "endpoint": "http://127.0.0.1:49897",
+      "at": "2026-10-20T14:49:54.039Z"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "download-ready",
+      "targetId": "6570FAD6383CDEB4EBDAD518D7BCA7AF",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T14:45:10.991Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T14:45:10.992Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T14:45:10.994Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T14:45:11.002Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T14:45:11.002Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T14:45:11.049Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T14:45:11.058Z"
+        }
+      ]
+    },
+    {
+      "name": "save-guard",
+      "targetId": "30B0218109A83C8FC2A70A92AC8067B1",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T14:45:33.975Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T14:45:33.977Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T14:45:33.979Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": [
+              {
+                "playState": "running",
+                "pending": true,
+                "endTime": 0.01
+              }
+            ]
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T14:45:34.051Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T14:45:34.052Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T14:45:34.107Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T14:45:34.136Z"
+        }
+      ]
+    },
+    {
+      "name": "retry-after-save",
+      "targetId": "689180761AC1577288F78D973AE4F103",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T14:45:34.587Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T14:45:34.593Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T14:45:34.599Z",
+          "observed": {
+            "visibilityState": "hidden",
+            "hidden": true,
+            "hasFocus": true,
+            "finiteAnimations": [
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              },
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              },
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              }
+            ]
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T14:45:34.707Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T14:45:34.708Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T14:45:34.753Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T14:45:34.761Z"
+        }
+      ]
+    },
+    {
+      "name": "save-and-restart-awaiting-http",
+      "targetId": "30B0218109A83C8FC2A70A92AC8067B1",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T14:45:37.823Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T14:45:37.824Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T14:45:37.826Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T14:45:37.831Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T14:45:37.831Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T14:45:37.889Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T14:45:37.919Z"
+        }
+      ]
+    },
+    {
+      "name": "upgraded-document",
+      "targetId": "DA7788374D7F96FA32592A926AEF5F97",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T14:50:00.242Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T14:50:00.243Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T14:50:00.245Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T14:50:00.256Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T14:50:00.256Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T14:50:00.318Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T14:50:00.356Z"
+        }
+      ]
+    }
+  ],
+  "processExits": [
+    {
+      "name": "baseline-first",
+      "pid": 3964,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "baseline-second",
+      "pid": 904,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "upgraded",
+      "pid": 9192,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "wizardExitCode": 0,
+  "success": true
+}

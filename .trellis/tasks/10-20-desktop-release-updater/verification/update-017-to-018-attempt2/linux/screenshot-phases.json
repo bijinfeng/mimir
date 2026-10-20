@@ -1,0 +1,240 @@
+[
+  {
+    "name": "download-ready",
+    "targetId": "2C3DAAE0CFEC014907372F846F571187",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:41:59.283Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:41:59.285Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:41:59.287Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": []
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:41:59.295Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:41:59.296Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:41:59.350Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:41:59.363Z"
+      }
+    ]
+  },
+  {
+    "name": "save-guard",
+    "targetId": "7C899247B3BFB848189129B831540846",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:42:31.609Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:42:31.612Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:42:31.614Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": [
+            {
+              "playState": "running",
+              "pending": true,
+              "endTime": 200
+            }
+          ]
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:42:31.979Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:42:31.980Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:42:32.080Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:42:32.132Z"
+      }
+    ]
+  },
+  {
+    "name": "retry-after-save",
+    "targetId": "D523C33B768E8265F471DFE048C0B006",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:42:33.116Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:42:33.117Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:42:33.120Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": [
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 300
+            },
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 300
+            },
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 300
+            }
+          ]
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:42:35.211Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:42:35.211Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:42:35.265Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:42:35.277Z"
+      }
+    ]
+  },
+  {
+    "name": "save-and-restart-awaiting-http",
+    "targetId": "7C899247B3BFB848189129B831540846",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:42:37.136Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:42:37.137Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:42:37.138Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": [
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 400
+            },
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 2000
+            }
+          ]
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:42:38.811Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:42:38.812Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:42:38.914Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:42:38.969Z"
+      }
+    ]
+  },
+  {
+    "name": "upgraded-document",
+    "targetId": "5FC4C98B88F60CE4A4F2CA85C06E1A52",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:43:00.638Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:43:00.639Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:43:00.640Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": []
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:43:00.643Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:43:00.643Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:43:00.715Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:43:00.769Z"
+      }
+    ]
+  }
+]

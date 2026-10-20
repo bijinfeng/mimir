@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "checkedAt": "2026-10-20T14:40:48.723758+00:00",
+  "version": "0.1.8",
+  "anonymous": true,
+  "authorizationHeaderPresent": false,
+  "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.8",
+  "tag": "v0.1.8",
+  "draft": false,
+  "prerelease": false,
+  "publishedAt": "2026-10-20T14:15:45Z",
+  "releaseAssetCount": 15,
+  "sourceCommit": "e3a950fdd5a42bf02e83ab1fb40a6832c35f38c9",
+  "releaseRun": "https://github.com/bijinfeng/mimir/actions/runs/39433040010",
+  "assetUrl": "https://github.com/bijinfeng/mimir/releases/download/v0.1.8/mimir-0.1.8-fnos-x64.fpk",
+  "assetId": 659513240,
+  "httpStatus": 200,
+  "contentLength": "170575967",
+  "receivedBytes": 170575967,
+  "expectedBytes": 170575967,
+  "sha256": "8edfcb853f3894b8b7afc9baeb61c2b47cee1c14b1015ff95cf14d9529462231",
+  "githubDigest": "sha256:8edfcb853f3894b8b7afc9baeb61c2b47cee1c14b1015ff95cf14d9529462231",
+  "sha256Matches": true,
+  "sha512Hex": "e8d334578f5801e89b2f85bd7dc763ca1a6dc8611e6bdb87b3dbc7aca869f5bd650f5bbeb1c90f2ad04c3bc9f60c2683530796434d43bdfb631101a19dcd2c4f",
+  "downloadSeconds": 1373.29,
+  "attempt": 2,
+  "method": "Anonymous official public asset URL, complete response streamed through SHA-256/SHA-512; no credentials or Range request.",
+  "limitations": [
+    "SHA-256 is compared with the anonymous GitHub asset digest; SHA-512 is independently computed only.",
+    "Binary bytes were consumed in full but are not retained in the repository.",
+    "fnOS device installation and upgrade are not asserted."
+  ]
+}

@@ -1,0 +1,473 @@
+﻿2026-10-20T14:40:51.6109180Z Current runner version: '2.337.0'
+2026-10-20T14:40:51.6418682Z ##[group]Runner Image Provisioner
+2026-10-20T14:40:51.6419649Z Hosted Compute Agent
+2026-10-20T14:40:51.6420263Z Version: 20261002.596
+2026-10-20T14:40:51.6421368Z Commit: c3d12f3313a95f25162a1503be624f3b0617f8c0
+2026-10-20T14:40:51.6422162Z Build Date: 2026-10-02T22:28:27Z
+2026-10-20T14:40:51.6423153Z Worker ID: {22ce8cd2-b2b7-44e9-a1f0-c61e6d6c1bc9}
+2026-10-20T14:40:51.6423914Z Region: westus
+2026-10-20T14:40:51.6424497Z Cloud: Azure
+2026-10-20T14:40:51.6425209Z ##[endgroup]
+2026-10-20T14:40:51.6426904Z ##[group]Operating System
+2026-10-20T14:40:51.6427616Z Microsoft Windows Server 2025
+2026-10-20T14:40:51.6428256Z 10.0.26100
+2026-10-20T14:40:51.6428761Z Datacenter
+2026-10-20T14:40:51.6429304Z ##[endgroup]
+2026-10-20T14:40:51.6429833Z ##[group]Runner Image
+2026-10-20T14:40:51.6430390Z Image: windows-2025-vs2026
+2026-10-20T14:40:51.6431017Z Version: 20261007.264.1
+2026-10-20T14:40:51.6432470Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261007.264/images/windows/Windows2025-VS2026-Readme.md
+2026-10-20T14:40:51.6434097Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261007.264
+2026-10-20T14:40:51.6435084Z ##[endgroup]
+2026-10-20T14:40:51.6436116Z ##[group]GITHUB_TOKEN Permissions
+2026-10-20T14:40:51.6438456Z Contents: read
+2026-10-20T14:40:51.6439062Z Metadata: read
+2026-10-20T14:40:51.6439565Z ##[endgroup]
+2026-10-20T14:40:51.6443900Z Secret source: Actions
+2026-10-20T14:40:51.6445214Z Cache mode: write
+2026-10-20T14:40:51.6446292Z Prepare workflow directory
+2026-10-20T14:40:51.9436323Z Prepare all required actions
+2026-10-20T14:40:51.9493567Z Getting action download info
+2026-10-20T14:40:52.4716310Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-20T14:40:52.8542606Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-20T14:40:53.0502444Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-10-20T14:40:53.4955972Z Complete job name: update (windows, windows-2025)
+2026-10-20T14:40:53.7513403Z ##[group]Run actions/checkout@v4
+2026-10-20T14:40:53.7514419Z with:
+2026-10-20T14:40:53.7514840Z   persist-credentials: false
+2026-10-20T14:40:53.7515336Z   repository: bijinfeng/mimir
+2026-10-20T14:40:53.7519312Z   token: ***
+2026-10-20T14:40:53.7519705Z   ssh-strict: true
+2026-10-20T14:40:53.7520112Z   ssh-user: git
+2026-10-20T14:40:53.7520491Z   clean: true
+2026-10-20T14:40:53.7520903Z   sparse-checkout-cone-mode: true
+2026-10-20T14:40:53.7521391Z   fetch-depth: 1
+2026-10-20T14:40:53.7521793Z   fetch-tags: false
+2026-10-20T14:40:53.7522218Z   show-progress: true
+2026-10-20T14:40:53.7522629Z   lfs: false
+2026-10-20T14:40:53.7523009Z   submodules: false
+2026-10-20T14:40:53.7523420Z   set-safe-directory: true
+2026-10-20T14:40:53.7523911Z   allow-unsafe-pr-checkout: false
+2026-10-20T14:40:53.7524671Z env:
+2026-10-20T14:40:53.7525048Z   BASE_VERSION: 0.1.7
+2026-10-20T14:40:53.7525477Z   TARGET_VERSION: 0.1.8
+2026-10-20T14:40:53.7525892Z ##[endgroup]
+2026-10-20T14:40:53.9221729Z Syncing repository: bijinfeng/mimir
+2026-10-20T14:40:53.9223297Z ##[group]Getting Git version info
+2026-10-20T14:40:53.9223749Z Working directory is 'D:\a\mimir\mimir'
+2026-10-20T14:40:54.0402650Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-20T14:40:54.5702122Z git version 2.56.0.windows.2
+2026-10-20T14:40:54.5828338Z ##[endgroup]
+2026-10-20T14:40:54.5898956Z Temporarily overriding HOME='D:\a\_temp\da80269a-c8fa-4e52-b6d7-84f01d8b8694' before making global git config changes
+2026-10-20T14:40:54.5905799Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-20T14:40:54.6156522Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\mimir\mimir
+2026-10-20T14:40:54.8184458Z Deleting the contents of 'D:\a\mimir\mimir'
+2026-10-20T14:40:54.8191692Z ##[group]Initializing the repository
+2026-10-20T14:40:54.8201651Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\mimir\mimir
+2026-10-20T14:40:55.1225189Z Initialized empty Git repository in D:/a/mimir/mimir/.git/
+2026-10-20T14:40:55.1277149Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/bijinfeng/mimir
+2026-10-20T14:40:55.3141065Z ##[endgroup]
+2026-10-20T14:40:55.3142117Z ##[group]Disabling automatic garbage collection
+2026-10-20T14:40:55.3143532Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2026-10-20T14:40:55.3768355Z ##[endgroup]
+2026-10-20T14:40:55.3769000Z ##[group]Setting up auth
+2026-10-20T14:40:55.3791582Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-20T14:40:55.4412472Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-20T14:40:58.2317800Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-20T14:40:58.2723198Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-20T14:40:58.8630644Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-20T14:40:58.9028889Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-20T14:40:59.4978722Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2026-10-20T14:40:59.5383504Z ##[endgroup]
+2026-10-20T14:40:59.5384154Z ##[group]Fetching the repository
+2026-10-20T14:40:59.5399700Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +442cd13a4b75fdc207cf9f7c7e8025e490ddd0da:refs/remotes/origin/master
+2026-10-20T14:41:10.3999723Z From https://github.com/bijinfeng/mimir
+2026-10-20T14:41:10.4003827Z  * [new ref]         442cd13a4b75fdc207cf9f7c7e8025e490ddd0da -> origin/master
+2026-10-20T14:41:10.4048813Z ##[endgroup]
+2026-10-20T14:41:10.4049492Z ##[group]Determining the checkout info
+2026-10-20T14:41:10.4050302Z ##[endgroup]
+2026-10-20T14:41:10.4060897Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2026-10-20T14:41:10.4586607Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2026-10-20T14:41:10.4986321Z ##[group]Checking out the ref
+2026-10-20T14:41:10.4995179Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B master refs/remotes/origin/master
+2026-10-20T14:41:11.6055660Z Updating files:  24% (1964/8067)
+2026-10-20T14:41:11.7604741Z Updating files:  25% (2017/8067)
+2026-10-20T14:41:11.7929334Z Updating files:  26% (2098/8067)
+2026-10-20T14:41:11.8532431Z Updating files:  27% (2179/8067)
+2026-10-20T14:41:11.8997849Z Updating files:  28% (2259/8067)
+2026-10-20T14:41:11.9415037Z Updating files:  29% (2340/8067)
+2026-10-20T14:41:12.0139468Z Updating files:  30% (2421/8067)
+2026-10-20T14:41:12.0687833Z Updating files:  31% (2501/8067)
+2026-10-20T14:41:12.1175531Z Updating files:  32% (2582/8067)
+2026-10-20T14:41:12.1459376Z Updating files:  33% (2663/8067)
+2026-10-20T14:41:12.1779813Z Updating files:  34% (2743/8067)
+2026-10-20T14:41:12.2239539Z Updating files:  35% (2824/8067)
+2026-10-20T14:41:12.2657829Z Updating files:  36% (2905/8067)
+2026-10-20T14:41:12.2883188Z Updating files:  37% (2985/8067)
+2026-10-20T14:41:12.3160505Z Updating files:  38% (3066/8067)
+2026-10-20T14:41:12.3610988Z Updating files:  39% (3147/8067)
+2026-10-20T14:41:12.3979091Z Updating files:  40% (3227/8067)
+2026-10-20T14:41:12.4348015Z Updating files:  41% (3308/8067)
+2026-10-20T14:41:12.4859482Z Updating files:  42% (3389/8067)
+2026-10-20T14:41:12.5591833Z Updating files:  43% (3469/8067)
+2026-10-20T14:41:12.5784195Z Updating files:  43% (3519/8067)
+2026-10-20T14:41:12.6086022Z Updating files:  44% (3550/8067)
+2026-10-20T14:41:12.6354035Z Updating files:  45% (3631/8067)
+2026-10-20T14:41:12.6861376Z Updating files:  46% (3711/8067)
+2026-10-20T14:41:12.7220540Z Updating files:  47% (3792/8067)
+2026-10-20T14:41:12.7496523Z Updating files:  48% (3873/8067)
+2026-10-20T14:41:12.7700183Z Updating files:  49% (3953/8067)
+2026-10-20T14:41:12.7917182Z Updating files:  50% (4034/8067)
+2026-10-20T14:41:12.8235240Z Updating files:  51% (4115/8067)
+2026-10-20T14:41:12.8451534Z Updating files:  52% (4195/8067)
+2026-10-20T14:41:12.8672425Z Updating files:  53% (4276/8067)
+2026-10-20T14:41:12.8897978Z Updating files:  54% (4357/8067)
+2026-10-20T14:41:12.9495256Z Updating files:  55% (4437/8067)
+2026-10-20T14:41:12.9834517Z Updating files:  56% (4518/8067)
+2026-10-20T14:41:13.0042181Z Updating files:  57% (4599/8067)
+2026-10-20T14:41:13.1826120Z Updating files:  58% (4679/8067)
+2026-10-20T14:41:13.2999443Z Updating files:  59% (4760/8067)
+2026-10-20T14:41:13.4484431Z Updating files:  60% (4841/8067)
+2026-10-20T14:41:13.5123198Z Updating files:  61% (4921/8067)
+2026-10-20T14:41:13.5598253Z Updating files:  62% (5002/8067)
+2026-10-20T14:41:13.5614104Z Updating files:  63% (5083/8067)
+2026-10-20T14:41:13.5934838Z Updating files:  63% (5085/8067)
+2026-10-20T14:41:13.6362883Z Updating files:  64% (5163/8067)
+2026-10-20T14:41:13.6657760Z Updating files:  65% (5244/8067)
+2026-10-20T14:41:13.7113087Z Updating files:  66% (5325/8067)
+2026-10-20T14:41:13.7842029Z Updating files:  67% (5405/8067)
+2026-10-20T14:41:13.8220996Z Updating files:  68% (5486/8067)
+2026-10-20T14:41:13.8458840Z Updating files:  69% (5567/8067)
+2026-10-20T14:41:13.8721614Z Updating files:  70% (5647/8067)
+2026-10-20T14:41:13.9123350Z Updating files:  71% (5728/8067)
+2026-10-20T14:41:13.9424100Z Updating files:  72% (5809/8067)
+2026-10-20T14:41:13.9699190Z Updating files:  73% (5889/8067)
+2026-10-20T14:41:14.0091953Z Updating files:  74% (5970/8067)
+2026-10-20T14:41:14.0394494Z Updating files:  75% (6051/8067)
+2026-10-20T14:41:14.0814228Z Updating files:  76% (6131/8067)
+2026-10-20T14:41:14.1142756Z Updating files:  77% (6212/8067)
+2026-10-20T14:41:14.1561573Z Updating files:  78% (6293/8067)
+2026-10-20T14:41:14.2024005Z Updating files:  79% (6373/8067)
+2026-10-20T14:41:14.2964366Z Updating files:  80% (6454/8067)
+2026-10-20T14:41:14.3607993Z Updating files:  81% (6535/8067)
+2026-10-20T14:41:14.5175531Z Updating files:  82% (6615/8067)
+2026-10-20T14:41:14.5387682Z Updating files:  83% (6696/8067)
+2026-10-20T14:41:14.5608091Z Updating files:  84% (6777/8067)
+2026-10-20T14:41:14.5646685Z Updating files:  84% (6845/8067)
+2026-10-20T14:41:14.5914796Z Updating files:  85% (6857/8067)
+2026-10-20T14:41:14.6154685Z Updating files:  86% (6938/8067)
+2026-10-20T14:41:14.6361191Z Updating files:  87% (7019/8067)
+2026-10-20T14:41:14.6547194Z Updating files:  88% (7099/8067)
+2026-10-20T14:41:14.7025545Z Updating files:  89% (7180/8067)
+2026-10-20T14:41:14.7250351Z Updating files:  90% (7261/8067)
+2026-10-20T14:41:14.7740905Z Updating files:  91% (7341/8067)
+2026-10-20T14:41:14.8396735Z Updating files:  92% (7422/8067)
+2026-10-20T14:41:14.8701680Z Updating files:  93% (7503/8067)
+2026-10-20T14:41:14.8978346Z Updating files:  94% (7583/8067)
+2026-10-20T14:41:14.9243939Z Updating files:  95% (7664/8067)
+2026-10-20T14:41:14.9460988Z Updating files:  96% (7745/8067)
+2026-10-20T14:41:14.9658594Z Updating files:  97% (7825/8067)
+2026-10-20T14:41:14.9869344Z Updating files:  98% (7906/8067)
+2026-10-20T14:41:15.0111626Z Updating files:  99% (7987/8067)
+2026-10-20T14:41:15.0112357Z Updating files: 100% (8067/8067)
+2026-10-20T14:41:15.0112817Z Updating files: 100% (8067/8067), done.
+2026-10-20T14:41:15.0343122Z Reset branch 'master'
+2026-10-20T14:41:15.0410211Z branch 'master' set up to track 'origin/master'.
+2026-10-20T14:41:15.0665422Z ##[endgroup]
+2026-10-20T14:41:15.1168042Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2026-10-20T14:41:15.1511292Z 442cd13a4b75fdc207cf9f7c7e8025e490ddd0da
+2026-10-20T14:41:15.1553197Z ##[group]Removing auth
+2026-10-20T14:41:15.1561195Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-20T14:41:15.1949344Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-20T14:41:15.7720740Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-20T14:41:15.8072456Z http.https://github.com/.extraheader
+2026-10-20T14:41:15.8116224Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2026-10-20T14:41:15.8503676Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-20T14:41:16.3853776Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-20T14:41:16.4229216Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-20T14:41:17.0658668Z ##[endgroup]
+2026-10-20T14:41:17.1074275Z ##[group]Run actions/setup-node@v4
+2026-10-20T14:41:17.1074590Z with:
+2026-10-20T14:41:17.1074788Z   node-version-file: .nvmrc
+2026-10-20T14:41:17.1075024Z   always-auth: false
+2026-10-20T14:41:17.1075229Z   check-latest: false
+2026-10-20T14:41:17.1077516Z   token: ***
+2026-10-20T14:41:17.1077716Z env:
+2026-10-20T14:41:17.1077884Z   BASE_VERSION: 0.1.7
+2026-10-20T14:41:17.1078081Z   TARGET_VERSION: 0.1.8
+2026-10-20T14:41:17.1078270Z ##[endgroup]
+2026-10-20T14:41:17.2730752Z Resolved .nvmrc as 22
+2026-10-20T14:41:17.2875993Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.3\x64
+2026-10-20T14:41:17.2882635Z (node:6740) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-20T14:41:17.2883434Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T14:41:17.2886726Z ##[group]Environment details
+2026-10-20T14:41:23.6740708Z node: v22.23.3
+2026-10-20T14:41:23.6741369Z npm: 10.9.9
+2026-10-20T14:41:23.6741638Z yarn: 1.22.22
+2026-10-20T14:41:23.6742554Z ##[endgroup]
+2026-10-20T14:41:23.7044028Z ##[group]Run node --test apps/desktop/scripts/update-smoke.test.mjs
+2026-10-20T14:41:23.7044689Z [36;1mnode --test apps/desktop/scripts/update-smoke.test.mjs[0m
+2026-10-20T14:41:23.7882062Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-20T14:41:23.7882545Z env:
+2026-10-20T14:41:23.7882776Z   BASE_VERSION: 0.1.7
+2026-10-20T14:41:23.7883052Z   TARGET_VERSION: 0.1.8
+2026-10-20T14:41:23.7883335Z ##[endgroup]
+2026-10-20T14:41:24.2907095Z TAP version 13
+2026-10-20T14:41:24.4057438Z # Subtest: native close waits for a mapped closable window in the confirmed relaunched PID set before one request
+2026-10-20T14:41:24.4063555Z ok 1 - native close waits for a mapped closable window in the confirmed relaunched PID set before one request
+2026-10-20T14:41:24.4064442Z   ---
+2026-10-20T14:41:24.4064782Z   duration_ms: 44.262
+2026-10-20T14:41:24.4065150Z   type: 'test'
+2026-10-20T14:41:24.4065367Z   ...
+2026-10-20T14:41:24.4666272Z # Subtest: native close cannot silently succeed without a confirmed target; cleanup records an optional absence
+2026-10-20T14:41:24.4688655Z ok 2 - native close cannot silently succeed without a confirmed target; cleanup records an optional absence
+2026-10-20T14:41:24.4689589Z   ---
+2026-10-20T14:41:24.4689777Z   duration_ms: 22.0529
+2026-10-20T14:41:24.4689986Z   type: 'test'
+2026-10-20T14:41:24.4690165Z   ...
+2026-10-20T14:41:24.4723545Z # Subtest: native close rejection, request errors and exit veto are audited and never cause a second close
+2026-10-20T14:41:24.4729201Z ok 3 - native close rejection, request errors and exit veto are audited and never cause a second close
+2026-10-20T14:41:24.4730094Z   ---
+2026-10-20T14:41:24.4730392Z   duration_ms: 5.9998
+2026-10-20T14:41:24.4730614Z   type: 'test'
+2026-10-20T14:41:24.4730790Z   ...
+2026-10-20T14:41:24.4747245Z # Subtest: cleanup only observes an already-requested process after exit veto, even if its window identity changes
+2026-10-20T14:41:24.4756480Z ok 4 - cleanup only observes an already-requested process after exit veto, even if its window identity changes
+2026-10-20T14:41:24.4757408Z   ---
+2026-10-20T14:41:24.4757655Z   duration_ms: 0.5462
+2026-10-20T14:41:24.4757880Z   type: 'test'
+2026-10-20T14:41:24.4758055Z   ...
+2026-10-20T14:41:24.5309016Z # Subtest: explicit launches get distinct available loopback endpoints and release their probes before use
+2026-10-20T14:41:24.5312854Z ok 5 - explicit launches get distinct available loopback endpoints and release their probes before use
+2026-10-20T14:41:24.5314325Z   ---
+2026-10-20T14:41:24.5314880Z   duration_ms: 44.7692
+2026-10-20T14:41:24.5315460Z   type: 'test'
+2026-10-20T14:41:24.5315957Z   ...
+2026-10-20T14:41:24.5317485Z # Subtest: OS reuse of a previous launch port is rejected, closed, and retried with a bounded allocation limit
+2026-10-20T14:41:24.5319233Z ok 6 - OS reuse of a previous launch port is rejected, closed, and retried with a bounded allocation limit
+2026-10-20T14:41:24.5320384Z   ---
+2026-10-20T14:41:24.5320899Z   duration_ms: 2.2844
+2026-10-20T14:41:24.5321440Z   type: 'test'
+2026-10-20T14:41:24.5321935Z   ...
+2026-10-20T14:41:24.5324159Z # Subtest: debug endpoint allocation propagates bind/close errors and rejects non-loopback or invalid addresses
+2026-10-20T14:41:24.5325922Z ok 7 - debug endpoint allocation propagates bind/close errors and rejects non-loopback or invalid addresses
+2026-10-20T14:41:24.5327012Z   ---
+2026-10-20T14:41:24.5327573Z   duration_ms: 45.3523
+2026-10-20T14:41:24.5328144Z   type: 'test'
+2026-10-20T14:41:24.5328584Z   ...
+2026-10-20T14:41:24.5329486Z # Subtest: pins exact stable versions and rejects equal, lower or prerelease versions
+2026-10-20T14:41:24.5333395Z ok 8 - pins exact stable versions and rejects equal, lower or prerelease versions
+2026-10-20T14:41:24.5334083Z   ---
+2026-10-20T14:41:24.5334365Z   duration_ms: 1.5034
+2026-10-20T14:41:24.5334702Z   type: 'test'
+2026-10-20T14:41:24.5334917Z   ...
+2026-10-20T14:41:24.5339240Z # Subtest: only accepts complete, stable official public release asset with digest
+2026-10-20T14:41:24.5340037Z ok 9 - only accepts complete, stable official public release asset with digest
+2026-10-20T14:41:24.5340460Z   ---
+2026-10-20T14:41:24.5340643Z   duration_ms: 1.2194
+2026-10-20T14:41:24.5340851Z   type: 'test'
+2026-10-20T14:41:24.5341079Z   ...
+2026-10-20T14:41:24.5478041Z # Subtest: hashes actual file bytes and detects changed package contents
+2026-10-20T14:41:24.5479127Z ok 10 - hashes actual file bytes and detects changed package contents
+2026-10-20T14:41:24.5479909Z   ---
+2026-10-20T14:41:24.5480202Z   duration_ms: 17.6998
+2026-10-20T14:41:24.5480526Z   type: 'test'
+2026-10-20T14:41:24.8162695Z   ...
+2026-10-20T14:41:24.8164409Z # (node:6084) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+2026-10-20T14:41:24.8165783Z # (Use `node --trace-warnings ...` to show where the warning was created)
+2026-10-20T14:41:24.8168195Z # Subtest: bounded waits require the actual condition and retain the last failure
+2026-10-20T14:41:24.8169581Z ok 11 - bounded waits require the actual condition and retain the last failure
+2026-10-20T14:41:24.8170458Z   ---
+2026-10-20T14:41:24.8173107Z   duration_ms: 22.1219
+2026-10-20T14:41:24.8173564Z   type: 'test'
+2026-10-20T14:41:24.8180026Z   ...
+2026-10-20T14:41:24.8181355Z # Subtest: screenshot preview explicitly foregrounds its target before reading state or waiting for paint
+2026-10-20T14:41:24.8183377Z ok 12 - screenshot preview explicitly foregrounds its target before reading state or waiting for paint
+2026-10-20T14:41:24.8183865Z   ---
+2026-10-20T14:41:24.8184040Z   duration_ms: 0.5423
+2026-10-20T14:41:24.8184318Z   type: 'test'
+2026-10-20T14:41:24.8184620Z   ...
+2026-10-20T14:41:24.8185516Z # Subtest: screenshot preview identifies the failing phase and preserves target-close or timeout errors
+2026-10-20T14:41:24.8187002Z ok 13 - screenshot preview identifies the failing phase and preserves target-close or timeout errors
+2026-10-20T14:41:24.8188154Z   ---
+2026-10-20T14:41:24.8188478Z   duration_ms: 0.6702
+2026-10-20T14:41:24.8188841Z   type: 'test'
+2026-10-20T14:41:24.8189155Z   ...
+2026-10-20T14:41:24.8190136Z # Subtest: screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners
+2026-10-20T14:41:24.8191810Z ok 14 - screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners
+2026-10-20T14:41:24.8192880Z   ---
+2026-10-20T14:41:24.8193315Z   duration_ms: 0.8753
+2026-10-20T14:41:24.8193801Z   type: 'test'
+2026-10-20T14:41:24.8194225Z   ...
+2026-10-20T14:41:24.8195116Z # Subtest: screenshot paint helper runs as an isolated serialized browser expression
+2026-10-20T14:41:24.8196461Z ok 15 - screenshot paint helper runs as an isolated serialized browser expression
+2026-10-20T14:41:24.8197469Z   ---
+2026-10-20T14:41:24.8197913Z   duration_ms: 1.0292
+2026-10-20T14:41:24.8212930Z   type: 'test'
+2026-10-20T14:41:24.8213423Z   ...
+2026-10-20T14:41:24.8214608Z # Subtest: screenshot paint timeout and page errors fail capture and clean up their pending waits
+2026-10-20T14:41:24.8216134Z ok 16 - screenshot paint timeout and page errors fail capture and clean up their pending waits
+2026-10-20T14:41:24.8217127Z   ---
+2026-10-20T14:41:24.8217570Z   duration_ms: 0.7102
+2026-10-20T14:41:24.8218088Z   type: 'test'
+2026-10-20T14:41:24.8220099Z   ...
+2026-10-20T14:41:24.8221610Z # Subtest: CDP paint evaluation has an external five-second deadline even without any renderer response
+2026-10-20T14:41:24.8223220Z ok 17 - CDP paint evaluation has an external five-second deadline even without any renderer response
+2026-10-20T14:41:24.8224104Z   ---
+2026-10-20T14:41:24.8224484Z   duration_ms: 238.0638
+2026-10-20T14:41:24.8224965Z   type: 'test'
+2026-10-20T14:41:24.8225404Z   ...
+2026-10-20T14:41:24.8226360Z # Subtest: CDP clears custom request timers on response, target closure and synchronous send failure
+2026-10-20T14:41:24.8229806Z ok 18 - CDP clears custom request timers on response, target closure and synchronous send failure
+2026-10-20T14:41:24.8230684Z   ---
+2026-10-20T14:41:24.8230983Z   duration_ms: 0.768
+2026-10-20T14:41:24.8231323Z   type: 'test'
+2026-10-20T14:41:24.8231624Z   ...
+2026-10-20T14:41:24.8232283Z # Subtest: CDP correlates out-of-order replies and rejects interrupted requests
+2026-10-20T14:41:24.8233375Z ok 19 - CDP correlates out-of-order replies and rejects interrupted requests
+2026-10-20T14:41:24.8234010Z   ---
+2026-10-20T14:41:24.8234298Z   duration_ms: 0.6771
+2026-10-20T14:41:24.8235124Z   type: 'test'
+2026-10-20T14:41:24.8235704Z   ...
+2026-10-20T14:41:24.8236907Z # Subtest: renderer exceptions fail the harness rather than becoming a false success
+2026-10-20T14:41:24.8238086Z ok 20 - renderer exceptions fail the harness rather than becoming a false success
+2026-10-20T14:41:24.8238818Z   ---
+2026-10-20T14:41:24.8239123Z   duration_ms: 0.2776
+2026-10-20T14:41:24.8239480Z   type: 'test'
+2026-10-20T14:41:24.8239807Z   ...
+2026-10-20T14:41:24.8241605Z # Subtest: real close during mouse release needs explicit target disappearance confirmation
+2026-10-20T14:41:24.8242887Z ok 21 - real close during mouse release needs explicit target disappearance confirmation
+2026-10-20T14:41:24.8243960Z   ---
+2026-10-20T14:41:24.8244341Z   duration_ms: 0.9233
+2026-10-20T14:41:24.8244672Z   type: 'test'
+2026-10-20T14:41:24.8244957Z   ...
+2026-10-20T14:41:24.8245665Z # Subtest: closing clicks still verify disappearance when CDP acknowledges the release
+2026-10-20T14:41:24.8246802Z ok 22 - closing clicks still verify disappearance when CDP acknowledges the release
+2026-10-20T14:41:24.8247482Z   ---
+2026-10-20T14:41:24.8248186Z   duration_ms: 0.5991
+2026-10-20T14:41:24.8248543Z   type: 'test'
+2026-10-20T14:41:24.8248832Z   ...
+2026-10-20T14:41:24.8249590Z # Subtest: unexpected target closure and mouse/protocol failures are never accepted as clicks
+2026-10-20T14:41:24.8250487Z ok 23 - unexpected target closure and mouse/protocol failures are never accepted as clicks
+2026-10-20T14:41:24.8250914Z   ---
+2026-10-20T14:41:24.8251103Z   duration_ms: 0.6502
+2026-10-20T14:41:24.8251301Z   type: 'test'
+2026-10-20T14:41:24.8251469Z   ...
+2026-10-20T14:41:24.8457357Z 1..23
+2026-10-20T14:41:24.8457714Z # tests 23
+2026-10-20T14:41:24.8458800Z # suites 0
+2026-10-20T14:41:24.8459157Z # pass 23
+2026-10-20T14:41:24.8460175Z # fail 0
+2026-10-20T14:41:24.8461009Z # cancelled 0
+2026-10-20T14:41:24.8462025Z # skipped 0
+2026-10-20T14:41:24.8462647Z # todo 0
+2026-10-20T14:41:24.8463679Z # duration_ms 597.8807
+2026-10-20T14:41:24.9959699Z ##[group]Run pwsh -NoProfile -File apps/desktop/scripts/update-smoke-native.ps1 -Action self-test
+2026-10-20T14:41:24.9960498Z [36;1mpwsh -NoProfile -File apps/desktop/scripts/update-smoke-native.ps1 -Action self-test[0m
+2026-10-20T14:41:25.0030210Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-20T14:41:25.0030557Z env:
+2026-10-20T14:41:25.0030721Z   BASE_VERSION: 0.1.7
+2026-10-20T14:41:25.0030909Z   TARGET_VERSION: 0.1.8
+2026-10-20T14:41:25.0031102Z ##[endgroup]
+2026-10-20T14:41:29.4234942Z PASS NSIS exact process path, dialog identity, button policy, Finish classification and interop compilation
+2026-10-20T14:41:29.6431789Z ##[group]Run node apps/desktop/scripts/update-smoke.mjs
+2026-10-20T14:41:29.6432261Z [36;1mnode apps/desktop/scripts/update-smoke.mjs[0m
+2026-10-20T14:41:29.6503463Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-20T14:41:29.6503827Z env:
+2026-10-20T14:41:29.6504000Z   BASE_VERSION: 0.1.7
+2026-10-20T14:41:29.6504204Z   TARGET_VERSION: 0.1.8
+2026-10-20T14:41:29.6504404Z ##[endgroup]
+2026-10-20T14:44:44.7908171Z LAUNCH baseline-first: pid=3964; endpoint=http://127.0.0.1:62971
+2026-10-20T14:45:10.9929608Z SCREENSHOT download-ready: bring-to-front
+2026-10-20T14:45:10.9938744Z SCREENSHOT download-ready: foreground-state
+2026-10-20T14:45:10.9953335Z SCREENSHOT download-ready: paint-wait
+2026-10-20T14:45:11.0032436Z SCREENSHOT download-ready: paint-ready
+2026-10-20T14:45:11.0039024Z SCREENSHOT download-ready: capture-png
+2026-10-20T14:45:11.0511060Z SCREENSHOT download-ready: capture-html
+2026-10-20T14:45:11.0591768Z SCREENSHOT download-ready: complete
+2026-10-20T14:45:11.0608540Z PASS official download verified; completion did not open a details window
+2026-10-20T14:45:12.3269557Z PASS ordinary UI close after download did not install
+2026-10-20T14:45:12.3358658Z LAUNCH baseline-second: pid=904; endpoint=http://127.0.0.1:62927
+2026-10-20T14:45:33.9774747Z SCREENSHOT save-guard: bring-to-front
+2026-10-20T14:45:33.9789788Z SCREENSHOT save-guard: foreground-state
+2026-10-20T14:45:33.9813247Z SCREENSHOT save-guard: paint-wait
+2026-10-20T14:45:34.0531765Z SCREENSHOT save-guard: paint-ready
+2026-10-20T14:45:34.0539839Z SCREENSHOT save-guard: capture-png
+2026-10-20T14:45:34.1084694Z SCREENSHOT save-guard: capture-html
+2026-10-20T14:45:34.1376665Z SCREENSHOT save-guard: complete
+2026-10-20T14:45:34.5044076Z PASS pending real HTTP save triggered guard; continue editing canceled installation
+2026-10-20T14:45:34.5887978Z SCREENSHOT retry-after-save: bring-to-front
+2026-10-20T14:45:34.5955252Z SCREENSHOT retry-after-save: foreground-state
+2026-10-20T14:45:34.6014883Z SCREENSHOT retry-after-save: paint-wait
+2026-10-20T14:45:34.7088836Z SCREENSHOT retry-after-save: paint-ready
+2026-10-20T14:45:34.7093753Z SCREENSHOT retry-after-save: capture-png
+2026-10-20T14:45:34.7546736Z SCREENSHOT retry-after-save: capture-html
+2026-10-20T14:45:34.7627020Z SCREENSHOT retry-after-save: complete
+2026-10-20T14:45:37.8248889Z SCREENSHOT save-and-restart-awaiting-http: bring-to-front
+2026-10-20T14:45:37.8262812Z SCREENSHOT save-and-restart-awaiting-http: foreground-state
+2026-10-20T14:45:37.8279329Z SCREENSHOT save-and-restart-awaiting-http: paint-wait
+2026-10-20T14:45:37.8327362Z SCREENSHOT save-and-restart-awaiting-http: paint-ready
+2026-10-20T14:45:37.8394287Z SCREENSHOT save-and-restart-awaiting-http: capture-png
+2026-10-20T14:45:37.8911986Z SCREENSHOT save-and-restart-awaiting-http: capture-html
+2026-10-20T14:45:37.9206134Z SCREENSHOT save-and-restart-awaiting-http: complete
+2026-10-20T14:49:49.4984982Z PASS updater relaunched new processes after the old application exited
+2026-10-20T14:49:51.8424867Z NATIVE_CLOSE post-install: enumerate
+2026-10-20T14:49:51.8431043Z NATIVE_CLOSE post-install: request pid=9184 window=590288
+2026-10-20T14:49:53.3658046Z NATIVE_CLOSE post-install: response pid=9184 window=590288
+2026-10-20T14:49:53.3663171Z NATIVE_CLOSE post-install: exit-wait
+2026-10-20T14:49:54.0258389Z NATIVE_CLOSE post-install: exited
+2026-10-20T14:49:54.0403791Z LAUNCH upgraded: pid=9192; endpoint=http://127.0.0.1:49897
+2026-10-20T14:50:00.2435910Z SCREENSHOT upgraded-document: bring-to-front
+2026-10-20T14:50:00.2447320Z SCREENSHOT upgraded-document: foreground-state
+2026-10-20T14:50:00.2465226Z SCREENSHOT upgraded-document: paint-wait
+2026-10-20T14:50:00.2573247Z SCREENSHOT upgraded-document: paint-ready
+2026-10-20T14:50:00.2579341Z SCREENSHOT upgraded-document: capture-png
+2026-10-20T14:50:00.3196173Z SCREENSHOT upgraded-document: capture-html
+2026-10-20T14:50:00.3580461Z SCREENSHOT upgraded-document: complete
+2026-10-20T14:50:00.3589836Z PASS real save-and-restart installed official target and relaunched; version, mode, Markdown, tags and folder retained
+2026-10-20T14:50:03.9108931Z NATIVE_CLOSE cleanup: enumerate
+2026-10-20T14:50:03.9113248Z NATIVE_CLOSE cleanup: no-target
+2026-10-20T14:50:08.2459906Z ##[group]Run actions/upload-artifact@v4
+2026-10-20T14:50:08.2460347Z with:
+2026-10-20T14:50:08.2460644Z   name: desktop-update-windows-0.1.7-to-0.1.8
+2026-10-20T14:50:08.2461023Z   path: D:\a\_temp/mimir-update-e2e/evidence/
+2026-10-20T14:50:08.2461383Z   if-no-files-found: warn
+2026-10-20T14:50:08.2461661Z   retention-days: 14
+2026-10-20T14:50:08.2461947Z   compression-level: 6
+2026-10-20T14:50:08.2462202Z   overwrite: false
+2026-10-20T14:50:08.2462457Z   include-hidden-files: false
+2026-10-20T14:50:08.2462736Z env:
+2026-10-20T14:50:08.2462962Z   BASE_VERSION: 0.1.7
+2026-10-20T14:50:08.2463222Z   TARGET_VERSION: 0.1.8
+2026-10-20T14:50:08.2463475Z ##[endgroup]
+2026-10-20T14:50:08.4471578Z (node:4892) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-20T14:50:08.4472825Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T14:50:08.4691791Z With the provided path, there will be 44 files uploaded
+2026-10-20T14:50:08.4698679Z Artifact name is valid!
+2026-10-20T14:50:08.4700327Z Root directory input is valid!
+2026-10-20T14:50:08.9089832Z Beginning upload of artifact content to blob storage
+2026-10-20T14:50:09.1364931Z (node:4892) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-20T14:50:10.1520526Z Uploaded bytes 3158590
+2026-10-20T14:50:10.2295907Z Finished uploading artifact content to blob storage!
+2026-10-20T14:50:10.2297737Z SHA256 digest of uploaded artifact zip is 173749344b20fc324b856e5086525d5f1865e64bd1fd6fa9ab99998de7632661
+2026-10-20T14:50:10.2300213Z Finalizing artifact upload
+2026-10-20T14:50:11.5362516Z Artifact desktop-update-windows-0.1.7-to-0.1.8.zip successfully finalized. Artifact ID 12275257693
+2026-10-20T14:50:11.5364205Z Artifact desktop-update-windows-0.1.7-to-0.1.8 has been successfully uploaded! Final size is 3158590 bytes. Artifact ID is 12275257693
+2026-10-20T14:50:11.5374682Z Artifact download URL: https://github.com/bijinfeng/mimir/actions/runs/39441421036/artifacts/12275257693
+2026-10-20T14:50:11.5748049Z Post job cleanup.
+2026-10-20T14:50:11.7286393Z (node:4188) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-20T14:50:11.7287815Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T14:50:11.7639558Z Post job cleanup.
+2026-10-20T14:50:11.9957140Z [command]"C:\Program Files\Git\bin\git.exe" version
+2026-10-20T14:50:12.0335422Z git version 2.56.0.windows.2
+2026-10-20T14:50:12.0411124Z Temporarily overriding HOME='D:\a\_temp\7eca7a77-bb88-429f-bc4f-ad1993de09e1' before making global git config changes
+2026-10-20T14:50:12.0412351Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-20T14:50:12.0421906Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\mimir\mimir
+2026-10-20T14:50:12.0828588Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2026-10-20T14:50:12.1236227Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2026-10-20T14:50:12.7784327Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-20T14:50:12.8175972Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2026-10-20T14:50:13.4841893Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-20T14:50:13.5229076Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-10-20T14:50:14.3310860Z Cleaning up orphan processes
+2026-10-20T14:50:14.4136366Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

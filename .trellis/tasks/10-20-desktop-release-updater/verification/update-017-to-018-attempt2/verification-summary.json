@@ -1,0 +1,120 @@
+{
+  "run": 39441421036,
+  "headSha": "442cd13a4b75fdc207cf9f7c7e8025e490ddd0da",
+  "conclusion": "success",
+  "platforms": {
+    "linux": {
+      "success": true,
+      "checks": 5,
+      "artifactId": 12274151927,
+      "artifactSha256": "sha256:4a495c13cab38ed8a8f9294fd4669ebf415d1c3eaa20f32d77935bd7c9a072fb",
+      "filesVerifiedAgainstArchive": 19,
+      "automaticPids": [
+        4533,
+        4537,
+        4538,
+        4540
+      ],
+      "automaticPidAt": "2026-10-20T14:42:46.617Z",
+      "closePid": 4533,
+      "closeWindow": "0x00400003",
+      "closeRequestAt": "2026-10-20T14:42:48.854Z",
+      "closeResponse": {
+        "accepted": true,
+        "method": "wmctrl -i -c",
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "exitedAt": "2026-10-20T14:42:49.011Z",
+      "explicitUpgradedLaunch": {
+        "name": "upgraded",
+        "pid": 4639,
+        "port": 35479,
+        "endpoint": "http://127.0.0.1:35479",
+        "at": "2026-10-20T14:42:49.115Z"
+      },
+      "explicitProcessExits": [
+        {
+          "name": "baseline-first",
+          "pid": 4281,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "name": "baseline-second",
+          "pid": 4406,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "name": "upgraded",
+          "pid": 4639,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "emptyReadinessEnumerations": 8,
+      "cleanupRequests": 0,
+      "upgradedVersion": "0.1.8",
+      "fullDataAssertionsInHarnessCompleted": true,
+      "previewContentTextVerified": true
+    },
+    "windows": {
+      "success": true,
+      "checks": 5,
+      "artifactId": 12275257693,
+      "artifactSha256": "sha256:173749344b20fc324b856e5086525d5f1865e64bd1fd6fa9ab99998de7632661",
+      "filesVerifiedAgainstArchive": 44,
+      "automaticPids": [
+        3476,
+        8892,
+        9184
+      ],
+      "automaticPidAt": "2026-10-20T14:49:49.496Z",
+      "closePid": 9184,
+      "closeWindow": "590288",
+      "closeRequestAt": "2026-10-20T14:49:51.842Z",
+      "closeResponse": {
+        "accepted": true,
+        "method": "CloseMainWindow",
+        "pid": 9184,
+        "id": "590288",
+        "at": "2026-10-20T14:49:53.1333431Z"
+      },
+      "exitedAt": "2026-10-20T14:49:54.024Z",
+      "explicitUpgradedLaunch": {
+        "name": "upgraded",
+        "pid": 9192,
+        "port": 49897,
+        "endpoint": "http://127.0.0.1:49897",
+        "at": "2026-10-20T14:49:54.039Z"
+      },
+      "explicitProcessExits": [
+        {
+          "name": "baseline-first",
+          "pid": 3964,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "name": "baseline-second",
+          "pid": 904,
+          "code": 0,
+          "signal": null
+        },
+        {
+          "name": "upgraded",
+          "pid": 9192,
+          "code": 0,
+          "signal": null
+        }
+      ],
+      "emptyReadinessEnumerations": 0,
+      "cleanupRequests": 0,
+      "upgradedVersion": "0.1.8",
+      "fullDataAssertionsInHarnessCompleted": true,
+      "previewContentTextVerified": true
+    }
+  }
+}

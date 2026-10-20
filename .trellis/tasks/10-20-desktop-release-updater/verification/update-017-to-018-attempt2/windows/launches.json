@@ -1,0 +1,23 @@
+[
+  {
+    "name": "baseline-first",
+    "pid": 3964,
+    "port": 62971,
+    "endpoint": "http://127.0.0.1:62971",
+    "at": "2026-10-20T14:44:44.787Z"
+  },
+  {
+    "name": "baseline-second",
+    "pid": 904,
+    "port": 62927,
+    "endpoint": "http://127.0.0.1:62927",
+    "at": "2026-10-20T14:45:12.334Z"
+  },
+  {
+    "name": "upgraded",
+    "pid": 9192,
+    "port": 49897,
+    "endpoint": "http://127.0.0.1:49897",
+    "at": "2026-10-20T14:49:54.039Z"
+  }
+]

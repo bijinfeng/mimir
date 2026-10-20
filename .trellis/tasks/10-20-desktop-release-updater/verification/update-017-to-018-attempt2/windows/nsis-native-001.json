@@ -1,0 +1,175 @@
+{
+  "processes": [
+    {
+      "id": 3732,
+      "handle": 328034,
+      "title": "mimir Setup ",
+      "name": "mimir-0.1.8-win-x64"
+    }
+  ],
+  "windows": [
+    {
+      "handle": 328034,
+      "processId": 3732,
+      "executablePath": "C:\\Users\\runneradmin\\AppData\\Local\\@mimirdesktop-updater\\pending\\mimir-0.1.8-win-x64.exe",
+      "title": "mimir Setup ",
+      "className": "#32770",
+      "visible": true,
+      "controls": [
+        {
+          "handle": 328026,
+          "text": "",
+          "className": "Button",
+          "controlId": 3,
+          "visible": false,
+          "enabled": false
+        },
+        {
+          "handle": 393620,
+          "text": "&Next >",
+          "className": "Button",
+          "controlId": 1,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 786454,
+          "text": "Cancel",
+          "className": "Button",
+          "controlId": 2,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 327748,
+          "text": "",
+          "className": "Static",
+          "controlId": 1018,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 786542,
+          "text": "",
+          "className": "Static",
+          "controlId": 1044,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 458776,
+          "text": "",
+          "className": "Static",
+          "controlId": 1035,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 262496,
+          "text": "",
+          "className": "Static",
+          "controlId": 1036,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328014,
+          "text": "",
+          "className": "Static",
+          "controlId": 1045,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 393286,
+          "text": "mimir 0.1.8 ",
+          "className": "Static",
+          "controlId": 1256,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 459030,
+          "text": "mimir 0.1.8",
+          "className": "Static",
+          "controlId": 1028,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 262492,
+          "text": "",
+          "className": "Static",
+          "controlId": 1034,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 459234,
+          "text": "Choose Installation Options",
+          "className": "Static",
+          "controlId": 1037,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 524694,
+          "text": "Who should this application be installed for?",
+          "className": "Static",
+          "controlId": 1038,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393330,
+          "text": "",
+          "className": "Static",
+          "controlId": 1039,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 917966,
+          "text": "",
+          "className": "#32770",
+          "controlId": 0,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 262288,
+          "text": "Please select whether you wish to make this software available to all users or just yourself",
+          "className": "Static",
+          "controlId": 1200,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393232,
+          "text": "Anyone who uses this computer (&all users)",
+          "className": "Button",
+          "controlId": 1201,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393328,
+          "text": "Only for &me (runneradmin)",
+          "className": "Button",
+          "controlId": 1202,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328152,
+          "text": "There is already a per-user installation.(D:\\a\\_temp\\mimir-update-e2e\\installation)\r\nWill reinstall/upgrade.",
+          "className": "Static",
+          "controlId": 1203,
+          "visible": true,
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "at": "2026-10-20T14:45:41.3053649Z"
+}

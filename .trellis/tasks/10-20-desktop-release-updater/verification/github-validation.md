@@ -180,3 +180,21 @@ v0.1.8固定e3a950fdd5a42bf02e83ab1fb40a6832c35f38c9已推master及tag（晚于7
 官方7→8 run39437731315已completed/failure：Windows job118679111438 success；Linux job118679111674 failure。Linux实际完成真实下载、普通exit0不安装、真实PATCH挂起保护/取消和再次保存200、目标AppImage完整SHA替换、旧组退出与更新器自动新PID，随后外部normalClose没有等待新工作区窗口就绪，也没有保留首次枚举/请求证据；90秒后仍有真实mimir进程，尚未显式重开核对完整资料。最终枚举证明3733工作区存在，不能倒推首次已映射或唯一归因为窗口就绪，也不能排除veto。保留false原始结果；不以wrapper3719解释pgrep -x mimir存活。正在修正外部只读窗口等待、精确新PID一次关闭与分阶段证据，随后原官方7→8复验，不另发产品版本。
 
 Windows首轮原始artifact已完整下载至update-017-to-018-attempt1/windows并冻结，result.success=true。三个显式launch CDP50595/56570/53851互异；自动PID712/4044/6188在14:25:39.306Z确认，早于upgraded显式PID4256的14:25:41.823Z。真实NSIS wizardExitCode0，最终IPC currentVersion0.1.8、完整两次编辑正文/title/tags/folder/local均过，三个显式进程exit0/null。主会话实际目视save-guard.png、nsis-native-010.png完成页、upgraded-document.png完整正文。对应run精确head及两job结果github-017-to-018-attempt1.json；不将Windows成功改写为Linux或全平台成功。
+
+## 窗口就绪外部协调修复与第二轮
+
+f86b1b8只修外部harness和相应workflow/spec，不改产品或正式7/8资产。原始空窗口分支RED和30/30 GREEN、PowerShell编译、静态检查与独立审查保留native-close-readiness-*。精确确认自动新PID后，只读等待所属mapped/closable窗口并在发动作前重验；一次正常关闭/实际response后保留原90秒全进程退出门，cleanup对已请求PID只记录skip，独立phase证据不能覆盖。
+
+master442cd13a4b75fdc207cf9f7c7e8025e490ddd0da已推送。完整[CI39441401694](https://github.com/bijinfeng/mimir/actions/runs/39441401694)与官方7→8 all平台[第二轮39441421036](https://github.com/bijinfeng/mimir/actions/runs/39441421036)执行中。新artifact将单列update-017-to-018-attempt2；旧attempt1不动，未完成项不提前勾选。另一个会话的desktop/renderer界面WIP不纳入本次提交或验收。
+
+v0.1.8最终FPK匿名全量于14:40:48Z完成：HTTP200、170575967字节，SHA256=8edfcb853f3894b8b7afc9baeb61c2b47cee1c14b1015ff95cf14d9529462231，与匿名公开digest一致。完整1373.29秒；前次0字节连接超时和公开前404/限流403均保留，不以认证请求冒充匿名，也无Range。fnos-v018-public已冻结，源码/tag/run/15精确资产身份一致；不代替设备安装升级。
+
+第二轮Linux job118691964620 success；完整原始artifact在update-017-to-018-attempt2/linux。实际新PID4533/4537/4538/4540先于显式launch，native-close-post-install记录8次空枚举，14:42:48.842首次映射所属PID4533窗口0x00400003，实际_NET_WM_PID/WM_DELETE_WINDOW/IsViewable均匹配；48.854单次request、48.902 wmctrl exit0 response、49.011零进程，显式upgraded 49.115随后才启动。五检查全过，三个显式launcher exit0无signal；最终IPC0.1.8和完整body/title/tags/folder/local保留。主会话与独立reviewer均目视保存等待和升级后完整正文PNG，未见遮罩缺失或截断。此轮实证窗口启动间隔，不能倒推首轮未保留枚举。
+
+第二轮39441421036整体completed/success，Windows118691964219与Linux118691964620均success。Windows实际NSIS Next/Finish共两动作、Run勾选、wizardExitCode0；自动PID3476/8892/9184在14:49:49.496Z先确认，窗口9184/590288在51.842一次request、CloseMainWindow accepted、54.024零进程，之后54.039才显式upgraded9192。最终0.1.8 automatic、全文/title/tags/folder/local和三launcher exit0/null全过；cleanup无close请求。主会话实际目视Windows guard/升级后全文/NSIS010完成页。作者对完整artifact ZIP核GitHub digest并逐entry比对，linux19/windows44文件完整，summary/API/manifest/两job原log均冻结attempt2。正式7/8产品资产未变，旧attempt1保留。
+
+## 最终完整质量门
+
+[CI39441401694](https://github.com/bijinfeng/mimir/actions/runs/39441401694) completed/success，精确head442cd13a4b75fdc207cf9f7c7e8025e490ddd0da；pnpm check、pnpm build、PostgreSQL全server重跑、真实S3兼容专项全部success。步骤JSON与去ANSI/行尾空白完整日志为github-native-close-ci.json/.log。最终独立报告native-update-final-independent-review.md核准真实AC6跨版本保留资料及完整门，旧失败不改写。
+
+后续提交仅归档本任务证据、PRD和journal，以[skip ci]避免纯日志再次触发完整suite；不修改CI配置，不跳过上列已完成门，应用/外部harness/工作流/规范保持442cd13已验源树。其他会话desktop/renderer界面WIP未提交、不在此验收范围。AC3原生通知投递/焦点仍未实测，fnOS设备实际安装升级未实测，macOS无正式签名仍manual；当前任务in_progress而非假装全部完成。

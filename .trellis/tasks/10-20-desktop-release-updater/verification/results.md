@@ -6,11 +6,13 @@
 
 用户后续已授权合并、推送、GitHub 构建与正式发布、真实更新验收，并扩展 fnOS 原生包一并发布。下方“本轮只修改本地”等内容为早期轮次的历史记录，当前事实以 [github-validation.md](github-validation.md) 及 Actions 实际结果为准。
 
-master 已合并并推送五目标发布与更新功能。v0.1.7（3f35e8a）与 v0.1.8（e3a950f）均已完成四客户端和 fnOS 原生构建、真实 smoke、聚合与公开发布，各15资产。完整 CI39428258688/39431446416 的 check/build/PG/S3 全通过。v0.1.7 FPK 匿名全量170581061字节、SHA256=47e1e0cff50d204e2dc61d153718e927ce45c616a1a75d06fe39cc575c8899b1；v0.1.8最终下载仍在采集中。
+master 已合并并推送五目标发布与更新功能。v0.1.7（3f35e8a）与 v0.1.8（e3a950f）均已完成四客户端和 fnOS 原生构建、真实 smoke、聚合与公开发布，各15资产。完整 CI39428258688/39431446416 的 check/build/PG/S3 全通过。v0.1.7 FPK 匿名全量170581061字节、SHA256=47e1e0cff50d204e2dc61d153718e927ce45c616a1a75d06fe39cc575c8899b1；v0.1.8 FPK也已匿名完整下载170575967字节，SHA256=8edfcb853f3894b8b7afc9baeb61c2b47cee1c14b1015ff95cf14d9529462231，与公开digest一致。
 
 新手动基线7已包含真实窗口销毁、Chromium Session预连接和production实际DB连接关闭修复，保留保存/veto/原15秒统一关闭预算；原生红绿探针与独立审查通过。旧3/4/5/6公开说明已提示先手动安装7或更新版，原tag和全部资产身份/字节不变。
 
-官方7→8首轮39437731315：Windows job118679111438 success；Linux已完成下载、普通exit0不安装、真实编辑保护/取消和再次保存PATCH200、目标AppImage完整SHA及更新器自动新PID。随后外部脚本未等待新工作区窗口就绪即尝试正常关闭，90秒内进程未退出；初始目标/关闭动作缺证据，不能断言唯一原因，也不能计为整体验收通过。首轮证据原样保留，正在补齐只等真实窗口就绪、精确新PID/原生窗口、一次正常关闭与分阶段记录，再以同组正式7→8复验。
+官方7→8首轮39437731315：Windows成功，Linux在精确包替换及自动拉起之后外部关闭协调失败，原始false保留attempt1。外部harness修复经过30项定向回归、PowerShell互操作编译和独立审查，master442cd13只改验收脚本/workflow/spec，正式7/8产品不变。
+
+同官方7→8第二轮39441421036整体success，Windows/Linux均完成官方下载/hash、完成无自动详情、普通exit0不安装、挂起实际PATCH保存保护/取消、第二次保存200后真实安装、自动新PID、一次原生正常关闭与零进程、显式重开0.1.8及完整body/title/tags/folder/local保留；三个显式launcher各exit0无signal。Linux实际先8次空枚举后映射窗口，修复后才发送一次close；Windows真实Next/Finish、Run勾选和wizardExitCode0。全部原始artifact/ZIP摘要与逐entry比对、截图和完整job日志见update-017-to-018-attempt2。主会话与独立reviewer实际目视关键PNG；精确442cd13的完整新CI39441401694全部success，包含pnpm check/build/PG/S3。后续仅证据/任务/journal提交，产品、harness、workflow及spec源树保持该已验版本。
 
 mac ARM64实际官方0.1.3→0.1.4手动ZIP替换已成功：真实标题栏/详情与manual能力、普通退出不安装、同一文档完整记录和本地模式保留；result.success=true、正常退出无遗留。它不代表0.1.8手动实测、系统浏览器下载动作、Gatekeeper、公证、自动安装或系统通知投递通过。
 

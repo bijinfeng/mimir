@@ -1,0 +1,183 @@
+{
+  "processes": [
+    {
+      "id": 3732,
+      "handle": 328034,
+      "title": "mimir Setup ",
+      "name": "mimir-0.1.8-win-x64"
+    }
+  ],
+  "windows": [
+    {
+      "handle": 328034,
+      "processId": 3732,
+      "executablePath": "C:\\Users\\runneradmin\\AppData\\Local\\@mimirdesktop-updater\\pending\\mimir-0.1.8-win-x64.exe",
+      "title": "mimir Setup ",
+      "className": "#32770",
+      "visible": true,
+      "controls": [
+        {
+          "handle": 328026,
+          "text": "< &Back",
+          "className": "Button",
+          "controlId": 3,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 393620,
+          "text": "&Next >",
+          "className": "Button",
+          "controlId": 1,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 786454,
+          "text": "Cancel",
+          "className": "Button",
+          "controlId": 2,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 327748,
+          "text": "",
+          "className": "Static",
+          "controlId": 1018,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 786542,
+          "text": "",
+          "className": "Static",
+          "controlId": 1044,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 458776,
+          "text": "",
+          "className": "Static",
+          "controlId": 1035,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 262496,
+          "text": "",
+          "className": "Static",
+          "controlId": 1036,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328014,
+          "text": "",
+          "className": "Static",
+          "controlId": 1045,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 393286,
+          "text": "mimir 0.1.8 ",
+          "className": "Static",
+          "controlId": 1256,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 459030,
+          "text": "mimir 0.1.8",
+          "className": "Static",
+          "controlId": 1028,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 262492,
+          "text": "",
+          "className": "Static",
+          "controlId": 1034,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 459234,
+          "text": "Installing",
+          "className": "Static",
+          "controlId": 1037,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 524694,
+          "text": "Please wait while mimir is being installed.",
+          "className": "Static",
+          "controlId": 1038,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393330,
+          "text": "",
+          "className": "Static",
+          "controlId": 1039,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 983502,
+          "text": "",
+          "className": "#32770",
+          "controlId": 0,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393688,
+          "text": "Show &details",
+          "className": "Button",
+          "controlId": 1027,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 458864,
+          "text": "",
+          "className": "msctls_progress32",
+          "controlId": 1004,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 458768,
+          "text": "",
+          "className": "Static",
+          "controlId": 1006,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 327824,
+          "text": "",
+          "className": "SysListView32",
+          "controlId": 1016,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131474,
+          "text": "",
+          "className": "SysHeader32",
+          "controlId": 0,
+          "visible": false,
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "at": "2026-10-20T14:48:12.1031809Z"
+}
