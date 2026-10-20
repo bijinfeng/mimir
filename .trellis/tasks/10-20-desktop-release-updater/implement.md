@@ -61,8 +61,10 @@
 
 ## fnOS 同版本发布扩展（用户新增）
 
-- [ ] 核对官方 fnpack 固定版本/校验，Linux x64/Node22 原生真实打包及部署资源可移植性。
-- [ ] 新增 fnOS reusable/manual workflow，产物命名、版本、结构、原生模块与可行烟测通过。
-- [ ] stage/aggregate/publish 强制同版 fnOS 与四客户端齐备；补真实资产缺失、错身份及篡改回归。
+- [x] 核对官方 fnpack 固定版本/校验，Linux x64/Node22 原生真实打包及部署资源可移植性。
+- [x] 新增 fnOS reusable/manual workflow，产物命名、版本、结构、原生模块与可行烟测通过。
+- [x] stage/aggregate/publish 强制同版 fnOS 与四客户端齐备；补真实资产缺失、错身份及篡改回归。
 - [ ] 独立审查、适当质量门、更新规范，提交推送后在 GitHub 执行并验证五目标统一匿名分发。
-- [ ] 记录 Ubuntu 构建/宿主烟测与真正 fnOS 设备安装的证据边界。
+- [x] 记录 Ubuntu 构建/宿主烟测与真正 fnOS 设备安装的证据边界。
+
+上述完成项以 `verification/fnos-build.md`、`github-five-target-manual.json` 和 `github-fnos-native-success.log` 的真实五目标手动构建为依据；统一稳定发布与匿名正式资产下载尚待后续证据，不提前勾选。

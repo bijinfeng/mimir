@@ -9,6 +9,8 @@ paths:
 
 storage 以 DATA_DIR 相对 POSIX key 读写；本地与 S3 同一时刻只选一个后端。
 
+- [S3 真实测试 fixture](s3-test-fixture.md)：官方固定 MinIO 来源、摘要、隔离与失败契约。
+
 ## Pre-Development Checklist
 
 - 先读[项目入口](../../project/index.md)和任务涉及的 `.trellis/spec/project/architecture.md §7.2 与 §13` 章节。

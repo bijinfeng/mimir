@@ -82,11 +82,36 @@ jobs:
           MIMIR_S3_TEST_ACCESS_KEY: mimirtest
           MIMIR_S3_TEST_SECRET_KEY: mimirtest-secret-only
         run: |
-          docker run --rm -d --name mimir-minio-test -p 127.0.0.1:19000:9000 \
-            -e MINIO_ROOT_USER="$MIMIR_S3_TEST_ACCESS_KEY" \
-            -e MINIO_ROOT_PASSWORD="$MIMIR_S3_TEST_SECRET_KEY" \
-            minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e server /data
-          trap 'docker stop mimir-minio-test' EXIT
+          # MinIO removed anonymous community images. Use the official historical
+          # linux-amd64 RELEASE.2025-09-07T16-13-09Z asset, pinned by SHA256.
+          fixture="$(mktemp -d "$RUNNER_TEMP/mimir-minio-test.XXXXXX")"
+          minio_pid=''
+          cleanup() {
+            if [[ -n "$minio_pid" ]]; then
+              kill "$minio_pid" 2>/dev/null || true
+              for attempt in $(seq 1 50); do
+                if ! kill -0 "$minio_pid" 2>/dev/null; then break; fi
+                sleep 0.1
+              done
+              if kill -0 "$minio_pid" 2>/dev/null; then kill -KILL "$minio_pid" 2>/dev/null || true; fi
+              wait "$minio_pid" 2>/dev/null || true
+            fi
+            rm -rf "$fixture"
+          }
+          trap cleanup EXIT
+          curl --fail --location --silent --show-error --retry 3 --max-time 180 \
+            -H 'Accept: application/octet-stream' \
+            https://api.github.com/repos/minio/minio/releases/assets/404655976 \
+            -o "$fixture/minio"
+          echo "7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f  $fixture/minio" | sha256sum --check
+          chmod +x "$fixture/minio"
+          "$fixture/minio" --version
+          MINIO_ROOT_USER="$MIMIR_S3_TEST_ACCESS_KEY" \
+            MINIO_ROOT_PASSWORD="$MIMIR_S3_TEST_SECRET_KEY" \
+            "$fixture/minio" server "$fixture/data" \
+            --address 127.0.0.1:19000 --console-address 127.0.0.1:19001 \
+            > "$fixture/server.log" 2>&1 &
+          minio_pid=$!
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:19000/minio/health/live > /dev/null; then break; fi
             sleep 1

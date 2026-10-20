@@ -1,0 +1,29 @@
+Command: docker --context colima image rm mimir-minio-official-amd64-verification; colima stop; docker context use default; colima list; docker context show
+Observed tool exit: 0
+
+Untagged: mimir-minio-official-amd64-verification:latest
+Deleted: sha256:a397a0442f2201161ed011caed58c549b6c3773c5b4b8e33f40c0cbefc3d3690
+time="2026-10-20T16:30:31+08:00" level=info msg="stopping colima"
+time="2026-10-20T16:30:31+08:00" level=info msg="stopping ..." context=docker
+Stopping 'docker.service', but its triggering units are still active:
+docker.socket
+colima
+time="2026-10-20T16:30:32+08:00" level=info msg="stopping ..." context=vm
+time="2026-10-20T16:30:32+08:00" level=info msg="Sending SIGINT to hostagent process 19649"
+time="2026-10-20T16:30:32+08:00" level=info msg="Waiting for the host agent and the driver processes to shut down"
+time="2026-10-20T16:30:32+08:00" level=info msg="[hostagent] Received SIGINT, shutting down the host agent"
+time="2026-10-20T16:30:32+08:00" level=info msg="[hostagent] Shutting down the host agent"
+time="2026-10-20T16:30:32+08:00" level=info msg="[hostagent] Stopping forwarding `/var/run/docker.sock` (guest) to `/Users/admin/.colima/default/docker.sock` (host)"
+time="2026-10-20T16:30:32+08:00" level=info msg="[hostagent] Stopping forwarding `/var/run/containerd/containerd.sock` (guest) to `/Users/admin/.colima/default/containerd.sock` (host)"
+time="2026-10-20T16:30:33+08:00" level=info msg="[hostagent] Stopping forwarding `/var/run/docker.sock` (guest) to `/Users/admin/.colima/docker.sock` (host)"
+time="2026-10-20T16:30:33+08:00" level=info msg="[hostagent] Unmounting disk `colima`"
+time="2026-10-20T16:30:33+08:00" level=info msg="[hostagent] Shutting down VZ"
+time="2026-10-20T16:30:33+08:00" level=info msg="[hostagent] [VZ] - vm state change: stopped"
+time="2026-10-20T16:30:33+08:00" level=info msg="Waiting for the instance to shut down"
+time="2026-10-20T16:30:34+08:00" level=info msg="The instance colima has shut down"
+time="2026-10-20T16:30:34+08:00" level=info msg=done
+default
+Current context is now "default"
+PROFILE    STATUS     ARCH       CPUS    MEMORY    DISK      RUNTIME    ADDRESS
+default    Stopped    aarch64    4       8GiB      100GiB    docker
+default
