@@ -1,6 +1,6 @@
 {
   "name": "@mimir/desktop",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "private": true,
   "description": "mimir 桌面端：Electron 载体 + 进程内私有宿主（D-046）；渲染进程由 electron-vite 构建（D-103）",
   "main": "dist/main/index.js",

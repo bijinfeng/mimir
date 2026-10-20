@@ -154,3 +154,9 @@ version-only b58c149的CI39415625320在与此前98aaf7d相同的XLSX20k测试500
 - Windows：host关闭成功，日志明确Install on explicit quitAndInstall，旧进程exit0，无signal；真实NSIS已打开Choose Installation Options。目视nsis-native-001.png确认Next按钮存在，但UIA枚举buttons=[]、actions=0，外部向导driver8分钟超时。不能据此认定产品未启动安装器，也不能计为更新成功。
 
 两项失败分别保存在update-015-to-016-attempt2与github-015-to-016-attempt2-failed.json/.log，后续分别解决，不改写旧结果。
+
+## Session 与生产数据库关闭修复及新基线
+
+9fff1a1 在保存及真实窗口关闭后清理捕获的 Chromium Session，drain→HTTP→DB 共用原15秒时间门；超时和迟到均不放行安装。Electron44.7预连接探针修前exit3、修后exit0。d70bb54 关闭实际production/development数据库引用，SQLite真实先红后绿2项、PG真实backend消失2项通过，独立审查通过。最终刷新server build/deploy后的真实Electron宿主证明HTTP callback完成、SQLite open true→false、原句柄查询拒绝，见host-close-final-native.json/.log。Desktop全122项/类型/静态门通过，server类型/静态门通过，主会话desktop build通过。原始采集日志保留末尾空行与ANSI，不做源码格式化；源码/spec的diff check通过。oxfmt忽略.trellis，因此不将其无匹配退出计为文档格式门通过。
+
+准备desktop/fnOS同版0.1.7，作为需手动安装的新发起端基线；待五目标正式发布后，再公开0.1.8并验证官方7→8。5→6 Windows独立run39426680220仍执行，未改变其latest；旧公开tag/资产不变。新产品修复的完整CI/五目标发布和跨版本升级尚待实际执行，不能用上述探针替代。
