@@ -1,9 +1,10 @@
 import type { DesktopPlatform, DesktopUpdateState } from '@mimir/shared/desktop'
+import { normalizeReleaseNotes, type ReleaseNotes } from './release-notes.js'
 
 export const RELEASES_URL = 'https://github.com/bijinfeng/mimir/releases'
 export interface UpdateInfo {
   version: string
-  releaseNotes?: string | { version: string; note: string | null }[] | null
+  releaseNotes?: ReleaseNotes
 }
 export interface UpdateDriver {
   check(): Promise<UpdateInfo | null>
@@ -178,17 +179,10 @@ export class UpdateController {
       } else if (!isNewerStable(info.version, this.state.currentVersion)) {
         this.publish({ status: 'current', checkedAt, version: undefined, releaseNotes: undefined })
       } else {
-        const notes =
-          typeof info.releaseNotes === 'string'
-            ? info.releaseNotes
-            : info.releaseNotes
-                ?.map((note) => note.note ?? '')
-                .filter(Boolean)
-                .join('\n\n')
         this.publish({
           status: 'available',
           version: info.version,
-          releaseNotes: notes || undefined,
+          releaseNotes: normalizeReleaseNotes(info.releaseNotes),
           releaseUrl: `${RELEASES_URL}/tag/v${info.version}`,
           checkedAt,
         })

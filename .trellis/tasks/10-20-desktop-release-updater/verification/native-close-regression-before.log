@@ -1,0 +1,42 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/desktop
+
+ ❯ |main| src/main/workspace-close.test.ts (6 tests | 1 failed | 5 skipped) 3ms
+   ❯ workspace replacement respects the native leave guard (5)
+     × removes close/unload listeners when the attempt settles 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |main| src/main/workspace-close.test.ts > workspace replacement respects the native leave guard > removes close/unload listeners when the attempt settles
+Error: Object has been destroyed
+ ❯ WindowFixture.get webContents [as webContents] src/main/workspace-close.test.ts:11:31
+      9|   get webContents() {
+     10|     // Electron's native BrowserWindow getter becomes invalid before `…
+     11|     if (this.destroyed) throw new Error('Object has been destroyed')
+       |                               ^
+     12|     return this.contents
+     13|   }
+ ❯ finish src/main/workspace-close.ts:36:14
+ ❯ src/main/workspace-close.ts:45:7
+ ❯ closeWorkspace src/main/workspace-close.ts:26:10
+ ❯ src/main/workspace-close.test.ts:121:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 skipped (6)
+   Start at  19:02:45
+   Duration  171ms (transform 56%, import 20%, worker 15%, tests 9%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/admin/Desktop/mimir/apps/desktop

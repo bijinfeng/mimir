@@ -1,0 +1,13 @@
+const { app, BrowserWindow } = require('electron');
+app.setPath('userData', "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-close-native-U4SIeh/data");
+app.on('window-all-closed',()=>{});
+process.on('uncaughtException',(error)=>{ console.log('NATIVE_UNCAUGHT '+error.stack); app.exit(2); });
+app.whenReady().then(async()=>{
+  const { closeWorkspace } = await import('./workspace-close.mjs');
+  app.dock?.hide();
+  const win=new BrowserWindow({show:false});
+  await win.loadURL('data:text/html,<title>isolated native close probe</title>');
+  console.log('NATIVE_READY Electron '+process.versions.electron);
+  try { await closeWorkspace(win, 3000); console.log('NATIVE_CLOSE_RESOLVED'); app.exit(0); }
+  catch(error){ console.log('NATIVE_CLOSE_REJECTED '+error.stack); app.exit(3); }
+});

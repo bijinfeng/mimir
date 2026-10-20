@@ -54,3 +54,37 @@
 - `update-smoke.test.mjs` 新增真实模拟 socket 销毁时序的回归，覆盖关闭回包竞态、实际消失确认失败、正常应答仍需消失确认，以及普通点击/按下/协议错误不得误放行。Node 22 **9/9** 通过；oxfmt、Node 语法、git diff --check 通过。完整 lint 无 error（既有警告保留）；桌面 routes:generate + tsc --noEmit 通过。
 
 产品安装包与更新器未改动，不修改任何已公开 tag/资产。修复后需要以新 master SHA 重新 dispatch 完整验收，原 run 的 rerun 会继续使用旧 harness SHA，不能作为本次修复验证。
+
+### 旧 Windows 运行取消后的现场
+
+主会话为释放 concurrency 主动取消旧 run 39408870875，Windows job 118581416559 的结论为 **cancelled**。其 13 文件 artifact 已下载到 `update-attempt1/windows/`，原 `result.json` 没有 success 字段，保留 partial 原貌，不记为产品失败或升级通过。
+
+日志证实 10:38:56 官方下载/校验完成且未自动打开详情，10:38:58 普通关闭没有安装，10:39:21 真实保存守卫取消安装。第二次“保存并重启”截图显示真实保存中，之后服务端 PATCH 返回 200/8ms。取消发生在等待实际安装/NSIS完成区间，尚未达到该等待的十分钟上限。
+
+完整读取 `baseline-second.log`：仅有第一次“继续编辑”对应的预期 UpdateBlocked；第二次保存后没有新的 blocked、关闭 veto、宿主关闭错误，也没有标准 updater 的 `Install on explicit quitAndInstall` 日志。原 artifact 没有原生窗口/进程快照，`nsis-update-wizard.log` 为空不能证明安装器未启动，也不能归咎于按钮识别或产品行为。后续由新 run 39409876470 验证已提交的关闭竞态修复。
+
+## 第二次实际升级失败与原生生命周期修复
+
+run [39409876470](https://github.com/bijinfeng/mimir/actions/runs/39409876470) 使用关闭竞态修复后的 harness，两个平台均完成官方下载、普通退出不安装、真实保存守卫取消安装；第二次保存后安装未完成。原始 artifact 保存在 `update-attempt2/linux/`、`update-attempt2/windows/`，两个 `result.json.success=false` 保留。
+
+- Linux job `118586095443`：`Timed out: AppImage replaced with exact official target bytes`。`native-windows.txt` 显示仅剩“mimir · 软件更新”和“Error”，主工作区已关闭；第二次 PATCH 已返回 200/7ms，未出现安装调用日志。
+- Windows job `118586095004`：`Timed out: Windows installed executable replaced`；向导八分钟超时 `actions=0`、exit 1，第二次 PATCH 已返回 200/8ms，同样未出现安装调用日志。该平台没有旧版原生窗口截图，不能单凭 `actions=0` 证明具体对话框内容。
+
+### 原因与真实原生复现
+
+`workspace-close.ts` 的 `closed` 回调清理监听器时再次读取 `target.webContents`。真实 Electron 在 `closed` 事件发生前已销毁 BrowserWindow；这个 native getter 会抛 `TypeError: Object has been destroyed`，中断 `finish()`、留下未 resolve 的关闭 Promise，因此安装准备停在关闭工作区之后、关闭宿主和调用安装器之前。
+
+使用仓库 Electron **44.7.0**，将实际 `workspace-close.ts` 仅去除 TypeScript 类型后加载到新临时目录的最小 app。创建 `show:false` 原生 BrowserWindow，加载 data URL 后直接调用真实 `closeWorkspace()`；使用专属临时 userData，未加载生产客户端、未操作已有安装，异常仅记录后退出探针。
+
+- `native-close-before.log`：`NATIVE_READY Electron 44.7.0`，随后 `NATIVE_UNCAUGHT TypeError: Object has been destroyed`，栈定位 `finish` 的 `target.webContents.off`，进程 exit **2**。
+- `native-close-regression-before.log`：强化 fixture 为“销毁后 getter 抛错”后，原有 listener 清理行为测试在旧实现确定失败，栈同样定位 `workspace-close.ts:36`。
+- 最小产品修复仅在关闭前捕获 `const contents = target.webContents`，之后注册/清理使用捕获的 EventEmitter；不改保存握手、veto、15s timeout 或宿主关闭顺序。
+- `native-close-after.log`：同一个原生探针、同一窗口动作输出 `NATIVE_CLOSE_RESOLVED`，exit **0**。
+
+### 本轮门禁与诊断增强
+
+- 完整桌面回归 `native-close-desktop-regression.log`：**13 files / 118 tests pass**，覆盖拒绝关闭、超时、原生 close 抛错、重复 transition 和销毁后监听器清理；增加已销毁窗口不访问 getter 的回归。
+- workspace-close 与自动升级脚本 oxlint、oxfmt、桌面 routes:generate + `tsc --noEmit` 通过。
+- 自动升级 harness 的 9/9 Node 回归通过；附加 NSIS 诊断仅每30秒保存 native 窗口/按钮状态、相关进程和原生桌面截图，不改变向导点击或安装条件。使用官方 PowerShell **7.5.4** macOS ARM64 临时解析器（发布 SHA-256 `3aaadd7ca62f1e4dbe59145b6af24e926d61f8da8a4782bc535e500c184135f0`）解析 `update-smoke-native.ps1`，**无语法错误**；Windows 上实际截图能力仍需后续 runner 运行，不宣称本机已验证。
+
+该 bug 位于发起安装的旧客户端，升级目标中的修复无法改变旧客户端的关闭逻辑；需要手动安装含修复的基线，再发布后续目标版本执行完整升级。公开旧 tag/资产保持不变，两个失败 run 不改写为通过。

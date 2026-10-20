@@ -24,6 +24,8 @@
 
 固定 GitHub provider 为 `bijinfeng/mimir`，只取稳定版，禁止降级。应用不存发布 PAT、证书或可由 renderer 指定的 feed。`desktop-updates.json` 用临时文件 + rename 持久化自动下载偏好、通知版本与上次启动版本。
 
+`releaseNotes` 在主进程通过 `normalizeReleaseNotes` 将 GitHub API Markdown、provider HTML 与多版本数组统一为可读纯文本，移除内部构建标记及 HTML 注释。输出只允许作为 React 文本节点显示，不得再次送入 HTML/Markdown 渲染器或外部链接打开器；官方发布入口继续使用固定验证过的 URL。
+
 - `MIMIR_BUILD_PLATFORM` / `MIMIR_BUILD_ARCH`：可选构建断言，必须与 runner 的 process 平台一致。
 - `MIMIR_MAC_SIGNING=adhoc`（默认）：ad-hoc 测试签名，包内 `desktopUpdateMode=manual`，产 DMG + ZIP；用户下载并替换应用。
 - `MIMIR_MAC_SIGNING=signed`：必须提供 CSC_LINK/CSC_KEY_PASSWORD/CSC_NAME、APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID；正式签名、公证及验证均成功才允许包内 automatic。afterPack 不能再用 ad-hoc 覆盖它。
@@ -69,6 +71,7 @@
 
 - 控制器测试覆盖单操作 gate、检查节奏、偏好、通知持久去重、通知不可用时继续检查、未知大小、100% 到校验完成、失败重试、安装顺序和安装器 error 事件恢复。
 - IPC 测试覆盖伪造 sender/frame、过期 requestId、导航后迟到响应、云端无桥、关闭 veto 和宿主失败/超时。
+- 原生窗口关闭前捕获事件源（如 `webContents`）；`closed` 阶段清理只能使用这些预捕获引用，不能再次访问已销毁 `BrowserWindow` 的 getter。fixture 必须模拟销毁后 getter 抛错，并以真实 Electron 关闭探针补验；普通 EventEmitter stub 不足以证明原生销毁边界安全。错误不能让关闭 Promise 悬挂或放行安装。
 - renderer 测试覆盖自动/手动保存、无句柄、失败、新改动、编辑器切换；保存 ACK 不等于忽略 beforeunload。
 - 资源复制测试必须覆盖迁移后 require、同名嵌套依赖版本、内部文件别名物化、目录循环/绝对/越界/损坏链接拒绝；真实包原生模块和安装后 smoke 仍不可省略。
 - Windows NSIS 门先 `package-resources.mjs capture <unpackedServer> <manifest.json>` 保存普通文件相对路径/大小/SHA256，真实安装后 capture 并 `verify <installedServer> <manifest.json>` 严格比对；缺失/新增/变更均失败，然后才运行既有 A/B/C smoke。禁止为通过门忽略深层文件。安装 5 分钟、卸载父进程 60 秒、整个步骤 15 分钟上界；失败上传安装器和资源/阶段证据，不上传 userData。卸载父进程返回不能证明临时子进程全部结束。

@@ -23,6 +23,8 @@ export function installCloseFeedback(
 /** A real native close must complete; beforeunload is never bypassed. */
 export function closeWorkspace(target: BrowserWindow, timeoutMs = 15_000): Promise<void> {
   if (target.isDestroyed()) return Promise.resolve()
+  // The native BrowserWindow getter throws once `closed` fires; retain the emitter now.
+  const contents = target.webContents
   return new Promise<void>((resolve, reject) => {
     const timer = setTimeout(
       () => finish(new Error('工作区未能关闭，请返回文档后重试。')),
@@ -33,12 +35,12 @@ export function closeWorkspace(target: BrowserWindow, timeoutMs = 15_000): Promi
     const finish = (error?: Error): void => {
       clearTimeout(timer)
       target.off('closed', closed)
-      target.webContents.off('will-prevent-unload', prevented)
+      contents.off('will-prevent-unload', prevented)
       if (error) reject(error)
       else resolve()
     }
     target.once('closed', closed)
-    target.webContents.once('will-prevent-unload', prevented)
+    contents.once('will-prevent-unload', prevented)
     try {
       target.close()
     } catch (error) {

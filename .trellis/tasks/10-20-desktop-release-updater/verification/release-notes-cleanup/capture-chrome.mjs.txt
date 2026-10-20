@@ -1,0 +1,36 @@
+import { spawn } from 'node:child_process'
+import { mkdtemp, readFile, writeFile, readdir, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { resolve, join } from 'node:path'
+import { pathToFileURL } from 'node:url'
+const folder=resolve('.trellis/tasks/10-20-desktop-release-updater/verification/release-notes-cleanup')
+const profile=await mkdtemp(join(tmpdir(),'mimir-ui-cdp-'))
+const child=spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',['--headless','--disable-gpu','--disable-extensions','--disable-background-networking','--no-first-run','--no-default-browser-check',`--user-data-dir=${profile}`,'--remote-debugging-port=0','about:blank'],{stdio:'ignore'})
+const delay=(ms)=>new Promise(done=>setTimeout(done,ms))
+try {
+ let port
+ for(let i=0;i<200;i++){try{port=(await readFile(join(profile,'DevToolsActivePort'),'utf8')).split('\n')[0];break}catch{await delay(50)}}
+ if(!port)throw new Error('Chrome CDP did not start')
+ const pages=await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
+ const socket=new WebSocket(pages.find(page=>page.type==='page').webSocketDebuggerUrl)
+ await new Promise(done=>socket.addEventListener('open',done,{once:true}))
+ let id=0; const pending=new Map();const listeners=new Set()
+ socket.addEventListener('message',event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);if(message.error)task.reject(message.error);else task.resolve(message.result)}else{for(const listener of [...listeners])listener(message)}})
+ const send=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject});socket.send(JSON.stringify({id:key,method,params}))})
+ await send('Page.enable')
+ const results=[]
+ for(const filename of (await readdir(folder)).filter(name=>name.endsWith('.html')).sort()){
+  const width=Number(filename.replace('.html','').split('-').at(-1));const height=648
+  await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false})
+  const loaded=new Promise(resolve=>{const listener=(event)=>{if(event.method==='Page.loadEventFired'){listeners.delete(listener);resolve()}};listeners.add(listener)})
+  await send('Page.navigate',{url:pathToFileURL(join(folder,filename)).href});await loaded
+  await send('Runtime.evaluate',{expression:'new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done)))',awaitPromise:true})
+  const metrics=await send('Runtime.evaluate',{expression:'JSON.stringify({width:innerWidth,height:innerHeight,scroll:document.documentElement.scrollWidth,footer:document.querySelector("footer")?.getBoundingClientRect().toJSON(),main:document.querySelector("main")?.getBoundingClientRect().toJSON(),text:document.body.innerText.slice(0,90)})',returnByValue:true})
+  const capture=await send('Page.captureScreenshot',{format:'png',fromSurface:true,captureBeyondViewport:false})
+  await writeFile(join(folder,filename.replace('.html','.png')),Buffer.from(capture.data,'base64'))
+  results.push({filename,...JSON.parse(metrics.result.value)})
+ }
+ await writeFile(join(folder,'layout-metrics.json'),JSON.stringify(results,null,2))
+ console.log(`Captured ${results.length} HTML component fixtures; horizontal overflows:`,results.filter(result=>result.scroll>result.width).map(result=>result.filename))
+ await send('Browser.close')
+} finally {child.kill();await delay(100);await rm(profile,{recursive:true,force:true})}

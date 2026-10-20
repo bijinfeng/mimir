@@ -4,8 +4,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { closeWorkspace, installCloseFeedback, WorkspaceTransition } from './workspace-close.js'
 
 class WindowFixture extends EventEmitter {
-  webContents = new EventEmitter()
+  private readonly contents = new EventEmitter()
   destroyed = false
+  get webContents() {
+    // Electron's native BrowserWindow getter becomes invalid before `closed` is emitted.
+    if (this.destroyed) throw new Error('Object has been destroyed')
+    return this.contents
+  }
   close = vi.fn<() => void>(() => {})
   isDestroyed() {
     return this.destroyed
@@ -111,9 +116,16 @@ describe('workspace replacement respects the native leave guard', () => {
   })
   it('removes close/unload listeners when the attempt settles', async () => {
     const previous = new WindowFixture()
+    const contents = previous.webContents
     previous.close.mockImplementation(() => previous.finishClose())
     await closeWorkspace(previous.native())
     expect(previous.listenerCount('closed')).toBe(0)
-    expect(previous.webContents.listenerCount('will-prevent-unload')).toBe(0)
+    expect(contents.listenerCount('will-prevent-unload')).toBe(0)
+  })
+  it('does not read native contents or close a window that is already destroyed', async () => {
+    const previous = new WindowFixture()
+    previous.destroyed = true
+    await expect(closeWorkspace(previous.native())).resolves.toBeUndefined()
+    expect(previous.close).not.toHaveBeenCalled()
   })
 })

@@ -1,0 +1,6 @@
+NATIVE_READY Electron 44.7.0
+NATIVE_UNCAUGHT TypeError: Object has been destroyed
+    at finish (file:///private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-close-native-U4SIeh/workspace-close.mjs:36:14)
+    at BrowserWindow.closed (file:///private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-close-native-U4SIeh/workspace-close.mjs:31:32)
+    at BrowserWindow.wrapper (node:events:639:12)
+    at BrowserWindow.emit (node:events:526:24)

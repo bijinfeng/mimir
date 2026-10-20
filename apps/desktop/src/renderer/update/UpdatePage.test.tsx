@@ -2,6 +2,7 @@ import { MimirProvider } from '@mimir/renderer/titlebar-kit'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
+import { normalizeReleaseNotes } from '../../main/release-notes'
 import { makeUpdateBridge } from './test-bridge'
 import { UpdatePage } from './UpdatePage'
 
@@ -30,6 +31,29 @@ afterEach(async () => {
 })
 
 describe('更新详情交互', () => {
+  it('规范化说明保持可读文本，不产生 HTML、远程图片或可点击外链', async () => {
+    const { api, calls } = makeUpdateBridge({
+      status: 'available',
+      releaseNotes: normalizeReleaseNotes(
+        '<!-- mimir-desktop-build:abc123 -->\n## 改进\n- **保存**更可靠\n[查看说明](javascript:alert(1))\n<script>alert(1)</script><img src="https://example.com/tracker.png" onerror="alert(1)">',
+      ),
+    })
+    const host = await render(<UpdatePage api={api} />)
+    const notes = host.querySelector('[aria-label="更新说明"]')
+    expect(notes?.textContent).toBe('更新说明改进\n• 保存更可靠\n查看说明')
+    expect(notes?.querySelector('a, img, script, iframe')).toBeNull()
+    expect(host.textContent).not.toContain('mimir-desktop-build')
+    expect(calls).toEqual([])
+  })
+  it('只有隐藏注释或空白时不显示空更新说明区块', async () => {
+    const { api } = makeUpdateBridge({
+      status: 'available',
+      releaseNotes: normalizeReleaseNotes(' \n<!-- hidden -->'),
+    })
+    const host = await render(<UpdatePage api={api} />)
+    expect(host.querySelector('[aria-label="更新说明"]')).toBeNull()
+    expect(button(host, '下载更新')).toBeDefined()
+  })
   it('新版手动下载、稍后关闭、重新打开后仍显示主进程状态', async () => {
     const { api, calls, emit } = makeUpdateBridge({
       status: 'available',

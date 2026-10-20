@@ -1,0 +1,20 @@
+$ vitest run
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+  - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/desktop
+
+
+ Test Files  13 passed (13)
+      Tests  118 passed (118)
+   Start at  19:03:16
+   Duration  4.45s (import 44%, tests 34%, environment 20%, transform 2%, worker 1%)
+
+    Isolate  13 workers spawned · ~726ms startup each (spawn + environment, per file)
+             at least ~323ms faster with isolate: false — reuses workers across files instead of one per file
