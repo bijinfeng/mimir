@@ -36,6 +36,7 @@ src/
 配置在 `apps/server/vite.config.ts`，那里的注释写明了三条不能改的契约
 （`preserveModules`、external、workspace 包内联）。
 
+- **插件私有第三方依赖**：Vite 8 SSR 默认 external 检查从 server 根解析，pnpm isolated 下不能看见 storage 插件私有的 `@aws-sdk/client-s3`。该 SDK 显式列在 `ssr.external`，由生产 hoisted deploy 的实际 node_modules 提供；不能把生成到 `dist/node_modules/.pnpm` 的深层 SDK ESM 文件视为可移植替代。保持 `preserveModulesRoot: src`、原生模块 external 和 workspace 编译契约；修改后须干净 server build、迁移后真实 SDK 操作和生产宿主登录验证，Windows 最终仍需 NSIS 安装后资源及 smoke 门。
 - **不要在入口里调 `serve()` 两次**：dev 入口只导出 app（`dev.ts`），
   监听由 Vite 的 dev server 做；生产入口才自己起服务（`index.ts`）
 - **加新入口**（比如一个维护脚本）要在 `vite.config.ts` 的

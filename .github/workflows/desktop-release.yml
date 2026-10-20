@@ -126,22 +126,88 @@ jobs:
           xvfb-run -a node apps/desktop/scripts/smoke.mjs
       - name: Smoke test Windows installed NSIS package
         if: runner.os == 'Windows'
+        timeout-minutes: 15
         shell: pwsh
         env:
           RELEASE_VERSION: ${{ needs.version.outputs.version }}
         run: |
+          $ErrorActionPreference = 'Stop'
           $installation = Join-Path $env:RUNNER_TEMP 'mimir-install-smoke'
           $installer = Join-Path $env:GITHUB_WORKSPACE "apps/desktop/release/mimir-$env:RELEASE_VERSION-win-x64.exe"
-          $result = Start-Process -FilePath $installer -ArgumentList @('/S', "/D=$installation") -PassThru -Wait
-          if ($result.ExitCode -ne 0) { throw "NSIS installation failed: $($result.ExitCode)" }
+          $evidence = Join-Path $env:RUNNER_TEMP 'mimir-install-resource-evidence'
+          New-Item -ItemType Directory -Path $evidence -Force | Out-Null
+          $phaseLog = Join-Path $evidence 'phases.log'
+          function Write-Phase([string] $message) {
+            $line = "$(Get-Date -Format o) $message"
+            Write-Host $line
+            Add-Content -Path $phaseLog -Value $line
+          }
+          Write-Phase "Windows NSIS inventory: TEMP=$env:TEMP TMP=$env:TMP RUNNER_TEMP=$env:RUNNER_TEMP install=$installation"
+          $expected = Join-Path $evidence 'unpacked-server.json'
+          Write-Phase 'Capture unpacked server resources: begin'
+          node apps/desktop/scripts/package-resources.mjs capture apps/desktop/release/win-unpacked/resources/server $expected
+          if ($LASTEXITCODE -ne 0) { throw 'Unpacked resource inventory failed' }
+          Write-Phase 'Capture unpacked server resources: complete'
+          $knownTempDirs = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+          Get-ChildItem -LiteralPath $env:TEMP -Directory -Filter 'ns*.tmp' -ErrorAction SilentlyContinue | ForEach-Object { [void] $knownTempDirs.Add($_.FullName) }
           try {
+            Write-Phase 'NSIS installation: begin'
+            $result = Start-Process -FilePath $installer -ArgumentList @('/S', "/D=$installation") -PassThru
+            $installDeadline = (Get-Date).AddMinutes(5)
+            while (-not $result.HasExited) {
+              if ((Get-Date) -gt $installDeadline) {
+                Write-Phase 'NSIS installation: timed out; terminating owned installer process tree'
+                taskkill /PID $result.Id /T /F
+                throw 'NSIS installation exceeded 5 minutes'
+              }
+              Get-ChildItem -LiteralPath $env:TEMP -Directory -Filter 'ns*.tmp' -ErrorAction SilentlyContinue | ForEach-Object {
+                if ($knownTempDirs.Add($_.FullName)) {
+                  Write-Phase "Observed NSIS temporary directory: $($_.FullName); extraction candidate: $(Join-Path $_.FullName '7z-out')"
+                }
+              }
+              Start-Sleep -Milliseconds 200
+              $result.Refresh()
+            }
+            $result.WaitForExit()
+            if ($result.ExitCode -ne 0) { throw "NSIS installation failed: $($result.ExitCode)" }
+            Write-Phase 'NSIS installation: complete'
+            $installedServer = Join-Path $installation 'resources/server'
+            Write-Phase 'Capture installed server resources: begin'
+            node apps/desktop/scripts/package-resources.mjs capture $installedServer (Join-Path $evidence 'installed-server.json')
+            if ($LASTEXITCODE -ne 0) { throw 'Installed resource inventory failed' }
+            Write-Phase 'Verify installed server resource paths, sizes and SHA256: begin'
+            node apps/desktop/scripts/package-resources.mjs verify $installedServer $expected 2>&1 | Tee-Object -FilePath (Join-Path $evidence 'verification.log')
+            if ($LASTEXITCODE -ne 0) { throw 'Installed resources differ from unpacked application' }
+            Write-Phase 'Verify installed server resource paths, sizes and SHA256: complete'
+            Write-Phase 'Installed application smoke: begin'
             $env:MIMIR_SMOKE_EXECUTABLE = Join-Path $installation 'mimir.exe'
             node apps/desktop/scripts/smoke.mjs
             if ($LASTEXITCODE -ne 0) { throw 'Installed application failed smoke test' }
+            Write-Phase 'Installed application smoke: complete'
           } finally {
+            Write-Phase 'NSIS cleanup: begin'
             $uninstaller = Join-Path $installation 'Uninstall mimir.exe'
-            if (Test-Path $uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
+            if (Test-Path $uninstaller) {
+              $cleanup = Start-Process -FilePath $uninstaller -ArgumentList '/S' -PassThru
+              if (-not $cleanup.WaitForExit(60000)) {
+                Write-Phase 'NSIS cleanup: timed out; terminating owned uninstaller process tree'
+                taskkill /PID $cleanup.Id /T /F
+                throw 'NSIS cleanup exceeded 60 seconds'
+              }
+              if ($cleanup.ExitCode -ne 0) { throw "NSIS cleanup failed: $($cleanup.ExitCode)" }
+            }
+            Write-Phase 'NSIS cleanup: complete'
           }
+      - name: Preserve Windows installer and resource evidence on failure
+        if: failure() && runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-install-resource-evidence
+          path: |
+            apps/desktop/release/mimir-*-win-x64.exe
+            ${{ runner.temp }}/mimir-install-resource-evidence/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Stage and hash distributable files
         shell: bash
         env:
@@ -158,8 +224,14 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  fnos:
+    needs: version
+    uses: ./.github/workflows/fnos-build.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+
   aggregate:
-    needs: [version, build]
+    needs: [version, build, fnos]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -185,7 +257,11 @@ jobs:
         with:
           name: desktop-linux-x64
           path: incoming/linux-x64
-      - name: Validate complete release and merge macOS update metadata
+      - uses: actions/download-artifact@v4
+        with:
+          name: fnos-x64
+          path: incoming/fnos-x64
+      - name: Validate all desktop and fnOS assets and merge macOS update metadata
         env:
           RELEASE_VERSION: ${{ needs.version.outputs.version }}
         run: node apps/desktop/scripts/release-artifacts.mjs aggregate incoming complete "$RELEASE_VERSION"

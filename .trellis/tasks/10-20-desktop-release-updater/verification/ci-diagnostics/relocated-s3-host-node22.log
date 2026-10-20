@@ -1,0 +1,22 @@
+Command: PATH=/Users/admin/.nvm/versions/node/v22.23.1/bin:$PATH node .trellis/tasks/10-20-desktop-release-updater/verification/ci-diagnostics/relocated-s3-host-probe.mjs
+Observed tool exit: 0
+
+relocated resource tree: { files: 56676, materialized: 0 }
+SDK entry belongs to relocated deployment; generated AWS chunks: 0
+Built adapter sent real signed SDK HTTP requests: write/read/copy/list/delete/probe passed { requests: 12 }
+[seed] 已创建默认知识库与产品说明（库：true，说明：true）
+[owner] 已按 OWNER_EMAIL 创建账号：admin@example.com
+未找到前端构建产物（apps/web/dist），只提供 API
+mimir server 监听 http://localhost:53950
+  数据目录 /var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-relocated-sdk-HSszJx/data
+  数据库 sqlite（/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-relocated-sdk-HSszJx/data/mimir.db）
+<-- POST /api/auth/sign-in/email
+2026-10-20T07:25:18.690Z WARN [Better Auth]: Rate limiting could not determine a client IP and is falling back to a single shared per-path bucket. Ensure your runtime forwards a trusted client IP header, then set `advanced.ipAddress.ipAddressHeaders` or `advanced.ipAddress.trustedProxies` so the address can be resolved.
+--> POST /api/auth/sign-in/email 200 47ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session 200 2ms
+<-- GET /api/documents
+--> GET /api/documents 200 2ms
+<-- GET /api/folders
+--> GET /api/folders 200 1ms
+Relocated production host: fresh SQLite migrations, standard test login, session/documents/folders HTTP 200 passed

@@ -68,6 +68,7 @@
 - IPC 测试覆盖伪造 sender/frame、过期 requestId、导航后迟到响应、云端无桥、关闭 veto 和宿主失败/超时。
 - renderer 测试覆盖自动/手动保存、无句柄、失败、新改动、编辑器切换；保存 ACK 不等于忽略 beforeunload。
 - 资源复制测试必须覆盖迁移后 require、同名嵌套依赖版本、内部文件别名物化、目录循环/绝对/越界/损坏链接拒绝；真实包原生模块和安装后 smoke 仍不可省略。
+- Windows NSIS 门先 `package-resources.mjs capture <unpackedServer> <manifest.json>` 保存普通文件相对路径/大小/SHA256，真实安装后 capture 并 `verify <installedServer> <manifest.json>` 严格比对；缺失/新增/变更均失败，然后才运行既有 A/B/C smoke。禁止为通过门忽略深层文件。安装 5 分钟、卸载父进程 60 秒、整个步骤 15 分钟上界；失败上传安装器和资源/阶段证据，不上传 userData。卸载父进程返回不能证明临时子进程全部结束。
 - ASAR 校验回归使用真实 archive，覆盖两种输入分隔符、正确/缺失根依赖、错版本、缺入口和越界入口；不能用列表展示路径代替真实字节验证。
 - 发布脚本测试用真实 fixture 字节验证五目标 hash、缺 FPK、非法 tag、版本不一致、错架构/mode、重复条目、双架构冲突和元数据汇总；缺失或篡改 FPK 必须在远端写入前失败，上传/远端摘要失败不能公开 draft；不能只匹配 YAML 文本。
 - fnOS 官方工具、原生模块、解包及 Socket 契约唯一归属 [architecture §8.6.1](../../project/architecture.md#861-fnos-原生包部署契约x86_64)；Ubuntu 验包不代表 fnOS 设备安装或覆盖升级已通过。

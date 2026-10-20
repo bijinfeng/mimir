@@ -64,7 +64,11 @@ export default defineConfig(({ mode }) => {
     // Canvas contains platform .node binaries; only the isolated Node worker loads it.
     // Vite's browser dependency optimizer must never parse those binaries.
     optimizeDeps: { exclude: ['@napi-rs/canvas'] },
-    ssr: { external: ['@napi-rs/canvas'] },
+    // During builds Vite checks default external resolution from this package root.
+    // S3 belongs to the workspace storage plugin, so that lookup cannot see it
+    // under pnpm's isolated layout. Keep the SDK external explicitly: deploying
+    // the plugin supplies its dependency, without emitting deep .pnpm ESM chunks.
+    ssr: { external: ['@napi-rs/canvas', '@aws-sdk/client-s3'] },
 
     server: {
       // 与前端 dev 代理的默认目标对齐（前端的 vite.config.ts 也读这个 PORT）。

@@ -1,0 +1,4 @@
+Command: PATH=/Users/admin/.nvm/versions/node/v22.23.1/bin:$PATH pnpm --filter @mimir/server typecheck
+Observed tool exit: 0
+
+$ tsc --noEmit
