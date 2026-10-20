@@ -52,9 +52,9 @@
 | 20 HTML 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-html-secondary`；`469f33e`；全仓 check exit 0 |
 | 21 DOCX 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-docx-secondary`；现状复核，无代码改动 |
 | 22 XLSX 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-xlsx-secondary`；全仓 check exit 0 |
-| 23 PPTX 二级 | 进行中（下一模块） | — |
-| 24 PDF 二级 | 待开始 | — |
-| 25 共享浮层与短窗 | 待开始 | — |
+| 23 PPTX 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-pptx-secondary`；现状复核，无代码改动 |
+| 24 PDF 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-pdf-secondary`；现状复核，无代码改动 |
+| 25 共享浮层与短窗 | 进行中（下一模块） | — |
 | 26 窄屏工作区 | 待开始 | — |
 | 27 跨模块一致性 | 待开始 | — |
 | 28 小程序 | 待开始 | — |
