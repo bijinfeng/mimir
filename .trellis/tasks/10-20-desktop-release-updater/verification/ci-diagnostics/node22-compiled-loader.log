@@ -1,0 +1,12 @@
+$ /Users/admin/.nvm/versions/node/v22.23.1/bin/node .trellis/tasks/10-20-desktop-release-updater/verification/ci-diagnostics/worker-heap-probe.mjs --compiled --loader
+{"name":"initial","heap":{"total_heap_size":10633216,"total_heap_size_executable":262144,"total_physical_size":9027584,"total_available_size":219855472,"used_heap_size":6413472,"heap_size_limit":226492416,"malloced_memory":163968,"peak_malloced_memory":299008,"does_zap_garbage":0,"number_of_native_contexts":1,"number_of_detached_contexts":0,"total_global_handles_size":8192,"used_global_handles_size":2752,"external_memory":2875521},"execArgv":[]}
+{"name":"tsx","heap":{"total_heap_size":12468224,"total_heap_size_executable":262144,"total_physical_size":11845632,"total_available_size":218000136,"used_heap_size":8237848,"heap_size_limit":226492416,"malloced_memory":434328,"peak_malloced_memory":1433600,"does_zap_garbage":0,"number_of_native_contexts":1,"number_of_detached_contexts":0,"total_global_handles_size":8192,"used_global_handles_size":3296,"external_memory":3460163},"execArgv":[]}
+{"name":"entry","heap":{"total_heap_size":34652160,"total_heap_size_executable":1048576,"total_physical_size":34914304,"total_available_size":203572584,"used_heap_size":22235584,"heap_size_limit":226492416,"malloced_memory":286824,"peak_malloced_memory":7585792,"does_zap_garbage":0,"number_of_native_contexts":1,"number_of_detached_contexts":0,"total_global_handles_size":24576,"used_global_handles_size":19904,"external_memory":4623928},"execArgv":[]}
+{"name":"parser","heap":{"total_heap_size":34652160,"total_heap_size_executable":1048576,"total_physical_size":34914304,"total_available_size":202031832,"used_heap_size":23776336,"heap_size_limit":226492416,"malloced_memory":2379880,"peak_malloced_memory":7585792,"does_zap_garbage":0,"number_of_native_contexts":1,"number_of_detached_contexts":0,"total_global_handles_size":24576,"used_global_handles_size":20512,"external_memory":4893938},"execArgv":[]}
+Error [ERR_WORKER_OUT_OF_MEMORY]: Worker terminated due to reaching memory limit: JS heap out of memory
+    at [kOnExit] (node:internal/worker:316:26)
+    at Worker.<computed>.onexit (node:internal/worker:232:20) {
+  code: 'ERR_WORKER_OUT_OF_MEMORY'
+}
+
+exit=1

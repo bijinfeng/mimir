@@ -1,0 +1,13 @@
+# Invocation recorded from tool execution; cwd=apps/server
+$ /Users/admin/.nvm/versions/node/v22.23.1/bin/node node_modules/vitest/vitest.mjs run src/test/chat-attachments.test.ts src/test/pptx-manual-upload.test.ts src/test/xlsx-range-disjoint.test.ts
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+
+
+ Test Files  3 passed (3)
+      Tests  143 passed (143)
+   Start at  14:46:45
+   Duration  23.29s (tests 61%, import 30%, transform 9%)
+
+
+# Observed tool exit status: 0

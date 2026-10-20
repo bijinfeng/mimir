@@ -366,6 +366,17 @@ describe('conversation attachment HTTP and lifecycle', () => {
     await expect(running).rejects.toThrow('超过')
     expect(worker.threadId).toBe(-1)
   })
+  it('rejects and terminates an actual worker that exceeds the preparation heap budget', async () => {
+    const worker = new Worker(
+      `const held=[];while(true){held.push(new Array(10000).fill('retain'))}`,
+      {
+        eval: true,
+        resourceLimits: { maxOldGenerationSizeMb: 192, maxYoungGenerationSizeMb: 16 },
+      },
+    )
+    await expect(runPreparationWorker(worker)).rejects.toThrow(/memory limit.*heap out of memory/)
+    expect(worker.threadId).toBe(-1)
+  })
   it('binds canonical refs, retains failed answer attachments and rebuilds context from server bytes', async () => {
     const { conversation, attachment, refs } = await ready()
     await expect(

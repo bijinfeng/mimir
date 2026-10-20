@@ -78,3 +78,20 @@ CSS 修复使用既有生成器，在共享 Vite preset 的 buildStart 阶段、
 新校验直接验证根依赖的真实 name/version 及 main 非空字节，规范化后不允许 main 逃出 updater 目录；外层 dependencies 声明或其他模块的嵌套 updater 均不足以通过。没有更改 updater 打包策略/版本，也没有仅删除有问题的检查。
 
 独立运行真实 ASAR fixture 回归 6/6 通过；三个 mjs oxlint、四文件 oxfmt check、入口 Node syntax、git diff check 通过；根 test 入口已保留此前条目并追加新测试。未重复全仓检查，此前全仓 exit 0 的记录保留。此补审仅确认跨平台读取修复与严格内容检查；真正 Windows archive、已安装客户端及升级仍由下一轮原生 runner 验收。源码无新增审查问题，可冻结提交。
+
+## Node 22 worker 与 CI 调度独立补审
+
+已独立检查冻结的 `chat-attachment-prepare.ts`、新增真实 heap exhaustion 回归、CI workspace 调度配置，以及 `github-ci-second-fixes.md` 的证据与边界。无新增代码问题，无源码修改。
+
+- 仅 source `.ts` 入口且现有 extensionOf 分类为 PDF 时，解析父包已声明的固定 pdfjs 主/worker 两模块 URL，在同一个受限 worker 内、tsx 注册前执行原生 ESM import。随后仍执行真实 source worker 和纯 parser，沿同一锁定 PDF.js 路径处理原字节；没有选择旧 dist、伪造提取结果或更改 MIME/签名/扫描件拒绝逻辑。
+- compiled `.js` 分支不做预载、不注册 tsx；worker 192MB old/16MB young 与30秒准备预算不变，取消/超时及 finally termination 路径未修改。Node22真实 OOM 测试断言错误拒绝且线程已终止，不能把崩溃算成功。
+- 锁定 pnpm 12.4.2 独立运行 `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm config get workspace-concurrency` 返回 `1`。配置仅作用 CI 的完整 pnpm check，串行 workspace，无测试删减或 timeout 调整；是否解决 GitHub 争用仍待远端结果。
+
+独立验证使用 **Node22.23.1**：
+
+- `worker-heap-probe.mjs --preload` 真实PDF结果精确为 `PDF attachment`，parsed时 used heap 36,178,256 bytes（在原预算内）。
+- 实际 `chat-attachments.test.ts` 聚焦 Office/PDF真实提取与扫描/损坏拒绝、真实 heap OOM拒绝/termination、timeout/abort后可继续准备：**3/3通过**；其余27项本次由 -t 未选，不是产品配置新增跳过。作者另有完整143项证据。
+- `node node_modules/typescript/bin/tsc --noEmit` 通过。
+- 两TS文件 oxlint、三文件 oxfmt check、CI actionlint、git diff check 通过。
+
+此前全仓 exit0 日志保持，但它使用本机Node25，不能替代本轮新增Node22门；本次未重跑全仓。源码可冻结提交。新GitHub完整CI、Postgres/S3专项、原生构建及真实升级仍由主会话验收。

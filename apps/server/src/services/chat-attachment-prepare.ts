@@ -2,7 +2,8 @@ import { attachmentParserModuleUrl } from '../plugins/host.js'
 import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { Worker } from 'node:worker_threads'
-import { CHAT_ATTACHMENT_LIMITS } from '@mimir/shared'
+import { pathToFileURL } from 'node:url'
+import { CHAT_ATTACHMENT_LIMITS, extensionOf } from '@mimir/shared'
 
 const require = createRequire(import.meta.url)
 const entryJs = new URL('./chat-attachment-worker.js', import.meta.url)
@@ -13,7 +14,12 @@ const entry = existsSync(entryJs)
 const source = String.raw`(async()=>{
  const {workerData,parentPort}=await import('node:worker_threads');
  try {
-  if(workerData.tsx){ const {register}=await import(workerData.tsx);register(); }
+  if(workerData.tsx){
+   // Keep vendor ESM native: tsx's dynamic-import sourcemaps exceed the heap budget
+   // on Node 22. Both modules are reused by the real PDF parser below.
+   for(const url of workerData.nativeImports) await import(url);
+   const {register}=await import(workerData.tsx);register();
+  }
   await import(workerData.entry);
  }catch(e){parentPort.postMessage({error:e instanceof Error?e.message:String(e)})}
 })()`
@@ -113,6 +119,12 @@ export async function prepareAttachmentBytes(
         parserModule: attachmentParserModuleUrl(),
         entry: entry.href,
         tsx: entry.pathname.endsWith('.ts') ? require.resolve('tsx/esm/api') : undefined,
+        nativeImports:
+          entry.pathname.endsWith('.ts') && extensionOf(name) === 'pdf'
+            ? ['pdfjs-dist/legacy/build/pdf.mjs', 'pdfjs-dist/legacy/build/pdf.worker.mjs'].map(
+                (specifier) => pathToFileURL(require.resolve(specifier)).href,
+              )
+            : [],
         name,
         mime,
         data,

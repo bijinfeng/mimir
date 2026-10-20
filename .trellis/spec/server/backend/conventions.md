@@ -141,3 +141,33 @@ src/
   写入路径改了表结构要一起核对触发器
 
 ---
+
+## 附件 worker 的 Node22 开发态加载
+
+### 1. 范围
+
+`chat-attachment-prepare.ts` 隔离预处理；Node22 的 tsx4.23.13 动态 import sourcemap 会使大型 PDF.js ESM 超过现有堆预算。编译产物没有该 loader。
+
+### 2. 签名
+
+`prepareAttachmentBytes(name, mime, data, signal?, timeoutMs?): Promise<PreparationResult>`；`runPreparationWorker(worker, signal?, timeoutMs?)` 成功、失败、取消和超时后均 await terminate。
+
+### 3. 契约
+
+保留 old/young 192/16MB、并发2及既有时间预算。仅入口为 `.ts` 且文件扩展为 PDF 时，在注册 tsx 前 native import 固定的 `pdfjs-dist/legacy/build/pdf.mjs` 与 `pdf.worker.mjs`；URL 来自已声明锁定依赖 require.resolve/pathToFileURL。真实 parser 复用 ESM 缓存并实际解析原字节。compiled `.js` 不预载、不注册 tsx，不从可陈旧的 dist 替代当前 TS。CI `pnpm check` 用 `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1` 串行 workspace；pnpm12不读取旧 npm_config 前缀。
+
+### 4. 错误矩阵
+
+缺依赖/无效或扫描PDF仍拒绝；真实堆超限、无限CPU、abort和timeout均拒绝且线程终止。不得增加预算、合成正文、忽略解析错误或跳用例。
+
+### 5. Good / Base / Bad
+
+Good：Node22 当前源码真实PDF抽取成功且超限仍拒绝。Base：compiled worker按原路径运行。Bad：提高上限或选择陈旧编译文件掩盖源码加载问题。
+
+### 6. 必需验证
+
+在 `.nvmrc` 对应 Node 主版本运行真实附件套件、OOM/CPU/abort恢复；同预算的源码/compiled探针对比区分 loader 与 parser。CI调度效果以完整远端运行判断，本机Node25通过不能代替Node22。
+
+### 7. 错误与正确
+
+错误：将192MB提高或只重跑Node25宣布CI已修好。正确：保持限制，在源码 worker 内先 native load 固定 vendor ESM，再注册TS loader，真实文本与失败边界均验证。

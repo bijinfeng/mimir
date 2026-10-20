@@ -64,6 +64,10 @@ jobs:
 
       # 与本地完成门一致：含样式守卫和根目录的桌面进程测试
       - run: pnpm check
+        env:
+          # Office and server both execute native/WASM suites on the same runner.
+          # Preserve test budgets while avoiding competing workspace processes.
+          PNPM_CONFIG_WORKSPACE_CONCURRENCY: 1
       # @mimir/shared 以源码发布，编译责任在使用方；类型检查不代替构建
       - run: pnpm build
       # 同一套服务端断言在 PG 上复跑，globalSetup 还会从空库执行正式迁移
