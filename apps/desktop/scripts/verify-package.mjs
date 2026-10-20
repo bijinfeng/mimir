@@ -3,6 +3,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { parse } from 'yaml'
 import { targets, validateVersion } from './release-artifacts.mjs'
+import { extractArchiveFile, verifyPackagedUpdater } from './verify-package-contents.mjs'
 
 const [targetKey, version] = process.argv.slice(2)
 validateVersion(version)
@@ -13,7 +14,7 @@ const desktopRoot = path.resolve('apps/desktop')
 const require = createRequire(path.join(desktopRoot, 'package.json'))
 const builderRequire = createRequire(require.resolve('electron-builder'))
 const libRequire = createRequire(builderRequire.resolve('app-builder-lib'))
-const { extractFile, listPackage } = libRequire('@electron/asar')
+const { extractFile } = libRequire('@electron/asar')
 const unpacked =
   target.platform === 'darwin'
     ? `release/${target.arch === 'arm64' ? 'mac-arm64' : 'mac'}/mimir.app/Contents`
@@ -24,7 +25,7 @@ const resources = path.join(
   target.platform === 'darwin' ? 'Resources' : 'resources',
 )
 const asar = path.join(resources, 'app.asar')
-const packaged = JSON.parse(extractFile(asar, 'package.json').toString())
+const packaged = JSON.parse(extractArchiveFile(asar, 'package.json', extractFile).toString())
 if (packaged.version !== version || packaged.dependencies?.['electron-updater'] !== '6.8.9')
   throw new Error('Wrong packaged version/updater dependency')
 const expectedMode =
@@ -33,8 +34,7 @@ const expectedMode =
     : 'automatic'
 if (packaged.desktopUpdateMode !== expectedMode)
   throw new Error('Wrong immutable update capability')
-if (!listPackage(asar).some((name) => name.endsWith('/electron-updater/package.json')))
-  throw new Error('electron-updater missing from app.asar')
+verifyPackagedUpdater(asar, extractFile)
 for (const file of [
   'dist/main/index.js',
   'dist/preload/index.js',
@@ -43,7 +43,7 @@ for (const file of [
   'dist/renderer/setup.html',
   'dist/renderer/update.html',
 ])
-  extractFile(asar, file)
+  extractArchiveFile(asar, file, extractFile)
 for (const file of [
   'server/dist/index.js',
   'server/dist/db/migrate.js',

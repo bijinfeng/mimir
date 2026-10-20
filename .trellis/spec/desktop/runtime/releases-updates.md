@@ -9,9 +9,11 @@
 
 - `pnpm desktop:build`：server build → desktop build → `scripts/deploy-server.mjs` → `scripts/package.mjs`。deploy 脚本只清理固定、被 gitignore 的 `apps/desktop/server-deploy` 再执行 `pnpm --filter @mimir/server deploy --prod --node-linker hoisted` 生产依赖部署，以支持重复打包和可移植物理目录；根安装仍保持 isolated；不能接受调用方传入的清理路径。matrix build 强制原生 OS/CPU；`nativeArtifactName(process.arch)` 固定文件名架构为 Node 的 x64/arm64，仅保留 version/os/ext 宏，防止 AppImage 将 x64 重写为 x86_64；builder 始终 `publish: 'never'`。
 - `finalizeResourceTree(root): Promise<{files:number, materialized:number}>`：afterPack 对完整可信 server 资源树执行；内部相对文件别名物化，目录/绝对/越界/损坏链接均使构建失败，不递归解引用依赖图。返回成功的资源树须无链接，才能压 NSIS/签名。
+- `extractArchiveFile(archive, entry, extractFile)`：ASAR 3.4.1 目录遍历使用宿主 `path.sep`，所有固定 archive entry 先 native normalize；`listPackage` 是宿主路径展示，禁止匹配固定正斜杠后缀来判断依赖。`verifyPackagedUpdater(archive, extractFile)` 必须读取根 updater 的真实 manifest name/version 与非空且不越界的 main 文件；缺文件、错版本和仅外层声明均失败。
 - `node apps/desktop/scripts/release-artifacts.mjs version [vX.Y.Z]`：校验 desktop/package.json 的稳定版本，tag 必须匹配已提交的桌面版本。
 - `stage <releaseDir> <outputDir> <target> <version> <mode>`、`aggregate <incomingDir> <outputDir> <version>`：收集并验证真实产物后生成完整发布目录；target 是 `mac-arm64|mac-x64|win-x64|linux-x64`。
 - `BASE_VERSION=X.Y.Z TARGET_VERSION=X.Y.Z node apps/desktop/scripts/update-smoke.mjs`：仅一次性 GitHub x64 Windows/Linux runner 可执行的真实升级验收；独立 `desktop-update-verify.yml` 映射同名输入。客户端不包含验收开关。
+- `BASE_VERSION=X.Y.Z TARGET_VERSION=X.Y.Z MANUAL_UPDATE_EVIDENCE=<绝对目录> node apps/desktop/scripts/manual-update-smoke.mjs`：本机 mac ARM64 官方 ZIP 手动更新验收；只启动/替换 mkdtemp 下专用 app 副本和同一隔离 userData，正常窗口关闭后才替换，记录真实 CDP HTML/PNG。固定官方匿名下载及摘要；不打开用户系统下载目录，不声称自动安装、Gatekeeper、公证或原生通知投递。
 - `.github/workflows/desktop-release.yml`：`workflow_dispatch` 仅产 artifacts；稳定 `vX.Y.Z` tag 才进入单独 `publish` job。
 - `DesktopUpdateApi`（shared）：工作区 `getState/open/setAppearance/onState/onPrepare/respondPrepare/onPrepareCancelled`；它没有检查、下载、安装动作。appearance 只接收 auto/light/dark 枚举，本地主题快照可通知主进程供原生菜单复用；云端详情始终跟随系统。
 - `MimirUpdaterBridge`：仅专用 `preload/updater.ts` 暴露 `getState/check/download/install/setAutoDownload/onState/openRelease/returnToDocument/close`。
@@ -65,6 +67,7 @@
 - IPC 测试覆盖伪造 sender/frame、过期 requestId、导航后迟到响应、云端无桥、关闭 veto 和宿主失败/超时。
 - renderer 测试覆盖自动/手动保存、无句柄、失败、新改动、编辑器切换；保存 ACK 不等于忽略 beforeunload。
 - 资源复制测试必须覆盖迁移后 require、同名嵌套依赖版本、内部文件别名物化、目录循环/绝对/越界/损坏链接拒绝；真实包原生模块和安装后 smoke 仍不可省略。
+- ASAR 校验回归使用真实 archive，覆盖两种输入分隔符、正确/缺失根依赖、错版本、缺入口和越界入口；不能用列表展示路径代替真实字节验证。
 - 发布脚本测试用真实 fixture 字节验证 hash、缺文件、非法 tag、双架构冲突和元数据汇总；不能只匹配 YAML 文本。
 - `pnpm check`、desktop build、实际打包与 `MIMIR_SMOKE_EXECUTABLE=<绝对路径> node apps/desktop/scripts/smoke.mjs`；界面实际截图/HTML归档。
 - 真实更新验收必须从官方匿名资产安装基线，驱动真实更新 UI；验证普通退出未替换安装文件、真实编辑阻止并取消安装、保存后重启安装、旧进程消失与新进程拉起、版本和原文档/模式保留。Windows 校验实际 updater 缓存安装包摘要；Linux 校验替换后的 AppImage 摘要。头部完成通知和系统焦点仍需原生桌面证据，不能用 CDP 无详情窗口替代。

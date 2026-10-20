@@ -55,3 +55,15 @@
 - 本机真实部署资源通过 afterPack 文件复制，43551 文件、零链接；迁移后 SQLite/vec、Jieba/dict、Canvas 均从迁移后的宿主目录独立加载成功（exit 0），见 `portable-host-final.log`。这只验证跨目录资源可移植性，不代表本机执行 Windows NSIS。
 
 最终 Windows 门仍为 GitHub runner 原生 NSIS 压缩、真实安装及安装路径内 smoke；没有把 macOS 的物理目录验证当成 Windows 安装通过。第一次本机迁移验证因 `/var` 与真实 `/private/var` 的检查路径未归一化误报，原日志保留 `portable-host-path-check-failed.log`；验证脚本随后对临时根 realpath 归一化，产品路径逻辑未因该验证脚本问题调整。
+
+## Windows ASAR 校验路径假阴性
+
+tag run `39380282464` 的 Windows job `118487798251` 已完成 NSIS 压缩、EXE 与 blockmap，随后 `verify-package.mjs:37` 抛出 updater 缺失。日志 `github-v010-windows-failed.log` 显示外层 package.json 的版本及 updater 声明校验已通过。
+
+锁定 `@electron/asar 3.4.1` 的具体实现：`lib/asar.js:251–252` 的 `listPackage` 调用 `Filesystem.listFiles`；`lib/filesystem.js:155–168` 在第 162 行使用宿主 `path.join(basePath, childPath)`，从 `/` 起步构造展示路径。Windows 因而返回反斜杠分隔路径，原来的 `endsWith('/electron-updater/package.json')` 即使文件存在也无法匹配。`lib/asar.js:254–260` 的 `extractFile` 则直接查找并读取 archive entry；但 `lib/filesystem.js:58–60` 的目录遍历直接 split(path.sep)，`getNode` 不会先 normalize。Windows 的 dirname 会保留输入斜杠，所以固定 archive 路径也必须先按宿主 normalize，不能只删除列表检查。
+
+修复删除展示列表的后缀推断，`verify-package-contents.mjs` 直接读取根 `node_modules/electron-updater/package.json`，验证真实模块 name/version 为 electron-updater/6.8.9，规范化 main 中的两种分隔符并验证其仍在包目录内、入口字节实际存在且非空。所有读取（包括既有 dist/main、preload、renderer 检查）经 `extractArchiveFile` 统一转为原生分隔符后交给 ASAR。仅外层依赖声明、其他包内嵌 updater、错误版本或入口缺失均不能通过；未改客户端依赖或 builder 打包策略。
+
+真实 ASAR fixture 回归 6/6 通过，覆盖两种输入分隔符的真实字节读取、标准及反斜杠 main、根依赖缺失、错误版本、入口缺失、两种分隔符的越界入口；已追加根 test 并保留 manual-update-smoke 等既有条目。日志 `asar-package-contents-tests.log`。本机既有真实 mac ARM64 app.asar 通过完整 `verify-package.mjs mac-arm64 0.1.0`（含 native 资源校验），见 `asar-package-local-verification.log`；受影响文件 lint/format 与 diff check 通过。
+
+此处已确认的是原检查跨平台逻辑必然产生假阴性；Windows archive 未在失败 run 上传，不能仅凭日志推断其中代码完整。下一次 Windows runner 必须通过新的直接字节检查及真实客户端 smoke，才能确认实际产品依赖无遗漏。原 v0.1.0 tag 不移动，后续由主会话决定新版本。

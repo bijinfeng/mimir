@@ -1,0 +1,14 @@
+✔ verifies real root updater manifest and normalized main bytes without platform-specific listing (22.368791ms)
+✔ reads real ASAR entry bytes through either input separator convention (4.551875ms)
+✔ manifest declaration and a nested updater cannot replace the actual root dependency (4.492791ms)
+✔ wrong bundled updater version fails even when the outer declaration is correct (3.900375ms)
+✔ updater manifest without executable entry bytes cannot pass package verification (3.563292ms)
+✔ updater entry escaping its package is rejected (6.941667ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 147.668125

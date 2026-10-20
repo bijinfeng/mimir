@@ -70,3 +70,11 @@ CSS 修复使用既有生成器，在共享 Vite preset 的 buildStart 阶段、
 补审修复：TitleBar 原 `button.click()` 改为可见/启用/中心点 hit-test 后 CDP 真实鼠标事件；下载按钮可见性断言增加启用及布局/visibility 检查。新增 helper 测试加入根 test 命令。2/2 helper 测试、受影响 mjs oxlint、三文件 oxfmt check、Node syntax、git diff check 通过。
 
 此前完整 `pnpm check` exit 0 记录保持；本次只追加上述定向门，未重复全仓。实际官方双版本尚待发布后执行，不把脚本/辅助测试视作真实手工替换已通过。按钮未点击打开系统浏览器、Gatekeeper/quarantine/公证、原生通知焦点仍为明确限制；Node 官方 ZIP 下载只能验证手工替换分发链。
+
+## Windows ASAR 路径校验独立补审
+
+已核对锁定 `@electron/asar 3.4.1` 源码：listFiles 使用宿主 path.join 构造显示名，extractFile/getFile 遍历按 path.sep 切分。原 POSIX 展示名后缀检查在 Windows 可产生假阴性；新 helper 统一将输入的两种分隔符转为本机规范路径，再读取真实 ASAR entry，覆盖外层 package、根 updater、main、preload 和三个 renderer HTML。
+
+新校验直接验证根依赖的真实 name/version 及 main 非空字节，规范化后不允许 main 逃出 updater 目录；外层 dependencies 声明或其他模块的嵌套 updater 均不足以通过。没有更改 updater 打包策略/版本，也没有仅删除有问题的检查。
+
+独立运行真实 ASAR fixture 回归 6/6 通过；三个 mjs oxlint、四文件 oxfmt check、入口 Node syntax、git diff check 通过；根 test 入口已保留此前条目并追加新测试。未重复全仓检查，此前全仓 exit 0 的记录保留。此补审仅确认跨平台读取修复与严格内容检查；真正 Windows archive、已安装客户端及升级仍由下一轮原生 runner 验收。源码无新增审查问题，可冻结提交。
