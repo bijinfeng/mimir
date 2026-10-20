@@ -1,0 +1,66 @@
+verify	S3 compatibility smoke test	﻿2026-10-20T08:57:50.6741880Z ##[group]Run # MinIO removed anonymous community images. Use the official historical
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6742576Z ^[[36;1m# MinIO removed anonymous community images. Use the official historical^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6743109Z ^[[36;1m# linux-amd64 RELEASE.2025-09-07T16-13-09Z asset, pinned by SHA256.^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6743601Z ^[[36;1mfixture="$(mktemp -d "$RUNNER_TEMP/mimir-minio-test.XXXXXX")"^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6743975Z ^[[36;1mminio_pid=''^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6744193Z ^[[36;1mcleanup() {^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6744426Z ^[[36;1m  if [[ -n "$minio_pid" ]]; then^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6744732Z ^[[36;1m    kill "$minio_pid" 2>/dev/null || true^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6745043Z ^[[36;1m    for attempt in $(seq 1 50); do^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6745399Z ^[[36;1m      if ! kill -0 "$minio_pid" 2>/dev/null; then break; fi^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6745736Z ^[[36;1m      sleep 0.1^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6745956Z ^[[36;1m    done^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6746328Z ^[[36;1m    if kill -0 "$minio_pid" 2>/dev/null; then kill -KILL "$minio_pid" 2>/dev/null || true; fi^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6746815Z ^[[36;1m    wait "$minio_pid" 2>/dev/null || true^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6747094Z ^[[36;1m  fi^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6747550Z ^[[36;1m  rm -rf "$fixture"^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6747814Z ^[[36;1m}^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6748017Z ^[[36;1mtrap cleanup EXIT^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6748386Z ^[[36;1mcurl --fail --location --silent --show-error --retry 3 --max-time 180 \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6748832Z ^[[36;1m  -H 'Accept: application/octet-stream' \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6749263Z ^[[36;1m  https://api.github.com/repos/minio/minio/releases/assets/404655976 \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6749663Z ^[[36;1m  -o "$fixture/minio"^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6750171Z ^[[36;1mecho "7c5bd8512c6e966455b1d198209358b2d191c77a83ab377c4073281065fb855f  $fixture/minio" | sha256sum --check^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6750711Z ^[[36;1mchmod +x "$fixture/minio"^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6750974Z ^[[36;1m"$fixture/minio" --version^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6751279Z ^[[36;1mMINIO_ROOT_USER="$MIMIR_S3_TEST_ACCESS_KEY" \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6751650Z ^[[36;1m  MINIO_ROOT_PASSWORD="$MIMIR_S3_TEST_SECRET_KEY" \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6752004Z ^[[36;1m  "$fixture/minio" server "$fixture/data" \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6752386Z ^[[36;1m  --address 127.0.0.1:19000 --console-address 127.0.0.1:19001 \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6752754Z ^[[36;1m  > "$fixture/server.log" 2>&1 &^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6753023Z ^[[36;1mminio_pid=$!^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6753250Z ^[[36;1mfor attempt in $(seq 1 30); do^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6753709Z ^[[36;1m  if curl --fail --silent http://127.0.0.1:19000/minio/health/live > /dev/null; then break; fi^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6754177Z ^[[36;1m  sleep 1^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6754382Z ^[[36;1mdone^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6754710Z ^[[36;1mcurl --fail --silent http://127.0.0.1:19000/minio/health/live > /dev/null^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6755275Z ^[[36;1mpnpm --filter @mimir/plugin-storage exec vitest run src/s3.integration.test.ts^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6818870Z shell: /usr/bin/bash -e {0}
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6819140Z env:
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6819570Z   DATABASE_URL: ***127.0.0.1:5544/mimir_test
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6819908Z   AUTH_SECRET: ci-only-secret-not-for-production
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6820223Z   DATA_DIR: ./data
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6820431Z   VAULT_DIR: ./data/vault
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6820653Z   RAW_DIR: ./data/raw
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6820920Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6821271Z   MIMIR_S3_TEST_ENDPOINT: http://127.0.0.1:19000
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6821594Z   MIMIR_S3_TEST_ACCESS_KEY: mimirtest
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6821904Z   MIMIR_S3_TEST_SECRET_KEY: mimirtest-secret-only
+verify	S3 compatibility smoke test	2026-10-20T08:57:50.6822197Z ##[endgroup]
+verify	S3 compatibility smoke test	2026-10-20T08:57:51.1797822Z /home/runner/work/_temp/mimir-minio-test.Kzcsky/minio: OK
+verify	S3 compatibility smoke test	2026-10-20T08:57:51.4018138Z minio version RELEASE.2025-09-07T16-13-09Z (commit-id=07c3a429bfed433e49018cb0f78a52145d4bedeb)
+verify	S3 compatibility smoke test	2026-10-20T08:57:51.4019600Z Runtime: go1.24.6 linux/amd64
+verify	S3 compatibility smoke test	2026-10-20T08:57:51.4020498Z License: GNU AGPLv3 - https://www.gnu.org/licenses/agpl-3.0.html
+verify	S3 compatibility smoke test	2026-10-20T08:57:51.4021285Z Copyright: 2015-2025 MinIO, Inc.
+verify	S3 compatibility smoke test	2026-10-20T08:57:52.7635944Z
+verify	S3 compatibility smoke test	2026-10-20T08:57:52.7640378Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv5.0.4 ^[[39m^[[90m/home/runner/work/mimir/mimir/plugins/storage^[[39m
+verify	S3 compatibility smoke test	2026-10-20T08:57:52.7640996Z
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4534884Z  ^[[32m✓^[[39m src/s3.integration.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 1444^[[2mms^[[22m^[[39m
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4535563Z    ^[[32m✓^[[39m S3 兼容端点集成验证 ^[[2m(2)^[[22m
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4536096Z      ^[[33m^[[2m✓^[[22m^[[39m LIST 跨过 1000 项边界且不返回桶内前缀^[[33m 1072^[[2mms^[[22m^[[39m
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4592974Z
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4599550Z ^[[2m Test Files ^[[22m ^[[1m^[[32m1 passed^[[39m^[[22m^[[90m (1)^[[39m
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4600579Z ^[[2m      Tests ^[[22m ^[[1m^[[32m2 passed^[[39m^[[22m^[[90m (2)^[[39m
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4603218Z ^[[2m   Start at ^[[22m 08:57:52
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4607988Z ^[[2m   Duration ^[[22m 1.69s^[[2m (tests 92%, import 7%, transform 1%)^[[22m
+verify	S3 compatibility smoke test	2026-10-20T08:57:54.4621900Z

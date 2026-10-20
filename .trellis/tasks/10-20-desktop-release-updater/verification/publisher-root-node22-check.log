@@ -1,0 +1,358 @@
+TAP version 13
+# Subtest: mac manual verification pins the official stable ZIP and exact architecture
+ok 1 - mac manual verification pins the official stable ZIP and exact architecture
+  ---
+  duration_ms: 1.413542
+  type: 'test'
+  ...
+# Subtest: manual acceptance rejects automatic states, source drift or wrong versions
+ok 2 - manual acceptance rejects automatic states, source drift or wrong versions
+  ---
+  duration_ms: 4.471583
+  type: 'test'
+  ...
+# Subtest: a relocated real resource tree retains every file and byte in a portable sorted manifest
+ok 3 - a relocated real resource tree retains every file and byte in a portable sorted manifest
+  ---
+  duration_ms: 26.1445
+  type: 'test'
+  ...
+# Subtest: verification reports precise missing, extra, size and same-size hash changes together
+ok 4 - verification reports precise missing, extra, size and same-size hash changes together
+  ---
+  duration_ms: 28.109709
+  type: 'test'
+  ...
+# Subtest: unsafe and duplicate manifest entries are rejected before resource traversal
+ok 5 - unsafe and duplicate manifest entries are rejected before resource traversal
+  ---
+  duration_ms: 0.956584
+  type: 'test'
+  ...
+# Subtest: resource links and linked roots cannot traverse outside the package
+ok 6 - resource links and linked roots cannot traverse outside the package
+  ---
+  duration_ms: 20.45675
+  type: 'test'
+  ...
+# Subtest: CLI writes only relative evidence, rejects differences and prevents self-inclusion
+ok 7 - CLI writes only relative evidence, rejects differences and prevents self-inclusion
+  ---
+  duration_ms: 522.865167
+  type: 'test'
+  ...
+# Subtest: native artifact names survive builder extension-specific architecture mapping
+ok 8 - native artifact names survive builder extension-specific architecture mapping
+  ---
+  duration_ms: 705.564083
+  type: 'test'
+  ...
+# Subtest: stable versions require an exact tag and reject prereleases, padding and malformed input
+ok 9 - stable versions require an exact tag and reject prereleases, padding and malformed input
+  ---
+  duration_ms: 0.208042
+  type: 'test'
+  ...
+# Subtest: committed desktop and fnOS versions must exactly agree before builds
+ok 10 - committed desktop and fnOS versions must exactly agree before builds
+  ---
+  duration_ms: 0.161917
+  type: 'test'
+  ...
+# Subtest: desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP
+ok 11 - desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP
+  ---
+  duration_ms: 52.261958
+  type: 'test'
+  ...
+# Subtest: fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata
+ok 12 - fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata
+  ---
+  duration_ms: 20.62025
+  type: 'test'
+  ...
+# Subtest: missing fnOS and tampered FPK bytes block the entire release before output creation
+ok 13 - missing fnOS and tampered FPK bytes block the entire release before output creation
+  ---
+  duration_ms: 71.002084
+  type: 'test'
+  ...
+# Subtest: fnOS wrong identity, architecture, hashes and Electron metadata fail closed
+ok 14 - fnOS wrong identity, architecture, hashes and Electron metadata fail closed
+  ---
+  duration_ms: 470.480917
+  type: 'test'
+  ...
+# Subtest: missing platform, stale manifest and modified bytes cannot form a release
+ok 15 - missing platform, stale manifest and modified bytes cannot form a release
+  ---
+  duration_ms: 61.041167
+  type: 'test'
+  ...
+# Subtest: malicious references, duplicate files and invalid metadata SHA-512 are rejected
+ok 16 - malicious references, duplicate files and invalid metadata SHA-512 are rejected
+  ---
+  duration_ms: 30.153292
+  type: 'test'
+  ...
+# Subtest: mismatched mac signing mode cannot publish a mixed channel
+ok 17 - mismatched mac signing mode cannot publish a mixed channel
+  ---
+  duration_ms: 45.200083
+  type: 'test'
+  ...
+# Subtest: macOS signed mode is explicit and fails closed without full credentials
+ok 18 - macOS signed mode is explicit and fails closed without full credentials
+  ---
+  duration_ms: 0.533041
+  type: 'test'
+  ...
+# Subtest: draft publishes only after every remote asset passes validation
+ok 19 - draft publishes only after every remote asset passes validation
+  ---
+  duration_ms: 30.424959
+  type: 'test'
+  ...
+# Subtest: a missing or different remote tag stops all draft mutations
+ok 20 - a missing or different remote tag stops all draft mutations
+  ---
+  duration_ms: 29.127792
+  type: 'test'
+  ...
+# Subtest: a remote tag moved during upload prevents publication
+ok 21 - a remote tag moved during upload prevents publication
+  ---
+  duration_ms: 29.878959
+  type: 'test'
+  ...
+# Subtest: owned draft recovery uses the verified tag and marker, not target creation metadata
+ok 22 - owned draft recovery uses the verified tag and marker, not target creation metadata
+  ---
+  duration_ms: 30.674167
+  type: 'test'
+  ...
+# Subtest: remote tag resolution peels annotated objects and rejects invalid or cyclic graphs
+ok 23 - remote tag resolution peels annotated objects and rejects invalid or cyclic graphs
+  ---
+  duration_ms: 0.750084
+  type: 'test'
+  ...
+# Subtest: GitHub failures include operation, message, permission and request ID without secrets or URL queries
+ok 24 - GitHub failures include operation, message, permission and request ID without secrets or URL queries
+  ---
+  duration_ms: 6.329792
+  type: 'test'
+  ...
+# Subtest: missing fnOS or its remote upload/digest failure never publishes a partial desktop release
+ok 25 - missing fnOS or its remote upload/digest failure never publishes a partial desktop release
+  ---
+  duration_ms: 37.563875
+  type: 'test'
+  ...
+# Subtest: downloaded release directory rechecks FPK bytes, size and both digests before remote mutations
+ok 26 - downloaded release directory rechecks FPK bytes, size and both digests before remote mutations
+  ---
+  duration_ms: 148.625125
+  type: 'test'
+  ...
+# Subtest: upload failure or remote digest mismatch leaves the release unpublished
+ok 27 - upload failure or remote digest mismatch leaves the release unpublished
+  ---
+  duration_ms: 37.220584
+  type: 'test'
+  ...
+# Subtest: published releases and unrelated drafts are immutable on rerun
+ok 28 - published releases and unrelated drafts are immutable on rerun
+  ---
+  duration_ms: 41.643709
+  type: 'test'
+  ...
+# Subtest: incomplete manifest fails before creating a draft
+ok 29 - incomplete manifest fails before creating a draft
+  ---
+  duration_ms: 54.187417
+  type: 'test'
+  ...
+# Subtest: only an owned draft can replace partial uploads; unknown draft assets stop recovery
+ok 30 - only an owned draft can replace partial uploads; unknown draft assets stop recovery
+  ---
+  duration_ms: 32.672834
+  type: 'test'
+  ...
+# Subtest: hoisted resources keep nested versions and file aliases after source removal and relocation
+ok 31 - hoisted resources keep nested versions and file aliases after source removal and relocation
+  ---
+  duration_ms: 86.482583
+  type: 'test'
+  ...
+# Subtest: non-portable absolute resource link aborts instead of following the graph
+ok 32 - non-portable absolute resource link aborts instead of following the graph
+  ---
+  duration_ms: 6.588375
+  type: 'test'
+  ...
+# Subtest: non-portable outside resource link aborts instead of following the graph
+ok 33 - non-portable outside resource link aborts instead of following the graph
+  ---
+  duration_ms: 2.43975
+  type: 'test'
+  ...
+# Subtest: non-portable directory-cycle resource link aborts instead of following the graph
+ok 34 - non-portable directory-cycle resource link aborts instead of following the graph
+  ---
+  duration_ms: 2.297833
+  type: 'test'
+  ...
+# Subtest: non-portable broken resource link aborts instead of following the graph
+ok 35 - non-portable broken resource link aborts instead of following the graph
+  ---
+  duration_ms: 2.048333
+  type: 'test'
+  ...
+# Subtest: pins exact stable versions and rejects equal, lower or prerelease versions
+ok 36 - pins exact stable versions and rejects equal, lower or prerelease versions
+  ---
+  duration_ms: 1.04
+  type: 'test'
+  ...
+# Subtest: only accepts complete, stable official public release asset with digest
+ok 37 - only accepts complete, stable official public release asset with digest
+  ---
+  duration_ms: 0.706375
+  type: 'test'
+  ...
+# Subtest: hashes actual file bytes and detects changed package contents
+ok 38 - hashes actual file bytes and detects changed package contents
+  ---
+  duration_ms: 8.383041
+  type: 'test'
+  ...
+# Subtest: bounded waits require the actual condition and retain the last failure
+ok 39 - bounded waits require the actual condition and retain the last failure
+  ---
+  duration_ms: 14.340292
+  type: 'test'
+  ...
+# Subtest: CDP correlates out-of-order replies and rejects interrupted requests
+ok 40 - CDP correlates out-of-order replies and rejects interrupted requests
+  ---
+  duration_ms: 22.523875
+  type: 'test'
+  ...
+# Subtest: renderer exceptions fail the harness rather than becoming a false success
+ok 41 - renderer exceptions fail the harness rather than becoming a false success
+  ---
+  duration_ms: 0.2175
+  type: 'test'
+  ...
+# Subtest: verifies real root updater manifest and normalized main bytes without platform-specific listing
+ok 42 - verifies real root updater manifest and normalized main bytes without platform-specific listing
+  ---
+  duration_ms: 58.246166
+  type: 'test'
+  ...
+# Subtest: reads real ASAR entry bytes through either input separator convention
+ok 43 - reads real ASAR entry bytes through either input separator convention
+  ---
+  duration_ms: 15.869459
+  type: 'test'
+  ...
+# Subtest: manifest declaration and a nested updater cannot replace the actual root dependency
+ok 44 - manifest declaration and a nested updater cannot replace the actual root dependency
+  ---
+  duration_ms: 21.223208
+  type: 'test'
+  ...
+# Subtest: wrong bundled updater version fails even when the outer declaration is correct
+ok 45 - wrong bundled updater version fails even when the outer declaration is correct
+  ---
+  duration_ms: 6.184625
+  type: 'test'
+  ...
+# Subtest: updater manifest without executable entry bytes cannot pass package verification
+ok 46 - updater manifest without executable entry bytes cannot pass package verification
+  ---
+  duration_ms: 6.879
+  type: 'test'
+  ...
+# Subtest: updater entry escaping its package is rejected
+ok 47 - updater entry escaping its package is rejected
+  ---
+  duration_ms: 11.063625
+  type: 'test'
+  ...
+# Subtest: 关闭 pnpm 包装进程时，监听端口的孙进程也退出
+ok 48 - 关闭 pnpm 包装进程时，监听端口的孙进程也退出
+  ---
+  duration_ms: 167.832
+  type: 'test'
+  ...
+# Subtest: pnpm 已退出后仍能清理监听端口的孙进程
+ok 49 - pnpm 已退出后仍能清理监听端口的孙进程
+  ---
+  duration_ms: 416.259792
+  type: 'test'
+  ...
+# Subtest: FPK manifest validates exact application, release version, architecture and runtime
+ok 50 - FPK manifest validates exact application, release version, architecture and runtime
+  ---
+  duration_ms: 1.414541
+  type: 'test'
+  ...
+# Subtest: fnpack source is fixed and downloaded bytes fail closed on mismatch
+ok 51 - fnpack source is fixed and downloaded bytes fail closed on mismatch
+  ---
+  duration_ms: 0.468875
+  type: 'test'
+  ...
+# Subtest: archive paths cannot escape the extraction tree
+ok 52 - archive paths cannot escape the extraction tree
+  ---
+  duration_ms: 0.09375
+  type: 'test'
+  ...
+# Subtest: real nested FPK bytes are extracted and checked before installation smoke
+ok 53 - real nested FPK bytes are extracted and checked before installation smoke
+  ---
+  duration_ms: 933.085167
+  type: 'test'
+  ...
+# Subtest: fnOS install stores owner credentials only in protected persistent config
+ok 54 - fnOS install stores owner credentials only in protected persistent config
+  ---
+  duration_ms: 860.013208
+  type: 'test'
+  ...
+# Subtest: fnOS install rejects invalid owner input without writing credentials
+ok 55 - fnOS install rejects invalid owner input without writing credentials
+  ---
+  duration_ms: 193.581792
+  type: 'test'
+  ...
+# Subtest: fnOS package declares the gateway, x86 runtime and icons
+ok 56 - fnOS package declares the gateway, x86 runtime and icons
+  ---
+  duration_ms: 4.584333
+  type: 'test'
+  ...
+# Subtest: fnOS lifecycle starts on a Unix socket and stops idempotently
+ok 57 - fnOS lifecycle starts on a Unix socket and stops idempotently
+  ---
+  duration_ms: 1196.315166
+  type: 'test'
+  ...
+# Subtest: clean route generation prepares shared types and keeps desktop extras out of the base tree
+ok 58 - clean route generation prepares shared types and keeps desktop extras out of the base tree
+  ---
+  duration_ms: 1401.633958
+  type: 'test'
+  ...
+1..58
+# tests 58
+# suites 0
+# pass 58
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2499.721292

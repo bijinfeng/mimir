@@ -30,6 +30,7 @@
 - workflow 对应仓库变量 `MIMIR_MAC_SIGNING`，Secrets `MAC_CSC_LINK/MAC_CSC_KEY_PASSWORD/MAC_CSC_NAME` 与上述 APPLE_*；只在打包步骤注入。
 - 每目标 `build-manifest.json` 声明 targetKey/platform/arch/version/updateMode 及资产 size/SHA-256/SHA-512；aggregate 对五目标身份和真实字节全部复验。`validateReleaseDirectory(dir, manifest)` 在任何远端写入前再次核对普通文件、大小及双摘要，上传后再核对 GitHub 资产摘要，最后才公开 draft。
 - 发布凭据只在 publish job 使用短期 `GITHUB_TOKEN`、contents:write；其余 jobs contents:read。
+- 发布只使用已存在的稳定 tag：`resolveReleaseTag(tag, readJson)` 解析远端 lightweight/annotated tag 到 commit，拒绝非法对象、循环和超过10层嵌套；创建草稿前及公开前都必须等于本次构建精确SHA。draft所有权使用相同tag及正文commit marker，不使用 `target_commitish` 元数据判定。POST /releases 省略该字段：GitHub对显式历史提交相对默认分支的workflow差异另要求workflows写权限，即使tag已存在；GITHUB_TOKEN不能获得该权限。不得通过扩大PAT权限或移动tag处理。
 - Windows x64 产 assisted NSIS（`oneClick=false`、`runAfterFinish=true`）；显式更新的正常 Finish 页面保留启动应用选项。首次 `/S` 且没有 `--force-run` 不能自行启动，普通退出仍由 `autoInstallOnAppQuit=false` 禁止安装。
 - Linux x64 产 AppImage。Linux 非 AppImage 或安装位置不可写时降为 manual。
 
@@ -55,6 +56,8 @@
 | 两份 latest-mac.yml | 验证同版本并合并 files，文件名唯一；不能后下载覆盖前下载 |
 | 真实升级验收的版本不稳定/target不是官方latest/资产摘要不匹配/runner已有userData | 验收立即失败，不复用用户库或注入自定义feed，不使用直接安装或伪造保存ACK补成通过 |
 | 已公开 tag 重跑 | 拒绝覆盖已发布 release；draft 验证完整上传后才公开 |
+| 远端tag缺失、解析不合法、创建前或公开前commit不匹配 | 立即失败；后一次检查失败保留未公开draft，不更改tag |
+| GitHub API拒绝请求 | 报告方法、路径、状态、经过脱敏的message/权限提示/request id；不输出Token、响应URL或任意原始body |
 
 ## 5. Good / Base / Bad
 
@@ -71,6 +74,7 @@
 - Windows NSIS 门先 `package-resources.mjs capture <unpackedServer> <manifest.json>` 保存普通文件相对路径/大小/SHA256，真实安装后 capture 并 `verify <installedServer> <manifest.json>` 严格比对；缺失/新增/变更均失败，然后才运行既有 A/B/C smoke。禁止为通过门忽略深层文件。安装 5 分钟、卸载父进程 60 秒、整个步骤 15 分钟上界；失败上传安装器和资源/阶段证据，不上传 userData。卸载父进程返回不能证明临时子进程全部结束。
 - ASAR 校验回归使用真实 archive，覆盖两种输入分隔符、正确/缺失根依赖、错版本、缺入口和越界入口；不能用列表展示路径代替真实字节验证。
 - 发布脚本测试用真实 fixture 字节验证五目标 hash、缺 FPK、非法 tag、版本不一致、错架构/mode、重复条目、双架构冲突和元数据汇总；缺失或篡改 FPK 必须在远端写入前失败，上传/远端摘要失败不能公开 draft；不能只匹配 YAML 文本。
+- 发布回归须覆盖省略 `target_commitish` 的真实create payload、metadata为master但commit marker/tag正确的draft恢复、错误marker拒绝、远端tag开始错或上传后移动、annotated/lightweight tag解析和安全API错误诊断。官方权限契约见 [Create a release](https://docs.github.com/en/rest/releases/releases#create-a-release)。
 - fnOS 官方工具、原生模块、解包及 Socket 契约唯一归属 [architecture §8.6.1](../../project/architecture.md#861-fnos-原生包部署契约x86_64)；Ubuntu 验包不代表 fnOS 设备安装或覆盖升级已通过。
 - `pnpm check`、desktop build、实际打包与 `MIMIR_SMOKE_EXECUTABLE=<绝对路径> node apps/desktop/scripts/smoke.mjs`；界面实际截图/HTML归档。
 - 真实更新验收必须从官方匿名资产安装基线，驱动真实更新 UI；验证普通退出未替换安装文件、真实编辑阻止并取消安装、保存后重启安装、旧进程消失与新进程拉起、版本和原文档/模式保留。Windows 校验实际 updater 缓存安装包摘要；Linux 校验替换后的 AppImage 摘要。头部完成通知和系统焦点仍需原生桌面证据，不能用 CDP 无详情窗口替代。

@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: native artifact names survive builder extension-specific architecture mapping
+ok 1 - native artifact names survive builder extension-specific architecture mapping
+  ---
+  duration_ms: 290.532208
+  type: 'test'
+  ...
+# Subtest: stable versions require an exact tag and reject prereleases, padding and malformed input
+ok 2 - stable versions require an exact tag and reject prereleases, padding and malformed input
+  ---
+  duration_ms: 0.219375
+  type: 'test'
+  ...
+# Subtest: committed desktop and fnOS versions must exactly agree before builds
+ok 3 - committed desktop and fnOS versions must exactly agree before builds
+  ---
+  duration_ms: 0.161875
+  type: 'test'
+  ...
+# Subtest: desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP
+ok 4 - desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP
+  ---
+  duration_ms: 52.432208
+  type: 'test'
+  ...
+# Subtest: fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata
+ok 5 - fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata
+  ---
+  duration_ms: 15.518333
+  type: 'test'
+  ...
+# Subtest: missing fnOS and tampered FPK bytes block the entire release before output creation
+ok 6 - missing fnOS and tampered FPK bytes block the entire release before output creation
+  ---
+  duration_ms: 42.29675
+  type: 'test'
+  ...
+# Subtest: fnOS wrong identity, architecture, hashes and Electron metadata fail closed
+ok 7 - fnOS wrong identity, architecture, hashes and Electron metadata fail closed
+  ---
+  duration_ms: 255.070917
+  type: 'test'
+  ...
+# Subtest: missing platform, stale manifest and modified bytes cannot form a release
+ok 8 - missing platform, stale manifest and modified bytes cannot form a release
+  ---
+  duration_ms: 35.063625
+  type: 'test'
+  ...
+# Subtest: malicious references, duplicate files and invalid metadata SHA-512 are rejected
+ok 9 - malicious references, duplicate files and invalid metadata SHA-512 are rejected
+  ---
+  duration_ms: 18.77275
+  type: 'test'
+  ...
+# Subtest: mismatched mac signing mode cannot publish a mixed channel
+ok 10 - mismatched mac signing mode cannot publish a mixed channel
+  ---
+  duration_ms: 18.459791
+  type: 'test'
+  ...
+# Subtest: macOS signed mode is explicit and fails closed without full credentials
+ok 11 - macOS signed mode is explicit and fails closed without full credentials
+  ---
+  duration_ms: 0.218625
+  type: 'test'
+  ...
+# Subtest: draft publishes only after every remote asset passes validation
+ok 12 - draft publishes only after every remote asset passes validation
+  ---
+  duration_ms: 22.017625
+  type: 'test'
+  ...
+# Subtest: a missing or different remote tag stops all draft mutations
+ok 13 - a missing or different remote tag stops all draft mutations
+  ---
+  duration_ms: 21.441292
+  type: 'test'
+  ...
+# Subtest: a remote tag moved during upload prevents publication
+ok 14 - a remote tag moved during upload prevents publication
+  ---
+  duration_ms: 21.423875
+  type: 'test'
+  ...
+# Subtest: owned draft recovery uses the verified tag and marker, not target creation metadata
+ok 15 - owned draft recovery uses the verified tag and marker, not target creation metadata
+  ---
+  duration_ms: 19.665625
+  type: 'test'
+  ...
+# Subtest: remote tag resolution peels annotated objects and rejects invalid or cyclic graphs
+ok 16 - remote tag resolution peels annotated objects and rejects invalid or cyclic graphs
+  ---
+  duration_ms: 0.258583
+  type: 'test'
+  ...
+# Subtest: GitHub failures include operation, message, permission and request ID without secrets or URL queries
+ok 17 - GitHub failures include operation, message, permission and request ID without secrets or URL queries
+  ---
+  duration_ms: 5.764375
+  type: 'test'
+  ...
+# Subtest: missing fnOS or its remote upload/digest failure never publishes a partial desktop release
+ok 18 - missing fnOS or its remote upload/digest failure never publishes a partial desktop release
+  ---
+  duration_ms: 28.140417
+  type: 'test'
+  ...
+# Subtest: downloaded release directory rechecks FPK bytes, size and both digests before remote mutations
+ok 19 - downloaded release directory rechecks FPK bytes, size and both digests before remote mutations
+  ---
+  duration_ms: 101.139791
+  type: 'test'
+  ...
+# Subtest: upload failure or remote digest mismatch leaves the release unpublished
+ok 20 - upload failure or remote digest mismatch leaves the release unpublished
+  ---
+  duration_ms: 21.890333
+  type: 'test'
+  ...
+# Subtest: published releases and unrelated drafts are immutable on rerun
+ok 21 - published releases and unrelated drafts are immutable on rerun
+  ---
+  duration_ms: 22.173417
+  type: 'test'
+  ...
+# Subtest: incomplete manifest fails before creating a draft
+ok 22 - incomplete manifest fails before creating a draft
+  ---
+  duration_ms: 19.602084
+  type: 'test'
+  ...
+# Subtest: only an owned draft can replace partial uploads; unknown draft assets stop recovery
+ok 23 - only an owned draft can replace partial uploads; unknown draft assets stop recovery
+  ---
+  duration_ms: 22.199875
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1118.563708

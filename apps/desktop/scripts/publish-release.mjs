@@ -10,21 +10,20 @@ import { hashFile, validateReleaseManifest, validateVersion } from './release-ar
 export async function publishRelease({ api, manifest, commit }) {
   validateReleaseManifest(manifest)
   if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Expected exact release commit')
+  if ((await api.tagCommit(manifest.tag)) !== commit)
+    throw new Error('Remote release tag does not identify the build commit')
   const marker = `<!-- mimir-desktop-build:${commit} -->`
   let release = await api.find(manifest.tag)
   if (release && !release.draft)
     throw new Error('Published releases are immutable; bump the version')
-  if (
-    release &&
-    (!release.body?.includes(marker) ||
-      release.tag_name !== manifest.tag ||
-      release.target_commitish !== commit)
-  )
+  if (release && (!release.body?.includes(marker) || release.tag_name !== manifest.tag))
     throw new Error('Draft does not belong to this build commit')
   if (!release)
     release = await api.create({
       tag_name: manifest.tag,
-      target_commitish: commit,
+      // The tag already exists and was checked above. GitHub still applies
+      // workflow-write authorization to an explicit historical target_commitish,
+      // even though that field does not determine an existing tag's commit.
       name: `mimir ${manifest.version}`,
       body: `${marker}\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。`,
       draft: true,
@@ -45,8 +44,46 @@ export async function publishRelease({ api, manifest, commit }) {
     if (!remote || remote.size !== asset.size || (await api.digest(remote)) !== asset.sha256)
       throw new Error(`Uploaded asset mismatch: ${asset.name}`)
   }
+  if ((await api.tagCommit(manifest.tag)) !== commit)
+    throw new Error('Remote release tag changed before publication')
   // This is the only operation that makes the version visible to auto-updaters.
   return api.publish(release.id)
+}
+
+/** Resolve lightweight and annotated tags without trusting release metadata. */
+export async function resolveReleaseTag(tag, readJson) {
+  let object = (await readJson(`/git/ref/tags/${encodeURIComponent(tag)}`)).object
+  const seen = new Set()
+  for (let depth = 0; depth < 10; depth++) {
+    if (!object || !/^[a-f0-9]{40}$/.test(object.sha))
+      throw new Error('Invalid remote release tag object')
+    if (object.type === 'commit') return object.sha
+    if (object.type !== 'tag' || seen.has(object.sha))
+      throw new Error('Invalid or cyclic remote release tag')
+    seen.add(object.sha)
+    object = (await readJson(`/git/tags/${object.sha}`)).object
+  }
+  throw new Error('Remote release tag nesting exceeds limit')
+}
+
+/** Report actionable API failures without printing credentials or response URLs. */
+export async function githubApiError(response, { method = 'GET', url, token }) {
+  const body = await response.json().catch(() => null)
+  const redact = (value) => {
+    let safe = String(value)
+    if (token) safe = safe.split(token).join('[redacted]')
+    return safe
+      .replace(/https?:\/\/\S+/g, '[URL omitted]')
+      .replace(/\s+/g, ' ')
+      .slice(0, 500)
+  }
+  const details = [`GitHub ${method} ${new URL(url).pathname} failed (${response.status})`]
+  if (typeof body?.message === 'string') details.push(redact(body.message))
+  for (const header of ['x-accepted-github-permissions', 'x-github-request-id']) {
+    const value = response.headers.get(header)
+    if (value) details.push(`${header}: ${redact(value)}`)
+  }
+  return new Error(details.join('; '))
 }
 
 /** Recheck downloaded artifacts before creating or changing any remote draft. */
@@ -86,10 +123,13 @@ async function publishDirectory(dir) {
   const endpoint = 'https://api.github.com/repos/bijinfeng/mimir'
   async function request(url, options = {}) {
     const response = await fetch(url, { ...options, headers: { ...headers, ...options.headers } })
-    if (!response.ok) throw new Error(`GitHub request failed (${response.status})`)
+    if (!response.ok) throw await githubApiError(response, { method: options.method, url, token })
     return response
   }
   const api = {
+    async tagCommit(tag) {
+      return resolveReleaseTag(tag, async (route) => (await request(`${endpoint}${route}`)).json())
+    },
     async find(tag) {
       const response = await fetch(`${endpoint}/releases/tags/${encodeURIComponent(tag)}`, {
         headers,
@@ -105,7 +145,11 @@ async function publishDirectory(dir) {
           if (releases.length < 100) return null
         }
       }
-      if (!response.ok) throw new Error(`Release lookup failed (${response.status})`)
+      if (!response.ok)
+        throw await githubApiError(response, {
+          url: `${endpoint}/releases/tags/${encodeURIComponent(tag)}`,
+          token,
+        })
       return response.json()
     },
     async create(body) {

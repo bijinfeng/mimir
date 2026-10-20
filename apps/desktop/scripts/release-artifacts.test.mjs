@@ -16,7 +16,12 @@ import {
   validateVersion,
 } from './release-artifacts.mjs'
 import { nativeArtifactName, signingConfiguration } from './package.mjs'
-import { publishRelease, validateReleaseDirectory } from './publish-release.mjs'
+import {
+  githubApiError,
+  publishRelease,
+  resolveReleaseTag,
+  validateReleaseDirectory,
+} from './publish-release.mjs'
 
 const version = '1.2.3'
 
@@ -326,10 +331,14 @@ function fakeApi({
   badDigest = false,
   failUploadAsset,
   badDigestAsset,
+  tagCommit = 'a'.repeat(40),
 } = {}) {
   const calls = []
   const uploaded = [...existingAssets]
   const api = {
+    async tagCommit() {
+      return tagCommit
+    },
     async find() {
       return existing
     },
@@ -337,6 +346,7 @@ function fakeApi({
       calls.push('draft')
       assert.equal(body.draft, true)
       assert.equal(body.make_latest, 'false')
+      assert.equal(Object.hasOwn(body, 'target_commitish'), false)
       return { id: 1 }
     },
     async assets() {
@@ -374,6 +384,127 @@ test('draft publishes only after every remote asset passes validation', async (t
   assert.equal(calls.at(-1), 'publish')
   assert.equal(calls.filter((call) => call.startsWith('verify:')).length, manifest.assets.length)
   assert.ok(calls.includes(`verify:mimir-${version}-fnos-x64.fpk`))
+})
+
+test('a missing or different remote tag stops all draft mutations', async (t) => {
+  const manifest = await aggregateArtifacts(await fixture(t))
+  for (const tagCommit of [null, 'b'.repeat(40)]) {
+    const { api, calls } = fakeApi({ tagCommit })
+    await assert.rejects(
+      publishRelease({ api, manifest, commit: 'a'.repeat(40) }),
+      /Remote release tag does not identify/,
+    )
+    assert.deepEqual(calls, [])
+  }
+})
+
+test('a remote tag moved during upload prevents publication', async (t) => {
+  const manifest = await aggregateArtifacts(await fixture(t))
+  const { api, calls } = fakeApi()
+  let lookups = 0
+  api.tagCommit = async () => (++lookups === 1 ? 'a' : 'b').repeat(40)
+  await assert.rejects(
+    publishRelease({ api, manifest, commit: 'a'.repeat(40) }),
+    /Remote release tag changed/,
+  )
+  assert.ok(calls.includes('draft'))
+  assert.ok(!calls.includes('publish'))
+})
+
+test('owned draft recovery uses the verified tag and marker, not target creation metadata', async (t) => {
+  const manifest = await aggregateArtifacts(await fixture(t))
+  const commit = 'a'.repeat(40)
+  const { api, calls } = fakeApi({
+    existing: {
+      id: 1,
+      draft: true,
+      tag_name: manifest.tag,
+      target_commitish: 'master',
+      body: `<!-- mimir-desktop-build:${commit} -->`,
+    },
+  })
+  await publishRelease({ api, manifest, commit })
+  assert.ok(!calls.includes('draft'))
+  assert.equal(calls.at(-1), 'publish')
+})
+
+function readTagGraph(graph) {
+  return async (route) => {
+    assert.ok(Object.hasOwn(graph, route), `Unexpected tag request: ${route}`)
+    return { object: graph[route] }
+  }
+}
+
+test('remote tag resolution peels annotated objects and rejects invalid or cyclic graphs', async () => {
+  const commit = 'a'.repeat(40)
+  const annotation = 'b'.repeat(40)
+  const ref = '/git/ref/tags/v1.2.3'
+  assert.equal(
+    await resolveReleaseTag('v1.2.3', readTagGraph({ [ref]: { type: 'commit', sha: commit } })),
+    commit,
+  )
+  assert.equal(
+    await resolveReleaseTag(
+      'v1.2.3',
+      readTagGraph({
+        [ref]: { type: 'tag', sha: annotation },
+        [`/git/tags/${annotation}`]: { type: 'commit', sha: commit },
+      }),
+    ),
+    commit,
+  )
+  for (const object of [null, { type: 'commit', sha: 'bad' }, { type: 'tree', sha: commit }]) {
+    await assert.rejects(resolveReleaseTag('v1.2.3', readTagGraph({ [ref]: object })), /Invalid/)
+  }
+  await assert.rejects(
+    resolveReleaseTag(
+      'v1.2.3',
+      readTagGraph({
+        [ref]: { type: 'tag', sha: annotation },
+        [`/git/tags/${annotation}`]: { type: 'tag', sha: annotation },
+      }),
+    ),
+    /cyclic/,
+  )
+  let depth = 0
+  await assert.rejects(
+    resolveReleaseTag('v1.2.3', async () => ({
+      object: { type: 'tag', sha: (++depth).toString(16).padStart(40, '0') },
+    })),
+    /nesting exceeds/,
+  )
+})
+
+test('GitHub failures include operation, message, permission and request ID without secrets or URL queries', async () => {
+  const token = 'test-publisher-credential'
+  const response = new Response(
+    JSON.stringify({
+      message: `Resource not accessible by integration ${token} https://uploads.github.com/path?secret=body-secret`,
+    }),
+    {
+      status: 403,
+      headers: {
+        'x-accepted-github-permissions': 'contents=write; workflows=write',
+        'x-github-request-id': 'ABCD:1234',
+      },
+    },
+  )
+  const error = await githubApiError(response, {
+    method: 'POST',
+    url: 'https://api.github.com/repos/bijinfeng/mimir/releases?secret=request-secret',
+    token,
+  })
+  assert.match(error.message, /POST \/repos\/bijinfeng\/mimir\/releases failed \(403\)/)
+  assert.match(error.message, /Resource not accessible by integration/)
+  assert.match(error.message, /contents=write; workflows=write/)
+  assert.match(error.message, /ABCD:1234/)
+  for (const secret of [token, 'body-secret', 'request-secret'])
+    assert.ok(!error.message.includes(secret))
+  const nonJson = await githubApiError(new Response('upstream unavailable', { status: 502 }), {
+    url: 'https://api.github.com/repos/bijinfeng/mimir/releases',
+    token,
+  })
+  assert.match(nonJson.message, /GET .*failed \(502\)/)
 })
 
 test('missing fnOS or its remote upload/digest failure never publishes a partial desktop release', async (t) => {
@@ -429,6 +560,7 @@ test('published releases and unrelated drafts are immutable on rerun', async (t)
   for (const existing of [
     { draft: false },
     { draft: true, body: 'unrelated', tag_name: manifest.tag },
+    { draft: true, body: `<!-- mimir-desktop-build:${'a'.repeat(40)} -->`, tag_name: 'v9.9.9' },
   ]) {
     const { api, calls } = fakeApi({ existing })
     await assert.rejects(publishRelease({ api, manifest, commit: 'a'.repeat(40) }))

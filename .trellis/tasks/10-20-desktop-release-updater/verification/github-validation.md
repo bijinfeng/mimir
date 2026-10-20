@@ -97,3 +97,5 @@ MinIO fixture修复与独立来源/运行审查已提交推送 `71778c7`，保�
 Attempt2 中 Intel DMG、包资源/原生smoke、其余目标及 aggregate 全部 success，但 publish 在创建草稿的 POST /releases 返回403。job明确 Contents:write，尚无草稿或公开Release。官方 REST 文档新增规则：显式 target_commitish 相对默认分支包含 workflow 差异时要求workflows写权限；GITHUB_TOKEN无法获得。master在等待构建时已有ci.yml变更，旧SHA参数触发该限制。用户owner现有OAuth也无workflow scope；一次相同payload空draft创建尝试返回404，未创建任何Release。
 
 修复方向是远端解析已存在tag到精确commit并保持marker所有权，省略existing tag无需的target_commitish；不扩大凭据权限、不移动tag或修改默认分支、不本地代发以掩盖失败。v0.1.2保留失败tag和完整成功构建证据；修复后首个统一稳定基线顺延0.1.3，真实升级目标0.1.4。以最终成功版本为准。失败job日志github-v012-publish-create-failed.log、attempt2 JSON保留。
+
+CI [39394323716](https://github.com/bijinfeng/mimir/actions/runs/39394323716) 已completed/success：全仓pnpmcheck、pnpm build、完整PostgreSQL重跑及新官方固定MinIO原生S3专项全部成功。S3真实2/2与精确version/SHA及退出清理日志github-ci-native-s3-success.log；全步骤JSON单独保存。publisher修复另经独立Node22发布23/23、根58/58与lint/format/syntax复核通过，即将用0.1.3新tag验证真实发布。
