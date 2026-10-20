@@ -1,0 +1,8 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  15:27:09
+   Duration  4.13s (import 75%, transform 18%, tests 7%)

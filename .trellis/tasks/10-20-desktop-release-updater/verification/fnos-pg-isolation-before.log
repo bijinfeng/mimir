@@ -1,0 +1,35 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+
+{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '00000',
+  message: 'schema "drizzle" does not exist, skipping',
+  file: 'dropcmds.c',
+  line: '526',
+  routine: 'does_not_exist_skipping'
+}
+ ❯ src/test/fnos-mode.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/fnos-mode.test.ts [ src/test/fnos-mode.test.ts ]
+Error: fnOS 模式必须使用 SQLite 数据库
+ ❯ src/env.ts:230:36
+    228|   }
+    229|   if (env.localMode) throw new Error('fnOS 模式不能启用桌面本地免登录模式')
+    230|   if (dbDriver !== 'sqlite') throw new Error('fnOS 模式必须使用 SQLite 数据库')
+       |                                    ^
+    231|   if (!isOwnerConfigured()) throw new Error('fnOS 模式必须配置 OWNER_EMAIL 和…
+    232| }
+ ❯ src/db/client.ts:7:1
+ ❯ src/services/chat-attachments.ts:9:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  15:18:15
+   Duration  1.95s (worker 97%, environment 3%)

@@ -2,7 +2,7 @@
  * 测试环境配置的唯一来源。
  *
  * 为什么抽出来：vitest 的 `test.env` 只作用于测试工作进程，
- * globalSetup 跑在主进程里读不到。两边共用同一份常量才能保证
+ * globalSetup 跑在主进程里读不到，须读取 project.config.env。两边共用配置才能保证
  * 「清库的那个库」和「测试连的那个库」确实是同一个。
  *
  * 双后端（D-045）：`TEST_DATABASE_URL` 按协议头分发——
@@ -48,4 +48,17 @@ export const LOCAL_MODE_TEST_ENV: Record<string, string> = {
   MIMIR_LOCAL_MODE: '1',
   /** 与 `services/local-mode.ts` 的比较对象。测试里用固定值，真实宿主每次随机 */
   MIMIR_LOCAL_TOKEN: 'test-local-token-0123456789abcdef',
+}
+
+/** fnOS 只支持 SQLite，不能继承方言对齐门传入的 Postgres 测试库。 */
+export const FNOS_TEST_ENV: Record<string, string> = {
+  ...TEST_ENV,
+  DATABASE_URL: 'file:./data/.test-fnos/mimir.db',
+  DATA_DIR: './data/.test-fnos',
+  OWNER_EMAIL: 'admin@example.com',
+  OWNER_PASSWORD: '12345678',
+  MIMIR_LOCAL_MODE: '0',
+  MIMIR_LOCAL_TOKEN: '',
+  MIMIR_FNOS_SOCKET: '/tmp/mimir-fnos-vitest.sock',
+  MIMIR_BASE_PATH: '/app/mimir',
 }

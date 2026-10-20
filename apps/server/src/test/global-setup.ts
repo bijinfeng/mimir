@@ -3,7 +3,7 @@ import { mkdir, rm } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
-import { TEST_DATABASE_URL, TEST_ENV } from './config.js'
+import type { TestProject } from 'vitest/node'
 
 /**
  * 集成测试只跑一次的前置：清库、清测试目录、建表。
@@ -15,13 +15,14 @@ import { TEST_DATABASE_URL, TEST_ENV } from './config.js'
  * 症状很隐蔽：单跑某个文件通过，全量跑就挂，而且挂的是看起来毫不相关的断言。
  *
  * 双后端（D-045）：默认走 SQLite 临时库（`data/.test/mimir.db`，免 Docker）；
- * 设 `TEST_DATABASE_URL=postgres://…mimir_test` 时走 Postgres 路径——
+ * 普通/本地模式设 `TEST_DATABASE_URL=postgres://…mimir_test` 时走 Postgres 路径——
  * 两个检索通道的 SQL 是按方言分开写的，同一套断言在两种方言下都要过
  * （`.trellis/spec/project/architecture.md` §9.2 的「方言对齐门」）。
+ * fnOS 配置始终用独立的 SQLite 测试根，不继承外层 Postgres 选择。
  */
 
 /**
- * 定位仓库根。TEST_ENV 里的路径都是相对仓库根的（与 src/env.ts 的约定一致），
+ * 定位仓库根。测试配置里的路径都是相对仓库根的（与 src/env.ts 的约定一致），
  * 所以必须找到真正的仓库根，不能按 apps/server 解析。
  */
 function findRepoRoot(start: string): string {
@@ -36,16 +37,20 @@ function findRepoRoot(start: string): string {
 
 const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)))
 
-/** TEST_ENV 里的路径统一相对仓库根 */
+/** 测试配置里的路径统一相对仓库根 */
 function testPath(relative: string | undefined): string | null {
   return relative ? resolve(repoRoot, relative.replace('./', '')) : null
 }
 
-const isPostgres = /^postgres(ql)?:\/\//.test(TEST_DATABASE_URL)
-
-export async function setup() {
-  if (isPostgres && !TEST_DATABASE_URL.includes('mimir_test')) {
-    throw new Error(`拒绝在非测试库上运行：${TEST_DATABASE_URL}。库名必须包含 mimir_test。`)
+export async function setup(project: TestProject) {
+  // test.env 仅自动传给 worker；清库与迁移必须选择同一项目的 env。
+  // fnOS 有独立 SQLite 配置，即使外层 TEST_DATABASE_URL 指向 Postgres。
+  const testEnv = project.config.env
+  const databaseUrl = testEnv.DATABASE_URL
+  if (!databaseUrl || !testEnv.DATA_DIR) throw new Error('测试配置必须指定数据库与数据目录')
+  const isPostgres = /^postgres(ql)?:\/\//.test(databaseUrl)
+  if (isPostgres && !databaseUrl.includes('mimir_test')) {
+    throw new Error(`拒绝在非测试库上运行：${databaseUrl}。库名必须包含 mimir_test。`)
   }
 
   // 1. 清文件（先做，避免下面建表失败时留下半清理状态）
@@ -54,20 +59,20 @@ export async function setup() {
   // 只清一个根就够：vault / raw / avatars 都是它下面的前缀（D-038），
   // SQLite 测试库（mimir.db）也在这个根下面，删父目录自然一起带走。
   {
-    const abs = testPath(TEST_ENV.DATA_DIR)
+    const abs = testPath(testEnv.DATA_DIR)
     if (abs) await rm(abs, { recursive: true, force: true })
   }
 
   // 2. 重建目录。env.ts 导入时会 mkdir 数据目录，这里先建好保持顺序清晰。
   {
-    const abs = testPath(TEST_ENV.DATA_DIR)
+    const abs = testPath(testEnv.DATA_DIR)
     if (abs) await mkdir(abs, { recursive: true })
   }
 
   if (isPostgres) {
     // 3. 清库（PG 专属：schema 级重建）。后续走生产使用的正式迁移，
     // 由 runMigrations 自己按顺序建扩展与表，不能用 push 绕过迁移文件。
-    const sql = postgres(TEST_DATABASE_URL, { max: 1 })
+    const sql = postgres(databaseUrl, { max: 1 })
     await sql`drop schema public cascade`
     // drizzle 的迁移日志在独立 schema；只删 public 会让第二遍测试以为
     // 迁移已应用，随后在空库里访问不存在的表。
@@ -80,10 +85,11 @@ export async function setup() {
 
   // SQLite 路径：测试库文件在 DATA_DIR 下面，上面清根时已一并删掉。
   // 两条路径都走运行时的 runMigrations()（journal 记账、幂等）。
-  // 动态 import：必须先把 TEST_ENV 写进 process.env，env.ts 在模块加载时
+  // 动态 import：必须先把当前项目的 env 写进 process.env，env.ts 在模块加载时
   // 就读取并解析 DATABASE_URL。
-  for (const [key, value] of Object.entries(TEST_ENV)) {
-    process.env[key] = value
+  for (const [key, value] of Object.entries(testEnv)) {
+    if (value === undefined) delete process.env[key]
+    else process.env[key] = value
   }
   const { runMigrations } = await import('../db/migrate.js')
   const { closeDb } = await import('../db/client.js')

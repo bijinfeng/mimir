@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
 import { request as httpRequest } from 'node:http'
+import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { startServer, type RunningServer } from '../index.js'
 import { env } from '../env.js'
@@ -60,6 +61,14 @@ describe('fnOS 私有网关', () => {
     if (running.server.listening) {
       await new Promise<void>((resolve) => running.server.close(() => resolve()))
     }
+  })
+
+  it('即使方言对齐门传入 Postgres，fnOS 仍使用独立 SQLite 测试库与统一账号', () => {
+    expect(env.dbDriver).toBe('sqlite')
+    expect(env.databaseFile).toBe(join(env.repoRoot, 'data/.test-fnos/mimir.db'))
+    expect(env.dataDir).toBe(join(env.repoRoot, 'data/.test-fnos'))
+    expect(env.ownerEmail).toBe('admin@example.com')
+    expect(env.ownerPassword).toBe('12345678')
   })
 
   it('只在网关前缀下提供页面与 API，业务仍要求 Mimir 会话', async () => {
