@@ -1,0 +1,42 @@
+{
+  "title": "选择官网首屏结构",
+  "question": "三种结构均沿用 Mimir 现有白灰与绿色品牌。选择的是讲述产品的方式；这次选择后，我会整理完整实施方案供你确认。",
+  "options": [
+    {
+      "id": "question",
+      "label": "问题带路",
+      "thesis": "用一个问题，把答案与原文放在同一屏。",
+      "palette": ["#ffffff", "#f7f8f8", "#262626", "#00834d"],
+      "materials": ["白灰工作面", "真实内容与细分隔线"],
+      "viewport": "首屏给出具体提问、示例回答和可核对的来源，下接完整工作区。",
+      "risk": "提问演示必须清楚标注示例，并保留开始使用入口。",
+      "html": ".impeccable/mocks/decision/question.html",
+      "kicker": "THE ROLL"
+    },
+    {
+      "id": "canvas",
+      "label": "完整工作台",
+      "thesis": "用真实的知识工作区，让访客一眼看懂产品。",
+      "palette": ["#ffffff", "#f7f8f8", "#262626", "#00834d"],
+      "materials": ["白灰工作面", "真实内容与细分隔线"],
+      "viewport": "居中价值句下，完整展示笔记、资料与引用问答共处的工作区。",
+      "risk": "真实截图需要足够大，并照顾手机阅读。",
+      "html": ".impeccable/mocks/decision/canvas.html"
+    },
+    {
+      "id": "journey",
+      "label": "知识的来回",
+      "thesis": "首屏横向展开收集、提问、核对三段路径。",
+      "palette": ["#ffffff", "#f7f8f8", "#262626", "#00834d"],
+      "materials": ["白灰工作面", "真实内容与细分隔线"],
+      "viewport": "以资料进入库、AI 提问和原文核对三段画面解释闭环。",
+      "risk": "首屏内容更密，手机需转成自然纵向流程。",
+      "html": ".impeccable/mocks/decision/journey.html"
+    }
+  ],
+  "buildPath": {
+    "value": "code",
+    "toggle": false
+  },
+  "steer": true
+}

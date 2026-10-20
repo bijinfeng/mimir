@@ -1,0 +1,107 @@
+<!doctype html><meta charset="utf-8" /><style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: #171717;
+    color: #f3f0e9;
+    font:
+      16px system-ui,
+      sans-serif;
+    padding: 44px;
+    overflow: hidden;
+  }
+  .board {
+    border: 1px solid #5b5b5b;
+    background: #222;
+    padding: 28px;
+    max-width: 1360px;
+    margin: auto;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    border-bottom: 1px solid #444;
+    padding-bottom: 22px;
+  }
+  .brand {
+    font-size: 24px;
+    letter-spacing: 0.12em;
+  }
+  .meta {
+    color: #a7d5bd;
+  }
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 42px;
+    padding-top: 38px;
+  }
+  .hero h1 {
+    font-size: 68px;
+    line-height: 0.95;
+    margin: 0 0 20px;
+    font-weight: 650;
+    letter-spacing: -0.05em;
+  }
+  .hero p {
+    color: #b8b8b8;
+    max-width: 420px;
+    line-height: 1.6;
+  }
+  .action {
+    display: inline-block;
+    margin-top: 26px;
+    background: #39b779;
+    color: #0e2117;
+    padding: 14px 20px;
+    font-weight: 700;
+  }
+  .rows {
+    display: grid;
+    gap: 10px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 120px 1fr 90px;
+    gap: 12px;
+    background: #111;
+    padding: 14px 16px;
+    border: 1px solid #3b3b3b;
+    font-family: ui-monospace, monospace;
+  }
+  .row b {
+    color: #d8c56a;
+  }
+  .row span {
+    color: #f3f0e9;
+  }
+  .row small {
+    color: #8b8b8b;
+    text-align: right;
+  }
+</style>
+<main class="board">
+  <header class="top">
+    <div class="brand">mimir</div>
+    <div class="meta">自己的知识库 · 可核对的答案</div>
+  </header>
+  <section class="hero">
+    <div>
+      <h1>把记过的，<br />真正找回来。</h1>
+      <p>收集网页、文件和想法，让 AI 从你的资料里回答，并把每个结论带回原文。</p>
+      <div class="action">开始使用 →</div>
+    </div>
+    <div class="rows">
+      <div class="row"><b>01 / 收集</b><span>产品研究 · Readme</span><small>已入库</small></div>
+      <div class="row">
+        <b>02 / 检索</b><span>“上次关于 RAG 的结论？”</span><small>3 个来源</small>
+      </div>
+      <div class="row">
+        <b>03 / 核对</b><span>回答 · 原文第 4 段</span><small>打开引用 ↗</small>
+      </div>
+    </div>
+  </section>
+</main>

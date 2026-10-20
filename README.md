@@ -16,7 +16,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-浏览器开发页默认在 `http://localhost:5173`，API 默认在 3000。
+浏览器开发页默认在 `http://localhost:5173`，根路径为公开产品官网；点击“开始使用”进入登录与知识工作区。API 默认在 3000。
 如需生产一致的 Postgres 路径，设置 `DATABASE_URL`，启动数据库后运行
 `pnpm db:migrate`；详见 [部署说明](.trellis/spec/project/architecture.md)。
 

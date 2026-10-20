@@ -1,0 +1,16 @@
+{
+  "id": "b9697520b91baff1",
+  "digest": "84faba96b189ee04",
+  "comps": [],
+  "sketches": [
+    ".impeccable/mocks/decision/question.html",
+    ".impeccable/mocks/decision/canvas.html",
+    ".impeccable/mocks/decision/journey.html"
+  ],
+  "pre": {
+    ".impeccable/mocks/decision/question.html": "fbb3b1054952cf772363aae97174da8a607ba759ee4d56e53452533efde929b2",
+    ".impeccable/mocks/decision/canvas.html": "35d4e91fc762df56d8f361628ff28ff476bc0c465eac06ca32390048b543b39f",
+    ".impeccable/mocks/decision/journey.html": "540f1da2c94561c825c0712b31f07c2f942fad7e20788d66a7e14fa826d23581"
+  },
+  "startedAt": 1792466710259
+}

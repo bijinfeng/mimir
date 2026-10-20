@@ -72,6 +72,30 @@ export type Platform =
 要求路由 context 的类型是公开的，否则生成的树每个路由都报 TS2883
 （`inferred type cannot be named … not portable`）。
 
+### 公开首页与路由守卫
+
+**范围**：浏览器根路径为产品官网，产品行为见[产品契约 §5.0](../../project/product.md#50-浏览器公开产品首页)。所有页面组件仍由 renderer 提供。
+
+**签名与配置**：`buildRouter(routeTree, basepath = '/', options: { publicHome?: boolean } = {})` 将 `publicHome` 注入 `RouterContext`。仅 Web 入口明确传 `true`；缺省/false 保持桌面直接进知识库。不从 window 或 User-Agent 推导。
+
+**访问合同**：根守卫仅在 `context.publicHome && location.pathname === '/'` 时跳过会话请求，返回 `{ session: null }`。pathname 是 Router 去掉 basepath 后的应用路径，不手动再拼 basepath。官网不读取会话、知识或模型 API；“开始使用”用 Router Link 到 `/docs?scope=all`，`preload={false}`，避免悬停预取触发认证请求。
+
+**校验与错误矩阵**：
+
+| 条件 | 结果 |
+| --- | --- |
+| Web publicHome + `/`，会话 API 可用或不可用 | 官网，不请求会话 |
+| 未启用 publicHome + `/` | 既有守卫后重定向工作区 |
+| `/docs`、`/chat`、`/settings` 未登录 | 登录，保留原公开目标路径 |
+| 受保护页面的会话请求失败 | 保留 RootError 恢复路径 |
+| 已登录访问 `/login` | 进入知识库 |
+
+**示例**：Web 传 `{ publicHome: true }` 是正常用法；Desktop 不传是兼容用法；把所有路径都视为公开、或 catch 会话错误并放行，是错误用法。
+
+**测试要求**：真实 Router/MemoryHistory 验证公开首页无 session 调用、basepath `/mimir/` 下首页/CTA/登录目标、受保护路由、已登录跳转、默认桌面入口、失败后重试恢复。公开示例引用需要键盘展开、Escape 关闭与焦点恢复。
+
+**错误与正确**：不要用 `pathname.startsWith('/')` 或吞掉 API 错误扩大公开范围；应精确比较应用根路径，其他路径继续走统一会话守卫。服务端 API 认证保持独立，不因页面公开而放宽。
+
 ### 标题栏实现方要用的件走 `./titlebar-kit`
 
 桌面端的标题栏需要品牌标记、侧栏品牌行的字形、以及 `TITLEBAR_HEIGHT`——

@@ -9,4 +9,6 @@ import type { QueryClient } from '@tanstack/react-query'
  */
 export interface RouterContext {
   queryClient: QueryClient
+  /** Explicit Web-only opt-in; desktop and tests default to the workspace. */
+  publicHome?: boolean
 }

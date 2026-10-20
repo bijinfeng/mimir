@@ -21,10 +21,12 @@ vite.config.ts     浏览器侧的构建（代理、产物位置）
 
 ```ts
 createApp(createRoot(container), {
-  router: buildRouter(routeTree),
+  router: buildRouter(routeTree, import.meta.env.BASE_URL, { publicHome: true }),
   platform: { kind: 'browser' },   // 没有桥、没有标题栏，由判别联合表达
 })
 ```
+
+`publicHome` 只声明该部署展示公开产品首页；认证例外与默认桌面行为见[渲染层路由合同](../../renderer/frontend/conventions.md#公开首页与路由守卫)。
 
 不要改成「从 `window` 探测」：这一侧的事实是确定的，探测只会让「浏览器里
 为什么没有标题栏」变成一个需要运行时才能回答的问题。

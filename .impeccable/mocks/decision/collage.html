@@ -1,0 +1,113 @@
+<!doctype html><meta charset="utf-8" /><style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: #e8e1d6;
+    color: #24211e;
+    font:
+      15px system-ui,
+      sans-serif;
+    padding: 38px;
+    overflow: hidden;
+  }
+  .sheet {
+    max-width: 1360px;
+    margin: auto;
+    min-height: 780px;
+    position: relative;
+    background: #f4eee4;
+    border: 1px solid #bbb1a4;
+    padding: 30px;
+    box-shadow: 8px 8px 0 #c9bfb1;
+  }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #2a2724;
+    padding-bottom: 20px;
+  }
+  .brand {
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+  .links {
+    display: flex;
+    gap: 26px;
+    font-size: 13px;
+  }
+  .scrap {
+    position: absolute;
+    background: #fffaf2;
+    border: 1px solid #bdb2a2;
+    padding: 22px;
+    box-shadow: 4px 5px 0 #c6baaa;
+  }
+  .one {
+    left: 7%;
+    top: 28%;
+    width: 36%;
+    transform: rotate(-3deg);
+  }
+  .two {
+    right: 7%;
+    top: 20%;
+    width: 34%;
+    transform: rotate(2deg);
+    background: #d5e6dc;
+  }
+  .three {
+    right: 18%;
+    bottom: 10%;
+    width: 30%;
+    transform: rotate(-4deg);
+    background: #f0d58d;
+  }
+  .kicker {
+    font:
+      700 12px ui-monospace,
+      monospace;
+    letter-spacing: 0.1em;
+    color: #9e3c2e;
+  }
+  .scrap h1 {
+    font-size: 54px;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    margin: 16px 0;
+  }
+  .scrap p {
+    line-height: 1.55;
+    color: #5d564e;
+  }
+  .cta {
+    display: inline-block;
+    margin-top: 12px;
+    background: #9e3c2e;
+    color: white;
+    padding: 11px 16px;
+    font-weight: 700;
+  }
+</style>
+<main class="sheet">
+  <header class="nav">
+    <div class="brand">mimir</div>
+    <nav class="links"><span>怎么工作</span><span>数据掌控</span><span>登录</span></nav>
+  </header>
+  <article class="scrap one">
+    <div class="kicker">个人知识库 / 01</div>
+    <h1>你的资料，<br />终于会回话。</h1>
+    <p>一处保存，一处检索。让 AI 只从你留下的资料里回答。</p>
+    <div class="cta">开始使用 →</div>
+  </article>
+  <article class="scrap two">
+    <div class="kicker">引用核对</div>
+    <h2>每个答案，都能回到原文。</h2>
+    <p>点击引用，回到真实段落，确认它为什么这样回答。</p>
+  </article>
+  <article class="scrap three">
+    <div class="kicker">收集 → 整理 → 使用</div>
+    <strong>网页、文件、笔记<br />放在同一张桌面上。</strong>
+  </article>
+</main>

@@ -1,0 +1,137 @@
+[
+  {
+    "name": "after-dark-narrow",
+    "viewport": [390, 844],
+    "theme": "dark",
+    "url": "http://127.0.0.1:5173/",
+    "png": "captures/after-dark-narrow.png",
+    "rendered_html": "captures/after-dark-narrow.html",
+    "sha256": "7d184f5632d9427b7a38a2b1901f9c0d0a362c9b91f599e2cb90af4281ef7bc5"
+  },
+  {
+    "name": "after-dark-wide",
+    "viewport": [1440, 900],
+    "theme": "dark",
+    "url": "http://127.0.0.1:5173/",
+    "png": "captures/after-dark-wide.png",
+    "rendered_html": "captures/after-dark-wide.html",
+    "sha256": "7f41cf5b2aeb4c5ce53f6689b795a4930d0f77d8e7e2fa7c9eb8449630ab3ccf"
+  },
+  {
+    "name": "after-light-narrow",
+    "viewport": [390, 844],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/",
+    "png": "captures/after-light-narrow.png",
+    "rendered_html": "captures/after-light-narrow.html",
+    "sha256": "3612a1c5e72f1ecca684cd98793cd38a7ddc484878270a23772770d4b846178e"
+  },
+  {
+    "name": "after-light-wide",
+    "viewport": [1440, 900],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/",
+    "png": "captures/after-light-wide.png",
+    "rendered_html": "captures/after-light-wide.html",
+    "sha256": "c99c1c4cbbe52c182e3ecf4b726efc352a3c55d5cbf362d649ea25c627b48dd7"
+  },
+  {
+    "name": "before-dark-narrow",
+    "viewport": [390, 844],
+    "theme": "dark",
+    "url": "http://localhost:5173/login",
+    "png": "captures/before-dark-narrow.png",
+    "rendered_html": "captures/before-dark-narrow.html",
+    "sha256": "89ab11c2e33769bd4ab714946bdf41d2d1ceb4fd708d1772c21de99e1a4efc26"
+  },
+  {
+    "name": "before-dark-wide",
+    "viewport": [1440, 900],
+    "theme": "dark",
+    "url": "http://localhost:5173/login",
+    "png": "captures/before-dark-wide.png",
+    "rendered_html": "captures/before-dark-wide.html",
+    "sha256": "9218c8c9acd4a901ef2605c6d21050164cc3af78000de813988ed72682d8981c"
+  },
+  {
+    "name": "before-light-narrow",
+    "viewport": [390, 844],
+    "theme": "light",
+    "url": "http://localhost:5173/login",
+    "png": "captures/before-light-narrow.png",
+    "rendered_html": "captures/before-light-narrow.html",
+    "sha256": "63b77d26983ac6a5ba1bc534fb9f6718fbc5c4eb16f0fac6f59ec89fc164120f"
+  },
+  {
+    "name": "before-light-wide",
+    "viewport": [1440, 900],
+    "theme": "light",
+    "url": "http://localhost:5173/login",
+    "png": "captures/before-light-wide.png",
+    "rendered_html": "captures/before-light-wide.html",
+    "sha256": "b60bf9338a2d1d684ef929039b8f4b64451ef6479a383b4b2e72df477066a577"
+  },
+  {
+    "name": "citation-open-narrow",
+    "viewport": [390, 844],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/",
+    "png": "captures/citation-open-narrow.png",
+    "rendered_html": "captures/citation-open-narrow.html",
+    "sha256": "83088d6baeca50e92ed56f700b0ec84ab6c3b0d0fa6eeda29fe3c5b8c5176ce3"
+  },
+  {
+    "name": "citation-open-wide",
+    "viewport": [1440, 900],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/",
+    "png": "captures/citation-open-wide.png",
+    "rendered_html": "captures/citation-open-wide.html",
+    "sha256": "73c8e30df0f026d9896ec3c6415d73e5dec4794d7f390556ebc9f48da8a09421"
+  },
+  {
+    "name": "deployment-wide",
+    "viewport": [1440, 900],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/#deployment",
+    "png": "captures/deployment-wide.png",
+    "rendered_html": "captures/deployment-wide.html",
+    "sha256": "57ddc8b575922c331b0e737f824cec4c69d24e6351a4113cf75e0939476b05dc"
+  },
+  {
+    "name": "faq-narrow",
+    "viewport": [390, 844],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/#product",
+    "png": "captures/faq-narrow.png",
+    "rendered_html": "captures/faq-narrow.html",
+    "sha256": "45b1801455109292e2d54632baf9af5cdfb3408182659655c36c80b05790227d"
+  },
+  {
+    "name": "faq-wide",
+    "viewport": [1440, 900],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/#deployment",
+    "png": "captures/faq-wide.png",
+    "rendered_html": "captures/faq-wide.html",
+    "sha256": "777a3490e320400488e784a5e77481d1408397a9b6a1259cf1d87d3339a5cfd2"
+  },
+  {
+    "name": "product-narrow",
+    "viewport": [390, 844],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/#product",
+    "png": "captures/product-narrow.png",
+    "rendered_html": "captures/product-narrow.html",
+    "sha256": "ac43b92af977de0597f6e75c126952b0dd6f0e2e99dae103f1f1dc4d070ed511"
+  },
+  {
+    "name": "product-wide",
+    "viewport": [1440, 900],
+    "theme": "light",
+    "url": "http://127.0.0.1:5173/#product",
+    "png": "captures/product-wide.png",
+    "rendered_html": "captures/product-wide.html",
+    "sha256": "93bfe9d15109c1bb14531726b9a084fb5c62c6c048e7f90abb6cc38ee658322a"
+  }
+]

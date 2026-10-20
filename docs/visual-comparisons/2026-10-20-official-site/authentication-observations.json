@@ -1,0 +1,8 @@
+{
+  "account": "admin@example.com",
+  "unauthenticatedCta": "/login?redirect=%2Fdocs%3Fscope%3Dall",
+  "afterLogin": "/docs?scope=all",
+  "signedInHome": "http://127.0.0.1:5173/",
+  "signedInCta": "http://127.0.0.1:5173/docs?scope=all",
+  "privateWorkspaceCaptured": false
+}

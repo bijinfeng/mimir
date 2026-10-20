@@ -1,0 +1,38 @@
+{
+  "scope": "surface",
+  "key": "6119dc63",
+  "reroll": 0,
+  "at": 1792466372109,
+  "worlds": [
+    {
+      "id": "ink-pigment-printmaking-screenprint-transparent-overlap",
+      "board": "https://impeccable.style/worlds/cards/ink-pigment-printmaking-screenprint-transparent-overlap.webp",
+      "hero": "https://impeccable.style/worlds/cards/ink-pigment-printmaking-screenprint-transparent-overlap-hero.webp"
+    },
+    {
+      "id": "design-canon-merz-collage-page",
+      "board": "https://impeccable.style/worlds/cards/design-canon-merz-collage-page.webp",
+      "hero": "https://impeccable.style/worlds/cards/design-canon-merz-collage-page-hero.webp"
+    },
+    {
+      "id": "medium-native-ebru-floated-pigment",
+      "board": "https://impeccable.style/worlds/cards/medium-native-ebru-floated-pigment.webp",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-ebru-floated-pigment-hero.webp"
+    },
+    {
+      "id": "signals-instruments-split-flap-concourse",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse.webp",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-split-flap-concourse-hero.webp"
+    },
+    {
+      "id": "dream-surreal-impossible-worlds-luminescent-alien-understory",
+      "board": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-luminescent-alien-understory.webp",
+      "hero": "https://impeccable.style/worlds/cards/dream-surreal-impossible-worlds-luminescent-alien-understory-hero.webp"
+    },
+    {
+      "id": "kinetic-sculpture-automata-crank-paper-menagerie",
+      "board": "https://impeccable.style/worlds/cards/kinetic-sculpture-automata-crank-paper-menagerie.webp",
+      "hero": "https://impeccable.style/worlds/cards/kinetic-sculpture-automata-crank-paper-menagerie-hero.webp"
+    }
+  ]
+}

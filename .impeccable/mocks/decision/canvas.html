@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>Mimir 官网结构</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      margin: 0;
+      width: 1440px;
+      height: 900px;
+      overflow: hidden;
+    }
+    body {
+      font:
+        18px -apple-system,
+        BlinkMacSystemFont,
+        'PingFang SC',
+        sans-serif;
+      color: #262626;
+      background: #fff;
+    }
+    nav {
+      height: 88px;
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 0 72px;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    nav b {
+      font-size: 27px;
+      margin-right: auto;
+      letter-spacing: 0.02em;
+    }
+    nav span {
+      font-size: 15px;
+      color: #595959;
+    }
+    .cta {
+      background: #00834d;
+      color: white;
+      padding: 13px 24px;
+      border-radius: 6px;
+      display: inline-block;
+      font-size: 17px;
+    }
+    .ghost {
+      display: inline-block;
+      padding: 13px 24px;
+      color: #262626;
+      font-size: 17px;
+    }
+    h1 {
+      font-size: 64px;
+      line-height: 1.18;
+      letter-spacing: -0.025em;
+      margin: 0 0 22px;
+    }
+    p {
+      line-height: 1.8;
+      color: #595959;
+      margin: 0 0 24px;
+    }
+    small {
+      font-size: 14px;
+      color: #6b6b6b;
+    }
+    .demo {
+      border: 1px solid #e8e8e8;
+      border-radius: 8px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 40px;
+      padding: 12px 18px;
+      font-size: 12px;
+      color: #6b6b6b;
+      background: #f7f8f8;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      height: 100%;
+    }
+    .side {
+      background: #f7f8f8;
+      padding: 25px 18px;
+      font-size: 14px;
+      line-height: 2.5;
+      border-right: 1px solid #e8e8e8;
+    }
+    .side b {
+      display: block;
+    }
+    .content {
+      padding: 26px;
+    }
+    .content h2 {
+      font-size: 24px;
+      margin: 0 0 20px;
+    }
+    .quote {
+      background: #e8f5ee;
+      padding: 18px;
+      border-radius: 6px;
+      color: #007a45;
+    }
+    .row {
+      padding: 17px 0;
+      border-bottom: 1px solid #e8e8e8;
+      font-size: 15px;
+    }
+    .source {
+      font-size: 14px;
+      color: #007a45;
+      margin-top: 20px;
+    }
+  </style>
+  <nav>
+    <b>mimir</b><span>产品能力</span><span>数据与部署</span><span>GitHub ↗</span
+    ><span class="cta">开始使用</span>
+  </nav>
+  <section style="padding: 64px 80px 0; text-align: center">
+    <h1>让你的知识，<br />重新参与思考。</h1>
+    <p>收集、写作与带引用的 AI 问答，在自己的知识库里发生。</p>
+    <span class="cta">开始使用 →</span><span class="ghost">了解数据与部署</span>
+  </section>
+  <div style="margin: 52px 100px 0; height: 470px; text-align: left">
+    <div class="demo">
+      <div class="bar">mimir / 产品研究</div>
+      <div class="grid">
+        <aside class="side">
+          <b>知识库</b>产品研究<br />阅读与摘录<br />写作素材<br /><br />搜索<br />问 AI
+        </aside>
+        <article class="content">
+          <h2>让收藏的资料，成为下一次思考的起点。</h2>
+          <div class="row">产品访谈.pdf <small>· 已入库</small></div>
+          <div class="row">知识管理方法.md <small>· 你的笔记</small></div>
+          <div class="source">问 AI：我们为什么需要保留原文引用？</div>
+          <p style="margin-top: 16px">
+            引用让答案可以核对，也让结论保留上下文。<span style="color: #007a45">[1]</span>
+          </p>
+          <div class="quote">
+            “每条结论，都应能回到它的来源。”<br /><small>产品访谈.pdf · 第 4 页</small>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</html>
+<!-- composition preview -->

@@ -21,7 +21,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
    * 这样新增页面时不需要记得加守卫——漏加一个未鉴权的页面，
    * 在自托管暴露公网的情况下等于把整个知识库交出去。
    */
-  beforeLoad: async ({ location }) => {
+  beforeLoad: async ({ location, context }) => {
+    // pathname is already stripped of the router basepath. No auth or private
+    // data is needed for this exact, explicitly enabled public surface.
+    if (context.publicHome && location.pathname === '/') return { session: null }
+
     const session = await api.auth.session()
 
     if (!session && location.pathname !== '/login') {

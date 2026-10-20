@@ -1,0 +1,127 @@
+<!doctype html><meta charset="utf-8" /><style>
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: #efe9df;
+    color: #292724;
+    font:
+      15px system-ui,
+      sans-serif;
+    padding: 42px;
+    overflow: hidden;
+  }
+  .stage {
+    max-width: 1360px;
+    margin: auto;
+    border-bottom: 2px solid #292724;
+    padding-bottom: 30px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .brand {
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+  .tag {
+    border: 1px solid #292724;
+    padding: 8px 12px;
+  }
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 54px;
+    align-items: center;
+    padding: 72px 6%;
+  }
+  .hero h1 {
+    font-size: 70px;
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+    margin: 0 0 22px;
+  }
+  .hero p {
+    font-size: 18px;
+    line-height: 1.55;
+    max-width: 500px;
+  }
+  .button {
+    display: inline-block;
+    margin-top: 18px;
+    background: #292724;
+    color: #f9f4ea;
+    padding: 14px 22px;
+  }
+  .machine {
+    height: 360px;
+    position: relative;
+    border: 1px solid #a59d91;
+    background: #f8f4ed;
+    padding: 28px;
+  }
+  .machine:before {
+    content: '';
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    top: 24%;
+    border-top: 2px solid #292724;
+  }
+  .node {
+    position: absolute;
+    width: 116px;
+    height: 116px;
+    border: 2px solid #292724;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #efe9df;
+    font-weight: 700;
+  }
+  .n1 {
+    left: 12%;
+    top: 12%;
+  }
+  .n2 {
+    right: 12%;
+    top: 12%;
+    background: #c65a3c;
+    color: #fff;
+  }
+  .n3 {
+    left: 35%;
+    bottom: 10%;
+  }
+  .note {
+    position: absolute;
+    bottom: 18px;
+    left: 28px;
+    color: #70695f;
+    font:
+      12px ui-monospace,
+      monospace;
+  }
+</style>
+<main class="stage">
+  <header class="header">
+    <div class="brand">mimir</div>
+    <div class="tag">打开你的知识库 ↗</div>
+  </header>
+  <section class="hero">
+    <div>
+      <h1>让知识<br />自己转起来。</h1>
+      <p>资料进入库里，检索找到线索，AI 把结论写成下一篇笔记。每一步都留着出处。</p>
+      <div class="button">开始使用 →</div>
+    </div>
+    <div class="machine">
+      <div class="node n1">收集</div>
+      <div class="node n2">回答</div>
+      <div class="node n3">沉淀</div>
+      <div class="note">每一段都有来源 · 每一次都能继续</div>
+    </div>
+  </section>
+</main>

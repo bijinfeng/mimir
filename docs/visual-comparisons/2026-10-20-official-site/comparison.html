@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>Mimir 官网 · 真实渲染对比</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 28px;
+      font:
+        15px/1.7 system-ui,
+        sans-serif;
+      background: #f7f8f8;
+      color: #262626;
+    }
+    h1 {
+      font-size: 26px;
+      margin: 0 0 8px;
+    }
+    p {
+      max-width: 80ch;
+      color: #595959;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 24px 0;
+    }
+    a {
+      color: #007a45;
+    }
+    section {
+      margin: 40px 0;
+    }
+    h2 {
+      font-size: 20px;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    figure {
+      margin: 0;
+      min-width: 0;
+    }
+    img {
+      width: 100%;
+      display: block;
+      border: 1px solid #d8dcda;
+    }
+    figcaption {
+      margin-bottom: 8px;
+    }
+    .narrow {
+      max-width: 850px;
+    }
+    .narrow img {
+      max-width: 390px;
+    }
+    @media (max-width: 700px) {
+      body {
+        padding: 16px;
+      }
+      .pair {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <h1>Mimir 官网 · 真实渲染对比</h1>
+  <p>
+    这是新增官网：此前根路径进入登录页，改后根路径显示产品介绍。每组保持相同主题和尺寸；截图与静态
+    HTML 均来自实际 React 页面。旧页面和新页面的内容因入口职责变化而不同，未伪造旧版官网。HTML
+    保留渲染样式，交互请在运行中的官网验证。
+  </p>
+  <nav>
+    <a href="#light-wide">light-wide</a><a href="#light-narrow">light-narrow</a
+    ><a href="#dark-wide">dark-wide</a><a href="#dark-narrow">dark-narrow</a>
+  </nav>
+  <section id="light-wide" class="wide">
+    <h2>light-wide</h2>
+    <div class="pair">
+      <figure>
+        <figcaption>
+          之前：登录入口 · <a href="captures/before-light-wide.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/before-light-wide.png"
+          ><img loading="lazy" alt="之前：登录入口 light-wide" src="captures/before-light-wide.png"
+        /></a>
+      </figure>
+      <figure>
+        <figcaption>
+          之后：产品官网 · <a href="captures/after-light-wide.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/after-light-wide.png"
+          ><img loading="lazy" alt="之后：产品官网 light-wide" src="captures/after-light-wide.png"
+        /></a>
+      </figure>
+    </div>
+  </section>
+  <section id="light-narrow" class="narrow">
+    <h2>light-narrow</h2>
+    <div class="pair">
+      <figure>
+        <figcaption>
+          之前：登录入口 · <a href="captures/before-light-narrow.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/before-light-narrow.png"
+          ><img
+            loading="lazy"
+            alt="之前：登录入口 light-narrow"
+            src="captures/before-light-narrow.png"
+        /></a>
+      </figure>
+      <figure>
+        <figcaption>
+          之后：产品官网 · <a href="captures/after-light-narrow.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/after-light-narrow.png"
+          ><img
+            loading="lazy"
+            alt="之后：产品官网 light-narrow"
+            src="captures/after-light-narrow.png"
+        /></a>
+      </figure>
+    </div>
+  </section>
+  <section id="dark-wide" class="wide">
+    <h2>dark-wide</h2>
+    <div class="pair">
+      <figure>
+        <figcaption>
+          之前：登录入口 · <a href="captures/before-dark-wide.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/before-dark-wide.png"
+          ><img loading="lazy" alt="之前：登录入口 dark-wide" src="captures/before-dark-wide.png"
+        /></a>
+      </figure>
+      <figure>
+        <figcaption>
+          之后：产品官网 · <a href="captures/after-dark-wide.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/after-dark-wide.png"
+          ><img loading="lazy" alt="之后：产品官网 dark-wide" src="captures/after-dark-wide.png"
+        /></a>
+      </figure>
+    </div>
+  </section>
+  <section id="dark-narrow" class="narrow">
+    <h2>dark-narrow</h2>
+    <div class="pair">
+      <figure>
+        <figcaption>
+          之前：登录入口 · <a href="captures/before-dark-narrow.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/before-dark-narrow.png"
+          ><img
+            loading="lazy"
+            alt="之前：登录入口 dark-narrow"
+            src="captures/before-dark-narrow.png"
+        /></a>
+      </figure>
+      <figure>
+        <figcaption>
+          之后：产品官网 · <a href="captures/after-dark-narrow.html">静态渲染 HTML</a>
+        </figcaption>
+        <a href="captures/after-dark-narrow.png"
+          ><img
+            loading="lazy"
+            alt="之后：产品官网 dark-narrow"
+            src="captures/after-dark-narrow.png"
+        /></a>
+      </figure>
+    </div>
+  </section>
+  <footer>
+    <a href="README.md">覆盖说明与验证结果</a> ·
+    <a href="capture-manifest.json">尺寸、来源及哈希</a>
+  </footer>
+</html>

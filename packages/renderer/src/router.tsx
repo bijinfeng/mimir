@@ -25,14 +25,18 @@ import type { RouterContext } from './lib/router-context'
  * @param routeTree - 该平台构建期生成的路由树
  * @param basepath - 应用的公开路径；桌面端与普通 Web 默认为根路径
  */
-export function buildRouter<TRouteTree extends AnyRoute>(routeTree: TRouteTree, basepath = '/') {
+export function buildRouter<TRouteTree extends AnyRoute>(
+  routeTree: TRouteTree,
+  basepath = '/',
+  options: { publicHome?: boolean } = {},
+) {
   return createRouter({
     routeTree,
     basepath,
     defaultPreload: 'intent',
     // 把 queryClient 挂进 context，路由守卫与 loader 就能直接预取数据，
     // 不必在组件里再取一遍
-    context: { queryClient } satisfies RouterContext,
+    context: { queryClient, publicHome: options.publicHome } satisfies RouterContext,
     scrollRestoration: true,
   })
 }
