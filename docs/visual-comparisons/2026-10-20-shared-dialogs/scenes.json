@@ -1,0 +1,42 @@
+[
+  {
+    "id": "kb-create-1440",
+    "title": "创建知识库 · 1440×900",
+    "width": 1440,
+    "height": 900,
+    "before": "before/kb-create-1440.png",
+    "after": "after/kb-create-1440.png"
+  },
+  {
+    "id": "kb-create-390",
+    "title": "创建知识库 · 390×844",
+    "width": 390,
+    "height": 844,
+    "before": "before/kb-create-390.png",
+    "after": "after/kb-create-390.png"
+  },
+  {
+    "id": "capture-url-1440",
+    "title": "收集内容 · 1440×900",
+    "width": 1440,
+    "height": 900,
+    "before": "before/capture-url-1440.png",
+    "after": "after/capture-url-1440.png"
+  },
+  {
+    "id": "capture-url-390",
+    "title": "收集内容 · 390×844",
+    "width": 390,
+    "height": 844,
+    "before": "before/capture-url-390.png",
+    "after": "after/capture-url-390.png"
+  },
+  {
+    "id": "capture-url-600x360",
+    "title": "收集内容 · 600×360",
+    "width": 600,
+    "height": 360,
+    "before": "before/capture-url-600x360.png",
+    "after": "after/capture-url-600x360.png"
+  }
+]

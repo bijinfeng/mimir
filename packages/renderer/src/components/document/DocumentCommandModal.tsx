@@ -171,7 +171,6 @@ export function DocumentCommandModal({
       title={command === 'rename' ? '重命名笔记' : command === 'move' ? '移动文档' : '搜索当前笔记'}
       width={480}
       className={hostStyles.modal}
-      style={{ top: 52 }}
       open={open}
       onCancel={close}
       onOk={() => void submit()}

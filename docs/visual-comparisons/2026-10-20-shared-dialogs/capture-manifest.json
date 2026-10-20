@@ -1,0 +1,62 @@
+[
+  {
+    "id": "kb-create-1440",
+    "title": "创建知识库 · 1440×900",
+    "width": 1440,
+    "height": 900,
+    "before": "before/kb-create-1440.png",
+    "after": "after/kb-create-1440.png",
+    "before_sha256": "249d8497694763a9f2efb9924c3f685d0b3e5ecc986a1850549fa4088eb2dc0c",
+    "before_bytes": 135277,
+    "after_sha256": "05f185e190ad00531c6fa68dba68457b9a1b9b1a2ba8e015061926d858211f7c",
+    "after_bytes": 134972
+  },
+  {
+    "id": "kb-create-390",
+    "title": "创建知识库 · 390×844",
+    "width": 390,
+    "height": 844,
+    "before": "before/kb-create-390.png",
+    "after": "after/kb-create-390.png",
+    "before_sha256": "3cb86de60ee29e8fd364d498fea64225e8dc197a999f47ff2fe3c9e57676fa56",
+    "before_bytes": 32790,
+    "after_sha256": "8396863149b950d5a30be1167d54714ac2b8f27545ae357b41a50e82c1401fea",
+    "after_bytes": 36505
+  },
+  {
+    "id": "capture-url-1440",
+    "title": "收集内容 · 1440×900",
+    "width": 1440,
+    "height": 900,
+    "before": "before/capture-url-1440.png",
+    "after": "after/capture-url-1440.png",
+    "before_sha256": "bac253307aa2efdbd980c45cd24e935cbd394b6c0e108afdb4e4574445790504",
+    "before_bytes": 140639,
+    "after_sha256": "145e35b8d3db326cf2e0bf7406ac4fcd653b33cc5cb7b04319e56e5e1e443753",
+    "after_bytes": 141296
+  },
+  {
+    "id": "capture-url-390",
+    "title": "收集内容 · 390×844",
+    "width": 390,
+    "height": 844,
+    "before": "before/capture-url-390.png",
+    "after": "after/capture-url-390.png",
+    "before_sha256": "1136a3a3b7ddf9101fb6790d28e3940f4dc3fa4d882575f68d1527990c114390",
+    "before_bytes": 49490,
+    "after_sha256": "c78f595154a1a2c48322f04d7826f263a84a8cdabb37c8810c7e80d67a48b2a9",
+    "after_bytes": 49523
+  },
+  {
+    "id": "capture-url-600x360",
+    "title": "收集内容 · 600×360",
+    "width": 600,
+    "height": 360,
+    "before": "before/capture-url-600x360.png",
+    "after": "after/capture-url-600x360.png",
+    "before_sha256": "f7e6ae0d5a4aada1d26e15a79c704359c3027e5d08c37cec4abc0875eb04df79",
+    "before_bytes": 26175,
+    "after_sha256": "8520d224bf0c221b331f6339854864c808bd8ff47f2f261513234602a243ccaa",
+    "after_bytes": 26053
+  }
+]

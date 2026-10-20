@@ -5,14 +5,14 @@ export const useCaptureStyles = createStyles(({ css, token, prefixCls, appearanc
   const v = captureVisualTokens(appearance === 'dark')
   return {
     modal: css`
-      top: 58px;
+      top: 56px;
       padding-bottom: 16px;
       max-width: calc(100vw - 16px);
       .${prefixCls}-modal-container {
         display: flex;
         flex-direction: column;
         padding: 20px 24px;
-        max-height: calc(100dvh - 74px);
+        max-height: calc(100dvh - 76px);
         overflow: hidden;
         border-radius: 6px;
         background: ${v.floating};
@@ -52,11 +52,14 @@ export const useCaptureStyles = createStyles(({ css, token, prefixCls, appearanc
         flex: none;
         stroke-width: 1.7;
       }
-      @media (max-width: 600px) {
-        top: 30px;
+      @media (max-width: 700px) {
+        top: 36px;
         .${prefixCls}-modal-container {
-          max-height: calc(100dvh - 46px);
+          max-height: calc(100dvh - 48px);
         }
+      }
+      @media (max-width: 480px) {
+        top: 24px;
       }
       @media (max-width: 440px) {
         .${prefixCls}-modal-container {

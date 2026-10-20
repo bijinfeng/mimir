@@ -142,7 +142,6 @@ export function UnsavedGuard({
       closable={false}
       classNames={{ footer: captureContext ? captureStyles.footer : undefined }}
       width={480}
-      style={captureContext ? undefined : { top: 52 }}
       className={captureContext ? captureStyles.modal : hostStyles.modal}
       mask={{ closable: false }}
       keyboard={!saving}

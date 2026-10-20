@@ -11,6 +11,7 @@ export const useDocumentDialogStyles = createStyles(({ css, token, prefixCls }) 
       max-width: calc(100vw - 20px);
       margin-inline: auto;
     }
+    top: 56px;
     color: ${token.colorText};
     font-size: ${DOCUMENT_DIALOG_TYPE.body}px;
     line-height: 1.6;
@@ -56,22 +57,27 @@ export const useDocumentDialogStyles = createStyles(({ css, token, prefixCls }) 
       flex: none;
       stroke-width: 1.65;
     }
-    @media (max-width: 575px) {
+    @media (max-width: 700px) {
       && {
-        top: 24px !important;
+        top: 36px !important;
         max-width: calc(100vw - ${DOCUMENT_NARROW_NAV_WIDTH + 20}px);
         margin-inline: ${DOCUMENT_NARROW_NAV_WIDTH + 10}px 10px;
         margin-block: 0;
       }
       && .${prefixCls}-modal-container {
         padding: 18px;
-        max-height: calc(100dvh - 34px);
+        max-height: calc(100dvh - 56px);
       }
       && .${prefixCls}-modal-title {
         font-size: ${DOCUMENT_DIALOG_TYPE.narrowHeading}px;
       }
       && .${prefixCls}-modal-footer {
         margin-top: 12px;
+      }
+    }
+    @media (max-width: 480px) {
+      && {
+        top: 24px !important;
       }
     }
     @media (max-height: 360px) {

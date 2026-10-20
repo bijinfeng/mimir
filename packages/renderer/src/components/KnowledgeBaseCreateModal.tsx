@@ -8,6 +8,7 @@ import type { FolderNode } from '@mimir/shared'
 import { api, ApiRequestError } from '../lib/api'
 import { FONT_SIZE } from '../theme/tokens'
 import { joinPath, nameOf, parentOf } from './nav/folder-ops'
+import { useDialogRootGeometry } from './dialog-geometry'
 
 export interface KnowledgeBaseModalProps {
   open: boolean
@@ -31,7 +32,7 @@ const useStyles = createStyles(({ css, token }) => ({
   dialog: css`
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - 48px);
+    max-height: calc(100dvh - 76px);
   `,
   body: css`
     min-height: 0;
@@ -70,6 +71,7 @@ export function KnowledgeBaseModal({
   afterClose,
 }: KnowledgeBaseModalProps) {
   const { styles } = useStyles()
+  const { styles: geometry } = useDialogRootGeometry()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
   const fieldId = useId()
@@ -240,8 +242,7 @@ export function KnowledgeBaseModal({
       }}
       okButtonProps={{ disabled: !name.trim() || recoveryBlocked, loading: pending }}
       destroyOnHidden
-      centered
-      classNames={{ container: styles.dialog, body: styles.body }}
+      classNames={{ root: geometry.root, container: styles.dialog, body: styles.body }}
       width={520}
     >
       <label className={styles.fieldLabel} htmlFor={`${fieldId}-name`}>
