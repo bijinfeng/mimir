@@ -89,3 +89,11 @@ v0.1.2正式tag流水线 [39390863778](https://github.com/bijinfeng/mimir/action
 CI39389655084的全pnpmcheck、pnpm build、完整PostgreSQL模式重跑均success，最终S3专项在Docker拉取固定minio/minio镜像时被registry denied，测试尚未启动，不能写成SDK断言失败或S3通过。日志github-ci-s3-failed.log；正在校验可匿名拉取的官方固定MinIO来源，不跳过2项真实兼容测试。
 
 后续版本0.1.3仅在本地准备f4308af（与fnOS同步、18项发布契约通过），未推tag；必须等待0.1.2真正公开后才公开后续版本，避免latest顺序竞态。
+
+MinIO fixture修复与独立来源/运行审查已提交推送 `71778c7`，保留原生产S3代码和两项断言；固定官方历史LinuxAMD64二进制+SHA，真实仿真2/2通过，Colima已恢复。新原生完整CI [39394323716](https://github.com/bijinfeng/mimir/actions/runs/39394323716) 进行中；此时不提前宣称Ubuntu生命周期通过。desktop/fnOS统一0.1.3已推master，尚未创建tag。
+
+## v0.1.2 发布 API 限制
+
+Attempt2 中 Intel DMG、包资源/原生smoke、其余目标及 aggregate 全部 success，但 publish 在创建草稿的 POST /releases 返回403。job明确 Contents:write，尚无草稿或公开Release。官方 REST 文档新增规则：显式 target_commitish 相对默认分支包含 workflow 差异时要求workflows写权限；GITHUB_TOKEN无法获得。master在等待构建时已有ci.yml变更，旧SHA参数触发该限制。用户owner现有OAuth也无workflow scope；一次相同payload空draft创建尝试返回404，未创建任何Release。
+
+修复方向是远端解析已存在tag到精确commit并保持marker所有权，省略existing tag无需的target_commitish；不扩大凭据权限、不移动tag或修改默认分支、不本地代发以掩盖失败。v0.1.2保留失败tag和完整成功构建证据；修复后首个统一稳定基线顺延0.1.3，真实升级目标0.1.4。以最终成功版本为准。失败job日志github-v012-publish-create-failed.log、attempt2 JSON保留。

@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "1c7e8230406759874cf316bbbd971338108dcda2",
+  "commit": "71778c7a93cb0ad28d0c4db78c34a8c51ceddf6b",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "master已推送，完整五目标手动GitHub构建39387632456成功（含fnOS FPK/socket、Windows安装前后28949文件摘要及安装smoke、Linux/mac双架构、aggregate）。最新Node22全仓pnpmcheck exit0。v0.1.2 tag固定1c7e823已push，等待实际统一稳定发布及后续版本真实更新验收；旧失败v0.1.0/v0.1.1保留。mac ad-hoc manual，fnOS真机边界记录。",
+  "notes": "master71778c7。CI39394323716全pnpmcheck/build成功、PG/S3进行中。v0.1.2五目标+aggregate全success但createRelease旧target_commitish触发GitHub workflow权限403；owner同请求404未创建draft，现无公开Release。正在修复publisher省略冗余字段并以远端tag双检查+marker识别归属；保留失败tag，不扩权/改默认分支。预期首个统一稳定基线0.1.3→真实更新目标0.1.4，按实际最终结果登记。fnOS真机/mac签名及通知边界保留。",
   "meta": {}
 }
