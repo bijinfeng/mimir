@@ -103,10 +103,11 @@ FPK 没有 Electron 更新 YAML，也不会被写入客户端的下载列表。
 Windows/Linux 的本地模拟测试不能当作对应平台已通过。
 fnOS 的 Ubuntu 构建、原生模块和宿主检查也不能代替真实 fnOS 设备的安装与升级验收。
 
-已有两个公开稳定版本、且目标版本为官方 latest 后，可执行真实升级验收：
+v0.1.3/v0.1.4 的更新重启存在窗口关闭缺陷，使用者需先手动安装含修复的 v0.1.5 或更新版。
+已有两个公开稳定版本、且目标版本为官方 latest 后，可执行真实升级验收（以下版本需已发布）：
 
 ```sh
-gh workflow run desktop-update-verify.yml --ref master -f base_version=0.1.0 -f target_version=0.1.1
+gh workflow run desktop-update-verify.yml --ref master -f base_version=0.1.5 -f target_version=0.1.6
 ```
 
 该工作流在一次性 Windows/Linux runner 上匿名下载旧安装包，驱动真实更新界面，

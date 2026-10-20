@@ -110,3 +110,16 @@ CI [39394323716](https://github.com/bijinfeng/mimir/actions/runs/39394323716) �
 ## v0.1.4 上传服务超时与同源重试
 
 [39402594994](https://github.com/bijinfeng/mimir/actions/runs/39402594994) attempt1：五目标实际构建、资源校验及smoke均完成通过；macIntel最后上传desktop-mac-x64时CreateArtifact请求连续5次timeout，job failure，aggregate/publish skipped。未创建或公开v0.1.4 Release。保留github-v014-attempt1.json及github-v014-upload-timeout.log，原样rerun failed jobs，不移动tag、不跳过目标。
+
+
+## 第二个正式统一版本 v0.1.4 与真实升级开始
+
+39402594994 attempt2整体success：原生五目标、聚合和发布全通过，15资产正式公开，latest=v0.1.4；github-v014-published.json、github-v014-publish-success.log保存实际结果。FPK再次匿名下载且完整字节/公开digest匹配。
+
+触发[39408870875](https://github.com/bijinfeng/mimir/actions/runs/39408870875)执行0.1.3→0.1.4实际Windows/Linux升级。Linux已完成真实官方下载及无详情自动弹出验证，在点击“稍后”关闭详情时CDP回包竞态导致外部harness失败；保留attempt1现场，修复仅测试同步并重跑，不能计为完整升级通过。Windows仍执行，macOS官方ZIP手动替换验收并行进行。
+
+## 原生关闭缺陷与修复基线
+
+0.1.3→0.1.4复验39409876470两平台均未通过。真实下载、普通退出不安装、保存保护与保存HTTP200已推进；窗口关闭后访问已销毁webContents getter使准备未完成。Electron44.7.0同源探针修前exit2、修后exit0，强fixture先红后绿；未改保存/veto/宿主顺序。原始失败截图/HTML/结果保存在update-attempt2，不能计为成功。
+
+75dd8c8提交产品修复与可读纯文本更新说明；b2bb972提交实网ZIP精确续传与NSIS诊断；324aa7d将desktop/fnOS同步准备0.1.5并推送master。新完整CI39413324883进行中。修复必须先手动安装为新基线，再用随后0.1.6验证真实自动更新，不能只修目标包。旧tag/资产保持原样，已给0.1.3/0.1.4公开说明添加已知问题提示。

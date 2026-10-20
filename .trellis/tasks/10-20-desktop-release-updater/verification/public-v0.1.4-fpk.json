@@ -1,0 +1,20 @@
+{
+  "version": "0.1.4",
+  "anonymous": true,
+  "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+  "tag": "v0.1.4",
+  "draft": false,
+  "prerelease": false,
+  "assetUrl": "https://github.com/bijinfeng/mimir/releases/download/v0.1.4/mimir-0.1.4-fnos-x64.fpk",
+  "assetId": 659016028,
+  "size": 170577526,
+  "sha256": "6d2896401949129658d10a11fe03757643b8d903df06e96b3dc7e92d55b38dc4",
+  "githubDigest": "sha256:6d2896401949129658d10a11fe03757643b8d903df06e96b3dc7e92d55b38dc4",
+  "downloadSeconds": 289.25,
+  "downloadMethod": "anonymous public URL curl",
+  "file": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-anonymous-fpk-cndma61f/mimir-0.1.4-fnos-x64.fpk",
+  "success": true,
+  "limitations": [
+    "Anonymous download and byte identity only; fnOS device installation and upgrade are not asserted."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "base": "0.1.3",
+  "target": "0.1.4",
+  "platform": "win32",
+  "checks": [
+    {
+      "check": "official download verified; completion did not open a details window",
+      "at": "2026-10-20T10:38:56.549Z",
+      "downloaded": {
+        "status": "downloaded",
+        "currentVersion": "0.1.3",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+        "platform": "win32",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true,
+        "version": "0.1.4",
+        "releaseNotes": "\n<p>桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。</p>\n<p><strong>Full Changelog</strong>: <a class=\"commit-link\" href=\"https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4\"><tt>v0.1.3...v0.1.4</tt></a></p>",
+        "checkedAt": "2026-10-20T10:38:50.718Z"
+      }
+    },
+    {
+      "check": "ordinary UI close after download did not install",
+      "at": "2026-10-20T10:38:58.363Z"
+    },
+    {
+      "check": "pending real HTTP save triggered guard; continue editing canceled installation",
+      "at": "2026-10-20T10:39:21.014Z"
+    }
+  ],
+  "limitations": [
+    "Headless/session notification delivery and focus are not asserted by CDP.",
+    "macOS ad-hoc builds remain manual; this test never claims macOS automatic installation."
+  ]
+}
