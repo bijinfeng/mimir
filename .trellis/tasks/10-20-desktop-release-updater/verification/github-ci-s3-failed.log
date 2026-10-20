@@ -1,0 +1,29 @@
+verify	S3 compatibility smoke test	﻿2026-10-20T08:18:28.3049106Z ##[group]Run docker run --rm -d --name mimir-minio-test -p 127.0.0.1:19000:9000 \
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3050167Z ^[[36;1mdocker run --rm -d --name mimir-minio-test -p 127.0.0.1:19000:9000 \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3050996Z ^[[36;1m  -e MINIO_ROOT_USER="$MIMIR_S3_TEST_ACCESS_KEY" \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3051704Z ^[[36;1m  -e MINIO_ROOT_PASSWORD="$MIMIR_S3_TEST_SECRET_KEY" \^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3053498Z ^[[36;1m  minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e server /data^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3054522Z ^[[36;1mtrap 'docker stop mimir-minio-test' EXIT^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3055103Z ^[[36;1mfor attempt in $(seq 1 30); do^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3055970Z ^[[36;1m  if curl --fail --silent http://127.0.0.1:19000/minio/health/live > /dev/null; then break; fi^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3056835Z ^[[36;1m  sleep 1^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3057173Z ^[[36;1mdone^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3057543Z ^[[36;1mcurl --fail --silent http://127.0.0.1:19000/minio/health/live > /dev/null^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3058761Z ^[[36;1mpnpm --filter @mimir/plugin-storage exec vitest run src/s3.integration.test.ts^[[0m
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3123230Z shell: /usr/bin/bash -e {0}
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3123510Z env:
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3123994Z   DATABASE_URL: ***127.0.0.1:5544/mimir_test
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3124341Z   AUTH_SECRET: ci-only-secret-not-for-production
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3124665Z   DATA_DIR: ./data
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3124882Z   VAULT_DIR: ./data/vault
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3125106Z   RAW_DIR: ./data/raw
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3125378Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3125742Z   MIMIR_S3_TEST_ENDPOINT: http://127.0.0.1:19000
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3126059Z   MIMIR_S3_TEST_ACCESS_KEY: mimirtest
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3126359Z   MIMIR_S3_TEST_SECRET_KEY: mimirtest-secret-only
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3126663Z ##[endgroup]
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.3361988Z Unable to find image 'minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e' locally
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.5738746Z docker: Error response from daemon: pull access denied for minio/minio, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.5739723Z
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.5740231Z Run 'docker run --help' for more information
+verify	S3 compatibility smoke test	2026-10-20T08:18:28.5760786Z ##[error]Process completed with exit code 125.

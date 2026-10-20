@@ -81,3 +81,11 @@ Windows strict ASAR/原生依赖检查与解包应用 A/B/C 全通过，但实�
 当前1c7e823代码快照本机Node22最新完整pnpmcheck **exit0**：Office2777、renderer636、server1366及local10/fnOS5/backup2、desktop110、root53全部通过；lint/styles/format/allworkspace types全过。日志final-latest-node22-pnpm-check.log，独立full-scope-check最后checkpoint。v0.1.2 annotated tag已创建并推送，固定1c7e823；开始首个统一稳定基线构建，不移动旧失败tag。
 
 Windows真实安装证据：28949个server文件路径/大小/SHA256安装前后完全匹配，最长相对路径154；捕获NSIS实际temp/7z-out路径。安装3分43秒左右，随后安装版A/B/C smoke全部通过。先前深路径overflow仅是历史假说，当前不把它写成已直接证明的根因。
+
+## v0.1.2 重试与 CI S3 环境故障
+
+v0.1.2正式tag流水线 [39390863778](https://github.com/bijinfeng/mimir/actions/runs/39390863778) attempt1：Windows完整资源/安装smoke、Linux/macARM和fnOS均成功；macIntel DMG阶段因 `hdiutil: couldn't eject disk2 - Resource busy` 失败，aggregate/publish skipped，未公开Release。相同源码上一manual全过；保留tag指向1c7e823，仅rerun failed jobs，在新runner原样复验。日志github-v012-mac-intel-failed.log与attempt1 JSON保留。
+
+CI39389655084的全pnpmcheck、pnpm build、完整PostgreSQL模式重跑均success，最终S3专项在Docker拉取固定minio/minio镜像时被registry denied，测试尚未启动，不能写成SDK断言失败或S3通过。日志github-ci-s3-failed.log；正在校验可匿名拉取的官方固定MinIO来源，不跳过2项真实兼容测试。
+
+后续版本0.1.3仅在本地准备f4308af（与fnOS同步、18项发布契约通过），未推tag；必须等待0.1.2真正公开后才公开后续版本，避免latest顺序竞态。
