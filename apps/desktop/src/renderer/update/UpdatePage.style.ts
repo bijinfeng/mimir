@@ -15,11 +15,22 @@ export const useStyles = createStyles(({ css, token }) => ({
     flex: 1;
     min-height: 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     padding: 24px;
     overflow-wrap: anywhere;
     @media (max-width: 420px) {
       padding: 20px 16px;
     }
+  `,
+  /**
+   * 短内容在剩余高度里成组居中；说明变长时自动外边距归零，正文从顶部滚动。
+   * 页脚在 body 之外，始终留在窗口底部。
+   */
+  content: css`
+    flex: none;
+    width: 100%;
+    margin-block: auto;
   `,
   heading: css`
     margin: 0 0 4px;

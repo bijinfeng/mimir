@@ -34,7 +34,11 @@ it('关于页显示主进程更新状态，点击复用详情窗口入口', asyn
   )
   expect(host.textContent).toContain('0.1.0')
   expect(host.textContent).toContain('可重启更新')
-  await act(async () => host.querySelector('button')?.click())
+  await act(async () =>
+    [...host.querySelectorAll('button')]
+      .find((button) => button.textContent?.replace(/\s+/g, '') === '可重启更新')
+      ?.click(),
+  )
   expect(update.calls).toEqual(['open'])
   await act(async () => update.emit({ status: 'downloading' }))
   expect(host.textContent).toContain('更新下载中')

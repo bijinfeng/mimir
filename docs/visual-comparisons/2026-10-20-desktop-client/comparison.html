@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>桌面客户端与更新 · 真实组件前后</title>
+    <style>
+      :root {
+        font:
+          14px/1.6 system-ui,
+          -apple-system,
+          'PingFang SC',
+          sans-serif;
+        color: #242824;
+        background: #f5f6f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        padding: 24px 28px 16px;
+        border-bottom: 1px solid #dfe3df;
+        background: #fff;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 8px 0;
+        color: #555f57;
+        max-width: 95ch;
+      }
+      a {
+        color: #236648;
+      }
+      main {
+        padding: 20px 28px 40px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      select,
+      button {
+        font: inherit;
+        background: #fff;
+        color: inherit;
+        border: 1px solid #c8d0c9;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #e7f0e9;
+        color: #1d5f38;
+        border-color: #8aa992;
+      }
+      .meta {
+        margin: 0 0 16px;
+        color: #555f57;
+      }
+      .frames {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d8ded8;
+        background: #fff;
+      }
+      footer {
+        border-top: 1px solid #dfe3df;
+        padding: 18px 28px;
+        background: #fff;
+        color: #555f57;
+      }
+      @media (max-width: 760px) {
+        header,
+        main,
+        footer {
+          padding-inline: 16px;
+        }
+        .frames {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>桌面客户端与更新 · 真实组件前后</h1>
+      <p>
+        2026-10-20 · 24 组同内容、同主题、同尺寸的实际组件渲染。设置 › 客户端与关于页来自真实
+        ClientSection / AboutPage + MimirProvider；更新页来自真实 UpdatePage + 模拟更新桥。
+      </p>
+      <p>
+        更新页前态使用改动前源码与相同 currentVersion
+        0.1.8、相同状态重新挂载；不是旧版截图复用。原生菜单、通知、安装升级不在 HTML 证据内。
+      </p>
+    </header>
+    <main>
+      <div class="toolbar">
+        <label
+          >场景
+          <select id="scene">
+            <option value="about-local-dark-390">
+              关于 mimir · 返回入口与版本/更新 · dark · 390px
+            </option>
+            <option value="about-local-light-390">
+              关于 mimir · 返回入口与版本/更新 · light · 390px
+            </option>
+            <option value="about-local-dark-920">
+              关于 mimir · 返回入口与版本/更新 · dark · 920px
+            </option>
+            <option value="about-local-light-920">
+              关于 mimir · 返回入口与版本/更新 · light · 920px
+            </option>
+            <option value="client-local-dark-390">
+              客户端设置 · 本地使用 + 版本/关于入口 · dark · 390px
+            </option>
+            <option value="client-local-light-390">
+              客户端设置 · 本地使用 + 版本/关于入口 · light · 390px
+            </option>
+            <option value="client-local-dark-920">
+              客户端设置 · 本地使用 + 版本/关于入口 · dark · 920px
+            </option>
+            <option value="client-local-light-920">
+              客户端设置 · 本地使用 + 版本/关于入口 · light · 920px
+            </option>
+            <option value="update-available-dark-360">软件更新 · 发现新版本 · dark · 360px</option>
+            <option value="update-downloaded-dark-360">
+              软件更新 · 已下载/重启安装 · dark · 360px
+            </option>
+            <option value="update-idle-dark-360">软件更新 · 空闲/检查更新 · dark · 360px</option>
+            <option value="update-long-dark-360">软件更新 · 长版本与长说明 · dark · 360px</option>
+            <option value="update-available-light-360">
+              软件更新 · 发现新版本 · light · 360px
+            </option>
+            <option value="update-downloaded-light-360">
+              软件更新 · 已下载/重启安装 · light · 360px
+            </option>
+            <option value="update-idle-light-360">软件更新 · 空闲/检查更新 · light · 360px</option>
+            <option value="update-long-light-360">软件更新 · 长版本与长说明 · light · 360px</option>
+            <option value="update-available-dark-600">软件更新 · 发现新版本 · dark · 600px</option>
+            <option value="update-downloaded-dark-600">
+              软件更新 · 已下载/重启安装 · dark · 600px
+            </option>
+            <option value="update-idle-dark-600">软件更新 · 空闲/检查更新 · dark · 600px</option>
+            <option value="update-long-dark-600">软件更新 · 长版本与长说明 · dark · 600px</option>
+            <option value="update-available-light-600">
+              软件更新 · 发现新版本 · light · 600px
+            </option>
+            <option value="update-downloaded-light-600">
+              软件更新 · 已下载/重启安装 · light · 600px
+            </option>
+            <option value="update-idle-light-600">软件更新 · 空闲/检查更新 · light · 600px</option>
+            <option value="update-long-light-600">软件更新 · 长版本与长说明 · light · 600px</option>
+          </select></label
+        >
+        <div role="group" aria-label="对比模式">
+          <button data-mode="compare" aria-pressed="true">前后并排</button>
+          <button data-mode="before" aria-pressed="false">修改前</button>
+          <button data-mode="after" aria-pressed="false">修改后</button>
+        </div>
+      </div>
+      <p class="meta" id="meta"></p>
+      <div class="frames" id="frames">
+        <figure>
+          <figcaption>修改前 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改前真实渲染" />
+        </figure>
+        <figure>
+          <figcaption>修改后 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改后真实渲染" />
+        </figure>
+      </div>
+    </main>
+    <footer>
+      机器人只保存实际渲染，不把模拟桥说成原生；版本、更新状态与说明为验收夹具，不代表已发布或已下载。
+    </footer>
+    <script>
+      const scenes = [
+        {
+          id: 'about-local-dark-390',
+          module: '关于 mimir',
+          title: '返回入口与版本/更新',
+          theme: 'dark',
+          width: 390,
+          height: 600,
+          before: 'before/about-local-dark-390.png',
+          after: 'after/about-local-dark-390.png',
+        },
+        {
+          id: 'about-local-light-390',
+          module: '关于 mimir',
+          title: '返回入口与版本/更新',
+          theme: 'light',
+          width: 390,
+          height: 600,
+          before: 'before/about-local-light-390.png',
+          after: 'after/about-local-light-390.png',
+        },
+        {
+          id: 'about-local-dark-920',
+          module: '关于 mimir',
+          title: '返回入口与版本/更新',
+          theme: 'dark',
+          width: 920,
+          height: 600,
+          before: 'before/about-local-dark-920.png',
+          after: 'after/about-local-dark-920.png',
+        },
+        {
+          id: 'about-local-light-920',
+          module: '关于 mimir',
+          title: '返回入口与版本/更新',
+          theme: 'light',
+          width: 920,
+          height: 600,
+          before: 'before/about-local-light-920.png',
+          after: 'after/about-local-light-920.png',
+        },
+        {
+          id: 'client-local-dark-390',
+          module: '客户端设置',
+          title: '本地使用 + 版本/关于入口',
+          theme: 'dark',
+          width: 390,
+          height: 600,
+          before: 'before/client-local-dark-390.png',
+          after: 'after/client-local-dark-390.png',
+        },
+        {
+          id: 'client-local-light-390',
+          module: '客户端设置',
+          title: '本地使用 + 版本/关于入口',
+          theme: 'light',
+          width: 390,
+          height: 600,
+          before: 'before/client-local-light-390.png',
+          after: 'after/client-local-light-390.png',
+        },
+        {
+          id: 'client-local-dark-920',
+          module: '客户端设置',
+          title: '本地使用 + 版本/关于入口',
+          theme: 'dark',
+          width: 920,
+          height: 600,
+          before: 'before/client-local-dark-920.png',
+          after: 'after/client-local-dark-920.png',
+        },
+        {
+          id: 'client-local-light-920',
+          module: '客户端设置',
+          title: '本地使用 + 版本/关于入口',
+          theme: 'light',
+          width: 920,
+          height: 600,
+          before: 'before/client-local-light-920.png',
+          after: 'after/client-local-light-920.png',
+        },
+        {
+          id: 'update-available-dark-360',
+          module: '软件更新',
+          title: '发现新版本',
+          theme: 'dark',
+          width: 360,
+          height: 480,
+          before: 'before/update-available-dark-360.png',
+          after: 'after/update-available-dark-360.png',
+        },
+        {
+          id: 'update-downloaded-dark-360',
+          module: '软件更新',
+          title: '已下载/重启安装',
+          theme: 'dark',
+          width: 360,
+          height: 480,
+          before: 'before/update-downloaded-dark-360.png',
+          after: 'after/update-downloaded-dark-360.png',
+        },
+        {
+          id: 'update-idle-dark-360',
+          module: '软件更新',
+          title: '空闲/检查更新',
+          theme: 'dark',
+          width: 360,
+          height: 480,
+          before: 'before/update-idle-dark-360.png',
+          after: 'after/update-idle-dark-360.png',
+        },
+        {
+          id: 'update-long-dark-360',
+          module: '软件更新',
+          title: '长版本与长说明',
+          theme: 'dark',
+          width: 360,
+          height: 480,
+          before: 'before/update-long-dark-360.png',
+          after: 'after/update-long-dark-360.png',
+        },
+        {
+          id: 'update-available-light-360',
+          module: '软件更新',
+          title: '发现新版本',
+          theme: 'light',
+          width: 360,
+          height: 480,
+          before: 'before/update-available-light-360.png',
+          after: 'after/update-available-light-360.png',
+        },
+        {
+          id: 'update-downloaded-light-360',
+          module: '软件更新',
+          title: '已下载/重启安装',
+          theme: 'light',
+          width: 360,
+          height: 480,
+          before: 'before/update-downloaded-light-360.png',
+          after: 'after/update-downloaded-light-360.png',
+        },
+        {
+          id: 'update-idle-light-360',
+          module: '软件更新',
+          title: '空闲/检查更新',
+          theme: 'light',
+          width: 360,
+          height: 480,
+          before: 'before/update-idle-light-360.png',
+          after: 'after/update-idle-light-360.png',
+        },
+        {
+          id: 'update-long-light-360',
+          module: '软件更新',
+          title: '长版本与长说明',
+          theme: 'light',
+          width: 360,
+          height: 480,
+          before: 'before/update-long-light-360.png',
+          after: 'after/update-long-light-360.png',
+        },
+        {
+          id: 'update-available-dark-600',
+          module: '软件更新',
+          title: '发现新版本',
+          theme: 'dark',
+          width: 600,
+          height: 680,
+          before: 'before/update-available-dark-600.png',
+          after: 'after/update-available-dark-600.png',
+        },
+        {
+          id: 'update-downloaded-dark-600',
+          module: '软件更新',
+          title: '已下载/重启安装',
+          theme: 'dark',
+          width: 600,
+          height: 680,
+          before: 'before/update-downloaded-dark-600.png',
+          after: 'after/update-downloaded-dark-600.png',
+        },
+        {
+          id: 'update-idle-dark-600',
+          module: '软件更新',
+          title: '空闲/检查更新',
+          theme: 'dark',
+          width: 600,
+          height: 680,
+          before: 'before/update-idle-dark-600.png',
+          after: 'after/update-idle-dark-600.png',
+        },
+        {
+          id: 'update-long-dark-600',
+          module: '软件更新',
+          title: '长版本与长说明',
+          theme: 'dark',
+          width: 600,
+          height: 680,
+          before: 'before/update-long-dark-600.png',
+          after: 'after/update-long-dark-600.png',
+        },
+        {
+          id: 'update-available-light-600',
+          module: '软件更新',
+          title: '发现新版本',
+          theme: 'light',
+          width: 600,
+          height: 680,
+          before: 'before/update-available-light-600.png',
+          after: 'after/update-available-light-600.png',
+        },
+        {
+          id: 'update-downloaded-light-600',
+          module: '软件更新',
+          title: '已下载/重启安装',
+          theme: 'light',
+          width: 600,
+          height: 680,
+          before: 'before/update-downloaded-light-600.png',
+          after: 'after/update-downloaded-light-600.png',
+        },
+        {
+          id: 'update-idle-light-600',
+          module: '软件更新',
+          title: '空闲/检查更新',
+          theme: 'light',
+          width: 600,
+          height: 680,
+          before: 'before/update-idle-light-600.png',
+          after: 'after/update-idle-light-600.png',
+        },
+        {
+          id: 'update-long-light-600',
+          module: '软件更新',
+          title: '长版本与长说明',
+          theme: 'light',
+          width: 600,
+          height: 680,
+          before: 'before/update-long-light-600.png',
+          after: 'after/update-long-light-600.png',
+        },
+      ]
+      const select = document.getElementById('scene')
+      const meta = document.getElementById('meta')
+      const figures = document.querySelectorAll('#frames figure')
+      const imgs = document.querySelectorAll('#frames img')
+      const links = document.querySelectorAll('#frames figcaption a')
+      let mode = 'compare'
+      function render() {
+        const s = scenes.find((x) => x.id === select.value) || scenes[0]
+        meta.textContent = `${s.module} · ${s.title} · ${s.theme} · ${s.width}×${s.height}`
+        figures[0].style.display = mode === 'after' ? 'none' : 'block'
+        figures[1].style.display = mode === 'before' ? 'none' : 'block'
+        imgs[0].src = s.before
+        links[0].href = s.before
+        imgs[1].src = s.after
+        links[1].href = s.after
+      }
+      select.value = scenes[0].id
+      select.addEventListener('change', render)
+      document.querySelectorAll('[data-mode]').forEach((button) =>
+        button.addEventListener('click', () => {
+          mode = button.dataset.mode
+          document
+            .querySelectorAll('[data-mode]')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === button)))
+          render()
+        }),
+      )
+      render()
+    </script>
+  </body>
+</html>

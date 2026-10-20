@@ -132,6 +132,7 @@ it('Desktop keeps its titlebar and independent native recovery while retry is pe
   await mount(<ErrorPage error={new Error('offline')} reset={vi.fn<() => void>()} />, {
     kind: 'desktop',
     renderTitleBar: DesktopTitleBar,
+    openAbout: vi.fn<() => void>(),
     bridge: { mode: { openSetup } } as unknown as Extract<Platform, { kind: 'desktop' }>['bridge'],
   })
   expect(host.querySelector('header')?.textContent).toBe('桌面窗口控件')

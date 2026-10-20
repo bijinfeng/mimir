@@ -1,7 +1,7 @@
 import { Button } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { LoadError } from '../LoadError'
-import { useDesktopBridge } from '../../platform'
+import { usePlatform } from '../../platform'
 import { Block, BlockDesc, Panel, Row } from './parts'
 
 /**
@@ -28,7 +28,8 @@ import { Block, BlockDesc, Panel, Row } from './parts'
  * 渲染一个灰掉的按钮只是噪音。
  */
 export function ClientSection() {
-  const bridge = useDesktopBridge()
+  const platform = usePlatform()
+  const bridge = platform.kind === 'desktop' ? platform.bridge : undefined
 
   const bootQuery = useQuery({
     queryKey: ['desktop-boot'],
@@ -37,25 +38,38 @@ export function ClientSection() {
 
   const mode = bootQuery.data?.mode
   const origin = bootQuery.data?.origin ?? null
+  const version = bootQuery.data?.version
+
+  // 浏览器里这个分区不存在；直接挂载时也保持同样的边界。
+  if (platform.kind !== 'desktop') return null
 
   if (bootQuery.isError) {
     return <LoadError message="客户端状态读取失败" onRetry={() => void bootQuery.refetch()} />
   }
 
   return (
-    <Panel title="使用方式" desc="在本地离线与连接服务器之间切换">
-      <Row label="当前">
-        {mode === undefined
-          ? '读取中…'
-          : mode === 'local'
-            ? '本地使用（数据在这台电脑上）'
-            : '连接服务器'}
-      </Row>
-      {mode === 'cloud' && origin ? <Row label="服务器">{origin}</Row> : null}
-      <Block>
-        <Button onClick={() => bridge?.mode.openSetup()}>更换使用方式</Button>
-        <BlockDesc>切换不会迁移数据，本地与服务器上的数据分别保留。</BlockDesc>
-      </Block>
-    </Panel>
+    <>
+      <Panel title="使用方式" desc="在本地离线与连接服务器之间切换">
+        <Row label="当前">
+          {mode === undefined
+            ? '读取中…'
+            : mode === 'local'
+              ? '本地使用（数据在这台电脑上）'
+              : '连接服务器'}
+        </Row>
+        {mode === 'cloud' && origin ? <Row label="服务器">{origin}</Row> : null}
+        <Block>
+          <Button onClick={() => bridge?.mode.openSetup()}>更换使用方式</Button>
+          <BlockDesc>切换不会迁移数据，本地与服务器上的数据分别保留。</BlockDesc>
+        </Block>
+      </Panel>
+      <Panel title="关于客户端" desc="版本与软件更新">
+        <Row label="版本">{version === undefined ? '读取中…' : version}</Row>
+        <Block>
+          <Button onClick={platform.openAbout}>关于 mimir</Button>
+          <BlockDesc>查看当前版本、使用方式，并检查软件更新。</BlockDesc>
+        </Block>
+      </Panel>
+    </>
   )
 }

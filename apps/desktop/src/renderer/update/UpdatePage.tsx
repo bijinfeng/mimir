@@ -137,77 +137,81 @@ export function UpdatePage({ api = updaterBridge }: { api?: MimirUpdaterBridge }
   return (
     <main className={styles.page}>
       <div className={styles.body}>
-        <h1 className={styles.heading} tabIndex={-1} ref={heading}>
-          软件更新
-        </h1>
-        {state && <p className={styles.meta}>当前版本 {state.currentVersion}</p>}
-        <section className={styles.status} aria-label="更新状态">
-          <h2 role="status" aria-live="polite" aria-atomic="true">
-            {copy.title}
-          </h2>
-          <p>{copy.description}</p>
-          {state?.status === 'downloading' && progress && (
-            <div className={styles.progress}>
-              {percent !== undefined && (
-                <Progress
-                  percent={Math.floor(percent)}
-                  showInfo={false}
-                  aria-label="更新下载进度"
-                />
-              )}
-              <p className={styles.meta}>
-                {percent !== undefined ? `${Math.floor(percent)}% · ` : ''}
-                {formatBytes(progress.transferred)}
-                {knownTotal ? ` / ${formatBytes(progress.total!)}` : ' 已下载'}
-              </p>
-            </div>
-          )}
-          {state?.message && (
-            <div
-              className={
-                state.status === 'error' || state.status === 'blocked' ? styles.error : styles.meta
-              }
-            >
-              {state.message}
-            </div>
-          )}
-          {actionError && (
-            <div className={styles.error} role="alert">
-              {actionError}
-            </div>
-          )}
-        </section>
-        {state?.releaseNotes && (
-          <section className={styles.notes} aria-label="更新说明">
-            <h3>更新说明</h3>
-            <div className={styles.releaseText}>{state.releaseNotes}</div>
+        <div className={styles.content}>
+          <h1 className={styles.heading} tabIndex={-1} ref={heading}>
+            软件更新
+          </h1>
+          {state && <p className={styles.meta}>当前版本 {state.currentVersion}</p>}
+          <section className={styles.status} aria-label="更新状态">
+            <h2 role="status" aria-live="polite" aria-atomic="true">
+              {copy.title}
+            </h2>
+            <p>{copy.description}</p>
+            {state?.status === 'downloading' && progress && (
+              <div className={styles.progress}>
+                {percent !== undefined && (
+                  <Progress
+                    percent={Math.floor(percent)}
+                    showInfo={false}
+                    aria-label="更新下载进度"
+                  />
+                )}
+                <p className={styles.meta}>
+                  {percent !== undefined ? `${Math.floor(percent)}% · ` : ''}
+                  {formatBytes(progress.transferred)}
+                  {knownTotal ? ` / ${formatBytes(progress.total!)}` : ' 已下载'}
+                </p>
+              </div>
+            )}
+            {state?.message && (
+              <div
+                className={
+                  state.status === 'error' || state.status === 'blocked'
+                    ? styles.error
+                    : styles.meta
+                }
+              >
+                {state.message}
+              </div>
+            )}
+            {actionError && (
+              <div className={styles.error} role="alert">
+                {actionError}
+              </div>
+            )}
           </section>
-        )}
-        {state?.capability === 'automatic' && (
-          <section className={styles.preference} aria-label="下载偏好">
-            <div>
-              <label htmlFor="automatic-download">自动下载更新</label>
-              <p className={styles.meta}>
-                {state.status === 'downloading'
-                  ? '关闭后对后续更新生效，本次下载会继续。'
-                  : '后台下载，准备好后提醒；重启安装由你决定。'}
-              </p>
-            </div>
-            <Switch
-              id="automatic-download"
-              aria-label="自动下载更新"
-              checked={state.autoDownload}
-              loading={preferencePending}
-              disabled={state.status === 'restarting'}
-              onChange={(enabled) => void setAutoDownload(enabled)}
-            />
-          </section>
-        )}
-        {checkedAt && !Number.isNaN(checkedAt.getTime()) && (
-          <p className={styles.meta} style={{ marginTop: 16 }}>
-            上次检查 {checkedAt.toLocaleString()}
-          </p>
-        )}
+          {state?.releaseNotes && (
+            <section className={styles.notes} aria-label="更新说明">
+              <h3>更新说明</h3>
+              <div className={styles.releaseText}>{state.releaseNotes}</div>
+            </section>
+          )}
+          {state?.capability === 'automatic' && (
+            <section className={styles.preference} aria-label="下载偏好">
+              <div>
+                <label htmlFor="automatic-download">自动下载更新</label>
+                <p className={styles.meta}>
+                  {state.status === 'downloading'
+                    ? '关闭后对后续更新生效，本次下载会继续。'
+                    : '后台下载，准备好后提醒；重启安装由你决定。'}
+                </p>
+              </div>
+              <Switch
+                id="automatic-download"
+                aria-label="自动下载更新"
+                checked={state.autoDownload}
+                loading={preferencePending}
+                disabled={state.status === 'restarting'}
+                onChange={(enabled) => void setAutoDownload(enabled)}
+              />
+            </section>
+          )}
+          {checkedAt && !Number.isNaN(checkedAt.getTime()) && (
+            <p className={styles.meta} style={{ marginTop: 16 }}>
+              上次检查 {checkedAt.toLocaleString()}
+            </p>
+          )}
+        </div>
       </div>
       <footer className={styles.footer}>
         <div>

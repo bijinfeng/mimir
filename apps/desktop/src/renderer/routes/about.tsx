@@ -2,6 +2,7 @@ import { getAppearance } from '@mimir/renderer/titlebar-kit'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Alert, Button, Skeleton, Typography } from 'antd'
+import { ArrowLeft } from 'lucide-react'
 import { createStyles } from 'antd-style'
 import { desktopBridge } from '@/lib/desktop-bridge'
 import { useUpdateState } from '@/lib/use-update-state'
@@ -30,6 +31,20 @@ const useStyles = createStyles(({ css, token }) => ({
     overflow-y: auto;
     padding: 24px clamp(24px, 4vw, 48px) 40px;
     background: ${token.colorBgContainer};
+  `,
+  back: css`
+    && {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 32px;
+      margin: 0 0 8px -8px;
+      padding-inline: 8px;
+      color: ${token.colorTextSecondary};
+    }
+    &&:hover {
+      color: ${token.colorText};
+    }
   `,
   content: css`
     max-width: 730px;
@@ -87,6 +102,14 @@ export function AboutPage() {
   return (
     <div className={styles.page}>
       <div className={styles.content}>
+        <Button
+          type="text"
+          className={styles.back}
+          icon={<ArrowLeft size={16} aria-hidden />}
+          onClick={() => window.history.back()}
+        >
+          返回
+        </Button>
         <Typography.Title level={2} className={styles.heading}>
           关于 mimir
         </Typography.Title>

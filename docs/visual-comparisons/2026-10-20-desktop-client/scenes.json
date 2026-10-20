@@ -1,0 +1,242 @@
+[
+  {
+    "id": "about-local-dark-390",
+    "module": "关于 mimir",
+    "title": "返回入口与版本/更新",
+    "theme": "dark",
+    "width": 390,
+    "height": 600,
+    "before": "before/about-local-dark-390.png",
+    "after": "after/about-local-dark-390.png"
+  },
+  {
+    "id": "about-local-light-390",
+    "module": "关于 mimir",
+    "title": "返回入口与版本/更新",
+    "theme": "light",
+    "width": 390,
+    "height": 600,
+    "before": "before/about-local-light-390.png",
+    "after": "after/about-local-light-390.png"
+  },
+  {
+    "id": "about-local-dark-920",
+    "module": "关于 mimir",
+    "title": "返回入口与版本/更新",
+    "theme": "dark",
+    "width": 920,
+    "height": 600,
+    "before": "before/about-local-dark-920.png",
+    "after": "after/about-local-dark-920.png"
+  },
+  {
+    "id": "about-local-light-920",
+    "module": "关于 mimir",
+    "title": "返回入口与版本/更新",
+    "theme": "light",
+    "width": 920,
+    "height": 600,
+    "before": "before/about-local-light-920.png",
+    "after": "after/about-local-light-920.png"
+  },
+  {
+    "id": "client-local-dark-390",
+    "module": "客户端设置",
+    "title": "本地使用 + 版本/关于入口",
+    "theme": "dark",
+    "width": 390,
+    "height": 600,
+    "before": "before/client-local-dark-390.png",
+    "after": "after/client-local-dark-390.png"
+  },
+  {
+    "id": "client-local-light-390",
+    "module": "客户端设置",
+    "title": "本地使用 + 版本/关于入口",
+    "theme": "light",
+    "width": 390,
+    "height": 600,
+    "before": "before/client-local-light-390.png",
+    "after": "after/client-local-light-390.png"
+  },
+  {
+    "id": "client-local-dark-920",
+    "module": "客户端设置",
+    "title": "本地使用 + 版本/关于入口",
+    "theme": "dark",
+    "width": 920,
+    "height": 600,
+    "before": "before/client-local-dark-920.png",
+    "after": "after/client-local-dark-920.png"
+  },
+  {
+    "id": "client-local-light-920",
+    "module": "客户端设置",
+    "title": "本地使用 + 版本/关于入口",
+    "theme": "light",
+    "width": 920,
+    "height": 600,
+    "before": "before/client-local-light-920.png",
+    "after": "after/client-local-light-920.png"
+  },
+  {
+    "id": "update-available-dark-360",
+    "module": "软件更新",
+    "title": "发现新版本",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-available-dark-360.png",
+    "after": "after/update-available-dark-360.png"
+  },
+  {
+    "id": "update-downloaded-dark-360",
+    "module": "软件更新",
+    "title": "已下载/重启安装",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-downloaded-dark-360.png",
+    "after": "after/update-downloaded-dark-360.png"
+  },
+  {
+    "id": "update-idle-dark-360",
+    "module": "软件更新",
+    "title": "空闲/检查更新",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-idle-dark-360.png",
+    "after": "after/update-idle-dark-360.png"
+  },
+  {
+    "id": "update-long-dark-360",
+    "module": "软件更新",
+    "title": "长版本与长说明",
+    "theme": "dark",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-long-dark-360.png",
+    "after": "after/update-long-dark-360.png"
+  },
+  {
+    "id": "update-available-light-360",
+    "module": "软件更新",
+    "title": "发现新版本",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-available-light-360.png",
+    "after": "after/update-available-light-360.png"
+  },
+  {
+    "id": "update-downloaded-light-360",
+    "module": "软件更新",
+    "title": "已下载/重启安装",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-downloaded-light-360.png",
+    "after": "after/update-downloaded-light-360.png"
+  },
+  {
+    "id": "update-idle-light-360",
+    "module": "软件更新",
+    "title": "空闲/检查更新",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-idle-light-360.png",
+    "after": "after/update-idle-light-360.png"
+  },
+  {
+    "id": "update-long-light-360",
+    "module": "软件更新",
+    "title": "长版本与长说明",
+    "theme": "light",
+    "width": 360,
+    "height": 480,
+    "before": "before/update-long-light-360.png",
+    "after": "after/update-long-light-360.png"
+  },
+  {
+    "id": "update-available-dark-600",
+    "module": "软件更新",
+    "title": "发现新版本",
+    "theme": "dark",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-available-dark-600.png",
+    "after": "after/update-available-dark-600.png"
+  },
+  {
+    "id": "update-downloaded-dark-600",
+    "module": "软件更新",
+    "title": "已下载/重启安装",
+    "theme": "dark",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-downloaded-dark-600.png",
+    "after": "after/update-downloaded-dark-600.png"
+  },
+  {
+    "id": "update-idle-dark-600",
+    "module": "软件更新",
+    "title": "空闲/检查更新",
+    "theme": "dark",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-idle-dark-600.png",
+    "after": "after/update-idle-dark-600.png"
+  },
+  {
+    "id": "update-long-dark-600",
+    "module": "软件更新",
+    "title": "长版本与长说明",
+    "theme": "dark",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-long-dark-600.png",
+    "after": "after/update-long-dark-600.png"
+  },
+  {
+    "id": "update-available-light-600",
+    "module": "软件更新",
+    "title": "发现新版本",
+    "theme": "light",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-available-light-600.png",
+    "after": "after/update-available-light-600.png"
+  },
+  {
+    "id": "update-downloaded-light-600",
+    "module": "软件更新",
+    "title": "已下载/重启安装",
+    "theme": "light",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-downloaded-light-600.png",
+    "after": "after/update-downloaded-light-600.png"
+  },
+  {
+    "id": "update-idle-light-600",
+    "module": "软件更新",
+    "title": "空闲/检查更新",
+    "theme": "light",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-idle-light-600.png",
+    "after": "after/update-idle-light-600.png"
+  },
+  {
+    "id": "update-long-light-600",
+    "module": "软件更新",
+    "title": "长版本与长说明",
+    "theme": "light",
+    "width": 600,
+    "height": 680,
+    "before": "before/update-long-light-600.png",
+    "after": "after/update-long-light-600.png"
+  }
+]

@@ -50,6 +50,11 @@ export type Platform =
        * React Compiler 随即跳过宿主组件（`.trellis/spec/project/rules.md` 铁律 1 的静默退化）。
        */
       renderTitleBar: (props: TitleBarSlotProps) => ReactNode
+      /**
+       * 打开客户端专属的「关于」页。由桌面入口用**它自己的**路由树提供，
+       * 共享层不需要知道 `/client/about` 只存在于桌面产物里。
+       */
+      openAbout: () => void
     }
 
 /** 标题栏要用的三项。缺省由调用点决定，见 `renderTitleBar` 的实现方 */

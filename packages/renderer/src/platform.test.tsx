@@ -91,8 +91,9 @@ async function probe(platform: Platform | null, read: () => ReactNode) {
 
 describe('平台契约', () => {
   it('桌面端读到桥；浏览器端读到 undefined', async () => {
-    const onDesktop = await probe({ kind: 'desktop', bridge, renderTitleBar: () => null }, () =>
-      useDesktopBridge() === undefined ? '无桥' : '有桥',
+    const onDesktop = await probe(
+      { kind: 'desktop', bridge, renderTitleBar: () => null, openAbout: noop },
+      () => (useDesktopBridge() === undefined ? '无桥' : '有桥'),
     )
     expect(onDesktop).toBe('有桥')
 
@@ -104,7 +105,7 @@ describe('平台契约', () => {
 
   it('isDesktop 按平台回答（它决定侧栏要不要画自己的顶栏）', async () => {
     expect(
-      await probe({ kind: 'desktop', bridge, renderTitleBar: () => null }, () =>
+      await probe({ kind: 'desktop', bridge, renderTitleBar: () => null, openAbout: noop }, () =>
         String(useIsDesktop()),
       ),
     ).toBe('true')

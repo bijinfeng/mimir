@@ -567,6 +567,30 @@ async function showSetupPage(target: BrowserWindow): Promise<void> {
   }
 }
 
+/**
+ * 原生「关于」信息框：跨本地/云端模式都可回答版本与当前使用方式。
+ * 它不替代客户端的关于页，只补上系统菜单里应有的标准入口。
+ */
+function showNativeAbout(): void {
+  const mode =
+    modeState?.mode === 'cloud'
+      ? `连接服务器：${modeState.cloudUrl}`
+      : '本地使用：数据保存在这台电脑上'
+  const options = {
+    type: 'info' as const,
+    title: '关于 mimir',
+    message: `mimir ${app.getVersion()}`,
+    detail: mode,
+    buttons: ['好的'],
+    defaultId: 0,
+    noLink: true,
+  }
+  const target = win
+  void (target && !target.isDestroyed()
+    ? dialog.showMessageBox(target, options)
+    : dialog.showMessageBox(options))
+}
+
 /** 云端页面不带桌面设置入口，切换动作必须由载体自己提供。 */
 function installApplicationMenu(): void {
   Menu.setApplicationMenu(
@@ -590,6 +614,7 @@ function installApplicationMenu(): void {
                 : '软件更新…',
             click: () => updater?.open(),
           },
+          { label: '关于 mimir', click: showNativeAbout },
           { type: 'separator' },
           { role: 'quit' },
         ],

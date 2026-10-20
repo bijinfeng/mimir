@@ -43,12 +43,17 @@ syncAppearance()
 const unsubscribeAppearance = subscribeAppearance(syncAppearance)
 window.addEventListener('pagehide', unsubscribeAppearance, { once: true })
 
+const router = buildRouter(routeTree)
+
 createApp(createRoot(container), {
-  router: buildRouter(routeTree),
+  router,
   platform: {
     kind: 'desktop',
-    // 判别联合的这一支里两者都是**必填**，所以上面的空值检查不是防御而是前提
+    // 判别联合的这一支里各项都是**必填**，所以上面的空值检查不是防御而是前提
     bridge: desktopBridge,
     renderTitleBar,
+    // 路由类型由桌面自己的 routeTree 生成，共享层只拿到一个回调。
+    // `href` 绕过共享基础路由树的 `to` 联合；目标只存在于桌面这棵树里。
+    openAbout: () => void router.navigate({ href: '/client/about' }),
   },
 })
