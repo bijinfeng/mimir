@@ -193,6 +193,67 @@ class Socket extends EventTarget {
   }
 }
 
+test('CDP paint evaluation has an external five-second deadline even without any renderer response', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const clearing = t.mock.method(globalThis, 'clearTimeout')
+  const socket = new Socket()
+  const cdp = new Cdp(socket)
+  const evaluation = cdp.evaluate(`(${settleScreenshotPaint.toString()})()`, { timeoutMs: 5000 })
+  const paintId = socket.sent[0].id
+  const paintTimer = cdp.pending.get(paintId).timer
+  const paintRejection = assert.rejects(evaluation, /CDP timeout: Runtime.evaluate/)
+  const normal = cdp.call('normal-default-deadline')
+  const normalRejection = assert.rejects(normal, /CDP timeout: normal-default-deadline/)
+  t.mock.timers.tick(4999)
+  assert.equal(cdp.pending.size, 2)
+  t.mock.timers.tick(1)
+  await paintRejection
+  assert.equal(cdp.pending.size, 1)
+  assert.ok(clearing.mock.calls.some(({ arguments: args }) => args[0] === paintTimer))
+  socket.message({ id: paintId, result: { result: { value: 'late success' } } })
+  socket.message({ id: paintId, error: { message: 'late error' } })
+  assert.equal(cdp.pending.size, 1)
+  t.mock.timers.tick(24_999)
+  assert.equal(cdp.pending.size, 1)
+  t.mock.timers.tick(1)
+  await normalRejection
+  assert.equal(cdp.pending.size, 0)
+  cdp.close()
+})
+
+test('CDP clears custom request timers on response, target closure and synchronous send failure', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  const clearing = t.mock.method(globalThis, 'clearTimeout')
+  const socket = new Socket()
+  const cdp = new Cdp(socket)
+  const evaluation = cdp.evaluate('true', { timeoutMs: 5000 })
+  const responseTimer = cdp.pending.get(socket.sent[0].id).timer
+  socket.message({ id: socket.sent[0].id, result: { result: { value: true } } })
+  assert.equal(await evaluation, true)
+  assert.equal(cdp.pending.size, 0)
+  const interrupted = cdp.evaluate('true', { timeoutMs: 5000 })
+  const closeTimer = cdp.pending.get(socket.sent[1].id).timer
+  cdp.close()
+  await assert.rejects(interrupted, CdpTargetClosedError)
+  assert.equal(cdp.pending.size, 0)
+  for (const timer of [responseTimer, closeTimer])
+    assert.ok(clearing.mock.calls.some(({ arguments: args }) => args[0] === timer))
+  t.mock.timers.tick(5000)
+  assert.equal(cdp.pending.size, 0)
+
+  const brokenSocket = new Socket()
+  const failure = new Error('socket send failed')
+  brokenSocket.send = () => {
+    throw failure
+  }
+  const broken = new Cdp(brokenSocket)
+  const clearsBefore = clearing.mock.calls.length
+  await assert.rejects(broken.evaluate('true', { timeoutMs: 5000 }), (error) => error === failure)
+  assert.equal(broken.pending.size, 0)
+  assert.equal(clearing.mock.calls.length, clearsBefore + 1)
+  broken.close()
+})
+
 test('CDP correlates out-of-order replies and rejects interrupted requests', async () => {
   const socket = new Socket()
   const cdp = new Cdp(socket)

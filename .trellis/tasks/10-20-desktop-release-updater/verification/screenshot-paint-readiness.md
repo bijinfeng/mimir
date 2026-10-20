@@ -15,11 +15,11 @@
 - 每个 requestAnimationFrame 读取 document.getAnimations，不改变样式、不结束或取消产品动画、不注入产品 hook。
 - pending/running 且 computed endTime 有限的动画会重置稳定帧计数；连续两个绘制帧没有这类动画才允许采集。
 - Infinity 的光标/加载转圈动画不纳入等待。
-- 整体最多 5 秒；超时、页面异常和 CDP target-close 都向调用者传播，不能吞掉后继续截图。清理外部计时器与待执行帧。
+- 绘制等待在 renderer 内最多 5 秒，且对应 CDP evaluate 请求同时有 Node 侧独立 5 秒上限；renderer 停顿、定时器/RAF 不执行或无响应时仍会失败，不再等默认 30 秒。其他 CDP 请求默认保持 30 秒。超时、页面异常和 CDP target-close 都向调用者传播，不能吞掉后继续截图。清理 renderer 计时器/待执行帧和外部请求 timer/pending map；超时后的迟到回复不恢复已失败采集。
 - 不使用固定 sleep，不放宽可见按钮、真实 HTTP 保存、普通退出、安装文件摘要、NSIS 完成或新旧进程条件。
 
 ## 验证
 
-Node22 脚本回归覆盖后出现的有限入场动画、pending/running/finished、无限 spinner、两个绘制帧、超时、页面错误、等待清理，以及函数序列化到隔离 browser-like 全局后执行。既有 typed CDP 关闭回归保持不变；相关两组脚本共 19 项通过。
+Node22 脚本回归覆盖后出现的有限入场动画、pending/running/finished、无限 spinner、两个绘制帧、超时、页面错误、等待清理，以及函数序列化到隔离 browser-like 全局后执行。新增无响应 socket 的外部 5 秒期限、默认 30 秒期限保持、迟到成功/错误回复忽略，以及正常回应/target-close/同步发送失败的 timer/map 清理。既有 typed CDP 关闭回归保持不变；相关两组脚本共 21 项通过。
 
 仅做外部脚本定向检查：Node22 tests、oxlint、oxfmt、Node syntax、git diff --check。没有启动另一轮官方下载/GUI，也没有用模拟回归替代实际画面。后续官方 0.1.5 → 0.1.6 Windows/Linux runner 的新截图仍须实际查看，才能登记真实采集效果。

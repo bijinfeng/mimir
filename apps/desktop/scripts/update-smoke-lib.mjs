@@ -160,16 +160,25 @@ export class Cdp {
     return new Cdp(socket)
   }
 
-  call(method, params = {}) {
+  call(method, params = {}, { timeoutMs = 30_000 } = {}) {
     if (this.closed) return Promise.reject(new CdpTargetClosedError())
+    if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0)
+      return Promise.reject(new Error('CDP timeout must be a positive integer'))
     const id = ++this.sequence
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id)
+        clearTimeout(timer)
         reject(new Error(`CDP timeout: ${method}`))
-      }, 30_000)
+      }, timeoutMs)
       this.pending.set(id, { resolve, reject, timer })
-      this.socket.send(JSON.stringify({ id, method, params }))
+      try {
+        this.socket.send(JSON.stringify({ id, method, params }))
+      } catch (error) {
+        this.pending.delete(id)
+        clearTimeout(timer)
+        reject(error)
+      }
     })
   }
 
@@ -180,13 +189,17 @@ export class Cdp {
     return () => listeners.delete(listener)
   }
 
-  async evaluate(expression) {
-    const value = await this.call('Runtime.evaluate', {
-      expression,
-      awaitPromise: true,
-      returnByValue: true,
-      userGesture: true,
-    })
+  async evaluate(expression, { timeoutMs = 30_000 } = {}) {
+    const value = await this.call(
+      'Runtime.evaluate',
+      {
+        expression,
+        awaitPromise: true,
+        returnByValue: true,
+        userGesture: true,
+      },
+      { timeoutMs },
+    )
     if (value.exceptionDetails) throw new Error(JSON.stringify(value.exceptionDetails))
     return value.result.value
   }
