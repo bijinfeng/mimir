@@ -133,3 +133,5 @@ mac ARM64官方3→4手动替换已完整成功，证据mac-official-manual/READ
 [39413757346](https://github.com/bijinfeng/mimir/actions/runs/39413757346) completed/success：五原生目标、aggregate、publisher全部通过；[v0.1.5](https://github.com/bijinfeng/mimir/releases/tag/v0.1.5)共15资产公开，marker指向324aa7d。匿名API首次因共享出口60次quota耗尽返回403，11:50:29UTC重置后同一官方URL匿名200并保存完整metadata，非私有仓库/缺资产。旧13/14说明已明确手动安装5或更新版，实际验证两版全部asset ID/name/size/digest及latest未变，old-release-fixed-baseline-advisory.json记录。
 
 version-only b58c149的CI39415625320在与此前98aaf7d相同的XLSX20k测试5000ms上限失败，其余1365项server通过。原始失败归档github-v016-ci-attempt1-failed.log；5基线完整同源测试成功不能抹去这次失败。正在检查该测试未压缩ZIP的无关字节相等比较开销；保持20k输入/真实操作/原字节断言和预算，不rerun-until-green。尚未推v0.1.6 tag。
+
+7a3c34d只修改既有20k测试的ZIP容器压缩，所有15个解压entry/20k cells/真实操作/字节与version断言/5000ms完全保留；Node22完整107项、server类型和静态门通过，独立重建验证等价。详见20k-fixture-ci-diagnosis.md、xlsx-fixture-independent-review.md。已推master；固定7a3c34d的v0.1.6 tag触发五目标[39418582165](https://github.com/bijinfeng/mimir/actions/runs/39418582165)，完整新CI[39418539314](https://github.com/bijinfeng/mimir/actions/runs/39418539314)同时执行。desktop/fnOS版本为0.1.6，生产代码与v0.1.5相同，旧失败tag/资产不变。
