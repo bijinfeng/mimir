@@ -1,0 +1,29 @@
+{
+  "base": "0.1.3",
+  "target": "0.1.4",
+  "platform": "linux",
+  "checks": [
+    {
+      "check": "official download verified; completion did not open a details window",
+      "at": "2026-10-20T10:35:30.841Z",
+      "downloaded": {
+        "status": "downloaded",
+        "currentVersion": "0.1.3",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+        "platform": "linux",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true,
+        "version": "0.1.4",
+        "releaseNotes": "\n<p>桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。</p>\n<p><strong>Full Changelog</strong>: <a class=\"commit-link\" href=\"https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4\"><tt>v0.1.3...v0.1.4</tt></a></p>",
+        "checkedAt": "2026-10-20T10:35:26.686Z"
+      }
+    }
+  ],
+  "limitations": [
+    "Headless/session notification delivery and focus are not asserted by CDP.",
+    "macOS ad-hoc builds remain manual; this test never claims macOS automatic installation."
+  ],
+  "success": false,
+  "error": "Error: CDP target closed\n    at WebSocket.<anonymous> (file:///home/runner/work/mimir/mimir/apps/desktop/scripts/update-smoke-lib.mjs:84:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:12005:14)\n    at Socket.onSocketClose (node:internal/deps/undici/undici:12408:7)\n    at Socket.emit (node:events:531:35)\n    at TCP.<anonymous> (node:net:347:12)"
+}

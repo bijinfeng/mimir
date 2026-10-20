@@ -58,6 +58,34 @@ export async function until(label, read, { timeout = 120_000, interval = 500 } =
   throw new Error(`Timed out: ${label}`, { cause: lastError })
 }
 
+export class CdpTargetClosedError extends Error {
+  constructor() {
+    super('CDP target closed')
+  }
+}
+
+/** A real close button can destroy its CDP target before mouseReleased is acknowledged. */
+export async function dispatchMouseClick(session, point, { confirmTargetClosed } = {}) {
+  await session.call('Input.dispatchMouseEvent', {
+    type: 'mousePressed',
+    ...point,
+    button: 'left',
+    clickCount: 1,
+  })
+  try {
+    await session.call('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      ...point,
+      button: 'left',
+      clickCount: 1,
+    })
+  } catch (error) {
+    if (!confirmTargetClosed || !(error instanceof CdpTargetClosedError)) throw error
+  }
+  // A successful CDP reply alone cannot prove that the intended window actually closed.
+  if (confirmTargetClosed) await confirmTargetClosed()
+}
+
 /** CDP only connects to a port supplied externally when launching a real packaged app. */
 export class Cdp {
   constructor(socket) {
@@ -65,6 +93,7 @@ export class Cdp {
     this.sequence = 0
     this.pending = new Map()
     this.listeners = new Map()
+    this.closed = false
     socket.addEventListener('message', ({ data }) => {
       const value = JSON.parse(String(data))
       if (value.id) {
@@ -79,9 +108,10 @@ export class Cdp {
       }
     })
     socket.addEventListener('close', () => {
+      this.closed = true
       for (const request of this.pending.values()) {
         clearTimeout(request.timer)
-        request.reject(new Error('CDP target closed'))
+        request.reject(new CdpTargetClosedError())
       }
       this.pending.clear()
     })
@@ -98,6 +128,7 @@ export class Cdp {
   }
 
   call(method, params = {}) {
+    if (this.closed) return Promise.reject(new CdpTargetClosedError())
     const id = ++this.sequence
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {

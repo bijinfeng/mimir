@@ -16,6 +16,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   Cdp,
+  dispatchMouseClick,
   officialRepository,
   releaseAsset,
   sha256,
@@ -58,6 +59,7 @@ const result = {
 const sessions = new Set()
 let wizard
 let executable
+let active
 const port = 19223
 const endpoint = `http://127.0.0.1:${port}`
 const env = { ...process.env, APPIMAGE_EXTRACT_AND_RUN: '1' }
@@ -114,6 +116,7 @@ async function connect(kind) {
     ),
   )
   const session = await Cdp.connect(info.webSocketDebuggerUrl)
+  session.targetId = info.id
   sessions.add(session)
   return session
 }
@@ -130,7 +133,7 @@ async function screenshot(session, name) {
     await session.evaluate('document.documentElement.outerHTML'),
   )
 }
-async function click(session, text) {
+async function click(session, text, { closesTarget = false, closesApp = false } = {}) {
   await session.call('Page.bringToFront')
   const point = await until(`visible enabled button: ${text}`, () =>
     session.evaluate(`(() => {
@@ -146,17 +149,14 @@ async function click(session, text) {
       return false;
     })()`),
   )
-  await session.call('Input.dispatchMouseEvent', {
-    type: 'mousePressed',
-    ...point,
-    button: 'left',
-    clickCount: 1,
-  })
-  await session.call('Input.dispatchMouseEvent', {
-    type: 'mouseReleased',
-    ...point,
-    button: 'left',
-    clickCount: 1,
+  await dispatchMouseClick(session, point, {
+    confirmTargetClosed: closesTarget
+      ? () =>
+          until(`clicked target ${session.targetId} closed`, async () => {
+            if (closesApp && !(await running())) return true
+            return !(await targets()).some((entry) => entry.id === session.targetId)
+          })
+      : undefined,
   })
 }
 async function verifyWindowsCachedInstaller(asset) {
@@ -217,6 +217,12 @@ async function noProcesses() {
   await until('all Mimir processes exit normally', async () => !(await running()), {
     timeout: 90_000,
   })
+  if (active) {
+    await until('launched application exits normally', () => active.exited, { timeout: 30_000 })
+    if (active.error) throw active.error
+    assert.equal(active.code, 0, 'Launched application must exit normally')
+    assert.equal(active.signal, null, 'Launched application must not be killed')
+  }
 }
 async function launch(name) {
   const child = spawn(
@@ -229,9 +235,19 @@ async function launch(name) {
     },
   )
   const stream = createWriteStream(join(evidence, `${name}.log`))
+  const instance = { name, pid: child.pid, exited: false }
+  active = instance
   child.stdout.pipe(stream, { end: false })
   child.stderr.pipe(stream, { end: false })
-  child.on('error', (error) => stream.write(String(error)))
+  child.on('error', (error) => {
+    instance.error = error
+    stream.write(String(error))
+  })
+  child.on('exit', (code, signal) => {
+    Object.assign(instance, { exited: true, code, signal })
+    result.processExits ??= []
+    result.processExits.push({ name, pid: child.pid, code, signal })
+  })
   child.on('close', () => stream.end())
   const workspace = await connect('workspace')
   await until('local authenticated workspace', () =>
@@ -334,8 +350,9 @@ try {
   await record('official download verified; completion did not open a details window', {
     downloaded: await state(details, true),
   })
-  await click(details, '稍后')
-  await click(workspace, '关闭')
+  await click(details, '稍后', { closesTarget: true })
+  assert.equal((await state(workspace)).status, 'downloaded')
+  await click(workspace, '关闭', { closesTarget: true, closesApp: true })
   await noProcesses()
   assert.equal(
     await sha256(executable),
@@ -510,7 +527,7 @@ try {
     'real save-and-restart installed official target and relaunched; version, mode, Markdown, tags and folder retained',
     { upgraded },
   )
-  await click(workspace, '关闭')
+  await click(workspace, '关闭', { closesTarget: true, closesApp: true })
   await noProcesses()
   await latestIsTarget()
   result.success = true

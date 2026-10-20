@@ -3,7 +3,15 @@ import { test } from 'node:test'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Cdp, releaseAsset, sha256, until, versionPair } from './update-smoke-lib.mjs'
+import {
+  Cdp,
+  CdpTargetClosedError,
+  dispatchMouseClick,
+  releaseAsset,
+  sha256,
+  until,
+  versionPair,
+} from './update-smoke-lib.mjs'
 
 test('pins exact stable versions and rejects equal, lower or prerelease versions', () => {
   assert.deepEqual(versionPair('0.1.0', '0.1.1'), { base: '0.1.0', target: '0.1.1' })
@@ -104,6 +112,7 @@ test('CDP correlates out-of-order replies and rejects interrupted requests', asy
   cdp.close()
   await assert.rejects(pending, /CDP target closed/)
   assert.equal(cdp.pending.size, 0)
+  await assert.rejects(cdp.call('after-close'), CdpTargetClosedError)
 })
 
 test('renderer exceptions fail the harness rather than becoming a false success', async () => {
@@ -113,4 +122,86 @@ test('renderer exceptions fail the harness rather than becoming a false success'
   socket.message({ id: socket.sent[0].id, result: { exceptionDetails: { text: 'save failed' } } })
   await assert.rejects(evaluation, /save failed/)
   cdp.close()
+})
+
+function clickSession({ closeAt, protocolError } = {}) {
+  const socket = new Socket()
+  socket.send = function (value) {
+    const request = JSON.parse(value)
+    this.sent.push(request)
+    if (request.params.type === closeAt) this.close()
+    else if (request.params.type === 'mouseReleased' && protocolError)
+      this.message({ id: request.id, error: { message: protocolError } })
+    else this.message({ id: request.id, result: {} })
+  }
+  return new Cdp(socket)
+}
+
+test('real close during mouse release needs explicit target disappearance confirmation', async () => {
+  const cdp = clickSession({ closeAt: 'mouseReleased' })
+  let confirmations = 0
+  await dispatchMouseClick(
+    cdp,
+    { x: 20, y: 30 },
+    {
+      confirmTargetClosed: async () => {
+        confirmations++
+      },
+    },
+  )
+  assert.equal(confirmations, 1)
+  assert.deepEqual(
+    cdp.socket.sent.map((request) => request.params.type),
+    ['mousePressed', 'mouseReleased'],
+  )
+  const missingTarget = new Error('clicked window is still present')
+  await assert.rejects(
+    dispatchMouseClick(
+      clickSession({ closeAt: 'mouseReleased' }),
+      { x: 1, y: 2 },
+      {
+        confirmTargetClosed: async () => {
+          throw missingTarget
+        },
+      },
+    ),
+    (error) => error === missingTarget,
+  )
+})
+
+test('closing clicks still verify disappearance when CDP acknowledges the release', async () => {
+  const cdp = clickSession()
+  let verified = false
+  await dispatchMouseClick(
+    cdp,
+    { x: 1, y: 2 },
+    {
+      confirmTargetClosed: async () => {
+        verified = true
+      },
+    },
+  )
+  assert.equal(verified, true)
+  cdp.close()
+})
+
+test('unexpected target closure and mouse/protocol failures are never accepted as clicks', async () => {
+  await assert.rejects(
+    dispatchMouseClick(clickSession({ closeAt: 'mouseReleased' }), { x: 1, y: 2 }),
+    CdpTargetClosedError,
+  )
+  let confirmations = 0
+  const options = {
+    confirmTargetClosed: async () => {
+      confirmations++
+    },
+  }
+  await assert.rejects(
+    dispatchMouseClick(clickSession({ closeAt: 'mousePressed' }), { x: 1, y: 2 }, options),
+    CdpTargetClosedError,
+  )
+  const cdp = clickSession({ protocolError: 'CDP target closed' })
+  await assert.rejects(dispatchMouseClick(cdp, { x: 1, y: 2 }, options), /CDP target closed/)
+  cdp.close()
+  assert.equal(confirmations, 0)
 })

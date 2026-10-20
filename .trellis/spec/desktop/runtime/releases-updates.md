@@ -78,6 +78,7 @@
 - fnOS 官方工具、原生模块、解包及 Socket 契约唯一归属 [architecture §8.6.1](../../project/architecture.md#861-fnos-原生包部署契约x86_64)；Ubuntu 验包不代表 fnOS 设备安装或覆盖升级已通过。
 - `pnpm check`、desktop build、实际打包与 `MIMIR_SMOKE_EXECUTABLE=<绝对路径> node apps/desktop/scripts/smoke.mjs`；界面实际截图/HTML归档。
 - 真实更新验收必须从官方匿名资产安装基线，驱动真实更新 UI；验证普通退出未替换安装文件、真实编辑阻止并取消安装、保存后重启安装、旧进程消失与新进程拉起、版本和原文档/模式保留。Windows 校验实际 updater 缓存安装包摘要；Linux 校验替换后的 AppImage 摘要。头部完成通知和系统焦点仍需原生桌面证据，不能用 CDP 无详情窗口替代。
+- 外部 CDP 点击“稍后”或正常关闭窗口时，窗口可能早于鼠标释放应答销毁。只允许明确关闭动作的释放阶段接收有类型的 target-close，并确认该目标确实消失；普通动作、按下阶段及其他协议/renderer错误仍须失败。关闭详情后确认工作区仍可用；普通退出须记录真实应用进程 exit 0 且无 signal，不能把调试连接断开当作退出成功。
 - 本机 mac 不能代表 Windows/Linux runner 或真实跨版本更新已通过；未执行的远端验证必须明确记录。
 
 ## 7. 错误与正确示例
