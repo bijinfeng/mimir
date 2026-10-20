@@ -201,6 +201,7 @@ async function verifyWindowsCachedInstaller(asset) {
     asset.digest,
     'Actual updater download must match the official target asset',
   )
+  return cached
 }
 async function normalClose() {
   if (process.platform === 'win32') {
@@ -363,7 +364,7 @@ try {
   assert.ok(created.id)
   assert.equal((await documentValue(workspace, created.id)).body, note.body)
   await downloaded(workspace)
-  await verifyWindowsCachedInstaller(targetAsset)
+  const cachedInstaller = await verifyWindowsCachedInstaller(targetAsset)
   assert.equal(
     (await targets()).some((entry) => /\/update\.html/.test(entry.url)),
     false,
@@ -467,6 +468,10 @@ try {
         join(scriptRoot, 'update-smoke-native.ps1'),
         '-Action',
         'wizard',
+        '-Installer',
+        cachedInstaller,
+        '-InstallerSha256',
+        targetAsset.digest.slice('sha256:'.length),
         '-EvidenceDirectory',
         evidence,
       ],

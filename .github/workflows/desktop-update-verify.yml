@@ -11,6 +11,15 @@ on:
         description: 'Existing newer official latest stable release (exact X.Y.Z)'
         required: true
         type: string
+      platform:
+        description: 'Native platform to verify'
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - windows
+          - linux
 
 permissions:
   contents: read
@@ -24,11 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: linux
-            runner: ubuntu-24.04
-          - platform: windows
-            runner: windows-2025
+        include: ${{ fromJSON(inputs.platform == 'windows' && '[{"platform":"windows","runner":"windows-2025"}]' || inputs.platform == 'linux' && '[{"platform":"linux","runner":"ubuntu-24.04"}]' || '[{"platform":"linux","runner":"ubuntu-24.04"},{"platform":"windows","runner":"windows-2025"}]') }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     env:
@@ -43,6 +48,9 @@ jobs:
           node-version-file: .nvmrc
       - name: Validate harness behavior
         run: node --test apps/desktop/scripts/update-smoke.test.mjs
+      - name: Validate native Windows wizard policy and interop compilation
+        if: runner.os == 'Windows'
+        run: pwsh -NoProfile -File apps/desktop/scripts/update-smoke-native.ps1 -Action self-test
       - name: Install Linux desktop session dependencies
         if: runner.os == 'Linux'
         run: |
