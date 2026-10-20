@@ -39,3 +39,14 @@
 ## GitHub 原生构建通过
 
 修复干净检出路由生成后，master `5d8924f` 对应完整五目标手动 [39387632456](https://github.com/bijinfeng/mimir/actions/runs/39387632456) 的 `fnos / build` 已完成 success。真实官方 fnpack FPK 构建、解包/原生模块/Unix Socket 宿主和认证验收、stage及上传全部执行成功；实际步骤结果见 github-fnos-native-success.json，日志单独保存。此时四客户端矩阵仍在执行，未公开 Release；匿名正式资产分发和 fnOS 真机覆盖升级尚未取得证据。
+
+## 正式 v0.1.3 同版发布与匿名分发
+
+`c402ec5` 对应 [39397577723](https://github.com/bijinfeng/mimir/actions/runs/39397577723) 全部success：fnOS与四客户端、aggregate和publisher均通过，15项资产一次公开于 [v0.1.3](https://github.com/bijinfeng/mimir/releases/tag/v0.1.3)。发布器使用自身短期GITHUB_TOKEN完成create/upload/digest/publish，无人工创建草稿或额外workflow权限。
+
+- 正式资产：`mimir-0.1.3-fnos-x64.fpk`，asset ID `658881928`。
+- 匿名curl从GitHub公开下载URL实际获取 **170577623 bytes**，HTTP200，平均约1134493 bytes/s；未提供cookie、PAT或Authorization。
+- 随后匿名REST读取正式tag元数据，完整下载文件SHA256与公开asset digest均为 `63fc06369b2419af3ce433809680787c97af1bd6688a336320b845e83b236117`。
+- 记录：`public-v0.1.3-release.json`、`public-v0.1.3-fpk.json`、`github-v013-published.json`。第一次匿名REST碰到当前出口每小时quota耗尽，09:49:54Z重置后正常通过；该限流未被当成权限或安装结果。
+
+该结果证明真实原生FPK、统一正式发布和匿名文件分发；fnOS设备的应用中心安装、覆盖升级和资料保留仍未实测，前述设备边界不变。
