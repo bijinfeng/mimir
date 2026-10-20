@@ -952,6 +952,9 @@ importers:
       pdfjs-dist:
         specifier: 'catalog:'
         version: 6.4.299
+      pele:
+        specifier: 1.6.0
+        version: 1.6.0
       tesseract.js:
         specifier: 7.0.0
         version: 7.0.0(encoding@0.1.13)
@@ -9475,6 +9478,10 @@ packages:
   pe-library@0.4.1:
     resolution: {integrity: sha512-eRWB5LBz7PpDu4PUlwT0PhnQfTQJlDDdPa35urV4Osrm0t0AqQFGn+UIkU3klZvwJ8KPO3VbBFsXquA6p6kqZw==}
     engines: {node: '>=12', npm: '>=6'}
+
+  pele@1.6.0:
+    resolution: {integrity: sha512-VfAiVItsOGlGhvnBfphdT28VCG7mXMZxQNOwAGsCtxI2ztbUsT39MraEOYjsapLxVETkdUZscm0DdotYDQMLdw==}
+    engines: {node: '>=20'}
 
   pend@1.2.0:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
@@ -20452,6 +20459,8 @@ snapshots:
       '@napi-rs/canvas': 1.0.11
 
   pe-library@0.4.1: {}
+
+  pele@1.6.0: {}
 
   pend@1.2.0: {}
 

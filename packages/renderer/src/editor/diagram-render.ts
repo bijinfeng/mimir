@@ -20,9 +20,24 @@ export function diagramLanguage(language: unknown): DiagramLanguage | null {
   return language === 'mermaid' || language === 'wavedrom' ? language : null
 }
 
+let peleLoader: Promise<typeof import('pele/lazy')> | undefined
 let mermaidLoader: Promise<(typeof import('mermaid'))['default']> | undefined
 let waveLoader: Promise<[typeof import('wavedrom'), typeof import('json5')]> | undefined
 let renderSequence = 0
+
+async function renderMermaid(source: string): Promise<string> {
+  try {
+    peleLoader ??= import('pele/lazy')
+    const pele = await peleLoader
+    const { svg } = await pele.renderAsync(source, { links: false, images: false })
+    return sanitizeDiagramSvg(svg)
+  } catch {
+    // Keep the original renderer available for syntax or loading failures during the trial.
+    const mermaid = await loadMermaid()
+    const { svg } = await mermaid.render(`mimir-mermaid-${++renderSequence}`, source)
+    return sanitizeDiagramSvg(svg)
+  }
+}
 
 function loadMermaid() {
   mermaidLoader ??= import('mermaid').then(({ default: mermaid }) => {
@@ -118,8 +133,7 @@ export async function renderDiagram(
     if (source.length > 50_000) throw new Error('图形源码不能超过 50,000 个字符')
     let svg: string
     if (language === 'mermaid') {
-      const mermaid = await loadMermaid()
-      ;({ svg } = await mermaid.render(`mimir-mermaid-${++renderSequence}`, source))
+      return { ok: true, svg: await renderMermaid(source) }
     } else {
       const [wave, json5] = await loadWaveDrom()
       const parsed = waveSource(source, (text) => json5.parse(text) as unknown)

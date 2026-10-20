@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-20",
+  "command": "VITEST_MAX_WORKERS=1 pnpm check",
+  "exitCode": 0,
+  "evidence": {
+    "threadId": "01a1574a-688a-7f01-9a15-559e900de15c",
+    "commandExecutionId": "exec-72ca550e-74cd-4b6a-b8cc-514ffaceafee",
+    "log": "docs/visual-comparisons/2026-10-20-official-site/full-check.txt",
+    "logSha256": "43445ae9939f1b3cbfcb00e382b8f2f6a9ebd4292d3cb1e9114366d6206d1566"
+  },
+  "focusedTests": {
+    "files": 4,
+    "passed": 35
+  },
+  "browserMatrix": {
+    "renders": 120,
+    "expectedErrors": 8,
+    "unsafeSvg": 0,
+    "pageOverflow": 0,
+    "previewOverflow": 0
+  },
+  "reviewedFiles": [
+    {
+      "path": "packages/renderer/package.json",
+      "sha256": "0920c3313126815a36b7077eda112c777a078698d0db3d6fc427ee20b25c3d89"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "aae3ab482f75791abc69aa925059bd3ddfeaedc5a30a1b80340e93d9febe8503"
+    },
+    {
+      "path": "packages/renderer/src/editor/diagram-render.ts",
+      "sha256": "d2100d8a4c237d438cac8d4be7a2e39ed092a77b7d708852f1eb584064cbef73"
+    },
+    {
+      "path": "packages/renderer/src/editor/diagram-render.test.ts",
+      "sha256": "ff5132eebe5757caf0ea4a97d28fc28a5baaca00cd11c35475ff1818c4796e1c"
+    },
+    {
+      "path": "packages/renderer/src/editor/diagram-pele.test.ts",
+      "sha256": "35efbded41525f44634f01d796ed70b882d259a3194eb166758040d3fa11e778"
+    },
+    {
+      "path": "packages/renderer/src/editor/diagram-block.test.ts",
+      "sha256": "9627f54cfd7f9890862b00d722873750d55d4b62e92976b462bb5993a2b6c3a2"
+    },
+    {
+      "path": ".trellis/spec/renderer/frontend/editor/conventions.md",
+      "sha256": "258a75ac2cac2607ab174144047fa833fc9f20465ef43242121e1174c9063af7"
+    }
+  ]
+}

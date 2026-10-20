@@ -51,6 +51,7 @@
     "mermaid": "^11.17.2",
     "morphicons": "^1.7.1",
     "pdfjs-dist": "catalog:",
+    "pele": "1.6.0",
     "tesseract.js": "7.0.0",
     "tesseract.js-core": "7.0.0",
     "wavedrom": "^3.7.0"

@@ -1,0 +1,2778 @@
+[
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 146.609375,
+      "naturalHeight": 147,
+      "naturalWidth": 660,
+      "width": 660.140625
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "chinese",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 100.1875,
+      "naturalHeight": 100,
+      "naturalWidth": 578,
+      "width": 577.609375
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "sequence",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 318,
+      "naturalHeight": 318,
+      "naturalWidth": 450,
+      "width": 450
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "class",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 311,
+      "naturalHeight": 311,
+      "naturalWidth": 175,
+      "width": 174.875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "er",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 270,
+      "naturalHeight": 270,
+      "naturalWidth": 166,
+      "width": 165.546875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "state",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 287,
+      "naturalHeight": 287,
+      "naturalWidth": 109,
+      "width": 109.28125
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "gantt",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 96.625,
+      "naturalHeight": 148,
+      "naturalWidth": 1265,
+      "width": 825.875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "mindmap",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 380.484375,
+      "naturalHeight": 380,
+      "naturalWidth": 291,
+      "width": 290.96875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "pie",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 450,
+      "naturalHeight": 450,
+      "naturalWidth": 547,
+      "width": 546.65625
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "subgraph",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 135,
+      "naturalHeight": 135,
+      "naturalWidth": 444,
+      "width": 443.921875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "frontmatter",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "directive",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "light",
+    "width": 900,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "wavedrom",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "code",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1280,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 119,
+      "naturalHeight": 119,
+      "naturalWidth": 607,
+      "width": 607
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 822,
+      "width": 822
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 251,
+      "naturalHeight": 251,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 261,
+      "naturalHeight": 261,
+      "naturalWidth": 131,
+      "width": 131
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 249,
+      "naturalHeight": 249,
+      "naturalWidth": 147,
+      "width": 147
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 293,
+      "naturalHeight": 293,
+      "naturalWidth": 114,
+      "width": 114
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 97,
+      "naturalHeight": 97,
+      "naturalWidth": 800,
+      "width": 800
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 87,
+      "naturalHeight": 87,
+      "naturalWidth": 466,
+      "width": 466
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 296,
+      "naturalHeight": 296,
+      "naturalWidth": 337,
+      "width": 337
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 220,
+      "naturalHeight": 220,
+      "naturalWidth": 242,
+      "width": 242
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "light",
+    "width": 900,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "light",
+    "width": 900,
+    "error": null,
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1093,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 70.171875,
+      "naturalHeight": 147,
+      "naturalWidth": 660,
+      "width": 315.953125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "chinese",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 54.796875,
+      "naturalHeight": 100,
+      "naturalWidth": 578,
+      "width": 315.921875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "sequence",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 223.296875,
+      "naturalHeight": 318,
+      "naturalWidth": 450,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "class",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 311,
+      "naturalHeight": 311,
+      "naturalWidth": 175,
+      "width": 174.875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "er",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 270,
+      "naturalHeight": 270,
+      "naturalWidth": 166,
+      "width": 165.546875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "state",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 287,
+      "naturalHeight": 287,
+      "naturalWidth": 109,
+      "width": 109.28125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "gantt",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 36.96875,
+      "naturalHeight": 148,
+      "naturalWidth": 1265,
+      "width": 315.96875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "mindmap",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 380.484375,
+      "naturalHeight": 380,
+      "naturalWidth": 291,
+      "width": 290.96875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "pie",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 260.125,
+      "naturalHeight": 450,
+      "naturalWidth": 547,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "subgraph",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 96.09375,
+      "naturalHeight": 135,
+      "naturalWidth": 444,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "frontmatter",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "directive",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "light",
+    "width": 390,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "wavedrom",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "code",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1280,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 61.9375,
+      "naturalHeight": 119,
+      "naturalWidth": 607,
+      "width": 315.921875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 24.59375,
+      "naturalHeight": 64,
+      "naturalWidth": 822,
+      "width": 315.875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 251,
+      "naturalHeight": 251,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 261,
+      "naturalHeight": 261,
+      "naturalWidth": 131,
+      "width": 131
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 249,
+      "naturalHeight": 249,
+      "naturalWidth": 147,
+      "width": 147
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 293,
+      "naturalHeight": 293,
+      "naturalWidth": 114,
+      "width": 114
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 38.3125,
+      "naturalHeight": 97,
+      "naturalWidth": 800,
+      "width": 315.96875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 58.984375,
+      "naturalHeight": 87,
+      "naturalWidth": 466,
+      "width": 315.9375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 277.546875,
+      "naturalHeight": 296,
+      "naturalWidth": 337,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 220,
+      "naturalHeight": 220,
+      "naturalWidth": 242,
+      "width": 242
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "light",
+    "width": 390,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "light",
+    "width": 390,
+    "error": null,
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1093,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 70.171875,
+      "naturalHeight": 147,
+      "naturalWidth": 660,
+      "width": 315.953125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "chinese",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 54.796875,
+      "naturalHeight": 100,
+      "naturalWidth": 578,
+      "width": 315.921875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "sequence",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 223.296875,
+      "naturalHeight": 318,
+      "naturalWidth": 450,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "class",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 311,
+      "naturalHeight": 311,
+      "naturalWidth": 175,
+      "width": 174.875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "er",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 270,
+      "naturalHeight": 270,
+      "naturalWidth": 166,
+      "width": 165.546875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "state",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 287,
+      "naturalHeight": 287,
+      "naturalWidth": 109,
+      "width": 109.28125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "gantt",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 36.96875,
+      "naturalHeight": 148,
+      "naturalWidth": 1265,
+      "width": 315.96875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "mindmap",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 380.484375,
+      "naturalHeight": 380,
+      "naturalWidth": 291,
+      "width": 290.96875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "pie",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 260.125,
+      "naturalHeight": 450,
+      "naturalWidth": 547,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "subgraph",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 96.09375,
+      "naturalHeight": 135,
+      "naturalWidth": 444,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "frontmatter",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "directive",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "dark",
+    "width": 390,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "wavedrom",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "code",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1280,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 61.9375,
+      "naturalHeight": 119,
+      "naturalWidth": 607,
+      "width": 315.921875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 24.59375,
+      "naturalHeight": 64,
+      "naturalWidth": 822,
+      "width": 315.875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 251,
+      "naturalHeight": 251,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 261,
+      "naturalHeight": 261,
+      "naturalWidth": 131,
+      "width": 131
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 249,
+      "naturalHeight": 249,
+      "naturalWidth": 147,
+      "width": 147
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 293,
+      "naturalHeight": 293,
+      "naturalWidth": 114,
+      "width": 114
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 38.3125,
+      "naturalHeight": 97,
+      "naturalWidth": 800,
+      "width": 315.96875
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 58.984375,
+      "naturalHeight": 87,
+      "naturalWidth": 466,
+      "width": 315.9375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 277.546875,
+      "naturalHeight": 296,
+      "naturalWidth": 337,
+      "width": 315.984375
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 220,
+      "naturalHeight": 220,
+      "naturalWidth": 242,
+      "width": 242
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "dark",
+    "width": 390,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 316,
+      "width": 316
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "dark",
+    "width": 390,
+    "error": null,
+    "image": null,
+    "mainWidth": 390,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1093,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 146.609375,
+      "naturalHeight": 147,
+      "naturalWidth": 660,
+      "width": 660.140625
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "chinese",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 100.1875,
+      "naturalHeight": 100,
+      "naturalWidth": 578,
+      "width": 577.609375
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "sequence",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 318,
+      "naturalHeight": 318,
+      "naturalWidth": 450,
+      "width": 450
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "class",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 311,
+      "naturalHeight": 311,
+      "naturalWidth": 175,
+      "width": 174.875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "er",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 270,
+      "naturalHeight": 270,
+      "naturalWidth": 166,
+      "width": 165.546875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "state",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 287,
+      "naturalHeight": 287,
+      "naturalWidth": 109,
+      "width": 109.28125
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "gantt",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 96.625,
+      "naturalHeight": 148,
+      "naturalWidth": 1265,
+      "width": 825.875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "mindmap",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 380.484375,
+      "naturalHeight": 380,
+      "naturalWidth": 291,
+      "width": 290.96875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "pie",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 450,
+      "naturalHeight": 450,
+      "naturalWidth": 547,
+      "width": 546.65625
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "subgraph",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 135,
+      "naturalHeight": 135,
+      "naturalWidth": 444,
+      "width": 443.921875
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "frontmatter",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "directive",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 65,
+      "naturalHeight": 65,
+      "naturalWidth": 251,
+      "width": 251.28125
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "dark",
+    "width": 900,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "wavedrom",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1280,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "before",
+    "id": "code",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1280,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1280,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 119,
+      "naturalHeight": 119,
+      "naturalWidth": 607,
+      "width": 607
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 822,
+      "width": 822
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 251,
+      "naturalHeight": 251,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 261,
+      "naturalHeight": 261,
+      "naturalWidth": 131,
+      "width": 131
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 249,
+      "naturalHeight": 249,
+      "naturalWidth": 147,
+      "width": 147
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 293,
+      "naturalHeight": 293,
+      "naturalWidth": 114,
+      "width": 114
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 97,
+      "naturalHeight": 97,
+      "naturalWidth": 800,
+      "width": 800
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 87,
+      "naturalHeight": 87,
+      "naturalWidth": 466,
+      "width": 466
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 296,
+      "naturalHeight": 296,
+      "naturalWidth": 337,
+      "width": 337
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 220,
+      "naturalHeight": 220,
+      "naturalWidth": 242,
+      "width": 242
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 64,
+      "naturalHeight": 64,
+      "naturalWidth": 202,
+      "width": 202
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": true,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "dark",
+    "width": 900,
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": false,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": {
+      "complete": true,
+      "height": 60,
+      "naturalHeight": 60,
+      "naturalWidth": 280,
+      "width": 280
+    },
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 826,
+      "width": 826
+    },
+    "scrollWidth": 1093,
+    "sourceHidden": true,
+    "pele": false,
+    "svgUnsafe": false
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "dark",
+    "width": 900,
+    "error": null,
+    "image": null,
+    "mainWidth": 900,
+    "pageWidth": 1093,
+    "preview": {
+      "scrollWidth": 0,
+      "width": 0
+    },
+    "scrollWidth": 1093,
+    "pele": false,
+    "svgUnsafe": false
+  }
+]

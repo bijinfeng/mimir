@@ -50,3 +50,18 @@ ref 声明顺序、初始值用 state 而非 ref），用它之后全部消失�
 直接读 `editor.isActive(...)`——它会停在「打开文档那一刻」的值，按钮不亮也
 不报错。要用 `useEditorState` 订阅（`MarkdownEditor` 的 `MarkdownToolbar`
 就是这么写的）。
+
+---
+
+## Mermaid 图表试用 Pele，源码与安全边界仍由宿主管理
+
+`diagram-render.ts` 的 `renderDiagram('mermaid', source)` 优先动态加载 `pele/lazy`，
+关闭 `links` / `images`；加载、解析、渲染或 SVG 校验失败时回退原 Mermaid strict
+配置。两个引擎的结果都必须经过 `sanitizeDiagramSvg()`，继续作为隔离的 SVG 图片
+显示，不直接插入 `innerHTML`。单个图表失败不改源码，错误由 NodeView 用文本展示。
+`codeBlock + language` 与原 Markdown 序列化仍是内容真相，不能把 SVG 写回正文。
+
+试用期间保留原引擎；不要把 Pele 成功生成 SVG 当作 Mermaid 布局或主题配置兼容。
+Pele 的布局与主题独立，宿主 CSS 变量无法穿透 `<img>`；长中文在窄列可能因整图缩小
+而变得难读。升级或调整引擎时用相同源码、主题、尺寸查看真实组件，并守住 Pele
+成功不加载 Mermaid、失败回退、SVG 净化与源码保存/修复/撤销的测试。
