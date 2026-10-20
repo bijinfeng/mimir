@@ -60,3 +60,9 @@
 ## 修复基线0.1.5
 
 v0.1.5固定324aa7d，真实五目标run39413757346全completed/success；fnOS / build118598221380使用同一官方固定工具与原生FPK/UnixSocket门通过。FPK资产170576150字节、官方SHA25682e1dcdbf073b981a5de53e90acdaf997cd04bcef310a25d5421e2cce9348095，和四客户端共15资产完整公开。证据github-v015-published.json、github-v015-fnos-native.log、github-v015-publish-success.log、匿名public-v0.1.5-release.json；本条未声称该版FPK已本地下载或设备安装。
+
+## 最终0.1.6统一发布和完整匿名下载
+
+固定7a3c34d的run39418582165全部success，fnOS与四客户端共15资产统一公开。官方fnpack1.2.3/固定SHA、原生Linux x64 Node22、FPK解包/原生模块与UnixSocket HTTP/HTTPS认证门均实际通过，日志github-v016-fnos-native.log。
+
+匿名完整下载最终mimir-0.1.6-fnos-x64.fpk：170553985字节，SHA256=1903d6391e684cf4177fa8cef60e74e1a572cb18ad8912046155c9fbef9ac30f，与公开GitHub digest匹配。无凭据、无Range、HTTP200，下载和摘要脚本及metadata/tag链/result在fnos-v016-public/。未保留二进制；真正fnOS设备安装及覆盖升级仍未实测。

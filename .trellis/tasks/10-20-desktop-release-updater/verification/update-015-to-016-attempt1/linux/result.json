@@ -1,0 +1,45 @@
+{
+  "base": "0.1.5",
+  "target": "0.1.6",
+  "platform": "linux",
+  "checks": [
+    {
+      "check": "official download verified; completion did not open a details window",
+      "at": "2026-10-20T12:25:13.550Z",
+      "downloaded": {
+        "status": "downloaded",
+        "currentVersion": "0.1.5",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.6",
+        "platform": "linux",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true,
+        "version": "0.1.6",
+        "releaseNotes": "桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\nFull Changelog: v0.1.5...v0.1.6",
+        "checkedAt": "2026-10-20T12:25:09.827Z"
+      }
+    },
+    {
+      "check": "ordinary UI close after download did not install",
+      "at": "2026-10-20T12:25:16.589Z"
+    },
+    {
+      "check": "pending real HTTP save triggered guard; continue editing canceled installation",
+      "at": "2026-10-20T12:25:46.840Z"
+    }
+  ],
+  "limitations": [
+    "Headless/session notification delivery and focus are not asserted by CDP.",
+    "macOS ad-hoc builds remain manual; this test never claims macOS automatic installation."
+  ],
+  "processExits": [
+    {
+      "name": "baseline-first",
+      "pid": 3510,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "success": false,
+  "error": "Error: CDP timeout: Runtime.evaluate\n    at Timeout.<anonymous> (file:///home/runner/work/mimir/mimir/apps/desktop/scripts/update-smoke-lib.mjs:172:16)\n    at listOnTimeout (node:internal/timers:585:17)\n    at process.processTimers (node:internal/timers:521:7)"
+}

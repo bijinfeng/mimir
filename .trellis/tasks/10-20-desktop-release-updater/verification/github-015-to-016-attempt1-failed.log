@@ -1,0 +1,980 @@
+update (linux, ubuntu-24.04)	Set up job	﻿2026-10-20T12:24:12.8881625Z Current runner version: '2.337.0'
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8910357Z ##[group]Runner Image Provisioner
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8911234Z Hosted Compute Agent
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8911923Z Version: 20261015.610
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8912628Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8913368Z Build Date: 2026-10-14T17:06:54Z
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8914406Z Worker ID: {e3ac6a98-8591-4af0-80ab-f98196a408c9}
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8915358Z Region: eastus2
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8915991Z Cloud: Azure
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8916605Z ##[endgroup]
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8918133Z ##[group]Operating System
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8919060Z Ubuntu
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8919612Z 24.04.5
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8920543Z LTS
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8921183Z ##[endgroup]
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8921764Z ##[group]Runner Image
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8922432Z Image: ubuntu-24.04
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8923015Z Version: 20261018.339.1
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8924382Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261018.339/images/ubuntu/Ubuntu2404-Readme.md
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8926433Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261018.339
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8927502Z ##[endgroup]
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8928671Z ##[group]GITHUB_TOKEN Permissions
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8930919Z Contents: read
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8931619Z Metadata: read
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8932560Z ##[endgroup]
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8935655Z Secret source: Actions
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8936707Z Cache mode: write
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.8937693Z Prepare workflow directory
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.9457176Z Prepare all required actions
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:12.9506323Z Getting action download info
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:13.1899542Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:13.2941258Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:13.3922666Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+update (linux, ubuntu-24.04)	Set up job	2026-10-20T12:24:13.6028162Z Complete job name: update (linux, ubuntu-24.04)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	﻿2026-10-20T12:24:13.6764930Z ##[group]Run actions/checkout@v4
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6765878Z with:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6766350Z   persist-credentials: false
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6766889Z   repository: bijinfeng/mimir
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6770938Z   token: ***
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6771382Z   ssh-strict: true
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6771832Z   ssh-user: git
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6772274Z   clean: true
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6772735Z   sparse-checkout-cone-mode: true
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6773274Z   fetch-depth: 1
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6773723Z   fetch-tags: false
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6774369Z   show-progress: true
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6774841Z   lfs: false
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6775347Z   submodules: false
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6775813Z   set-safe-directory: true
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6776334Z   allow-unsafe-pr-checkout: false
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6777128Z env:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6777552Z   BASE_VERSION: 0.1.5
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6778018Z   TARGET_VERSION: 0.1.6
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.6778503Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7818505Z Syncing repository: bijinfeng/mimir
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7820513Z ##[group]Getting Git version info
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7821340Z Working directory is '/home/runner/work/mimir/mimir'
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7822339Z [command]/usr/bin/git version
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7923737Z git version 2.55.0
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7978805Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7996012Z Temporarily overriding HOME='/home/runner/work/_temp/abbb3b0b-1bb3-459b-817f-f65899ae54ae' before making global git config changes
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.7998561Z Adding repository directory to the temporary git global config as a safe directory
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8002512Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mimir/mimir
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8059999Z Deleting the contents of '/home/runner/work/mimir/mimir'
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8066986Z ##[group]Initializing the repository
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8071889Z [command]/usr/bin/git init /home/runner/work/mimir/mimir
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8188300Z hint: Using 'master' as the name for the initial branch. This default branch name
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8190167Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8191744Z hint: to use in all of your new repositories, which will suppress this warning,
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8192981Z hint: call:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8193656Z hint:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8194788Z hint: 	git config --global init.defaultBranch <name>
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8195872Z hint:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8196842Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8198391Z hint: 'development'. The just-created branch can be renamed via this command:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8199823Z hint:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8200666Z hint: 	git branch -m <name>
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8201512Z hint:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8202613Z hint: Disable this message with "git config set advice.defaultBranchName false"
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8209977Z Initialized empty Git repository in /home/runner/work/mimir/mimir/.git/
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8220052Z [command]/usr/bin/git remote add origin https://github.com/bijinfeng/mimir
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8286201Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8287558Z ##[group]Disabling automatic garbage collection
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8291165Z [command]/usr/bin/git config --local gc.auto 0
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8330411Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8332078Z ##[group]Setting up auth
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8340481Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8386932Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8785414Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.8877572Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.9141381Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.9187826Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.9461110Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.9515338Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.9516761Z ##[group]Fetching the repository
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:13.9526923Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +57b6b4eb65c1777de6b6644e6143e4f9debbb439:refs/remotes/origin/master
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.5957180Z From https://github.com/bijinfeng/mimir
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.5959459Z  * [new ref]         57b6b4eb65c1777de6b6644e6143e4f9debbb439 -> origin/master
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.5964506Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.5966485Z ##[group]Determining the checkout info
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.5968852Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.5975767Z [command]/usr/bin/git sparse-checkout disable
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.6043067Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.6086819Z ##[group]Checking out the ref
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:20.6095387Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.6255600Z Updating files:  64% (5060/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.6539715Z Updating files:  65% (5071/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.6770467Z Updating files:  66% (5149/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.6889328Z Updating files:  67% (5227/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.6948374Z Updating files:  68% (5305/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7027497Z Updating files:  69% (5383/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7216200Z Updating files:  70% (5461/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7318968Z Updating files:  71% (5539/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7423212Z Updating files:  72% (5617/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7615761Z Updating files:  73% (5695/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7701778Z Updating files:  74% (5773/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.7907469Z Updating files:  75% (5851/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.8020036Z Updating files:  76% (5929/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.8179597Z Updating files:  77% (6007/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.8324983Z Updating files:  78% (6085/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.8779636Z Updating files:  79% (6163/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9073172Z Updating files:  80% (6241/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9217761Z Updating files:  81% (6319/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9276066Z Updating files:  82% (6397/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9344864Z Updating files:  83% (6475/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9420839Z Updating files:  84% (6553/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9500438Z Updating files:  85% (6631/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9566410Z Updating files:  86% (6709/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9617897Z Updating files:  87% (6787/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9778561Z Updating files:  88% (6865/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9842096Z Updating files:  89% (6943/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:21.9910752Z Updating files:  90% (7021/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0280375Z Updating files:  91% (7099/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0353518Z Updating files:  92% (7177/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0463267Z Updating files:  93% (7255/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0542797Z Updating files:  94% (7333/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0607157Z Updating files:  95% (7411/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0653497Z Updating files:  96% (7489/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0700487Z Updating files:  97% (7567/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0750790Z Updating files:  98% (7645/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0816626Z Updating files:  99% (7723/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0817720Z Updating files: 100% (7801/7801)
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0818740Z Updating files: 100% (7801/7801), done.
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0910725Z Reset branch 'master'
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.0918826Z branch 'master' set up to track 'origin/master'.
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1020535Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1090462Z [command]/usr/bin/git log -1 --format=%H
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1147494Z 57b6b4eb65c1777de6b6644e6143e4f9debbb439
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1157832Z ##[group]Removing auth
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1162262Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1212968Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1498170Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1536681Z http.https://github.com/.extraheader
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1545735Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1593948Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1849413Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.1889153Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+update (linux, ubuntu-24.04)	Run actions/checkout@v4	2026-10-20T12:24:22.2136354Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	﻿2026-10-20T12:24:22.2483018Z ##[group]Run actions/setup-node@v4
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2483358Z with:
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2483587Z   node-version-file: .nvmrc
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2483849Z   always-auth: false
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2484273Z   check-latest: false
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2486892Z   token: ***
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2487112Z env:
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2487311Z   BASE_VERSION: 0.1.5
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2487553Z   TARGET_VERSION: 0.1.6
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.2487785Z ##[endgroup]
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.3914536Z Resolved .nvmrc as 22
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.3980185Z Found in cache @ /opt/hostedtoolcache/node/22.23.3/x64
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.3984670Z ##[group]Environment details
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.3986324Z (node:2426) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.3987748Z (Use `node --trace-deprecation ...` to show where the warning was created)
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.8377331Z node: v22.23.3
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.8377865Z npm: 10.9.9
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.8378191Z yarn: 1.22.22
+update (linux, ubuntu-24.04)	Run actions/setup-node@v4	2026-10-20T12:24:22.8379160Z ##[endgroup]
+update (linux, ubuntu-24.04)	Validate harness behavior	﻿2026-10-20T12:24:22.8535749Z ##[group]Run node --test apps/desktop/scripts/update-smoke.test.mjs
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.8536389Z ^[[36;1mnode --test apps/desktop/scripts/update-smoke.test.mjs^[[0m
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.8733617Z shell: /usr/bin/bash -e {0}
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.8733933Z env:
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.8734374Z   BASE_VERSION: 0.1.5
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.8734637Z   TARGET_VERSION: 0.1.6
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.8734904Z ##[endgroup]
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9288722Z TAP version 13
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9788399Z # Subtest: pins exact stable versions and rejects equal, lower or prerelease versions
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9801998Z ok 1 - pins exact stable versions and rejects equal, lower or prerelease versions
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9802801Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9803076Z   duration_ms: 3.749488
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9803400Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9803731Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9804616Z # Subtest: only accepts complete, stable official public release asset with digest
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9805303Z ok 2 - only accepts complete, stable official public release asset with digest
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9805821Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9806041Z   duration_ms: 1.456418
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9806387Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9806626Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9845148Z # Subtest: hashes actual file bytes and detects changed package contents
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9847462Z ok 3 - hashes actual file bytes and detects changed package contents
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9849240Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9849504Z   duration_ms: 10.851237
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9849755Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:22.9849963Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0300546Z # (node:2465) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0302224Z # (Use `node --trace-warnings ...` to show where the warning was created)
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0304554Z # Subtest: bounded waits require the actual condition and retain the last failure
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0318026Z ok 4 - bounded waits require the actual condition and retain the last failure
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0319008Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0319574Z   duration_ms: 13.566832
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0320188Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0320799Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0321989Z # Subtest: screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0323608Z ok 5 - screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0329211Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0329730Z   duration_ms: 0.751403
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0330250Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0330739Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0331671Z # Subtest: screenshot paint helper runs as an isolated serialized browser expression
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0333020Z ok 6 - screenshot paint helper runs as an isolated serialized browser expression
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0333989Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0334822Z   duration_ms: 1.203703
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0335411Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0335941Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0337058Z # Subtest: screenshot paint timeout and page errors fail capture and clean up their pending waits
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0338726Z ok 7 - screenshot paint timeout and page errors fail capture and clean up their pending waits
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0339665Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0340070Z   duration_ms: 0.772222
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0340557Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0340997Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0342261Z # Subtest: CDP paint evaluation has an external five-second deadline even without any renderer response
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0343940Z ok 8 - CDP paint evaluation has an external five-second deadline even without any renderer response
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0345692Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0346102Z   duration_ms: 24.407289
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0346577Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0346967Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0347944Z # Subtest: CDP clears custom request timers on response, target closure and synchronous send failure
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0349418Z ok 9 - CDP clears custom request timers on response, target closure and synchronous send failure
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0350743Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0351153Z   duration_ms: 1.007744
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0351606Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0351997Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0352819Z # Subtest: CDP correlates out-of-order replies and rejects interrupted requests
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0354017Z ok 10 - CDP correlates out-of-order replies and rejects interrupted requests
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0354944Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0355382Z   duration_ms: 0.856039
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0355887Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0356312Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0385375Z # Subtest: renderer exceptions fail the harness rather than becoming a false success
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0386507Z ok 11 - renderer exceptions fail the harness rather than becoming a false success
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0386988Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0387246Z   duration_ms: 0.285968
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0387540Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0387799Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0388333Z # Subtest: real close during mouse release needs explicit target disappearance confirmation
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0389121Z ok 12 - real close during mouse release needs explicit target disappearance confirmation
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0389587Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0389839Z   duration_ms: 0.737096
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0390119Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0390372Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0390882Z # Subtest: closing clicks still verify disappearance when CDP acknowledges the release
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0391591Z ok 13 - closing clicks still verify disappearance when CDP acknowledges the release
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0392043Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0392289Z   duration_ms: 0.535166
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0392560Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0392812Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0393357Z # Subtest: unexpected target closure and mouse/protocol failures are never accepted as clicks
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0394389Z ok 14 - unexpected target closure and mouse/protocol failures are never accepted as clicks
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0395205Z   ---
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0395571Z   duration_ms: 0.52687
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0395976Z   type: 'test'
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0396404Z   ...
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0526613Z 1..14
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0527053Z # tests 14
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0527509Z # suites 0
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0528023Z # pass 14
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0528631Z # fail 0
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0534892Z # cancelled 0
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0545608Z # skipped 0
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0545924Z # todo 0
+update (linux, ubuntu-24.04)	Validate harness behavior	2026-10-20T12:24:23.0546240Z # duration_ms 138.091609
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	﻿2026-10-20T12:24:23.0656980Z ##[group]Run sudo apt-get update
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0657533Z ^[[36;1msudo apt-get update^[[0m
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0658102Z ^[[36;1msudo apt-get install -y xvfb openbox wmctrl libfuse2t64^[[0m
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0658855Z ^[[36;1msudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0^[[0m
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0729587Z shell: /usr/bin/bash -e {0}
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0730015Z env:
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0730326Z   BASE_VERSION: 0.1.5
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0730683Z   TARGET_VERSION: 0.1.6
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.0731038Z ##[endgroup]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.1672337Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.2003649Z Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.2008602Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.2042884Z Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.2067150Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.2119118Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.3343562Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1397 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.3506642Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1704 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.4855720Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1145 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.4889858Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [231 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:23.4908071Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1222 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:26.1664666Z Fetched 6081 kB in 1s (8106 kB/s)
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.1498238Z Reading package lists...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.1871759Z Reading package lists...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.3808056Z Building dependency tree...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.3815611Z Reading state information...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5265831Z The following additional packages will be installed:
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5267284Z   fonts-droid-fallback fonts-noto-mono fonts-urw-base35 libgif7 libgs-common
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5268347Z   libgs10 libgs10-common libhwy1t64 libid3tag0 libidn12 libijs-0.35
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5269422Z   libimlib2t64 libjbig2dec0 libjxl0.7 libobrender32v5 libobt2v5
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5270389Z   libpangoxft-1.0-0 libpaper-utils libpaper1 librsvg2-2 librsvg2-common
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5275590Z   libspectre1 libstartup-notification0 libxcb-util1 obconf poppler-data scrot
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5276676Z   xfonts-encodings xfonts-utils xserver-common
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5278974Z Suggested packages:
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5279589Z   fonts-noto fonts-freefont-otf | fonts-freefont-ttf fonts-texgyre
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5280301Z   librsvg2-bin tint2 openbox-gnome-session openbox-kde-session poppler-utils
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5280862Z   ghostscript fonts-japanese-mincho | fonts-ipafont-mincho
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5281358Z   fonts-japanese-gothic | fonts-ipafont-gothic fonts-arphic-ukai
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5281790Z   fonts-arphic-uming fonts-nanum
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5282132Z Recommended packages:
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5282511Z   xfonts-base
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5550445Z The following NEW packages will be installed:
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5551597Z   fonts-droid-fallback fonts-noto-mono fonts-urw-base35 libfuse2t64 libgif7
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5552687Z   libgs-common libgs10 libgs10-common libhwy1t64 libid3tag0 libidn12
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5553699Z   libijs-0.35 libimlib2t64 libjbig2dec0 libjxl0.7 libobrender32v5 libobt2v5
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5554902Z   libpangoxft-1.0-0 libpaper-utils libpaper1 librsvg2-2 librsvg2-common
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5556693Z   libspectre1 libstartup-notification0 libxcb-util1 obconf openbox
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5558216Z   poppler-data scrot wmctrl xfonts-encodings xfonts-utils
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5568492Z The following packages will be upgraded:
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5569052Z   xserver-common xvfb
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5773205Z 2 upgraded, 32 newly installed, 0 to remove and 37 not upgraded.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5774799Z Need to get 26.4 MB of archives.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5775544Z After this operation, 85.7 MB of additional disk space will be used.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.5776395Z Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.6163451Z Get:2 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-droid-fallback all 1:6.0.1r16-1.1build1 [1805 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.6559558Z Get:3 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 poppler-data all 0.4.12-1 [2060 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.6995671Z Get:4 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-noto-mono all 20201225-2 [435 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.7236328Z Get:5 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-encodings all 1:1.0.5-0ubuntu2 [578 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.7577016Z Get:6 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 xfonts-utils amd64 1:7.7+6build3 [94.4 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:27.7843596Z Get:7 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 fonts-urw-base35 all 20200910-8 [11.0 MB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.0458938Z Get:8 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libfuse2t64 amd64 2.9.9-8.1build1 [89.9 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.0662778Z Get:9 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgif7 amd64 5.2.2-1ubuntu1.2 [35.6 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.0853764Z Get:10 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgs-common all 10.02.1~dfsg1-0ubuntu7.9 [176 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.1068858Z Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgs10-common all 10.02.1~dfsg1-0ubuntu7.9 [488 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.1411930Z Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libidn12 amd64 1.42-1ubuntu0.1 [56.1 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.1611862Z Get:13 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libijs-0.35 amd64 0.35-15.1build1 [15.3 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.1796142Z Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libjbig2dec0 amd64 0.20-1ubuntu0.24.04.1 [65.2 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.1990031Z Get:15 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libpaper1 amd64 1.1.29build1 [13.4 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.2175273Z Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 libgs10 amd64 10.02.1~dfsg1-0ubuntu7.9 [3898 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.3183548Z Get:17 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libhwy1t64 amd64 1.0.7-8.1build1 [584 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.3553047Z Get:18 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libid3tag0 amd64 0.15.1b-14build1 [33.6 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.3742507Z Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 libjxl0.7 amd64 0.7.0-10.2ubuntu6.1 [1001 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.4646521Z Get:20 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 librsvg2-2 amd64 2.58.0+dfsg-1ubuntu0.1 [2141 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.5525890Z Get:21 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libspectre1 amd64 0.2.12-1build2 [30.9 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.5720123Z Get:22 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libimlib2t64 amd64 1.12.1-1.1build2 [208 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.5948045Z Get:23 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libobt2v5 amd64 3.6.1-12build5 [33.3 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.6168559Z Get:24 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libpangoxft-1.0-0 amd64 1.52.1+ds-1build1 [20.3 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.6359723Z Get:25 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 libobrender32v5 amd64 3.6.1-12build5 [42.5 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.6565582Z Get:26 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libpaper-utils amd64 1.1.29build1 [8650 B]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.6761029Z Get:27 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 librsvg2-common amd64 2.58.0+dfsg-1ubuntu0.1 [11.8 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.6948400Z Get:28 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libxcb-util1 amd64 0.4.0-1build3 [10.7 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.7134677Z Get:29 http://azure.archive.ubuntu.com/ubuntu noble/main amd64 libstartup-notification0 amd64 0.12-6build3 [18.4 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.7328644Z Get:30 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 obconf amd64 1:2.0.4+git20150213-3build1 [136 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.7568441Z Get:31 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 openbox amd64 3.6.1-12build5 [304 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.7881285Z Get:32 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 scrot amd64 1.10-1build2 [71.5 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.8090869Z Get:33 http://azure.archive.ubuntu.com/ubuntu noble/universe amd64 wmctrl amd64 1.07-7ubuntu3 [19.8 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.8283644Z Get:34 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 xserver-common all 2:21.1.12-1ubuntu1.9 [35.0 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:28.8482164Z Get:35 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 xvfb amd64 2:21.1.12-1ubuntu1.9 [877 kB]
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.1583324Z Preconfiguring packages ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2270711Z Fetched 26.4 MB in 1s (19.8 MB/s)
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2535828Z Selecting previously unselected package fonts-droid-fallback.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2844696Z (Reading database ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2845364Z (Reading database ... 5%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2845842Z (Reading database ... 10%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2846278Z (Reading database ... 15%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2846598Z (Reading database ... 20%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2846958Z (Reading database ... 25%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2847403Z (Reading database ... 30%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2847827Z (Reading database ... 35%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2848251Z (Reading database ... 40%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2848705Z (Reading database ... 45%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2849156Z (Reading database ... 50%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.2907437Z (Reading database ... 55%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.4318967Z (Reading database ... 60%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.6355812Z (Reading database ... 65%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.7421403Z (Reading database ... 70%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:29.8783687Z (Reading database ... 75%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.0700524Z (Reading database ... 80%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.2712802Z (Reading database ... 85%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.4795906Z (Reading database ... 90%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.6615617Z (Reading database ... 95%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.6616445Z (Reading database ... 100%
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.6617350Z (Reading database ... 214410 files and directories currently installed.)
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.6662184Z Preparing to unpack .../00-fonts-droid-fallback_1%3a6.0.1r16-1.1build1_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.6901818Z Unpacking fonts-droid-fallback (1:6.0.1r16-1.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.8483986Z Selecting previously unselected package poppler-data.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.8627050Z Preparing to unpack .../01-poppler-data_0.4.12-1_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.8635929Z Unpacking poppler-data (0.4.12-1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:30.9889645Z Selecting previously unselected package fonts-noto-mono.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0033416Z Preparing to unpack .../02-fonts-noto-mono_20201225-2_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0040759Z Unpacking fonts-noto-mono (20201225-2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0327290Z Selecting previously unselected package xfonts-encodings.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0469093Z Preparing to unpack .../03-xfonts-encodings_1%3a1.0.5-0ubuntu2_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0477666Z Unpacking xfonts-encodings (1:1.0.5-0ubuntu2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0793264Z Selecting previously unselected package xfonts-utils.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0934944Z Preparing to unpack .../04-xfonts-utils_1%3a7.7+6build3_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.0943017Z Unpacking xfonts-utils (1:7.7+6build3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.1368332Z Selecting previously unselected package fonts-urw-base35.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.1509974Z Preparing to unpack .../05-fonts-urw-base35_20200910-8_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.2188795Z Unpacking fonts-urw-base35 (20200910-8) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3149522Z Selecting previously unselected package libfuse2t64:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3293135Z Preparing to unpack .../06-libfuse2t64_2.9.9-8.1build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3311771Z Unpacking libfuse2t64:amd64 (2.9.9-8.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3574850Z Selecting previously unselected package libgif7:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3717330Z Preparing to unpack .../07-libgif7_5.2.2-1ubuntu1.2_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3726679Z Unpacking libgif7:amd64 (5.2.2-1ubuntu1.2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.3958430Z Selecting previously unselected package libgs-common.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.4101966Z Preparing to unpack .../08-libgs-common_10.02.1~dfsg1-0ubuntu7.9_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.4110592Z Unpacking libgs-common (10.02.1~dfsg1-0ubuntu7.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.4376205Z Selecting previously unselected package libgs10-common.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.4518645Z Preparing to unpack .../09-libgs10-common_10.02.1~dfsg1-0ubuntu7.9_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.4528980Z Unpacking libgs10-common (10.02.1~dfsg1-0ubuntu7.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.5241571Z Selecting previously unselected package libidn12:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.5385506Z Preparing to unpack .../10-libidn12_1.42-1ubuntu0.1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.5393531Z Unpacking libidn12:amd64 (1.42-1ubuntu0.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.5658489Z Selecting previously unselected package libijs-0.35:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.5799941Z Preparing to unpack .../11-libijs-0.35_0.35-15.1build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.5809143Z Unpacking libijs-0.35:amd64 (0.35-15.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6049498Z Selecting previously unselected package libjbig2dec0:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6192806Z Preparing to unpack .../12-libjbig2dec0_0.20-1ubuntu0.24.04.1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6201970Z Unpacking libjbig2dec0:amd64 (0.20-1ubuntu0.24.04.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6459347Z Selecting previously unselected package libpaper1:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6600099Z Preparing to unpack .../13-libpaper1_1.1.29build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6610298Z Unpacking libpaper1:amd64 (1.1.29build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.6912854Z Selecting previously unselected package libgs10:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.7052896Z Preparing to unpack .../14-libgs10_10.02.1~dfsg1-0ubuntu7.9_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.7060686Z Unpacking libgs10:amd64 (10.02.1~dfsg1-0ubuntu7.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8093268Z Selecting previously unselected package libhwy1t64:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8235608Z Preparing to unpack .../15-libhwy1t64_1.0.7-8.1build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8243876Z Unpacking libhwy1t64:amd64 (1.0.7-8.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8588687Z Selecting previously unselected package libid3tag0:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8731557Z Preparing to unpack .../16-libid3tag0_0.15.1b-14build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8738212Z Unpacking libid3tag0:amd64 (0.15.1b-14build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.8969663Z Selecting previously unselected package libjxl0.7:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.9111493Z Preparing to unpack .../17-libjxl0.7_0.7.0-10.2ubuntu6.1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.9122479Z Unpacking libjxl0.7:amd64 (0.7.0-10.2ubuntu6.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.9477711Z Selecting previously unselected package librsvg2-2:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.9618843Z Preparing to unpack .../18-librsvg2-2_2.58.0+dfsg-1ubuntu0.1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:31.9626120Z Unpacking librsvg2-2:amd64 (2.58.0+dfsg-1ubuntu0.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0112438Z Selecting previously unselected package libspectre1:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0255981Z Preparing to unpack .../19-libspectre1_0.2.12-1build2_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0262728Z Unpacking libspectre1:amd64 (0.2.12-1build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0486995Z Selecting previously unselected package libimlib2t64:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0628246Z Preparing to unpack .../20-libimlib2t64_1.12.1-1.1build2_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0635546Z Unpacking libimlib2t64:amd64 (1.12.1-1.1build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.0927404Z Selecting previously unselected package libobt2v5:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1072001Z Preparing to unpack .../21-libobt2v5_3.6.1-12build5_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1079694Z Unpacking libobt2v5:amd64 (3.6.1-12build5) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1317563Z Selecting previously unselected package libpangoxft-1.0-0:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1465862Z Preparing to unpack .../22-libpangoxft-1.0-0_1.52.1+ds-1build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1474488Z Unpacking libpangoxft-1.0-0:amd64 (1.52.1+ds-1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1729170Z Selecting previously unselected package libobrender32v5.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1872088Z Preparing to unpack .../23-libobrender32v5_3.6.1-12build5_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.1878584Z Unpacking libobrender32v5 (3.6.1-12build5) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2098720Z Selecting previously unselected package libpaper-utils.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2241073Z Preparing to unpack .../24-libpaper-utils_1.1.29build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2247171Z Unpacking libpaper-utils (1.1.29build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2477382Z Selecting previously unselected package librsvg2-common:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2617671Z Preparing to unpack .../25-librsvg2-common_2.58.0+dfsg-1ubuntu0.1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2623624Z Unpacking librsvg2-common:amd64 (2.58.0+dfsg-1ubuntu0.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.2885122Z Selecting previously unselected package libxcb-util1:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3023831Z Preparing to unpack .../26-libxcb-util1_0.4.0-1build3_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3030459Z Unpacking libxcb-util1:amd64 (0.4.0-1build3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3248902Z Selecting previously unselected package libstartup-notification0:amd64.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3389028Z Preparing to unpack .../27-libstartup-notification0_0.12-6build3_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3397017Z Unpacking libstartup-notification0:amd64 (0.12-6build3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3612791Z Selecting previously unselected package obconf.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3753598Z Preparing to unpack .../28-obconf_1%3a2.0.4+git20150213-3build1_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.3759709Z Unpacking obconf (1:2.0.4+git20150213-3build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.5361682Z Selecting previously unselected package openbox.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.5503850Z Preparing to unpack .../29-openbox_3.6.1-12build5_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.5540018Z Unpacking openbox (3.6.1-12build5) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.6576011Z Selecting previously unselected package scrot.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.6721275Z Preparing to unpack .../30-scrot_1.10-1build2_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.6728535Z Unpacking scrot (1.10-1build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.6957865Z Selecting previously unselected package wmctrl.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.7098401Z Preparing to unpack .../31-wmctrl_1.07-7ubuntu3_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.7104961Z Unpacking wmctrl (1.07-7ubuntu3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.7492093Z Preparing to unpack .../32-xserver-common_2%3a21.1.12-1ubuntu1.9_all.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.7513175Z Unpacking xserver-common (2:21.1.12-1ubuntu1.9) over (2:21.1.12-1ubuntu1.8) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.7895766Z Preparing to unpack .../33-xvfb_2%3a21.1.12-1ubuntu1.9_amd64.deb ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.7914981Z Unpacking xvfb (2:21.1.12-1ubuntu1.9) over (2:21.1.12-1ubuntu1.8) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.8537329Z Setting up libhwy1t64:amd64 (1.0.7-8.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:32.8557944Z Setting up libpaper1:amd64 (1.1.29build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:33.0702600Z
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:33.0703364Z Creating config file /etc/papersize with new version
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2010752Z Setting up fonts-noto-mono (20201225-2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2034996Z Setting up libpangoxft-1.0-0:amd64 (1.52.1+ds-1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2051672Z Setting up libijs-0.35:amd64 (0.35-15.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2069399Z Setting up libgs-common (10.02.1~dfsg1-0ubuntu7.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2086109Z Setting up libpaper-utils (1.1.29build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2104672Z Setting up wmctrl (1.07-7ubuntu3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2121158Z Setting up libxcb-util1:amd64 (0.4.0-1build3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2145321Z Setting up poppler-data (0.4.12-1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2211665Z Setting up librsvg2-2:amd64 (2.58.0+dfsg-1ubuntu0.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2229273Z Setting up libid3tag0:amd64 (0.15.1b-14build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2246195Z Setting up libjbig2dec0:amd64 (0.20-1ubuntu0.24.04.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2263493Z Setting up xfonts-encodings (1:1.0.5-0ubuntu2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2281245Z Setting up libidn12:amd64 (1.42-1ubuntu0.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2301965Z Setting up libobt2v5:amd64 (3.6.1-12build5) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2319780Z Setting up libjxl0.7:amd64 (0.7.0-10.2ubuntu6.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2337944Z Setting up librsvg2-common:amd64 (2.58.0+dfsg-1ubuntu0.1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2386684Z Setting up libgif7:amd64 (5.2.2-1ubuntu1.2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2403101Z Setting up fonts-droid-fallback (1:6.0.1r16-1.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2646874Z Setting up xserver-common (2:21.1.12-1ubuntu1.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2670820Z Setting up libfuse2t64:amd64 (2.9.9-8.1build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2695476Z Setting up libstartup-notification0:amd64 (0.12-6build3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2709383Z Setting up xvfb (2:21.1.12-1ubuntu1.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2726493Z Setting up xfonts-utils (1:7.7+6build3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.2768682Z Setting up fonts-urw-base35 (20200910-8) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4105730Z Setting up libgs10-common (10.02.1~dfsg1-0ubuntu7.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4122723Z Setting up libgs10:amd64 (10.02.1~dfsg1-0ubuntu7.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4141325Z Setting up libspectre1:amd64 (0.2.12-1build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4160000Z Setting up libimlib2t64:amd64 (1.12.1-1.1build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4178059Z Setting up libobrender32v5 (3.6.1-12build5) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4201409Z Setting up scrot (1.10-1build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4220822Z Setting up obconf (1:2.0.4+git20150213-3build1) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4237704Z Setting up openbox (3.6.1-12build5) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4328084Z update-alternatives: using /usr/bin/openbox to provide /usr/bin/x-window-manager (x-window-manager) in auto mode
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4372361Z update-alternatives: using /usr/bin/openbox-session to provide /usr/bin/x-session-manager (x-session-manager) in auto mode
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4412983Z Processing triggers for libgdk-pixbuf-2.0-0:amd64 (2.42.10+dfsg-3ubuntu3.3) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.4813812Z Processing triggers for fontconfig (2.15.0-1.1ubuntu2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.6644957Z Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.6993278Z Processing triggers for man-db (2.12.0-4build2) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.7017278Z Not building database; man-db/auto-update is not 'true'.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:34.7030674Z Processing triggers for shared-mime-info (2.4-4) ...
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2321383Z
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2322064Z Running kernel seems to be up-to-date.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2322490Z
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2322766Z No services need to be restarted.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2323091Z
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2323365Z No containers need to be restarted.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2323678Z
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2324006Z No user sessions are running outdated binaries.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2324633Z
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:36.2325155Z No VM guests are running outdated hypervisor (qemu) binaries on this host.
+update (linux, ubuntu-24.04)	Install Linux desktop session dependencies	2026-10-20T12:24:37.1781005Z kernel.apparmor_restrict_unprivileged_userns = 0
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	﻿2026-10-20T12:24:37.1837454Z ##[group]Run xvfb-run -a sh -c 'openbox > "$RUNNER_TEMP/openbox.log" 2>&1 & node apps/desktop/scripts/update-smoke.mjs'
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:24:37.1838335Z ^[[36;1mxvfb-run -a sh -c 'openbox > "$RUNNER_TEMP/openbox.log" 2>&1 & node apps/desktop/scripts/update-smoke.mjs'^[[0m
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:24:37.1894767Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:24:37.1895149Z env:
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:24:37.1895366Z   BASE_VERSION: 0.1.5
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:24:37.1895605Z   TARGET_VERSION: 0.1.6
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:24:37.1895840Z ##[endgroup]
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:13.5518600Z PASS official download verified; completion did not open a details window
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:16.5898450Z PASS ordinary UI close after download did not install
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:46.8412583Z PASS pending real HTTP save triggered guard; continue editing canceled installation
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5302762Z node:internal/modules/run_main:123
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5305399Z     triggerUncaughtException(
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5306776Z     ^
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5307280Z
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5307790Z Error: CDP timeout: Runtime.evaluate
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5308998Z     at Timeout.<anonymous> (file:///home/runner/work/mimir/mimir/apps/desktop/scripts/update-smoke-lib.mjs:172:16)
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5310222Z     at listOnTimeout (node:internal/timers:585:17)
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5311091Z     at process.processTimers (node:internal/timers:521:7)
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5311845Z
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5312135Z Node.js v22.23.3
+update (linux, ubuntu-24.04)	Real Linux AppImage upgrade from public GitHub Releases	2026-10-20T12:25:52.5560465Z ##[error]Process completed with exit code 1.
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	﻿2026-10-20T12:25:52.5722935Z ##[group]Run actions/upload-artifact@v4
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5723439Z with:
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5723825Z   name: desktop-update-linux-0.1.5-to-0.1.6
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5724988Z   path: /home/runner/work/_temp/mimir-update-e2e/evidence/
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5725608Z   if-no-files-found: warn
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5726027Z   retention-days: 14
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5726397Z   compression-level: 6
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5727035Z   overwrite: false
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5727388Z   include-hidden-files: false
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5727765Z env:
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5728065Z   BASE_VERSION: 0.1.5
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5728418Z   TARGET_VERSION: 0.1.6
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.5728761Z ##[endgroup]
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.7982937Z (node:3756) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.7985158Z (Use `node --trace-deprecation ...` to show where the warning was created)
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.8073237Z With the provided path, there will be 9 files uploaded
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.8078615Z Artifact name is valid!
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:52.8081042Z Root directory input is valid!
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.0390725Z Beginning upload of artifact content to blob storage
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.1672277Z (node:3756) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.2496276Z Uploaded bytes 538484
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.2703211Z Finished uploading artifact content to blob storage!
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.2705030Z SHA256 digest of uploaded artifact zip is 64cd2610faf01d881c9a8a61c7e1dcc7c9d5f2da2e433d3b37c715838cd81989
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.2708025Z Finalizing artifact upload
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.4990152Z Artifact desktop-update-linux-0.1.5-to-0.1.6.zip successfully finalized. Artifact ID 12265110262
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.4992385Z Artifact desktop-update-linux-0.1.5-to-0.1.6 has been successfully uploaded! Final size is 538484 bytes. Artifact ID is 12265110262
+update (linux, ubuntu-24.04)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:25:53.4998136Z Artifact download URL: https://github.com/bijinfeng/mimir/actions/runs/39421962037/artifacts/12265110262
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	﻿2026-10-20T12:25:53.5335641Z Post job cleanup.
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6590785Z [command]/usr/bin/git version
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6639751Z git version 2.55.0
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6684573Z Temporarily overriding HOME='/home/runner/work/_temp/92014c69-f249-44c7-b7f1-78a5663ed560' before making global git config changes
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6695492Z Adding repository directory to the temporary git global config as a safe directory
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6697102Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mimir/mimir
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6743430Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.6786515Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.7113155Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.7167922Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.7515010Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+update (linux, ubuntu-24.04)	Post Run actions/checkout@v4	2026-10-20T12:25:53.7574878Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+update (linux, ubuntu-24.04)	Complete job	﻿2026-10-20T12:25:53.8192856Z Cleaning up orphan processes
+update (linux, ubuntu-24.04)	Complete job	2026-10-20T12:25:53.8577390Z Terminate orphan process: pid (3631) (mimir-0.1.5-linux-x64.AppImage)
+update (linux, ubuntu-24.04)	Complete job	2026-10-20T12:25:53.8587202Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+update (windows, windows-2025)	Set up job	﻿2026-10-20T12:24:12.7076624Z Current runner version: '2.337.0'
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7128135Z ##[group]Runner Image Provisioner
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7129105Z Hosted Compute Agent
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7129781Z Version: 20261015.610
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7130483Z Commit: 267fdb4e8bbec4ab5ea31367f3a00d5c480c7656
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7131316Z Build Date: 2026-10-14T17:06:54Z
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7132073Z Worker ID: {d75b45f7-6c8a-4fb0-9d21-ce4b4e883e38}
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7132883Z Region: eastus
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7133483Z Cloud: Azure
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7134120Z ##[endgroup]
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7135705Z ##[group]Operating System
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7136435Z Microsoft Windows Server 2025
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7137419Z 10.0.26100
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7137990Z Datacenter
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7138589Z ##[endgroup]
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7139207Z ##[group]Runner Image
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7140037Z Image: windows-2025-vs2026
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7140780Z Version: 20261018.275.1
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7142290Z Included Software: https://github.com/actions/runner-images/blob/win25-vs2026/20261018.275/images/windows/Windows2025-VS2026-Readme.md
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7144870Z Image Release: https://github.com/actions/runner-images/releases/tag/win25-vs2026%2F20261018.275
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7146072Z ##[endgroup]
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7147406Z ##[group]GITHUB_TOKEN Permissions
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7149416Z Contents: read
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7150069Z Metadata: read
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7150692Z ##[endgroup]
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7152965Z Secret source: Actions
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7153945Z Cache mode: write
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7154841Z Prepare workflow directory
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7609198Z Prepare all required actions
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.7651606Z Getting action download info
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:12.9056167Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:13.2557664Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:13.6590924Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+update (windows, windows-2025)	Set up job	2026-10-20T12:24:14.1914390Z Complete job name: update (windows, windows-2025)
+update (windows, windows-2025)	Run actions/checkout@v4	﻿2026-10-20T12:24:14.4666734Z ##[group]Run actions/checkout@v4
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4667995Z with:
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4668648Z   persist-credentials: false
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4669390Z   repository: bijinfeng/mimir
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4675110Z   token: ***
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4675726Z   ssh-strict: true
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4676347Z   ssh-user: git
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4676973Z   clean: true
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4677587Z   sparse-checkout-cone-mode: true
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4678292Z   fetch-depth: 1
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4679223Z   fetch-tags: false
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4679831Z   show-progress: true
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4680443Z   lfs: false
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4681063Z   submodules: false
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4681658Z   set-safe-directory: true
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4682366Z   allow-unsafe-pr-checkout: false
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4683362Z env:
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4683908Z   BASE_VERSION: 0.1.5
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4684594Z   TARGET_VERSION: 0.1.6
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.4685237Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.6146748Z Syncing repository: bijinfeng/mimir
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.6148912Z ##[group]Getting Git version info
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.6149714Z Working directory is 'D:\a\mimir\mimir'
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:14.7408813Z [command]"C:\Program Files\Git\bin\git.exe" version
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:15.8591715Z git version 2.56.0.windows.2
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:15.8633953Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:15.8648829Z Temporarily overriding HOME='D:\a\_temp\e4799b59-57b6-4e1a-9e70-59834732609f' before making global git config changes
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:15.8649541Z Adding repository directory to the temporary git global config as a safe directory
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:15.8657227Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\mimir\mimir
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.0066728Z Deleting the contents of 'D:\a\mimir\mimir'
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.0072204Z ##[group]Initializing the repository
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.0079365Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\mimir\mimir
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.1978793Z Initialized empty Git repository in D:/a/mimir/mimir/.git/
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.2028054Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/bijinfeng/mimir
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.3408978Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.3409538Z ##[group]Disabling automatic garbage collection
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.3417190Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.3714683Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.3715096Z ##[group]Setting up auth
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.3724771Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:16.4017352Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:19.9649996Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:19.9981253Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:20.4184778Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:20.4485698Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:20.9129834Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:20.9425694Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:20.9436178Z ##[group]Fetching the repository
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:20.9437370Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +57b6b4eb65c1777de6b6644e6143e4f9debbb439:refs/remotes/origin/master
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3179524Z From https://github.com/bijinfeng/mimir
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3182534Z  * [new ref]         57b6b4eb65c1777de6b6644e6143e4f9debbb439 -> origin/master
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3219279Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3219768Z ##[group]Determining the checkout info
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3220326Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3229146Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.3925297Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.4235551Z ##[group]Checking out the ref
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:31.4242802Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force -B master refs/remotes/origin/master
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.5658514Z Updating files:  25% (1998/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.5940251Z Updating files:  26% (2029/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.6379135Z Updating files:  27% (2107/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.6823235Z Updating files:  28% (2185/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.7280510Z Updating files:  29% (2263/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.7630096Z Updating files:  30% (2341/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.7853784Z Updating files:  31% (2419/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.8115522Z Updating files:  32% (2497/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.8499710Z Updating files:  33% (2575/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.8792644Z Updating files:  34% (2653/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.8963513Z Updating files:  35% (2731/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.9191607Z Updating files:  36% (2809/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.9536950Z Updating files:  37% (2887/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:32.9823903Z Updating files:  38% (2965/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.0115354Z Updating files:  39% (3043/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.0525296Z Updating files:  40% (3121/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.1318694Z Updating files:  41% (3199/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.1563505Z Updating files:  42% (3277/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.1732302Z Updating files:  43% (3355/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.2165507Z Updating files:  44% (3433/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.2419905Z Updating files:  45% (3511/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.2688608Z Updating files:  46% (3589/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.2856142Z Updating files:  47% (3667/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.2996572Z Updating files:  48% (3745/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.3237773Z Updating files:  49% (3823/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.3397816Z Updating files:  50% (3901/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.3570084Z Updating files:  51% (3979/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.3728121Z Updating files:  52% (4057/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.3953774Z Updating files:  53% (4135/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.4476165Z Updating files:  54% (4213/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.4653604Z Updating files:  55% (4291/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.5054365Z Updating files:  56% (4369/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.5185517Z Updating files:  56% (4370/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:33.5388703Z Updating files:  57% (4447/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.1312889Z Updating files:  58% (4525/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.2445542Z Updating files:  59% (4603/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.2804284Z Updating files:  60% (4681/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.3223880Z Updating files:  61% (4759/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.3489991Z Updating files:  62% (4837/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.3817747Z Updating files:  63% (4915/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.4066323Z Updating files:  64% (4993/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.4543895Z Updating files:  65% (5071/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.5060810Z Updating files:  66% (5149/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.5105481Z Updating files:  67% (5227/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.5318819Z Updating files:  67% (5246/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.5501008Z Updating files:  68% (5305/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.5704935Z Updating files:  69% (5383/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.6023257Z Updating files:  70% (5461/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.6260820Z Updating files:  71% (5539/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.6483066Z Updating files:  72% (5617/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.6791942Z Updating files:  73% (5695/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.7007455Z Updating files:  74% (5773/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.7337853Z Updating files:  75% (5851/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.7576644Z Updating files:  76% (5929/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.7887334Z Updating files:  77% (6007/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.8246769Z Updating files:  78% (6085/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.8975882Z Updating files:  79% (6163/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.9470097Z Updating files:  80% (6241/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.9790608Z Updating files:  81% (6319/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:34.9957656Z Updating files:  82% (6397/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.0142228Z Updating files:  83% (6475/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.0339533Z Updating files:  84% (6553/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.5353323Z Updating files:  85% (6631/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.5394528Z Updating files:  85% (6700/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.5581438Z Updating files:  86% (6709/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.5733163Z Updating files:  87% (6787/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.6065817Z Updating files:  88% (6865/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.6235563Z Updating files:  89% (6943/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.6430875Z Updating files:  90% (7021/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.7180315Z Updating files:  91% (7099/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.7371668Z Updating files:  92% (7177/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.7611970Z Updating files:  93% (7255/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.7811797Z Updating files:  94% (7333/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.7989394Z Updating files:  95% (7411/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8141176Z Updating files:  96% (7489/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8310254Z Updating files:  97% (7567/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8468501Z Updating files:  98% (7645/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8655935Z Updating files:  99% (7723/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8713349Z Updating files: 100% (7801/7801)
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8714236Z Updating files: 100% (7801/7801), done.
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8837109Z Reset branch 'master'
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.8850454Z branch 'master' set up to track 'origin/master'.
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.9037892Z ##[endgroup]
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.9370483Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.9646519Z 57b6b4eb65c1777de6b6644e6143e4f9debbb439
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.9686735Z ##[group]Removing auth
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.9694726Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:35.9994685Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:36.4732675Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:36.5057179Z http.https://github.com/.extraheader
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:36.5111747Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:36.5490126Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:37.0106036Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:37.0482334Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+update (windows, windows-2025)	Run actions/checkout@v4	2026-10-20T12:24:37.5310177Z ##[endgroup]
+update (windows, windows-2025)	Run actions/setup-node@v4	﻿2026-10-20T12:24:37.5834265Z ##[group]Run actions/setup-node@v4
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5834682Z with:
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5834927Z   node-version-file: .nvmrc
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5835120Z   always-auth: false
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5835280Z   check-latest: false
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5837341Z   token: ***
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5837492Z env:
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5837652Z   BASE_VERSION: 0.1.5
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5837821Z   TARGET_VERSION: 0.1.6
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.5837979Z ##[endgroup]
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.7194829Z Resolved .nvmrc as 22
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.7523994Z Found in cache @ C:\hostedtoolcache\windows\node\22.23.3\x64
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.7530873Z (node:1484) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.7531715Z (Use `node --trace-deprecation ...` to show where the warning was created)
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:37.7533852Z ##[group]Environment details
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:53.9890576Z node: v22.23.3
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:53.9890907Z npm: 10.9.9
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:53.9891190Z yarn: 1.22.22
+update (windows, windows-2025)	Run actions/setup-node@v4	2026-10-20T12:24:53.9891760Z ##[endgroup]
+update (windows, windows-2025)	Validate harness behavior	﻿2026-10-20T12:24:54.0147805Z ##[group]Run node --test apps/desktop/scripts/update-smoke.test.mjs
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.0148540Z ^[[36;1mnode --test apps/desktop/scripts/update-smoke.test.mjs^[[0m
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.0612661Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.0613013Z env:
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.0613175Z   BASE_VERSION: 0.1.5
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.0613340Z   TARGET_VERSION: 0.1.6
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.0613499Z ##[endgroup]
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.7199100Z TAP version 13
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8396840Z # Subtest: pins exact stable versions and rejects equal, lower or prerelease versions
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8401737Z ok 1 - pins exact stable versions and rejects equal, lower or prerelease versions
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8402805Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8404096Z   duration_ms: 34.8769
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8404548Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8404792Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8405678Z # Subtest: only accepts complete, stable official public release asset with digest
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8407034Z ok 2 - only accepts complete, stable official public release asset with digest
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8407708Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8407932Z   duration_ms: 1.2633
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8408187Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8408732Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8603394Z # Subtest: hashes actual file bytes and detects changed package contents
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8605229Z ok 3 - hashes actual file bytes and detects changed package contents
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8606177Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8606343Z   duration_ms: 24.9395
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8606527Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:54.8606675Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6195559Z # (node:6644) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6196554Z # (Use `node --trace-warnings ...` to show where the warning was created)
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6199253Z # Subtest: bounded waits require the actual condition and retain the last failure
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6200581Z ok 4 - bounded waits require the actual condition and retain the last failure
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6201279Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6201588Z   duration_ms: 19.1343
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6201926Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6202250Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6202987Z # Subtest: screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6204057Z ok 5 - screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6204726Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6205021Z   duration_ms: 0.7639
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6205355Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6205659Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6206242Z # Subtest: screenshot paint helper runs as an isolated serialized browser expression
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6207096Z ok 6 - screenshot paint helper runs as an isolated serialized browser expression
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6207669Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6207957Z   duration_ms: 0.9566
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6208275Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6208569Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6218419Z # Subtest: screenshot paint timeout and page errors fail capture and clean up their pending waits
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6219810Z ok 7 - screenshot paint timeout and page errors fail capture and clean up their pending waits
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6220587Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6220847Z   duration_ms: 0.472
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6221101Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6221330Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6225198Z # Subtest: CDP paint evaluation has an external five-second deadline even without any renderer response
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6226343Z ok 8 - CDP paint evaluation has an external five-second deadline even without any renderer response
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6227281Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6227698Z   duration_ms: 733.1887
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6227958Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6228181Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6228769Z # Subtest: CDP clears custom request timers on response, target closure and synchronous send failure
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6233505Z ok 9 - CDP clears custom request timers on response, target closure and synchronous send failure
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6234091Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6234312Z   duration_ms: 0.9662
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6234615Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6234834Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6235320Z # Subtest: CDP correlates out-of-order replies and rejects interrupted requests
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6236727Z ok 10 - CDP correlates out-of-order replies and rejects interrupted requests
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6237226Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6237454Z   duration_ms: 0.8293
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6237702Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6237920Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6238403Z # Subtest: renderer exceptions fail the harness rather than becoming a false success
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6239670Z ok 11 - renderer exceptions fail the harness rather than becoming a false success
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6240191Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6240399Z   duration_ms: 0.2583
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6240664Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6240865Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6241359Z # Subtest: real close during mouse release needs explicit target disappearance confirmation
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6242131Z ok 12 - real close during mouse release needs explicit target disappearance confirmation
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6243470Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6243679Z   duration_ms: 0.6493
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6243904Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6244108Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6328119Z # Subtest: closing clicks still verify disappearance when CDP acknowledges the release
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6328939Z ok 13 - closing clicks still verify disappearance when CDP acknowledges the release
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6329414Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6329633Z   duration_ms: 0.4389
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6329866Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6330072Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6331789Z # Subtest: unexpected target closure and mouse/protocol failures are never accepted as clicks
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6332468Z ok 14 - unexpected target closure and mouse/protocol failures are never accepted as clicks
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6333035Z   ---
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6333249Z   duration_ms: 0.4687
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6333485Z   type: 'test'
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6333706Z   ...
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6608070Z 1..14
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6608395Z # tests 14
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6608633Z # suites 0
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6608831Z # pass 14
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6609090Z # fail 0
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6609961Z # cancelled 0
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6610183Z # skipped 0
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6610525Z # todo 0
+update (windows, windows-2025)	Validate harness behavior	2026-10-20T12:24:55.6611178Z # duration_ms 1036.7218
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	﻿2026-10-20T12:24:55.7868190Z ##[group]Run node apps/desktop/scripts/update-smoke.mjs
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:24:55.7868587Z ^[[36;1mnode apps/desktop/scripts/update-smoke.mjs^[[0m
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:24:55.7926574Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:24:55.7926864Z env:
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:24:55.7927016Z   BASE_VERSION: 0.1.5
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:24:55.7927189Z   TARGET_VERSION: 0.1.6
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:24:55.7927358Z ##[endgroup]
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:28:36.3374520Z PASS official download verified; completion did not open a details window
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:28:37.2726097Z PASS ordinary UI close after download did not install
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:28:58.6449741Z PASS pending real HTTP save triggered guard; continue editing canceled installation
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3147505Z node:internal/modules/run_main:123
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3149774Z     triggerUncaughtException(
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3151419Z     ^
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3151616Z
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3151859Z Error: CDP timeout: Runtime.evaluate
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3195963Z     at Timeout.<anonymous> (file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke-lib.mjs:172:16)
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3197120Z     at listOnTimeout (node:internal/timers:585:17)
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3198101Z     at process.processTimers (node:internal/timers:521:7)
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3198700Z
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.3199136Z Node.js v22.23.3
+update (windows, windows-2025)	Real Windows installed NSIS upgrade from public GitHub Releases	2026-10-20T12:29:04.4062551Z ##[error]Process completed with exit code 1.
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	﻿2026-10-20T12:29:04.4251967Z ##[group]Run actions/upload-artifact@v4
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4252343Z with:
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4252706Z   name: desktop-update-windows-0.1.5-to-0.1.6
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4253060Z   path: D:\a\_temp/mimir-update-e2e/evidence/
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4253343Z   if-no-files-found: warn
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4253572Z   retention-days: 14
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4253795Z   compression-level: 6
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4254041Z   overwrite: false
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4254256Z   include-hidden-files: false
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4254476Z env:
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4254653Z   BASE_VERSION: 0.1.5
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4254865Z   TARGET_VERSION: 0.1.6
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.4255072Z ##[endgroup]
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.5852971Z (node:3468) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.5853641Z (Use `node --trace-deprecation ...` to show where the warning was created)
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.5916567Z With the provided path, there will be 8 files uploaded
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.5920763Z Artifact name is valid!
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.5922152Z Root directory input is valid!
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.7746065Z Beginning upload of artifact content to blob storage
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.8209199Z (node:3468) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.8463582Z Uploaded bytes 159450
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.8614470Z Finished uploading artifact content to blob storage!
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.8615635Z SHA256 digest of uploaded artifact zip is 6865535fe414144c0776dcd79691170bb14805a75977118fee455509f84879fe
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:04.8617713Z Finalizing artifact upload
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:05.0927561Z Artifact desktop-update-windows-0.1.5-to-0.1.6.zip successfully finalized. Artifact ID 12264106657
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:05.0928497Z Artifact desktop-update-windows-0.1.5-to-0.1.6 has been successfully uploaded! Final size is 159450 bytes. Artifact ID is 12264106657
+update (windows, windows-2025)	Preserve real upgrade logs, states and screenshots	2026-10-20T12:29:05.0937384Z Artifact download URL: https://github.com/bijinfeng/mimir/actions/runs/39421962037/artifacts/12264106657
+update (windows, windows-2025)	Post Run actions/checkout@v4	﻿2026-10-20T12:29:05.1241422Z Post job cleanup.
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.2622482Z [command]"C:\Program Files\Git\bin\git.exe" version
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.2909528Z git version 2.56.0.windows.2
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.2961254Z Temporarily overriding HOME='D:\a\_temp\4d44a9bd-5a0d-430b-890d-bbf331d5c274' before making global git config changes
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.2962216Z Adding repository directory to the temporary git global config as a safe directory
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.2968769Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\mimir\mimir
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.3278474Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.3596802Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.8295860Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:05.8592978Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:06.3363405Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+update (windows, windows-2025)	Post Run actions/checkout@v4	2026-10-20T12:29:06.3669226Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+update (windows, windows-2025)	Complete job	﻿2026-10-20T12:29:06.8465569Z Cleaning up orphan processes
+update (windows, windows-2025)	Complete job	2026-10-20T12:29:06.9157578Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

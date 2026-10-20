@@ -135,3 +135,11 @@ mac ARM64官方3→4手动替换已完整成功，证据mac-official-manual/READ
 version-only b58c149的CI39415625320在与此前98aaf7d相同的XLSX20k测试5000ms上限失败，其余1365项server通过。原始失败归档github-v016-ci-attempt1-failed.log；5基线完整同源测试成功不能抹去这次失败。正在检查该测试未压缩ZIP的无关字节相等比较开销；保持20k输入/真实操作/原字节断言和预算，不rerun-until-green。尚未推v0.1.6 tag。
 
 7a3c34d只修改既有20k测试的ZIP容器压缩，所有15个解压entry/20k cells/真实操作/字节与version断言/5000ms完全保留；Node22完整107项、server类型和静态门通过，独立重建验证等价。详见20k-fixture-ci-diagnosis.md、xlsx-fixture-independent-review.md。已推master；固定7a3c34d的v0.1.6 tag触发五目标[39418582165](https://github.com/bijinfeng/mimir/actions/runs/39418582165)，完整新CI[39418539314](https://github.com/bijinfeng/mimir/actions/runs/39418539314)同时执行。desktop/fnOS版本为0.1.6，生产代码与v0.1.5相同，旧失败tag/资产不变。
+
+## 0.1.6 正式公开与新基线实际升级
+
+39418582165 已 completed/success：五目标构建/原生资源/真实 smoke、聚合与 publisher 全通过；[v0.1.6](https://github.com/bijinfeng/mimir/releases/tag/v0.1.6) 于12:23:18Z正式公开15资产。固定7a3c34d的完整CI39418539314也全部success，含pnpmcheck/build/PG/S3。证据github-v016-published.json、github-v016-fnos-native.log、github-v016-publish-success.log、github-v016-fixed-ci.json/.log；CI日志只去ANSI和行尾空白。
+
+最终FPK已匿名完整下载170553985字节，SHA256=1903d6391e684cf4177fa8cef60e74e1a572cb18ad8912046155c9fbef9ac30f，与匿名官方digest一致；完整下载耗时158.93秒，无Authorization/Range，证据fnos-v016-public/。该结果不代替fnOS设备安装升级。
+
+57b6b4e已推master，使用只读绘制等待的新外部脚本运行[39421962037](https://github.com/bijinfeng/mimir/actions/runs/39421962037)官方5→6。两平台均通过正式下载、普通退出不安装、真实保存guard/取消，随后真实PATCH200，但在重拍被工作区覆盖的更新详情时Runtime.evaluate超时。Linux从guard cancel到异常约5.69秒，与截图paint外部5秒上限吻合；未捕获旧visibility，不能据此断言精确occlusion原因。两平台均未进入后续真实安装，不计为升级成功。原始结果/截图/HTML/log保存在update-015-to-016-attempt1与github-015-to-016-attempt1-failed.json/.log。实际目视两平台save-guard.png完整可见，修复了旧只见遮罩的采集窗口。

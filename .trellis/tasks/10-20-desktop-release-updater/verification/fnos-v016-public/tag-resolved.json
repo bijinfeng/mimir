@@ -1,0 +1,33 @@
+{
+  "anonymous": true,
+  "authorizationHeaderPresent": false,
+  "annotatedTagObjects": [
+    {
+      "node_id": "TA_kwDOUiW3ftoAKGMwNTc2YTRiOTNiNmFhM2U5Yzg1NzM2NzliMGJjZjIyNzA3MDY4ZGU",
+      "sha": "c0576a4b93b6aa3e9c8573679b0bcf22707068de",
+      "url": "https://api.github.com/repos/bijinfeng/mimir/git/tags/c0576a4b93b6aa3e9c8573679b0bcf22707068de",
+      "tagger": {
+        "name": "jfbi",
+        "email": "jfbi@iflytek.com",
+        "date": "2026-10-20T11:56:37Z"
+      },
+      "object": {
+        "sha": "7a3c34d23f63e5313c8cb72f466ec096817df608",
+        "type": "commit",
+        "url": "https://api.github.com/repos/bijinfeng/mimir/git/commits/7a3c34d23f63e5313c8cb72f466ec096817df608"
+      },
+      "tag": "v0.1.6",
+      "message": "Desktop update verification target and matching fnOS 0.1.6\n",
+      "verification": {
+        "verified": false,
+        "reason": "unsigned",
+        "signature": null,
+        "payload": null,
+        "verified_at": null
+      }
+    }
+  ],
+  "resolvedCommit": "7a3c34d23f63e5313c8cb72f466ec096817df608",
+  "expectedCommit": "7a3c34d23f63e5313c8cb72f466ec096817df608",
+  "matches": true
+}

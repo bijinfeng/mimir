@@ -1,0 +1,10 @@
+{
+  "ref": "refs/tags/v0.1.6",
+  "node_id": "REF_kwDOUiW3frByZWZzL3RhZ3MvdjAuMS42",
+  "url": "https://api.github.com/repos/bijinfeng/mimir/git/refs/tags/v0.1.6",
+  "object": {
+    "sha": "c0576a4b93b6aa3e9c8573679b0bcf22707068de",
+    "type": "tag",
+    "url": "https://api.github.com/repos/bijinfeng/mimir/git/tags/c0576a4b93b6aa3e9c8573679b0bcf22707068de"
+  }
+}
