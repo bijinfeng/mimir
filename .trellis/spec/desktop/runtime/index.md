@@ -18,6 +18,7 @@ paths:
 
 - [conventions](./conventions.md)
 - [pitfalls](./pitfalls.md)
+- [releases-updates](./releases-updates.md)
 
 ## Quality Check
 

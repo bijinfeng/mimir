@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { cp, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -60,9 +60,9 @@ export default async function afterPack(context) {
     )
   }
 
-  if (electronPlatformName === 'darwin') {
+  if (electronPlatformName === 'darwin' && context.packager.config.mac?.identity === null) {
     const appPath = path.join(appOutDir, `${context.packager.appInfo.productFilename}.app`)
     console.log(`[after-pack] ad-hoc 签名 → ${appPath}`)
-    execSync(`codesign --force --deep -s - ${JSON.stringify(appPath)}`, { stdio: 'inherit' })
+    execFileSync('codesign', ['--force', '--deep', '-s', '-', appPath], { stdio: 'inherit' })
   }
 }

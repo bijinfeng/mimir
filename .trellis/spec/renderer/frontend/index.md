@@ -26,6 +26,7 @@ paths:
 - [Markdown 编辑器](./editor/index.md)
 - [主题与外观](./theme/index.md)
 - [文档面板](./document/index.md)
+- [桌面更新保存握手](../../desktop/runtime/releases-updates.md)（复用 UnsavedProvider，不另建脏状态）
 
 ## Quality Check
 

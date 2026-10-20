@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react'
+import type { DesktopUpdateApi } from '@mimir/shared/desktop'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 /**
@@ -16,6 +17,8 @@ import type { ReactNode } from 'react'
 export interface PendingLeave {
   /** 用户想做的事。确认后执行它 */
   action: () => void
+  reason?: 'update'
+  onCancel?: () => void
 }
 
 interface UnsavedContextValue {
@@ -50,7 +53,13 @@ interface UnsavedContextValue {
 
 const UnsavedContext = createContext<UnsavedContextValue | null>(null)
 
-export function UnsavedProvider({ children }: { children: ReactNode }) {
+export function UnsavedProvider({
+  children,
+  desktopUpdate,
+}: {
+  children: ReactNode
+  desktopUpdate?: DesktopUpdateApi
+}) {
   const [isDirty, setDirtyState] = useState(false)
   const [pending, setPending] = useState<PendingLeave | null>(null)
   const [saveMode, setSaveMode] = useState<'auto' | 'manual'>('manual')
@@ -65,6 +74,7 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
   const editorIdRef = useRef<string | undefined>(undefined)
   const registrationVersion = useRef(0)
   const pendingRef = useRef<PendingLeave | null>(null)
+  const leavingRef = useRef(false)
 
   /**
    * 保存函数放 ref 而不是 state：它只是一个命令入口，
@@ -87,7 +97,9 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
     ) => {
       const invalidateEditor = () => {
         editorVersion.current += 1
+        pendingRef.current?.onCancel?.()
         pendingRef.current = null
+        leavingRef.current = false
         savingRef.current = false
         setPending(null)
         setSaving(false)
@@ -116,22 +128,78 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
     [],
   )
 
-  const runGuarded = (action: () => void) => {
-    if (savingRef.current) return
-    if (!dirtyRef.current) {
-      action()
+  const beginLeave = useCallback((request: PendingLeave) => {
+    if (savingRef.current || leavingRef.current) {
+      request.onCancel?.()
       return
     }
+    if (!dirtyRef.current) {
+      request.action()
+      return
+    }
+    pendingRef.current?.onCancel?.()
     setSaveError(null)
-    const request = { action }
     pendingRef.current = request
     setPending(request)
-  }
+  }, [])
+
+  const runGuarded = (action: () => void) => beginLeave({ action })
+
+  // A shared browser leave guard also protects cloud deployments without a desktop bridge.
+  useEffect(() => {
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current && !savingRef.current) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    const preventEditing = (event: Event) => {
+      if (!leavingRef.current) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+    }
+    window.addEventListener('beforeunload', beforeUnload)
+    const events = ['keydown', 'pointerdown', 'beforeinput', 'paste', 'drop'] as const
+    for (const name of events) document.addEventListener(name, preventEditing, true)
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnload)
+      for (const name of events) document.removeEventListener(name, preventEditing, true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!desktopUpdate) return
+    const offPrepare = desktopUpdate.onPrepare((request) => {
+      beginLeave({
+        reason: 'update',
+        action: () => {
+          // Freeze user edits between acknowledgement and native beforeunload.
+          leavingRef.current = true
+          desktopUpdate.respondPrepare(request.requestId, true)
+        },
+        onCancel: () => desktopUpdate.respondPrepare(request.requestId, false),
+      })
+    })
+    const offCancelled = desktopUpdate.onPrepareCancelled(() => {
+      leavingRef.current = false
+      if (pendingRef.current?.reason === 'update') {
+        pendingRef.current = null
+        setPending(null)
+        setSaveError(null)
+      }
+    })
+    return () => {
+      offPrepare()
+      offCancelled()
+      leavingRef.current = false
+      if (pendingRef.current?.reason === 'update') pendingRef.current.onCancel?.()
+    }
+  }, [desktopUpdate, beginLeave])
 
   const resolve = (choice: 'cancel' | 'discard' | 'save') => {
     const current = pendingRef.current
     if (!current || savingRef.current) return
     if (choice === 'cancel') {
+      current.onCancel?.()
       pendingRef.current = null
       setPending(null)
       setSaveError(null)

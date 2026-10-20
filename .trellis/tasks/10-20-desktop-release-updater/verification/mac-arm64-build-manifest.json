@@ -1,0 +1,37 @@
+{
+  "targetKey": "mac-arm64",
+  "version": "0.1.0",
+  "updateMode": "manual",
+  "assets": [
+    {
+      "name": "mimir-0.1.0-mac-arm64.dmg",
+      "size": 481557958,
+      "sha512": "Sfp7ZMvtof8NFR+HIbpLzpAptAAdCvO5oYApWbB3Trfh/6FQPH9sX0XCSDN9I8uoMPQ7W8k2WksOn3G+icgG+Q==",
+      "sha256": "e025904f862a625f404c0d4e46623d7b696b2212ba2c31ddcaa37183b9b2ad9a"
+    },
+    {
+      "name": "mimir-0.1.0-mac-arm64.zip",
+      "size": 516401153,
+      "sha512": "F/6/cqGHOQ1DaDSQ+Uynf2HIidD87N3NYT2pr7XoeoSM1hjQ/A87BRsBwpE1+AJZqpKbYP2hXop7klLhhhr8MQ==",
+      "sha256": "6db2196f8bd225b23d1348e5a3581bbc7d9bc0dc81b5a6bdd8477967c98d1037"
+    },
+    {
+      "name": "latest-mac.yml",
+      "size": 503,
+      "sha512": "fvsgMsuAYQD/SIrXqQsNChKqRvNrRoRl81H/5hMqOslH+NmtNTo9FzzZxpPJVh0R7XEn2OUx4VXwXgEg/bdXxA==",
+      "sha256": "277dcdb5cd0204a95d104fa2debe60be4daed8fc6ba066b8854f6c1f0191ad14"
+    },
+    {
+      "name": "mimir-0.1.0-mac-arm64.dmg.blockmap",
+      "size": 500277,
+      "sha512": "PMuS7h5IDNDp2Vg0/1IuyZzkMXL0UqVE4DiU7JXl4qrXr/0GiLDNeXO29m1qmjF570J6NS6R3PEdCHfJxeXifg==",
+      "sha256": "cee0c5e98b932472770cf819ee6ca66157cb57163eebea78b43ee32b29d6b8ec"
+    },
+    {
+      "name": "mimir-0.1.0-mac-arm64.zip.blockmap",
+      "size": 514142,
+      "sha512": "jIu1AzAJv4XJMptKlXPFkejvDr8gBFb3mRxK8HabikNp+eLOUTr0qV6wKzA+Vg4as9xhEAcpQSZfI5sXqkZU0g==",
+      "sha256": "e49422b54389ae1ff182eaa0f714aae409d86328662b49a48d18a4b272bd52a5"
+    }
+  ]
+}

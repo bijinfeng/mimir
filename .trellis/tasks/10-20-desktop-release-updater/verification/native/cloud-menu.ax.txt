@@ -1,0 +1,7 @@
+Window: "Mimir 云端更新验证", App: mimir.
+1 mimir, Secondary Actions: Cancel, Pick
+	2 菜单 Secondary Actions: Cancel
+		3 更换使用方式…, ID: itemSelected:
+		4 软件更新…, ID: itemSelected:
+		5 Quit mimir, ID: terminate:
+		6 退出并保留窗口

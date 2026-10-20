@@ -161,4 +161,67 @@ export interface MimirDesktopBridge {
   /** 使用方式的选择与切换（D-100）。首次启动尚未选择时 `get()` 为 null */
   mode: DesktopModeApi
   window: DesktopWindowApi
+  update: DesktopUpdateApi
+}
+
+/** 更新状态由主进程维护；页面只能消费真实进度与固定发布来源。 */
+export interface DesktopUpdateState {
+  status:
+    | 'disabled'
+    | 'idle'
+    | 'checking'
+    | 'current'
+    | 'unpublished'
+    | 'available'
+    | 'downloading'
+    | 'preparing'
+    | 'downloaded'
+    | 'restarting'
+    | 'blocked'
+    | 'error'
+  currentVersion: string
+  version?: string
+  releaseNotes?: string
+  releaseUrl: string
+  platform: DesktopPlatform
+  arch: string
+  capability: 'automatic' | 'manual' | 'disabled'
+  autoDownload: boolean
+  checkedAt?: string
+  progress?: { transferred: number; total?: number; percent?: number }
+  message?: string
+  retry?: 'check' | 'download' | 'install'
+  /** 旧云端无保存握手；用户需先保存，再在专用窗口明确确认。 */
+  requiresSaveConfirmation?: boolean
+  /** 工作区已关闭或宿主部分关闭，须退出客户端后重新启动。 */
+  recoveryRequired?: boolean
+}
+
+export interface DesktopUpdatePrepareRequest {
+  requestId: string
+  version: string
+}
+
+/** 主工作区只有状态/打开入口；保存响应不能自行触发安装。 */
+export interface DesktopUpdateApi {
+  getState(): Promise<DesktopUpdateState>
+  open(appearance?: 'auto' | 'light' | 'dark'): void
+  setAppearance(appearance: 'auto' | 'light' | 'dark'): void
+  onState(listener: (state: DesktopUpdateState) => void): () => void
+  onPrepare(listener: (request: DesktopUpdatePrepareRequest) => void): () => void
+  respondPrepare(requestId: string, ready: boolean): void
+  onPrepareCancelled(listener: () => void): () => void
+}
+
+/** 仅随应用分发的独立更新窗口拥有动作能力。 */
+export interface MimirUpdaterBridge {
+  getState(): Promise<DesktopUpdateState>
+  check(): Promise<void>
+  download(): Promise<void>
+  install(cloudSavedConfirmed?: boolean): Promise<void>
+  setAutoDownload(enabled: boolean): Promise<void>
+  onState(listener: (state: DesktopUpdateState) => void): () => void
+  openRelease(): Promise<void>
+  returnToDocument(): void
+  close(): void
 }

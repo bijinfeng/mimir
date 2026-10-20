@@ -10,6 +10,9 @@ import {
 import { normalizeCloudUrl, probeCloudUrl } from './cloud.js'
 import { parseModeConfig, readModeConfig, writeModeConfig } from './config.js'
 import { startHost, type HostHandle, type HostPaths } from './host.js'
+import { installCloseFeedback, WorkspaceTransition } from './workspace-close.js'
+import { HostShutdown } from './host-shutdown.js'
+import { createNativeUpdater } from './native-updater.js'
 import { navigationDecision, partitionFor, type WindowSurface } from './security.js'
 
 /**
@@ -66,6 +69,20 @@ if (process.platform === 'linux') {
 }
 
 let host: HostHandle | null = null
+let shutdown: HostShutdown | null = null
+let updatePreparing = false
+const workspaceTransition = new WorkspaceTransition()
+let quitReady = false
+let updater: Awaited<ReturnType<typeof createNativeUpdater>> | null = null
+
+function closeHost(): Promise<void> {
+  shutdown ??= new HostShutdown(async () => {
+    if (!host) return
+    await host.close()
+    host = null
+  })
+  return shutdown.close()
+}
 let bootInfo: DesktopBootInfo | null = null
 let win: BrowserWindow | null = null
 let windowSurface: WindowSurface | null = null
@@ -194,28 +211,45 @@ function createWindow(url: string, surface: WindowSurface): BrowserWindow {
   win = created
   windowSurface = surface
   windowControls(created)
+  installCloseFeedback(
+    created,
+    () => updatePreparing,
+    () =>
+      dialog.showMessageBox(created, {
+        type: 'info',
+        title: '当前页面暂时阻止了关闭',
+        message: '当前页面暂时阻止了关闭，请先返回文档完成保存或进行中的操作。',
+        buttons: ['返回文档'],
+        defaultId: 0,
+        cancelId: 0,
+        noLink: true,
+      }),
+  )
   guardNavigation(created, url, partition)
   watchCloudLoadFailure(created)
   created.on('closed', () => {
     if (win === created) {
       win = null
       windowSurface = null
+      if (!updatePreparing && !workspaceTransition.transitioning) app.quit()
     }
   })
   void created.loadURL(url)
   return created
 }
 
-/** 窗口装饰不能在现有 BrowserWindow 上切换；先开新窗，避免触发退出。 */
+/** 旧工作区完成保存/关闭后再发布新窗口，拒绝关闭时保留原窗口身份。 */
 async function loadWindow(
   target: BrowserWindow,
   url: string,
   surface: WindowSurface,
 ): Promise<void> {
-  // Session 在 BrowserWindow 构造时固定；即使只是 local ↔ setup 也必须换窗。
+  if (updatePreparing || workspaceTransition.transitioning || target !== win) return
+  // Session 在构造时固定；等待旧窗口确实关闭，避免 beforeunload 拒绝后留下孤儿。
   if (windowSurface !== surface) {
-    createWindow(url, surface)
-    target.close()
+    await workspaceTransition.replace(target, () => {
+      createWindow(url, surface)
+    })
     return
   }
   windowSurface = surface
@@ -524,8 +558,13 @@ async function handleCloudUnreachable(
  */
 async function showSetupPage(target: BrowserWindow): Promise<void> {
   if (target.isDestroyed() || target !== win) return
-  setupVisible = true
-  await loadWindow(target, setupPageUrl(), 'setup')
+  if (updatePreparing || workspaceTransition.transitioning) return
+  try {
+    await loadWindow(target, setupPageUrl(), 'setup')
+    setupVisible = true
+  } catch (error) {
+    console.warn('[desktop] 切换使用方式已取消：', error)
+  }
 }
 
 /** 云端页面不带桌面设置入口，切换动作必须由载体自己提供。 */
@@ -542,6 +581,14 @@ function installApplicationMenu(): void {
               const target = win
               if (target && !target.isDestroyed()) void showSetupPage(target)
             },
+          },
+          {
+            id: 'software-update',
+            label:
+              updater?.controller.getState().status === 'downloaded'
+                ? '软件更新… · 可安装'
+                : '软件更新…',
+            click: () => updater?.open(),
           },
           { type: 'separator' },
           { role: 'quit' },
@@ -666,6 +713,24 @@ function registerModeBridge(paths: HostPaths): void {
 
 async function main(): Promise<void> {
   console.log('[desktop] whenReady，开始启动流程')
+  updater = await createNativeUpdater({
+    workspace: () => ({
+      window: workspaceTransition.transitioning ? null : win,
+      surface: windowSurface,
+    }),
+    closeHost,
+    setPreparing: (value) => {
+      updatePreparing = value
+      if (!value && !win && BrowserWindow.getAllWindows().length === 0) app.quit()
+    },
+    menuChanged: (state) => {
+      const item = Menu.getApplicationMenu()?.getMenuItemById('software-update')
+      if (item)
+        item.label = ['downloaded', 'blocked'].includes(state.status)
+          ? '软件更新… · 可安装'
+          : '软件更新…'
+    },
+  })
   installApplicationMenu()
   ipcMain.handle('mimir:boot-info', () => bootInfo)
   ipcMain.on('mimir:quit', () => app.quit())
@@ -710,22 +775,42 @@ if (!gotLock) {
       existing.focus()
     }
   })
-  void app.whenReady().then(main)
+  void app
+    .whenReady()
+    .then(main)
+    .then(() => updater?.controller.start())
 }
 
-// 单窗口应用：关窗即退出（含 macOS）。单用户知识库没有「留在后台」的场景，
-// 而宿主进程还开着的时候驻留只会让「关了窗口为什么还有进程」变成疑问
+// Closing details alone never exits; closing the primary workspace still does.
 app.on('window-all-closed', () => {
-  app.quit()
+  if (!updatePreparing && !workspaceTransition.transitioning) app.quit()
 })
 
-// 优雅关停：先停 HTTP 监听再关数据库（WAL 落盘），5 秒兜底强制退出
+// Window close/renderer beforeunload must precede host shutdown even on ordinary quit.
 app.on('before-quit', (event) => {
-  if (!host) return
+  if (quitReady) return
+  if (workspaceTransition.transitioning) {
+    event.preventDefault()
+    return
+  }
+  if (win && !win.isDestroyed()) {
+    event.preventDefault()
+    if (!updatePreparing) win.close()
+    return
+  }
+  if (!host) {
+    updater?.dispose()
+    return
+  }
   event.preventDefault()
-  const closing = host
-  host = null
-  void Promise.race([closing.close(), new Promise<void>((done) => setTimeout(done, 5000))]).then(
-    () => app.quit(),
-  )
+  void closeHost()
+    .catch((error: unknown) => {
+      console.error('[desktop] 关闭宿主失败：', error)
+    })
+    .then(() => {
+      // Ordinary quit may exit after a failed shutdown; update installation never does.
+      quitReady = true
+      updater?.dispose()
+      app.quit()
+    })
 })

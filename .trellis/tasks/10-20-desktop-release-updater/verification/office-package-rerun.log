@@ -1,0 +1,13 @@
+$ vitest run --passWithNoTests
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
+
+
+ Test Files  235 passed (235)
+      Tests  2774 passed (2774)
+   Start at  13:42:32
+   Duration  142.18s (import 46%, tests 42%, environment 10%, transform 2%)
+
+    Isolate  235 workers spawned · ~791ms startup each (spawn + environment, per file)
+             at least ~19.86s faster with isolate: false — reuses workers across files instead of one per file
+

@@ -1,0 +1,15 @@
+
+[smoke] PASS A 已选模式：页面启动流程走到了取数据这一步
+[smoke] PASS A 渲染产物被真的加载（静态服务指向 dist/renderer）
+[smoke] PASS A 渲染层样式被加载
+[smoke] PASS A 本地模式免登录生效（令牌 cookie 带上了）
+[smoke] PASS A 守卫放行，页面开始取文档（不是停在登录页）
+[smoke] PASS A 侧栏开始取目录树（应用外壳渲染了）
+[smoke] PASS B 首次启动：进程活着（没有因为缺少宿主而崩）
+[smoke] PASS B 首次启动不启动宿主（选择页必须在没有宿主时也能打开）
+[smoke] PASS B 首次启动没有报错
+[smoke] PASS C 云端模式：远端页面已加载且拿不到桌面桥
+[smoke] PASS C 云端模式：窗口确实请求了远端页面
+[smoke] PASS C 云端模式：没有启动本地宿主
+
+[smoke] 自检通过

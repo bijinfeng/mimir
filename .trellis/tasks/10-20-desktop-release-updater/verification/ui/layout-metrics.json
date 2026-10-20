@@ -1,0 +1,1894 @@
+[
+  {
+    "filename": "after-dark-390.html",
+    "width": 390,
+    "height": 600,
+    "scroll": 390,
+    "text": "mimir\n可重启更新\n关于 mimir\n版本\n0.1.0\n可重启更新\n使用方式\n本地使用"
+  },
+  {
+    "filename": "after-dark-920.html",
+    "width": 920,
+    "height": 600,
+    "scroll": 920,
+    "text": "mimir\n可重启更新\n关于 mimir\n版本\n0.1.0\n可重启更新\n使用方式\n本地使用"
+  },
+  {
+    "filename": "after-light-390.html",
+    "width": 390,
+    "height": 600,
+    "scroll": 390,
+    "text": "mimir\n可重启更新\n关于 mimir\n版本\n0.1.0\n可重启更新\n使用方式\n本地使用"
+  },
+  {
+    "filename": "after-light-920.html",
+    "width": 920,
+    "height": 600,
+    "scroll": 920,
+    "text": "mimir\n可重启更新\n关于 mimir\n版本\n0.1.0\n可重启更新\n使用方式\n本地使用"
+  },
+  {
+    "filename": "before-dark-390.html",
+    "width": 390,
+    "height": 600,
+    "scroll": 390,
+    "text": "mimir\n关于 mimir\n版本\n0.1.0\n使用方式\n本地使用"
+  },
+  {
+    "filename": "before-dark-920.html",
+    "width": 920,
+    "height": 600,
+    "scroll": 920,
+    "text": "mimir\n关于 mimir\n版本\n0.1.0\n使用方式\n本地使用"
+  },
+  {
+    "filename": "before-light-390.html",
+    "width": 390,
+    "height": 600,
+    "scroll": 390,
+    "text": "mimir\n关于 mimir\n版本\n0.1.0\n使用方式\n本地使用"
+  },
+  {
+    "filename": "before-light-920.html",
+    "width": 920,
+    "height": 600,
+    "scroll": 920,
+    "text": "mimir\n关于 mimir\n版本\n0.1.0\n使用方式\n本地使用"
+  },
+  {
+    "filename": "new-available-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n下载会在后台进行，不会打断当前工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记"
+  },
+  {
+    "filename": "new-available-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n下载会在后台进行，不会打断当前工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记"
+  },
+  {
+    "filename": "new-available-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n下载会在后台进行，不会打断当前工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记"
+  },
+  {
+    "filename": "new-available-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n下载会在后台进行，不会打断当前工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记"
+  },
+  {
+    "filename": "new-blocked-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 379,
+      "width": 360,
+      "height": 101,
+      "top": 379,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请返回文档处理未保存内容，已下载的更新会保留。\n\n当前内容还没保存，暂未重启。\n自动下载更新\n\n后台下载，准备好后提醒"
+  },
+  {
+    "filename": "new-blocked-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请返回文档处理未保存内容，已下载的更新会保留。\n\n当前内容还没保存，暂未重启。\n自动下载更新\n\n后台下载，准备好后提醒"
+  },
+  {
+    "filename": "new-blocked-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 379,
+      "width": 360,
+      "height": 101,
+      "top": 379,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请返回文档处理未保存内容，已下载的更新会保留。\n\n当前内容还没保存，暂未重启。\n自动下载更新\n\n后台下载，准备好后提醒"
+  },
+  {
+    "filename": "new-blocked-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请返回文档处理未保存内容，已下载的更新会保留。\n\n当前内容还没保存，暂未重启。\n自动下载更新\n\n后台下载，准备好后提醒"
+  },
+  {
+    "filename": "new-checking-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在检查更新…\n\n正在获取最新版本信息，你可以关闭此窗口继续工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录"
+  },
+  {
+    "filename": "new-checking-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在检查更新…\n\n正在获取最新版本信息，你可以关闭此窗口继续工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录"
+  },
+  {
+    "filename": "new-checking-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在检查更新…\n\n正在获取最新版本信息，你可以关闭此窗口继续工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录"
+  },
+  {
+    "filename": "new-checking-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在检查更新…\n\n正在获取最新版本信息，你可以关闭此窗口继续工作。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录"
+  },
+  {
+    "filename": "new-cloud-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 339,
+      "width": 360,
+      "height": 141,
+      "top": 339,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请先返回文档保存当前内容。保存完成后，再回来确认重启。\n\n请先在文档中保存，再确认重启。\n自动下载更新\n\n后台下载，准"
+  },
+  {
+    "filename": "new-cloud-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请先返回文档保存当前内容。保存完成后，再回来确认重启。\n\n请先在文档中保存，再确认重启。\n自动下载更新\n\n后台下载，准"
+  },
+  {
+    "filename": "new-cloud-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 339,
+      "width": 360,
+      "height": 141,
+      "top": 339,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请先返回文档保存当前内容。保存完成后，再回来确认重启。\n\n请先在文档中保存，再确认重启。\n自动下载更新\n\n后台下载，准"
+  },
+  {
+    "filename": "new-cloud-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请先返回文档保存当前内容。保存完成后，再回来确认重启。\n\n请先在文档中保存，再确认重启。\n自动下载更新\n\n后台下载，准"
+  },
+  {
+    "filename": "new-current-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n已是最新版本\n\n你正在使用 mimir 0.1.0。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n再次"
+  },
+  {
+    "filename": "new-current-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n已是最新版本\n\n你正在使用 mimir 0.1.0。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n再次"
+  },
+  {
+    "filename": "new-current-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n已是最新版本\n\n你正在使用 mimir 0.1.0。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n再次"
+  },
+  {
+    "filename": "new-current-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n已是最新版本\n\n你正在使用 mimir 0.1.0。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n再次"
+  },
+  {
+    "filename": "new-disabled-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n开发版本不执行自动更新\n\n可以查看正式版本的发布记录。\n\n关 闭\n查看发布记录"
+  },
+  {
+    "filename": "new-disabled-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n开发版本不执行自动更新\n\n可以查看正式版本的发布记录。\n\n关 闭\n查看发布记录"
+  },
+  {
+    "filename": "new-disabled-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n开发版本不执行自动更新\n\n可以查看正式版本的发布记录。\n\n关 闭\n查看发布记录"
+  },
+  {
+    "filename": "new-disabled-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n开发版本不执行自动更新\n\n可以查看正式版本的发布记录。\n\n关 闭\n查看发布记录"
+  },
+  {
+    "filename": "new-downloaded-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n新版本已准备好\n\n重启后将使用 mimir 0.2.0。重启会中断正在进行的回答和传输。普通退出不会安装更新。\n\n更新说明\n界面验收示例：这段内"
+  },
+  {
+    "filename": "new-downloaded-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n新版本已准备好\n\n重启后将使用 mimir 0.2.0。重启会中断正在进行的回答和传输。普通退出不会安装更新。\n\n更新说明\n界面验收示例：这段内"
+  },
+  {
+    "filename": "new-downloaded-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n新版本已准备好\n\n重启后将使用 mimir 0.2.0。重启会中断正在进行的回答和传输。普通退出不会安装更新。\n\n更新说明\n界面验收示例：这段内"
+  },
+  {
+    "filename": "new-downloaded-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n新版本已准备好\n\n重启后将使用 mimir 0.2.0。重启会中断正在进行的回答和传输。普通退出不会安装更新。\n\n更新说明\n界面验收示例：这段内"
+  },
+  {
+    "filename": "new-downloading-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n42% · 84.0 MB / 200.0 MB\n\n自动下载"
+  },
+  {
+    "filename": "new-downloading-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n42% · 84.0 MB / 200.0 MB\n\n自动下载"
+  },
+  {
+    "filename": "new-downloading-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n42% · 84.0 MB / 200.0 MB\n\n自动下载"
+  },
+  {
+    "filename": "new-downloading-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n42% · 84.0 MB / 200.0 MB\n\n自动下载"
+  },
+  {
+    "filename": "new-error-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n下载未完成\n\n请检查网络连接后重试，或前往官方下载页。\n\n下载未完成或更新文件未通过检查，请重新下载。\n自动下载更新\n\n后台下载，准备好后提醒；"
+  },
+  {
+    "filename": "new-error-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n下载未完成\n\n请检查网络连接后重试，或前往官方下载页。\n\n下载未完成或更新文件未通过检查，请重新下载。\n自动下载更新\n\n后台下载，准备好后提醒；"
+  },
+  {
+    "filename": "new-error-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n下载未完成\n\n请检查网络连接后重试，或前往官方下载页。\n\n下载未完成或更新文件未通过检查，请重新下载。\n自动下载更新\n\n后台下载，准备好后提醒；"
+  },
+  {
+    "filename": "new-error-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n下载未完成\n\n请检查网络连接后重试，或前往官方下载页。\n\n下载未完成或更新文件未通过检查，请重新下载。\n自动下载更新\n\n后台下载，准备好后提醒；"
+  },
+  {
+    "filename": "new-idle-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n检查是否有新版本\n\n更新会在后台检查，重启安装由你决定。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-idle-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n检查是否有新版本\n\n更新会在后台检查，重启安装由你决定。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-idle-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n检查是否有新版本\n\n更新会在后台检查，重启安装由你决定。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-idle-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n检查是否有新版本\n\n更新会在后台检查，重启安装由你决定。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-long-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0-with-a-long-version-label 可用\n\n下载会在后台进行，不会打断当前工作。\n\n更新说明\n验收示例 "
+  },
+  {
+    "filename": "new-long-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0-with-a-long-version-label 可用\n\n下载会在后台进行，不会打断当前工作。\n\n更新说明\n验收示例 "
+  },
+  {
+    "filename": "new-long-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0-with-a-long-version-label 可用\n\n下载会在后台进行，不会打断当前工作。\n\n更新说明\n验收示例 "
+  },
+  {
+    "filename": "new-long-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0-with-a-long-version-label 可用\n\n下载会在后台进行，不会打断当前工作。\n\n更新说明\n验收示例 "
+  },
+  {
+    "filename": "new-manual-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 379,
+      "width": 360,
+      "height": 101,
+      "top": 379,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n此测试版需要手动更新。下载后退出 mimir，再替换应用；系统可能阻止打开。\n\n查看发布记录\n稍 后\n下载 ma"
+  },
+  {
+    "filename": "new-manual-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n此测试版需要手动更新。下载后退出 mimir，再替换应用；系统可能阻止打开。\n\n查看发布记录\n稍 后\n下载 ma"
+  },
+  {
+    "filename": "new-manual-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 379,
+      "width": 360,
+      "height": 101,
+      "top": 379,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n此测试版需要手动更新。下载后退出 mimir，再替换应用；系统可能阻止打开。\n\n查看发布记录\n稍 后\n下载 ma"
+  },
+  {
+    "filename": "new-manual-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\nmimir 0.2.0 可用\n\n此测试版需要手动更新。下载后退出 mimir，再替换应用；系统可能阻止打开。\n\n查看发布记录\n稍 后\n下载 ma"
+  },
+  {
+    "filename": "new-preparing-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备更新…\n\n下载已完成，正在检查更新文件，暂时还不能安装。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n"
+  },
+  {
+    "filename": "new-preparing-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备更新…\n\n下载已完成，正在检查更新文件，暂时还不能安装。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n"
+  },
+  {
+    "filename": "new-preparing-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备更新…\n\n下载已完成，正在检查更新文件，暂时还不能安装。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n"
+  },
+  {
+    "filename": "new-preparing-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备更新…\n\n下载已完成，正在检查更新文件，暂时还不能安装。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n"
+  },
+  {
+    "filename": "new-recovery-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请从应用菜单退出 mimir，再重新启动以恢复使用。已下载的更新尚未安装。\n\n工作区已关闭，但本地服务未能安全退出。请"
+  },
+  {
+    "filename": "new-recovery-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请从应用菜单退出 mimir，再重新启动以恢复使用。已下载的更新尚未安装。\n\n工作区已关闭，但本地服务未能安全退出。请"
+  },
+  {
+    "filename": "new-recovery-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请从应用菜单退出 mimir，再重新启动以恢复使用。已下载的更新尚未安装。\n\n工作区已关闭，但本地服务未能安全退出。请"
+  },
+  {
+    "filename": "new-recovery-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n暂未重启，更新尚未安装\n\n请从应用菜单退出 mimir，再重新启动以恢复使用。已下载的更新尚未安装。\n\n工作区已关闭，但本地服务未能安全退出。请"
+  },
+  {
+    "filename": "new-restarting-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备重启…\n\n正在处理当前内容的保存与关闭，请稍候。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-restarting-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备重启…\n\n正在处理当前内容的保存与关闭，请稍候。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-restarting-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备重启…\n\n正在处理当前内容的保存与关闭，请稍候。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-restarting-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在准备重启…\n\n正在处理当前内容的保存与关闭，请稍候。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关 闭\n"
+  },
+  {
+    "filename": "new-unknown-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n84.0 MB 已下载\n\n自动下载更新\n\n关闭后对后续更新生"
+  },
+  {
+    "filename": "new-unknown-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n84.0 MB 已下载\n\n自动下载更新\n\n关闭后对后续更新生"
+  },
+  {
+    "filename": "new-unknown-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n84.0 MB 已下载\n\n自动下载更新\n\n关闭后对后续更新生"
+  },
+  {
+    "filename": "new-unknown-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n正在下载 mimir 0.2.0\n\n关闭此窗口不会取消下载，准备好后会轻提示你。\n\n84.0 MB 已下载\n\n自动下载更新\n\n关闭后对后续更新生"
+  },
+  {
+    "filename": "new-unpublished-dark-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n目前还没有可用的发布版本\n\n稍后可以再次检查，或查看发布记录。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关"
+  },
+  {
+    "filename": "new-unpublished-dark-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n目前还没有可用的发布版本\n\n稍后可以再次检查，或查看发布记录。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关"
+  },
+  {
+    "filename": "new-unpublished-light-360.html",
+    "width": 360,
+    "height": 480,
+    "scroll": 360,
+    "footer": {
+      "x": 0,
+      "y": 423,
+      "width": 360,
+      "height": 57,
+      "top": 423,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 360,
+      "height": 480,
+      "top": 0,
+      "right": 360,
+      "bottom": 480,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n目前还没有可用的发布版本\n\n稍后可以再次检查，或查看发布记录。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关"
+  },
+  {
+    "filename": "new-unpublished-light-600.html",
+    "width": 600,
+    "height": 680,
+    "scroll": 600,
+    "footer": {
+      "x": 0,
+      "y": 615,
+      "width": 600,
+      "height": 65,
+      "top": 615,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "main": {
+      "x": 0,
+      "y": 0,
+      "width": 600,
+      "height": 680,
+      "top": 0,
+      "right": 600,
+      "bottom": 680,
+      "left": 0
+    },
+    "text": "软件更新\n\n当前版本 0.1.0\n\n目前还没有可用的发布版本\n\n稍后可以再次检查，或查看发布记录。\n\n自动下载更新\n\n后台下载，准备好后提醒；重启安装由你决定。\n\n查看发布记录\n关"
+  }
+]

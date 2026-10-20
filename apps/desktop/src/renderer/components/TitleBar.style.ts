@@ -44,6 +44,28 @@ export const useStyles = createStyles(({ css, token }) => ({
    * 品牌。字号比侧栏那条（16px）小一档——标题栏不是内容区，它整条
    * 44px 里只承载「这是哪个应用」，不需要与页面标题争视觉重量。
    */
+  update: css`
+    -webkit-app-region: no-drag;
+    flex: none;
+    border: 0;
+    border-radius: 6px;
+    padding: 5px 8px;
+    margin-right: 12px;
+    background: transparent;
+    color: ${token.colorTextSecondary};
+    font: inherit;
+    font-size: ${FONT_SIZE.meta}px;
+    cursor: pointer;
+    &:hover {
+      background: ${token.colorFillTertiary};
+      color: ${token.colorText};
+    }
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimary};
+      outline-offset: 2px;
+    }
+  `,
+
   brand: css`
     flex: none;
     display: inline-flex;

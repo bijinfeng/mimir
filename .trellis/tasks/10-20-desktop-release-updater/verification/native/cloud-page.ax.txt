@@ -1,0 +1,14 @@
+The following is a diff from the previous accessibility tree for Window: "Mimir 云端更新验证" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 1-6, 10-21
++10 标准窗口 Mimir 云端更新验证, Secondary Actions: Raise
++	11 container Mimir 云端更新验证
++		12 container
++			13 HTML 内容 Mimir 云端更新验证, URL: 127.0.0.1:18765/
++				14 标题 临时云端工作区, Value: 1
++					15 文本 临时云端工作区
++				16 文本 仅用于更新入口验证。
++				17 文本 桌面桥：未注入
++	18 关闭按钮
++	19 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
++	20 最小化按钮
+The focused UI element is 13 HTML 内容 Mimir 云端更新验证, URL: 127.0.0.1:18765/

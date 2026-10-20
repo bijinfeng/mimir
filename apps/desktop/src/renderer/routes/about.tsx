@@ -1,8 +1,10 @@
+import { getAppearance } from '@mimir/renderer/titlebar-kit'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Alert, Button, Skeleton, Typography } from 'antd'
 import { createStyles } from 'antd-style'
 import { desktopBridge } from '@/lib/desktop-bridge'
+import { useUpdateState } from '@/lib/use-update-state'
 
 /**
  * 「关于」页——**客户端专属**（D-104）。
@@ -54,6 +56,14 @@ const useStyles = createStyles(({ css, token }) => ({
     flex: none;
     color: ${token.colorTextSecondary};
   `,
+  version: css`
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  `,
   value: css`
     min-width: 0;
     overflow-wrap: anywhere;
@@ -61,8 +71,9 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }))
 
-function AboutPage() {
+export function AboutPage() {
   const { styles } = useStyles()
+  const { state: update } = useUpdateState(desktopBridge?.update)
 
   /**
    * boot 信息走 react-query 而不是 useEffect + useState：
@@ -92,7 +103,20 @@ function AboutPage() {
           <div className={styles.section}>
             <div className={styles.row}>
               <span className={styles.label}>版本</span>
-              <span className={styles.value}>{boot.data.version}</span>
+              <div className={styles.version}>
+                <span className={styles.value}>{boot.data.version}</span>
+                {desktopBridge?.update && (
+                  <Button onClick={() => desktopBridge?.update.open(getAppearance())}>
+                    {update?.status === 'downloaded'
+                      ? '可重启更新'
+                      : update?.status === 'downloading'
+                        ? '更新下载中'
+                        : update?.status === 'available'
+                          ? '查看新版本'
+                          : '检查更新'}
+                  </Button>
+                )}
+              </div>
             </div>
             <div className={styles.row}>
               <span className={styles.label}>使用方式</span>

@@ -37,3 +37,6 @@ export { FONT_SIZE, TITLEBAR_HEIGHT } from './theme/tokens'
  * 不套的话 `createStyles` 拿不到 token，组件直接抛错。
  */
 export { MimirProvider } from './theme/MimirProvider'
+
+/** 本地载体打开独立窗口时传递当前外观，不读取远端页面状态。 */
+export { getAppearance, subscribe as subscribeAppearance } from './theme/appearance'

@@ -1,0 +1,158 @@
+import { writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { MimirProvider } from '@mimir/renderer/titlebar-kit'
+import type { DesktopUpdateState } from '@mimir/shared/desktop'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act, createElement, type ReactNode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { expect, it, vi } from 'vitest'
+import { makeUpdateBridge } from '../update/test-bridge'
+
+vi.mock('@/lib/desktop-bridge', () => ({
+  desktopBridge: {
+    boot: async () => ({ version: '0.1.0', mode: 'local' }),
+    window: {
+      platform: 'darwin',
+      isMaximized: async () => false,
+      onMaximizeChange: () => () => {},
+    },
+    update: {
+      getState: async () => ({
+        status: 'downloaded',
+        version: '0.2.0',
+        currentVersion: '0.1.0',
+        capability: 'automatic',
+        autoDownload: true,
+      }),
+      onState: () => () => {},
+      open: () => {},
+    },
+  },
+}))
+it('archive real components with explicit UI fixtures', async () => {
+  const { TitleBar } = await import('./TitleBar')
+  const { AboutPage } = await import('../routes/about')
+  const { UpdatePage } = await import('../update/UpdatePage')
+  const { setThemeMode } = await import('../../../../../packages/renderer/src/theme/appearance')
+  const dest = resolve(
+    import.meta.dirname,
+    '../../../../../.trellis/tasks/10-20-desktop-release-updater/verification/ui',
+  )
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  async function capture(
+    name: string,
+    theme: string,
+    width: number,
+    height: number,
+    node: ReactNode,
+  ) {
+    const host = document.createElement('div')
+    host.id = 'root'
+    host.style.cssText = `width:${width}px;height:${height}px;display:flex;flex-direction:column;overflow:hidden`
+    document.body.append(host)
+    const root = createRoot(host)
+    await act(async () => root.render(createElement(MimirProvider, null, node)))
+    expect(host.textContent).not.toBe('')
+    writeFileSync(
+      `${dest}/${name}-${theme}-${width}.html`,
+      `<!doctype html><html lang="zh-CN" data-theme="${theme}" style="color-scheme:${theme}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${document.head.innerHTML}</head><body>${host.outerHTML}</body></html>`,
+    )
+    await act(async () => root.unmount())
+    host.remove()
+  }
+  const examples: Record<string, Partial<DesktopUpdateState>> = {
+    idle: { status: 'idle' },
+    checking: { status: 'checking' },
+    current: { status: 'current' },
+    unpublished: { status: 'unpublished' },
+    available: { status: 'available', version: '0.2.0', autoDownload: false },
+    downloading: {
+      status: 'downloading',
+      version: '0.2.0',
+      progress: { transferred: 88080384, total: 209715200 },
+    },
+    unknown: { status: 'downloading', version: '0.2.0', progress: { transferred: 88080384 } },
+    preparing: { status: 'preparing', version: '0.2.0' },
+    downloaded: {
+      status: 'downloaded',
+      version: '0.2.0',
+      releaseNotes:
+        '界面验收示例：这段内容用于验证更新说明排版，并非真实发布。\n\n• 保留真实版本与状态。\n• 关闭详情不会取消下载。',
+    },
+    restarting: { status: 'restarting', version: '0.2.0' },
+    blocked: {
+      status: 'blocked',
+      version: '0.2.0',
+      retry: 'install',
+      message: '当前内容还没保存，暂未重启。',
+    },
+    cloud: {
+      status: 'blocked',
+      version: '0.2.0',
+      retry: 'install',
+      requiresSaveConfirmation: true,
+      message: '请先在文档中保存，再确认重启。',
+    },
+    error: {
+      status: 'error',
+      version: '0.2.0',
+      retry: 'download',
+      message: '下载未完成或更新文件未通过检查，请重新下载。',
+    },
+    manual: {
+      status: 'available',
+      version: '0.2.0',
+      platform: 'darwin',
+      capability: 'manual',
+      autoDownload: false,
+    },
+    disabled: { status: 'disabled', capability: 'disabled', autoDownload: false },
+    recovery: {
+      status: 'blocked',
+      recoveryRequired: true,
+      message: '工作区已关闭，但本地服务未能安全退出。请关闭客户端并重新启动以恢复使用。',
+    },
+    long: {
+      status: 'available',
+      version: '0.2.0-with-a-long-version-label',
+      releaseNotes: Array.from(
+        { length: 20 },
+        (_, i) => `验收示例 ${i + 1}：这段长说明用于验证滚动与窄窗口折行；不代表实际更新内容。`,
+      ).join('\n'),
+    },
+  }
+  for (const theme of ['light', 'dark'] as const) {
+    setThemeMode(theme)
+    for (const width of [920, 390]) {
+      const client = new QueryClient()
+      client.setQueryData(['desktop-boot'], { version: '0.1.0', mode: 'local' })
+      await capture(
+        'after',
+        theme,
+        width,
+        600,
+        createElement(
+          QueryClientProvider,
+          { client },
+          createElement(TitleBar, {
+            collapsed: false,
+            showToggle: true,
+            onToggleCollapsed: () => {},
+          }),
+          createElement(AboutPage),
+        ),
+      )
+      client.clear()
+    }
+    for (const [name, state] of Object.entries(examples))
+      for (const width of [600, 360]) {
+        await capture(
+          `new-${name}`,
+          theme,
+          width,
+          width === 600 ? 680 : 480,
+          createElement(UpdatePage, { api: makeUpdateBridge(state).api }),
+        )
+      }
+  }
+})

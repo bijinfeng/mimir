@@ -1,0 +1,2 @@
+There has been no change in the accessibility tree for Window: "mimir · 软件更新".
+The focused UI element is 19 按钮 查看发布记录

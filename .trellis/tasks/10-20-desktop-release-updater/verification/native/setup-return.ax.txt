@@ -1,0 +1,21 @@
+The following is a diff from the previous accessibility tree for Window: "mimir · 选择使用方式" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 1-18
++22 标准窗口 mimir · 选择使用方式, Secondary Actions: Raise
++	23 container mimir · 选择使用方式
++		24 container
++			25 HTML 内容 mimir · 选择使用方式, URL: file:///private/tmp/mimir-desktop-review/mimir.app/Contents/Resources/app.asar/dist/renderer/setup.html
++				26 container
++					27 标题 mimir, Value: 2
++						28 文本 mimir
++					29 文本 知识工作区
++					30 标题 选择使用方式, Value: 2
++						31 文本 选择使用方式
++					32 文本 选择资料存放的位置。之后可在设置中更改。
++					33 container 使用方式
++						34 切换按钮 本地使用 资料保存在此设备，可离线使用。, Value: 1
++						35 切换按钮 连接服务器 连接你自己的服务器，在多台设备上使用。, Value: 0
++					36 按钮 开始使用
++	37 关闭按钮
++	38 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
++	39 最小化按钮
+The focused UI element is 25 HTML 内容 mimir · 选择使用方式, URL: file:///private/tmp/mimir-desktop-review/mimir.app/Contents/Resources/app.asar/dist/renderer/setup.html

@@ -1,10 +1,11 @@
 import type { TitleBarSlotProps } from '@mimir/renderer'
-import { BrandMark } from '@mimir/renderer/titlebar-kit'
+import { BrandMark, getAppearance } from '@mimir/renderer/titlebar-kit'
 import { Tooltip } from 'antd'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useStyles } from '@/components/TitleBar.style'
 import { WindowControls } from '@/components/WindowControls'
 import { desktopBridge } from '@/lib/desktop-bridge'
+import { useUpdateState } from '@/lib/use-update-state'
 
 /**
  * 自绘窗口标题栏（D-094，方案 A）。
@@ -48,7 +49,7 @@ import { desktopBridge } from '@/lib/desktop-bridge'
  *
  * 整条标题栏是 `-webkit-app-region: drag`，**里面每个可点的东西都要
  * 显式标 `no-drag`**——漏标的表现是「按钮点不动」，而且不报错、控制台
- * 也没有任何东西。现在的可点元素只有两个（折叠按钮、三枚窗口控件），
+ * 也没有任何东西。可点元素包括折叠按钮、更新入口和窗口控件，
  * 但**以后往标题栏里加任何东西都要记得标**（这也是方案 C 被否掉的理由，
  * 见 demo 的对照表）。
  *
@@ -60,6 +61,17 @@ import { desktopBridge } from '@/lib/desktop-bridge'
  */
 export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarSlotProps) {
   const { styles } = useStyles()
+  const { state: update } = useUpdateState(desktopBridge?.update)
+  const updateLabel =
+    update?.status === 'downloading'
+      ? '更新下载中'
+      : update?.status === 'preparing'
+        ? '正在准备更新'
+        : update?.status === 'downloaded'
+          ? '可重启更新'
+          : update?.status === 'available'
+            ? '发现新版本'
+            : undefined
 
   // 读一次就够：preload 在首帧之前注入，平台不会变（见 desktop-bridge.ts）
   const platform = desktopBridge?.window.platform
@@ -93,6 +105,17 @@ export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarS
 
       {/* 中间整块是拖动区（没有内容，正好用来拖窗口） */}
       <span className={styles.spacer} />
+
+      {updateLabel && (
+        <button
+          type="button"
+          className={`${styles.update} me-no-drag`}
+          onClick={() => desktopBridge?.update.open(getAppearance())}
+          aria-label={`${updateLabel}，查看软件更新`}
+        >
+          {updateLabel}
+        </button>
+      )}
 
       {/*
         右侧控件。**macOS 下整组不渲染**（系统红绿灯在左上角）——那一判断

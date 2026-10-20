@@ -32,14 +32,25 @@ asarUnpack:
   - '**/*.node'
 npmRebuild: false
 afterPack: scripts/after-pack.mjs
+artifactName: mimir-${version}-${os}-${arch}.${ext}
+publish:
+  provider: github
+  owner: bijinfeng
+  repo: mimir
+  releaseType: release
+# package.mjs overrides this immutable marker for supported automatic builds.
+extraMetadata:
+  desktopUpdateMode: manual
 mac:
   icon: resources/icon.icns
   category: public.app-category.productivity
   # 不签不公证：ad-hoc 签名在 afterPack 里做（否则 macOS 直接 SIGKILL 秒退）。
   # 正式分发需要开发者证书 + 公证（identity + notarize），本机构建仅自用。
   identity: null
+  notarize: false
   target:
     - dmg
+    - zip
 # Linux 明确只构建 AppImage；不使用 builder 默认的 AppImage + Snap 双目标，
 # 否则同一份安装包要额外下载 Snap 模板并打两次（实测本机）。
 # Windows 图标先配好；尚未在 Windows 宿主验证其安装包。
@@ -50,3 +61,10 @@ linux:
     - AppImage
 win:
   icon: resources/icon.ico
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  runAfterFinish: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false

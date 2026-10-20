@@ -1,0 +1,11 @@
+version: 0.1.0
+files:
+  - url: mimir-0.1.0-mac-arm64.zip
+    sha512: F/6/cqGHOQ1DaDSQ+Uynf2HIidD87N3NYT2pr7XoeoSM1hjQ/A87BRsBwpE1+AJZqpKbYP2hXop7klLhhhr8MQ==
+    size: 516401153
+  - url: mimir-0.1.0-mac-arm64.dmg
+    sha512: Sfp7ZMvtof8NFR+HIbpLzpAptAAdCvO5oYApWbB3Trfh/6FQPH9sX0XCSDN9I8uoMPQ7W8k2WksOn3G+icgG+Q==
+    size: 481557958
+path: mimir-0.1.0-mac-arm64.zip
+sha512: F/6/cqGHOQ1DaDSQ+Uynf2HIidD87N3NYT2pr7XoeoSM1hjQ/A87BRsBwpE1+AJZqpKbYP2hXop7klLhhhr8MQ==
+releaseDate: '2026-10-20T05:41:41.360Z'

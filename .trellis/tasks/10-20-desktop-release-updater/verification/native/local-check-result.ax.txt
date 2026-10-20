@@ -1,0 +1,7 @@
+The following is a diff from the previous accessibility tree for Window: "mimir · 软件更新" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 22
+~						16 文本 目前还没有可用的发布版本
+~						17 文本 稍后可以再次检查，或查看发布记录。
+~					18 text 上次检查  2026/10/20 13:35:26
+~					21 按钮 再次检查
+The focused UI element is 10 HTML 内容 mimir · 软件更新, URL: file:///private/tmp/mimir-desktop-review/mimir.app/Contents/Resources/app.asar/dist/renderer/update.html?appearance=light

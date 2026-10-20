@@ -1,0 +1,24 @@
+Window: "mimir · 软件更新", App: mimir.
+1 标准窗口 mimir · 软件更新, Secondary Actions: Raise
+	2 container mimir · 软件更新
+		3 container
+			4 HTML 内容 mimir · 软件更新, URL: file:///private/tmp/mimir-desktop-review/mimir.app/Contents/Resources/app.asar/dist/renderer/update.html?appearance=auto
+				5 container
+					6 标题 软件更新, Value: 1
+						7 文本 软件更新
+					8 text 当前版本  0.1.0
+					9 container 更新状态
+						10 文本 目前还没有可用的发布版本
+						11 文本 稍后可以再次检查，或查看发布记录。
+					12 text 上次检查  2026/10/20 13:32:01
+					13 按钮 查看发布记录
+					14 按钮 关 闭
+					15 按钮 再次检查
+	16 关闭按钮
+	17 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	18 最小化按钮
+19 menu bar
+	20 mimir
+	21 编辑
+
+The focused UI element is 6 标题 软件更新, Value: 1

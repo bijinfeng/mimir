@@ -1,3 +1,4 @@
+import { makeUpdateBridge } from '@/update/test-bridge'
 import type { DesktopModeResult, DesktopModeState, MimirDesktopBridge } from '@mimir/shared/desktop'
 import { act, createElement, type ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -51,6 +52,7 @@ function makeBridge(options: {
   const chosen: DesktopModeState[] = []
 
   const bridge: MimirDesktopBridge = {
+    update: makeUpdateBridge().api,
     boot: async () => null,
     quit: noop,
     mode: {

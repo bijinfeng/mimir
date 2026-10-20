@@ -120,6 +120,7 @@ export function UnsavedGuard({
   const { styles: hostStyles, cx } = useDocumentDialogStyles()
   const { styles: captureStyles } = useCaptureStyles()
   const auto = saveMode === 'auto'
+  const updating = pending?.reason === 'update'
   const buttonClass = captureContext ? captureStyles.button : hostStyles.button
   function continueEditing() {
     if (saving) return
@@ -130,11 +131,13 @@ export function UnsavedGuard({
     <Modal
       open={Boolean(pending)}
       title={
-        captureContext
-          ? '打开文档前保存改动'
-          : auto && !isDirty
-            ? '改动已自动保存'
-            : '有改动还没保存'
+        updating
+          ? '重启更新前保存改动'
+          : captureContext
+            ? '打开文档前保存改动'
+            : auto && !isDirty
+              ? '改动已自动保存'
+              : '有改动还没保存'
       }
       closable={false}
       classNames={{ footer: captureContext ? captureStyles.footer : undefined }}
@@ -170,7 +173,7 @@ export function UnsavedGuard({
                 disabled={saving}
                 onClick={() => resolve('discard')}
               >
-                丢弃改动
+                {updating ? '丢弃并重启' : '丢弃改动'}
               </Button>,
             ]
           : []),
@@ -190,7 +193,17 @@ export function UnsavedGuard({
                   ) : (
                     <ShieldCheck size={15} aria-hidden="true" />
                   ))}
-                <span>{saving ? '保存中…' : !isDirty ? '离开' : '保存并离开'}</span>
+                <span>
+                  {saving
+                    ? '保存中…'
+                    : updating
+                      ? !isDirty
+                        ? '重启并安装'
+                        : '保存并重启'
+                      : !isDirty
+                        ? '离开'
+                        : '保存并离开'}
+                </span>
               </Button>,
             ]
           : []),
@@ -238,7 +251,9 @@ export function UnsavedGuard({
                 ? isDirty
                   ? '笔记正在自动保存。保存完成后才能离开。'
                   : '这次改动已经写入笔记，可以离开。'
-                : '离开前保存改动，或丢弃改动。'}
+                : updating
+                  ? '保存当前改动后重启安装，或丢弃改动并重启。'
+                  : '离开前保存改动，或丢弃改动。'}
           </p>
           {saving && (
             <p role="status" className={styles.notice}>

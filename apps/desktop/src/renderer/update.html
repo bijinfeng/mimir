@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>mimir · 软件更新</title>
+    <!--
+      独立 file:// 页面采用同一套外观键与首帧处理。
+      本地工作区通过主进程传递已解析的外观；连接服务器时传 auto 跟随系统。
+      在主题模块求值前同步偏好，避免独立窗口先闪过浅色。
+    -->
+    <script>
+      ;(function () {
+        var requested = new URLSearchParams(location.search).get('appearance')
+        var appearance = requested === 'light' || requested === 'dark' ? requested : null
+        try {
+          if (requested === 'auto' || requested === 'light' || requested === 'dark') {
+            localStorage.setItem('mimir.appearance', requested)
+          }
+          var stored = localStorage.getItem('mimir.appearance')
+          if (stored === 'light' || stored === 'dark') appearance = stored
+        } catch (error) {
+          // 隐私模式下 localStorage 读取会抛错，当作「没存过」
+        }
+        if (!appearance) {
+          appearance =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+        }
+        var root = document.documentElement
+        root.dataset.theme = appearance
+        root.style.colorScheme = appearance
+        root.style.background = appearance === 'dark' ? '#18191a' : '#ffffff'
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./update.tsx"></script>
+  </body>
+</html>

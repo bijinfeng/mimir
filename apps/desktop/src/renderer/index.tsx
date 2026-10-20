@@ -1,4 +1,5 @@
 import { buildRouter, createApp } from '@mimir/renderer'
+import { getAppearance, subscribeAppearance } from '@mimir/renderer/titlebar-kit'
 import { createRoot } from 'react-dom/client'
 import { TitleBar } from '@/components/TitleBar'
 import { desktopBridge } from '@/lib/desktop-bridge'
@@ -35,6 +36,12 @@ if (!desktopBridge) {
     'window.mimirDesktop 不存在：preload 没有执行（检查 BrowserWindow 的 preload 路径）',
   )
 }
+
+const updateApi = desktopBridge.update
+const syncAppearance = () => updateApi.setAppearance(getAppearance())
+syncAppearance()
+const unsubscribeAppearance = subscribeAppearance(syncAppearance)
+window.addEventListener('pagehide', unsubscribeAppearance, { once: true })
 
 createApp(createRoot(container), {
   router: buildRouter(routeTree),

@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
+
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  13:39:40
+   Duration  12.81s (tests 77%, import 18%, transform 3%, environment 2%)
+

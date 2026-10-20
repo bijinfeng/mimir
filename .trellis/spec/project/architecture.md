@@ -2000,7 +2000,7 @@ dragenter/leave 用计数器防抖。
 │       SQLite @ userData/data · 127.0.0.1 随机端口 · 免登录  │
 │   └─ 云端模式：不起宿主，系统边框窗口加载自部署地址（D-105）│
 │  BrowserWindow → 加载宿主地址或远端地址（见 §14.6）          │
-│  IPC 只承载：boot 信息、模式选择/切换、窗口控制与退出         │
+│  IPC 承载：boot、模式、窗口控制、退出与受信任本地更新握手     │
 │  （契约：shared 的 DesktopBootInfo / DesktopModeApi /       │
 │   DesktopWindowApi）                                        │
 └────────────────────────────────────────────────────────────┘
@@ -2040,7 +2040,7 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 |---|---|
 | `pnpm desktop:dev` | 先完整构建并启动，再 watch 桌面三段产物；改渲染代码后刷新窗口，改 main/preload 后重启。附带进程树清理和 Electron 二进制镜像默认值。本地模式由进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
 | `pnpm desktop:start` | 构建 server/desktop 产物后启动 Electron；桌面渲染进程由本包构建，不依赖 web 产物 |
-| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 按宿主平台打包（macOS 为 dmg，Linux 为 AppImage；Windows 安装包尚未实测） |
+| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 按宿主平台打包（macOS 为 DMG + ZIP，Windows 为 NSIS，Linux 为 AppImage）；签名与发布契约见[桌面更新规范](../desktop/runtime/releases-updates.md) |
 
 Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定二进制来源。
 `desktop:dev` 缺少二进制时默认从 npmmirror 下载（可用 `ELECTRON_MIRROR` 覆盖）；
@@ -2062,9 +2062,9 @@ Linux 打包时 builder 还会下载 AppImage 工具；若 GitHub TLS 断连，�
   目录，`server/dist/node_modules/.pnpm`（vite SSR 构建把部分传递依赖按
   pnpm 结构放这里）会被静默丢掉，运行时报模块找不到。afterPack 钩子用
   `fs.cp`（保留符号链接的 pnpm 布局）自行拷贝
-- **必须 ad-hoc 签名**：identity: null 时 builder 完全跳过签名，macOS
+- **测试包必须 ad-hoc 签名**：identity: null 时 builder 完全跳过签名，macOS
   （Sequoia 起，含 Intel）把未签名二进制直接 SIGKILL——秒退、零输出。
-  afterPack 里 `codesign --force --deep -s -`。正式分发需要开发者证书 + 公证
+  默认测试模式由 afterPack 执行 `codesign --force --deep -s -`，只支持手动更新。显式 signed 模式由 builder 使用开发者证书签名 + 公证，afterPack 不覆盖正式签名
 - better-sqlite3 v13 自带 N-API 预编译（prebuilds/ 跨 Node/Electron 通用），
   无需 electron-rebuild；`@node-rs/jieba` 是 N-API，同理
 - 桌面包**不设 `dev` 脚本**：`pnpm dev` 是 `-r --parallel dev`，
@@ -2092,7 +2092,8 @@ Linux 打包时 builder 还会下载 AppImage 工具；若 GitHub TLS 断连，�
   会话权限默认拒绝，避免远端内容取得摄像头、麦克风等系统权限。
 - **云端窗口由系统提供边框和窗口控件**（D-105）：远端提供的是 Web 构建，
   不含桌面标题栏；主进程的「更换使用方式」菜单在登录页也可用
-- 单实例锁：两个窗口同时写一个 SQLite 会撞锁
+- 单实例锁：两个工作区实例同时写一个 SQLite 会撞锁；更新详情窗口由同一主进程
+  持有，不创建第二个知识库宿主。更新安装动作只接受客户端自己的受信任本地窗口。
 
 ### 14.6 两种模式：本地离线与云端（D-100）
 
@@ -2115,7 +2116,8 @@ Linux 打包时 builder 还会下载 AppImage 工具；若 GitHub TLS 断连，�
 选择页是桌面渲染进程的**第二个 HTML 入口**：不依赖宿主即可从 `file://` 打开，
 但与本地主界面复用 React、主题、品牌和窗口控件。它在渲染产物里
 （`dist/renderer/setup.html`），由 `files: dist/**` 进 asar。云端模式从系统
-边框窗口进入选择页时先建无边框新窗口，再关旧窗（D-105）。
+边框窗口进入选择页时，由 WorkspaceTransition 等旧窗口完成关闭后再建无边框新窗口，
+切换期间抑制普通退出；页面拒绝离开时保留旧窗口与原有工作区身份。
 
 **本地模式的鉴权**（免登录但不免鉴权）：
 

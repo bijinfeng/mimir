@@ -20,11 +20,13 @@ apps/desktop/
 │   │   ├── config.ts         模式选择的持久化（<userData>/desktop-config.json，临时文件 + rename）
 │   │   └── artifacts.ts      启动前的产物检查（缺失时给清单式错误）
 │   ├── preload/index.ts      沙箱化 preload：只暴露宿主↔载体的握手契约（packages/shared/src/desktop.ts）
-│   └── renderer/             渲染进程——**只有载体独有的**。两个 HTML 入口
+│   └── renderer/             渲染进程——**只有载体独有的**。三个 HTML 入口
 │       ├── index.html        主应用的入口（electron-vite 的约定位置）
 │       ├── index.tsx         注入桌面插槽 → createApp()
 │       ├── setup.html        首启选择页的入口（D-100）
 │       ├── setup.tsx         选择页挂载（不注入插槽——它自己就是桌面专属的）
+│       ├── update.html       独立软件更新窗口入口（专用 preload，无知识库宿主）
+│       ├── update/           更新详情组件与样式
 │       ├── setup/            选择页的组件与样式
 │       ├── components/       自绘标题栏（D-094）、窗口控件（两处共用）
 │       └── lib/              桌面桥的取值（window.mimirDesktop）
@@ -121,3 +123,7 @@ electron-vite 的 dev 形态会为渲染进程另起一个 Vite dev server，让
 `SetupPage` 的 mode.get 等待期间保留品牌与 `WindowControls`，用 `role=status` 呈现读取状态，不返回空页面。提交按钮和地址 Enter 共用入口；除 pending state 外，用同步 ref gate 在同一帧阻止重复 choose。空白云端地址以及桥缺失都不得 choose。失败（返回失败或异常）释放 gate/pending 并保留地址供重试；成功仅 activate 一次，保持 gate/pending 直到主进程导航。检查空白使用 trim，地址负载沿既有规则，不截断路径/查询。
 
 等待提示独立于动作行，短高页面使用局部滚动，窗口控件保持可用。交互回归使用 deferred promise 锁住同帧防重、失败恢复和成功等待；不要只断言 loading 样式。浏览器模拟桥只能证明组件回调，实际启动/隔离用三段构建与 smoke.mjs；拖拽/系统菜单须另有原生GUI证据。
+
+## 发布与更新
+
+打包签名、四目标发布、更新 IPC 和保存后重启的可执行契约见 [releases-updates](./releases-updates.md)。

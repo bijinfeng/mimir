@@ -45,7 +45,10 @@ export default defineConfig({
       sourcemap: true,
       minify: false,
       lib: {
-        entry: resolve(import.meta.dirname, 'src/preload/index.ts'),
+        entry: {
+          index: resolve(import.meta.dirname, 'src/preload/index.ts'),
+          updater: resolve(import.meta.dirname, 'src/preload/updater.ts'),
+        },
       },
     },
   },
@@ -77,6 +80,7 @@ export default defineConfig({
            * 手抄了一套色值变量与一份品牌 path）。
            */
           setup: resolve(import.meta.dirname, 'src/renderer/setup.html'),
+          update: resolve(import.meta.dirname, 'src/renderer/update.html'),
         },
       },
     },

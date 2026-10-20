@@ -1,0 +1,218 @@
+name: Desktop release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A release rerun cannot race another writer for the same tag.
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate committed stable version and tag
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [[ "$EVENT_NAME" == push ]]; then
+            version="$(node apps/desktop/scripts/release-artifacts.mjs version "$RELEASE_TAG")"
+          else
+            version="$(node apps/desktop/scripts/release-artifacts.mjs version)"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - run: node --test apps/desktop/scripts/release-artifacts.test.mjs
+
+  build:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: mac-arm64
+            runner: macos-15
+            platform: darwin
+            arch: arm64
+            executable: apps/desktop/release/mac-arm64/mimir.app/Contents/MacOS/mimir
+          - target: mac-x64
+            runner: macos-15-intel
+            platform: darwin
+            arch: x64
+            executable: apps/desktop/release/mac/mimir.app/Contents/MacOS/mimir
+          - target: win-x64
+            runner: windows-2025
+            platform: win32
+            arch: x64
+            executable: apps/desktop/release/win-unpacked/mimir.exe
+          - target: linux-x64
+            runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+            executable: apps/desktop/release/linux-unpacked/mimir
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    env:
+      MIMIR_BUILD_PLATFORM: ${{ matrix.platform }}
+      MIMIR_BUILD_ARCH: ${{ matrix.arch }}
+      MIMIR_MAC_SIGNING: ${{ vars.MIMIR_MAC_SIGNING || 'adhoc' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Verify native runner
+        run: node -e "if (process.platform !== process.env.MIMIR_BUILD_PLATFORM || process.arch !== process.env.MIMIR_BUILD_ARCH) throw Error('Native runner mismatch')"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mimir/server build
+      - run: pnpm --filter @mimir/desktop build
+      - run: node apps/desktop/scripts/deploy-server.mjs
+      - name: Package without publishing
+        run: pnpm --filter @mimir/desktop package
+        env:
+          # Secrets are only exposed to the packaging step. No publishing token here.
+          CSC_LINK: ${{ matrix.platform == 'darwin' && secrets.MAC_CSC_LINK || '' }}
+          CSC_KEY_PASSWORD: ${{ matrix.platform == 'darwin' && secrets.MAC_CSC_KEY_PASSWORD || '' }}
+          CSC_NAME: ${{ matrix.platform == 'darwin' && secrets.MAC_CSC_NAME || '' }}
+          APPLE_ID: ${{ matrix.platform == 'darwin' && secrets.APPLE_ID || '' }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.platform == 'darwin' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
+          APPLE_TEAM_ID: ${{ matrix.platform == 'darwin' && secrets.APPLE_TEAM_ID || '' }}
+      - name: Verify packaged application and production resources
+        env:
+          TARGET_KEY: ${{ matrix.target }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: node apps/desktop/scripts/verify-package.mjs "$TARGET_KEY" "$RELEASE_VERSION"
+        shell: bash
+      - name: Smoke test packaged application (macOS / Windows)
+        if: runner.os != 'Linux'
+        shell: bash
+        env:
+          EXECUTABLE: ${{ matrix.executable }}
+        run: |
+          export MIMIR_SMOKE_EXECUTABLE="$GITHUB_WORKSPACE/$EXECUTABLE"
+          node apps/desktop/scripts/smoke.mjs
+      - name: Smoke test packaged application (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libfuse2t64
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          export MIMIR_SMOKE_EXECUTABLE="$GITHUB_WORKSPACE/apps/desktop/release/mimir-$RELEASE_VERSION-linux-x64.AppImage"
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          xvfb-run -a node apps/desktop/scripts/smoke.mjs
+      - name: Smoke test Windows installed NSIS package
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          $installation = Join-Path $env:RUNNER_TEMP 'mimir-install-smoke'
+          $installer = Join-Path $env:GITHUB_WORKSPACE "apps/desktop/release/mimir-$env:RELEASE_VERSION-win-x64.exe"
+          $result = Start-Process -FilePath $installer -ArgumentList @('/S', "/D=$installation") -PassThru -Wait
+          if ($result.ExitCode -ne 0) { throw "NSIS installation failed: $($result.ExitCode)" }
+          try {
+            $env:MIMIR_SMOKE_EXECUTABLE = Join-Path $installation 'mimir.exe'
+            node apps/desktop/scripts/smoke.mjs
+            if ($LASTEXITCODE -ne 0) { throw 'Installed application failed smoke test' }
+          } finally {
+            $uninstaller = Join-Path $installation 'Uninstall mimir.exe'
+            if (Test-Path $uninstaller) { Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait }
+          }
+      - name: Stage and hash distributable files
+        shell: bash
+        env:
+          TARGET_KEY: ${{ matrix.target }}
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          mode=automatic
+          if [[ "$MIMIR_BUILD_PLATFORM" == darwin && "$MIMIR_MAC_SIGNING" == adhoc ]]; then mode=manual; fi
+          node apps/desktop/scripts/release-artifacts.mjs stage apps/desktop/release "staged/$TARGET_KEY" "$TARGET_KEY" "$RELEASE_VERSION" "$mode"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.target }}
+          path: staged/${{ matrix.target }}/
+          if-no-files-found: error
+          retention-days: 14
+
+  aggregate:
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-mac-arm64
+          path: incoming/mac-arm64
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-mac-x64
+          path: incoming/mac-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-win-x64
+          path: incoming/win-x64
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-linux-x64
+          path: incoming/linux-x64
+      - name: Validate complete release and merge macOS update metadata
+        env:
+          RELEASE_VERSION: ${{ needs.version.outputs.version }}
+        run: node apps/desktop/scripts/release-artifacts.mjs aggregate incoming complete "$RELEASE_VERSION"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-complete
+          path: complete/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [version, aggregate]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: desktop-complete
+          path: complete
+      - name: Upload verified assets to draft, then publish stable latest
+        run: node apps/desktop/scripts/publish-release.mjs complete
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

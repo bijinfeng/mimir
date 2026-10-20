@@ -1,0 +1,11 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "项目约束、同批文档和数据边界"}
+{"file": ".trellis/spec/desktop/runtime/index.md", "reason": "桌面运行规范入口"}
+{"file": ".trellis/spec/desktop/runtime/conventions.md", "reason": "三段构建、宿主、云端隔离和原生菜单"}
+{"file": ".trellis/spec/desktop/runtime/pitfalls.md", "reason": "打包资源、路径、签名与运行陷阱"}
+{"file": ".trellis/spec/project/quality.md", "reason": "质量门和真实验证要求"}
+{"file": ".trellis/tasks/10-20-desktop-release-updater/research/distribution-evidence.md", "reason": "版本与官方技术证据、公开分发决定"}
+{"file": ".trellis/spec/project/design.md", "reason": "沿用既有视觉和状态文案契约"}
+{"file": ".trellis/spec/renderer/frontend/index.md", "reason": "最小保存/离开保护接入共享 renderer"}
+{"file": ".trellis/spec/shared/contract/index.md", "reason": "本地 IPC 的最小契约与类型边界"}
+{"file": ".trellis/tasks/10-20-desktop-release-updater/research/interaction-evidence.md", "reason": "UI 现状与保存保护缺口、参考证据"}
+{"file": ".trellis/spec/desktop/runtime/releases-updates.md", "reason": "本轮落地发布、签名、更新状态、IPC 和安装顺序契约"}

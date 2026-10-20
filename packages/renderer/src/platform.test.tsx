@@ -37,6 +37,23 @@ const bridge: MimirDesktopBridge = {
     activate: noop,
     openSetup: noop,
   },
+  update: {
+    getState: async () => ({
+      status: 'disabled',
+      currentVersion: '0.1.0',
+      releaseUrl: '',
+      platform: 'linux',
+      arch: 'x64',
+      capability: 'disabled',
+      autoDownload: false,
+    }),
+    open: noop,
+    setAppearance: noop,
+    onState: () => noop,
+    onPrepare: () => noop,
+    respondPrepare: noop,
+    onPrepareCancelled: () => noop,
+  },
   window: {
     platform: 'linux',
     minimize: noop,

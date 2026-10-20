@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DesktopBootInfo, DesktopModeResult, DesktopModeState } from '@mimir/shared/desktop'
+import type {
+  DesktopBootInfo,
+  DesktopModeResult,
+  DesktopModeState,
+  DesktopUpdateState,
+  DesktopUpdatePrepareRequest,
+} from '@mimir/shared/desktop'
 
 /**
  * 沙箱化 preload：只暴露宿主↔载体的握手契约
@@ -46,6 +52,40 @@ contextBridge.exposeInMainWorld('mimirDesktop', {
    * `isMaximized` 是异步的（IPC 往返），其余是单向通知——最大化状态要读
    * 权威值，不能靠页面自己翻一个布尔值。
    */
+  update: {
+    getState: (): Promise<DesktopUpdateState> => ipcRenderer.invoke('mimir:update-state'),
+    open: (appearance?: 'auto' | 'light' | 'dark'): void => {
+      ipcRenderer.send('mimir:update-open', appearance)
+    },
+    setAppearance: (appearance: 'auto' | 'light' | 'dark'): void => {
+      ipcRenderer.send('mimir:update-appearance', appearance)
+    },
+    onState: (listener: (state: DesktopUpdateState) => void): (() => void) => {
+      const handler = (_event: unknown, state: DesktopUpdateState): void => listener(state)
+      ipcRenderer.on('mimir:update-state', handler)
+      return () => {
+        ipcRenderer.off('mimir:update-state', handler)
+      }
+    },
+    onPrepare: (listener: (request: DesktopUpdatePrepareRequest) => void): (() => void) => {
+      const handler = (_event: unknown, request: DesktopUpdatePrepareRequest): void =>
+        listener(request)
+      ipcRenderer.on('mimir:update-prepare', handler)
+      return () => {
+        ipcRenderer.off('mimir:update-prepare', handler)
+      }
+    },
+    respondPrepare: (requestId: string, ready: boolean): void => {
+      ipcRenderer.send('mimir:update-prepare-result', requestId, ready)
+    },
+    onPrepareCancelled: (listener: () => void): (() => void) => {
+      const handler = (): void => listener()
+      ipcRenderer.on('mimir:update-prepare-cancelled', handler)
+      return () => {
+        ipcRenderer.off('mimir:update-prepare-cancelled', handler)
+      }
+    },
+  },
   window: {
     platform: process.platform,
     minimize: (): void => {

@@ -20,6 +20,8 @@ DOCX 对话编辑的跨层工具与续轮合同见 [docx-agent](./docx-agent.md)
 PDF 原文与批注 HTTP、NM/IRT 身份和鉴权作者合同见 [pdf-agent](./pdf-agent.md)。
 XLSX 范围宿主与显式 WASM 公式缓存重算合同见 [xlsx-agent](./xlsx-agent.md)。
 
+桌面只读更新状态、独立窗口动作与保存 nonce 握手见 [桌面发布与更新](../../desktop/runtime/releases-updates.md)，契约类型唯一存于 `src/desktop.ts`。
+
 ## Pre-Development Checklist
 
 - 先读[项目入口](../../project/index.md)和任务涉及的 `.trellis/spec/project/architecture.md §3 与 §7.4` 章节。

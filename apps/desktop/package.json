@@ -8,7 +8,7 @@
     "build": "pnpm routes:generate && electron-vite build",
     "build:watch": "node scripts/watch-build.mjs",
     "start": "electron .",
-    "package": "electron-builder",
+    "package": "node scripts/package.mjs",
     "typecheck": "pnpm routes:generate && tsc --noEmit",
     "test": "vitest run",
     "icons": "tsx scripts/make-icons.ts",
@@ -17,7 +17,8 @@
   "dependencies": {
     "@mimir/renderer": "workspace:*",
     "@tanstack/react-query": "^5.103.1",
-    "@tanstack/react-router": "^1.170.38"
+    "@tanstack/react-router": "^1.170.38",
+    "electron-updater": "6.8.9"
   },
   "devDependencies": {
     "@mimir/server": "workspace:*",

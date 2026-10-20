@@ -1,3 +1,4 @@
+import { makeUpdateBridge } from '@/update/test-bridge'
 import { MimirProvider } from '@mimir/renderer/titlebar-kit'
 import type { DesktopPlatform, MimirDesktopBridge } from '@mimir/shared/desktop'
 import { act, createElement, type ReactElement } from 'react'
@@ -42,6 +43,7 @@ function makeBridge(platform: DesktopPlatform, maximized = false) {
   let listener: ((value: boolean) => void) | undefined
 
   const bridge: MimirDesktopBridge = {
+    update: makeUpdateBridge().api,
     /*
      * boot / quit / mode 只是为了凑齐桥的契约——标题栏一个都不碰，
      * 所以这里给的是普通桩函数而不是 spy（没有要断言的调用）。
@@ -191,6 +193,22 @@ describe('自绘标题栏', () => {
     // 三枚窗口控件仍然在
     expect(host.querySelectorAll('button')).toHaveLength(3)
 
+    await unmount()
+  })
+  it('状态入口跟随推送，点击只打开详情且保持 no-drag', async () => {
+    const { bridge } = makeBridge('linux')
+    const update = makeUpdateBridge({ status: 'downloading' })
+    bridge.update = update.api
+    const TitleBar = await loadTitleBar(bridge)
+    const { host, unmount } = await render(
+      createElement(TitleBar, { collapsed: false, showToggle: false, onToggleCollapsed: noop }),
+    )
+    const entry = host.querySelector<HTMLButtonElement>('[aria-label="更新下载中，查看软件更新"]')
+    expect(entry?.className).toContain(NO_DRAG)
+    await act(async () => entry?.click())
+    expect(update.calls).toEqual(['open'])
+    await act(async () => update.emit({ status: 'downloaded' }))
+    expect(host.querySelector('[aria-label="可重启更新，查看软件更新"]')).not.toBeNull()
     await unmount()
   })
 })
