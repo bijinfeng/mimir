@@ -1,0 +1,11 @@
+{
+  "invalidSourceKept": true,
+  "savedValid": "## 中文流程与条件分支\n\n```mermaid\nflowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D\n```\n\n",
+  "reopenedValid": "## 中文流程与条件分支\n\n```mermaid\nflowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D\n```\n\n",
+  "roundtripEqual": true,
+  "undoOriginalSourceKept": true,
+  "undoEquivalentAfterTrailingWhitespace": true,
+  "undoSource": "## 错误与源码修复\n\n```mermaid\nthis is invalid mermaid\n```\n\n",
+  "undoNote": "真实 setContent/undo 恢复原源码，Tiptap 段尾换行规范化，字节比对去除段尾空白后相同。",
+  "undoByteExact": false
+}

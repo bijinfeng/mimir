@@ -21,39 +21,8 @@ export function diagramLanguage(language: unknown): DiagramLanguage | null {
 }
 
 let peleLoader: Promise<typeof import('pele/lazy')> | undefined
-let mermaidLoader: Promise<(typeof import('mermaid'))['default']> | undefined
 let waveLoader: Promise<[typeof import('wavedrom'), typeof import('json5')]> | undefined
 let renderSequence = 0
-
-async function renderMermaid(source: string): Promise<string> {
-  try {
-    peleLoader ??= import('pele/lazy')
-    const pele = await peleLoader
-    const { svg } = await pele.renderAsync(source, { links: false, images: false })
-    return sanitizeDiagramSvg(svg)
-  } catch {
-    // Keep the original renderer available for syntax or loading failures during the trial.
-    const mermaid = await loadMermaid()
-    const { svg } = await mermaid.render(`mimir-mermaid-${++renderSequence}`, source)
-    return sanitizeDiagramSvg(svg)
-  }
-}
-
-function loadMermaid() {
-  mermaidLoader ??= import('mermaid').then(({ default: mermaid }) => {
-    mermaid.initialize({
-      startOnLoad: false,
-      securityLevel: 'strict',
-      theme: 'default',
-      htmlLabels: false,
-      flowchart: { htmlLabels: false },
-      suppressErrorRendering: true,
-      maxTextSize: 50_000,
-    })
-    return mermaid
-  })
-  return mermaidLoader
-}
 
 function loadWaveDrom() {
   waveLoader ??= Promise.all([import('wavedrom'), import('json5')]).then(([wave, json5]) => [
@@ -96,7 +65,7 @@ export function sanitizeDiagramSvg(svg: string): string {
       (style.textContent ?? '').replace(/@import[^;{}]*(?:;|$)/gi, ''),
     )
   }
-  // Mermaid uses width="100%"; use its viewBox for the correct image aspect ratio.
+  // Use the viewBox for the correct image aspect ratio, including percentage SVG widths.
   const box = root
     .getAttribute('viewBox')
     ?.trim()
@@ -133,7 +102,12 @@ export async function renderDiagram(
     if (source.length > 50_000) throw new Error('图形源码不能超过 50,000 个字符')
     let svg: string
     if (language === 'mermaid') {
-      return { ok: true, svg: await renderMermaid(source) }
+      peleLoader ??= import('pele/lazy').catch((error: unknown) => {
+        peleLoader = undefined
+        throw error
+      })
+      const pele = await peleLoader
+      ;({ svg } = await pele.renderAsync(source, { links: false, images: false }))
     } else {
       const [wave, json5] = await loadWaveDrom()
       const parsed = waveSource(source, (text) => json5.parse(text) as unknown)

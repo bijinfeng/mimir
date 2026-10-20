@@ -1,0 +1,9 @@
+{
+  "packages/renderer/src/editor/diagram-render.ts": "efa1e483fae781fa4433abc9ac51aee3733886782dc830a274fd456a1e30097e",
+  "packages/renderer/src/editor/diagram-render.test.ts": "ed567421f4ec74c9d30e205a5d697ccf0ed11cada1c2121d3b74746d4ee97230",
+  "packages/renderer/src/editor/diagram-pele.test.ts": "fbedda0f06140c070fbb5ce01b07707e0fd1b54ddacbd2b8131d4a36b4262988",
+  "packages/renderer/src/editor/diagram-block.test.ts": "b1886770bf9ee10e500bd3224bbd92c3b300ce1017bafcdbe17699bdfcd3ea6a",
+  "packages/renderer/package.json": "90982c6f6a2c8d7953f72e1d0b0e852914207ed5ea145261d6b86cb4b931ab46",
+  "pnpm-lock.yaml": "36ed663cfc1c511e5997ae0d31c3888c9323bdec0dd07619f12ac4712d12aae3",
+  ".trellis/spec/renderer/frontend/editor/conventions.md": "63ec97c8c7102a985413634acb9b47f71b7c06cedf63dd8d70a1256e65dffe0c"
+}

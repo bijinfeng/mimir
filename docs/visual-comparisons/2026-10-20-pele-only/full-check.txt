@@ -1,0 +1,456 @@
+$ pnpm lint && pnpm lint:styles && pnpm format:check && pnpm -r typecheck && pnpm test
+$ oxlint
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/pre-send-seam-probe/vitest-v29.config.ts:1:30: warning import(no-absolute-path): Do not import modules using an absolute path help: Replace the absolute path with a relative path or a module alias.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/agui-v5-evidence/validate-examples.mjs:9:31: warning eslint(no-shadow): 'x' is already declared in the upper scope. help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/pre-send-seam-probe/runtime-facade.ts:7:17: warning unicorn(consistent-function-scoping): Function `forward` does not capture any variables from its parent scope help: Move `forward` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/pre-send-seam-probe/vitest.config.ts:1:30: warning import(no-absolute-path): Do not import modules using an absolute path help: Replace the absolute path with a relative path or a module alias.
+.trellis/tasks/archive/2026-10/10-18-interaction-library/research/reference-evidence/KnowledgeBaseList.vue:933:6: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-library/research/reference-evidence/KnowledgeBaseList.vue:933:6: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-library/research/reference-evidence/KnowledgeBaseList.vue:956:6: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-library/research/reference-evidence/KnowledgeBaseList.vue:956:6: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/pre-send-seam-probe/probe.test.ts:16:16: warning unicorn(consistent-function-scoping): Function `release` does not capture any variables from its parent scope help: Move `release` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/pre-send-seam-probe/probe.test.ts:5:39: warning import(no-absolute-path): Do not import modules using an absolute path help: Replace the absolute path with a relative path or a module alias.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/pre-send-seam-probe/probe.test.ts:14:55: warning unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`. help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/vendor-official/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx:1247:35: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/research/vendor-official/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx:777:50: warning react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function. help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx:1247:35: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v2/vendor/packages/ui/src/components/react/assistant-ui/elements/tool-fallback.aui.tsx:777:50: warning react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function. help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/protocol-probe.mjs:28:26: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/protocol-examples.ts:200:66: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/protocol-examples.ts:418:7: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/protocol-examples.ts:200:66: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/protocol-examples.ts:418:7: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/protocol-examples.ts:200:66: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/protocol-examples.ts:418:7: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-20-interaction-desktop/gallery/source-before/main.jsx:142:10: warning unicorn(consistent-function-scoping): Function `settle` does not capture any variables from its parent scope help: Move `settle` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-pdf/gallery/instrumentation-v1/main.jsx:62:9: warning unicorn(consistent-function-scoping): Function `encode` does not capture any variables from its parent scope help: Move `encode` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-pdf/gallery/instrumentation-v1/main.jsx:62:9: warning unicorn(consistent-function-scoping): Function `decode` does not capture any variables from its parent scope help: Move `decode` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-pdf/gallery/instrumentation-v1/main.jsx:76:79: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/interactions-app.tsx:279:21: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/interactions-app.tsx:301:19: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/interactions-app.tsx:279:21: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/interactions-app.tsx:301:19: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/interactions-app.tsx:276:21: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/interactions-app.tsx:298:19: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:73:48: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:144:40: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:149:41: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:152:30: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:320:38: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:47:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/composer-toolbar.tsx:51:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:73:48: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:144:40: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:149:41: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:152:30: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:320:38: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:47:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/composer-toolbar.tsx:51:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:157:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:313:17: warning unicorn(consistent-function-scoping): Function `time` does not capture any variables from its parent scope help: Move `time` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:32:7: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:138:14: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `Markdown` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:493:12: warning react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead. help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:566:28: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:570:33: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:574:26: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:579:25: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:587:25: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:606:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:615:28: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:617:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:622:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/chat-components.tsx:627:26: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:157:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:313:17: warning unicorn(consistent-function-scoping): Function `time` does not capture any variables from its parent scope help: Move `time` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:32:7: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:138:14: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `Markdown` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:493:12: warning react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead. help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:566:28: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:570:33: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:574:26: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:579:25: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:587:25: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:606:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:615:28: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:617:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:622:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/chat-components.tsx:627:26: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:157:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:313:17: warning unicorn(consistent-function-scoping): Function `time` does not capture any variables from its parent scope help: Move `time` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:32:7: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:138:14: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `Markdown` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:493:12: warning react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead. help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:566:28: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:570:33: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:574:26: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:579:25: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:587:25: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:606:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:615:28: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:617:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:622:30: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/chat-components.tsx:627:26: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/protocol-probe.mjs:28:26: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/protocol-probe.mjs:28:26: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/protocol-demo.tsx:174:49: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/protocol-demo.tsx:209:24: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/protocol-demo.tsx:225:19: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/protocol-demo.tsx:174:49: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/protocol-demo.tsx:209:24: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/protocol-demo.tsx:225:19: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/protocol-demo.tsx:174:49: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/protocol-demo.tsx:209:24: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/protocol-demo.tsx:225:19: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/component-lab.tsx:694:16: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/component-lab.tsx:694:16: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/component-lab.tsx:678:16: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/mobile-runtime.spec.ts:193:11: warning eslint(no-shadow): 'screen' is already declared in the upper scope. help: Consider renaming 'screen' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/runtime-fixture.tsx:63:13: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `KeyboardFixture` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/runtime-fixture.tsx:118:13: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `FlowFixture` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/archive/2026-10/10-20-interaction-pptx/gallery/verify-helper.mjs:4:26: warning import(no-absolute-path): Do not import modules using an absolute path help: Replace the absolute path with a relative path or a module alias.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/model-lab.tsx:76:34: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/model-lab.tsx:76:34: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-20-interaction-pdf/gallery/source-before/main.jsx:115:34: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:79:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:202:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:209:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:232:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:249:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:192:7: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'current', 'chat', and 'post' help: Either include it or remove the dependency array.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/thread-app.tsx:242:34: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'add', and 'fixture.attachmentMode' help: Either include it or remove the dependency array.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:79:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:202:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:209:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:232:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:249:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:192:7: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'current', 'chat', and 'post' help: Either include it or remove the dependency array.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/thread-app.tsx:242:34: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'add', and 'fixture.attachmentMode' help: Either include it or remove the dependency array.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:79:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:196:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:203:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:226:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:243:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:194:5: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'post', 'current', and 'chat' help: Either include it or remove the dependency array.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v5/thread-app.tsx:236:34: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'add', and 'fixture.attachmentMode' help: Either include it or remove the dependency array.
+.trellis/tasks/archive/2026-10/10-20-interaction-pptx/research/inventory.cjs:15:24: warning unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`. help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+.trellis/tasks/archive/2026-10/10-20-interaction-pptx/gallery/local-host.mjs:130:11: warning unicorn(consistent-function-scoping): Function `decode` does not capture any variables from its parent scope help: Move `decode` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-pdf/gallery/local-host.mjs:219:34: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-20-interaction-desktop/gallery/main.jsx:142:10: warning unicorn(consistent-function-scoping): Function `settle` does not capture any variables from its parent scope help: Move `settle` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-markdown/gallery/main.jsx:229:7: warning react(memo-dependencies): Found extra memoization dependencies help: Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:557:43: warning eslint(no-shadow): 's' is already declared in the upper scope. help: Consider renaming 's' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:360:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:151:15: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:153:23: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:155:15: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:157:19: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:161:38: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:163:18: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:170:14: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:232:8: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/renderer/src/lib/api.ts:923:35: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v6/main.tsx:2125:54: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/archive/2026-10/10-18-interaction-chat/prototype/v7/main.tsx:2125:54: warning eslint(no-shadow): 'model' is already declared in the upper scope. help: Consider renaming 'model' to avoid shadowing the variable from the outer scope.
+docs/visual-comparisons/2026-10-20-desktop/demo/source-before/main.jsx:142:10: warning unicorn(consistent-function-scoping): Function `settle` does not capture any variables from its parent scope help: Move `settle` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-pptx/gallery/main.jsx:70:9: warning unicorn(consistent-function-scoping): Function `encode` does not capture any variables from its parent scope help: Move `encode` to the outer scope to avoid recreating it on every call.
+docs/visual-comparisons/2026-10-20-desktop/demo/source-after/main.jsx:142:10: warning unicorn(consistent-function-scoping): Function `settle` does not capture any variables from its parent scope help: Move `settle` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/archive/2026-10/10-20-interaction-pdf/gallery/main.jsx:115:34: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:1171:18: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:1307:30: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:2183:50: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:2213:31: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+plugins/provider/src/provider.ts:100:17: warning unicorn(consistent-function-scoping): Function `listEndpointModels` does not capture any variables from its parent scope help: Move `listEndpointModels` to the outer scope to avoid recreating it on every call.
+docs/visual-comparisons/2026-10-20-pdf/demo/source-before/main.jsx:115:34: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/editors/PptxDeckWritingPreview.test.tsx:392:39: warning eslint(no-shadow): 'resolve' is already declared in the upper scope. help: Consider renaming 'resolve' to avoid shadowing the variable from the outer scope.
+apps/server/src/routes/files.ts:131:8: warning oxc(no-async-endpoint-handlers): Express endpoint handler for `/:id/file` should not be `async`. help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`). Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+apps/server/src/routes/miniapp.ts:88:48: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+apps/server/src/services/miniapp-operations.ts:16:8: warning unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`. help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+packages/office/src/editors/docx-toolbar-render.test.tsx:539:18: warning unicorn(consistent-function-scoping): Function `openTableMenu` does not capture any variables from its parent scope help: Move `openTableMenu` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/PptxDeckWritingPreview.tsx:217:13: warning unicorn(consistent-function-scoping): Function `ownsFocus` does not capture any variables from its parent scope help: Move `ownsFocus` to the outer scope to avoid recreating it on every call.
+packages/renderer/src/editor/markdown-toolbar.test.ts:449:12: warning unicorn(consistent-function-scoping): Function `cursorInCell` does not capture any variables from its parent scope help: Move `cursorInCell` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/PdfOcrOverlay.test.tsx:24:24: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/editors/pdf-ocr-worker.ts:69:12: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:70:12: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:80:10: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:81:10: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:109:77: warning unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument. help: Insert `, worker.location.origin`
+apps/server/src/test/document-agent-core.test.ts:199:11: warning unicorn(consistent-function-scoping): Function `resolveCatalog` does not capture any variables from its parent scope help: Move `resolveCatalog` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/docx-toolbar.test.ts:213:18: warning unicorn(consistent-function-scoping): Function `inTable` does not capture any variables from its parent scope help: Move `inTable` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/use-pdf-ocr.test.ts:98:11: warning unicorn(consistent-function-scoping): Function `recognize` does not capture any variables from its parent scope help: Move `recognize` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/use-pdf-ocr.test.ts:112:13: warning unicorn(consistent-function-scoping): Function `recognize` does not capture any variables from its parent scope help: Move `recognize` to the outer scope to avoid recreating it on every call.
+packages/office/src/shell/EditorShell.test.tsx:1908:12: warning unicorn(consistent-function-scoping): Function `withRealCss` does not capture any variables from its parent scope help: Move `withRealCss` to the outer scope to avoid recreating it on every call.
+apps/miniapp/src/lib/network.ts:6:17: warning unicorn(consistent-function-scoping): Function `update` does not capture any variables from its parent scope help: Move `update` to the outer scope to avoid recreating it on every call.
+apps/miniapp/src/pages/library/index.tsx:42:16: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:61:17: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:67:17: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:13:10: warning unicorn(consistent-function-scoping): Function `find` does not capture any variables from its parent scope help: Move `find` to the outer scope to avoid recreating it on every call.
+apps/miniapp/src/components/ui.tsx:135:17: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/components/markdown.tsx:220:17: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/components/markdown.tsx:260:11: warning react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead. help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+apps/miniapp/src/components/markdown.tsx:275:13: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+apps/miniapp/src/components/markdown.tsx:293:23: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+apps/miniapp/src/components/markdown.tsx:299:70: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+apps/miniapp/src/lib/storage.ts:66:6: warning unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`. help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+apps/miniapp/src/pages/account/index.tsx:29:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/account/index.tsx:53:16: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/account/index.tsx:66:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/reader/index.tsx:54:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/reader/index.tsx:78:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/capture/index.tsx:57:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/capture/index.tsx:106:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/capture/index.tsx:139:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/capture/index.tsx:164:16: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/capture/index.tsx:170:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/capture/index.tsx:167:23: warning eslint(preserve-caught-error): There is no cause error attached to this new thrown error. help: Preserve the original error by using the `cause` property when re-throwing errors.
+apps/miniapp/src/pages/editor/index.tsx:94:16: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:110:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:145:17: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:252:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:282:16: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:297:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:328:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:352:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:442:24: warning eslint(no-shadow): 'folder' is already declared in the upper scope. help: Consider renaming 'folder' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:545:26: warning eslint(no-shadow): 'folder' is already declared in the upper scope. help: Consider renaming 'folder' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/editor/index.tsx:139:16: warning react(exhaustive-effect-dependencies): Found missing/extra effect dependencies help: Missing dependencies can cause an effect to fire less often than it should. Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+apps/miniapp/src/pages/editor/index.tsx:164:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+apps/miniapp/src/pages/editor/index.tsx:133:25: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'valid', 'fromDocument', and 'cachedDraft' help: Either include it or remove the dependency array.
+apps/miniapp/src/pages/editor/index.tsx:286:11: warning eslint(preserve-caught-error): There is no cause error attached to this new thrown error. help: Preserve the original error by using the `cause` property when re-throwing errors.
+apps/miniapp/src/pages/login/index.tsx:26:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+packages/office/src/pptx.test.ts:283:18: warning unicorn(consistent-function-scoping): Function `withMissingGeometry` does not capture any variables from its parent scope help: Move `withMissingGeometry` to the outer scope to avoid recreating it on every call.
+apps/server/src/test/api.test.ts:173:9: warning unicorn(consistent-function-scoping): Function `treePaths` does not capture any variables from its parent scope help: Move `treePaths` to the outer scope to avoid recreating it on every call.
+apps/miniapp/src/pages/chat/index.tsx:104:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:128:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:154:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:203:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:277:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:298:17: warning eslint(no-shadow): 'next' is already declared in the upper scope. help: Consider renaming 'next' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:346:10: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:360:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:386:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:407:41: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:441:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/chat/index.tsx:111:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+$ node scripts/check-style-backticks.mjs
+样式模板里没有多余的反引号
+$ oxfmt --check
+Checking formatting...
+
+All matched files use the correct format.
+Finished in 5822ms on 2120 files using 10 threads.
+packages/tokenizer typecheck$ tsc --noEmit
+packages/shared typecheck$ tsc --noEmit
+packages/tokenizer typecheck: Done
+packages/shared typecheck: Done
+apps/miniapp typecheck$ tsc --noEmit
+packages/office typecheck$ tsc --noEmit
+packages/chat typecheck$ tsc --noEmit
+packages/core typecheck$ tsc --noEmit
+apps/miniapp typecheck: Done
+plugins/capturer typecheck$ tsc --noEmit
+packages/core typecheck: Done
+plugins/leg typecheck$ tsc --noEmit
+packages/chat typecheck: Done
+plugins/parser typecheck$ tsc --noEmit
+plugins/capturer typecheck: Done
+plugins/provider typecheck$ tsc --noEmit
+plugins/leg typecheck: Done
+plugins/storage typecheck$ tsc --noEmit
+plugins/parser typecheck: Done
+plugins/provider typecheck: Done
+plugins/storage typecheck: Done
+apps/server typecheck$ tsc --noEmit
+packages/office typecheck: Done
+packages/renderer typecheck$ pnpm routes:generate && tsc --noEmit
+packages/renderer typecheck: $ node generate-routes.mjs src/routeTree.gen.ts
+packages/renderer typecheck: 路由树已生成 → /Users/admin/Desktop/mimir/packages/renderer/src/routeTree.gen.ts
+apps/server typecheck: Done
+packages/renderer typecheck: Done
+apps/web typecheck$ pnpm routes:generate && tsc --noEmit
+apps/desktop typecheck$ pnpm routes:generate && tsc --noEmit
+apps/web typecheck: $ node ../../packages/renderer/generate-routes.mjs src/routeTree.gen.ts
+apps/desktop typecheck: $ node ../../packages/renderer/generate-routes.mjs src/renderer/routeTree.gen.ts src/renderer/routes /client
+apps/web typecheck: 路由树已生成 → /Users/admin/Desktop/mimir/apps/web/src/routeTree.gen.ts
+apps/desktop typecheck: 路由树已生成 → /Users/admin/Desktop/mimir/apps/desktop/src/renderer/routeTree.gen.ts
+apps/web typecheck: Done
+apps/desktop typecheck: Done
+$ pnpm -r test && node --test scripts/desktop-dev-process.test.mjs scripts/fnos-package.test.mjs
+Scope: 15 of 16 workspace projects
+apps/miniapp test$ node --test scripts/*.test.mjs
+packages/chat test$ vitest run --passWithNoTests
+packages/office test$ vitest run --passWithNoTests
+plugins/provider test$ vitest run
+apps/miniapp test: ✔ unconfigured shell never invents a production server (0.533417ms)
+apps/miniapp test: ✔ fixed origin is normalized, with a non-default HTTPS port retained (0.059542ms)
+apps/miniapp test: ✔ rejects credentials, insecure URLs and non-origin configuration (0.126541ms)
+apps/miniapp test: (node:35923) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/admin/Desktop/mimir/apps/miniapp/src/lib/sse.ts is not specified and it doesn't parse as CommonJS.
+apps/miniapp test: Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+apps/miniapp test: To eliminate this warning, add "type": "module" to /Users/admin/Desktop/mimir/apps/miniapp/package.json.
+apps/miniapp test: (Use `node --trace-warnings ...` to show where the warning was created)
+apps/miniapp test: ✔ UTF-8 preserves Chinese and emoji at every possible chunk boundary (0.938666ms)
+apps/miniapp test: ✔ unfinished and invalid UTF-8 are replaced instead of silently lost (0.083417ms)
+apps/miniapp test: ✔ SSE buffers CRLF, comments, multiline data and UTF-8 byte fragments (1.054708ms)
+apps/miniapp test: ✔ incomplete SSE frame never invents a completed run (0.098709ms)
+apps/miniapp test: ✔ run errors remain failures even if a later terminal event arrives (0.0575ms)
+apps/miniapp test: ℹ tests 8
+apps/miniapp test: ℹ suites 0
+apps/miniapp test: ℹ pass 8
+apps/miniapp test: ℹ fail 0
+apps/miniapp test: ℹ cancelled 0
+apps/miniapp test: ℹ skipped 0
+apps/miniapp test: ℹ todo 0
+apps/miniapp test: ℹ duration_ms 234.092792
+apps/miniapp test: Done
+plugins/storage test$ vitest run
+packages/chat test:
+packages/chat test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/chat
+packages/chat test:
+packages/office test:
+packages/office test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
+packages/office test:
+plugins/provider test:
+plugins/provider test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/plugins/provider
+plugins/provider test:
+plugins/storage test:
+plugins/storage test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/plugins/storage
+plugins/storage test:
+plugins/storage test:
+plugins/storage test:  Test Files  1 passed | 1 skipped (2)
+plugins/storage test:       Tests  13 passed | 2 skipped (15)
+plugins/storage test:    Start at  12:29:51
+plugins/storage test:    Duration  387ms (import 51%, transform 32%, tests 13%, worker 4%)
+plugins/storage test:
+plugins/storage test: Done
+plugins/provider test:
+plugins/provider test:  Test Files  2 passed (2)
+plugins/provider test:       Tests  31 passed (31)
+plugins/provider test:    Start at  12:29:51
+plugins/provider test:    Duration  1.06s (import 66%, transform 29%, tests 4%, worker 1%)
+plugins/provider test:
+plugins/provider test: Done
+apps/server test$ vitest run && vitest run --config vitest.local.config.ts && vitest run --config vitest.fnos.config.ts && node --test scripts/sqlite-backup.node-test.mjs
+apps/server test:
+apps/server test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+apps/server test:
+packages/chat test: POST http://127.0.0.1:50679/api/chat 503 (Service Unavailable)
+packages/chat test: POST http://127.0.0.1:50687/api/chat 503 (Service Unavailable)
+packages/chat test:
+packages/chat test:  Test Files  8 passed (8)
+packages/chat test:       Tests  88 passed (88)
+packages/chat test:    Start at  12:29:51
+packages/chat test:    Duration  12.73s (import 45%, tests 36%, environment 15%, transform 4%)
+packages/chat test:
+packages/chat test:     Isolate  8 workers spawned · ~341ms startup each (spawn + environment, per file)
+packages/chat test:              at least ~2.38s faster with isolate: false — reuses workers across files instead of one per file
+packages/chat test:
+packages/chat test: Done
+apps/server test:
+apps/server test:  Test Files  122 passed (122)
+apps/server test:       Tests  1365 passed (1365)
+apps/server test:    Start at  12:29:52
+apps/server test:    Duration  200.93s (import 51%, tests 46%, transform 2%)
+apps/server test:
+apps/server test:     Isolate  122 workers spawned · ~115ms startup each (spawn + environment, per file)
+apps/server test:              at least ~13.91s faster with isolate: false — reuses workers across files instead of one per file
+apps/server test:
+apps/server test:
+apps/server test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+apps/server test:
+apps/server test:
+apps/server test:  Test Files  1 passed (1)
+apps/server test:       Tests  10 passed (10)
+apps/server test:    Start at  12:33:14
+apps/server test:    Duration  4.59s (transform 57%, import 40%, tests 2%)
+apps/server test:
+apps/server test:
+apps/server test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+apps/server test:
+apps/server test:
+apps/server test:  Test Files  1 passed (1)
+apps/server test:       Tests  4 passed (4)
+apps/server test:    Start at  12:33:19
+apps/server test:    Duration  4.19s (transform 56%, import 37%, tests 7%)
+apps/server test:
+apps/server test: ✔ SQLite 实例备份 → 校验 → 隔离目录恢复：数据库、文件、密钥都回来 (81.107542ms)
+apps/server test: ✔ 无 auth-secret 时不能声称创建完整备份 (2.577125ms)
+apps/server test: ℹ tests 2
+apps/server test: ℹ suites 0
+apps/server test: ℹ pass 2
+apps/server test: ℹ fail 0
+apps/server test: ℹ cancelled 0
+apps/server test: ℹ skipped 0
+apps/server test: ℹ todo 0
+apps/server test: ℹ duration_ms 366.399542
+apps/server test: Done
+packages/office test:
+packages/office test:  Test Files  235 passed (235)
+packages/office test:       Tests  2774 passed (2774)
+packages/office test:    Start at  12:29:51
+packages/office test:    Duration  405.21s (tests 60%, import 31%, environment 6%, transform 3%)
+packages/office test:
+packages/office test:      Import  1030 modules were evaluated 2485 times · 116.39s total, 31% of tracked time
+packages/office test:              ~68.15s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+packages/office test:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+packages/office test:
+packages/office test: Done
+packages/renderer test$ vitest run --passWithNoTests
+packages/renderer test:
+packages/renderer test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+packages/renderer test:
+packages/renderer test:
+packages/renderer test:  Test Files  84 passed (84)
+packages/renderer test:       Tests  627 passed (627)
+packages/renderer test:    Start at  12:36:36
+packages/renderer test:    Duration  111.21s (import 57%, tests 26%, environment 14%, transform 2%)
+packages/renderer test:
+packages/renderer test:      Import  899 modules were evaluated 2511 times · 58.01s total, 57% of tracked time
+packages/renderer test:              ~37.24s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+packages/renderer test:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+packages/renderer test:
+packages/renderer test: Done
+apps/desktop test$ vitest run
+apps/web test$ vitest run --passWithNoTests
+apps/desktop test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+apps/desktop test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+apps/web test:
+apps/web test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/web
+apps/web test:
+apps/web test: No test files found, exiting with code 0
+apps/web test:
+apps/web test: include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+apps/web test: exclude:  **/node_modules/**, **/.git/**
+apps/web test:
+apps/desktop test:
+apps/desktop test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/desktop
+apps/desktop test:
+apps/web test: Done
+apps/desktop test:
+apps/desktop test:  Test Files  7 passed (7)
+apps/desktop test:       Tests  57 passed (57)
+apps/desktop test:    Start at  12:38:28
+apps/desktop test:    Duration  3.40s (tests 61%, import 26%, environment 10%, transform 2%)
+apps/desktop test:
+apps/desktop test:     Isolate  7 workers spawned · ~135ms startup each (spawn + environment, per file)
+apps/desktop test:              at least ~811ms faster with isolate: false — reuses workers across files instead of one per file
+apps/desktop test:
+apps/desktop test: Done
+✔ 关闭 pnpm 包装进程时，监听端口的孙进程也退出 (117.223709ms)
+✔ pnpm 已退出后仍能清理监听端口的孙进程 (305.826416ms)
+✔ fnOS install stores owner credentials only in protected persistent config (695.0725ms)
+✔ fnOS install rejects invalid owner input without writing credentials (122.2275ms)
+✔ fnOS package declares the gateway, x86 runtime and icons (3.763667ms)
+✔ fnOS lifecycle starts on a Unix socket and stops idempotently (1384.8135ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2292.959666

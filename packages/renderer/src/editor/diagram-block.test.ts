@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { Editor } from '@tiptap/core'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { createExtensions } from './extensions'
 import { renderDiagram, sanitizeDiagramSvg } from './diagram-render'
 import { runOps } from '../../../office/src/agent/markdown-ops'
@@ -10,10 +10,9 @@ import {
   type MarkdownSlashState,
 } from '../../../office/src/editors/markdown-slash'
 
-vi.mock('pele/lazy', { spy: true })
-
 const editors: Editor[] = []
 const mounts: HTMLElement[] = []
+beforeEach(() => vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null))
 afterEach(() => {
   editors.splice(0).forEach((editor) => editor.destroy())
   mounts.splice(0).forEach((mount) => mount.remove())
@@ -64,35 +63,14 @@ it('renders real WaveJSON including JSON5, timing signals and local SVG uses', a
   expect(result.svg).toContain('href="#')
 })
 
-it('renders real Mermaid compatibility output when Pele fails and reports malformed diagrams', async () => {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
-  const pele = await import('pele/lazy')
-  vi.mocked(pele.renderAsync).mockRejectedValueOnce(new Error('Pele unavailable'))
-  // jsdom has no SVG layout engine; supply only the text measurement the renderer needs.
-  Object.defineProperty(SVGElement.prototype, 'getBBox', {
-    configurable: true,
-    value() {
-      return { x: 0, y: 0, width: 80, height: 24 }
-    },
-  })
-  Object.defineProperty(SVGElement.prototype, 'getComputedTextLength', {
-    configurable: true,
-    value() {
-      return 80
-    },
-  })
-  try {
-    const result = await renderDiagram('mermaid', 'flowchart LR\n  A[Start] --> B[Done]')
-    if (!result.ok) throw new Error(result.error)
-    expect(result.svg).toContain('Start')
-    expect(result.svg).toContain('Done')
-    expect(result.svg).not.toContain('foreignObject')
-    expect((await renderDiagram('mermaid', 'not a diagram')).ok).toBe(false)
-  } finally {
-    Reflect.deleteProperty(SVGElement.prototype, 'getBBox')
-    Reflect.deleteProperty(SVGElement.prototype, 'getComputedTextLength')
-  }
-}, 15_000)
+it('renders Mermaid fenced syntax with real Pele and reports malformed diagrams', async () => {
+  const result = await renderDiagram('mermaid', 'flowchart LR\n  A[Start] --> B[Done]')
+  if (!result.ok) throw new Error(result.error)
+  expect(result.svg).toContain('Start')
+  expect(result.svg).toContain('Done')
+  expect(result.svg).not.toContain('foreignObject')
+  expect((await renderDiagram('mermaid', 'not a diagram')).ok).toBe(false)
+})
 
 it.each([
   ['wavedrom', "{signal: [{name:'clk', wave:'p...'}]}"],
@@ -149,6 +127,10 @@ it.each([
     expect(editor.commands.undo()).toBe(true)
     expect(editor.state.doc.firstChild?.textContent).toBe(source)
     expect(editor.getMarkdown().trimEnd()).toBe(markdown)
+    await vi.waitFor(() =>
+      expect(mount.querySelector('.mimir-diagram__error')?.textContent).toContain('无法绘制图形'),
+    )
+    expect((mount.querySelector('.mimir-diagram pre') as HTMLElement).hidden).toBe(false)
   },
 )
 

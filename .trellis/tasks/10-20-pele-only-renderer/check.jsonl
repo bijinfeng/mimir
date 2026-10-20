@@ -1,0 +1,5 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "项目约束"}
+{"file": ".trellis/spec/project/quality.md", "reason": "完成定义"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "共享渲染层"}
+{"file": ".trellis/spec/renderer/frontend/editor/conventions.md", "reason": "源码、安全与渲染合同"}
+{"file": ".trellis/tasks/archive/2026-10/10-20-pele-mermaid-trial/research/pele-evaluation.md", "reason": "已有 Pele 与 WeKnora 版本证据，保留兼容限制"}

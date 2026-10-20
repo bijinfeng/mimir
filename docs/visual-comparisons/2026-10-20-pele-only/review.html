@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pele 单引擎替换 · 真实组件对比</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 16px;
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+        background: #f5f5f5;
+        color: #202020;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0 0 8px;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 12px 0;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      select {
+        padding: 4px 8px;
+        font: inherit;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+      }
+      section {
+        min-width: 0;
+        overflow: auto;
+      }
+      h2 {
+        font-size: 14px;
+      }
+      iframe {
+        display: block;
+        border: 1px solid #ccc;
+        background: white;
+        height: 740px;
+      }
+      @media (max-width: 1000px) {
+        .pair {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Pele 单引擎替换 · 真实组件对比</h1>
+    <p>
+      两侧使用同一份固定内容、主题与组件尺寸。左侧是已归档试用版，右侧仅使用
+      Pele；源码格式保持不变。
+    </p>
+    <nav aria-label="同步对比条件">
+      <label
+        >样例
+        <select id="case"></select
+      ></label>
+      <label
+        >主题
+        <select id="theme">
+          <option value="light">浅色</option>
+          <option value="dark">深色</option>
+        </select></label
+      >
+      <label
+        >组件宽度
+        <select id="width">
+          <option value="900">900 px</option>
+          <option value="390">390 px</option>
+        </select></label
+      >
+      <label
+        >模式
+        <select id="editable">
+          <option value="0">只读</option>
+          <option value="1">编辑源码</option>
+        </select></label
+      >
+    </nav>
+    <div class="pair">
+      <section>
+        <h2>替换前：Pele 优先与 Mermaid 回退</h2>
+        <iframe title="替换前：Pele 优先与 Mermaid 回退 真实组件" id="before"></iframe>
+      </section>
+      <section>
+        <h2>替换后：Pele 单引擎</h2>
+        <iframe title="Pele 真实组件" id="after"></iframe>
+      </section>
+    </div>
+    <script type="module">
+      import { cases } from './demo/fixtures.js'
+      const params = new URLSearchParams(location.search)
+      const keys = ['case', 'theme', 'width', 'editable']
+      for (const [id, item] of Object.entries(cases)) {
+        const option = document.createElement('option')
+        option.value = id
+        option.textContent = item.title
+        document.getElementById('case').append(option)
+      }
+      for (const key of keys) {
+        const control = document.getElementById(key)
+        if (params.has(key)) control.value = params.get(key)
+        control.addEventListener('change', sync)
+      }
+      function sync() {
+        for (const key of keys) params.set(key, document.getElementById(key).value)
+        history.replaceState(null, '', `?${params}`)
+        for (const variant of ['before', 'after']) {
+          const frame = document.getElementById(variant)
+          frame.style.width = `${params.get('width')}px`
+          frame.src =
+            variant === 'before'
+              ? `../2026-10-20-pele/demo/dist/after/index.html?${params}`
+              : `./demo/dist/after/index.html?${params}`
+        }
+      }
+      sync()
+    </script>
+  </body>
+</html>

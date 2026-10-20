@@ -2,10 +2,6 @@
 import { afterAll, beforeAll, expect, it, vi } from 'vitest'
 import { renderDiagram } from './diagram-render'
 
-vi.mock('mermaid', () => {
-  throw new Error('Real Pele samples must succeed without loading the compatibility renderer')
-})
-
 // jsdom has no canvas; Pele uses its built-in text width fallback in this environment.
 beforeAll(() => vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null))
 afterAll(() => vi.restoreAllMocks())

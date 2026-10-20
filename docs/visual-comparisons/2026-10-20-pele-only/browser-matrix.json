@@ -1,0 +1,1290 @@
+[
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 390,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "light",
+    "width": 390,
+    "code": "flowchart LR\n A[这是用于检查中文长标签在知识库阅读列中的显示情况的测试节点] --> B[整理完成后继续连接相关资料]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 822
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "light",
+    "width": 390,
+    "code": "sequenceDiagram\n participant U as 用户\n participant S as 知识库\n U->>S: 检索资料\n loop 逐条核对\n S-->>U: 返回引用\n end",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 251,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "light",
+    "width": 390,
+    "code": "classDiagram\n Document <|-- Note\n class Document {\n +String title\n +save() void\n }\n class Note {\n +edit() void\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 261,
+        "width": 131
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "light",
+    "width": 390,
+    "code": "erDiagram\n DOCUMENT ||--o{ CITATION : contains\n DOCUMENT {\n string title\n }\n CITATION {\n string source\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 249,
+        "width": 147
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "light",
+    "width": 390,
+    "code": "stateDiagram-v2\n [*] --> Draft\n Draft --> Saved: 保存\n Saved --> Draft: 编辑\n Saved --> [*]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 293,
+        "width": 114
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "light",
+    "width": 390,
+    "code": "gantt\n dateFormat YYYY-MM-DD\n section 资料整理\n 收集 :a, 2026-10-20, 2d\n 整理 :b, after a, 3d",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 97,
+        "width": 800
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "light",
+    "width": 390,
+    "code": "mindmap\n root((知识库))\n  收集\n   网页\n   文件\n  整理\n   标签\n   目录",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 87,
+        "width": 466
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "light",
+    "width": 390,
+    "code": "pie title 资料来源\n \"网页\" : 40\n \"文件\" : 35\n \"笔记\" : 25",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 296,
+        "width": 337
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "light",
+    "width": 390,
+    "code": "flowchart LR\n subgraph S[整理流程]\n direction TB\n A[收集] --> B[归档]\n end\n B --> C[引用]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 220,
+        "width": 242
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "light",
+    "width": 390,
+    "code": "---\nconfig:\n  theme: dark\n---\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "light",
+    "width": 390,
+    "code": "%%{init: {\"theme\":\"dark\"}}%%\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "light",
+    "width": 390,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected for the given text.",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "light",
+    "width": 390,
+    "code": "{signal:[{name:'clk',wave:'p....'},{name:'data',wave:'x.34x',data:['收集','整理']}]}",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 60,
+        "width": 280
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "light",
+    "width": 390,
+    "code": "const knowledge = ['收集', '整理']",
+    "error": null,
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 900,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "light",
+    "width": 900,
+    "code": "flowchart LR\n A[这是用于检查中文长标签在知识库阅读列中的显示情况的测试节点] --> B[整理完成后继续连接相关资料]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 822
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "light",
+    "width": 900,
+    "code": "sequenceDiagram\n participant U as 用户\n participant S as 知识库\n U->>S: 检索资料\n loop 逐条核对\n S-->>U: 返回引用\n end",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 251,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "light",
+    "width": 900,
+    "code": "classDiagram\n Document <|-- Note\n class Document {\n +String title\n +save() void\n }\n class Note {\n +edit() void\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 261,
+        "width": 131
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "light",
+    "width": 900,
+    "code": "erDiagram\n DOCUMENT ||--o{ CITATION : contains\n DOCUMENT {\n string title\n }\n CITATION {\n string source\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 249,
+        "width": 147
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "light",
+    "width": 900,
+    "code": "stateDiagram-v2\n [*] --> Draft\n Draft --> Saved: 保存\n Saved --> Draft: 编辑\n Saved --> [*]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 293,
+        "width": 114
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "light",
+    "width": 900,
+    "code": "gantt\n dateFormat YYYY-MM-DD\n section 资料整理\n 收集 :a, 2026-10-20, 2d\n 整理 :b, after a, 3d",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 97,
+        "width": 800
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "light",
+    "width": 900,
+    "code": "mindmap\n root((知识库))\n  收集\n   网页\n   文件\n  整理\n   标签\n   目录",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 87,
+        "width": 466
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "light",
+    "width": 900,
+    "code": "pie title 资料来源\n \"网页\" : 40\n \"文件\" : 35\n \"笔记\" : 25",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 296,
+        "width": 337
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "light",
+    "width": 900,
+    "code": "flowchart LR\n subgraph S[整理流程]\n direction TB\n A[收集] --> B[归档]\n end\n B --> C[引用]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 220,
+        "width": 242
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "light",
+    "width": 900,
+    "code": "---\nconfig:\n  theme: dark\n---\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "light",
+    "width": 900,
+    "code": "%%{init: {\"theme\":\"dark\"}}%%\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "light",
+    "width": 900,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected for the given text.",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "light",
+    "width": 900,
+    "code": "{signal:[{name:'clk',wave:'p....'},{name:'data',wave:'x.34x',data:['收集','整理']}]}",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 60,
+        "width": 280
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "light",
+    "width": 900,
+    "code": "const knowledge = ['收集', '整理']",
+    "error": null,
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 390,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "dark",
+    "width": 390,
+    "code": "flowchart LR\n A[这是用于检查中文长标签在知识库阅读列中的显示情况的测试节点] --> B[整理完成后继续连接相关资料]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 822
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "dark",
+    "width": 390,
+    "code": "sequenceDiagram\n participant U as 用户\n participant S as 知识库\n U->>S: 检索资料\n loop 逐条核对\n S-->>U: 返回引用\n end",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 251,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "dark",
+    "width": 390,
+    "code": "classDiagram\n Document <|-- Note\n class Document {\n +String title\n +save() void\n }\n class Note {\n +edit() void\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 261,
+        "width": 131
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "dark",
+    "width": 390,
+    "code": "erDiagram\n DOCUMENT ||--o{ CITATION : contains\n DOCUMENT {\n string title\n }\n CITATION {\n string source\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 249,
+        "width": 147
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "dark",
+    "width": 390,
+    "code": "stateDiagram-v2\n [*] --> Draft\n Draft --> Saved: 保存\n Saved --> Draft: 编辑\n Saved --> [*]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 293,
+        "width": 114
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "dark",
+    "width": 390,
+    "code": "gantt\n dateFormat YYYY-MM-DD\n section 资料整理\n 收集 :a, 2026-10-20, 2d\n 整理 :b, after a, 3d",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 97,
+        "width": 800
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "dark",
+    "width": 390,
+    "code": "mindmap\n root((知识库))\n  收集\n   网页\n   文件\n  整理\n   标签\n   目录",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 87,
+        "width": 466
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "dark",
+    "width": 390,
+    "code": "pie title 资料来源\n \"网页\" : 40\n \"文件\" : 35\n \"笔记\" : 25",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 296,
+        "width": 337
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "dark",
+    "width": 390,
+    "code": "flowchart LR\n subgraph S[整理流程]\n direction TB\n A[收集] --> B[归档]\n end\n B --> C[引用]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 220,
+        "width": 242
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "dark",
+    "width": 390,
+    "code": "---\nconfig:\n  theme: dark\n---\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "dark",
+    "width": 390,
+    "code": "%%{init: {\"theme\":\"dark\"}}%%\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "dark",
+    "width": 390,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected for the given text.",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "dark",
+    "width": 390,
+    "code": "{signal:[{name:'clk',wave:'p....'},{name:'data',wave:'x.34x',data:['收集','整理']}]}",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 60,
+        "width": 280
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "dark",
+    "width": 390,
+    "code": "const knowledge = ['收集', '整理']",
+    "error": null,
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 900,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "chinese",
+    "theme": "dark",
+    "width": 900,
+    "code": "flowchart LR\n A[这是用于检查中文长标签在知识库阅读列中的显示情况的测试节点] --> B[整理完成后继续连接相关资料]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 822
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "sequence",
+    "theme": "dark",
+    "width": 900,
+    "code": "sequenceDiagram\n participant U as 用户\n participant S as 知识库\n U->>S: 检索资料\n loop 逐条核对\n S-->>U: 返回引用\n end",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 251,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "class",
+    "theme": "dark",
+    "width": 900,
+    "code": "classDiagram\n Document <|-- Note\n class Document {\n +String title\n +save() void\n }\n class Note {\n +edit() void\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 261,
+        "width": 131
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "er",
+    "theme": "dark",
+    "width": 900,
+    "code": "erDiagram\n DOCUMENT ||--o{ CITATION : contains\n DOCUMENT {\n string title\n }\n CITATION {\n string source\n }",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 249,
+        "width": 147
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "state",
+    "theme": "dark",
+    "width": 900,
+    "code": "stateDiagram-v2\n [*] --> Draft\n Draft --> Saved: 保存\n Saved --> Draft: 编辑\n Saved --> [*]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 293,
+        "width": 114
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "gantt",
+    "theme": "dark",
+    "width": 900,
+    "code": "gantt\n dateFormat YYYY-MM-DD\n section 资料整理\n 收集 :a, 2026-10-20, 2d\n 整理 :b, after a, 3d",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 97,
+        "width": 800
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "mindmap",
+    "theme": "dark",
+    "width": 900,
+    "code": "mindmap\n root((知识库))\n  收集\n   网页\n   文件\n  整理\n   标签\n   目录",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 87,
+        "width": 466
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "pie",
+    "theme": "dark",
+    "width": 900,
+    "code": "pie title 资料来源\n \"网页\" : 40\n \"文件\" : 35\n \"笔记\" : 25",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 296,
+        "width": 337
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "subgraph",
+    "theme": "dark",
+    "width": 900,
+    "code": "flowchart LR\n subgraph S[整理流程]\n direction TB\n A[收集] --> B[归档]\n end\n B --> C[引用]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 220,
+        "width": 242
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "frontmatter",
+    "theme": "dark",
+    "width": 900,
+    "code": "---\nconfig:\n  theme: dark\n---\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "directive",
+    "theme": "dark",
+    "width": 900,
+    "code": "%%{init: {\"theme\":\"dark\"}}%%\nflowchart LR\n A[资料] --> B[知识]",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 64,
+        "width": 202
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "error",
+    "theme": "dark",
+    "width": 900,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected for the given text.",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "wavedrom",
+    "theme": "dark",
+    "width": 900,
+    "code": "{signal:[{name:'clk',wave:'p....'},{name:'data',wave:'x.34x',data:['收集','整理']}]}",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 60,
+        "width": 280
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "after",
+    "id": "code",
+    "theme": "dark",
+    "width": 900,
+    "code": "const knowledge = ['收集', '整理']",
+    "error": null,
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 单引擎"
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 390,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "light",
+    "width": 390,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "light",
+    "width": 900,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "light",
+    "width": 900,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 390,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "dark",
+    "width": 390,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 390,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "flowchart",
+    "theme": "dark",
+    "width": 900,
+    "code": "flowchart LR\n A[收集资料] --> B{需要整理？}\n B -->|是| C[补充标签]\n B -->|否| D[保存]\n C --> D",
+    "error": null,
+    "images": [
+      {
+        "complete": true,
+        "height": 119,
+        "width": 607
+      }
+    ],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  },
+  {
+    "variant": "before",
+    "id": "error",
+    "theme": "dark",
+    "width": 900,
+    "code": "this is invalid mermaid",
+    "error": "无法绘制图形：No diagram type detected matching given configuration for text: this is invalid mermaid",
+    "images": [],
+    "mainPadding": "20px",
+    "mainWidth": 900,
+    "overflow": false,
+    "previewOverflow": false,
+    "title": "Pele 优先 · Mermaid 回退"
+  }
+]

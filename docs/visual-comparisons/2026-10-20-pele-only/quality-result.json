@@ -1,0 +1,34 @@
+{
+  "command": "VITEST_MAX_WORKERS=1 pnpm check",
+  "exitCode": 0,
+  "executionSessionId": 56118,
+  "workingDirectory": "/Users/admin/Desktop/mimir",
+  "log": "full-check.txt",
+  "focused": {
+    "files": 4,
+    "tests": 34
+  },
+  "full": {
+    "renderer": {
+      "files": 84,
+      "tests": 627
+    },
+    "office": {
+      "files": 235,
+      "tests": 2774
+    },
+    "server": {
+      "files": 122,
+      "tests": 1365
+    },
+    "desktop": {
+      "files": 7,
+      "tests": 57
+    }
+  },
+  "browserCases": 68,
+  "independentReview": "passed",
+  "finalArchiveFormatCheck": "pnpm format:check exit 0 (2121 files)",
+  "rawLogSha256": "61e82f44ec994462471cbaa60e2a353269f2eed0c8558be2d8d2c7d67528a5a7",
+  "logNormalization": "Trailing whitespace removed; messages and line order preserved."
+}
