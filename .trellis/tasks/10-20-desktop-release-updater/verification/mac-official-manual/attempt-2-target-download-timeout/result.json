@@ -1,0 +1,56 @@
+{
+  "base": "0.1.3",
+  "target": "0.1.4",
+  "root": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex",
+  "userData": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex/user-data",
+  "installation": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex/installation",
+  "evidence": "/Users/admin/Desktop/mimir/.trellis/tasks/10-20-desktop-release-updater/verification/mac-official-manual",
+  "checks": [
+    {
+      "check": "official newer version, real TitleBar/details, manual capability, no automatic download/install actions",
+      "at": "2026-10-20T10:53:47.103Z",
+      "available": {
+        "status": "available",
+        "currentVersion": "0.1.3",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+        "platform": "darwin",
+        "arch": "arm64",
+        "capability": "manual",
+        "autoDownload": false,
+        "version": "0.1.4",
+        "releaseNotes": "<!-- mimir-desktop-build:127d4b7af8d483521fea8e3ea3c9454a57535fc1 -->\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\n**Full Changelog**: https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4",
+        "checkedAt": "2026-10-20T10:53:43.417Z"
+      },
+      "state": {
+        "status": "available",
+        "currentVersion": "0.1.3",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+        "platform": "darwin",
+        "arch": "arm64",
+        "capability": "manual",
+        "autoDownload": false,
+        "version": "0.1.4",
+        "releaseNotes": "<!-- mimir-desktop-build:127d4b7af8d483521fea8e3ea3c9454a57535fc1 -->\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\n**Full Changelog**: https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4",
+        "checkedAt": "2026-10-20T10:53:43.417Z"
+      },
+      "actions": [
+        "查看发布记录",
+        "稍后",
+        "下载macOS版"
+      ]
+    },
+    {
+      "check": "ordinary close completed normally without installing",
+      "at": "2026-10-20T10:53:50.200Z"
+    }
+  ],
+  "limitations": [
+    "This is a manual ZIP replacement of a disposable app copy, not an automatic installation.",
+    "Node downloads do not simulate Finder quarantine or validate Gatekeeper/notarization.",
+    "System notification delivery/focus is not asserted. Screenshots are actual packaged renderer CDP captures.",
+    "The manual download button is inspected; it is not clicked because opening the system browser would use the user default download directory."
+  ],
+  "success": false,
+  "error": "TimeoutError: The operation was aborted due to timeout\n    at new DOMException (node:internal/per_context/domexception:76:18)\n    at Timeout._onTimeout (node:internal/abort_controller:155:9)\n    at listOnTimeout (node:internal/timers:585:17)\n    at process.processTimers (node:internal/timers:521:7)",
+  "appStillRunning": false
+}

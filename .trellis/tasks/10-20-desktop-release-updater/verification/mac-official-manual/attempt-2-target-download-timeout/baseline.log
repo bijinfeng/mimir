@@ -1,0 +1,130 @@
+
+DevTools listening on ws://127.0.0.1:56625/devtools/browser/a3c06dd2-f53e-4329-8db4-bff579607d1a
+[desktop] whenReady，开始启动流程
+[87672:1020/185311.455228:ERROR:content/browser/network_service_instance_impl.cc:650] Network service crashed or was terminated, restarting service.
+已挂载前端静态资源
+mimir server 监听 http://localhost:62539
+  数据目录 /private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex/user-data/data
+  数据库 sqlite（/private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex/user-data/data/mimir.db）
+  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听
+<-- GET /healthz
+--> GET /healthz 200 3ms
+[desktop] 本地模式宿主 http://127.0.0.1:62539
+[desktop] 数据目录 /private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex/user-data/data
+[desktop] 数据库 sqlite（/private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex/user-data/data/mimir.db）
+<-- GET /
+--> GET / 200 26ms
+<-- GET /assets/index-CSvGLjAp.js
+<-- GET /assets/rolldown-runtime-CEgmsyvS.js
+<-- GET /assets/react-B-G88Jf8.js
+--> GET /assets/rolldown-runtime-CEgmsyvS.js 200 11ms
+--> GET /assets/index-CSvGLjAp.js 200 27ms
+<-- GET /assets/tokens-CkQvOsaX.js
+--> GET /assets/react-B-G88Jf8.js 200 25ms
+<-- GET /assets/src-DK4bPvcM.js
+<-- GET /assets/api-DEpO1fWY.js
+<-- GET /assets/utils-NDPNWik3.js
+--> GET /assets/tokens-CkQvOsaX.js 200 31ms
+--> GET /assets/src-DK4bPvcM.js 200 18ms
+--> GET /assets/api-DEpO1fWY.js 200 7ms
+--> GET /assets/utils-NDPNWik3.js 200 8ms
+<-- GET /assets/lazyRouteComponent-xGOyTJOs.js
+<-- GET /assets/matchContext-D4snGsv0.js
+<-- GET /assets/link-DhadZWz5.js
+<-- GET /assets/titlebar-kit-XbIZT7Tu.js
+<-- GET /assets/WindowControls-B1wUwnlB.js
+--> GET /assets/lazyRouteComponent-xGOyTJOs.js 200 18ms
+--> GET /assets/matchContext-D4snGsv0.js 200 22ms
+--> GET /assets/link-DhadZWz5.js 200 21ms
+--> GET /assets/titlebar-kit-XbIZT7Tu.js 200 18ms
+--> GET /assets/WindowControls-B1wUwnlB.js 200 14ms
+<-- GET /assets/use-update-state-BkSB8atk.js
+--> GET /assets/use-update-state-BkSB8atk.js 200 1ms
+<-- GET /api/auth/get-session
+[seed] 已创建默认知识库与产品说明（库：true，说明：true）
+[local] 已创建本机用户（local@mimir.local）——本地模式不需要登录
+--> GET /api/auth/get-session 200 1s
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session 200 5ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session 200 1ms
+<-- GET /assets/_app-mSDMbmLm.js
+<-- GET /assets/useMutation-B7RkExRi.js
+<-- GET /assets/input-C0tmXbl5.js
+<-- GET /assets/EyeOutlined-C_TPgRMu.js
+<-- GET /assets/chevron-down-Z-Q9Zxao.js
+--> GET /assets/input-C0tmXbl5.js 200 14ms
+--> GET /assets/_app-mSDMbmLm.js 200 15ms
+--> GET /assets/useMutation-B7RkExRi.js 200 14ms
+--> GET /assets/EyeOutlined-C_TPgRMu.js 200 13ms
+<-- GET /assets/collapse-DIMYHjWf.js
+--> GET /assets/chevron-down-Z-Q9Zxao.js 200 3ms
+--> GET /assets/collapse-DIMYHjWf.js 200 3ms
+<-- GET /assets/FileFormatIcon-BKFB38It.css
+--> GET /assets/FileFormatIcon-BKFB38It.css 200 6ms
+<-- GET /assets/x-DSY-rfqR.js
+--> GET /assets/x-DSY-rfqR.js 200 2ms
+<-- GET /assets/progress-dxAxfLkA.js
+--> GET /assets/progress-dxAxfLkA.js 200 2ms
+<-- GET /assets/avatar-BktyIDZC.js
+<-- GET /assets/useBreakpoint-DY5xQ4oT.js
+<-- GET /assets/plus-C0vaQ0aO.js
+<-- GET /assets/nav-collapse-sltbpFUj.js
+<-- GET /assets/search-BW8wlyBt.js
+<-- GET /assets/use-scrolled-BDGxKWf9.js
+--> GET /assets/useBreakpoint-DY5xQ4oT.js 200 1ms
+--> GET /assets/avatar-BktyIDZC.js 200 2ms
+--> GET /assets/plus-C0vaQ0aO.js 200 2ms
+<-- GET /assets/upload-aq4CrmPI.js
+--> GET /assets/nav-collapse-sltbpFUj.js 200 4ms
+--> GET /assets/use-scrolled-BDGxKWf9.js 200 4ms
+--> GET /assets/search-BW8wlyBt.js 200 5ms
+<-- GET /assets/app-shell-context-Ca0Rleea.js
+--> GET /assets/upload-aq4CrmPI.js 200 8ms
+<-- GET /assets/pencil-ClM8_4HU.js
+<-- GET /assets/folder-input-Fprc2MoF.js
+<-- GET /assets/_app.docs-U_ejIA7T.js
+<-- GET /assets/trash-B_0x15Ue.js
+--> GET /assets/app-shell-context-Ca0Rleea.js 200 14ms
+--> GET /assets/pencil-ClM8_4HU.js 200 13ms
+--> GET /assets/folder-input-Fprc2MoF.js 200 6ms
+--> GET /assets/_app.docs-U_ejIA7T.js 200 4ms
+<-- GET /assets/useForm-TPPRAqIe.js
+<-- GET /assets/FileFormatIcon-DlCtGbRg.js
+<-- GET /assets/collapse-DM9iMr9U.js
+<-- GET /assets/switch-clGhNoyB.js
+--> GET /assets/trash-B_0x15Ue.js 200 13ms
+--> GET /assets/useForm-TPPRAqIe.js 200 10ms
+--> GET /assets/collapse-DM9iMr9U.js 200 8ms
+<-- GET /assets/arrow-down-2moPj-vj.js
+--> GET /assets/arrow-down-2moPj-vj.js 200 1ms
+<-- GET /assets/square-CPV8jR16.js
+--> GET /assets/switch-clGhNoyB.js 200 11ms
+<-- GET /assets/refresh-cw-BY6RDCYr.js
+<-- GET /assets/LoadError-CqkupCRi.js
+--> GET /assets/square-CPV8jR16.js 200 15ms
+--> GET /assets/FileFormatIcon-DlCtGbRg.js 200 26ms
+--> GET /assets/refresh-cw-BY6RDCYr.js 200 9ms
+<-- GET /assets/use-chat-composer-status-BQzZSO4O.js
+<-- POST /api/folders
+--> POST /api/folders 201 31ms
+<-- POST /api/documents/notes
+--> GET /assets/LoadError-CqkupCRi.js 200 75ms
+--> GET /assets/use-chat-composer-status-BQzZSO4O.js 200 67ms
+--> POST /api/documents/notes 201 84ms
+<-- GET /api/documents/UcWdBznJTVIYTfey
+--> GET /api/documents/UcWdBznJTVIYTfey 200 29ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session 200 3ms
+<-- GET /api/config
+--> GET /api/config 200 24ms
+<-- GET /api/folders
+--> GET /api/folders 200 9ms
+<-- GET /api/conversations
+--> GET /api/conversations 200 12ms
+<-- GET /api/documents?limit=100
+--> GET /api/documents?limit=100 200 28ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session 200 3ms
+<-- GET /api/documents?folder=%E6%9B%B4%E6%96%B0%E9%AA%8C%E6%94%B6&limit=100
+--> GET /api/documents?folder=%E6%9B%B4%E6%96%B0%E9%AA%8C%E6%94%B6&limit=100 200 23ms

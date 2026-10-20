@@ -1,0 +1,71 @@
+{
+  "base": "0.1.3",
+  "target": "0.1.4",
+  "root": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-sXAJjG",
+  "userData": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-sXAJjG/user-data",
+  "installation": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-sXAJjG/installation",
+  "downloadDirectory": "/private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-cxv2zs1i",
+  "evidence": "/Users/admin/Desktop/mimir/.trellis/tasks/10-20-desktop-release-updater/verification/mac-official-manual",
+  "checks": [
+    {
+      "check": "official newer version, real TitleBar/details, manual capability, no automatic download/install actions",
+      "at": "2026-10-20T11:13:55.454Z",
+      "available": {
+        "status": "available",
+        "currentVersion": "0.1.3",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+        "platform": "darwin",
+        "arch": "arm64",
+        "capability": "manual",
+        "autoDownload": false,
+        "version": "0.1.4",
+        "releaseNotes": "已知限制（Windows/Linux）：0.1.3、0.1.4 在确认安装后的窗口关闭阶段存在错误，请勿依赖这两个版本的自动安装。修复版本发布后需要手动安装一次，之后才能使用后续自动升级。macOS 继续使用手动更新；fnOS 仍由系统手动安装和升级。\n\n<!-- mimir-desktop-build:127d4b7af8d483521fea8e3ea3c9454a57535fc1 -->\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\n**Full Changelog**: https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4\n",
+        "checkedAt": "2026-10-20T11:13:54.259Z"
+      },
+      "state": {
+        "status": "available",
+        "currentVersion": "0.1.3",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.4",
+        "platform": "darwin",
+        "arch": "arm64",
+        "capability": "manual",
+        "autoDownload": false,
+        "version": "0.1.4",
+        "releaseNotes": "已知限制（Windows/Linux）：0.1.3、0.1.4 在确认安装后的窗口关闭阶段存在错误，请勿依赖这两个版本的自动安装。修复版本发布后需要手动安装一次，之后才能使用后续自动升级。macOS 继续使用手动更新；fnOS 仍由系统手动安装和升级。\n\n<!-- mimir-desktop-build:127d4b7af8d483521fea8e3ea3c9454a57535fc1 -->\n\n桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\n**Full Changelog**: https://github.com/bijinfeng/mimir/compare/v0.1.3...v0.1.4\n",
+        "checkedAt": "2026-10-20T11:13:54.259Z"
+      },
+      "actions": [
+        "查看发布记录",
+        "稍后",
+        "下载macOS版"
+      ]
+    },
+    {
+      "check": "ordinary close completed normally without installing",
+      "at": "2026-10-20T11:13:56.323Z"
+    },
+    {
+      "check": "official ZIP manually replaced only the copied app; target version and original local mode/document retained",
+      "at": "2026-10-20T11:14:38.667Z",
+      "upgraded": {
+        "status": "idle",
+        "currentVersion": "0.1.4",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases",
+        "platform": "darwin",
+        "arch": "arm64",
+        "capability": "manual",
+        "autoDownload": false,
+        "message": "此测试版需要手动更新。下载后退出 mimir，再替换应用；系统可能阻止打开。"
+      },
+      "documentId": "fNg4Lr9vpMRTrxDL"
+    }
+  ],
+  "limitations": [
+    "This is a manual ZIP replacement of a disposable app copy, not an automatic installation.",
+    "Node downloads do not simulate Finder quarantine or validate Gatekeeper/notarization.",
+    "System notification delivery/focus is not asserted. Screenshots are actual packaged renderer CDP captures.",
+    "The manual download button is inspected; it is not clicked because opening the system browser would use the user default download directory."
+  ],
+  "success": true,
+  "appStillRunning": false
+}

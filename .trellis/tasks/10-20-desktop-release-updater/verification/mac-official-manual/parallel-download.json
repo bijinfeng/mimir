@@ -1,0 +1,56 @@
+{
+  "cache": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-cxv2zs1i",
+  "source": "/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-official-manual-update-Vjrcex",
+  "asset": "mimir-0.1.4-mac-arm64.zip",
+  "api": "https://api.github.com/repos/bijinfeng/mimir/releases/assets/659017483",
+  "prefixBytes": 145119360,
+  "size": 568698513,
+  "officialDigest": "sha256:af4e18997e5e19e3aa4a8d49487f9b6417913d4c6269e53ba4cf9930cd9e2bad",
+  "concurrency": 6,
+  "segments": [
+    {
+      "start": 498101990,
+      "end": 568698512,
+      "bytes": 70596523,
+      "file": "range-498101990-568698512",
+      "seconds": 291.31
+    },
+    {
+      "start": 215715886,
+      "end": 286312411,
+      "bytes": 70596526,
+      "file": "range-215715886-286312411",
+      "seconds": 302.63
+    },
+    {
+      "start": 145119360,
+      "end": 215715885,
+      "bytes": 70596526,
+      "file": "range-145119360-215715885",
+      "seconds": 334.88
+    },
+    {
+      "start": 427505464,
+      "end": 498101989,
+      "bytes": 70596526,
+      "file": "range-427505464-498101989",
+      "seconds": 349.65
+    },
+    {
+      "start": 286312412,
+      "end": 356908937,
+      "bytes": 70596526,
+      "file": "range-286312412-356908937",
+      "seconds": 398.76
+    },
+    {
+      "start": 356908938,
+      "end": 427505463,
+      "bytes": 70596526,
+      "file": "range-356908938-427505463",
+      "seconds": 420.02
+    }
+  ],
+  "success": true,
+  "digest": "sha256:af4e18997e5e19e3aa4a8d49487f9b6417913d4c6269e53ba4cf9930cd9e2bad"
+}
