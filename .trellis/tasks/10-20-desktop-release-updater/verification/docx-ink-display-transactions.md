@@ -42,3 +42,5 @@ Office包内执行，两套件共 **31/31通过、exit0**（其中组件18项）
 补强既有正文中途写入回归：先用真实 pointermove 确认预览存在，实际正文事务返回后立即确认预览已消失，再 pointerup 确认无墨迹提交。原测试仅在 pointerup 后检查，而 move 的独立 doc guard 也能使其通过，无法单独守住 transaction 的即时取消。
 
 检查修复前失败日志，稳定布局的新增显示事务回归确实得到0笔；修复后完整两套件 **31/31通过**。本轮独立 Node22.23.1 在上述增强断言后再次运行两完整套件，仍 **31/31、exit0**，日志 `docx-ink-independent-check.log`。Office typecheck、两 TSX oxlint/oxfmt 和 git diff check 均 exit0。独立检查未重跑 Office 全包、GitHub CI 或真实浏览器像素测试；也不将确定性重现等同于已证明原 CI 那次具体触发事务。
+
+后续按主会话要求执行一次最新完整本机门：Node22.23.1 / pnpm12.4.2 / `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check` **exit0**，Office 全包 **235文件/2777项通过**，其余工作区及根测试链也通过。完整命令、版本和最终退出码见 `final-latest-node22-pnpm-check.log`，汇总见 `full-scope-check.md`。这补齐上述本机 Office 全包边界，GitHub CI 与真实浏览器仍单独验收。

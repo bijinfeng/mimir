@@ -35,3 +35,7 @@
 原生 Linux 真实完整构建、FPK 解包与 Socket smoke 本地尚未执行，等待 GitHub Actions 记录；本机架构门会拒绝伪造结果。五目标 Release、匿名 FPK 下载及发布资产哈希以主会话远端验收记录为准。
 
 真正 fnOS 设备上的应用中心安装、首次配置、图标入口、最低系统版本、HTTPS 网关、覆盖升级与资料保留仍需实机证据。Ubuntu 宿主 smoke 通过也不代表这些设备验收已完成。
+
+## GitHub 原生构建通过
+
+修复干净检出路由生成后，master `5d8924f` 对应完整五目标手动 [39387632456](https://github.com/bijinfeng/mimir/actions/runs/39387632456) 的 `fnos / build` 已完成 success。真实官方 fnpack FPK 构建、解包/原生模块/Unix Socket 宿主和认证验收、stage及上传全部执行成功；实际步骤结果见 github-fnos-native-success.json，日志单独保存。此时四客户端矩阵仍在执行，未公开 Release；匿名正式资产分发和 fnOS 真机覆盖升级尚未取得证据。

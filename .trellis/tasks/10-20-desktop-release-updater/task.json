@@ -2,7 +2,7 @@
   "id": "desktop-release-updater",
   "name": "desktop-release-updater",
   "title": "GitHub Actions 桌面端构建分发与自动更新",
-  "description": "建立 GitHub Actions 构建与 GitHub Releases 分发流程，并为 Electron 桌面端提供自动更新能力",
+  "description": "GitHub Actions 构建四桌面客户端与 fnOS x64 原生包，同版 Releases 分发及桌面安全自动更新",
   "status": "in_progress",
   "dev_type": null,
   "scope": null,
@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "fef57cca565a6d73f7ea3a2bb9eb6c5c0b4e32c5",
+  "commit": "1c7e8230406759874cf316bbbd971338108dcda2",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "用户新授权合并 master 并在 GitHub 验证全流程；master 已 fast-forward 到 e66c2c3 并推送。远端 CI 与四目标手动构建已启动；后续官方首发/补丁版与真实更新验收进行中。macOS 缺正式签名凭据时仍为 manual。",
+  "notes": "master已推送，完整五目标手动GitHub构建39387632456成功（含fnOS FPK/socket、Windows安装前后28949文件摘要及安装smoke、Linux/mac双架构、aggregate）。最新Node22全仓pnpmcheck exit0。v0.1.2 tag固定1c7e823已push，等待实际统一稳定发布及后续版本真实更新验收；旧失败v0.1.0/v0.1.1保留。mac ad-hoc manual，fnOS真机边界记录。",
   "meta": {}
 }

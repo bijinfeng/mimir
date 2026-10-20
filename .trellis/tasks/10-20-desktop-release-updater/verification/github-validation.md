@@ -57,3 +57,27 @@ Node22 进一步诊断：相同 192/16MB worker 中，compiled JS 无 loader 能
 Windows strict ASAR/原生依赖检查与解包应用 A/B/C 全通过，但实际 NSIS 安装后的 A 本地模式失败，B 首启/C 云端仍通过：缺少 server/dist/node_modules/.pnpm 下 AWS SDK 的 check-content-length-header.js。日志 github-v011-windows-failed.log。NSIS 安装与卸载均返回，不能写成步骤卡死或安装版通过。
 
 包内真实资源问题阻止聚合/发布；v0.1.1 tag保持原始提交，不移动。已安排检查锁定NSIS临时7z-out路径、Vite第三方external契约以及安装前后全量资源对照。后续先完成五目标手动构建，再以新稳定版作为首个成功基线/后续补丁验证更新；预计版本顺延0.1.2→0.1.3，以实际成功发布为准。没有已公开Release被覆盖。
+
+## fnOS 首轮真实 GitHub 构建
+
+`41579c9` 已推送 master；独立 [39385621049](https://github.com/bijinfeng/mimir/actions/runs/39385621049) 通过原生 Node22/x64、冻结依赖安装、已提交版本门、8项打包契约与官方固定 fnpack 摘要校验。真实 Web build 的 tsc 发现干净检出缺少 shared renderer 的 ignored routeTree.gen.ts；构建失败，验包/stage/upload未执行。日志 github-fnos-first-failed.log；修复生成顺序后重跑，不跳过 tsc。
+
+上一 CI [39383281565](https://github.com/bijinfeng/mimir/actions/runs/39383281565) 中全仓 pnpm check 与 pnpm build 已通过；其后 PostgreSQL 模式重跑失败于 fnOS 测试继承 TEST_DATABASE_URL，违反生产 fnOS 仅 SQLite 契约。保留生产约束，修复 Vitest setup/worker 同源环境隔离；日志 github-ci-postgres-failed.log。
+
+## 五目标手动集成构建
+
+`b563569` 修复 server AWS external 契约并接入 Windows NSIS 资源全量比对，`8dc85b1` 修复 PG/fnOS 测试隔离，`5d8924f` 修复消费方生成前的共享 routeTree。已全部推送 master，运行 [39387632456](https://github.com/bijinfeng/mimir/actions/runs/39387632456) 进行四客户端加 fnOS 同版构建；手动流程不会公开版本。新 CI [39387631516](https://github.com/bijinfeng/mimir/actions/runs/39387631516) 同步运行。
+
+上一 CI [39385619800](https://github.com/bijinfeng/mimir/actions/runs/39385619800) 的 Office 2774 中单个 ink 断言失败（高亮笔 stroke 缺失）；日志 github-ci-fnos-first-failed.log，定位与回归进行中。不能把更早全门通过覆盖当前失败。
+
+独立最终范围复核记录 full-scope-check.md；新增根脚本53/53、PG独立隔离5/5、Node22四包类型及工作流检查通过；完整当前快照 CI 与实际安装/发布/升级仍以运行结果登记。
+
+39387632456 的 fnos / build 和 Linux 客户端已完整success；fnOS官方真实FPK构建、解包/原生模块/Socket认证和stage上传均过。Windows/mac仍在执行，aggregate/publication未宣称通过；fnOS设备安装/升级仍未实测。
+
+五目标手动流水线39387632456最终 **completed/success**：version、fnOS、四桌面native build/verify/smoke/stage/upload及aggregate完整成功，publish按manual契约skipped。证据 github-five-target-manual.json、github-fnos-native-success.log、github-windows-installed-success.log；此轮版本0.1.1/源码5d8924f只用于手动产物，不重新解释旧失败tag或公开Release。
+
+`d5245c6` 提交已证明的DOCX metadata手势取消修复与独立31项回归；`1c7e823` 将desktop与fnOS一起准备0.1.2，已推master。新CI39389655084、本机Node22完整pnpmcheck正在执行；尚未创建v0.1.2 tag。
+
+当前1c7e823代码快照本机Node22最新完整pnpmcheck **exit0**：Office2777、renderer636、server1366及local10/fnOS5/backup2、desktop110、root53全部通过；lint/styles/format/allworkspace types全过。日志final-latest-node22-pnpm-check.log，独立full-scope-check最后checkpoint。v0.1.2 annotated tag已创建并推送，固定1c7e823；开始首个统一稳定基线构建，不移动旧失败tag。
+
+Windows真实安装证据：28949个server文件路径/大小/SHA256安装前后完全匹配，最长相对路径154；捕获NSIS实际temp/7z-out路径。安装3分43秒左右，随后安装版A/B/C smoke全部通过。先前深路径overflow仅是历史假说，当前不把它写成已直接证明的根因。
