@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "8709f76bfcec9fc9c862adaabf5d0564e7b524c8",
+  "commit": "3f35e8a9201a1abd0eb882a4f91e8f75cbb85abb",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "v0.1.5/0.1.6五目标15资产统一公开，最终6 FPK匿名完整下载及SHA通过；7a3c34d完整CI39418539314和master57b6b4e完整CI39421648291全部success。mac官方3→4手动替换真实成功。官方5→6第二轮截图/真实保存通过：Linux工作区关闭后hostclose被安全门阻止，精确原异常待probe；Windows真实启动NSIS且旧进程exit0，但外部UIA向导驱动actions0导致超时。分别诊断，不计完整升级通过。通知焦点和fnOS设备安装边界未实测，任务保持in_progress。",
+  "notes": "desktop/fnOS0.1.7新手动基线已推master及固定tag；Release39428273594/完整CI39428258688执行中。Session预连接原生红绿和统一15秒门、production实际DB关闭修复及真实SQLite/PG和最终生产Electron probe已通过独立审查。旧master8709f76完整CI39424899331全部success。官方5→6 Windows attempt3真实向导exit0且自动新PID/字节替换通过，随后harness固定CDP端口冲突，资料断言未完成，保留false并修外部端口。最终须7→8全Windows/Linux。v6 FPK匿名全字节/SHA通过；mac官方3→4手动替换成功。系统通知焦点和fnOS设备安装尚未实测，保持in_progress。",
   "meta": {}
 }
