@@ -3,10 +3,13 @@ import { test } from 'node:test'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { createServer } from 'node:net'
+import { EventEmitter } from 'node:events'
 import { runInNewContext } from 'node:vm'
 import {
   Cdp,
   CdpTargetClosedError,
+  createDebugEndpointAllocator,
   dispatchMouseClick,
   previewScreenshot,
   releaseAsset,
@@ -15,6 +18,92 @@ import {
   until,
   versionPair,
 } from './update-smoke-lib.mjs'
+
+test('explicit launches get distinct available loopback endpoints and release their probes before use', async () => {
+  const allocate = createDebugEndpointAllocator()
+  const ports = new Set()
+  for (let index = 0; index < 4; index++) {
+    const { port, endpoint } = await allocate()
+    assert.ok(!ports.has(port), 'A prior launch port cannot be reused')
+    ports.add(port)
+    assert.equal(endpoint, `http://127.0.0.1:${port}`)
+    const listener = createServer()
+    try {
+      await new Promise((resolve, reject) => {
+        listener.once('error', reject)
+        listener.listen({ host: '127.0.0.1', port, exclusive: true }, resolve)
+      })
+      assert.equal(listener.address().address, '127.0.0.1')
+    } finally {
+      if (listener.listening) await new Promise((resolve) => listener.close(resolve))
+    }
+  }
+})
+
+function debugProbe(address, { bindError, closeError } = {}) {
+  const listener = new EventEmitter()
+  listener.listening = false
+  listener.closes = 0
+  listener.listen = (options, callback) => {
+    assert.deepEqual(options, { host: '127.0.0.1', port: 0, exclusive: true })
+    if (bindError) listener.emit('error', bindError)
+    else {
+      listener.listening = true
+      callback()
+    }
+  }
+  listener.address = () => address
+  listener.close = (callback) => {
+    listener.closes++
+    listener.listening = false
+    callback(closeError)
+  }
+  return listener
+}
+
+test('OS reuse of a previous launch port is rejected, closed, and retried with a bounded allocation limit', async () => {
+  const probes = [40001, 40001, 40002].map((port) => debugProbe({ address: '127.0.0.1', port }))
+  let attempts = 0
+  const allocate = createDebugEndpointAllocator({ createListener: () => probes[attempts++] })
+  assert.equal((await allocate()).port, 40001)
+  assert.equal((await allocate()).port, 40002)
+  assert.equal(attempts, 3)
+  assert.ok(probes.every((probe) => probe.closes === 1 && !probe.listening))
+
+  const repeats = []
+  const repeated = createDebugEndpointAllocator({
+    createListener() {
+      const probe = debugProbe({ address: '127.0.0.1', port: 40003 })
+      repeats.push(probe)
+      return probe
+    },
+  })
+  await repeated()
+  await assert.rejects(repeated(), /previously unused loopback CDP port/)
+  assert.equal(repeats.length, 21)
+  assert.ok(repeats.every((probe) => probe.closes === 1 && !probe.listening))
+})
+
+test('debug endpoint allocation propagates bind/close errors and rejects non-loopback or invalid addresses', async () => {
+  for (const failure of ['bindError', 'closeError']) {
+    const error = new Error(failure)
+    const probe = debugProbe({ address: '127.0.0.1', port: 40004 }, { [failure]: error })
+    const allocate = createDebugEndpointAllocator({ createListener: () => probe })
+    await assert.rejects(allocate(), (actual) => actual === error)
+    assert.equal(probe.closes, failure === 'bindError' ? 0 : 1)
+  }
+  for (const address of [
+    null,
+    'socket-path',
+    { address: '0.0.0.0', port: 40004 },
+    { address: '127.0.0.1', port: 0 },
+    { address: '127.0.0.1', port: 65536 },
+  ]) {
+    const probe = debugProbe(address)
+    await assert.rejects(createDebugEndpointAllocator({ createListener: () => probe })())
+    assert.equal(probe.closes, 1)
+  }
+})
 
 test('pins exact stable versions and rejects equal, lower or prerelease versions', () => {
   assert.deepEqual(versionPair('0.1.0', '0.1.1'), { base: '0.1.0', target: '0.1.1' })

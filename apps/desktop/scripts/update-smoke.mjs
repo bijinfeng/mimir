@@ -16,6 +16,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   Cdp,
+  createDebugEndpointAllocator,
   dispatchMouseClick,
   officialRepository,
   previewScreenshot,
@@ -62,8 +63,8 @@ const sessions = new Set()
 let wizard
 let executable
 let active
-const port = 19223
-const endpoint = `http://127.0.0.1:${port}`
+const allocateDebugEndpoint = createDebugEndpointAllocator()
+let endpoint
 const env = { ...process.env, APPIMAGE_EXTRACT_AND_RUN: '1' }
 for (const key of ['GH_TOKEN', 'GITHUB_TOKEN', 'NODE_OPTIONS', 'ELECTRON_RUN_AS_NODE'])
   delete env[key]
@@ -250,9 +251,11 @@ async function noProcesses() {
   }
 }
 async function launch(name) {
+  const debug = await allocateDebugEndpoint()
+  endpoint = debug.endpoint
   const child = spawn(
     executable,
-    [`--remote-debugging-port=${port}`, '--remote-debugging-address=127.0.0.1'],
+    [`--remote-debugging-port=${debug.port}`, '--remote-debugging-address=127.0.0.1'],
     {
       cwd: root,
       env,
@@ -274,6 +277,10 @@ async function launch(name) {
     result.processExits.push({ name, pid: child.pid, code, signal })
   })
   child.on('close', () => stream.end())
+  result.launches ??= []
+  result.launches.push({ name, pid: child.pid, ...debug, at: new Date().toISOString() })
+  await writeFile(join(evidence, 'launches.json'), JSON.stringify(result.launches, null, 2))
+  console.log(`LAUNCH ${name}: pid=${child.pid}; endpoint=${endpoint}`)
   const workspace = await connect('workspace')
   await until('local authenticated workspace', () =>
     workspace.evaluate(

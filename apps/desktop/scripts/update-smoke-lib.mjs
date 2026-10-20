@@ -2,9 +2,44 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
+import { createServer } from 'node:net'
 import { setTimeout as delay } from 'node:timers/promises'
 
 export const officialRepository = 'bijinfeng/mimir'
+
+/** Each explicit launch needs a fresh loopback port, including after the updater's real relaunch. */
+export function createDebugEndpointAllocator({ createListener = createServer } = {}) {
+  const used = new Set()
+  return async () => {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const listener = createListener()
+      try {
+        await new Promise((resolve, reject) => {
+          const onError = (error) => reject(error)
+          listener.once('error', onError)
+          listener.listen({ host: '127.0.0.1', port: 0, exclusive: true }, () => {
+            listener.off('error', onError)
+            resolve()
+          })
+        })
+        const address = listener.address()
+        assert.ok(address && typeof address === 'object')
+        assert.equal(address.address, '127.0.0.1')
+        assert.ok(Number.isSafeInteger(address.port) && address.port > 0 && address.port <= 65535)
+        if (used.has(address.port)) continue
+        used.add(address.port)
+        return { port: address.port, endpoint: `http://127.0.0.1:${address.port}` }
+      } finally {
+        // Release the probe before Chromium binds. Actual bind/startup failures still fail acceptance.
+        if (listener.listening)
+          await new Promise((resolve, reject) =>
+            listener.close((error) => (error ? reject(error) : resolve())),
+          )
+      }
+    }
+    throw new Error('Could not allocate a previously unused loopback CDP port')
+  }
+}
 
 export function versionPair(base, target) {
   const stable = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/
