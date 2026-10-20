@@ -92,6 +92,16 @@ Windows x64 和 Linux x64，并对解包后的真实应用执行启动自检。
 首次发布后需单独验证匿名下载、NSIS 安装、AppImage 启动和用户资料保留，
 Windows/Linux 的本地模拟测试不能当作对应平台已通过。
 
+已有两个公开稳定版本、且目标版本为官方 latest 后，可执行真实升级验收：
+
+```sh
+gh workflow run desktop-update-verify.yml --ref master -f base_version=0.1.0 -f target_version=0.1.1
+```
+
+该工作流在一次性 Windows/Linux runner 上匿名下载旧安装包，驱动真实更新界面，
+验证普通退出不安装、编辑保存保护、确认安装后的自动启动及文档和模式保留。
+日志、状态和截图保存在对应 Actions artifact；它不验证 macOS 正式签名升级或系统通知投递。
+
 完整检查运行 `pnpm check`。服务器部署参见[技术契约 §8](.trellis/spec/project/architecture.md)。
 
 ## 账号与安全

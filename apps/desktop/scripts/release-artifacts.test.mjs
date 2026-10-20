@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import { parse, stringify } from 'yaml'
 import {
@@ -12,10 +13,40 @@ import {
   validateMetadata,
   validateVersion,
 } from './release-artifacts.mjs'
-import { signingConfiguration } from './package.mjs'
+import { nativeArtifactName, signingConfiguration } from './package.mjs'
 import { publishRelease } from './publish-release.mjs'
 
 const version = '1.2.3'
+
+test('native artifact names survive builder extension-specific architecture mapping', () => {
+  const require = createRequire(import.meta.url)
+  const builderRequire = createRequire(require.resolve('electron-builder'))
+  builderRequire('app-builder-lib')
+  const libRequire = createRequire(builderRequire.resolve('app-builder-lib'))
+  const { PlatformPackager } = libRequire('./platformPackager.js')
+  const { Arch } = libRequire('builder-util')
+  for (const target of Object.values(targets)) {
+    // Exercise the locked builder's real arch mapping and macro expansion without packaging.
+    const packager = Object.create(PlatformPackager.prototype)
+    Object.defineProperties(packager, {
+      appInfo: { value: { version } },
+      platform: { value: { buildConfigurationKey: target.os } },
+    })
+    for (const ext of target.extensions) {
+      if (ext === 'AppImage')
+        assert.equal(
+          packager.computeArtifactName('mimir-${version}-${os}-${arch}.${ext}', ext, Arch.x64),
+          `mimir-${version}-linux-x86_64.AppImage`,
+        )
+      assert.equal(
+        packager.computeArtifactName(nativeArtifactName(target.arch), ext, Arch[target.arch]),
+        `mimir-${version}-${target.os}-${target.arch}.${ext}`,
+      )
+    }
+  }
+  assert.throws(() => nativeArtifactName('x86_64'), /Unsupported/)
+  assert.throws(() => nativeArtifactName('../x64'), /Unsupported/)
+})
 
 async function fixture(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'mimir-release-'))

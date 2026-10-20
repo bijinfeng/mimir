@@ -1,0 +1,67 @@
+name: Desktop real update verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_version:
+        description: 'Existing stable baseline with updater (exact X.Y.Z)'
+        required: true
+        type: string
+      target_version:
+        description: 'Existing newer official latest stable release (exact X.Y.Z)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-update-verification
+  cancel-in-progress: false
+
+jobs:
+  update:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-24.04
+          - platform: windows
+            runner: windows-2025
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      BASE_VERSION: ${{ inputs.base_version }}
+      TARGET_VERSION: ${{ inputs.target_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Validate harness behavior
+        run: node --test apps/desktop/scripts/update-smoke.test.mjs
+      - name: Install Linux desktop session dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb openbox wmctrl libfuse2t64
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Real Linux AppImage upgrade from public GitHub Releases
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          xvfb-run -a sh -c 'openbox > "$RUNNER_TEMP/openbox.log" 2>&1 & node apps/desktop/scripts/update-smoke.mjs'
+      - name: Real Windows installed NSIS upgrade from public GitHub Releases
+        if: runner.os == 'Windows'
+        run: node apps/desktop/scripts/update-smoke.mjs
+      - name: Preserve real upgrade logs, states and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-update-${{ matrix.platform }}-${{ inputs.base_version }}-to-${{ inputs.target_version }}
+          path: ${{ runner.temp }}/mimir-update-e2e/evidence/
+          if-no-files-found: warn
+          retention-days: 14

@@ -7,9 +7,10 @@
 
 ## 2. 签名与入口
 
-- `pnpm desktop:build`：server build → desktop build → `scripts/deploy-server.mjs` → `scripts/package.mjs`。deploy 脚本只清理固定、被 gitignore 的 `apps/desktop/server-deploy` 再执行生产依赖部署，以支持重复打包；不能接受调用方传入的清理路径。matrix build 强制原生 OS/CPU，builder 始终 `publish: 'never'`。
+- `pnpm desktop:build`：server build → desktop build → `scripts/deploy-server.mjs` → `scripts/package.mjs`。deploy 脚本只清理固定、被 gitignore 的 `apps/desktop/server-deploy` 再执行生产依赖部署，以支持重复打包；不能接受调用方传入的清理路径。matrix build 强制原生 OS/CPU；`nativeArtifactName(process.arch)` 固定文件名架构为 Node 的 x64/arm64，仅保留 version/os/ext 宏，防止 AppImage 将 x64 重写为 x86_64；builder 始终 `publish: 'never'`。
 - `node apps/desktop/scripts/release-artifacts.mjs version [vX.Y.Z]`：校验 desktop/package.json 的稳定版本，tag 必须匹配已提交的桌面版本。
 - `stage <releaseDir> <outputDir> <target> <version> <mode>`、`aggregate <incomingDir> <outputDir> <version>`：收集并验证真实产物后生成完整发布目录；target 是 `mac-arm64|mac-x64|win-x64|linux-x64`。
+- `BASE_VERSION=X.Y.Z TARGET_VERSION=X.Y.Z node apps/desktop/scripts/update-smoke.mjs`：仅一次性 GitHub x64 Windows/Linux runner 可执行的真实升级验收；独立 `desktop-update-verify.yml` 映射同名输入。客户端不包含验收开关。
 - `.github/workflows/desktop-release.yml`：`workflow_dispatch` 仅产 artifacts；稳定 `vX.Y.Z` tag 才进入单独 `publish` job。
 - `DesktopUpdateApi`（shared）：工作区 `getState/open/setAppearance/onState/onPrepare/respondPrepare/onPrepareCancelled`；它没有检查、下载、安装动作。appearance 只接收 auto/light/dark 枚举，本地主题快照可通知主进程供原生菜单复用；云端详情始终跟随系统。
 - `MimirUpdaterBridge`：仅专用 `preload/updater.ts` 暴露 `getState/check/download/install/setAutoDownload/onState/openRelease/returnToDocument/close`。
@@ -25,7 +26,8 @@
 - `MIMIR_MAC_SIGNING=signed`：必须提供 CSC_LINK/CSC_KEY_PASSWORD/CSC_NAME、APPLE_ID/APPLE_APP_SPECIFIC_PASSWORD/APPLE_TEAM_ID；正式签名、公证及验证均成功才允许包内 automatic。afterPack 不能再用 ad-hoc 覆盖它。
 - workflow 对应仓库变量 `MIMIR_MAC_SIGNING`，Secrets `MAC_CSC_LINK/MAC_CSC_KEY_PASSWORD/MAC_CSC_NAME` 与上述 APPLE_*；只在打包步骤注入。
 - 发布凭据只在 publish job 使用短期 `GITHUB_TOKEN`、contents:write；其余 jobs contents:read。
-- Windows x64 产 NSIS；Linux x64 产 AppImage。Linux 非 AppImage 或安装位置不可写时降为 manual。
+- Windows x64 产 assisted NSIS（`oneClick=false`、`runAfterFinish=true`）；显式更新的正常 Finish 页面保留启动应用选项。首次 `/S` 且没有 `--force-run` 不能自行启动，普通退出仍由 `autoInstallOnAppQuit=false` 禁止安装。
+- Linux x64 产 AppImage。Linux 非 AppImage 或安装位置不可写时降为 manual。
 
 ## 4. 校验与错误矩阵
 
@@ -46,6 +48,7 @@
 | 安装器启动通过 error 事件失败 | 工作区已关闭时进入 blocked/recoveryRequired，展示重新启动指引，不停在 restarting；不能只依赖 quitAndInstall 的同步异常 |
 | 任一 matrix 失败、版本/哈希/架构文件不符 | 停在 publish 之前 |
 | 两份 latest-mac.yml | 验证同版本并合并 files，文件名唯一；不能后下载覆盖前下载 |
+| 真实升级验收的版本不稳定/target不是官方latest/资产摘要不匹配/runner已有userData | 验收立即失败，不复用用户库或注入自定义feed，不使用直接安装或伪造保存ACK补成通过 |
 | 已公开 tag 重跑 | 拒绝覆盖已发布 release；draft 验证完整上传后才公开 |
 
 ## 5. Good / Base / Bad
@@ -61,6 +64,7 @@
 - renderer 测试覆盖自动/手动保存、无句柄、失败、新改动、编辑器切换；保存 ACK 不等于忽略 beforeunload。
 - 发布脚本测试用真实 fixture 字节验证 hash、缺文件、非法 tag、双架构冲突和元数据汇总；不能只匹配 YAML 文本。
 - `pnpm check`、desktop build、实际打包与 `MIMIR_SMOKE_EXECUTABLE=<绝对路径> node apps/desktop/scripts/smoke.mjs`；界面实际截图/HTML归档。
+- 真实更新验收必须从官方匿名资产安装基线，驱动真实更新 UI；验证普通退出未替换安装文件、真实编辑阻止并取消安装、保存后重启安装、旧进程消失与新进程拉起、版本和原文档/模式保留。Windows 校验实际 updater 缓存安装包摘要；Linux 校验替换后的 AppImage 摘要。头部完成通知和系统焦点仍需原生桌面证据，不能用 CDP 无详情窗口替代。
 - 本机 mac 不能代表 Windows/Linux runner 或真实跨版本更新已通过；未执行的远端验证必须明确记录。
 
 ## 7. 错误与正确示例

@@ -65,6 +65,8 @@ win:
     - nsis
 nsis:
   oneClick: false
-  runAfterFinish: false
+  # Keep the assisted installer's Finish-page launch action for explicit updates.
+  # A first /S install still does not launch unless --force-run is also passed.
+  runAfterFinish: true
   allowToChangeInstallationDirectory: true
   deleteAppDataOnUninstall: false

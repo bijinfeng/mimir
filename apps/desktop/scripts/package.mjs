@@ -9,6 +9,12 @@ import { validateVersion } from './release-artifacts.mjs'
 const desktopRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const require = createRequire(import.meta.url)
 
+export function nativeArtifactName(arch) {
+  if (!['arm64', 'x64'].includes(arch)) throw new Error('Unsupported native build architecture')
+  // Builder maps ${arch} to x86_64 for AppImage; release assets use Node's arch names.
+  return `mimir-\${version}-\${os}-${arch}.\${ext}`
+}
+
 export function signingConfiguration(platform, env) {
   const mode = env.MIMIR_MAC_SIGNING ?? 'adhoc'
   if (!['adhoc', 'signed'].includes(mode))
@@ -58,7 +64,12 @@ async function packageDesktop() {
   ]
   if (!platform || !['arm64', 'x64'].includes(process.arch))
     throw new Error('Unsupported native build target')
-  const config = { ...base, ...signing, mac: { ...base.mac, ...signing.mac } }
+  const config = {
+    ...base,
+    ...signing,
+    artifactName: nativeArtifactName(process.arch),
+    mac: { ...base.mac, ...signing.mac },
+  }
   // Never allow an inherited GH_TOKEN or builder default to publish from a matrix runner.
   await build({
     config,

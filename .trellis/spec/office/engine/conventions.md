@@ -176,7 +176,7 @@ src/
   index.ts         对外出口
   shims/i18n.ts          上游 i18n 的等价替代
   shims/pptx-engine-types.ts  pptx 引擎的类型桶（挡住整条写路径）
-  generated/       样式裁剪产物（不进 git，由同步产出）
+  generated/       样式裁剪产物（不进 git，由同步脚本/共享构建预设生成）
 scripts/
   sync-upstream.mjs  从上游同步 vendor/（含闭包计算、改写、自检）
   trim-editor-css.mjs 从上游整份样式里裁出编辑器需要的部分
@@ -298,7 +298,7 @@ TIFF 当前仅接受通过条/瓦片完整性、颜色/样本组合及解码预�
 两条这一层特有的规矩：
 
 - **不要手改 `src/generated/editor.css`**：它是 `trim-editor-css.mjs` 的产物，
-  同步会覆盖
+  同步和 Web/desktop 构建会覆盖；构建生成契约见 renderer/frontend/conventions.md
 - **`vitest` 的默认环境是 node，不是 happy-dom**。happy-dom 会替换全局
   `URL`，于是 `readFileSync(new URL(..., import.meta.url))` 抛
   `The URL must be of scheme file`——解析类测试整片挂掉（实测踩过 48 个）。

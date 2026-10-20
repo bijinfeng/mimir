@@ -173,6 +173,12 @@ async function flush() {
 }
 
 describe('native update authorization and restart sequence', () => {
+  it('keeps ordinary quit separate from explicit installer restart', async () => {
+    const { autoUpdater } = await import('electron-updater')
+    expect(autoUpdater.autoInstallOnAppQuit).toBe(false)
+    active!.dispose()
+    expect(mocks.installed).not.toHaveBeenCalled()
+  })
   it('opens one local details window with dedicated preload and validates exact frame/URL', async () => {
     active!.open()
     active!.open()

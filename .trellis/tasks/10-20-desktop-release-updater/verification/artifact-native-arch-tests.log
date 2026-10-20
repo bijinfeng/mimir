@@ -1,0 +1,20 @@
+✔ native artifact names survive builder extension-specific architecture mapping (570.851958ms)
+✔ stable versions require an exact tag and reject prereleases, padding and malformed input (0.173792ms)
+✔ four real byte sets aggregate with both mac architectures and matching compatibility ZIP (48.969459ms)
+✔ missing platform, stale manifest and modified bytes cannot form a release (63.138583ms)
+✔ malicious references, duplicate files and invalid metadata SHA-512 are rejected (21.999167ms)
+✔ mismatched mac signing mode cannot publish a mixed channel (22.651958ms)
+✔ macOS signed mode is explicit and fails closed without full credentials (0.531542ms)
+✔ draft publishes only after every remote asset passes validation (29.821834ms)
+✔ upload failure or remote digest mismatch leaves the release unpublished (26.488292ms)
+✔ published releases and unrelated drafts are immutable on rerun (28.541084ms)
+✔ incomplete manifest fails before creating a draft (30.281666ms)
+✔ only an owned draft can replace partial uploads; unknown draft assets stop recovery (28.18525ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1007.8405
