@@ -1,0 +1,241 @@
+{
+  "base": "0.1.5",
+  "target": "0.1.6",
+  "platform": "win32",
+  "checks": [
+    {
+      "check": "official download verified; completion did not open a details window",
+      "at": "2026-10-20T12:38:29.619Z",
+      "downloaded": {
+        "status": "downloaded",
+        "currentVersion": "0.1.5",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.6",
+        "platform": "win32",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true,
+        "version": "0.1.6",
+        "releaseNotes": "桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\nFull Changelog: v0.1.5...v0.1.6",
+        "checkedAt": "2026-10-20T12:38:23.649Z"
+      }
+    },
+    {
+      "check": "ordinary UI close after download did not install",
+      "at": "2026-10-20T12:38:30.748Z"
+    },
+    {
+      "check": "pending real HTTP save triggered guard; continue editing canceled installation",
+      "at": "2026-10-20T12:38:52.550Z"
+    }
+  ],
+  "limitations": [
+    "Headless/session notification delivery and focus are not asserted by CDP.",
+    "Screenshot capture explicitly brings its target to the front; these previews are not evidence of automatic focus behavior.",
+    "macOS ad-hoc builds remain manual; this test never claims macOS automatic installation."
+  ],
+  "screenshots": [
+    {
+      "name": "download-ready",
+      "targetId": "0C38343FA0912627EBFD7A09B75CD909",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T12:38:29.538Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T12:38:29.546Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T12:38:29.548Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T12:38:29.564Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T12:38:29.565Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T12:38:29.610Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T12:38:29.618Z"
+        }
+      ]
+    },
+    {
+      "name": "save-guard",
+      "targetId": "83EE6A32D2C0E798AA9B494F527495AA",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T12:38:52.066Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T12:38:52.068Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T12:38:52.070Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": [
+              {
+                "playState": "running",
+                "pending": true,
+                "endTime": 0.01
+              }
+            ]
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T12:38:52.145Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T12:38:52.146Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T12:38:52.197Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T12:38:52.223Z"
+        }
+      ]
+    },
+    {
+      "name": "retry-after-save",
+      "targetId": "DCCFFA48C90004CFD1269D5F2DA1A339",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T12:38:52.632Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T12:38:52.639Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T12:38:52.645Z",
+          "observed": {
+            "visibilityState": "hidden",
+            "hidden": true,
+            "hasFocus": true,
+            "finiteAnimations": [
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              },
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              },
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              }
+            ]
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T12:38:52.753Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T12:38:52.753Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T12:38:52.797Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T12:38:52.805Z"
+        }
+      ]
+    },
+    {
+      "name": "save-and-restart-awaiting-http",
+      "targetId": "83EE6A32D2C0E798AA9B494F527495AA",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T12:38:54.993Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T12:38:54.994Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T12:38:54.996Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T12:38:55.002Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T12:38:55.003Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T12:38:55.055Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T12:38:55.079Z"
+        }
+      ]
+    }
+  ],
+  "processExits": [
+    {
+      "name": "baseline-first",
+      "pid": 9868,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "baseline-second",
+      "pid": 4012,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "wizardExitCode": 1,
+  "success": false,
+  "error": "Error: Timed out: Windows installed executable replaced\n    at until (file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke-lib.mjs:58:9)\n    at async file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke.mjs:513:5"
+}

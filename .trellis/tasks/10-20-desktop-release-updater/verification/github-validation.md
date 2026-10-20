@@ -143,3 +143,14 @@ version-only b58c149的CI39415625320在与此前98aaf7d相同的XLSX20k测试500
 最终FPK已匿名完整下载170553985字节，SHA256=1903d6391e684cf4177fa8cef60e74e1a572cb18ad8912046155c9fbef9ac30f，与匿名官方digest一致；完整下载耗时158.93秒，无Authorization/Range，证据fnos-v016-public/。该结果不代替fnOS设备安装升级。
 
 57b6b4e已推master，使用只读绘制等待的新外部脚本运行[39421962037](https://github.com/bijinfeng/mimir/actions/runs/39421962037)官方5→6。两平台均通过正式下载、普通退出不安装、真实保存guard/取消，随后真实PATCH200，但在重拍被工作区覆盖的更新详情时Runtime.evaluate超时。Linux从guard cancel到异常约5.69秒，与截图paint外部5秒上限吻合；未捕获旧visibility，不能据此断言精确occlusion原因。两平台均未进入后续真实安装，不计为升级成功。原始结果/截图/HTML/log保存在update-015-to-016-attempt1与github-015-to-016-attempt1-failed.json/.log。实际目视两平台save-guard.png完整可见，修复了旧只见遮罩的采集窗口。
+
+## 第二轮5→6：截图通过，安装阶段问题分开诊断
+
+独立审查通过后，4ed2f77先通过临时验证引用执行[39423359375](https://github.com/bijinfeng/mimir/actions/runs/39423359375)，避免取消master的完整CI；随后master CI39421648291全部success，修复及证据已推master8709f76。临时引用运行不冒充master触发，其精确headSha和最终master历史均可核对。
+
+两端新截图均通过显式前台、有限动画等待、PNG/HTML采集，阶段记录可查。实际目视Linux retry-after-save显示真实取消状态，save-and-restart-awaiting-http清楚显示保存中；截图不代表自动焦点行为。第二次真实编辑/保存PATCH200也完成。
+
+- Linux：工作区关闭成功后closeHost失败，被recoveryRequired安全门阻止安装；未出现安装调用，等待精确官方AppImage替换超时。原异常被旧catch丢弃，不能从这一日志指定确切原因，目前单独真实probe诊断。
+- Windows：host关闭成功，日志明确Install on explicit quitAndInstall，旧进程exit0，无signal；真实NSIS已打开Choose Installation Options。目视nsis-native-001.png确认Next按钮存在，但UIA枚举buttons=[]、actions=0，外部向导driver8分钟超时。不能据此认定产品未启动安装器，也不能计为更新成功。
+
+两项失败分别保存在update-015-to-016-attempt2与github-015-to-016-attempt2-failed.json/.log，后续分别解决，不改写旧结果。

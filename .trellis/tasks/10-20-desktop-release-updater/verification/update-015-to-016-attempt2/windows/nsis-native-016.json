@@ -1,0 +1,27 @@
+{
+  "processes": [
+    {
+      "name": "mimir-0.1.6-win-x64",
+      "title": "mimir Setup ",
+      "id": 7628,
+      "handle": 197154
+    }
+  ],
+  "at": "2026-10-20T12:46:55.0123420Z",
+  "windows": [
+    {
+      "offscreen": false,
+      "title": "mimir Setup ",
+      "class": "#32770",
+      "pid": 7628,
+      "buttons": []
+    },
+    {
+      "offscreen": false,
+      "title": "System Properties",
+      "class": "#32770",
+      "pid": 7700,
+      "buttons": []
+    }
+  ]
+}

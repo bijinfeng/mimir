@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "324aa7df8ad8c3f4938cc9ccc3b06e7b30017dc5",
+  "commit": "8709f76bfcec9fc9c862adaabf5d0564e7b524c8",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "v0.1.3/v0.1.4五目标统一公开及匿名FPK验证通过；实际3→4暴露native getter关闭错误，75dd8c8修复并通过118项desktop/两项独立审查。mac官方3→4手动ZIP替换真实成功，资料和模式保留。v0.1.5固定324aa7d run39413757346进行中，完整CI39413324883 check/build已过，PG/S3待最终结果；0.1.6仅本地版本准备。下一步官方5→6 Windows/Linux实际升级。通知焦点和fnOS设备边界仍未实测。",
+  "notes": "v0.1.5/0.1.6五目标15资产统一公开，最终6 FPK匿名完整下载及SHA通过；7a3c34d完整CI39418539314和master57b6b4e完整CI39421648291全部success。mac官方3→4手动替换真实成功。官方5→6第二轮截图/真实保存通过：Linux工作区关闭后hostclose被安全门阻止，精确原异常待probe；Windows真实启动NSIS且旧进程exit0，但外部UIA向导驱动actions0导致超时。分别诊断，不计完整升级通过。通知焦点和fnOS设备安装边界未实测，任务保持in_progress。",
   "meta": {}
 }
