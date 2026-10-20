@@ -166,3 +166,17 @@ version-only b58c149的CI39415625320在与此前98aaf7d相同的XLSX20k测试500
 官方5→6 Windows [39426680220](https://github.com/bijinfeng/mimir/actions/runs/39426680220) 仍为failure。真实NSIS完成Next/Finish、wizardExitCode0，旧进程exit0且新PID自动拉起，目标exe替换；随后正常关闭并显式重开时固定CDP19223报0x2740，完整资料断言未执行。原artifact保留update-015-to-016-windows-attempt3。cc2911b只改外部端口分配/记录，26项与独立静态/行为复核通过，不改公开产品与失败证据。
 
 0.1.7已固定3f35e8a推master/tag，[发布39428273594](https://github.com/bijinfeng/mimir/actions/runs/39428273594)、[完整CI39428258688](https://github.com/bijinfeng/mimir/actions/runs/39428258688)执行中。另prepare desktop/fnOS同版0.1.8（31项发布/fnOS契约通过），正式公开须晚于7，不改变旧tag和资产。README基线与后续示例同步为7→8，实际最终结果待归档。
+
+## v0.1.7 正式公开
+
+固定3f35e8a的完整CI39428258688已success（check/build/PG/S3全部通过）。五目标发布39428273594全success，v0.1.7于13:43:15Z正式公开15资产；所有四客户端与fnOS同版。github-v017-{ci,release,published}.json及fnos/publish/ci日志保留。旧v3/v4/v5/v6说明已追加手动7或更新版指引，release-advisories-v017保留before/after，逐项确认资产ID/name/size/digest不变；不移动任何tag。
+
+v0.1.8固定e3a950fdd5a42bf02e83ab1fb40a6832c35f38c9已推master及tag（晚于7公开），完整CI39431446416与五目标发布39433040010执行中。7 FPK匿名全量下载进行中。最终7→8尚待实际执行，不沿用此前失败轮次。
+
+## v0.1.8 正式公开与7→8首轮
+
+固定e3a950f的完整CI39431446416已success，check/build/PG/S3均通过。五目标发布39433040010全success；v0.1.8于14:15:45Z正式公开15资产，四客户端与fnOS同版，未覆盖旧资产。github-v018-{ci,release,published}.json与fnos/publish/ci日志保存。v0.1.7 FPK最终匿名完整下载170581061字节，SHA256=47e1e0cff50d204e2dc61d153718e927ce45c616a1a75d06fe39cc575c8899b1，与公开digest一致；v0.1.8最终匿名全量仍在采集。
+
+官方7→8 run39437731315已completed/failure：Windows job118679111438 success；Linux job118679111674 failure。Linux实际完成真实下载、普通exit0不安装、真实PATCH挂起保护/取消和再次保存200、目标AppImage完整SHA替换、旧组退出与更新器自动新PID，随后外部normalClose没有等待新工作区窗口就绪，也没有保留首次枚举/请求证据；90秒后仍有真实mimir进程，尚未显式重开核对完整资料。最终枚举证明3733工作区存在，不能倒推首次已映射或唯一归因为窗口就绪，也不能排除veto。保留false原始结果；不以wrapper3719解释pgrep -x mimir存活。正在修正外部只读窗口等待、精确新PID一次关闭与分阶段证据，随后原官方7→8复验，不另发产品版本。
+
+Windows首轮原始artifact已完整下载至update-017-to-018-attempt1/windows并冻结，result.success=true。三个显式launch CDP50595/56570/53851互异；自动PID712/4044/6188在14:25:39.306Z确认，早于upgraded显式PID4256的14:25:41.823Z。真实NSIS wizardExitCode0，最终IPC currentVersion0.1.8、完整两次编辑正文/title/tags/folder/local均过，三个显式进程exit0/null。主会话实际目视save-guard.png、nsis-native-010.png完成页、upgraded-document.png完整正文。对应run精确head及两job结果github-017-to-018-attempt1.json；不将Windows成功改写为Linux或全平台成功。

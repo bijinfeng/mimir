@@ -1,0 +1,229 @@
+[
+  {
+    "name": "download-ready",
+    "targetId": "03A721E543A3376674FA122EE2721263",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:20:50.489Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:20:50.490Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:20:50.492Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": []
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:20:50.500Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:20:50.500Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:20:50.547Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:20:50.555Z"
+      }
+    ]
+  },
+  {
+    "name": "save-guard",
+    "targetId": "3C729A6D9CD587CC634B24266D1E6073",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:21:14.439Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:21:14.441Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:21:14.443Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": [
+            {
+              "playState": "running",
+              "pending": true,
+              "endTime": 0.01
+            }
+          ]
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:21:14.517Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:21:14.518Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:21:14.573Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:21:14.602Z"
+      }
+    ]
+  },
+  {
+    "name": "retry-after-save",
+    "targetId": "9E90086BFA9F23BA16A9D5AB6F7D46D7",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:21:15.023Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:21:15.029Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:21:15.037Z",
+        "observed": {
+          "visibilityState": "hidden",
+          "hidden": true,
+          "hasFocus": true,
+          "finiteAnimations": [
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 0.01
+            },
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 0.01
+            },
+            {
+              "playState": "running",
+              "pending": false,
+              "endTime": 0.01
+            }
+          ]
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:21:15.142Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:21:15.142Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:21:15.186Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:21:15.194Z"
+      }
+    ]
+  },
+  {
+    "name": "save-and-restart-awaiting-http",
+    "targetId": "3C729A6D9CD587CC634B24266D1E6073",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:21:17.515Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:21:17.517Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:21:17.519Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": []
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:21:17.531Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:21:17.532Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:21:17.592Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:21:17.621Z"
+      }
+    ]
+  },
+  {
+    "name": "upgraded-document",
+    "targetId": "D6D9345392EDB2A1E376E7B7647BB0CD",
+    "explicitForegroundPreview": true,
+    "phases": [
+      {
+        "stage": "bring-to-front",
+        "at": "2026-10-20T14:25:58.535Z"
+      },
+      {
+        "stage": "foreground-state",
+        "at": "2026-10-20T14:25:58.536Z"
+      },
+      {
+        "stage": "paint-wait",
+        "at": "2026-10-20T14:25:58.538Z",
+        "observed": {
+          "visibilityState": "visible",
+          "hidden": false,
+          "hasFocus": true,
+          "finiteAnimations": []
+        }
+      },
+      {
+        "stage": "paint-ready",
+        "at": "2026-10-20T14:25:58.544Z"
+      },
+      {
+        "stage": "capture-png",
+        "at": "2026-10-20T14:25:58.545Z"
+      },
+      {
+        "stage": "capture-html",
+        "at": "2026-10-20T14:25:58.610Z"
+      },
+      {
+        "stage": "complete",
+        "at": "2026-10-20T14:25:58.644Z"
+      }
+    ]
+  }
+]

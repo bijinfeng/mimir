@@ -1,0 +1,167 @@
+
+[desktop] whenReady，开始启动流程
+
+DevTools listening on ws://127.0.0.1:56570/devtools/browser/d38f0acc-c654-4786-968c-913b347c1e30
+已挂载前端静态资源
+mimir server 监听 http://localhost:56572
+  数据目录 C:\Users\runneradmin\AppData\Roaming\mimir\data
+  数据库 sqlite（C:\Users\runneradmin\AppData\Roaming\mimir\data\mimir.db）
+  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听
+<-- GET /healthz
+--> GET /healthz [32m200[0m 0ms
+[desktop] 本地模式宿主 http://127.0.0.1:56572
+[desktop] 数据目录 C:\Users\runneradmin\AppData\Roaming\mimir\data
+[desktop] 数据库 sqlite（C:\Users\runneradmin\AppData\Roaming\mimir\data\mimir.db）
+<-- GET /
+--> GET / [32m200[0m 1ms
+<-- GET /assets/index-DUTuCCUs.js
+--> GET /assets/index-DUTuCCUs.js [32m200[0m 2ms
+<-- GET /assets/rolldown-runtime-CEgmsyvS.js
+<-- GET /assets/react-B-G88Jf8.js
+<-- GET /assets/tokens-B_hSLtC-.js
+--> GET /assets/rolldown-runtime-CEgmsyvS.js [32m200[0m 1ms
+--> GET /assets/react-B-G88Jf8.js [32m200[0m 2ms
+<-- GET /assets/matchContext-bD7Rf7Dy.js
+<-- GET /assets/utils-NDPNWik3.js
+--> GET /assets/tokens-B_hSLtC-.js [32m200[0m 4ms
+--> GET /assets/matchContext-bD7Rf7Dy.js [32m200[0m 2ms
+--> GET /assets/utils-NDPNWik3.js [32m200[0m 3ms
+<-- GET /assets/src-DK4bPvcM.js
+--> GET /assets/src-DK4bPvcM.js [32m200[0m 1ms
+<-- GET /assets/api-2XXdxKwk.js
+<-- GET /assets/lazyRouteComponent-D8erj-hk.js
+--> GET /assets/lazyRouteComponent-D8erj-hk.js [32m200[0m 1ms
+--> GET /assets/api-2XXdxKwk.js [32m200[0m 2ms
+<-- GET /assets/link-IK4mqxX3.js
+--> GET /assets/link-IK4mqxX3.js [32m200[0m 0ms
+<-- GET /assets/titlebar-kit-HdXcx8Az.js
+--> GET /assets/titlebar-kit-HdXcx8Az.js [32m200[0m 0ms
+<-- GET /assets/WindowControls-C62A7HFZ.js
+--> GET /assets/WindowControls-C62A7HFZ.js [32m200[0m 2ms
+<-- GET /assets/use-update-state-DXUznxoI.js
+--> GET /assets/use-update-state-DXUznxoI.js [32m200[0m 0ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 3ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 1ms
+<-- GET /assets/_app-CXM1D9aX.js
+<-- GET /assets/useMutation-DSIWJMX8.js
+<-- GET /assets/input-CIdZa-hP.js
+<-- GET /assets/EyeOutlined-CJMQX-vW.js
+--> GET /assets/_app-CXM1D9aX.js [32m200[0m 4ms
+--> GET /assets/useMutation-DSIWJMX8.js [32m200[0m 2ms
+--> GET /assets/input-CIdZa-hP.js [32m200[0m 1ms
+<-- GET /assets/chevron-down-BsNmXozd.js
+<-- GET /assets/collapse-DIMYHjWf.js
+--> GET /assets/EyeOutlined-CJMQX-vW.js [32m200[0m 2ms
+--> GET /assets/chevron-down-BsNmXozd.js [32m200[0m 1ms
+--> GET /assets/collapse-DIMYHjWf.js [32m200[0m 1ms
+<-- GET /assets/FileFormatIcon-DrlG3v0o.css
+<-- GET /assets/x-Do95W56V.js
+<-- GET /assets/avatar-D6VBPEt1.js
+<-- GET /assets/useBreakpoint-DS2Sgujj.js
+<-- GET /assets/progress-DIzXWcHt.js
+--> GET /assets/FileFormatIcon-DrlG3v0o.css [32m200[0m 4ms
+--> GET /assets/x-Do95W56V.js [32m200[0m 4ms
+--> GET /assets/avatar-D6VBPEt1.js [32m200[0m 4ms
+--> GET /assets/useBreakpoint-DS2Sgujj.js [32m200[0m 3ms
+--> GET /assets/progress-DIzXWcHt.js [32m200[0m 4ms
+<-- GET /assets/plus-BL0RtzMv.js
+<-- GET /assets/nav-collapse-CggpPqDH.js
+<-- GET /assets/use-scrolled-VqnKna5G.js
+<-- GET /assets/search-BJHFRWHF.js
+--> GET /assets/plus-BL0RtzMv.js [32m200[0m 3ms
+--> GET /assets/nav-collapse-CggpPqDH.js [32m200[0m 2ms
+--> GET /assets/use-scrolled-VqnKna5G.js [32m200[0m 2ms
+<-- GET /assets/upload-Cwzu3jIW.js
+--> GET /assets/search-BJHFRWHF.js [32m200[0m 1ms
+--> GET /assets/upload-Cwzu3jIW.js [32m200[0m 1ms
+<-- GET /assets/app-shell-context-BRYv_rhf.js
+<-- GET /assets/pencil-FctWFbxi.js
+--> GET /assets/app-shell-context-BRYv_rhf.js [32m200[0m 1ms
+<-- GET /assets/folder-input-lIyAGD2m.js
+--> GET /assets/pencil-FctWFbxi.js [32m200[0m 1ms
+--> GET /assets/folder-input-lIyAGD2m.js [32m200[0m 1ms
+<-- GET /assets/_app.docs-BAG9TOKq.js
+--> GET /assets/_app.docs-BAG9TOKq.js [32m200[0m 0ms
+<-- GET /assets/trash-Cfk7r6nv.js
+--> GET /assets/trash-Cfk7r6nv.js [32m200[0m 0ms
+<-- GET /assets/useForm-hqM05umz.js
+--> GET /assets/useForm-hqM05umz.js [32m200[0m 1ms
+<-- GET /assets/FileFormatIcon-CB6YtKrF.js
+<-- GET /assets/switch-C0vxT0-O.js
+<-- GET /assets/collapse-80mkjuxl.js
+--> GET /assets/switch-C0vxT0-O.js [32m200[0m 1ms
+--> GET /assets/collapse-80mkjuxl.js [32m200[0m 1ms
+--> GET /assets/FileFormatIcon-CB6YtKrF.js [32m200[0m 7ms
+<-- GET /assets/arrow-down-DKS8oewX.js
+--> GET /assets/arrow-down-DKS8oewX.js [32m200[0m 0ms
+<-- GET /assets/square-CrJ5gsnx.js
+--> GET /assets/square-CrJ5gsnx.js [32m200[0m 1ms
+<-- GET /assets/refresh-cw-BcUxRALg.js
+<-- GET /assets/LoadError-D65LfWoF.js
+--> GET /assets/refresh-cw-BcUxRALg.js [32m200[0m 1ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 2ms
+<-- GET /assets/use-chat-composer-status-BWFMbdWh.js
+--> GET /assets/LoadError-D65LfWoF.js [32m200[0m 3ms
+--> GET /assets/use-chat-composer-status-BWFMbdWh.js [32m200[0m 1ms
+<-- GET /api/documents/dzxFzwSLwF6A_XMW
+--> GET /api/documents/dzxFzwSLwF6A_XMW [32m200[0m 19ms
+<-- GET /api/config
+--> GET /api/config [32m200[0m 4ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 0ms
+<-- GET /api/conversations
+--> GET /api/conversations [32m200[0m 1ms
+<-- GET /api/documents?limit=100
+--> GET /api/documents?limit=100 [32m200[0m 7ms
+<-- GET /api/folders
+--> GET /api/folders [32m200[0m 2ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 0ms
+<-- GET /api/documents?folder=%E6%9B%B4%E6%96%B0%E9%AA%8C%E6%94%B6&limit=100
+--> GET /api/documents?folder=%E6%9B%B4%E6%96%B0%E9%AA%8C%E6%94%B6&limit=100 [32m200[0m 2ms
+Checking for update
+Found version 0.1.8 (url: mimir-0.1.8-win-x64.exe)
+Downloading update from mimir-0.1.8-win-x64.exe
+updater cache dir: C:\Users\runneradmin\AppData\Local\@mimirdesktop-updater
+Update has already been downloaded to C:\Users\runneradmin\AppData\Local\@mimirdesktop-updater\pending\mimir-0.1.8-win-x64.exe).
+<-- GET /docs?scope=all&id=dzxFzwSLwF6A_XMW
+--> GET /docs?scope=all&id=dzxFzwSLwF6A_XMW [32m200[0m 0ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 1ms
+<-- GET /api/auth/get-session
+--> GET /api/auth/get-session [32m200[0m 0ms
+<-- GET /api/config
+--> GET /api/config [32m200[0m 2ms
+<-- GET /api/folders
+--> GET /api/folders [32m200[0m 1ms
+<-- GET /api/conversations
+--> GET /api/conversations [32m200[0m 1ms
+<-- GET /api/documents/dzxFzwSLwF6A_XMW/suggested-tags
+<-- GET /api/documents/dzxFzwSLwF6A_XMW
+--> GET /api/documents/dzxFzwSLwF6A_XMW/suggested-tags [32m200[0m 110ms
+--> GET /api/documents/dzxFzwSLwF6A_XMW [32m200[0m 110ms
+<-- GET /api/documents/dzxFzwSLwF6A_XMW
+--> GET /api/documents/dzxFzwSLwF6A_XMW [32m200[0m 4ms
+<-- GET /api/documents/dzxFzwSLwF6A_XMW/suggested-tags
+--> GET /api/documents/dzxFzwSLwF6A_XMW/suggested-tags [32m200[0m 3ms
+[desktop:update] UpdateBlocked [Error]: 当前内容还没保存或准备已取消，暂未重启。请返回文档处理后重试。
+    at prepareWorkspace (D:\a\_temp\mimir-update-e2e\installation\resources\app.asar\dist\main\index.js:909:14)
+    at async Object.prepareInstall (D:\a\_temp\mimir-update-e2e\installation\resources\app.asar\dist\main\index.js:980:5)
+    at async UpdateController.runInstall (D:\a\_temp\mimir-update-e2e\installation\resources\app.asar\dist\main\index.js:766:4)
+    at async D:\a\_temp\mimir-update-e2e\installation\resources\app.asar\dist\main\index.js:1067:3
+    at async Session.<anonymous> (node:electron/js2c/browser_init:1:119972) {
+  requiresSaveConfirmation: false,
+  recoveryRequired: false
+}
+<-- PATCH /api/documents/dzxFzwSLwF6A_XMW
+--> PATCH /api/documents/dzxFzwSLwF6A_XMW [32m200[0m 23ms
+<-- GET /api/documents/dzxFzwSLwF6A_XMW
+--> GET /api/documents/dzxFzwSLwF6A_XMW [32m200[0m 3ms
+<-- PATCH /api/documents/dzxFzwSLwF6A_XMW
+--> PATCH /api/documents/dzxFzwSLwF6A_XMW [32m200[0m 9ms
+Install on explicit quitAndInstall
+Install: isSilent: false, isForceRunAfter: true
+Executing: C:\Users\runneradmin\AppData\Local\@mimirdesktop-updater\pending\mimir-0.1.8-win-x64.exe with args: --updated,--force-run

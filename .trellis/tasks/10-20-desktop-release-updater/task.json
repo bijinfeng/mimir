@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "3f35e8a9201a1abd0eb882a4f91e8f75cbb85abb",
+  "commit": "e3a950fdd5a42bf02e83ab1fb40a6832c35f38c9",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "desktop/fnOS0.1.7新手动基线已推master及固定tag；Release39428273594/完整CI39428258688执行中。Session预连接原生红绿和统一15秒门、production实际DB关闭修复及真实SQLite/PG和最终生产Electron probe已通过独立审查。旧master8709f76完整CI39424899331全部success。官方5→6 Windows attempt3真实向导exit0且自动新PID/字节替换通过，随后harness固定CDP端口冲突，资料断言未完成，保留false并修外部端口。最终须7→8全Windows/Linux。v6 FPK匿名全字节/SHA通过；mac官方3→4手动替换成功。系统通知焦点和fnOS设备安装尚未实测，保持in_progress。",
+  "notes": "desktop/fnOS0.1.7与0.1.8已固定tag并正式五目标各15资产公开；完整CI39428258688/39431446416全部success。官方7→8第一轮39437731315 Windows真实升级/向导exit0/自动新PID/资料模式保留全部success，Linux完整目标SHA替换且自动新PID，但外部normalClose无就绪/初始动作证据，资料未核，保持false；正在修外部协调后原7→8复验。Session原15秒预算及production实际DB关闭已原生红绿/独立复核。7 FPK匿名全量SHA通过，8下载中。mac官方3→4手动替换成功；系统通知焦点和fnOS设备安装未实测，保持in_progress。",
   "meta": {}
 }

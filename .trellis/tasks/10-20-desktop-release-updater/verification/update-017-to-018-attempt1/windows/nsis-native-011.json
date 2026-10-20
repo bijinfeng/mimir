@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-20T14:25:37.8751526Z",
+  "processes": [
+    {
+      "handle": 0,
+      "id": 712,
+      "name": "mimir",
+      "title": ""
+    },
+    {
+      "handle": 0,
+      "id": 4044,
+      "name": "mimir",
+      "title": ""
+    },
+    {
+      "handle": 0,
+      "id": 6188,
+      "name": "mimir",
+      "title": ""
+    },
+    {
+      "handle": 0,
+      "id": 6148,
+      "name": "mimir-0.1.8-win-x64",
+      "title": ""
+    }
+  ],
+  "windows": []
+}

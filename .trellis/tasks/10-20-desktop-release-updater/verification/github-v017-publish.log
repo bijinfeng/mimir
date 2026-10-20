@@ -1,0 +1,296 @@
+﻿2026-10-20T13:35:59.4658111Z Current runner version: '2.337.0'
+2026-10-20T13:35:59.4686033Z ##[group]Runner Image Provisioner
+2026-10-20T13:35:59.4687029Z Hosted Compute Agent
+2026-10-20T13:35:59.4687697Z Version: 20261012.601
+2026-10-20T13:35:59.4688383Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-20T13:35:59.4689221Z Build Date: 2026-10-12T17:48:21Z
+2026-10-20T13:35:59.4689910Z Worker ID: {331a0fa7-819c-4bc6-bb64-b659615181b5}
+2026-10-20T13:35:59.4690661Z Region: centralus
+2026-10-20T13:35:59.4691260Z Cloud: Azure
+2026-10-20T13:35:59.4692016Z ##[endgroup]
+2026-10-20T13:35:59.4693669Z ##[group]Operating System
+2026-10-20T13:35:59.4694327Z Ubuntu
+2026-10-20T13:35:59.4694843Z 24.04.5
+2026-10-20T13:35:59.4695447Z LTS
+2026-10-20T13:35:59.4696002Z ##[endgroup]
+2026-10-20T13:35:59.4696624Z ##[group]Runner Image
+2026-10-20T13:35:59.4697236Z Image: ubuntu-24.04
+2026-10-20T13:35:59.4697807Z Version: 20261012.334.1
+2026-10-20T13:35:59.4699146Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-20T13:35:59.4700803Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-20T13:35:59.4702313Z ##[endgroup]
+2026-10-20T13:35:59.4703514Z ##[group]GITHUB_TOKEN Permissions
+2026-10-20T13:35:59.4705781Z Contents: write
+2026-10-20T13:35:59.4706866Z Metadata: read
+2026-10-20T13:35:59.4707572Z ##[endgroup]
+2026-10-20T13:35:59.4709989Z Secret source: Actions
+2026-10-20T13:35:59.4711035Z Cache mode: write
+2026-10-20T13:35:59.4712201Z Prepare workflow directory
+2026-10-20T13:35:59.5061152Z Prepare all required actions
+2026-10-20T13:35:59.5112186Z Getting action download info
+2026-10-20T13:35:59.8302769Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-20T13:35:59.9510361Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-10-20T13:36:00.4659678Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-20T13:36:00.6796998Z Download action repository 'actions/download-artifact@v4' (SHA:d3f86a106a0bac45b974a628896c90dbdf5c8093)
+2026-10-20T13:36:01.2299155Z Complete job name: publish
+2026-10-20T13:36:01.3255990Z ##[group]Run actions/checkout@v4
+2026-10-20T13:36:01.3257402Z with:
+2026-10-20T13:36:01.3258312Z   repository: bijinfeng/mimir
+2026-10-20T13:36:01.3267146Z   token: ***
+2026-10-20T13:36:01.3268038Z   ssh-strict: true
+2026-10-20T13:36:01.3268925Z   ssh-user: git
+2026-10-20T13:36:01.3269822Z   persist-credentials: true
+2026-10-20T13:36:01.3270803Z   clean: true
+2026-10-20T13:36:01.3271990Z   sparse-checkout-cone-mode: true
+2026-10-20T13:36:01.3273069Z   fetch-depth: 1
+2026-10-20T13:36:01.3273962Z   fetch-tags: false
+2026-10-20T13:36:01.3274869Z   show-progress: true
+2026-10-20T13:36:01.3275785Z   lfs: false
+2026-10-20T13:36:01.3276619Z   submodules: false
+2026-10-20T13:36:01.3277524Z   set-safe-directory: true
+2026-10-20T13:36:01.3278562Z   allow-unsafe-pr-checkout: false
+2026-10-20T13:36:01.3279999Z ##[endgroup]
+2026-10-20T13:36:01.4363647Z Syncing repository: bijinfeng/mimir
+2026-10-20T13:36:01.4367845Z ##[group]Getting Git version info
+2026-10-20T13:36:01.4370153Z Working directory is '/home/runner/work/mimir/mimir'
+2026-10-20T13:36:01.4373920Z [command]/usr/bin/git version
+2026-10-20T13:36:01.4422692Z git version 2.55.0
+2026-10-20T13:36:01.4449858Z ##[endgroup]
+2026-10-20T13:36:01.4463956Z Temporarily overriding HOME='/home/runner/work/_temp/a3de1c20-46b0-4e61-8783-b81f45cdcc04' before making global git config changes
+2026-10-20T13:36:01.4467877Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-20T13:36:01.4471103Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mimir/mimir
+2026-10-20T13:36:01.4527051Z Deleting the contents of '/home/runner/work/mimir/mimir'
+2026-10-20T13:36:01.4539258Z ##[group]Initializing the repository
+2026-10-20T13:36:01.4548716Z [command]/usr/bin/git init /home/runner/work/mimir/mimir
+2026-10-20T13:36:01.4651716Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-20T13:36:01.4655901Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-20T13:36:01.4659120Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-20T13:36:01.4661957Z hint: call:
+2026-10-20T13:36:01.4662941Z hint:
+2026-10-20T13:36:01.4664208Z hint: 	git config --global init.defaultBranch <name>
+2026-10-20T13:36:01.4665645Z hint:
+2026-10-20T13:36:01.4667609Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-20T13:36:01.4669836Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-20T13:36:01.4671991Z hint:
+2026-10-20T13:36:01.4673066Z hint: 	git branch -m <name>
+2026-10-20T13:36:01.4674245Z hint:
+2026-10-20T13:36:01.4676803Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-20T13:36:01.4680268Z Initialized empty Git repository in /home/runner/work/mimir/mimir/.git/
+2026-10-20T13:36:01.4686363Z [command]/usr/bin/git remote add origin https://github.com/bijinfeng/mimir
+2026-10-20T13:36:01.4724928Z ##[endgroup]
+2026-10-20T13:36:01.4726679Z ##[group]Disabling automatic garbage collection
+2026-10-20T13:36:01.4728897Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-20T13:36:01.4767487Z ##[endgroup]
+2026-10-20T13:36:01.4769257Z ##[group]Setting up auth
+2026-10-20T13:36:01.4774027Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-20T13:36:01.4810026Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-20T13:36:01.5274109Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-20T13:36:01.5339200Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-20T13:36:01.5619437Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-20T13:36:01.5660786Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-20T13:36:01.5897948Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-20T13:36:01.5942123Z ##[endgroup]
+2026-10-20T13:36:01.5944004Z ##[group]Fetching the repository
+2026-10-20T13:36:01.5954115Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3f35e8a9201a1abd0eb882a4f91e8f75cbb85abb:refs/tags/v0.1.7
+2026-10-20T13:36:08.9342891Z From https://github.com/bijinfeng/mimir
+2026-10-20T13:36:08.9344876Z  * [new ref]         3f35e8a9201a1abd0eb882a4f91e8f75cbb85abb -> v0.1.7
+2026-10-20T13:36:08.9347494Z ##[endgroup]
+2026-10-20T13:36:08.9348402Z ##[group]Determining the checkout info
+2026-10-20T13:36:08.9350179Z ##[endgroup]
+2026-10-20T13:36:08.9356311Z [command]/usr/bin/git sparse-checkout disable
+2026-10-20T13:36:08.9409955Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-20T13:36:08.9443872Z ##[group]Checking out the ref
+2026-10-20T13:36:08.9450039Z [command]/usr/bin/git checkout --progress --force refs/tags/v0.1.7
+2026-10-20T13:36:09.9776473Z Updating files:  63% (5008/7924)
+2026-10-20T13:36:09.9864135Z Updating files:  64% (5072/7924)
+2026-10-20T13:36:10.0098511Z Updating files:  65% (5151/7924)
+2026-10-20T13:36:10.0402318Z Updating files:  66% (5230/7924)
+2026-10-20T13:36:10.0490705Z Updating files:  67% (5310/7924)
+2026-10-20T13:36:10.0614857Z Updating files:  68% (5389/7924)
+2026-10-20T13:36:10.0693511Z Updating files:  69% (5468/7924)
+2026-10-20T13:36:10.0864248Z Updating files:  70% (5547/7924)
+2026-10-20T13:36:10.0984700Z Updating files:  71% (5627/7924)
+2026-10-20T13:36:10.1063810Z Updating files:  72% (5706/7924)
+2026-10-20T13:36:10.1280807Z Updating files:  73% (5785/7924)
+2026-10-20T13:36:10.1376452Z Updating files:  74% (5864/7924)
+2026-10-20T13:36:10.1578890Z Updating files:  75% (5943/7924)
+2026-10-20T13:36:10.1684248Z Updating files:  76% (6023/7924)
+2026-10-20T13:36:10.1815286Z Updating files:  77% (6102/7924)
+2026-10-20T13:36:10.2034013Z Updating files:  78% (6181/7924)
+2026-10-20T13:36:10.2395343Z Updating files:  79% (6260/7924)
+2026-10-20T13:36:10.2724379Z Updating files:  80% (6340/7924)
+2026-10-20T13:36:10.2973926Z Updating files:  81% (6419/7924)
+2026-10-20T13:36:10.3033372Z Updating files:  82% (6498/7924)
+2026-10-20T13:36:10.3094274Z Updating files:  83% (6577/7924)
+2026-10-20T13:36:10.3176039Z Updating files:  84% (6657/7924)
+2026-10-20T13:36:10.3257102Z Updating files:  85% (6736/7924)
+2026-10-20T13:36:10.3326851Z Updating files:  86% (6815/7924)
+2026-10-20T13:36:10.3382966Z Updating files:  87% (6894/7924)
+2026-10-20T13:36:10.3514695Z Updating files:  88% (6974/7924)
+2026-10-20T13:36:10.3606738Z Updating files:  89% (7053/7924)
+2026-10-20T13:36:10.3670050Z Updating files:  90% (7132/7924)
+2026-10-20T13:36:10.4033978Z Updating files:  91% (7211/7924)
+2026-10-20T13:36:10.4111942Z Updating files:  92% (7291/7924)
+2026-10-20T13:36:10.4222681Z Updating files:  93% (7370/7924)
+2026-10-20T13:36:10.4308733Z Updating files:  94% (7449/7924)
+2026-10-20T13:36:10.4376259Z Updating files:  95% (7528/7924)
+2026-10-20T13:36:10.4421800Z Updating files:  96% (7608/7924)
+2026-10-20T13:36:10.4470125Z Updating files:  97% (7687/7924)
+2026-10-20T13:36:10.4521254Z Updating files:  98% (7766/7924)
+2026-10-20T13:36:10.4586672Z Updating files:  99% (7845/7924)
+2026-10-20T13:36:10.4587264Z Updating files: 100% (7924/7924)
+2026-10-20T13:36:10.4587836Z Updating files: 100% (7924/7924), done.
+2026-10-20T13:36:10.4672900Z Note: switching to 'refs/tags/v0.1.7'.
+2026-10-20T13:36:10.4673298Z
+2026-10-20T13:36:10.4673760Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-20T13:36:10.4674857Z changes and commit them, and you can discard any commits you make in this
+2026-10-20T13:36:10.4675814Z state without impacting any branches by switching back to a branch.
+2026-10-20T13:36:10.4676753Z
+2026-10-20T13:36:10.4677206Z If you want to create a new branch to retain commits you create, you may
+2026-10-20T13:36:10.4677809Z do so (now or later) by using -c with the switch command. Example:
+2026-10-20T13:36:10.4678097Z
+2026-10-20T13:36:10.4678299Z   git switch -c <new-branch-name>
+2026-10-20T13:36:10.4678484Z
+2026-10-20T13:36:10.4678709Z Or undo this operation with:
+2026-10-20T13:36:10.4678932Z
+2026-10-20T13:36:10.4679043Z   git switch -
+2026-10-20T13:36:10.4679225Z
+2026-10-20T13:36:10.4679529Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-20T13:36:10.4679960Z
+2026-10-20T13:36:10.4680219Z HEAD is now at 3f35e8a chore(release): prepare desktop and fnOS 0.1.7 shutdown baseline
+2026-10-20T13:36:10.4758294Z ##[endgroup]
+2026-10-20T13:36:10.4809360Z [command]/usr/bin/git log -1 --format=%H
+2026-10-20T13:36:10.4838483Z 3f35e8a9201a1abd0eb882a4f91e8f75cbb85abb
+2026-10-20T13:36:10.5137481Z ##[group]Run pnpm/action-setup@v4
+2026-10-20T13:36:10.5137756Z with:
+2026-10-20T13:36:10.5137951Z   dest: ~/setup-pnpm
+2026-10-20T13:36:10.5138159Z   run_install: null
+2026-10-20T13:36:10.5138357Z   cache: false
+2026-10-20T13:36:10.5138581Z   cache_dependency_path: pnpm-lock.yaml
+2026-10-20T13:36:10.5138866Z   package_json_file: package.json
+2026-10-20T13:36:10.5139107Z   standalone: false
+2026-10-20T13:36:10.5139306Z ##[endgroup]
+2026-10-20T13:36:10.6620729Z ##[group]Running self-installer...
+2026-10-20T13:36:11.0962600Z (node:2329) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-20T13:36:11.0964387Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T13:36:11.3425846Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-10-20T13:36:11.5241183Z Packages: +3
+2026-10-20T13:36:11.5241855Z +++
+2026-10-20T13:36:12.1144719Z Progress: resolved 15, reused 0, downloaded 3, added 3, done
+2026-10-20T13:36:12.1311590Z .../.pnpm/pnpm@12.4.2/node_modules/pnpm preinstall$ node install.js
+2026-10-20T13:36:12.3433946Z .../.pnpm/pnpm@12.4.2/node_modules/pnpm preinstall: Done
+2026-10-20T13:36:12.3438791Z .../.pnpm/pnpm@12.4.2/node_modules/pnpm postinstall$ node install.js
+2026-10-20T13:36:12.3844418Z .../.pnpm/pnpm@12.4.2/node_modules/pnpm postinstall: Done
+2026-10-20T13:36:13.4797241Z
+2026-10-20T13:36:13.4797804Z dependencies:
+2026-10-20T13:36:13.4798271Z + pnpm 12.4.2 (12.14.0 is available)
+2026-10-20T13:36:13.4798598Z
+2026-10-20T13:36:13.4824357Z Done in 2.6s
+2026-10-20T13:36:13.5166331Z ##[endgroup]
+2026-10-20T13:36:13.5166591Z Installation Completed!
+2026-10-20T13:36:13.5365264Z ##[group]Run actions/setup-node@v4
+2026-10-20T13:36:13.5365541Z with:
+2026-10-20T13:36:13.5365761Z   node-version-file: .nvmrc
+2026-10-20T13:36:13.5366084Z   cache: pnpm
+2026-10-20T13:36:13.5366335Z   always-auth: false
+2026-10-20T13:36:13.5366753Z   check-latest: false
+2026-10-20T13:36:13.5369081Z   token: ***
+2026-10-20T13:36:13.5369283Z env:
+2026-10-20T13:36:13.5369536Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-10-20T13:36:13.5369848Z ##[endgroup]
+2026-10-20T13:36:13.6737171Z Resolved .nvmrc as 22
+2026-10-20T13:36:13.6795699Z Found in cache @ /opt/hostedtoolcache/node/22.23.3/x64
+2026-10-20T13:36:13.6800486Z (node:2360) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-20T13:36:13.6801994Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T13:36:13.6803900Z ##[group]Environment details
+2026-10-20T13:36:16.4443875Z node: v22.23.3
+2026-10-20T13:36:16.4444353Z npm: 10.9.9
+2026-10-20T13:36:16.4444633Z yarn: 1.22.22
+2026-10-20T13:36:16.4445691Z ##[endgroup]
+2026-10-20T13:36:16.4467049Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-10-20T13:36:16.4627670Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-10-20T13:36:16.6114044Z Cache hit for: node-cache-Linux-x64-pnpm-0521c8bdf1cef2091d3d90bc2667513966fc33e7f79df16204f74933c9f64e20
+2026-10-20T13:36:16.6267832Z (node:2360) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-20T13:36:17.7546227Z Received 109051904 of 398740923 (27.3%), 103.9 MBs/sec
+2026-10-20T13:36:18.7548407Z Received 314572800 of 398740923 (78.9%), 149.9 MBs/sec
+2026-10-20T13:36:19.1156663Z Received 398740923 of 398740923 (100.0%), 161.0 MBs/sec
+2026-10-20T13:36:19.1157876Z Cache Size: ~380 MB (398740923 B)
+2026-10-20T13:36:19.1280241Z [command]/usr/bin/tar -xf /home/runner/work/_temp/4b3a7147-778e-4b25-9548-d2ca929d4d13/cache.tzst -P -C /home/runner/work/mimir/mimir --use-compress-program unzstd
+2026-10-20T13:36:24.4559798Z Cache restored successfully
+2026-10-20T13:36:24.4772590Z Cache restored from key: node-cache-Linux-x64-pnpm-0521c8bdf1cef2091d3d90bc2667513966fc33e7f79df16204f74933c9f64e20
+2026-10-20T13:36:24.4967552Z ##[group]Run pnpm install --frozen-lockfile
+2026-10-20T13:36:24.4967978Z pnpm install --frozen-lockfile
+2026-10-20T13:36:24.5267312Z shell: /usr/bin/bash -e {0}
+2026-10-20T13:36:24.5267686Z env:
+2026-10-20T13:36:24.5268041Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-10-20T13:36:24.5268500Z ##[endgroup]
+2026-10-20T13:36:24.5570174Z Scope: all 16 workspace projects
+2026-10-20T13:36:24.6616269Z ? Verifying lockfile against supply-chain policies (2207 entries)...
+2026-10-20T13:36:25.1037208Z Packages are hard linked from the content-addressable store to the virtual store.
+2026-10-20T13:36:25.1047860Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-10-20T13:36:25.1058392Z   Virtual store is at:             node_modules/.pnpm
+2026-10-20T13:36:26.1332888Z Progress: resolved 840, reused 840, downloaded 0, added 833
+2026-10-20T13:36:27.1352340Z Progress: resolved 1926, reused 1926, downloaded 0, added 1924
+2026-10-20T13:36:31.3051901Z ✓ Lockfile passes supply-chain policies (2207 entries in 6.6s)
+2026-10-20T13:36:31.3052872Z Lockfile is up to date, resolution step is skipped
+2026-10-20T13:36:31.3264558Z Packages: +1943
+2026-10-20T13:36:31.3265537Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-10-20T13:36:31.4599204Z Progress: resolved 1943, reused 1943, downloaded 0, added 1943, done
+2026-10-20T13:36:31.7313818Z
+2026-10-20T13:36:31.7314659Z devDependencies:
+2026-10-20T13:36:31.7315444Z + oxfmt 0.72.0
+2026-10-20T13:36:31.7316010Z + oxlint 1.87.0
+2026-10-20T13:36:31.7316422Z + yaml 2.8.1
+2026-10-20T13:36:31.7316770Z
+2026-10-20T13:36:31.7319998Z Done in 7.2s using pnpm v12.4.2
+2026-10-20T13:36:31.7724652Z ##[group]Run actions/download-artifact@v4
+2026-10-20T13:36:31.7724984Z with:
+2026-10-20T13:36:31.7725185Z   name: desktop-complete
+2026-10-20T13:36:31.7725412Z   path: complete
+2026-10-20T13:36:31.7725620Z   merge-multiple: false
+2026-10-20T13:36:31.7725853Z   repository: bijinfeng/mimir
+2026-10-20T13:36:31.7726098Z   run-id: 39428273594
+2026-10-20T13:36:31.7726298Z env:
+2026-10-20T13:36:31.7726535Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-10-20T13:36:31.7726843Z ##[endgroup]
+2026-10-20T13:36:31.9257516Z Downloading single artifact
+2026-10-20T13:36:31.9409816Z (node:2486) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-20T13:36:31.9411582Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T13:36:32.1245093Z Preparing to download the following artifacts:
+2026-10-20T13:36:32.1247078Z - desktop-complete (ID: 12268616229, Size: 3102295100, Expected Digest: sha256:536016d7fa57882edcac115ea00191d5493eb79d16a51750c9ae97f59e85ef83)
+2026-10-20T13:36:32.3039685Z Redirecting to blob download url: https://productionresultssa16.blob.core.windows.net/actions-results/bb98d205-5508-8934-bc44-56941b5c9771/workflow-job-run-f9e5de39-6972-5631-bfe5-68fb550e8eba/artifacts/d1dfea8f4d806447e46861b40e5a2c3451d6348bd1b8593b59940625c5562c35.zip
+2026-10-20T13:36:32.3042860Z Starting download of artifact to: /home/runner/work/mimir/mimir/complete
+2026-10-20T13:36:32.5537281Z (node:2486) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-10-20T13:40:40.1300438Z SHA256 digest of downloaded artifact is 536016d7fa57882edcac115ea00191d5493eb79d16a51750c9ae97f59e85ef83
+2026-10-20T13:40:40.1301875Z Artifact download completed successfully.
+2026-10-20T13:40:40.1302560Z Total of 1 artifact(s) downloaded
+2026-10-20T13:40:40.1308611Z Download artifact has finished successfully
+2026-10-20T13:40:40.1441335Z ##[group]Run node apps/desktop/scripts/publish-release.mjs complete
+2026-10-20T13:40:40.1442195Z node apps/desktop/scripts/publish-release.mjs complete
+2026-10-20T13:40:40.1505596Z shell: /usr/bin/bash -e {0}
+2026-10-20T13:40:40.1505855Z env:
+2026-10-20T13:40:40.1506124Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+2026-10-20T13:40:40.1508674Z   GITHUB_TOKEN: ***
+2026-10-20T13:40:40.1508899Z ##[endgroup]
+2026-10-20T13:43:15.6443255Z Post job cleanup.
+2026-10-20T13:43:15.7650327Z (node:2667) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-20T13:43:15.7652277Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-20T13:43:15.7655088Z Cache hit occurred on the primary key node-cache-Linux-x64-pnpm-0521c8bdf1cef2091d3d90bc2667513966fc33e7f79df16204f74933c9f64e20, not saving cache.
+2026-10-20T13:43:15.7759957Z Post job cleanup.
+2026-10-20T13:43:15.9225375Z Pruning is unnecessary.
+2026-10-20T13:43:15.9444341Z Post job cleanup.
+2026-10-20T13:43:16.0521252Z [command]/usr/bin/git version
+2026-10-20T13:43:16.0624144Z git version 2.55.0
+2026-10-20T13:43:16.0650432Z Temporarily overriding HOME='/home/runner/work/_temp/d6f72c9f-2f2b-4c1c-bb38-c2076cc96e1a' before making global git config changes
+2026-10-20T13:43:16.0652596Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-20T13:43:16.0656739Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/mimir/mimir
+2026-10-20T13:43:16.0714781Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-20T13:43:16.0785036Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-20T13:43:16.1164611Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-20T13:43:16.1215639Z http.https://github.com/.extraheader
+2026-10-20T13:43:16.1234297Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-20T13:43:16.1274322Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-20T13:43:16.1558338Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-20T13:43:16.1599653Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-20T13:43:16.2040529Z Cleaning up orphan processes
+2026-10-20T13:43:16.2339085Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/download-artifact@v4, actions/setup-node@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

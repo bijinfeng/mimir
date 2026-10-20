@@ -1,0 +1,175 @@
+{
+  "at": "2026-10-20T14:25:34.8131659Z",
+  "processes": [
+    {
+      "handle": 459056,
+      "id": 6148,
+      "name": "mimir-0.1.8-win-x64",
+      "title": "mimir Setup "
+    }
+  ],
+  "windows": [
+    {
+      "handle": 459056,
+      "processId": 6148,
+      "executablePath": "C:\\Users\\runneradmin\\AppData\\Local\\@mimirdesktop-updater\\pending\\mimir-0.1.8-win-x64.exe",
+      "title": "mimir Setup ",
+      "className": "#32770",
+      "visible": true,
+      "controls": [
+        {
+          "handle": 393342,
+          "text": "< &Back",
+          "className": "Button",
+          "controlId": 3,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 590168,
+          "text": "&Finish",
+          "className": "Button",
+          "controlId": 1,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 983062,
+          "text": "Cancel",
+          "className": "Button",
+          "controlId": 2,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 393566,
+          "text": "",
+          "className": "Static",
+          "controlId": 1018,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 262496,
+          "text": "",
+          "className": "Static",
+          "controlId": 1044,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 262602,
+          "text": "",
+          "className": "Static",
+          "controlId": 1035,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 458782,
+          "text": "",
+          "className": "Static",
+          "controlId": 1036,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328168,
+          "text": "",
+          "className": "Static",
+          "controlId": 1045,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 327772,
+          "text": "mimir 0.1.8 ",
+          "className": "Static",
+          "controlId": 1256,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 262478,
+          "text": "mimir 0.1.8",
+          "className": "Static",
+          "controlId": 1028,
+          "visible": false,
+          "enabled": false
+        },
+        {
+          "handle": 393592,
+          "text": "",
+          "className": "Static",
+          "controlId": 1034,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393344,
+          "text": "Installation Complete",
+          "className": "Static",
+          "controlId": 1037,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 459152,
+          "text": "Setup was completed successfully.",
+          "className": "Static",
+          "controlId": 1038,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 459252,
+          "text": "",
+          "className": "Static",
+          "controlId": 1039,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 459154,
+          "text": "",
+          "className": "#32770",
+          "controlId": 0,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 524808,
+          "text": "",
+          "className": "Static",
+          "controlId": 1200,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393738,
+          "text": "Completing mimir Setup",
+          "className": "Static",
+          "controlId": 1201,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328038,
+          "text": "mimir has been installed on your computer.\r\n\r\nClick Finish to close Setup.",
+          "className": "Static",
+          "controlId": 1202,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 590284,
+          "text": "&Run mimir",
+          "className": "Button",
+          "controlId": 1203,
+          "visible": true,
+          "enabled": true
+        }
+      ]
+    }
+  ]
+}
