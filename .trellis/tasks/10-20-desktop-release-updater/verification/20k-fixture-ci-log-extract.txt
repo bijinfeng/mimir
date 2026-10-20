@@ -1,0 +1,30 @@
+/tmp/mimir-ci-016-failed.log
+verify	Run pnpm check	2026-10-20T11:43:56.6318231Z    ^[[32m✓^[[39m real current-canvas host sort has one publish/history entry and a repeated sort has none^[[32m 62^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:43:56.6320496Z ^[[31m   ^[[31m×^[[31m keeps the existing 20000 stored-cell budget with inline strings outside the small operation^[[39m^[[33m 5147^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:43:56.6322253Z    ^[[32m✓^[[39m move partitions cf dependencies reached through a relative sqref offset^[[32m 25^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:43:56.6323775Z    ^[[32m✓^[[39m move partitions dv dependencies reached through a relative sqref offset^[[32m 20^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:48:14.0923376Z
+verify	Run pnpm check	2026-10-20T11:48:14.0925042Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/test/xlsx-range-disjoint.test.ts^[[2m > ^[[22mkeeps the existing 20000 stored-cell budget with inline strings outside the small operation
+verify	Run pnpm check	2026-10-20T11:48:14.0931865Z ^[[31m^[[1mError^[[22m: Test timed out in 5000ms.
+verify	Run pnpm check	2026-10-20T11:48:14.0933524Z If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".^[[39m
+verify	Run pnpm check	2026-10-20T11:48:14.0925042Z ^[[41m^[[1m FAIL ^[[22m^[[49m src/test/xlsx-range-disjoint.test.ts^[[2m > ^[[22mkeeps the existing 20000 stored-cell budget with inline strings outside the small operation
+verify	Run pnpm check	2026-10-20T11:48:14.0931865Z ^[[31m^[[1mError^[[22m: Test timed out in 5000ms.
+verify	Run pnpm check	2026-10-20T11:48:14.0933524Z If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".^[[39m
+verify	Run pnpm check	2026-10-20T11:48:14.0935118Z ^[[36m ^[[2m❯^[[22m src/test/xlsx-range-disjoint.test.ts:^[[2m412:1^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:48:14.1083332Z
+verify	Run pnpm check	2026-10-20T11:48:14.1109514Z     ^[[90m412|^[[39m it('keeps the existing 20000 stored-cell budget with inline strings ou…
+verify	Run pnpm check	2026-10-20T11:48:14.1111095Z ^[[2m Test Files ^[[22m ^[[1m^[[31m1 failed^[[39m^[[22m^[[2m | ^[[22m^[[1m^[[32m121 passed^[[39m^[[22m^[[90m (122)^[[39m
+verify	Run pnpm check	2026-10-20T11:48:14.1138874Z     ^[[90m   |^[[39m ^[[31m^^[[39m
+verify	Run pnpm check	2026-10-20T11:48:14.1262981Z
+verify	Run pnpm check	2026-10-20T11:48:14.1269412Z ##[error]Error: Test timed out in 5000ms.
+verify	Run pnpm check	If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+verify	Run pnpm check	 ❯ src/test/xlsx-range-disjoint.test.ts:412:1
+.trellis/tasks/10-20-desktop-release-updater/verification/github-fixed-baseline-ci.log
+verify	Run pnpm check	2026-10-20T11:22:16.7864103Z  ^[[32m✓^[[39m src/test/xlsx-range-disjoint.test.ts ^[[2m(^[[22m^[[2m107 tests^[[22m^[[2m)^[[22m^[[33m 5940^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:22:16.7865474Z    ^[[33m^[[2m✓^[[22m^[[39m keeps the existing 20000 stored-cell budget with inline strings outside the small operation^[[33m 3606^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:22:19.5320003Z  ^[[32m✓^[[39m src/test/pptx-agent-host.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[33m 1246^[[2mms^[[22m^[[39m
+verify	Run pnpm check	2026-10-20T11:22:21.5300395Z ^[[90mstderr^[[2m | src/test/pdf-agent-route.test.ts^[[2m > ^[[22m^[[2mPDF Agent authenticated text host route^[[2m > ^[[22m^[[2mauthenticates image working bytes and refuses stale targets without storing them
+verify	Run pnpm --filter @mimir/server test	2026-10-20T11:26:43.6541799Z  ^[[32m✓^[[39m src/test/xlsx-range-disjoint.test.ts ^[[2m(^[[22m^[[2m107 tests^[[22m^[[2m)^[[22m^[[33m 5904^[[2mms^[[22m^[[39m
+verify	Run pnpm --filter @mimir/server test	2026-10-20T11:26:43.6543512Z    ^[[33m^[[2m✓^[[22m^[[39m keeps the existing 20000 stored-cell budget with inline strings outside the small operation^[[33m 3628^[[2mms^[[22m^[[39m
+verify	Run pnpm --filter @mimir/server test	2026-10-20T11:26:45.1513564Z ^[[90mstderr^[[2m | src/test/pdf-drawing-geometry.test.ts^[[2m > ^[[22m^[[2meditable PDF drawing geometry^[[2m > ^[[22m^[[2mredraws exact directional paths after native rotation, offset crop, A5 and target 0
+verify	Run pnpm --filter @mimir/server test	2026-10-20T11:26:45.1515437Z ^[[22m^[[39mWarning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.

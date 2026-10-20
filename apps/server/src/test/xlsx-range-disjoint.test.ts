@@ -187,10 +187,15 @@ for (const feature of features)
       /相交|范围|结构|引用|关系|XML|批注|表格|Invalid/,
     )
   })
-async function mutate(bytes: Uint8Array, part: string, edit: (xml: string) => string) {
+async function mutate(
+  bytes: Uint8Array,
+  part: string,
+  edit: (xml: string) => string,
+  compression: 'STORE' | 'DEFLATE' = 'STORE',
+) {
   const zip = await JSZip.loadAsync(bytes)
   zip.file(part, edit(await zip.file(part)!.async('string')))
-  return zip.generateAsync({ type: 'uint8array' })
+  return zip.generateAsync({ type: 'uint8array', compression })
 }
 for (const operation of ['copy', 'move', 'sort'])
   for (const ref of ['', 'J0', 'XFE1', 'J1048577', 'J1 K2', 'A1:Z9:K2'])
@@ -415,8 +420,13 @@ it('keeps the existing 20000 stored-cell budget with inline strings outside the 
     (_rowValue, row) =>
       `<row r="${row + 1}">${Array.from({ length: 20 }, (_columnValue, column) => `<c r="${String.fromCharCode(65 + column)}${row + 1}" t="inlineStr"><is><t>keep</t></is></c>`).join('')}</row>`,
   ).join('')
-  const bytes = await mutate(await fixture('merge', 'ZZ1:AAA2'), path, (xml) =>
-    xml.replace(/<sheetData>[\s\S]*?<\/sheetData>/, `<sheetData>${rows}</sheetData>`),
+  // Compress only the container: retain all 20000 cells without spending the
+  // timeout on deep-comparing a megabyte of uncompressed fixture XML.
+  const bytes = await mutate(
+    await fixture('merge', 'ZZ1:AAA2'),
+    path,
+    (xml) => xml.replace(/<sheetData>[\s\S]*?<\/sheetData>/, `<sheetData>${rows}</sheetData>`),
+    'DEFLATE',
   )
   const result = await apply(bytes, 'sort')
   expect(result.bytes).toEqual(bytes)
