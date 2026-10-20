@@ -3,11 +3,13 @@ import { test } from 'node:test'
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { runInNewContext } from 'node:vm'
 import {
   Cdp,
   CdpTargetClosedError,
   dispatchMouseClick,
   releaseAsset,
+  settleScreenshotPaint,
   sha256,
   until,
   versionPair,
@@ -85,6 +87,97 @@ test('bounded waits require the actual condition and retain the last failure', a
     ),
     (error) => error.cause === failure && error.message.includes('never completes'),
   )
+})
+
+function paintPage() {
+  let sequence = 0
+  const frames = new Map()
+  const timers = new Map()
+  let animations = []
+  const page = {
+    document: { getAnimations: () => animations },
+    requestAnimationFrame: (callback) => {
+      frames.set(++sequence, callback)
+      return sequence
+    },
+    cancelAnimationFrame: (id) => frames.delete(id),
+    setTimeout: (callback, milliseconds) => {
+      assert.ok(milliseconds <= 5000)
+      timers.set(++sequence, callback)
+      return sequence
+    },
+    clearTimeout: (id) => timers.delete(id),
+  }
+  return {
+    page,
+    frames,
+    timers,
+    async frame(next = []) {
+      animations = next
+      const callbacks = [...frames.values()]
+      frames.clear()
+      for (const callback of callbacks) callback()
+      await Promise.resolve()
+      await Promise.resolve()
+    },
+  }
+}
+
+function motion(endTime, playState = 'running', pending = false) {
+  return { effect: { getComputedTiming: () => ({ endTime }) }, playState, pending }
+}
+
+test('screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners', async () => {
+  const observed = paintPage()
+  let settled = false
+  const painting = settleScreenshotPaint({ page: observed.page }).then(() => {
+    settled = true
+  })
+  await observed.frame()
+  assert.equal(settled, false)
+  // The entry animation can start on the frame after the guard entered the DOM.
+  await observed.frame([motion(300, 'idle', true), motion(Infinity)])
+  await observed.frame([motion(300), motion(Infinity)])
+  assert.equal(settled, false)
+  await observed.frame([motion(300, 'finished'), motion(Infinity)])
+  assert.equal(settled, false)
+  await observed.frame([motion(Infinity)])
+  await painting
+  assert.equal(settled, true)
+  assert.equal(observed.frames.size, 0)
+  assert.equal(observed.timers.size, 0)
+})
+
+test('screenshot paint helper runs as an isolated serialized browser expression', async () => {
+  const observed = paintPage()
+  const painting = runInNewContext(`(${settleScreenshotPaint.toString()})()`, observed.page)
+  await observed.frame()
+  await observed.frame()
+  await painting
+  assert.equal(observed.timers.size, 0)
+})
+
+test('screenshot paint timeout and page errors fail capture and clean up their pending waits', async () => {
+  const observed = paintPage()
+  const painting = settleScreenshotPaint({ page: observed.page })
+  const rejection = assert.rejects(painting, /Screenshot paint did not settle/)
+  await observed.frame([motion(300)])
+  for (const callback of observed.timers.values()) callback()
+  await rejection
+  assert.equal(observed.frames.size, 0)
+  assert.equal(observed.timers.size, 0)
+
+  const broken = paintPage()
+  const failure = new Error('renderer is no longer available')
+  broken.page.document.getAnimations = () => {
+    throw failure
+  }
+  const failed = settleScreenshotPaint({ page: broken.page })
+  const failedAssertion = assert.rejects(failed, (error) => error === failure)
+  await broken.frame()
+  await failedAssertion
+  assert.equal(broken.timers.size, 0)
+  await assert.rejects(settleScreenshotPaint({ timeoutMs: 5001 }), /five seconds/)
 })
 
 class Socket extends EventTarget {

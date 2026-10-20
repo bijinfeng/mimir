@@ -19,6 +19,7 @@ import {
   dispatchMouseClick,
   officialRepository,
   releaseAsset,
+  settleScreenshotPaint,
   sha256,
   until,
   versionPair,
@@ -126,6 +127,7 @@ async function state(session, updater = false) {
   )
 }
 async function screenshot(session, name) {
+  await session.evaluate(`(${settleScreenshotPaint.toString()})()`)
   const image = await session.call('Page.captureScreenshot', { format: 'png' })
   await writeFile(join(evidence, `${name}.png`), Buffer.from(image.data, 'base64'))
   await writeFile(

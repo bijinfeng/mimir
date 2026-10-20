@@ -58,6 +58,39 @@ export async function until(label, read, { timeout = 120_000, interval = 500 } =
   throw new Error(`Timed out: ${label}`, { cause: lastError })
 }
 
+/** Serialized into the observed renderer by CDP; never changes page state or animations. */
+export async function settleScreenshotPaint({ page = globalThis, timeoutMs = 5000 } = {}) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 5000)
+    throw new Error('Screenshot paint deadline must be within five seconds')
+  let frame
+  let timer
+  const deadline = new Promise((resolve, reject) => {
+    timer = page.setTimeout(() => reject(new Error('Screenshot paint did not settle')), timeoutMs)
+  })
+  const painting = (async () => {
+    let stableFrames = 0
+    while (stableFrames < 2) {
+      await new Promise((resolve) => {
+        frame = page.requestAnimationFrame(resolve)
+      })
+      const finiteMotion = page.document
+        .getAnimations()
+        .some(
+          (animation) =>
+            Number.isFinite(animation.effect?.getComputedTiming().endTime) &&
+            (animation.pending || animation.playState === 'running'),
+        )
+      stableFrames = finiteMotion ? 0 : stableFrames + 1
+    }
+  })()
+  try {
+    await Promise.race([painting, deadline])
+  } finally {
+    page.clearTimeout(timer)
+    if (frame !== undefined) page.cancelAnimationFrame(frame)
+  }
+}
+
 export class CdpTargetClosedError extends Error {
   constructor() {
     super('CDP target closed')
