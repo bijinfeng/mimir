@@ -45,6 +45,14 @@ src/
 - **改了这三条契约**：`src/test/plugins.test.ts` 的「构建配置」那组断言会拦下来。
   它们守的是「部署能不能起来」，不是「配置好不好看」
 
+## 数据库连接生命周期
+
+`db/client.ts` 的模块引用须持有工厂实际选用的 SQLite/PostgreSQL client，包括新建的 production 连接和复用的 development 连接。全局 HMR 缓存只服务 development，不能用缓存是否存在判断 production 是否需要关闭，也不能为了关闭而把 production 连接写入该缓存。
+
+`closeDb()` 关闭实际 client，保留 PostgreSQL 的 `end({ timeout: 1 })`；成功后才清模块引用，仅在全局缓存仍指向同一对象时清缓存。失败必须向宿主传播，重复成功关闭保持幂等。HTTP close callback 返回不能替代数据库实际关闭；关闭后应用不得继续使用原 `db`，重新启动走新的宿主生命周期。
+
+回归在隔离 production/development 子进程运行真实驱动：SQLite 验证 `open === false`、已关闭句柄拒绝查询、原文件数据可重新读取；PostgreSQL 通过第二条真实连接观察 backend PID 消失并验证原连接拒绝查询。不得只 spy `close/end` 或只检查开发缓存为空。参见 `src/test/db-client-close.test.ts`。
+
 ---
 
 ## 加一个插件实现

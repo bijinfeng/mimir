@@ -1,0 +1,19 @@
+已挂载前端静态资源
+mimir server 监听 http://localhost:49168
+  数据目录 /var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-jx5Nwr/data
+  数据库 sqlite（/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-host-close-native-jx5Nwr/data/mimir.db）
+  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听
+<-- GET /healthz
+--> GET /healthz 200 0ms
+PRODUCTION_SQLITE_OPEN_BEFORE_CLOSE true
+NATIVE_HOST_READY Electron 44.7.0 Node 24.21.0
+<-- GET /healthz
+--> GET /healthz 200 0ms
+NATIVE_PRECONNECT_REQUESTED
+NATIVE_CLOSE_START
+HTTP_CLOSE_CALL 1792501572830
+HTTP_CONNECTIONS 1
+HTTP_CLOSE_CALLBACK 1792501572830 undefined
+PRODUCTION_SQLITE_OPEN_AFTER_CLOSE false
+CLOSED_SQLITE_QUERY_REJECTED true
+NATIVE_HOST_CLOSE_RESOLVED

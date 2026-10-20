@@ -35,9 +35,15 @@ const globalForDb = globalThis as unknown as {
   __mimirSqlite?: SqliteClient
 }
 
+// The global cache exists only for dev HMR. Shutdown must also own the actual
+// production connection, which is deliberately not stored in that cache.
+let pgClient: PgClient | undefined
+let sqliteClient: SqliteClient | undefined
+
 function createPostgres(): PostgresJsDatabase<typeof pgSchema> {
   // 单用户自托管，池子不需要大
   const sql = globalForDb.__mimirSql ?? postgres(env.databaseUrl, { max: 10, onnotice: () => {} })
+  pgClient = sql
 
   if (env.nodeEnv !== 'production') {
     globalForDb.__mimirSql = sql
@@ -51,6 +57,7 @@ function createSqlite(): PostgresJsDatabase<typeof pgSchema> {
     globalForDb.__mimirSqlite ??
     // better-sqlite3 不自动创建父目录；env.ts 已经把 DATA_DIR 建好了
     new Database(env.databaseFile)
+  sqliteClient = sqlite
 
   if (env.nodeEnv !== 'production') {
     globalForDb.__mimirSqlite = sqlite
@@ -102,10 +109,16 @@ export const db = dbDriver === 'postgres' ? createPostgres() : createSqlite()
  */
 export async function closeDb(): Promise<void> {
   if (dbDriver === 'postgres') {
-    await globalForDb.__mimirSql?.end({ timeout: 1 })
-    globalForDb.__mimirSql = undefined
+    const sql = pgClient
+    if (!sql) return
+    await sql.end({ timeout: 1 })
+    if (globalForDb.__mimirSql === sql) globalForDb.__mimirSql = undefined
+    pgClient = undefined
     return
   }
-  globalForDb.__mimirSqlite?.close()
-  globalForDb.__mimirSqlite = undefined
+  const sqlite = sqliteClient
+  if (!sqlite) return
+  sqlite.close()
+  if (globalForDb.__mimirSqlite === sqlite) globalForDb.__mimirSqlite = undefined
+  sqliteClient = undefined
 }

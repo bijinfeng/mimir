@@ -1,0 +1,85 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+
+ ❯ src/test/db-client-close.test.ts (2 tests | 1 failed) 942ms
+   × closes the actual production database connection 513ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/test/db-client-close.test.ts > closes the actual production database connection
+Error: Command failed: /Users/admin/.nvm/versions/node/v22.23.1/bin/node --import tsx --input-type=module --eval 
+          import assert from 'node:assert/strict'
+          import Database from 'better-sqlite3'
+          import postgres from 'postgres'
+          const { db, closeDb } = await import("file:///Users/admin/Desktop/mimir/apps/server/src/db/client.ts")
+          const client = db.$client
+          if (false) {
+            const observer = postgres(process.env.DATABASE_URL, { max: 1 })
+            try {
+              const [{ pid }] = await client`select pg_backend_pid() as pid`
+              await client`create temporary table close_probe (value text)`
+              await client`insert into close_probe values ('persisted')`
+              assert.equal((await client`select value from close_probe`)[0].value, 'persisted')
+              assert.equal((await observer`select pid from pg_stat_activity where pid = ${pid}`).length, 1)
+              await closeDb()
+              assert.equal((await observer`select pid from pg_stat_activity where pid = ${pid}`).length, 0)
+              await assert.rejects(client`select 1`, { code: 'CONNECTION_ENDED' })
+              await Promise.all([closeDb(), closeDb()])
+              console.log('POSTGRES_CONNECTION_CLOSED_AND_IDEMPOTENT')
+            } finally {
+              await observer.end({ timeout: 1 })
+              await client.end({ timeout: 1 })
+            }
+          } else {
+            assert.equal(client.open, true)
+            client.exec('create table close_probe (value text)')
+            client.prepare('insert into close_probe values (?)').run('persisted')
+            assert.equal(client.prepare('select value from close_probe').get().value, 'persisted')
+            try {
+              await closeDb()
+              assert.equal(client.open, false)
+              assert.throws(() => client.prepare('select 1'), /not open/)
+              await Promise.all([closeDb(), closeDb()])
+              const reopened = new Database(process.env.DATABASE_URL.slice('file:'.length))
+              try {
+                assert.equal(reopened.prepare('select value from close_probe').get().value, 'persisted')
+              } finally {
+                reopened.close()
+              }
+              console.log('SQLITE_CONNECTION_CLOSED_AND_IDEMPOTENT')
+            } finally {
+              if (client.open) client.close()
+            }
+          }
+        
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+true !== false
+
+    at file:///Users/admin/Desktop/mimir/apps/server/[eval1]:31:22 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  21:01:35
+   Duration  1.59s (tests 97%, transform 2%, import 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in /Users/admin/Desktop/mimir/apps/server
+

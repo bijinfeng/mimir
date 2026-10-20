@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-20T13:07:35.565160+00:00",
+  "electron": "44.7.0",
+  "node": "24.21.0",
+  "nativeExitCode": 0,
+  "productionSQLiteOpenBeforeClose": true,
+  "productionSQLiteOpenAfterClose": false,
+  "closedHandleRealQueryRejected": true,
+  "httpCloseCallbackCompleted": true,
+  "sourceAndBuildSha256": {
+    "apps/server/src/db/client.ts": "ee3cb37d89a798a3c26da781d646b9748efac3367881c373b14c33db05c36708",
+    "apps/server/dist/db/client.js": "a1c336f3d939671d2a6d839d9628d9e168febc7f1ff78f0e51a4a322b40a95e1",
+    "apps/desktop/server-deploy/dist/db/client.js": "a1c336f3d939671d2a6d839d9628d9e168febc7f1ff78f0e51a4a322b40a95e1",
+    "apps/desktop/src/main/native-updater.ts": "addd39c867eeab65bf9c6fa50c5a76b34b90ed4e1a47a51b6bf834866fa98258",
+    "apps/desktop/src/main/host-shutdown.ts": "8400f552d82ee8a658256b6e93ff540460f917ba207262c511e89610f582ea24"
+  },
+  "limitations": [
+    "Native preparation probe only; no official package upgrade or installation is asserted."
+  ]
+}

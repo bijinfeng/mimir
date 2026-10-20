@@ -1,0 +1,53 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+
+{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '00000',
+  message: 'drop cascades to 26 other objects',
+  detail: 'drop cascades to extension pg_trgm\n' +
+    'drop cascades to extension vector\n' +
+    'drop cascades to table document_tags\n' +
+    'drop cascades to table documents\n' +
+    'drop cascades to table tags\n' +
+    'drop cascades to table account\n' +
+    'drop cascades to table session\n' +
+    'drop cascades to table "user"\n' +
+    'drop cascades to table verification\n' +
+    'drop cascades to table conversation_refs\n' +
+    'drop cascades to table conversations\n' +
+    'drop cascades to table document_links\n' +
+    'drop cascades to table messages\n' +
+    'drop cascades to table settings\n' +
+    'drop cascades to table usage_log\n' +
+    'drop cascades to table folders\n' +
+    'drop cascades to table chunk_embeddings\n' +
+    'drop cascades to table chunks\n' +
+    'drop cascades to table feeds\n' +
+    'drop cascades to table docx_agent_runs\n' +
+    'drop cascades to table miniapp_devices\n' +
+    'drop cascades to table miniapp_operations\n' +
+    'drop cascades to table attachment_garbage\n' +
+    'drop cascades to table attachment_leases\n' +
+    'drop cascades to table conversation_attachments\n' +
+    'drop cascades to table message_attachments',
+  file: 'dependency.c',
+  line: '1227',
+  routine: 'reportDependentObjects'
+}
+{
+  severity_local: 'NOTICE',
+  severity: 'NOTICE',
+  code: '00000',
+  message: 'drop cascades to table drizzle.__drizzle_migrations',
+  file: 'dependency.c',
+  line: '1233',
+  routine: 'reportDependentObjects'
+}
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  21:03:54
+   Duration  1.86s (tests 98%, worker 1%, import 1%)
+
