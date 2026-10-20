@@ -1,0 +1,347 @@
+{
+  "at": "2026-10-20T13:04:38.5487775Z",
+  "windows": [
+    {
+      "handle": 524694,
+      "processId": 9716,
+      "executablePath": "C:\\Users\\runneradmin\\AppData\\Local\\@mimirdesktop-updater\\pending\\mimir-0.1.6-win-x64.exe",
+      "title": "mimir Setup ",
+      "className": "#32770",
+      "visible": true,
+      "controls": [
+        {
+          "handle": 262672,
+          "text": "",
+          "className": "Button",
+          "controlId": 3,
+          "visible": false,
+          "enabled": false
+        },
+        {
+          "handle": 131626,
+          "text": "&Next >",
+          "className": "Button",
+          "controlId": 1,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393738,
+          "text": "Cancel",
+          "className": "Button",
+          "controlId": 2,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393734,
+          "text": "",
+          "className": "Static",
+          "controlId": 1018,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 197144,
+          "text": "",
+          "className": "Static",
+          "controlId": 1044,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 459070,
+          "text": "",
+          "className": "Static",
+          "controlId": 1035,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 590034,
+          "text": "",
+          "className": "Static",
+          "controlId": 1036,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 524648,
+          "text": "",
+          "className": "Static",
+          "controlId": 1045,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 459134,
+          "text": "mimir 0.1.6 ",
+          "className": "Static",
+          "controlId": 1256,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 197138,
+          "text": "mimir 0.1.6",
+          "className": "Static",
+          "controlId": 1028,
+          "visible": true,
+          "enabled": false
+        },
+        {
+          "handle": 262668,
+          "text": "",
+          "className": "Static",
+          "controlId": 1034,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328146,
+          "text": "Choose Installation Options",
+          "className": "Static",
+          "controlId": 1037,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 459128,
+          "text": "Who should this application be installed for?",
+          "className": "Static",
+          "controlId": 1038,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 327834,
+          "text": "",
+          "className": "Static",
+          "controlId": 1039,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 393334,
+          "text": "",
+          "className": "#32770",
+          "controlId": 0,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 197146,
+          "text": "Please select whether you wish to make this software available to all users or just yourself",
+          "className": "Static",
+          "controlId": 1200,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 197158,
+          "text": "Anyone who uses this computer (&all users)",
+          "className": "Button",
+          "controlId": 1201,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 262678,
+          "text": "Only for &me (runneradmin)",
+          "className": "Button",
+          "controlId": 1202,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 328154,
+          "text": "There is already a per-user installation.(D:\\a\\_temp\\mimir-update-e2e\\installation)\r\nWill reinstall/upgrade.",
+          "className": "Static",
+          "controlId": 1203,
+          "visible": true,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "handle": 65662,
+      "processId": 5740,
+      "executablePath": "C:\\Windows\\System32\\SystemPropertiesPerformance.exe",
+      "title": "System Properties",
+      "className": "#32770",
+      "visible": true,
+      "controls": [
+        {
+          "handle": 65664,
+          "text": "OK",
+          "className": "Button",
+          "controlId": 2,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 65666,
+          "text": "",
+          "className": "Static",
+          "controlId": 20,
+          "visible": true,
+          "enabled": true
+        },
+        {
+          "handle": 65680,
+          "text": "Windows created a temporary paging file on your computer because of a problem that occurred with your paging file configuration when you started your computer.  The total paging file size for all disk drives may be somewhat larger than the size you specified.",
+          "className": "Static",
+          "controlId": 65535,
+          "visible": true,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "handle": 131138,
+      "processId": 5740,
+      "executablePath": "C:\\Windows\\System32\\SystemPropertiesPerformance.exe",
+      "title": "Performance Options",
+      "className": "#32770",
+      "visible": false,
+      "controls": [
+        {
+          "handle": 196702,
+          "text": "OK",
+          "className": "Button",
+          "controlId": 1,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131140,
+          "text": "Cancel",
+          "className": "Button",
+          "controlId": 2,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 196678,
+          "text": "&Apply",
+          "className": "Button",
+          "controlId": 12321,
+          "visible": false,
+          "enabled": false
+        },
+        {
+          "handle": 131164,
+          "text": "Help",
+          "className": "Button",
+          "controlId": 9,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131146,
+          "text": "",
+          "className": "SysTabControl32",
+          "controlId": 12320,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131106,
+          "text": "Advanced",
+          "className": "#32770",
+          "controlId": 0,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131104,
+          "text": "Processor scheduling",
+          "className": "Button",
+          "controlId": 203,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131102,
+          "text": "Choose how to allocate processor resources.",
+          "className": "Static",
+          "controlId": 208,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131100,
+          "text": "Adjust for best performance of:",
+          "className": "Static",
+          "controlId": 210,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131098,
+          "text": "&Programs",
+          "className": "Button",
+          "controlId": 204,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131096,
+          "text": "Background &services",
+          "className": "Button",
+          "controlId": 205,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131094,
+          "text": "Virtual memory",
+          "className": "Button",
+          "controlId": 206,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131092,
+          "text": "A paging file is an area on the hard disk that Windows uses as if it were RAM.",
+          "className": "Static",
+          "controlId": 209,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131090,
+          "text": "Total paging file size for all drives:",
+          "className": "Static",
+          "controlId": 207,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 131088,
+          "text": "2944 MB",
+          "className": "Static",
+          "controlId": 202,
+          "visible": false,
+          "enabled": true
+        },
+        {
+          "handle": 65660,
+          "text": "&Change...",
+          "className": "Button",
+          "controlId": 201,
+          "visible": false,
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "processes": [
+    {
+      "id": 9716,
+      "title": "mimir Setup ",
+      "handle": 524694,
+      "name": "mimir-0.1.6-win-x64"
+    }
+  ]
+}

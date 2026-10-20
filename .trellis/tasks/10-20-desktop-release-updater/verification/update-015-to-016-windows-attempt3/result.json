@@ -1,0 +1,258 @@
+{
+  "base": "0.1.5",
+  "target": "0.1.6",
+  "platform": "win32",
+  "checks": [
+    {
+      "check": "official download verified; completion did not open a details window",
+      "at": "2026-10-20T13:04:09.676Z",
+      "downloaded": {
+        "status": "downloaded",
+        "currentVersion": "0.1.5",
+        "releaseUrl": "https://github.com/bijinfeng/mimir/releases/tag/v0.1.6",
+        "platform": "win32",
+        "arch": "x64",
+        "capability": "automatic",
+        "autoDownload": true,
+        "version": "0.1.6",
+        "releaseNotes": "桌面客户端安装包与 fnOS x86_64 原生 FPK。macOS 默认是需手动更新的测试包；fnOS 通过系统管理安装和升级。各平台限制和更新说明见仓库 README。\n\nFull Changelog: v0.1.5...v0.1.6",
+        "checkedAt": "2026-10-20T13:04:03.568Z"
+      }
+    },
+    {
+      "check": "ordinary UI close after download did not install",
+      "at": "2026-10-20T13:04:10.622Z"
+    },
+    {
+      "check": "pending real HTTP save triggered guard; continue editing canceled installation",
+      "at": "2026-10-20T13:04:32.895Z"
+    },
+    {
+      "check": "updater relaunched new processes after the old application exited",
+      "at": "2026-10-20T13:08:33.610Z",
+      "previousProcesses": [
+        1536,
+        2772,
+        4524,
+        4548,
+        5924
+      ],
+      "relaunchedProcesses": [
+        1244,
+        4060,
+        6084,
+        9472
+      ]
+    }
+  ],
+  "limitations": [
+    "Headless/session notification delivery and focus are not asserted by CDP.",
+    "Screenshot capture explicitly brings its target to the front; these previews are not evidence of automatic focus behavior.",
+    "macOS ad-hoc builds remain manual; this test never claims macOS automatic installation."
+  ],
+  "screenshots": [
+    {
+      "name": "download-ready",
+      "targetId": "31FB04C6C6B2D1B716DEEB5B2EE0B3D5",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T13:04:09.599Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T13:04:09.607Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T13:04:09.608Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T13:04:09.625Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T13:04:09.626Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T13:04:09.668Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T13:04:09.675Z"
+        }
+      ]
+    },
+    {
+      "name": "save-guard",
+      "targetId": "76DB2AE0A232D7B4E52C2F3B12E46CC8",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T13:04:32.486Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T13:04:32.488Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T13:04:32.490Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": [
+              {
+                "playState": "running",
+                "pending": true,
+                "endTime": 0.01
+              }
+            ]
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T13:04:32.564Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T13:04:32.565Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T13:04:32.613Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T13:04:32.637Z"
+        }
+      ]
+    },
+    {
+      "name": "retry-after-save",
+      "targetId": "CBEC31EC98AA69AE4B13B491945887DD",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T13:04:32.963Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T13:04:32.969Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T13:04:32.975Z",
+          "observed": {
+            "visibilityState": "hidden",
+            "hidden": true,
+            "hasFocus": true,
+            "finiteAnimations": [
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              },
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              },
+              {
+                "playState": "running",
+                "pending": false,
+                "endTime": 0.01
+              }
+            ]
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T13:04:33.078Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T13:04:33.079Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T13:04:33.121Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T13:04:33.128Z"
+        }
+      ]
+    },
+    {
+      "name": "save-and-restart-awaiting-http",
+      "targetId": "76DB2AE0A232D7B4E52C2F3B12E46CC8",
+      "explicitForegroundPreview": true,
+      "phases": [
+        {
+          "stage": "bring-to-front",
+          "at": "2026-10-20T13:04:35.291Z"
+        },
+        {
+          "stage": "foreground-state",
+          "at": "2026-10-20T13:04:35.293Z"
+        },
+        {
+          "stage": "paint-wait",
+          "at": "2026-10-20T13:04:35.295Z",
+          "observed": {
+            "visibilityState": "visible",
+            "hidden": false,
+            "hasFocus": true,
+            "finiteAnimations": []
+          }
+        },
+        {
+          "stage": "paint-ready",
+          "at": "2026-10-20T13:04:35.312Z"
+        },
+        {
+          "stage": "capture-png",
+          "at": "2026-10-20T13:04:35.313Z"
+        },
+        {
+          "stage": "capture-html",
+          "at": "2026-10-20T13:04:35.366Z"
+        },
+        {
+          "stage": "complete",
+          "at": "2026-10-20T13:04:35.391Z"
+        }
+      ]
+    }
+  ],
+  "processExits": [
+    {
+      "name": "baseline-first",
+      "pid": 8424,
+      "code": 0,
+      "signal": null
+    },
+    {
+      "name": "baseline-second",
+      "pid": 1536,
+      "code": 0,
+      "signal": null
+    }
+  ],
+  "wizardExitCode": 0,
+  "success": false,
+  "error": "Error: Timed out: CDP workspace renderer\n    at until (file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke-lib.mjs:58:9)\n    at async connect (file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke.mjs:111:16)\n    at async launch (file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke.mjs:277:21)\n    at async file:///D:/a/mimir/mimir/apps/desktop/scripts/update-smoke.mjs:543:15"
+}
