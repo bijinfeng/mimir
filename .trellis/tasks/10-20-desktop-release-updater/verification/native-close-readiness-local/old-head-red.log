@@ -1,0 +1,8 @@
+Unchanged source commit: 22bb6476ad7a26a5a3b4d0db2d043af007e2dda6
+Old normalClose resolved: enumerations=1, requests=0
+AssertionError [ERR_ASSERTION]: successful close requires one observed close request
+
+0 !== 1
+
+RED confirmed: successful resolution without a native close target/request violates required-close contract.
+This causal empty-window reproduction does not establish the unrecorded first enumeration of the historical runner.

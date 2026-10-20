@@ -55,7 +55,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb openbox wmctrl libfuse2t64
+          sudo apt-get install -y xvfb openbox wmctrl x11-utils libfuse2t64
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Real Linux AppImage upgrade from public GitHub Releases
         if: runner.os == 'Linux'

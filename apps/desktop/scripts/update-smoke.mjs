@@ -16,6 +16,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   Cdp,
+  closeNativeWorkspace,
   createDebugEndpointAllocator,
   dispatchMouseClick,
   officialRepository,
@@ -60,6 +61,7 @@ const result = {
   ],
 }
 const sessions = new Set()
+const requestedClosePids = new Set()
 let wizard
 let executable
 let active
@@ -204,20 +206,104 @@ async function verifyWindowsCachedInstaller(asset) {
   )
   return cached
 }
-async function normalClose() {
-  if (process.platform === 'win32') {
-    await exec(
-      'pwsh',
-      ['-NoProfile', '-File', join(scriptRoot, 'update-smoke-native.ps1'), '-Action', 'close'],
-      { env },
-    )
-  } else {
-    const { stdout } = await exec('wmctrl', ['-lp'])
-    await writeFile(join(evidence, 'native-windows.txt'), stdout)
-    for (const row of stdout.split('\n').filter((line) => /mimir/i.test(line))) {
-      await exec('wmctrl', ['-i', '-c', row.split(/\s+/)[0]])
-    }
+async function inspectLinuxWindow(window) {
+  const [{ stdout: info }, { stdout: properties }] = await Promise.all([
+    exec('xwininfo', ['-id', window.id], { timeout: 10_000 }),
+    exec('xprop', ['-id', window.id, '_NET_WM_PID', 'WM_PROTOCOLS'], { timeout: 10_000 }),
+  ])
+  return {
+    ...window,
+    info,
+    properties,
+    mapped: /Map State:\s+IsViewable/.test(info),
+    closable:
+      /\bWM_DELETE_WINDOW\b/.test(properties) &&
+      Number(properties.match(/_NET_WM_PID\(CARDINAL\)\s*=\s*(\d+)/)?.[1]) === window.pid,
   }
+}
+async function normalClose({ phase, expectedPids, required = true }) {
+  const events = []
+  const expected = new Set(expectedPids)
+  await closeNativeWorkspace({
+    expectedPids,
+    required,
+    waitForExit: required ? noProcesses : undefined,
+    writeEvent: async (event) => {
+      events.push(event)
+      await writeFile(join(evidence, `native-close-${phase}.json`), JSON.stringify(events, null, 2))
+      console.log(
+        `NATIVE_CLOSE ${phase}: ${event.stage}${event.target ? ` pid=${event.target.pid} window=${event.target.id}` : ''}`,
+      )
+    },
+    readWindows: async () => {
+      if (process.platform === 'win32') {
+        const { stdout } = await exec(
+          'pwsh',
+          [
+            '-NoProfile',
+            '-File',
+            join(scriptRoot, 'update-smoke-native.ps1'),
+            '-Action',
+            'windows',
+          ],
+          { env, timeout: 10_000 },
+        )
+        const windows = JSON.parse(stdout)
+        for (const window of windows) window.alreadyRequested = requestedClosePids.has(window.pid)
+        return windows
+      }
+      const { stdout } = await exec('wmctrl', ['-lp'], { timeout: 10_000 })
+      const windows = []
+      for (const row of stdout.trim().split('\n')) {
+        const match = row.match(/^(0x[\da-f]+)\s+(-?\d+)\s+(\d+)\s+(\S+)\s*(.*)$/i)
+        if (!match) continue
+        let window = {
+          id: match[1],
+          pid: Number(match[3]),
+          title: match[5],
+          mapped: false,
+          closable: false,
+        }
+        if (expected.has(window.pid)) {
+          window = await inspectLinuxWindow(window)
+        }
+        window.alreadyRequested = requestedClosePids.has(window.pid)
+        windows.push(window)
+      }
+      return windows
+    },
+    requestClose: async (closeTarget) => {
+      // A veto, rejected request or uncertain transport outcome must never trigger a cleanup retry.
+      requestedClosePids.add(closeTarget.pid)
+      if (process.platform === 'win32') {
+        const { stdout } = await exec(
+          'pwsh',
+          [
+            '-NoProfile',
+            '-File',
+            join(scriptRoot, 'update-smoke-native.ps1'),
+            '-Action',
+            'close',
+            '-TargetProcessId',
+            String(closeTarget.pid),
+            '-TargetWindowHandle',
+            closeTarget.id,
+          ],
+          { env, timeout: 10_000 },
+        )
+        return JSON.parse(stdout)
+      }
+      const current = await inspectLinuxWindow(closeTarget)
+      assert.ok(
+        current.mapped && current.closable,
+        'Observed native close target changed or is not ready',
+      )
+      const { stdout, stderr } = await exec('wmctrl', ['-i', '-c', closeTarget.id], {
+        timeout: 10_000,
+      })
+      return { accepted: true, method: 'wmctrl -i -c', exitCode: 0, stdout, stderr }
+    },
+  })
 }
 async function processIds() {
   if (process.platform === 'win32') {
@@ -545,8 +631,7 @@ try {
     previousProcesses: [...previousProcesses],
     relaunchedProcesses,
   })
-  await normalClose()
-  await noProcesses()
+  await normalClose({ phase: 'post-install', expectedPids: relaunchedProcesses })
   workspace = await launch('upgraded')
   const upgraded = await state(workspace)
   assert.equal(upgraded.currentVersion, target)
@@ -583,6 +668,13 @@ try {
   for (const session of sessions) session.close()
   await writeFile(join(evidence, 'result.json'), JSON.stringify(result, null, 2))
   // Failure cleanup remains an ordinary window-close request. Do not force a save-vetoed process.
-  await normalClose().catch(() => {})
+  await processIds()
+    .then((expectedPids) => normalClose({ phase: 'cleanup', expectedPids, required: false }))
+    .catch(async (error) => {
+      await writeFile(
+        join(evidence, 'native-close-cleanup-error.json'),
+        JSON.stringify({ at: new Date().toISOString(), error: String(error) }, null, 2),
+      )
+    })
   if (wizard && wizard.exitCode === null) wizard.kill()
 }

@@ -9,6 +9,7 @@ import { runInNewContext } from 'node:vm'
 import {
   Cdp,
   CdpTargetClosedError,
+  closeNativeWorkspace,
   createDebugEndpointAllocator,
   dispatchMouseClick,
   previewScreenshot,
@@ -18,6 +19,119 @@ import {
   until,
   versionPair,
 } from './update-smoke-lib.mjs'
+
+test('native close waits for a mapped closable window in the confirmed relaunched PID set before one request', async () => {
+  const events = []
+  const ready = { id: '0x123', pid: 42, mapped: true, closable: true }
+  const snapshots = [
+    [],
+    [{ ...ready, pid: 99 }],
+    [{ ...ready, mapped: false }],
+    [{ ...ready, closable: false }],
+    [ready],
+  ]
+  let closed = 0
+  await closeNativeWorkspace({
+    expectedPids: [42],
+    readWindows: async () => snapshots.shift(),
+    requestClose: async (window) => {
+      assert.deepEqual(window, ready)
+      closed++
+      return { accepted: true, method: 'normal-close' }
+    },
+    writeEvent: async (event) => events.push(event),
+    waitForExit: async () => {
+      assert.equal(closed, 1)
+      assert.equal(events.at(-1).stage, 'exit-wait')
+    },
+    interval: 1,
+  })
+  assert.equal(closed, 1)
+  assert.equal(events.filter((event) => event.stage === 'enumerate').length, 5)
+  assert.equal(events.at(-1).stage, 'exited')
+  assert.ok(events.every((event) => !Number.isNaN(Date.parse(event.at))))
+})
+
+test('native close cannot silently succeed without a confirmed target; cleanup records an optional absence', async () => {
+  const events = []
+  let closed = 0
+  const options = {
+    expectedPids: [42],
+    readWindows: async () => [],
+    requestClose: async () => closed++,
+    writeEvent: async (event) => events.push(event),
+    waitForExit: async () => assert.fail('No close was requested'),
+    timeout: 10,
+    interval: 1,
+  }
+  await assert.rejects(closeNativeWorkspace(options), /mapped closable native workspace/)
+  assert.equal(closed, 0)
+  assert.equal(events.at(-1).stage, 'failed')
+  await closeNativeWorkspace({ ...options, required: false })
+  assert.equal(events.at(-1).stage, 'no-target')
+  assert.equal(closed, 0)
+})
+
+test('native close rejection, request errors and exit veto are audited and never cause a second close', async () => {
+  const target = { id: '123', pid: 42, mapped: true, closable: true }
+  for (const failure of ['rejected', 'request', 'veto']) {
+    let attempts = 0
+    const events = []
+    const error = new Error(failure)
+    await assert.rejects(
+      closeNativeWorkspace({
+        expectedPids: [42],
+        readWindows: async () => [target],
+        requestClose: async () => {
+          attempts++
+          if (failure === 'request') throw error
+          return { accepted: failure !== 'rejected' }
+        },
+        writeEvent: async (event) => events.push(event),
+        waitForExit: async () => {
+          throw error
+        },
+      }),
+      failure === 'rejected' ? /Native close request was rejected/ : (actual) => actual === error,
+    )
+    assert.equal(attempts, 1)
+    assert.equal(events.at(-1).stage, 'failed')
+    assert.equal(events.filter((event) => event.stage === 'request').length, 1)
+  }
+})
+
+test('cleanup only observes an already-requested process after exit veto, even if its window identity changes', async () => {
+  let attempts = 0
+  let requested = false
+  const events = []
+  const options = {
+    expectedPids: [42],
+    readWindows: async () => [
+      {
+        id: requested ? 'new-dialog' : 'main',
+        pid: 42,
+        mapped: true,
+        closable: true,
+        alreadyRequested: requested,
+      },
+    ],
+    requestClose: async () => {
+      attempts++
+      requested = true
+      return { accepted: true }
+    },
+    writeEvent: async (event) => events.push(event),
+    waitForExit: async () => {
+      throw new Error('Exit veto')
+    },
+  }
+  await assert.rejects(closeNativeWorkspace(options), /Exit veto/)
+  await closeNativeWorkspace({ ...options, required: false, waitForExit: undefined })
+  assert.equal(attempts, 1)
+  assert.equal(events.at(-2).stage, 'skip-known-requested')
+  assert.equal(events.at(-2).target.id, 'new-dialog')
+  assert.equal(events.at(-1).stage, 'no-target')
+})
 
 test('explicit launches get distinct available loopback endpoints and release their probes before use', async () => {
   const allocate = createDebugEndpointAllocator()

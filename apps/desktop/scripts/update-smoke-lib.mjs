@@ -93,6 +93,82 @@ export async function until(label, read, { timeout = 120_000, interval = 500 } =
   throw new Error(`Timed out: ${label}`, { cause: lastError })
 }
 
+/** Readiness is observation only. One normal close request is followed by the existing exit gate. */
+export async function closeNativeWorkspace({
+  expectedPids,
+  readWindows,
+  requestClose,
+  writeEvent,
+  waitForExit,
+  required = true,
+  timeout = 30_000,
+  interval = 250,
+}) {
+  const expected = new Set(expectedPids)
+  const record = (stage, details = {}) =>
+    writeEvent({ stage, at: new Date().toISOString(), ...details })
+  try {
+    if (required) {
+      assert.ok(expected.size > 0, 'Native close requires the confirmed process set')
+      assert.equal(
+        typeof waitForExit,
+        'function',
+        'Native close requires the strict process exit gate',
+      )
+    }
+    const observe = async () => {
+      let windows
+      try {
+        windows = await readWindows()
+      } catch (error) {
+        await record('enumeration-error', { error: String(error) })
+        throw error
+      }
+      await record('enumerate', { windows })
+      for (const window of windows)
+        if (expected.has(window.pid) && window.alreadyRequested)
+          await record('skip-known-requested', { target: window })
+      return windows.find(
+        (window) =>
+          expected.has(window.pid) &&
+          !window.alreadyRequested &&
+          window.id &&
+          window.id !== '0' &&
+          window.mapped &&
+          window.closable,
+      )
+    }
+    const target = required
+      ? await until('mapped closable native workspace in confirmed process set', observe, {
+          timeout,
+          interval,
+        })
+      : await observe()
+    if (!target) {
+      await record('no-target')
+      return
+    }
+    await record('request', { target })
+    const response = await requestClose(target)
+    await record('response', { target, response })
+    assert.equal(response.accepted, true, 'Native close request was rejected')
+    if (waitForExit) {
+      await record('exit-wait')
+      await waitForExit()
+      await record('exited')
+    }
+  } catch (error) {
+    await record('failed', {
+      error: String(error),
+      code: error.code,
+      signal: error.signal,
+      stdout: error.stdout,
+      stderr: error.stderr,
+    })
+    throw error
+  }
+}
+
 /** Serialized into the observed renderer by CDP; never changes page state or animations. */
 export async function settleScreenshotPaint({ page = globalThis, timeoutMs = 5000 } = {}) {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 5000)

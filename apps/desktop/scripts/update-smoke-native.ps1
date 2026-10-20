@@ -1,5 +1,5 @@
 # External UI driver for the real NSIS wizard; never passes silent/update bypass flags.
-param([ValidateSet('install', 'wizard', 'close', 'running', 'pids', 'self-test')][string]$Action, [string]$Installer, [string]$InstallerSha256, [string]$Installation, [string]$EvidenceDirectory)
+param([ValidateSet('install', 'wizard', 'close', 'windows', 'running', 'pids', 'self-test')][string]$Action, [string]$Installer, [string]$InstallerSha256, [string]$Installation, [string]$EvidenceDirectory, [int]$TargetProcessId, [long]$TargetWindowHandle)
 $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true') { throw 'Only disposable GitHub runners are supported' }
 if ($Action -eq 'install') {
@@ -14,10 +14,50 @@ if ($Action -eq 'running') {
   if (Get-Process -Name mimir -ErrorAction SilentlyContinue) { 'running' }
   exit 0
 }
-if ($Action -eq 'close') {
-  Get-Process -Name mimir -ErrorAction SilentlyContinue | ForEach-Object {
-    if ($_.MainWindowHandle -ne 0) { [void]$_.CloseMainWindow() }
+if ($Action -in @('windows', 'close', 'self-test')) {
+  Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class NativeWorkspace {
+  [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hwnd);
+  [DllImport("user32.dll")] public static extern bool IsWindowEnabled(IntPtr hwnd);
+  [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
+  public static bool BelongsTo(IntPtr hwnd, int expected) {
+    uint processId;
+    GetWindowThreadProcessId(hwnd, out processId);
+    return processId == expected;
   }
+}
+'@
+}
+if ($Action -eq 'windows') {
+  $windows = @(Get-Process -Name mimir -ErrorAction SilentlyContinue | ForEach-Object {
+    $processId = $_.Id
+    try {
+      $_.Refresh()
+      $handle = $_.MainWindowHandle
+      @{ pid = $processId; id = $handle.ToInt64().ToString(); title = $_.MainWindowTitle;
+        mapped = $handle -ne 0 -and [NativeWorkspace]::IsWindowVisible($handle);
+        closable = $handle -ne 0 -and [NativeWorkspace]::IsWindowEnabled($handle) -and [NativeWorkspace]::BelongsTo($handle, $processId) }
+    } catch {
+      @{ pid = $processId; id = '0'; mapped = $false; closable = $false; error = [string]$_ }
+    }
+  })
+  ConvertTo-Json -InputObject $windows -Compress -Depth 4
+  exit 0
+}
+if ($Action -eq 'close') {
+  if ($TargetProcessId -le 0 -or $TargetWindowHandle -eq 0) { throw 'Close requires the exact observed process and window' }
+  $process = Get-Process -Id $TargetProcessId
+  $process.Refresh()
+  $handle = [IntPtr]::new($TargetWindowHandle)
+  if ($process.ProcessName -ine 'mimir' -or $process.MainWindowHandle -ne $handle -or
+    -not [NativeWorkspace]::BelongsTo($handle, $TargetProcessId) -or
+    -not [NativeWorkspace]::IsWindowVisible($handle) -or -not [NativeWorkspace]::IsWindowEnabled($handle)) {
+    throw 'Observed Mimir close target changed or is not ready'
+  }
+  $accepted = $process.CloseMainWindow()
+  @{ pid = $TargetProcessId; id = $TargetWindowHandle.ToString(); method = 'CloseMainWindow'; accepted = $accepted; at = [DateTime]::UtcNow.ToString('o') } | ConvertTo-Json -Compress
   exit 0
 }
 # UIA can expose the dialog yet omit every standard NSIS child. Enumerate actual Win32 HWNDs.
