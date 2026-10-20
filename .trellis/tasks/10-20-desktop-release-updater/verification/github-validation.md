@@ -105,3 +105,8 @@ CI [39394323716](https://github.com/bijinfeng/mimir/actions/runs/39394323716) �
 [c402ec5 / 39397577723](https://github.com/bijinfeng/mimir/actions/runs/39397577723) completed/success，五目标及aggregate、发布create/upload/digest/publish全成功。正式[Release v0.1.3](https://github.com/bijinfeng/mimir/releases/tag/v0.1.3)共15资产，包含7安装包/FPK、3更新元数据和5blockmap，未人工创建草稿、未扩大token权限。匿名公开HTML返回200并包含正确标题。当前共享出口匿名REST quota暂耗尽（reset 2026-10-20T09:49:54Z），不是私有或发布失败；待重置补匿名REST与FPK字节下载记录。
 
 最新代码127d4b7的[CI39397745471](https://github.com/bijinfeng/mimir/actions/runs/39397745471) 全completed/success，完整Node22检查、build、PG与S3通过；完整原始日志final-github-node22-ci.log、步骤JSON保存。c402ec5的CI被立即准备version-only0.1.4的新push替代，非测试失败。v0.1.4 annotated tag已推，固定127d4b7；基线已公开后才推后续tag，避免latest顺序竞态。
+
+
+## v0.1.4 上传服务超时与同源重试
+
+[39402594994](https://github.com/bijinfeng/mimir/actions/runs/39402594994) attempt1：五目标实际构建、资源校验及smoke均完成通过；macIntel最后上传desktop-mac-x64时CreateArtifact请求连续5次timeout，job failure，aggregate/publish skipped。未创建或公开v0.1.4 Release。保留github-v014-attempt1.json及github-v014-upload-timeout.log，原样rerun failed jobs，不移动tag、不跳过目标。

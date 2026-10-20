@@ -6,7 +6,9 @@
 
 用户后续已授权合并、推送、GitHub 构建与正式发布、真实更新验收，并扩展 fnOS 原生包一并发布。下方“本轮只修改本地”等内容为早期轮次的历史记录，当前事实以 [github-validation.md](github-validation.md) 及 Actions 实际结果为准。
 
-master 已推送 fnOS 原生流水线与五目标发布校验；fnOS 首轮真实 Linux 构建因干净检出缺 shared routeTree 而失败，修复中。v0.1.0/v0.1.1 tag 保留原始提交，两者均因 Windows 门失败而未公开 Release。下一步先让完整五目标手动构建通过，再创建首个成功稳定基线及后续版本，执行官方 Windows/Linux 跨版本更新和本机 mac 手动更新。没有已成功发布或已实测更新的结论。
+master 已推送 fnOS 原生流水线与五目标发布校验。v0.1.3 已通过四客户端和 fnOS 原生构建、包资源校验、真实 smoke、聚合及自动发布，15 项资产公开；FPK 已匿名下载并核对完整 SHA256。最新生产代码 127d4b7 的 GitHub CI39397745471 全部通过，包含完整 pnpm check、build、PostgreSQL 与 S3。证据见 github-v013-published.json、github-final-code-ci.json、public-v0.1.3-fpk.json。
+
+v0.1.4 固定同一源码版本提交127d4b7；首次运行所有实际构建通过，Intel上传产物时GitHub服务超时，未公开新Release。已原样重试失败job。Windows/Linux真实跨版本更新与macOS手动替换尚待新版本公开后执行。系统通知投递/焦点、mac正式签名及fnOS实机安装边界保持明确，不能由runner smoke代替。
 
 ## 历史首轮记录
 

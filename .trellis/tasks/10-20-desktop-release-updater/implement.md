@@ -53,7 +53,7 @@
 ## GitHub 全流程验收（用户新授权）
 
 - [x] 检查远端 master 和工作区，以 fast-forward 合并已有实现并推送。
-- [ ] 运行 GitHub CI 和四目标原生构建，修复实际 runner 问题并复核。
+- [x] 运行 GitHub CI 和四目标原生构建，修复实际 runner 问题并复核。
 - [ ] 创建首版和后续稳定补丁版，验证完整资产统一发布与匿名下载。
 - [ ] 在真实 Windows 安装版、Linux AppImage 上通过独立外部驱动验证官方下载、普通退出不安装、显式重启安装及资料/模式保留。
 - [ ] 验证 macOS 检查更新与手动下载路径，明确无证书自动安装边界。
@@ -64,7 +64,13 @@
 - [x] 核对官方 fnpack 固定版本/校验，Linux x64/Node22 原生真实打包及部署资源可移植性。
 - [x] 新增 fnOS reusable/manual workflow，产物命名、版本、结构、原生模块与可行烟测通过。
 - [x] stage/aggregate/publish 强制同版 fnOS 与四客户端齐备；补真实资产缺失、错身份及篡改回归。
-- [ ] 独立审查、适当质量门、更新规范，提交推送后在 GitHub 执行并验证五目标统一匿名分发。
+- [x] 独立审查、适当质量门、更新规范，提交推送后在 GitHub 执行并验证五目标统一匿名分发。
 - [x] 记录 Ubuntu 构建/宿主烟测与真正 fnOS 设备安装的证据边界。
 
 上述完成项以 `verification/fnos-build.md`、`github-five-target-manual.json` 和 `github-fnos-native-success.log` 的真实五目标手动构建为依据；统一稳定发布与匿名正式资产下载尚待后续证据，不提前勾选。
+
+## 远端验收进展（续验）
+
+v0.1.3（c402ec5）已通过真实五目标、aggregate与自动publisher，15资产公开；FPK匿名下载170577623字节且SHA256匹配。最新版源码127d4b7的完整Node22 GitHub CI39397745471全部通过，含build/PG/S3。上述结果更新原先未执行状态，历史失败记录保留。
+
+v0.1.4固定127d4b7，run39402594994 attempt1所有实际构建/校验通过；Intel在CreateArtifact上传服务连续5次超时，发布被门禁阻止，无新Release。相同tag/源码仅rerun failed jobs；尚未将跨版本升级勾选完成。

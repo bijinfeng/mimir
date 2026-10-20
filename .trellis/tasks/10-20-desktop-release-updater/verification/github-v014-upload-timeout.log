@@ -1,0 +1,20 @@
+2026-10-20T09:57:26.2794820Z node apps/desktop/scripts/smoke.mjs
+2026-10-20T09:58:15.1375000Z [smoke] PASS A 已选模式：页面启动流程走到了取数据这一步
+2026-10-20T09:58:15.1423590Z [smoke] PASS A 渲染产物被真的加载（静态服务指向 dist/renderer）
+2026-10-20T09:58:15.1425540Z [smoke] PASS A 渲染层样式被加载
+2026-10-20T09:58:15.1428410Z [smoke] PASS A 本地模式免登录生效（令牌 cookie 带上了）
+2026-10-20T09:58:15.1451190Z [smoke] PASS A 守卫放行，页面开始取文档（不是停在登录页）
+2026-10-20T09:58:15.1452390Z [smoke] PASS A 侧栏开始取目录树（应用外壳渲染了）
+2026-10-20T09:58:15.1478370Z [smoke] PASS B 首次启动：进程活着（没有因为缺少宿主而崩）
+2026-10-20T09:58:15.1479580Z [smoke] PASS B 首次启动不启动宿主（选择页必须在没有宿主时也能打开）
+2026-10-20T09:58:15.1481050Z [smoke] PASS B 首次启动没有报错
+2026-10-20T09:58:15.1482490Z [smoke] PASS C 云端模式：远端页面已加载且拿不到桌面桥
+2026-10-20T09:58:15.1483860Z [smoke] PASS C 云端模式：窗口确实请求了远端页面
+2026-10-20T09:58:15.1485010Z [smoke] PASS C 云端模式：没有启动本地宿主
+2026-10-20T09:58:15.1486180Z [smoke] 自检通过
+2026-10-20T09:58:53.1874820Z Artifact name is valid!
+2026-10-20T09:58:58.3055000Z Attempt 1 of 5 failed with error: Request timeout: /twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact. Retrying request in 3000 ms...
+2026-10-20T09:59:06.3248150Z Attempt 2 of 5 failed with error: Request timeout: /twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact. Retrying request in 6569 ms...
+2026-10-20T09:59:17.8981750Z Attempt 3 of 5 failed with error: Request timeout: /twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact. Retrying request in 8341 ms...
+2026-10-20T09:59:31.2517180Z Attempt 4 of 5 failed with error: Request timeout: /twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact. Retrying request in 14554 ms...
+2026-10-20T09:59:50.8305530Z ##[error]Failed to CreateArtifact: Failed to make request after 5 attempts: Request timeout: /twirp/github.actions.results.api.v1.ArtifactService/CreateArtifact
