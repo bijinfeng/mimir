@@ -83,6 +83,8 @@ jobs:
       - name: Verify native runner
         run: node -e "if (process.platform !== process.env.MIMIR_BUILD_PLATFORM || process.arch !== process.env.MIMIR_BUILD_ARCH) throw Error('Native runner mismatch')"
       - run: pnpm install --frozen-lockfile
+      - name: Verify native ASAR entry paths
+        run: node --test apps/desktop/scripts/verify-package-contents.test.mjs
       - run: pnpm --filter @mimir/server build
       - run: pnpm --filter @mimir/desktop build
       - run: node apps/desktop/scripts/deploy-server.mjs

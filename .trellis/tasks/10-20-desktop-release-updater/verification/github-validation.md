@@ -38,3 +38,9 @@
 - Windows 已完成 NSIS 打包，在 verify-package.mjs 的包内 electron-updater 存在性检查失败。严格发布门阻止汇总/公开版本；日志 github-v010-windows-failed.log。正在核查跨平台 ASAR 路径，不绕过检查。
 - 同提交 CI：[39380273533](https://github.com/bijinfeng/mimir/actions/runs/39380273533)，结果待完成。
 - 已推送 tag 保留，不移动或覆盖。若修复须新提交，首个成功稳定基线顺延 v0.1.1，后续更新目标 v0.1.2。
+
+Windows ASAR 修复已独立复核并提交 `239cf77`：按宿主分隔符读取真实根 updater manifest/main 及所有既有 entry，6/6 真实 archive 回归和本机真实包完整校验通过。新 Windows runner 校验仍待执行。
+
+CI 39380273533 已完成并失败：之前的 Office CSS/中文字体问题未复现；server 三项分别是附件 PDF worker 192MB OOM、PPTX/XLSX 既有 5s 超时。日志 github-ci-a98a0a5-failed.log。已发现本机默认 Node 25 与 .nvmrc/CI Node 22 不同；在空闲本机用 Node 22.23.1 单独运行真实附件 PDF 用例亦复现 OOM，不能仅解释为 CI 资源争用。本地全仓通过证据需按其实际 Node 25 环境理解。保持限制及断言，正在因果诊断。
+
+Node22 进一步诊断：相同 192/16MB worker 中，compiled JS 无 loader 能成功解析（heap约33.7MB），仅额外注册 tsx 即 OOM；两个超时文件在空闲 Node22 独跑 113/113 通过。生产 compiled 路径未受该 loader 问题影响。新稳定基线准备为 `v0.1.1`，后续目标 `v0.1.2`；原 v0.1.0 失败 tag 保留。
