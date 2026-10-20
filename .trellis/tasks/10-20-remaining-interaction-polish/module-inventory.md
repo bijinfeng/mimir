@@ -57,4 +57,4 @@
 | 25 共享浮层与短窗 | 已完成 | `docs/visual-comparisons/2026-10-20-shared-dialogs`；全仓 check exit 0 |
 | 26 窄屏工作区 | 已完成 | `docs/visual-comparisons/2026-10-20-narrow-workspace`；待全仓 check |
 | 27 跨模块一致性 | 已完成 | `docs/visual-comparisons/2026-10-20-consistency`；无代码改动 |
-| 28 小程序 | 进行中（下一模块） | 构建通过；等待开发者工具登录后做视觉验收 |
+| 28 小程序 | 进行中 | 构建通过（7 页、667 模块、455 KiB）；开发者工具已重装并登录，仍需手动开启服务端口/导入项目后做视觉验收 |
