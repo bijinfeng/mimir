@@ -1,5 +1,5 @@
 appname=mimir
-version=0.1.1
+version=0.1.2
 display_name=Mimir
 desc=个人知识库：笔记、资料收集与带引用的 AI 问答
 source=thirdparty
