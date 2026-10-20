@@ -1,0 +1,11 @@
+[after-pack] apps/desktop/resources/icon.png → ../../../../private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-79cDQD/original/resources/icon.png
+[after-pack] apps/desktop/server-deploy/dist → ../../../../private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-79cDQD/original/resources/server/dist
+[after-pack] apps/desktop/server-deploy/drizzle-sqlite → ../../../../private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-79cDQD/original/resources/server/drizzle-sqlite
+[after-pack] apps/desktop/server-deploy/node_modules → ../../../../private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-79cDQD/original/resources/server/node_modules
+[after-pack] portable host resources: 43551 files, 0 file aliases materialized, no directory links
+sqlite vec { version: 'v0.1.9' }
+better-sqlite3 /node_modules/better-sqlite3/lib/index.js
+sqlite-vec /node_modules/sqlite-vec/index.cjs
+@node-rs/jieba /node_modules/@node-rs/jieba/index.js
+@napi-rs/canvas /node_modules/@napi-rs/canvas/index.js
+PASS: relocated real deployed host: 43551 files, zero links, native SQLite/vec/Jieba/Canvas loaded

@@ -8,7 +8,7 @@
     "dev": "pnpm -r --parallel --stream dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test && node --test scripts/desktop-dev-process.test.mjs scripts/fnos-package.test.mjs apps/desktop/scripts/release-artifacts.test.mjs apps/desktop/scripts/update-smoke.test.mjs",
+    "test": "pnpm -r test && node --test scripts/desktop-dev-process.test.mjs scripts/fnos-package.test.mjs apps/desktop/scripts/release-artifacts.test.mjs apps/desktop/scripts/update-smoke.test.mjs apps/desktop/scripts/resource-tree.test.mjs",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",

@@ -40,3 +40,18 @@
 `scripts/package.mjs` 现在于原生 OS/CPU 校验成功后，将 `process.arch` 固定写入唯一 `artifactName` 配置，版本、系统与扩展名仍交由 builder 展开。发布汇总、workflow 和 E2E 继续严格要求统一的 `x64`/`arm64` 命名，没有同时接受两套别名。
 
 新增行为回归调用锁定 builder 的真实 `computeArtifactName` 和宏展开：先复现 AppImage 原模板的 `x86_64`，然后验证新模板在四目标的 DMG、ZIP、NSIS EXE、AppImage 均为发布清单要求的文件名；非法架构被拒绝。`node --test apps/desktop/scripts/release-artifacts.test.mjs` 12/12 通过，日志 `artifact-native-arch-tests.log`；受影响脚本的 oxlint、oxfmt 及 `git diff --check` 通过。本机未伪装 Linux runner 或构建 Linux 安装包。
+
+## Windows NSIS 生产资源链接
+
+第二轮 Windows runner 已完成 afterPack，随后 builder `26.15.3` 的 7za 在压缩 NSIS 输入树时，对 `resources/server/node_modules/.pnpm/*/node_modules/*` 的大量依赖链接报 `Access is denied` 并 exit 1，见 `github-windows-package-failed.log`。现有 afterPack 的 `cp(..., { verbatimSymlinks: true })` 保留链接，与旧注释“解引用”不符。Node 的 `internal/fs/cp/cp` 中 `onLink` 在此模式直接 `readlink` 后 `symlink`，不会把 Windows junction 的绝对目标改成安装目录，也不会保留原 junction 类型。原 runner 日志没有包含具体 readlink 目标，不能据此断言每个失败链接的实际目标。
+
+修复避免依赖复制时猜测 Windows 链接类型：仅 `deploy-server.mjs` 的生产部署加 `--node-linker hoisted`，保留根安装为 isolated、lockfile 与供应链策略。pnpm 在部署阶段按依赖图生成有限的物理目录及必要版本嵌套；不采用复制时全量 dereference。afterPack 保留点目录复制，然后调用 `resource-tree.mjs` 递归检查整个 `resources/server`，包括 `dist` 内嵌依赖：只物化内部相对文件别名；目录链接、绝对/越界链接、坏链接和特殊文件使打包失败，错误包括路径。成功返回即保证宿主树没有目录或文件符号链接，不携带指向 runner 的 reparse 链接。
+
+验证：
+
+- pnpm `12.4.2` 独立 hoisted probe 成功；正式脚本重复生产部署 exit 0，`server-deploy/node_modules/.modules.yaml` 为 hoisted，仓库根仍为 isolated。日志 `hoisted-deploy-probe.log`、`hoisted-deploy-final.log`。
+- fixture 实际复制、物化文件别名、删除源目录、迁移目录后，用 Node require 读取两份冲突依赖版本及 `dist/node_modules/.pnpm` 隐藏内容；全树无链接。绝对链接、越界链接、目录循环和坏链接均拒绝且不假报成功。新增测试纳入根 test 入口。
+- 资源与发布测试合计 17/17 通过，日志 `resource-tree-release-tests.log`；受影响脚本的 lint/format 与 `git diff --check` 通过。
+- 本机真实部署资源通过 afterPack 文件复制，43551 文件、零链接；迁移后 SQLite/vec、Jieba/dict、Canvas 均从迁移后的宿主目录独立加载成功（exit 0），见 `portable-host-final.log`。这只验证跨目录资源可移植性，不代表本机执行 Windows NSIS。
+
+最终 Windows 门仍为 GitHub runner 原生 NSIS 压缩、真实安装及安装路径内 smoke；没有把 macOS 的物理目录验证当成 Windows 安装通过。第一次本机迁移验证因 `/var` 与真实 `/private/var` 的检查路径未归一化误报，原日志保留 `portable-host-path-check-failed.log`；验证脚本随后对临时根 realpath 归一化，产品路径逻辑未因该验证脚本问题调整。

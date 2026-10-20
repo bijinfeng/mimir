@@ -26,3 +26,7 @@
 第二轮手动构建：[39378398346](https://github.com/bijinfeng/mimir/actions/runs/39378398346)，commit 198486c。Linux 包与资源检查成功后，真实 AppImage smoke 因 builder 将文件名架构展开为 x86_64，而契约要求 x64，出现 ENOENT。修复在 package.mjs 一处固定原生架构名，锁定 builder 真实宏展开回归 12/12 通过。保留原始失败日志 github-linux-smoke-failed.log，不降低发布校验。
 
 独立 review 另修复 NSIS 正常 Finish 后启动选项，并补新增真实升级 harness 的行为检查；细节见 github-build-fixes.md、github-flow-check.md、github-update-e2e.md。
+
+第二轮 macOS ARM64 与 Intel x64 两项均完整通过；日志 github-second-mac-*.log、结果 github-second-build.json。Windows 因隔离依赖目录链接被 NSIS/7za 拒绝而失败；修复为打包专用 hoisted 部署并在 afterPack 有限物化文件别名、拒绝不可移植链接。真实资源迁移后 43,551 文件无链接，原生模块可加载；独立 17 项资源/发布回归通过。最终 Windows 安装器验收仍须新 runner。
+
+仓库 CI 39378386495 的 Office 失败已补干净测试 CSS 生成及 Ubuntu 真实 CJK 字体准备，未修改 PDF 生产代码或放宽断言。证据 github-ci-check-failed.log、github-ci-fixes.md 与 ci-diagnostics/font-probe.md。最终全仓本地检查及新远端运行进行中。

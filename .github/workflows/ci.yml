@@ -54,6 +54,14 @@ jobs:
       # 路径类环境变量相对仓库根解析，测试也需要这两个目录存在
       - run: mkdir -p data/vault data/raw data/.test/vault data/.test/raw
 
+      # PDFium's native insert-text path embeds installed sfnt CJK fonts.
+      # Keep real Chinese wrapping/save assertions; the runner's Latin fonts are insufficient.
+      - name: Install CJK fonts for native PDF tests
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
+          fc-match 'Noto Sans CJK SC'
+
       # 与本地完成门一致：含样式守卫和根目录的桌面进程测试
       - run: pnpm check
       # @mimir/shared 以源码发布，编译责任在使用方；类型检查不代替构建

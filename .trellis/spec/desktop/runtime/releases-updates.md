@@ -7,7 +7,8 @@
 
 ## 2. 签名与入口
 
-- `pnpm desktop:build`：server build → desktop build → `scripts/deploy-server.mjs` → `scripts/package.mjs`。deploy 脚本只清理固定、被 gitignore 的 `apps/desktop/server-deploy` 再执行生产依赖部署，以支持重复打包；不能接受调用方传入的清理路径。matrix build 强制原生 OS/CPU；`nativeArtifactName(process.arch)` 固定文件名架构为 Node 的 x64/arm64，仅保留 version/os/ext 宏，防止 AppImage 将 x64 重写为 x86_64；builder 始终 `publish: 'never'`。
+- `pnpm desktop:build`：server build → desktop build → `scripts/deploy-server.mjs` → `scripts/package.mjs`。deploy 脚本只清理固定、被 gitignore 的 `apps/desktop/server-deploy` 再执行 `pnpm --filter @mimir/server deploy --prod --node-linker hoisted` 生产依赖部署，以支持重复打包和可移植物理目录；根安装仍保持 isolated；不能接受调用方传入的清理路径。matrix build 强制原生 OS/CPU；`nativeArtifactName(process.arch)` 固定文件名架构为 Node 的 x64/arm64，仅保留 version/os/ext 宏，防止 AppImage 将 x64 重写为 x86_64；builder 始终 `publish: 'never'`。
+- `finalizeResourceTree(root): Promise<{files:number, materialized:number}>`：afterPack 对完整可信 server 资源树执行；内部相对文件别名物化，目录/绝对/越界/损坏链接均使构建失败，不递归解引用依赖图。返回成功的资源树须无链接，才能压 NSIS/签名。
 - `node apps/desktop/scripts/release-artifacts.mjs version [vX.Y.Z]`：校验 desktop/package.json 的稳定版本，tag 必须匹配已提交的桌面版本。
 - `stage <releaseDir> <outputDir> <target> <version> <mode>`、`aggregate <incomingDir> <outputDir> <version>`：收集并验证真实产物后生成完整发布目录；target 是 `mac-arm64|mac-x64|win-x64|linux-x64`。
 - `BASE_VERSION=X.Y.Z TARGET_VERSION=X.Y.Z node apps/desktop/scripts/update-smoke.mjs`：仅一次性 GitHub x64 Windows/Linux runner 可执行的真实升级验收；独立 `desktop-update-verify.yml` 映射同名输入。客户端不包含验收开关。
@@ -46,6 +47,7 @@
 | 普通关闭/退出/模式切换被页面拦住 | 原生提示返回文档完成保存或进行中的操作；只解释阻止原因，不绕过 veto；更新准备中由更新界面单独反馈 |
 | 宿主关闭失败或超时 | 阻止安装，展示恢复指引；超时不能视为关闭成功 |
 | 安装器启动通过 error 事件失败 | 工作区已关闭时进入 blocked/recoveryRequired，展示重新启动指引，不停在 restarting；不能只依赖 quitAndInstall 的同步异常 |
+| 生产资源含目录/junction/绝对/越界/损坏链接 | 构建失败并定位链接；不得将 runner 绝对路径带入安装包，或全图解引用掩盖循环 |
 | 任一 matrix 失败、版本/哈希/架构文件不符 | 停在 publish 之前 |
 | 两份 latest-mac.yml | 验证同版本并合并 files，文件名唯一；不能后下载覆盖前下载 |
 | 真实升级验收的版本不稳定/target不是官方latest/资产摘要不匹配/runner已有userData | 验收立即失败，不复用用户库或注入自定义feed，不使用直接安装或伪造保存ACK补成通过 |
@@ -62,6 +64,7 @@
 - 控制器测试覆盖单操作 gate、检查节奏、偏好、通知持久去重、通知不可用时继续检查、未知大小、100% 到校验完成、失败重试、安装顺序和安装器 error 事件恢复。
 - IPC 测试覆盖伪造 sender/frame、过期 requestId、导航后迟到响应、云端无桥、关闭 veto 和宿主失败/超时。
 - renderer 测试覆盖自动/手动保存、无句柄、失败、新改动、编辑器切换；保存 ACK 不等于忽略 beforeunload。
+- 资源复制测试必须覆盖迁移后 require、同名嵌套依赖版本、内部文件别名物化、目录循环/绝对/越界/损坏链接拒绝；真实包原生模块和安装后 smoke 仍不可省略。
 - 发布脚本测试用真实 fixture 字节验证 hash、缺文件、非法 tag、双架构冲突和元数据汇总；不能只匹配 YAML 文本。
 - `pnpm check`、desktop build、实际打包与 `MIMIR_SMOKE_EXECUTABLE=<绝对路径> node apps/desktop/scripts/smoke.mjs`；界面实际截图/HTML归档。
 - 真实更新验收必须从官方匿名资产安装基线，驱动真实更新 UI；验证普通退出未替换安装文件、真实编辑阻止并取消安装、保存后重启安装、旧进程消失与新进程拉起、版本和原文档/模式保留。Windows 校验实际 updater 缓存安装包摘要；Linux 校验替换后的 AppImage 摘要。头部完成通知和系统焦点仍需原生桌面证据，不能用 CDP 无详情窗口替代。

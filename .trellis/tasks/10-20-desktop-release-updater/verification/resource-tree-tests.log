@@ -1,0 +1,13 @@
+✔ hoisted resources keep nested versions and file aliases after source removal and relocation (37.788042ms)
+✔ non-portable absolute resource link aborts instead of following the graph (2.779458ms)
+✔ non-portable outside resource link aborts instead of following the graph (1.997ms)
+✔ non-portable directory-cycle resource link aborts instead of following the graph (1.97725ms)
+✔ non-portable broken resource link aborts instead of following the graph (1.76225ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 96.900042

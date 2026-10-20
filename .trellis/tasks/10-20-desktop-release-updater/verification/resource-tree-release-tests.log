@@ -1,0 +1,25 @@
+✔ native artifact names survive builder extension-specific architecture mapping (842.410708ms)
+✔ stable versions require an exact tag and reject prereleases, padding and malformed input (0.171875ms)
+✔ four real byte sets aggregate with both mac architectures and matching compatibility ZIP (59.406375ms)
+✔ missing platform, stale manifest and modified bytes cannot form a release (68.337125ms)
+✔ malicious references, duplicate files and invalid metadata SHA-512 are rejected (34.5645ms)
+✔ mismatched mac signing mode cannot publish a mixed channel (30.40475ms)
+✔ macOS signed mode is explicit and fails closed without full credentials (0.391333ms)
+✔ draft publishes only after every remote asset passes validation (30.933417ms)
+✔ upload failure or remote digest mismatch leaves the release unpublished (31.116166ms)
+✔ published releases and unrelated drafts are immutable on rerun (32.117541ms)
+✔ incomplete manifest fails before creating a draft (29.758625ms)
+✔ only an owned draft can replace partial uploads; unknown draft assets stop recovery (28.598375ms)
+✔ hoisted resources keep nested versions and file aliases after source removal and relocation (72.134708ms)
+✔ non-portable absolute resource link aborts instead of following the graph (4.559125ms)
+✔ non-portable outside resource link aborts instead of following the graph (5.67325ms)
+✔ non-portable directory-cycle resource link aborts instead of following the graph (4.828ms)
+✔ non-portable broken resource link aborts instead of following the graph (4.085667ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1364.512

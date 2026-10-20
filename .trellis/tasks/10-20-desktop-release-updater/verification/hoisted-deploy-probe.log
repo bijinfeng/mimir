@@ -1,0 +1,12 @@
+Packages are cloned from the content-addressable store to the virtual store.
+  Content-addressable store is at: /Users/admin/Library/pnpm/store/v11
+  Virtual store is at:             apps/desktop/release/hoisted-deploy-probe/node_modules/.pnpm
+? Verifying lockfile at apps/desktop/release/hoisted-deploy-probe/pnpm-lock.yaml against supply-chain policies (500 entries)...
+[WARN] Request took 10630ms: https://registry.npmmirror.com/@aws-sdk%2Fcredential-provider-ini
+[WARN] Request took 12259ms: https://registry.npmmirror.com/@types%2Fnode
+✓ Lockfile at apps/desktop/release/hoisted-deploy-probe/pnpm-lock.yaml passes supply-chain policies (500 entries in 21.9s)
+.../desktop/release/hoisted-deploy-probe | Progress: resolved 207, reused 199, downloaded 0, added 128
+.../desktop/release/hoisted-deploy-probe | Progress: resolved 207, reused 199, downloaded 0, added 154
+.../desktop/release/hoisted-deploy-probe | Progress: resolved 207, reused 199, downloaded 0, added 181
+.../desktop/release/hoisted-deploy-probe | Progress: resolved 207, reused 199, downloaded 0, added 210, done
+Done in 25.8s using pnpm v12.4.2

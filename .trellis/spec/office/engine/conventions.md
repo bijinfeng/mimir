@@ -298,7 +298,7 @@ TIFF 当前仅接受通过条/瓦片完整性、颜色/样本组合及解码预�
 两条这一层特有的规矩：
 
 - **不要手改 `src/generated/editor.css`**：它是 `trim-editor-css.mjs` 的产物，
-  同步和 Web/desktop 构建会覆盖；构建生成契约见 renderer/frontend/conventions.md
+  同步、Web/desktop 构建及 Office Vitest 配置加载时会覆盖；构建生成契约见 renderer/frontend/conventions.md
 - **`vitest` 的默认环境是 node，不是 happy-dom**。happy-dom 会替换全局
   `URL`，于是 `readFileSync(new URL(..., import.meta.url))` 抛
   `The URL must be of scheme file`——解析类测试整片挂掉（实测踩过 48 个）。
@@ -473,3 +473,12 @@ DOCX 上游 writer 的 `JSZip.file` 会默认补建原件没有的父目录条�
 固定原生 `flipElements` 会更新直接组成员的模型，但未把成员transform补回父组合XML。服务端 `pptx-group-flip.ts` 的 `runPptxHostTxn` 在原事务范围同步包装同名OpDef，原生apply完成后用 `editGroupChildTransform` 刷新实际模型；不新增操作名、不改原生records、校验、快照或原子回滚。顶层flip直接沿原行为。
 
 此包装安装、runTxn、finally恢复之间不得出现await或Promise。registry是共享状态，只有整个调用保持同步，其他请求才不会在定义替换期间插入执行；finally必须连runTxn快照异常也恢复原定义。不要改成按请求保留替换定义或异步包装。`apps/server/src/test/pptx-group-flip-host.test.ts`覆盖并发宿主、快照异常、后续原生操作失败回滚，以及flip后立即ungroup/duplicateSlide的同批次持久化。Office几何专项还须断言bare host flip已保存，不能继续把旧未持久化诊断当正确预期。
+
+### 干净环境测试前置
+
+Office Vitest 配置在 suite collection 前用当前 Node 和 `fileURLToPath` 执行既有
+`trim-editor-css.mjs`；生成失败直接中止，不依赖开发者先 build 或 sync。
+原生 PDF 中文插字的 vendored 字体路径需要系统 sfnt CJK 字体（含受支持 TTC 字面
+提取）；Ubuntu CI 在 `pnpm check` 前安装 `fonts-noto-cjk` 并记录 fc-match。
+缺字时须保留明确拒绝；不能跳过中文换行/保存断言、伪造字体覆盖或以别的 writer
+使用 woff2 的成功代替此路径。实际字体准备属于测试宿主条件，不修改 PDF 生产实现。

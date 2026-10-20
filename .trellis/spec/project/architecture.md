@@ -2040,7 +2040,7 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 |---|---|
 | `pnpm desktop:dev` | 先完整构建并启动，再 watch 桌面三段产物；改渲染代码后刷新窗口，改 main/preload 后重启。附带进程树清理和 Electron 二进制镜像默认值。本地模式由进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
 | `pnpm desktop:start` | 构建 server/desktop 产物后启动 Electron；桌面渲染进程由本包构建，不依赖 web 产物 |
-| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 按宿主平台打包（macOS 为 DMG + ZIP，Windows 为 NSIS，Linux 为 AppImage）；签名与发布契约见[桌面更新规范](../desktop/runtime/releases-updates.md) |
+| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod --node-linker hoisted` 收集可移植 server 生产依赖 + electron-builder 按宿主平台打包（macOS 为 DMG + ZIP，Windows 为 NSIS，Linux 为 AppImage）；签名与发布契约见[桌面更新规范](../desktop/runtime/releases-updates.md) |
 
 Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定二进制来源。
 `desktop:dev` 缺少二进制时默认从 npmmirror 下载（可用 `ELECTRON_MIRROR` 覆盖）；
@@ -2061,7 +2061,7 @@ Linux 打包时 builder 还会下载 AppImage 工具；若 GitHub TLS 断连，�
 - **宿主资源不用 extraResources**：electron-builder 拷贝时会跳过点开头的
   目录，`server/dist/node_modules/.pnpm`（vite SSR 构建把部分传递依赖按
   pnpm 结构放这里）会被静默丢掉，运行时报模块找不到。afterPack 钩子用
-  `fs.cp`（保留符号链接的 pnpm 布局）自行拷贝
+  `fs.cp` 保留点目录自行拷贝，再物化内部文件别名；生产 deploy 使用 hoisted 物理目录，目录/junction/绝对/越界链接均拒绝进入安装包
 - **测试包必须 ad-hoc 签名**：identity: null 时 builder 完全跳过签名，macOS
   （Sequoia 起，含 Intel）把未签名二进制直接 SIGKILL——秒退、零输出。
   默认测试模式由 afterPack 执行 `codesign --force --deep -s -`，只支持手动更新。显式 signed 模式由 builder 使用开发者证书签名 + 公证，afterPack 不覆盖正式签名

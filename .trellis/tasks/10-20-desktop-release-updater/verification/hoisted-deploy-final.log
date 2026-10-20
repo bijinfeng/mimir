@@ -1,0 +1,9 @@
+Packages are cloned from the content-addressable store to the virtual store.
+  Content-addressable store is at: /Users/admin/Library/pnpm/store/v11
+  Virtual store is at:             apps/desktop/server-deploy/node_modules/.pnpm
+✓ Lockfile at apps/desktop/server-deploy/pnpm-lock.yaml passes supply-chain policies (verified 1h ago)
+apps/desktop/server-deploy               | Progress: resolved 207, reused 199, downloaded 0, added 98
+apps/desktop/server-deploy               | Progress: resolved 207, reused 199, downloaded 0, added 171
+apps/desktop/server-deploy               | Progress: resolved 207, reused 199, downloaded 0, added 195
+apps/desktop/server-deploy               | Progress: resolved 207, reused 199, downloaded 0, added 210, done
+Done in 4.4s using pnpm v12.4.2

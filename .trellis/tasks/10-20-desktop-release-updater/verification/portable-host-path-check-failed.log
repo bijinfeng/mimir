@@ -1,0 +1,14 @@
+[after-pack] apps/desktop/resources/icon.png → ../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-4RB2Rh/original/resources/icon.png
+[after-pack] apps/desktop/server-deploy/dist → ../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-4RB2Rh/original/resources/server/dist
+[after-pack] apps/desktop/server-deploy/drizzle-sqlite → ../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-4RB2Rh/original/resources/server/drizzle-sqlite
+[after-pack] apps/desktop/server-deploy/node_modules → ../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-4RB2Rh/original/resources/server/node_modules
+[after-pack] portable host resources: 43551 files, 0 file aliases materialized, no directory links
+sqlite vec { version: 'v0.1.9' }
+file:///Users/admin/Desktop/mimir/[eval1]:9
+ for(const name of ['better-sqlite3','sqlite-vec','@node-rs/jieba','@napi-rs/canvas']){const location=require.resolve(name);if(!location.startsWith(host))throw Error(`Resolved outside resources: ${location}`);console.log(name,location.slice(host.length))}
+                                                                                                                                                                ^
+
+Error: Resolved outside resources: /private/var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-portable-afterpack-4RB2Rh/relocated/resources/server/node_modules/better-sqlite3/lib/index.js
+    at file:///Users/admin/Desktop/mimir/[eval1]:9:161
+
+Node.js v25.9.0

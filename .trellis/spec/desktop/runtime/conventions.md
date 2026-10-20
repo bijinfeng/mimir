@@ -79,7 +79,7 @@ BrandMark 的 path）。现在它用同一套 antd 主题、同一个 `BrandMark
 ## 构建链
 
 `pnpm desktop:build`（仓库根）= server 构建 → **desktop 三段构建** →
-`server deploy` 产物落到 `apps/desktop/server-deploy/` → electron-builder 打包。
+`server deploy --prod --node-linker hoisted` 仅为打包生成物理生产依赖树（根安装仍为 isolated），产物落到 `apps/desktop/server-deploy/` → electron-builder 打包。
 自 D-103 起**没有单独的 web 构建那一步**：渲染进程是本包的第三个入口。
 
 **`server-deploy/` 是 gitignore 的构建产物**，里面的文件（包括拷进去的

@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { cp, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { finalizeResourceTree } from './resource-tree.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
@@ -14,7 +15,8 @@ const here = path.dirname(fileURLToPath(import.meta.url))
  * 部分传递依赖按 pnpm 结构放进 dist），而 electron-builder 拷贝
  * extraResources 时**会跳过点开头的目录**——打出来的包运行时报
  * `Cannot find module …/.pnpm/fflate/…`（实测踩过）。`fs.cp` 没有这个
- * 过滤，点目录、符号链接（解引用）都按真实内容拷贝。
+ * 过滤。生产依赖以 hoisted 物理目录部署；复制后物化内部文件链接，并拒绝
+ * 目录链接或越界链接，确保 NSIS 不携带 Windows junction 或 runner 绝对路径。
  *
  * ## 为什么拷完再签名
  *
@@ -59,6 +61,11 @@ export default async function afterPack(context) {
       `[after-pack] ${path.relative(process.cwd(), from)} → ${path.relative(process.cwd(), to)}`,
     )
   }
+
+  const portable = await finalizeResourceTree(path.join(resources, 'server'))
+  console.log(
+    `[after-pack] portable host resources: ${portable.files} files, ${portable.materialized} file aliases materialized, no directory links`,
+  )
 
   if (electronPlatformName === 'darwin' && context.packager.config.mac?.identity === null) {
     const appPath = path.join(appOutDir, `${context.packager.appInfo.productFilename}.app`)

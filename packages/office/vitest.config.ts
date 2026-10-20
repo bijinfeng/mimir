@@ -1,4 +1,16 @@
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
+
+// Tests resolve DocxEditor's ignored CSS without going through the renderer build plugin.
+// Generate from committed vendor input once before collecting any suites, even on a clean clone.
+execFileSync(
+  process.execPath,
+  [fileURLToPath(new URL('./scripts/trim-editor-css.mjs', import.meta.url))],
+  {
+    stdio: 'inherit',
+  },
+)
 
 export default defineConfig({
   test: {

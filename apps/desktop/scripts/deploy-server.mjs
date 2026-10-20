@@ -8,7 +8,15 @@ const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url))
 await rm(path.join(repositoryRoot, 'apps/desktop/server-deploy'), { recursive: true, force: true })
 const result = spawnSync(
   'pnpm',
-  ['--filter', '@mimir/server', 'deploy', '--prod', 'apps/desktop/server-deploy'],
+  [
+    '--filter',
+    '@mimir/server',
+    'deploy',
+    '--prod',
+    '--node-linker',
+    'hoisted',
+    'apps/desktop/server-deploy',
+  ],
   {
     cwd: repositoryRoot,
     stdio: 'inherit',

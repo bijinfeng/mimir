@@ -1,0 +1,10 @@
+裁剪样式：1414 → 439 条规则，107 KB
+输出 src/generated/editor.css
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  14:20:10
+   Duration  1.69s (tests 77%, import 19%, transform 4%)
