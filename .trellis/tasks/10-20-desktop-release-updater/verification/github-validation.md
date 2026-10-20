@@ -99,3 +99,9 @@ Attempt2 中 Intel DMG、包资源/原生smoke、其余目标及 aggregate 全�
 修复方向是远端解析已存在tag到精确commit并保持marker所有权，省略existing tag无需的target_commitish；不扩大凭据权限、不移动tag或修改默认分支、不本地代发以掩盖失败。v0.1.2保留失败tag和完整成功构建证据；修复后首个统一稳定基线顺延0.1.3，真实升级目标0.1.4。以最终成功版本为准。失败job日志github-v012-publish-create-failed.log、attempt2 JSON保留。
 
 CI [39394323716](https://github.com/bijinfeng/mimir/actions/runs/39394323716) 已completed/success：全仓pnpmcheck、pnpm build、完整PostgreSQL重跑及新官方固定MinIO原生S3专项全部成功。S3真实2/2与精确version/SHA及退出清理日志github-ci-native-s3-success.log；全步骤JSON单独保存。publisher修复另经独立Node22发布23/23、根58/58与lint/format/syntax复核通过，即将用0.1.3新tag验证真实发布。
+
+## 首个正式统一版本 v0.1.3
+
+[c402ec5 / 39397577723](https://github.com/bijinfeng/mimir/actions/runs/39397577723) completed/success，五目标及aggregate、发布create/upload/digest/publish全成功。正式[Release v0.1.3](https://github.com/bijinfeng/mimir/releases/tag/v0.1.3)共15资产，包含7安装包/FPK、3更新元数据和5blockmap，未人工创建草稿、未扩大token权限。匿名公开HTML返回200并包含正确标题。当前共享出口匿名REST quota暂耗尽（reset 2026-10-20T09:49:54Z），不是私有或发布失败；待重置补匿名REST与FPK字节下载记录。
+
+最新代码127d4b7的[CI39397745471](https://github.com/bijinfeng/mimir/actions/runs/39397745471) 全completed/success，完整Node22检查、build、PG与S3通过；完整原始日志final-github-node22-ci.log、步骤JSON保存。c402ec5的CI被立即准备version-only0.1.4的新push替代，非测试失败。v0.1.4 annotated tag已推，固定127d4b7；基线已公开后才推后续tag，避免latest顺序竞态。

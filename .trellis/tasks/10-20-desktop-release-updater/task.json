@@ -15,12 +15,12 @@
   "branch": "master",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "71778c7a93cb0ad28d0c4db78c34a8c51ceddf6b",
+  "commit": "127d4b7af8d483521fea8e3ea3c9454a57535fc1",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "master71778c7。CI39394323716全pnpmcheck/build成功、PG/S3进行中。v0.1.2五目标+aggregate全success但createRelease旧target_commitish触发GitHub workflow权限403；owner同请求404未创建draft，现无公开Release。正在修复publisher省略冗余字段并以远端tag双检查+marker识别归属；保留失败tag，不扩权/改默认分支。预期首个统一稳定基线0.1.3→真实更新目标0.1.4，按实际最终结果登记。fnOS真机/mac签名及通知边界保留。",
+  "notes": "master127d4b7 Node22完整GitHubCI39397745471全success（check/build/PG/S3）。v0.1.3固定c402ec5，五目标、aggregate及修正publisher全success，公开Release15资产含fnOS，匿名HTMLHTTP200；当前出口匿名REST配额至09:49:54Z耗尽，重置后补API/FPK下载。v0.1.4固定127d4b7已推tag，等待五目标统一发布后真实Windows/Linux自动更新和Mac manual验收。旧失败tag保留不移动。",
   "meta": {}
 }
