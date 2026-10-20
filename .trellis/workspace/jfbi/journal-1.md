@@ -1498,3 +1498,36 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 53: Pele 单引擎替换 Mermaid
+<!-- trellis-session: v=2 fp=2cdf7d92fe81f1bf -->
+
+**Date**: 2026-10-20
+**Task**: Pele 单引擎替换 Mermaid
+**Package**: renderer
+**Branch**: `codex/pele-mermaid-trial`
+
+### Summary
+
+移除 Mermaid 回退和运行依赖，保留 mermaid 源码格式、安全净化与可恢复错误。完整质量门 exit0，34项定向测试、68组真实组件浏览器验证及独立审查通过；前后HTML和已知兼容限制已归档。
+
+### Main Changes
+
+- Pele1.6唯一引擎，删除Mermaid及103项不再使用的依赖闭包
+- 现行规范、真实组件对比HTML和验证证据同步提交；不推送
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3e30562` | feat(renderer): replace Mermaid fallback with Pele |
+
+### Testing
+
+- [OK] VITEST_MAX_WORKERS=1 pnpm check: exit0；Renderer627、Office2774、Server1365项通过
+- [OK] 34focused tests；68browser cases；源码修复、撤销、重开；207归档文件哈希复核
+
+### Status
+
+[OK] **Completed**
