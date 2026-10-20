@@ -1670,22 +1670,24 @@ function FrontmatterPanel({
           {error}
         </p>
       ) : null}
-      <ToolbarMenuItemRow
-        item={{
-          key: 'save',
-          label: saving ? '正在保存…' : '保存笔记属性',
-          disabled: loading || saving,
-          disabledReason: loading ? '正在读取笔记属性' : '正在保存笔记属性',
-          onSelect: () => {
-            setSaving(true)
-            setError(null)
-            void frontmatter.writeFrontmatter(draft, baseline).then(close, (cause) => {
-              setError(cause instanceof Error ? cause.message : String(cause))
-              setSaving(false)
-            })
-          },
-        }}
-      />
+      <div className="mimir-markdown-properties__footer">
+        <ToolbarMenuItemRow
+          item={{
+            key: 'save',
+            label: saving ? '正在保存…' : '保存笔记属性',
+            disabled: loading || saving,
+            disabledReason: loading ? '正在读取笔记属性' : '正在保存笔记属性',
+            onSelect: () => {
+              setSaving(true)
+              setError(null)
+              void frontmatter.writeFrontmatter(draft, baseline).then(close, (cause) => {
+                setError(cause instanceof Error ? cause.message : String(cause))
+                setSaving(false)
+              })
+            },
+          }}
+        />
+      </div>
     </div>
   )
 }

@@ -456,6 +456,20 @@
   padding: 4px;
 }
 
+/*
+ * 600×360 下属性面板只有 216px 高，YAML 文本域占满后“保存笔记属性”会被
+ * 滚出面板。动作贴着面板底部常驻，文本域自己滚——用户不需要先找按钮。
+ */
+.mimir-markdown-properties__footer {
+  position: sticky;
+  bottom: -4px;
+  z-index: 1;
+  margin-top: auto;
+  padding: 6px 0 2px;
+  border-top: 1px solid var(--me-border, #d9d9d9);
+  background: var(--me-surface, #fff);
+}
+
 .mimir-markdown-properties > .me-property-form,
 .mimir-editor--note .me-link .me-property-form,
 .mimir-editor--note .me-insert > .me-property-form {

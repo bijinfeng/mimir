@@ -1,0 +1,703 @@
+packages/renderer test:  ✓ src/theme/design.test.ts (109 tests) 618ms
+packages/renderer test:  ✓ src/components/document/MarkdownBody.test.tsx (5 tests) 543ms
+packages/renderer test:    ✓ renders saved WaveDrom fences read-only and preserves source on a drawing error 470ms
+packages/renderer test: stderr | src/editor/markdown-save.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-save.test.tsx (11 tests) 551ms
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx > tag metadata never applies its body snapshot; failed refresh keeps editor and retries only GET
+packages/renderer test: Each child in a list should have a unique "key" prop.
+packages/renderer test: 
+packages/renderer test: Check the render method of `div`. It was passed a child from DocumentHeader. See https://react.dev/link/warning-keys for more information.
+packages/renderer test: 
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx > tag metadata never applies its body snapshot; failed refresh keeps editor and retries only GET
+packages/renderer test: Each child in a list should have a unique "key" prop.
+packages/renderer test: 
+packages/renderer test: Check the render method of `DocumentHeader`. See https://react.dev/link/warning-keys for more information.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.core.test.tsx (8 tests) 589ms
+packages/renderer test: stderr | src/components/KnowledgeBaseCreateModal.test.tsx > 非法名称就地关联错误并聚焦，组合输入不提交；请求失败保留草稿可重试
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/KnowledgeBaseCreateModal.test.tsx (11 tests) 500ms
+packages/renderer test:  ✓ src/components/library/LibraryView.test.tsx (6 tests) 540ms
+packages/renderer test:  ✓ src/routes/-app-shell.test.tsx (13 tests) 418ms
+packages/renderer test:  ✓ src/components/document/DocumentCommandModal.test.tsx (9 tests) 418ms
+packages/renderer test: stderr | src/editor/markdown-slash-image.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-slash-image.test.tsx (5 tests) 381ms
+packages/renderer test: stderr | src/components/UnsavedGuard.test.tsx > document leave guard > focuses continue first, excludes IME Escape/Enter and restores invoking focus
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/UnsavedGuard.test.tsx > document leave guard > focuses continue first, excludes IME Escape/Enter and restores invoking focus
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/UnsavedGuard.test.tsx (10 tests) 344ms
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx > returns find and replace Escape/close focus to the live Markdown editor without changing content
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx > returns find and replace Escape/close focus to the live Markdown editor without changing content
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-find-focus.test.tsx (1 test) 360ms
+packages/renderer test:    ✓ returns find and replace Escape/close focus to the live Markdown editor without changing content 360ms
+packages/renderer test:  ✓ src/components/settings/SettingControl.test.tsx (10 tests) 317ms
+packages/renderer test:  ✓ src/components/CaptureDialog.test.tsx (6 tests) 253ms
+packages/renderer test:  ✓ src/components/library/SourceReplaceDialog.test.tsx (3 tests) 279ms
+packages/renderer test: stderr | src/editor/markdown-writing.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-writing.test.tsx (5 tests) 266ms
+packages/renderer test: stderr | src/editor/markdown-toolbar.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-toolbar.test.ts (46 tests) 257ms
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 预设下拉填入连接与建议模型，并聚焦下一步显示名
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/settings/ProviderForm.test.tsx (4 tests) 261ms
+packages/renderer test: stderr | src/components/nav/FolderSection.test.tsx > 编辑改名保留子目录位置，可通过专用回调保留打开的笔记：false
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/nav/FolderSection.test.tsx (3 tests) 223ms
+packages/renderer test:  ✓ src/components/nav/RecentNotes.test.tsx (1 test) 170ms
+packages/renderer test: stderr | src/editor/markdown-agent.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-agent.test.ts (21 tests) 85ms
+packages/renderer test: stderr | src/components/settings/ClientSection.test.tsx > 客户端设置 > 显示真实版本和当前使用方式，关于入口交给桌面路由
+packages/renderer test: An update to ClientSection inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ClientSection.test.tsx > 客户端设置 > 云端使用方式显示服务器来源
+packages/renderer test: An update to ClientSection inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/settings/ClientSection.test.tsx (3 tests) 175ms
+packages/renderer test: 裁剪样式：1414 → 439 条规则，107 KB
+packages/renderer test: 输出 src/generated/editor.css
+packages/renderer test:  ✓ vite-preset.test.ts (3 tests) 194ms
+packages/renderer test: stderr | src/routes/-login-recovery.test.tsx > setup error offers plain recovery guidance and retries into the real login form
+packages/renderer test: An update to LoginPage inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/routes/-login-recovery.test.tsx > setup error offers plain recovery guidance and retries into the real login form
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to EllipsisMeasure inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/routes/-login-recovery.test.tsx (4 tests) 179ms
+packages/renderer test: stderr | src/components/DocumentPanel.commands.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.commands.test.tsx (1 test) 170ms
+packages/renderer test:  ✓ src/components/UploadPanel.test.tsx (5 tests) 160ms
+packages/renderer test:  ✓ src/components/document/DocumentTitle.test.tsx (3 tests) 139ms
+packages/renderer test:  ✓ src/components/library/FolderNameModal.test.tsx (3 tests) 130ms
+packages/renderer test:  ✓ src/components/library/LibraryView.drop.test.tsx (3 tests) 131ms
+packages/renderer test:  ✓ src/editor/diagram-pele.test.ts (13 tests) 117ms
+packages/renderer test: stderr | src/editor/MarkdownImage.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/MarkdownImage.test.tsx (2 tests) 115ms
+packages/renderer test:  ✓ src/routes/-root-recovery.test.tsx (1 test) 129ms
+packages/renderer test:  ✓ src/components/document/FilePreview.test.tsx (3 tests) 97ms
+packages/renderer test:  ✓ src/components/settings/ProviderList.test.tsx (1 test) 96ms
+packages/renderer test:  ✓ src/components/settings/FeedsSection.test.tsx (1 test) 75ms
+packages/renderer test: stderr | src/routes/-settings-scroll.test.tsx > 设置分区使用独立滚动恢复目标，同分区重渲染保留位置而换分区回到顶部
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/routes/-settings-scroll.test.tsx (1 test) 74ms
+packages/renderer test: stderr | src/editor/round-trip.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/round-trip.test.ts (13 tests) 69ms
+packages/renderer test:  ✓ src/lib/api-base-path.test.ts (2 tests) 77ms
+packages/renderer test:  ✓ src/components/document/DocChatSidebar.test.tsx (2 tests) 60ms
+packages/renderer test:  ✓ src/lib/pptx-deck-stream.test.ts (11 tests) 62ms
+packages/renderer test:  ✓ src/components/confirm-danger.test.tsx (1 test) 59ms
+packages/renderer test: stderr | src/components/document/MarkdownHostSlots.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/document/MarkdownHostSlots.test.tsx (1 test) 57ms
+packages/renderer test:  ✓ src/components/library/FileFormatIcon.test.tsx (5 tests) 52ms
+packages/renderer test:  ✓ src/components/settings/UsageHeatmap.test.tsx (4 tests) 49ms
+packages/renderer test:  ✓ src/components/document/DocumentFooter.test.tsx (2 tests) 46ms
+packages/renderer test:  ✓ src/components/marketing/CitationDemo.test.tsx (1 test) 48ms
+packages/renderer test: stderr | src/editor/note-links.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/note-links.test.ts (4 tests) 39ms
+packages/renderer test:  ✓ src/components/document/DocxCapabilityStatus.test.tsx (4 tests) 41ms
+packages/renderer test: stderr | src/editor/math-block.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/math-block.test.ts (3 tests) 43ms
+packages/renderer test: stderr | src/editor/drift.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/drift.test.ts (2 tests) 37ms
+packages/renderer test:  ✓ src/editor/diagram-render.test.ts (9 tests) 37ms
+packages/renderer test:  ✓ src/lib/pdf-ocr-assets.test.ts (1 test) 29ms
+packages/renderer test:  ✓ src/lib/nav-collapse.test.ts (4 tests) 14ms
+packages/renderer test: stderr | src/editor/markdown-find.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-find.test.ts (1 test) 23ms
+packages/renderer test:  ✓ src/components/document/DocChatGuide.test.tsx (1 test) 22ms
+packages/renderer test:  ✓ src/lib/unsaved-update.test.tsx (7 tests) 29ms
+packages/renderer test:  ✓ src/components/nav/menu-items.test.ts (8 tests) 12ms
+packages/renderer test:  ✓ src/platform.test.tsx (3 tests) 11ms
+packages/renderer test:  ✓ src/routes/-public-home.test.tsx (11 tests) 10ms
+packages/renderer test:  ✓ src/theme/appearance.test.ts (9 tests) 8ms
+packages/renderer test:  ✓ src/lib/agent-media.test.ts (4 tests) 9ms
+packages/renderer test:  ✓ src/lib/html-writing-stream.test.ts (4 tests) 6ms
+packages/renderer test:  ✓ src/lib/markdown-writing-stream.test.ts (4 tests) 8ms
+packages/renderer test:  ✓ src/lib/docx-agent-api.test.ts (2 tests) 5ms
+packages/renderer test:  ✓ src/lib/agent-media.check.test.ts (5 tests) 4ms
+packages/renderer test:  ✓ src/lib/markdown-export.test.ts (1 test) 4ms
+packages/renderer test:  ✓ src/lib/recent-documents.test.ts (5 tests) 4ms
+packages/renderer test:  ✓ src/lib/xlsx-validation-api.test.ts (2 tests) 3ms
+packages/renderer test:  ✓ src/lib/chat-save-note.test.ts (5 tests) 3ms
+packages/renderer test:  ✓ src/components/settings/model-config.test.ts (23 tests) 3ms
+packages/renderer test:  ✓ src/router-base-path.test.ts (1 test) 3ms
+packages/renderer test:  ✓ src/lib/chat-attachments-api.test.ts (3 tests) 3ms
+packages/renderer test:  ✓ src/lib/app-path.test.ts (4 tests) 2ms
+packages/renderer test:  ✓ src/components/list-helpers.test.ts (17 tests) 3ms
+packages/renderer test:  ✓ src/lib/office-source-filename.test.ts (2 tests) 2ms
+packages/renderer test:  ✓ src/lib/docx-agent-contract.test.ts (2 tests) 2ms
+packages/renderer test:  ✓ src/components/document/headings.test.ts (2 tests) 2ms
+packages/renderer test: stderr | src/components/DocumentPanel.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.test.ts (3 tests) 1ms
+packages/renderer test:  ✓ src/components/nav/folder-ops.test.ts (2 tests) 1ms
+packages/renderer test:  ✓ src/lib/docx-agent-availability.test.ts (2 tests) 1ms
+packages/renderer test: 
+packages/renderer test:  Test Files  86 passed (86)
+packages/renderer test:       Tests  640 passed (640)
+packages/renderer test:    Start at  00:50:06
+packages/renderer test:    Duration  111.81s (import 58%, tests 26%, environment 14%, transform 1%)
+packages/renderer test: 
+packages/renderer test:      Import  901 modules were evaluated 2517 times · 60.07s total, 58% of tracked time
+packages/renderer test:              ~38.56s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+packages/renderer test:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+packages/renderer test: 
+packages/renderer test: Done
+apps/desktop test$ vitest run
+apps/web test$ vitest run --passWithNoTests
+apps/desktop test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+apps/desktop test: (!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test:   - ESM syntax in a file loaded as CommonJS (renderer-alias.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+apps/desktop test: Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+apps/web test: 
+apps/web test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/web
+apps/web test: 
+apps/web test: No test files found, exiting with code 0
+apps/web test: 
+apps/web test: include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+apps/web test: exclude:  **/node_modules/**, **/.git/**
+apps/web test: 
+apps/desktop test: 
+apps/desktop test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/desktop
+apps/desktop test: 
+apps/web test: Done
+apps/desktop test:  ✓ |main| src/main/host.test.ts (7 tests) 318ms
+apps/desktop test:    ✓ waitForReady (1)
+apps/desktop test:      ✓ 超时明确报错，而不是静默等待 311ms
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > keeps session drain inside the shutdown budget and rejects late completion
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 工作区已关闭，但暂时无法完成重启，更新尚未安装。请关闭客户端并重新启动以恢复使用。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:196:23)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7) {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: true,
+apps/desktop test:   cause: Error: 宿主关闭超时
+apps/desktop test:       at /Users/admin/Desktop/mimir/apps/desktop/src/main/host-shutdown.ts:14:16
+apps/desktop test:       at callTimer (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5167:25)
+apps/desktop test:       at runTimersInRange (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5865:26)
+apps/desktop test:       at doTickInner (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5960:22)
+apps/desktop test:       at doTick (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:5976:21)
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:6066:22
+apps/desktop test:       at Immediate.<anonymous> (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/index.uwTEEBsB.js:6014:30)
+apps/desktop test:       at process.processImmediate (node:internal/timers:504:21)
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > refuses renderer false, unrelated requests, and replies from stale navigation
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 当前内容还没保存或准备已取消，暂未重启。请返回文档处理后重试。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:177:15)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:345:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > refuses renderer false, unrelated requests, and replies from stale navigation
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 当前内容还没保存或准备已取消，暂未重启。请返回文档处理后重试。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:177:15)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:349:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > honors beforeunload veto even after save permission and retains the workspace
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 文档阻止了关闭，请先保存当前内容。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:356:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > stops on window timeout or close exception
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 工作区未能关闭，请返回文档后重试。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7) {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > stops on window timeout or close exception
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: close error
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:374:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > requires manual saving confirmation in cloud and still honors its leave veto
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 请先返回文档保存内容，再确认重启。此服务器页面无法自动确认保存。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:146:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:15)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:26)
+apps/desktop test:     at UpdateController.install (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:284:27)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:380:30
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10) {
+apps/desktop test:   requiresSaveConfirmation: true,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > requires manual saving confirmation in cloud and still honors its leave veto
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 文档阻止了关闭，请先保存当前内容。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:187:13)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:390:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: false
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > marks failed host shutdown as recovery required and cannot retry an installer
+apps/desktop test: [desktop:update] UpdateBlocked [Error]: 工作区已关闭，但暂时无法完成重启，更新尚未安装。请关闭客户端并重新启动以恢复使用。
+apps/desktop test:     at prepareWorkspace (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:196:23)
+apps/desktop test:     at Object.prepareInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:267:9)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:300:7)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:401:5
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20 {
+apps/desktop test:   requiresSaveConfirmation: false,
+apps/desktop test:   recoveryRequired: true,
+apps/desktop test:   cause: Error: database close failed
+apps/desktop test:       at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:400:37
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:       at new Promise (<anonymous>)
+apps/desktop test:       at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10)
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3314:20
+apps/desktop test:       at new Promise (<anonymous>)
+apps/desktop test:       at runWithTimeout (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3272:10)
+apps/desktop test:       at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3895:64
+apps/desktop test: }
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > recovers from synchronous installer error events after the workspace has closed
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at EventEmitter.<anonymous> (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:419:37)
+apps/desktop test:     at EventEmitter.Mock [as quitAndInstall] (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/spy.DDMXghXv.js:353:40)
+apps/desktop test:     at Object.install (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:262:21)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:304:29)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:422:7
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at EventEmitter.<anonymous> (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:419:37)
+apps/desktop test:     at EventEmitter.Mock [as quitAndInstall] (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/spy.DDMXghXv.js:353:40)
+apps/desktop test:     at Object.install (/Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.ts:262:21)
+apps/desktop test:     at UpdateController.runInstall (/Users/admin/Desktop/mimir/apps/desktop/src/main/updater.ts:304:29)
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:422:7
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > native update authorization and restart sequence > recovers from late installer error events after the workspace has closed
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:423:56
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: [desktop:update] Error: installer launch failed
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:423:56
+apps/desktop test:     at async file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:20
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > packaged capability policy > only treats confirmed official HTTP 200 as error after provider failure
+apps/desktop test: [desktop:update] Error: No published versions on GitHub
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:461:41
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2882:64
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10)
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3314:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithTimeout (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3272:10)
+apps/desktop test: 
+apps/desktop test: stderr | src/main/native-updater.test.ts > packaged capability policy > only treats confirmed official HTTP 403 as error after provider failure
+apps/desktop test: [desktop:update] Error: No published versions on GitHub
+apps/desktop test:     at /Users/admin/Desktop/mimir/apps/desktop/src/main/native-updater.test.ts:461:41
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2882:64
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithCancel (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3329:10)
+apps/desktop test:     at file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3314:20
+apps/desktop test:     at new Promise (<anonymous>)
+apps/desktop test:     at runWithTimeout (file:///Users/admin/Desktop/mimir/node_modules/.pnpm/vitest@5.0.4_@types+node@26.6.5_happy-dom@20.14.6_jsdom@28.1.0_@noble+hashes@2.4.0__vit_d1de9a6da26190d0464e3c9cadf2e27a/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3272:10)
+apps/desktop test: 
+apps/desktop test:  ✓ |main| src/main/native-updater.test.ts (24 tests) 84ms
+apps/desktop test:  ✓ |main| src/main/cloud.test.ts (14 tests) 28ms
+apps/desktop test:  ✓ |main| src/main/updater.test.ts (15 tests) 9ms
+apps/desktop test:  ✓ |main| src/main/config.test.ts (7 tests) 8ms
+apps/desktop test:  ✓ |main| src/main/artifacts.test.ts (4 tests) 5ms
+apps/desktop test:  ✓ |main| src/main/workspace-close.test.ts (6 tests) 4ms
+apps/desktop test:  ✓ |main| src/main/release-notes.test.ts (5 tests) 5ms
+apps/desktop test:  ✓ |main| src/main/host-shutdown.test.ts (1 test) 3ms
+apps/desktop test:  ✓ |main| src/main/security.test.ts (5 tests) 2ms
+apps/desktop test:  ✓ |renderer| src/renderer/setup/SetupPage.test.tsx (15 tests) 1331ms
+apps/desktop test:    ✓ 选择页 (15)
+apps/desktop test:      ✓ 读取期间保留品牌和可用窗口控件，不提前显示首启表单 830ms
+apps/desktop test:  ✓ |renderer| src/renderer/update/UpdatePage.test.tsx (12 tests) 209ms
+apps/desktop test:  ✓ |renderer| src/renderer/components/TitleBar.test.tsx (6 tests) 152ms
+apps/desktop test:  ✓ |renderer| src/renderer/routes/-about.test.tsx (1 test) 134ms
+apps/desktop test: 
+apps/desktop test:  Test Files  14 passed (14)
+apps/desktop test:       Tests  122 passed (122)
+apps/desktop test:    Start at  00:51:58
+apps/desktop test:    Duration  6.18s (tests 47%, import 39%, environment 12%, transform 1%, worker 1%)
+apps/desktop test: 
+apps/desktop test:     Isolate  14 workers spawned · ~135ms startup each (spawn + environment, per file)
+apps/desktop test:              at least ~1.76s faster with isolate: false — reuses workers across files instead of one per file
+apps/desktop test: 
+apps/desktop test: Done
+✔ mac manual verification pins the official stable ZIP and exact architecture (3.338125ms)
+✔ manual acceptance rejects automatic states, source drift or wrong versions (0.580625ms)
+✔ official ZIP download resumes exact ranges and only reuses a fully verified cache (18.340708ms)
+✔ official ZIP download rejects untrusted resume responses without modifying the partial file (4.959333ms)
+✔ official ZIP download verifies fresh and empty files and rejects corrupt or linked cache bytes (9.466208ms)
+✔ official ZIP download enforces stall and overall deadlines while preserving received bytes (46.5335ms)
+✔ download cache is restricted to real prior harness temporary roots (3.165333ms)
+✔ a relocated real resource tree retains every file and byte in a portable sorted manifest (28.117125ms)
+✔ verification reports precise missing, extra, size and same-size hash changes together (24.205333ms)
+✔ unsafe and duplicate manifest entries are rejected before resource traversal (0.549375ms)
+✔ resource links and linked roots cannot traverse outside the package (20.590041ms)
+✔ CLI writes only relative evidence, rejects differences and prevents self-inclusion (636.592917ms)
+✔ native artifact names survive builder extension-specific architecture mapping (837.994333ms)
+✔ stable versions require an exact tag and reject prereleases, padding and malformed input (0.174042ms)
+✔ committed desktop and fnOS versions must exactly agree before builds (0.163833ms)
+✔ desktop and fnOS byte sets aggregate with both mac architectures and matching compatibility ZIP (62.977583ms)
+✔ fnOS staging requires manual mode and a correctly versioned nonempty regular FPK, without updater metadata (22.808334ms)
+✔ missing fnOS and tampered FPK bytes block the entire release before output creation (69.521708ms)
+✔ fnOS wrong identity, architecture, hashes and Electron metadata fail closed (375.153542ms)
+✔ missing platform, stale manifest and modified bytes cannot form a release (43.263875ms)
+✔ malicious references, duplicate files and invalid metadata SHA-512 are rejected (18.232667ms)
+✔ mismatched mac signing mode cannot publish a mixed channel (20.550084ms)
+✔ macOS signed mode is explicit and fails closed without full credentials (0.213666ms)
+✔ draft publishes only after every remote asset passes validation (29.365625ms)
+✔ a missing or different remote tag stops all draft mutations (25.997459ms)
+✔ a remote tag moved during upload prevents publication (22.556833ms)
+✔ owned draft recovery uses the verified tag and marker, not target creation metadata (20.498875ms)
+✔ remote tag resolution peels annotated objects and rejects invalid or cyclic graphs (0.263125ms)
+✔ GitHub failures include operation, message, permission and request ID without secrets or URL queries (5.898084ms)
+✔ missing fnOS or its remote upload/digest failure never publishes a partial desktop release (24.893208ms)
+✔ downloaded release directory rechecks FPK bytes, size and both digests before remote mutations (109.554208ms)
+✔ upload failure or remote digest mismatch leaves the release unpublished (25.452125ms)
+✔ published releases and unrelated drafts are immutable on rerun (23.368209ms)
+✔ incomplete manifest fails before creating a draft (26.5735ms)
+✔ only an owned draft can replace partial uploads; unknown draft assets stop recovery (23.137791ms)
+✔ hoisted resources keep nested versions and file aliases after source removal and relocation (82.845708ms)
+✔ non-portable absolute resource link aborts instead of following the graph (4.279125ms)
+✔ non-portable outside resource link aborts instead of following the graph (5.013958ms)
+✔ non-portable directory-cycle resource link aborts instead of following the graph (6.348583ms)
+✔ non-portable broken resource link aborts instead of following the graph (4.242583ms)
+✔ native close waits for a mapped closable window in the confirmed relaunched PID set before one request (10.3975ms)
+✔ native close cannot silently succeed without a confirmed target; cleanup records an optional absence (11.586458ms)
+✔ native close rejection, request errors and exit veto are audited and never cause a second close (0.784375ms)
+✔ cleanup only observes an already-requested process after exit veto, even if its window identity changes (0.158167ms)
+✔ explicit launches get distinct available loopback endpoints and release their probes before use (7.225333ms)
+✔ OS reuse of a previous launch port is rejected, closed, and retried with a bounded allocation limit (0.784458ms)
+✔ debug endpoint allocation propagates bind/close errors and rejects non-loopback or invalid addresses (2.698291ms)
+✔ pins exact stable versions and rejects equal, lower or prerelease versions (0.322042ms)
+✔ only accepts complete, stable official public release asset with digest (0.312875ms)
+✔ hashes actual file bytes and detects changed package contents (6.634375ms)
+✔ bounded waits require the actual condition and retain the last failure (13.937542ms)
+✔ screenshot preview explicitly foregrounds its target before reading state or waiting for paint (0.214667ms)
+✔ screenshot preview identifies the failing phase and preserves target-close or timeout errors (0.170625ms)
+✔ screenshot capture waits for finite motion and two painted frames, ignoring infinite spinners (0.20275ms)
+✔ screenshot paint helper runs as an isolated serialized browser expression (0.564125ms)
+✔ screenshot paint timeout and page errors fail capture and clean up their pending waits (0.141125ms)
+✔ CDP paint evaluation has an external five-second deadline even without any renderer response (12.972583ms)
+✔ CDP clears custom request timers on response, target closure and synchronous send failure (0.624209ms)
+✔ CDP correlates out-of-order replies and rejects interrupted requests (0.177666ms)
+✔ renderer exceptions fail the harness rather than becoming a false success (0.0695ms)
+✔ real close during mouse release needs explicit target disappearance confirmation (0.1805ms)
+✔ closing clicks still verify disappearance when CDP acknowledges the release (0.08175ms)
+✔ unexpected target closure and mouse/protocol failures are never accepted as clicks (0.122875ms)
+✔ verifies real root updater manifest and normalized main bytes without platform-specific listing (37.178541ms)
+✔ reads real ASAR entry bytes through either input separator convention (7.929375ms)
+✔ manifest declaration and a nested updater cannot replace the actual root dependency (7.56875ms)
+✔ wrong bundled updater version fails even when the outer declaration is correct (7.894875ms)
+✔ updater manifest without executable entry bytes cannot pass package verification (4.822167ms)
+✔ updater entry escaping its package is rejected (12.051166ms)
+✔ 关闭 pnpm 包装进程时，监听端口的孙进程也退出 (204.236333ms)
+✔ pnpm 已退出后仍能清理监听端口的孙进程 (450.889625ms)
+✔ FPK manifest validates exact application, release version, architecture and runtime (0.6085ms)
+✔ fnpack source is fixed and downloaded bytes fail closed on mismatch (0.457459ms)
+✔ archive paths cannot escape the extraction tree (0.106958ms)
+✔ real nested FPK bytes are extracted and checked before installation smoke (1057.5555ms)
+✔ fnOS install stores owner credentials only in protected persistent config (980.741417ms)
+✔ fnOS install rejects invalid owner input without writing credentials (110.830625ms)
+✔ fnOS package declares the gateway, x86 runtime and icons (2.213291ms)
+✔ fnOS lifecycle starts on a Unix socket and stops idempotently (959.349958ms)
+✔ clean route generation prepares shared types and keeps desktop extras out of the base tree (1212.381584ms)
+ℹ tests 80
+ℹ suites 0
+ℹ pass 80
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2365.636125
+[status: completed, exit code: 0]

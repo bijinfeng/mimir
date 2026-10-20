@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Markdown 二级浮层 · 真实前后</title>
+    <style>
+      :root {
+        font:
+          14px/1.6 system-ui,
+          -apple-system,
+          'PingFang SC',
+          sans-serif;
+        color: #242824;
+        background: #f5f6f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        padding: 24px 28px 16px;
+        border-bottom: 1px solid #dfe3df;
+        background: #fff;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 8px 0;
+        color: #555f57;
+        max-width: 95ch;
+      }
+      a {
+        color: #236648;
+      }
+      main {
+        padding: 20px 28px 40px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      select,
+      button {
+        font: inherit;
+        background: #fff;
+        color: inherit;
+        border: 1px solid #c8d0c9;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #e7f0e9;
+        color: #1d5f38;
+        border-color: #8aa992;
+      }
+      .meta {
+        margin: 0 0 16px;
+        color: #555f57;
+      }
+      .frames {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d8ded8;
+        background: #fff;
+      }
+      footer {
+        border-top: 1px solid #dfe3df;
+        padding: 18px 28px;
+        background: #fff;
+        color: #555f57;
+      }
+      @media (max-width: 760px) {
+        header,
+        main,
+        footer {
+          padding-inline: 16px;
+        }
+        .frames {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Markdown 二级浮层 · 真实前后</h1>
+      <p>
+        2026-10-20 · 2 组同页面、同主题、同尺寸的真实产品截图：390px 下属性面板被左侧导航遮挡，以及
+        600×360 下保存动作滚出面板。
+      </p>
+      <p>修复同时作用于共享 Office 工具条弹层：面板先限制在编辑器外壳内，再按视口可用高度限高。</p>
+    </header>
+    <main>
+      <div class="toolbar">
+        <label
+          >场景
+          <select id="scene">
+            <option value="props-390">属性面板 · 390×844</option>
+            <option value="props-600x360">属性面板 · 600×360 短窗口</option>
+          </select></label
+        >
+        <div role="group" aria-label="对比模式">
+          <button data-mode="compare" aria-pressed="true">前后并排</button
+          ><button data-mode="before" aria-pressed="false">修改前</button
+          ><button data-mode="after" aria-pressed="false">修改后</button>
+        </div>
+      </div>
+      <p class="meta" id="meta"></p>
+      <div class="frames" id="frames">
+        <figure>
+          <figcaption>修改前 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改前真实渲染" />
+        </figure>
+        <figure>
+          <figcaption>修改后 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改后真实渲染" />
+        </figure>
+      </div>
+    </main>
+    <footer>测试账号与固定笔记内容；没有执行真实属性写入。HTML 快照随后保存。</footer>
+    <script>
+      const scenes = [
+        {
+          id: 'props-390',
+          title: '属性面板 · 390×844',
+          width: 390,
+          height: 844,
+          before: 'before/props-390.png',
+          after: 'after/props-390.png',
+        },
+        {
+          id: 'props-600x360',
+          title: '属性面板 · 600×360 短窗口',
+          width: 600,
+          height: 360,
+          before: 'before/props-600x360.png',
+          after: 'after/props-600x360.png',
+        },
+      ]
+      const select = document.getElementById('scene')
+      const meta = document.getElementById('meta')
+      const figures = document.querySelectorAll('#frames figure')
+      const imgs = document.querySelectorAll('#frames img')
+      const links = document.querySelectorAll('#frames figcaption a')
+      let mode = 'compare'
+      function render() {
+        const s = scenes.find((x) => x.id === select.value) || scenes[0]
+        meta.textContent = `${s.title}`
+        figures[0].style.display = mode === 'after' ? 'none' : 'block'
+        figures[1].style.display = mode === 'before' ? 'none' : 'block'
+        imgs[0].src = s.before
+        links[0].href = s.before
+        imgs[1].src = s.after
+        links[1].href = s.after
+      }
+      select.addEventListener('change', render)
+      document.querySelectorAll('[data-mode]').forEach((button) =>
+        button.addEventListener('click', () => {
+          mode = button.dataset.mode
+          document
+            .querySelectorAll('[data-mode]')
+            .forEach((b) => b.setAttribute('aria-pressed', String(b === button)))
+          render()
+        }),
+      )
+      render()
+    </script>
+  </body>
+</html>

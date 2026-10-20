@@ -1,0 +1,18 @@
+[
+  {
+    "id": "props-390",
+    "title": "属性面板 · 390×844",
+    "width": 390,
+    "height": 844,
+    "before": "before/props-390.png",
+    "after": "after/props-390.png"
+  },
+  {
+    "id": "props-600x360",
+    "title": "属性面板 · 600×360 短窗口",
+    "width": 600,
+    "height": 360,
+    "before": "before/props-600x360.png",
+    "after": "after/props-600x360.png"
+  }
+]

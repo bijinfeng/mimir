@@ -48,7 +48,7 @@
 | --- | --- | --- |
 | 17 桌面客户端与更新 | 已完成 | `docs/visual-comparisons/2026-10-20-desktop-client`；全仓 check exit 0 |
 | 18 设置页二级 | 已完成 | `docs/visual-comparisons/2026-10-20-settings-secondary`；待全仓 check |
-| 19 Markdown 二级 | 待开始 | — |
+| 19 Markdown 二级 | 已完成 | `docs/visual-comparisons/2026-10-20-markdown-secondary`；待全仓 check |
 | 20 HTML 二级 | 待开始 | — |
 | 21 DOCX 二级 | 待开始 | — |
 | 22 XLSX 二级 | 待开始 | — |

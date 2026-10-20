@@ -1314,6 +1314,40 @@ describe('ToolbarMenu', () => {
     expect(host.querySelector('[role="menu"]')).toBeNull()
   })
 
+  it('390px 下把面板限制在编辑器外壳内，不压到左侧导航', () => {
+    const host = mount(
+      <div className="mimir-editor">
+        <ToolbarMenu label="笔记属性" panelWidth={360} items={items} />
+      </div>,
+    )
+    const editor = host.querySelector<HTMLElement>('.mimir-editor')!
+    const trigger = host.querySelector<HTMLButtonElement>('.me-btn')!
+    const rect = (left: number, top: number, width: number, height: number) =>
+      ({
+        left,
+        top,
+        right: left + width,
+        bottom: top + height,
+        width,
+        height,
+        x: left,
+        y: top,
+        toJSON() {},
+      }) as DOMRect
+    editor.getBoundingClientRect = () => rect(52, 0, 338, 844)
+    trigger.getBoundingClientRect = () => rect(210, 80, 67, 48)
+    const originalWidth = Object.getOwnPropertyDescriptor(window, 'innerWidth')
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
+    try {
+      click(trigger)
+      const panel = host.querySelector<HTMLElement>('[role="menu"]')!
+      expect(panel.style.left).toBe('60px')
+      expect(panel.style.width).toBe('322px')
+    } finally {
+      if (originalWidth) Object.defineProperty(window, 'innerWidth', originalWidth)
+    }
+  })
+
   it('renderPanel 拿得到 close，面板内容由调用方决定', () => {
     const host = mount(
       <ToolbarMenu label="插入" renderPanel={(close) => <button onClick={close}>自定义</button>} />,

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "props-390",
+    "title": "属性面板 · 390×844",
+    "width": 390,
+    "height": 844,
+    "before": "before/props-390.png",
+    "after": "after/props-390.png",
+    "before_sha256": "bbb52a1fe884f8527ebcb93e7ebe5aa3db6f86e41b810658c3f9379f888338b0",
+    "before_bytes": 79638,
+    "after_sha256": "351ce99a33c2b9d17a43213effed843abd06a03d1f904ec93ff6b0465ce382b8",
+    "after_bytes": 81997
+  },
+  {
+    "id": "props-600x360",
+    "title": "属性面板 · 600×360 短窗口",
+    "width": 600,
+    "height": 360,
+    "before": "before/props-600x360.png",
+    "after": "after/props-600x360.png",
+    "before_sha256": "b9d8094e63b1b88d8618bb59a406a09f28b3834bbbb9602b0b341dec684c63ad",
+    "before_bytes": 42536,
+    "after_sha256": "a10ef767bd959cf6e3ead1042febbe7b3b410e0ce558493f649df4ad6a35d46b",
+    "after_bytes": 44456
+  }
+]

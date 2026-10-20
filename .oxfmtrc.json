@@ -26,6 +26,7 @@
     ".trellis/tasks/**",
     // Raw component DOM captured as visual evidence; formatting would rewrite the archived bytes.
     "docs/visual-comparisons/2026-10-20-desktop-client/{before,after}/**/*.html",
-    "docs/visual-comparisons/2026-10-20-settings-secondary/{before,after}/**/*.html"
+    "docs/visual-comparisons/2026-10-20-settings-secondary/{before,after}/**/*.html",
+    "docs/visual-comparisons/2026-10-20-markdown-secondary/{before,after}/**/*.html"
   ]
 }

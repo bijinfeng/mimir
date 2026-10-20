@@ -1251,6 +1251,8 @@ interface PopupPosition {
   top?: number
   bottom?: number
   left: number
+  width: number
+  maxHeight?: number
 }
 
 /** 面板最小可用宽度，与 `shell.css` 的 `.me-menu__panel` 保持一致 */
@@ -1306,7 +1308,11 @@ function insidePanel(panel: HTMLElement | null, target: Node): boolean {
  * 坐标是**打开那一刻**算出来的。滚动之后触发按钮已经不在原处，面板还悬在
  * 旧位置——比关掉更让人困惑。改窗口大小同理。
  */
-function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH, estimatedHeight = POPUP_EST_HEIGHT) {
+function useToolbarPopup(
+  panelWidth = POPUP_MIN_WIDTH,
+  estimatedHeight = POPUP_EST_HEIGHT,
+  limitHeight = true,
+) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<PopupPosition | null>(null)
@@ -1320,17 +1326,47 @@ function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH, estimatedHeight = POPUP_E
     // 位置在**事件里**算：渲染期读 ref 会被 React Compiler 判违规
     const rect = triggerRef.current?.getBoundingClientRect()
     if (rect === undefined) {
-      setPosition({ top: 0, left: 0 })
+      setPosition({
+        top: 0,
+        left: 0,
+        width: panelWidth,
+        ...(limitHeight ? { maxHeight: estimatedHeight } : {}),
+      })
       return
     }
-    const width = Math.min(panelWidth, window.innerWidth - 16)
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
+    /**
+     * 弹层先受**编辑器外壳**约束，再受视口约束。
+     *
+     * 只看视口的问题在 390px 下实测过：编辑器左侧还有 52px 导航轨，一个
+     * 360px 的属性面板按视口居中会压到导航轨上，面板左侧的文字被裁掉。
+     * 外壳宽度为 0 时（测试环境或尚未布局）回退到视口。
+     */
+    const host = triggerRef.current?.closest('.mimir-editor')?.getBoundingClientRect()
+    const outerLeft = host !== undefined && host.width > 0 ? host.left : 0
+    const outerRight = host !== undefined && host.width > 0 ? host.right : window.innerWidth
+    const leftBound = Math.max(8, outerLeft + 8)
+    const rightBound = Math.min(window.innerWidth - 8, outerRight - 8)
+    const width = Math.min(panelWidth, Math.max(0, rightBound - leftBound))
+    const left = Math.max(leftBound, Math.min(rect.left, rightBound - width))
     const below = window.innerHeight - rect.bottom
+    const openAbove = below < estimatedHeight && rect.top > below
+    /**
+     * 面板高度也不能只靠 CSS 的 `60vh`：600×360 下属性面板 258px 高，
+     * 即使页脚能滚到，面板仍会压着视口底边。这里按**实际可用空间**限高，
+     * 并保留 8px 边距，内容在面板内部滚动。
+     */
+    const available = Math.max(0, openAbove ? rect.top - 12 : window.innerHeight - rect.bottom - 12)
+    const maxHeight = Math.min(window.innerHeight * 0.6, available)
     setPosition(
-      below < estimatedHeight && rect.top > below
+      openAbove
         ? // 下方放不下就往上展开：用 `bottom` 锚定，面板实际高度与估计值不同也不会越过按钮
-          { bottom: window.innerHeight - rect.top + 4, left }
-        : { top: rect.bottom + 4, left },
+          {
+            bottom: window.innerHeight - rect.top + 4,
+            left,
+            width,
+            ...(limitHeight ? { maxHeight } : {}),
+          }
+        : { top: rect.bottom + 4, left, width, ...(limitHeight ? { maxHeight } : {}) },
     )
   }
 
@@ -1660,6 +1696,13 @@ export function ToolbarMenu({
   }
 
   const hasItems = items !== undefined && items.length > 0
+  const panelStyle = {
+    top: position?.top,
+    bottom: position?.bottom,
+    left: position?.left,
+    width: position?.width,
+    maxHeight: position?.maxHeight,
+  }
 
   return (
     <span className="me-menu">
@@ -1694,19 +1737,7 @@ export function ToolbarMenu({
           aria-label={label}
           tabIndex={-1}
           onKeyDown={onPanelKeyDown}
-          style={
-            position.bottom === undefined
-              ? {
-                  top: position.top,
-                  left: position.left,
-                  ...(panelWidth ? { width: Math.min(panelWidth, window.innerWidth - 16) } : {}),
-                }
-              : {
-                  bottom: position.bottom,
-                  left: position.left,
-                  ...(panelWidth ? { width: Math.min(panelWidth, window.innerWidth - 16) } : {}),
-                }
-          }
+          style={panelStyle}
         >
           {renderPanel !== undefined ? (
             renderPanel(close)
@@ -1949,6 +1980,7 @@ export function ToolbarColorPicker({
   const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup(
     allowCustomRgb ? 260 : undefined,
     allowCustomRgb ? 340 : undefined,
+    false,
   )
   const current = options.find((option) => option.value === value)
   const currentSwatch = current?.swatch ?? (allowCustomRgb ? normalizedRgb(value) : null)
