@@ -1476,3 +1476,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 52: 试用 Pele 渲染 Mermaid 图表
+<!-- trellis-session: v=2 fp=8facbef21be8a629 -->
+
+**Date**: 2026-10-20
+**Task**: 试用 Pele 渲染 Mermaid 图表
+**Branch**: `codex/pele-mermaid-trial`
+
+### Summary
+
+接入 Pele1.6 动态渲染并保留 strict Mermaid 回退与 SVG 隔离；35项专项、120组真实组件前后对比及完整 pnpm check 通过（VITEST_MAX_WORKERS=1，exit0）。归档 HTML、截图、源码哈希与中文长标签/主题限制；任务已归档，未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `388f1c0a5f6dc1852fcf1235e9e0e9be850d909e` | feat(renderer): trial Pele with Mermaid fallback |
+
+### Status
+
+[OK] **Completed**
