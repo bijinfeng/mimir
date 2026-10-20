@@ -74,6 +74,8 @@ export function chooseInkAnchor(anchors: Anchor[], point: InkPoint): Anchor | nu
 interface Gesture {
   pointer: number
   doc: PmNode
+  geometry: Geometry
+  origin: InkPoint
   anchor: Anchor | null
   points: InkPoint[]
   erased: Set<string>
@@ -103,18 +105,32 @@ export function DocxInkOverlay({
   const [previewAnchor, setPreviewAnchor] = useState<Anchor | null>(null)
   const [preview, setPreview] = useState<InkStroke | null>(null),
     [erased, setErased] = useState<string[]>([])
-  const measure = useCallback(() => {
-    const stage = svg.current?.parentElement
-    if (!stage || editor.isDestroyed) return
-    const next = measureInkAnchors(editor, stage, zoom)
-    setGeometry((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
-  }, [editor, zoom])
   const cancel = useCallback(() => {
     gesture.current = null
     setPreview(null)
     setPreviewAnchor(null)
     setErased([])
   }, [])
+  const measure = useCallback(() => {
+    const canvas = svg.current,
+      stage = canvas?.parentElement
+    if (!canvas || !stage || editor.isDestroyed) return
+    const next = measureInkAnchors(editor, stage, zoom)
+    const g = gesture.current
+    if (g) {
+      const origin = canvas.getBoundingClientRect()
+      // Decoration-only transactions may leave the current stroke valid. A content
+      // write or layout shift still invalidates its frozen document/coordinates.
+      if (
+        editor.state.doc !== g.doc ||
+        origin.left !== g.origin.x ||
+        origin.top !== g.origin.y ||
+        JSON.stringify(next) !== JSON.stringify(g.geometry)
+      )
+        cancel()
+    }
+    setGeometry((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
+  }, [editor, zoom, cancel])
   useEffect(() => {
     queueMicrotask(measure)
     const stage = svg.current?.parentElement
@@ -145,7 +161,7 @@ export function DocxInkOverlay({
       measure()
     }
     const unsubscribe = controller.subscribe(changed)
-    editor.on('transaction', changed)
+    editor.on('transaction', measure)
     window.addEventListener('blur', cancel)
     window.addEventListener('scroll', cancel, true)
     window.addEventListener('resize', cancel)
@@ -175,7 +191,7 @@ export function DocxInkOverlay({
     return () => {
       unsubscribe()
       shell?.removeEventListener('keydown', escape)
-      editor.off('transaction', changed)
+      editor.off('transaction', measure)
       window.removeEventListener('blur', cancel)
       window.removeEventListener('scroll', cancel, true)
       window.removeEventListener('resize', cancel)
@@ -242,6 +258,11 @@ export function DocxInkOverlay({
     const g: Gesture = {
       pointer: event.pointerId,
       doc: editor.state.doc,
+      geometry: measured,
+      origin: {
+        x: event.currentTarget.getBoundingClientRect().left,
+        y: event.currentTarget.getBoundingClientRect().top,
+      },
       anchor,
       points: [],
       erased: new Set(),

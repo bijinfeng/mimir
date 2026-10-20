@@ -220,6 +220,53 @@ it('keeps the first stroke when focusing the canvas would scroll its ancestor', 
   expect(inkAnnotations(editor.state.doc)[0]!.stroke!.points).toHaveLength(3)
   expect(undoDepth(editor.state)).toBe(1)
 })
+it('keeps a stroke across display-only transactions when document and measured geometry stay fixed', async () => {
+  const { host, overlay, editor } = await boot()
+  await click(host, '荧光笔')
+  await pointer(overlay, 'pointerdown', 110, 170)
+  await pointer(overlay, 'pointermove', 140, 180)
+  expect(overlay.querySelector('path')).not.toBeNull()
+  const before = editor.state.doc
+  // Pagination publishes decoration metadata asynchronously, without a content edit.
+  await act(async () => editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false)))
+  expect(editor.state.doc).toBe(before)
+  expect(overlay.querySelector('path')).not.toBeNull()
+  await pointer(overlay, 'pointerup', 150, 185)
+  expect(inkAnnotations(editor.state.doc)).toHaveLength(1)
+  expect(inkAnnotations(editor.state.doc)[0]!.stroke!.points).toHaveLength(3)
+  expect(inkAnnotations(editor.state.doc)[0]!.stroke!.tool).toBe('highlighter')
+  expect(undoDepth(editor.state)).toBe(1)
+})
+it('cancels a display-only transaction if the canvas viewport origin changed', async () => {
+  const { host, overlay, editor, zoomState } = await boot()
+  await click(host, '荧光笔')
+  await pointer(overlay, 'pointerdown', 110, 170)
+  await pointer(overlay, 'pointermove', 140, 180)
+  expect(overlay.querySelector('path')).not.toBeNull()
+  const before = editor.state.doc
+  zoomState.scroll = 24
+  await act(async () => editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false)))
+  expect(overlay.querySelector('path')).toBeNull()
+  await pointer(overlay, 'pointerup', 150, 185)
+  expect(editor.state.doc).toBe(before)
+  expect(inkAnnotations(editor.state.doc)).toHaveLength(0)
+  expect(undoDepth(editor.state)).toBe(0)
+})
+it('cancels a display-only transaction if paragraph or canvas geometry changed', async () => {
+  const { host, overlay, editor, zoomState } = await boot()
+  await click(host, '荧光笔')
+  await pointer(overlay, 'pointerdown', 110, 170)
+  await pointer(overlay, 'pointermove', 140, 180)
+  expect(overlay.querySelector('path')).not.toBeNull()
+  const before = editor.state.doc
+  zoomState.value = 1.2
+  await act(async () => editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false)))
+  expect(overlay.querySelector('path')).toBeNull()
+  await pointer(overlay, 'pointerup', 150, 185)
+  expect(editor.state.doc).toBe(before)
+  expect(inkAnnotations(editor.state.doc)).toHaveLength(0)
+  expect(undoDepth(editor.state)).toBe(0)
+})
 it('cancels pointercancel, external document writes, scrolling, tool changes and Escape without fake history', async () => {
   const state = await boot(),
     { host, editor, overlay } = state
@@ -230,7 +277,10 @@ it('cancels pointercancel, external document writes, scrolling, tool changes and
   expect(inkAnnotations(editor.state.doc)).toHaveLength(0)
   expect(undoDepth(editor.state)).toBe(0)
   await pointer(overlay, 'pointerdown', 110, 170)
+  await pointer(overlay, 'pointermove', 140, 180)
+  expect(overlay.querySelector('path')).not.toBeNull()
   await act(async () => editor.commands.insertContentAt(2, 'manual'))
+  expect(overlay.querySelector('path')).toBeNull()
   await pointer(overlay, 'pointerup', 140, 180)
   expect(inkAnnotations(editor.state.doc)).toHaveLength(0)
   await pointer(overlay, 'pointerdown', 110, 170)

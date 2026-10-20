@@ -1,0 +1,34 @@
+裁剪样式：1414 → 439 条规则，107 KB
+输出 src/generated/editor.css
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
+
+ ❯ src/editors/DocxEditor.ink.test.tsx (18 tests | 1 failed | 15 skipped) 489ms
+   × keeps a stroke across display-only transactions when document and measured geometry stay fixed 261ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editors/DocxEditor.ink.test.tsx > keeps a stroke across display-only transactions when document and measured geometry stay fixed
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ src/editors/DocxEditor.ink.test.tsx:233:44
+    231|   expect(editor.state.doc).toBe(before)
+    232|   await pointer(overlay, 'pointerup', 150, 185)
+    233|   expect(inkAnnotations(editor.state.doc)).toHaveLength(1)
+       |                                            ^
+    234|   expect(inkAnnotations(editor.state.doc)[0]!.stroke!.points).toHaveLe…
+    235|   expect(inkAnnotations(editor.state.doc)[0]!.stroke!.tool).toBe('high…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 15 skipped (18)
+   Start at  15:43:48
+   Duration  4.02s (import 62%, environment 15%, tests 13%, transform 11%)
