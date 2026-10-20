@@ -9,7 +9,7 @@
 ## Findings (not fixed)
 
 - Cleanup uses the returned uninstaller process's `WaitForExit(60000)`. An NSIS uninstaller can spawn a temporary copy, so the “cleanup complete” phase alone does not prove every descendant has exited. This is a cleanup/evidence limitation, not a substitute for the preceding real installed application checks; installation resource comparison and full A/B/C smoke remain required. No cleanup success claim should be treated as installed application or upgrade acceptance.
-- The fresh deployed S3 runtime probe is owned by the implementation agent and was pending this review. The narrow explicit `@aws-sdk/client-s3` external declaration preserves `preserveModulesRoot`, server entry paths and native dependency declarations; source inspection alone cannot prove the relocated package resolves it.
+- The fresh deployed S3 runtime probe is owned by the implementation agent. Its subsequently completed report, `github-windows-install-fixes.md`, records a successful Node22 relocation outside the checkout, SDK resolution within that deployment, 12 signed HTTP requests through the real built storage adapter and standard-account production-host HTTP checks. This checker reviewed that evidence without repeating its deployment. The narrow explicit `@aws-sdk/client-s3` external declaration preserves `preserveModulesRoot`, server entry paths and native dependency declarations; Windows installed acceptance remains separate.
 - Real Windows runner execution and actual cross-version updates were not run by this review. The previous installed-smoke failure remains unresolved until the new runner passes.
 
 ## Verified code paths

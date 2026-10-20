@@ -1,0 +1,15 @@
+$ pnpm routes:generate && tsc --noEmit && vite build
+$ node ../../packages/renderer/generate-routes.mjs src/routeTree.gen.ts
+路由树已生成 → /Users/admin/Desktop/mimir/apps/web/src/routeTree.gen.ts
+../../packages/renderer/src/route-register.ts(2,32): error TS2307: Cannot find module './routeTree.gen' or its corresponding type declarations.
+../../packages/renderer/src/routes/_app.chat.tsx(39,38): error TS2345: Argument of type '"/_app/chat"' is not assignable to parameter of type 'undefined'.
+../../packages/renderer/src/routes/_app.docs.tsx(16,38): error TS2345: Argument of type '"/_app/docs"' is not assignable to parameter of type 'undefined'.
+../../packages/renderer/src/routes/_app.settings.tsx(110,38): error TS2345: Argument of type '"/_app/settings"' is not assignable to parameter of type 'undefined'.
+../../packages/renderer/src/routes/_app.tsx(60,38): error TS2345: Argument of type '"/_app"' is not assignable to parameter of type 'undefined'.
+../../packages/renderer/src/routes/index.tsx(4,38): error TS2345: Argument of type '"/"' is not assignable to parameter of type 'undefined'.
+../../packages/renderer/src/routes/index.tsx(6,18): error TS2339: Property 'publicHome' does not exist on type 'never'.
+../../packages/renderer/src/routes/login.tsx(45,38): error TS2345: Argument of type '"/login"' is not assignable to parameter of type 'undefined'.
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/admin/Desktop/mimir/apps/web

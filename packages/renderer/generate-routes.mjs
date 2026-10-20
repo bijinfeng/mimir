@@ -44,7 +44,17 @@ const extraRoutes =
     ? { directory: resolve(process.cwd(), extraDirArg), pathPrefix: extraPrefix }
     : undefined
 
-const config = getConfig(routeGeneratorConfig({ generatedRouteTree, extraRoutes }), PKG_ROOT)
+async function generate(tree, routes) {
+  const config = getConfig(
+    routeGeneratorConfig({ generatedRouteTree: tree, extraRoutes: routes }),
+    PKG_ROOT,
+  )
+  await new Generator({ root: PKG_ROOT, config }).run()
+  console.log(`路由树已生成 → ${tree}`)
+}
 
-await new Generator({ root: PKG_ROOT, config }).run()
-console.log(`路由树已生成 → ${generatedRouteTree}`)
+// 消费方的 tsc 也会读 renderer 的 route-register.ts；干净检出必须先有基础类型树。
+// 基础树永远不混入桌面专属路由，每个平台仍保留自己的完整树。
+const baseTree = resolve(PKG_ROOT, 'src/routeTree.gen.ts')
+if (generatedRouteTree !== baseTree) await generate(baseTree)
+await generate(generatedRouteTree, extraRoutes)

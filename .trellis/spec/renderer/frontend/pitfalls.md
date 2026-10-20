@@ -27,7 +27,7 @@
 | 热力图的日期键全部静默失配 | 图表库用 `YYYY/M/D`（**不补零**），API 给 `2026-09-18`（补零）——直接 `replaceAll('-','/')` 得到的键永远查不到，自定义规则全部失效而图照常渲染。只在一个 `dateKey()` 里统一转换。见 §12.8 |
 | 热力图少渲染最后几天（含「今天」） | 库的 `gridNum` 从**容器宽度**推，不从日期范围推——CSS 自适应会安静丢掉放不下的天（370 天在 680px 容器里只画 53 列）。自己按日期范围算宽度传给 SVG。见 §12.8 |
 | 热力图有时一格都不画 | antd `Tabs` 切走的面板是 `display: none`，`clientWidth` 为 0 → 列数为 0；且只在挂载时量一次，恢复与否全靠凑巧（实测同一页面来回切，有时 376 格、有时 0 格）。宽度为 0 时**不挂载**该库，用 `ResizeObserver` 等它有位置了再挂（`WhenVisible`）。见 §12.8 |
-| 干净检出直接跑 `typecheck` 找不到 `routeTree.gen.ts` | 路由树是生成物。用 `tsr generate` 显式生成，已写进 typecheck/build 脚本 |
+| 干净检出直接跑 `typecheck` 找不到 `routeTree.gen.ts` | 路由树是生成物。统一调用 `packages/renderer/generate-routes.mjs`（已写进 typecheck/build）：消费方生成自身树前必须先补共享基础树，因公开入口的 route-register.ts 也依赖它。基础树不可混入 desktop extraRoutes；禁止只在 CI 补步骤或跳过 tsc。回归用真实 Generator 并删除实际生成物验证 clean Web/fnOS 构建 |
 | antd 按钮 hover 时「边框一闪 + 内容抖一下」 | 我们给按钮写 `border: none` 而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，白边一闪；border-box 重算让内容内移 1px（实测头像 x 14 → 14.8）。修法是**留一个恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡）。裸 `<button>` 不受影响（没有变体样式），只有 antd `Button` 需要（D-083） |
 
 ## 设置分区与路由滚动恢复

@@ -66,7 +66,7 @@ export type Platform =
 路由文件都报错（见 `src/route-register.ts`）。
 
 路由配置只有一份：`route-config.mjs`，同时被 Vite 插件与 `generate-routes.mjs`
-使用。各写一遍会出现「构建能过、typecheck 看到的是另一棵树」。
+使用。各写一遍会出现「构建能过、typecheck 看到的是另一棵树」。消费方调用生成器时先生成本包基础类型树，再生成自己的树；基础树不接收平台 extraRoutes。直接生成基础树只执行一次。删除生成物后的独立 Web/fnOS 构建也必须通过 tsc，不能依赖先跑全仓 typecheck。
 
 **`RouterContext` 与 `AuthSession` 必须留在公共导出面上**：跨包的文件路由
 要求路由 context 的类型是公开的，否则生成的树每个路由都报 TS2883

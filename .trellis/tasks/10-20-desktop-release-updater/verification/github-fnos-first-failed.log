@@ -1,0 +1,27 @@
+build	Build real fnOS x86 package	﻿2026-10-20T07:18:54.4554059Z ##[group]Run pnpm fnos:build
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4554486Z ^[[36;1mpnpm fnos:build^[[0m
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4609502Z shell: /usr/bin/bash -e {0}
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4609872Z env:
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4610246Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4610773Z   FNOS_FNPACK: /home/runner/work/_temp/fnpack
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4611223Z ##[endgroup]
+build	Build real fnOS x86 package	2026-10-20T07:18:54.4955348Z $ node scripts/build-fnos.mjs
+build	Build real fnOS x86 package	2026-10-20T07:18:54.7417723Z $ pnpm routes:generate && tsc --noEmit && vite build
+build	Build real fnOS x86 package	2026-10-20T07:18:54.7609228Z $ node ../../packages/renderer/generate-routes.mjs src/routeTree.gen.ts
+build	Build real fnOS x86 package	2026-10-20T07:18:55.6304912Z 路由树已生成 → /home/runner/work/mimir/mimir/apps/web/src/routeTree.gen.ts
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4673174Z ##[error]../../packages/renderer/src/route-register.ts(2,32): error TS2307: Cannot find module './routeTree.gen' or its corresponding type declarations.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4688230Z ##[error]../../packages/renderer/src/routes/_app.chat.tsx(39,38): error TS2345: Argument of type '"/_app/chat"' is not assignable to parameter of type 'undefined'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4692018Z ##[error]../../packages/renderer/src/routes/_app.docs.tsx(16,38): error TS2345: Argument of type '"/_app/docs"' is not assignable to parameter of type 'undefined'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4695572Z ##[error]../../packages/renderer/src/routes/_app.settings.tsx(110,38): error TS2345: Argument of type '"/_app/settings"' is not assignable to parameter of type 'undefined'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4699308Z ##[error]../../packages/renderer/src/routes/_app.tsx(60,38): error TS2345: Argument of type '"/_app"' is not assignable to parameter of type 'undefined'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4702560Z ##[error]../../packages/renderer/src/routes/index.tsx(4,38): error TS2345: Argument of type '"/"' is not assignable to parameter of type 'undefined'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4705527Z ##[error]../../packages/renderer/src/routes/index.tsx(6,18): error TS2339: Property 'publicHome' does not exist on type 'never'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.4708918Z ##[error]../../packages/renderer/src/routes/login.tsx(45,38): error TS2345: Argument of type '"/login"' is not assignable to parameter of type 'undefined'.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.5930080Z [ELIFECYCLE] Command failed with exit code 1.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6042256Z Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6042846Z
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6043890Z   × "pnpm recursive run" failed in /home/runner/work/mimir/mimir/apps/web
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6044427Z
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6075903Z [fnOS] pnpm --filter @mimir/web build failed (1)
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6137171Z [ELIFECYCLE] Command failed with exit code 1.
+build	Build real fnOS x86 package	2026-10-20T07:19:00.6158541Z ##[error]Process completed with exit code 1.
