@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>跨模块一致性复核</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f5f6f5;
+        color: #242824;
+        font:
+          14px/1.7 system-ui,
+          'PingFang SC',
+          sans-serif;
+      }
+      main {
+        max-width: 900px;
+        margin: auto;
+        padding: 36px 24px 56px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 8px;
+      }
+      p {
+        color: #555f57;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 24px;
+        background: #fff;
+      }
+      th,
+      td {
+        border: 1px solid #e1e5e2;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f7f8f8;
+        font-weight: 600;
+      }
+      a {
+        color: #236648;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>跨模块一致性复核</h1>
+      <p>
+        2026-10-20 · 模块 27 · 无产品代码改动。弹窗落点、Office 弹层、短窗检查器、390px
+        分类条与主题字号已逐项核对。
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>项</th>
+            <th>结果</th>
+            <th>证据</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>任务弹窗落点</td>
+            <td>统一 56/36/24</td>
+            <td><a href="../2026-10-20-shared-dialogs/comparison.html">共享任务弹窗</a></td>
+          </tr>
+          <tr>
+            <td>Office 工具条弹层</td>
+            <td>限制在编辑器内并按视口限高</td>
+            <td><a href="../2026-10-20-markdown-secondary/comparison.html">Markdown 二级</a></td>
+          </tr>
+          <tr>
+            <td>短窗检查器</td>
+            <td>滚动与固定动作一致</td>
+            <td>
+              <a href="../2026-10-20-html-secondary/comparison.html">HTML</a> ·
+              <a href="../2026-10-20-xlsx-secondary/comparison.html">XLSX</a> ·
+              <a href="../2026-10-20-docx-secondary/index.html">DOCX</a> ·
+              <a href="../2026-10-20-pdf-secondary/README.md">PDF</a>
+            </td>
+          </tr>
+          <tr>
+            <td>390px 分类条</td>
+            <td>四档完整可见</td>
+            <td><a href="../2026-10-20-narrow-workspace/comparison.html">窄屏工作区</a></td>
+          </tr>
+          <tr>
+            <td>主题字号</td>
+            <td>design.test.ts 109 项通过</td>
+            <td>全仓 check</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>剩余：小程序 7 页。</p>
+    </main>
+  </body>
+</html>
