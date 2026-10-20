@@ -36,3 +36,16 @@
 ## 验证边界
 
 本轮无产品GUI或新PNG采集，不用browser-like单测替代实际画面。外部截止修复已独立通过，仍需实际查看后续Windows/Linux截图，再记录守卫在真实有限动画后完整呈现。既有版本、安装、HTTP保存、关闭保护和摘要验收不应改变。
+
+## 显式前台截图与阶段诊断追加复核
+
+2026-10-20，复核当前冻结的 `previewScreenshot`、screenshot 阶段记录及新增两项回归，**未发现新的阻塞问题**。本节不撤回旧失败；按主会话提供的 run39421962037 现场，两个平台在取消守卫后截图5秒失败、尚未进入安装。旧运行未记录visibility/focus/animation状态，因此不能据此确定是遮挡、后台节流或某一种动画导致。
+
+- `previewScreenshot` 显式外部执行 Page.bringToFront，随后只读记录 visibilityState/hidden/hasFocus 与有限动画状态，再调用未改变的只读 settleScreenshotPaint。显式前台是采集预览动作，**不再将整个外部preview称作只读或自动焦点行为证据**；真正的paint helper仍不改DOM/CSS/动画。result.limitation与每张截图 explicitForegroundPreview=true 明确标注这一点。
+- 精确顺序仍为：官方实际下载/摘要通过 → 断言不存在 update.html 窗口 → 用户路径 openDetails → 显式前台截图。新增前台动作在“不自动打开详情”的断言之后，不会替产品打开或隐藏更新窗口来满足该断言。原文“Download must not open or focus”实际只检查target存在性，系统焦点仍由原有limitation注明不作证明。
+- 本次diff没有修改普通退出不安装、真实dirty guard取消、真实HTTP保存等待、安装前旧字节不变、实际AppImage/NSIS替换、自动新进程拉起、版本和文档/标签/文件夹/模式保留的任何判断。前台截图不会调用安装、伪造ACK、提前释放PATCH或直接启动目标安装包。
+- bring-to-front、foreground-state、paint-wait、paint-ready、capture-png、capture-html、complete各阶段写入独立 screenshot-phases.json 与result.screenshots；失败记录 failedPhase/error 并继续抛出，不能静默跳过截图后登记升级通过。
+- 前台命令、状态读取及paint wait分别传外部5000ms；paint helper内部5秒、外部paint wait5秒保持。各阶段分别有上界，不能误称整个preview/PNG/HTML和文件I/O总共五秒。
+- 新增回归核对前台、状态读取、paint顺序及各调用预算；前台target-close、读取/paint超时原异常向外传播，不产生paint-ready。既有无响应socket五秒、cleanup、late-response、序列化、有限动画及无限spinner测试保留。
+
+本轮独立执行 Node22两组脚本 **23/23 pass**，三脚本oxlint、oxfmt --check、node --check与git diff --check通过。本轮没有GUI、远端操作或新截图，不把阶段诊断与单测改写成真实升级成功；新runner证据仍须目视复核。仅追加本报告，其他文件未修改。
