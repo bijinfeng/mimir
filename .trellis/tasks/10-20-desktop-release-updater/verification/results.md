@@ -6,9 +6,13 @@
 
 用户后续已授权合并、推送、GitHub 构建与正式发布、真实更新验收，并扩展 fnOS 原生包一并发布。下方“本轮只修改本地”等内容为早期轮次的历史记录，当前事实以 [github-validation.md](github-validation.md) 及 Actions 实际结果为准。
 
-master 已推送 fnOS 原生流水线与五目标发布校验。v0.1.3 已通过四客户端和 fnOS 原生构建、包资源校验、真实 smoke、聚合及自动发布，15 项资产公开；FPK 已匿名下载并核对完整 SHA256。最新生产代码 127d4b7 的 GitHub CI39397745471 全部通过，包含完整 pnpm check、build、PostgreSQL 与 S3。证据见 github-v013-published.json、github-final-code-ci.json、public-v0.1.3-fpk.json。
+master 已合并并推送五目标发布与更新功能。v0.1.3/v0.1.4 的四客户端与 fnOS 原生构建、真实 smoke、聚合和发布已成功，各15资产；两版FPK均匿名下载并核对完整SHA256。其实际Windows/Linux自动安装复验发现原生窗口关闭缺陷，不能计为升级通过；失败截图/结果及真实Electron44同源探针已归档。
 
-v0.1.4 固定同一源码版本提交127d4b7；首次运行所有实际构建通过，Intel上传产物时GitHub服务超时，未公开新Release。已原样重试失败job。Windows/Linux真实跨版本更新与macOS手动替换尚待新版本公开后执行。系统通知投递/焦点、mac正式签名及fnOS实机安装边界保持明确，不能由runner smoke代替。
+产品修复75dd8c8已通过118项desktop测试及两项独立审查，保留原生销毁/veto/保存/宿主顺序契约，并将更新说明转为可读纯文本。固定324aa7d的v0.1.5作为手动安装新基线；随后0.1.6为version-only升级目标，不移动旧tag或覆盖资产。完整CI39413324883的pnpmcheck/build已通过，PG/S3仍按实际最终结果登记；不能把旧完整CI代替新源码质量门。
+
+mac ARM64实际官方0.1.3→0.1.4手动ZIP替换已成功：真实标题栏/详情与manual能力、普通退出不安装、同一文档完整记录和本地模式保留；result.success=true、正常退出无遗留。网络失败与已验缓存复用分别记录于mac-official-manual。它不代表系统浏览器下载动作、Gatekeeper、公证、自动安装或系统通知投递通过。
+
+Windows/Linux的5→6真实升级、后续统一发布及完整CI待完成，证据持续写入github-validation.md。fnOS原生FPK/Socket认证验证不等于fnOS设备安装升级；原生通知投递与系统焦点仍需真实桌面证据，任务保持in_progress。
 
 ## 历史首轮记录
 
