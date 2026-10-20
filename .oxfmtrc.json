@@ -28,6 +28,7 @@
     "docs/visual-comparisons/2026-10-20-desktop-client/{before,after}/**/*.html",
     "docs/visual-comparisons/2026-10-20-settings-secondary/{before,after}/**/*.html",
     "docs/visual-comparisons/2026-10-20-markdown-secondary/{before,after}/**/*.html",
-    "docs/visual-comparisons/2026-10-20-html-secondary/{before,after}/**/*.html"
+    "docs/visual-comparisons/2026-10-20-html-secondary/{before,after}/**/*.html",
+    "docs/visual-comparisons/2026-10-20-xlsx-secondary/{before,after}/**/*.html"
   ]
 }

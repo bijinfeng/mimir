@@ -1,0 +1,26 @@
+[
+  {
+    "id": "chart-top",
+    "title": "对象与表格 · 600×360 初始",
+    "width": 600,
+    "height": 360,
+    "before": "before/chart-top.png",
+    "after": "after/chart-top.png",
+    "before_sha256": "84fa9e421158cd7ac1cd68ae1020fd58db61c8ec2724a7306c677613959c8303",
+    "before_bytes": 38651,
+    "after_sha256": "aaaf62a0cffbb0f16e75576eb8e49fc347ee36c4975e809423d8a7ca280dcfde",
+    "after_bytes": 38219
+  },
+  {
+    "id": "chart-scrolled",
+    "title": "对象与表格 · 600×360 滚到字段",
+    "width": 600,
+    "height": 360,
+    "before": "before/chart-scrolled.png",
+    "after": "after/chart-scrolled.png",
+    "before_sha256": "84fa9e421158cd7ac1cd68ae1020fd58db61c8ec2724a7306c677613959c8303",
+    "before_bytes": 38651,
+    "after_sha256": "c9b6cb40de6337eea020d6741cb644439567c83526d67ef2a2dd6a360ba7caeb",
+    "after_bytes": 39649
+  }
+]

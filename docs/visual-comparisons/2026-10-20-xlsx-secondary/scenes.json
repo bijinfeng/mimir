@@ -1,0 +1,18 @@
+[
+  {
+    "id": "chart-top",
+    "title": "对象与表格 · 600×360 初始",
+    "width": 600,
+    "height": 360,
+    "before": "before/chart-top.png",
+    "after": "after/chart-top.png"
+  },
+  {
+    "id": "chart-scrolled",
+    "title": "对象与表格 · 600×360 滚到字段",
+    "width": 600,
+    "height": 360,
+    "before": "before/chart-scrolled.png",
+    "after": "after/chart-scrolled.png"
+  }
+]

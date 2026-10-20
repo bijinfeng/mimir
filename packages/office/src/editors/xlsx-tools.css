@@ -283,3 +283,40 @@
     margin-inline-end: 0;
   }
 }
+
+/*
+ * 600×360 等短窗口里，对象面板的头部、标签和固定动作会把字段区压到 24px：
+ * 图表位置、类型和标题都要在一个只有一行的窗口里滚。短窗口改为整块面板滚动，
+ * 动作条 sticky 在底部；字段区不再参与弹性压缩。
+ */
+@media (max-height: 520px) {
+  .mimir-xlsx-inspector {
+    overflow-y: auto;
+  }
+
+  .mimir-xlsx-inspector__content,
+  .mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table']) {
+    flex: 0 0 auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .mimir-xlsx-inspector__content > .me-property-form,
+  .mimir-xlsx-inspector__content > .me-property-form > .mimir-xlsx-tools {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table'])
+    .mimir-xlsx-tools
+    > fieldset {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .mimir-xlsx-object-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+  }
+}
