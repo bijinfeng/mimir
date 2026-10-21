@@ -3,7 +3,7 @@
   "name": "cross-platform-app-icon",
   "title": "Mimir 跨平台应用图标重设计",
   "description": "为桌面端、网页端、fnOS 和微信小程序设计统一品牌图标及平台资源",
-  "status": "in_progress",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,11 +11,11 @@
   "creator": "jfbi",
   "assignee": "jfbi",
   "createdAt": "2026-10-21",
-  "completedAt": null,
+  "completedAt": "2026-10-21",
   "branch": "codex/cross-platform-app-icon",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "e8ec18f2c696ec8f46667bcd9e40816cf03331bb",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -51,7 +51,7 @@
     "packages/renderer/src/theme/design.test.ts",
     "docs/visual-comparisons/2026-10-21-brand-icon/comparison.html"
   ],
-  "notes": "",
+  "notes": "Approved round-seven raven integrated across all four clients. Full pnpm check passed in clean task-only snapshot; actual UI comparison and native-device limits recorded. Parallel miniapp migration preserved.",
   "meta": {
     "approvedDesign": {
       "round": 7,
