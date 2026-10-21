@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Avatar, Button, Input, Upload } from 'antd'
+import { App, Button, Input, Upload } from 'antd'
 import { Camera } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '../../lib/api'
 import { type CroppedAvatar } from '../../lib/avatar'
 import { LoadError } from '../LoadError'
+import { UserAvatar } from '../UserAvatar'
 import { AvatarCropper } from '../AvatarCropper'
 import { Block, Panel } from './parts'
 import { useAccountStyles } from './AccountSection.style'
@@ -179,9 +180,7 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
               }
             }}
           >
-            <Avatar size={52} src={image} className={accountStyles.avatar}>
-              {session?.user.name?.slice(0, 1).toUpperCase() ?? '?'}
-            </Avatar>
+            <UserAvatar size={52} src={image} className={accountStyles.avatar} aria-hidden="true" />
             <span
               className={accountStyles.avatarCameraOverlay}
               data-role="avatar-camera-overlay"

@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "范围与并行改动保护"}
+{"file": ".trellis/spec/project/quality.md", "reason": "完整质量门与真实组件验收"}
+{"file": ".trellis/spec/project/design.md", "reason": "现行主题与头像规范归属"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "renderer 组件与样式"}
+{"file": ".trellis/spec/renderer/frontend/pitfalls.md", "reason": "测试和回退约束"}
+{"file": ".trellis/spec/miniapp/frontend/build.md", "reason": "本地图片与微信构建"}
+{"file": ".trellis/spec/miniapp/frontend/client.md", "reason": "保留账号数据及会话合同"}

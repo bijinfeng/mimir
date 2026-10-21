@@ -1,0 +1,32 @@
+{
+  "manifest": [
+    {
+      "stage": "before",
+      "width": 390,
+      "height": 420,
+      "adapter": "DOM mapping for native Image/View/Text, not WeChat",
+      "overflow": true,
+      "images": []
+    },
+    {
+      "stage": "after",
+      "width": 390,
+      "height": 420,
+      "adapter": "DOM mapping for native Image/View/Text, not WeChat",
+      "overflow": true,
+      "images": [
+        {
+          "width": 48,
+          "height": 48,
+          "loaded": true
+        },
+        {
+          "width": 32,
+          "height": 32,
+          "loaded": true
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

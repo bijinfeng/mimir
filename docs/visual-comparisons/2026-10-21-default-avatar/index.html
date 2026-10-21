@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>统一默认头像 · 真实组件对比</title>
+    <style>
+      body {
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+        margin: 24px;
+        color: #262626;
+        background: #f7f8f8;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      button,
+      select {
+        font: inherit;
+        padding: 5px 10px;
+      }
+      nav {
+        display: flex;
+        gap: 12px;
+        margin: 16px 0;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      section {
+        min-width: 0;
+      }
+      img {
+        width: 100%;
+        height: auto;
+        border: 1px solid #e8e8e8;
+        background: #fff;
+      }
+      p {
+        max-width: 100ch;
+      }
+      a {
+        color: #007a45;
+      }
+      @media (max-width: 800px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>统一默认头像 · 真实组件对比</h1>
+    <p>
+      侧栏、折叠入口、账号菜单和资料设置保持相同尺寸、内容与主题。默认头像与姓名无关；自定义头像和上传预览优先。<a
+        href="README.md"
+        >覆盖、验证与小程序基线说明</a
+      >
+    </p>
+    <nav>
+      <label
+        >状态
+        <select id="state">
+          <option value="default">默认图案</option>
+          <option value="custom">自定义图片</option>
+          <option value="failed">图片加载失败</option>
+          <option value="miniapp">小程序源码片段</option>
+        </select></label
+      ><label
+        >主题
+        <select id="theme">
+          <option value="light">浅色</option>
+          <option value="dark">深色</option>
+        </select></label
+      >
+    </nav>
+    <main>
+      <section>
+        <h2>之前</h2>
+        <img id="before" alt="实施前真实组件" src="before/default-light.png" /><a
+          id="beforeHTML"
+          href="before/default-light.html"
+          >打开真实组件HTML</a
+        >
+        · <a id="beforePNG" href="before/default-light.png">打开PNG</a>
+      </section>
+      <section>
+        <h2>之后</h2>
+        <img id="after" alt="实施后真实组件" src="after/default-light.png" /><a
+          id="afterHTML"
+          href="after/default-light.html"
+          >打开真实组件HTML</a
+        >
+        · <a id="afterPNG" href="after/default-light.png">打开PNG</a>
+      </section>
+    </main>
+    <p>
+      小程序以当前HEAD c06f843的48px
+      View资料卡为基线，只替换字母回退。早期并行工作树/32px独立方案保存在历史目录。DOM适配仅核对真实源码与本地图片，微信设备验收仍待验。
+    </p>
+    <script>
+      const state = document.getElementById('state')
+      const theme = document.getElementById('theme')
+      function update() {
+        theme.disabled = state.value === 'miniapp'
+        for (const stage of ['before', 'after']) {
+          const path =
+            state.value === 'miniapp'
+              ? `miniapp-${stage}`
+              : `${stage}/${state.value}-${theme.value}`
+          document.getElementById(stage).src = path + '.png'
+          document.getElementById(stage + 'HTML').href = path + '.html'
+          document.getElementById(stage + 'PNG').href = path + '.png'
+        }
+      }
+      state.addEventListener('change', update)
+      theme.addEventListener('change', update)
+    </script>
+  </body>
+</html>

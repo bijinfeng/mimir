@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { Avatar, Button, Dropdown, Tooltip } from 'antd'
+import { Button, Dropdown, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 import { ChartColumn, Check, LoaderCircle, LogOut, Palette, Settings, User } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { UserAvatar } from '../UserAvatar'
 import { useStyles } from '../NavSidebar.style'
 import { api } from '../../lib/api'
 import {
@@ -73,9 +74,7 @@ export function AccountRow({
           type: 'group',
           label: (
             <div className={styles.accountMenuIdentity}>
-              <Avatar size={28} src={user.image ?? undefined} className={styles.accountAvatar}>
-                {user.name.slice(0, 1).toUpperCase()}
-              </Avatar>
+              <UserAvatar size={28} src={user.image} className={styles.accountAvatar} />
               <div className={styles.accountMenuIdentityText}>
                 <Tooltip title={user.name} trigger={['hover', 'focus']}>
                   <span tabIndex={0} className={styles.accountMenuName}>
@@ -167,14 +166,7 @@ export function AccountRow({
       ref={accountTriggerRef}
       loading={signingOut}
     >
-      <Avatar
-        aria-hidden="true"
-        size={26}
-        src={user.image ?? undefined}
-        className={styles.accountAvatar}
-      >
-        {user.name.slice(0, 1).toUpperCase()}
-      </Avatar>
+      <UserAvatar aria-hidden="true" size={26} src={user.image} className={styles.accountAvatar} />
       {!collapsed && <span className={styles.accountName}>{user.name}</span>}
     </Button>
   ) : null

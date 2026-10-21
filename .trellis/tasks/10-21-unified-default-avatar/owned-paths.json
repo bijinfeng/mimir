@@ -1,0 +1,22 @@
+{
+  "copy_from_workspace": [
+    "assets/avatar/default-avatar.svg",
+    "scripts/generate-default-avatar.mjs",
+    "packages/renderer/src/components/UserAvatar.tsx",
+    "packages/renderer/src/components/UserAvatar.test.tsx",
+    "packages/renderer/src/components/AccountAvatar.test.tsx",
+    "packages/renderer/src/components/nav/AccountRow.tsx",
+    "packages/renderer/src/components/settings/AccountSection.tsx",
+    "packages/renderer/src/components/settings/AccountSection.style.ts",
+    "apps/miniapp/src/components/user-avatar.tsx",
+    "apps/miniapp/src/assets/avatar/default-avatar.png",
+    "apps/miniapp/scripts/default-avatar.test.mjs",
+    "apps/miniapp/src/pages/account/index.tsx"
+  ],
+  "overrides": {},
+  "main_owned": [
+    ".trellis/spec/project/design.md"
+  ],
+  "preserve_other_workspace_changes": true,
+  "baseline": "c06f843 (prior parallel miniapp work committed; account avatar-only diff can now be copied directly)"
+}

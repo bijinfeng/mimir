@@ -1,0 +1,21 @@
+ M .trellis/tasks/10-20-remaining-interaction-polish/module-inventory.md
+ M apps/miniapp/.gitignore
+ M apps/miniapp/config/index.ts
+ M apps/miniapp/package.json
+ M apps/miniapp/src/app.scss
+ M apps/miniapp/src/components/ui.tsx
+ M apps/miniapp/src/pages/account/index.tsx
+ M apps/miniapp/src/pages/capture/index.tsx
+ M apps/miniapp/src/pages/chat/index.tsx
+ M apps/miniapp/src/pages/editor/index.tsx
+ M apps/miniapp/src/pages/library/index.tsx
+ M apps/miniapp/src/pages/login/index.tsx
+ M apps/miniapp/src/pages/reader/index.tsx
+ M docs/visual-comparisons/index.html
+ M pnpm-lock.yaml
+?? .impeccable/questions/6ffef679.hand.json
+?? .impeccable/questions/6ffef679.state.json
+?? .trellis/tasks/10-21-unified-default-avatar/
+?? apps/desktop/.impeccable/questions/
+?? apps/miniapp/src/index.html
+?? docs/visual-comparisons/2026-10-20-miniapp-pages/

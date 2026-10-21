@@ -1,0 +1,116 @@
+{
+  "results": [
+    {
+      "file": "before/default-light.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "before/custom-light.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "before/failed-light.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "before/default-dark.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "before/custom-dark.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "before/failed-dark.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "after/default-light.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "after/custom-light.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "after/failed-light.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "after/default-dark.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "after/custom-dark.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "after/failed-dark.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "miniapp-before.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    },
+    {
+      "file": "miniapp-after.html",
+      "scripts": 0,
+      "externalStyles": 0,
+      "externalImages": 0,
+      "imagesLoaded": true,
+      "overflow": false
+    }
+  ]
+}

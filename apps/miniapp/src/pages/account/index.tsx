@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow } from '@tarojs/taro'
+import { UserAvatar } from '../../components/user-avatar'
 import { Action, ErrorNotice } from '../../components/ui'
 import { api, errorMessage } from '../../lib/api'
 import { useSession, getSession, setSession, sessionReason } from '../../lib/session'
@@ -69,14 +70,13 @@ export default function AccountPage() {
       setBusy(false)
     }
   }
-  const initial = (session?.user.name || session?.user.email || '?').trim().slice(0, 1).toUpperCase()
   return (
     <View className="page">
       <Text className="page-title">我的</Text>
       {session && (
         <View className="profile-card">
           <View className="profile-avatar" aria-hidden="true">
-            {initial}
+            <UserAvatar />
           </View>
           <View className="profile-text">
             <Text className="profile-name">{session.user.name}</Text>
