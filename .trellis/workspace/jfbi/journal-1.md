@@ -1616,3 +1616,39 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 
 - AC3原生系统通知投递与自动焦点、fnOS设备安装升级仍待实测；mac无正式签名继续手动更新，当前任务in_progress不归档。
 - 其他会话界面打磨WIP保留未纳入本轮；后续证据与journal提交不改变442cd13已验源树。
+
+
+## Session 56: 第七版渡鸦跨平台图标接入
+<!-- trellis-session: v=2 fp=71c1015886aa399b -->
+
+**Date**: 2026-10-21
+**Task**: 第七版渡鸦跨平台图标接入
+**Branch**: `codex/cross-platform-app-icon`
+
+### Summary
+
+统一桌面、网页、fnOS 和小程序的绿色渡鸦图标，保留七轮提案并归档真实组件前后对比。独立 task-only 副本的原 pnpm check 与相关生产构建通过；并行小程序迁移完整保留。
+
+### Main Changes
+
+- 建立单一 SVG 与配色元数据，生成并验证 13 个平台资源，保留 currentColor 和无障碍接口。
+- 归档 20 张真实组件截图、离线 HTML、实际平台资源与完整检查证据。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `e8ec18f` | feat(brand): unify green raven icons across four clients |
+
+### Testing
+
+- [OK] pnpm check 在清洁临时副本 exit 0：Office 2778、renderer 640、desktop 125、Server 全模式及根脚本 80 项通过。
+- [OK] Web、桌面、小程序生产构建与资源字节一致性、生成幂等、容器目录及圆形安全区通过。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 按发布流程在实际安装环境核对系统图标缓存、fnOS 与微信真机；本次未推送、发布或上传头像。
