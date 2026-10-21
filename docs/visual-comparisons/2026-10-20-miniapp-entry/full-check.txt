@@ -1,0 +1,2573 @@
+packages/office test: stderr | src/editors/PdfEditor.images.test.tsx > PDF image Inspector and real working bytes > shares selected image pixels, Agent round undo and two saved files through the real host
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.images.test.tsx > PDF image Inspector and real working bytes > shares selected image pixels, Agent round undo and two saved files through the real host
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.images.test.tsx > PDF image Inspector and real working bytes > shares selected image pixels, Agent round undo and two saved files through the real host
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.images.test.tsx > PDF image Inspector and real working bytes > rejects an asynchronous file read after an intervening Agent edit
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/PdfEditor.images.test.tsx (10 tests) 1587ms
+packages/office test:    ✓ PDF image Inspector and real working bytes (10)
+packages/office test:      ✓ automatically reads the current bytes after saved Undo/Redo without extra writes or self-refresh 482ms
+packages/office test:      ✓ shares selected image pixels, Agent round undo and two saved files through the real host 318ms
+packages/office test:  ✓ src/editors/DocxTableDesignControls.test.tsx (5 tests) 1566ms
+packages/office test:    ✓ real Inspector shows current values; drafts apply once, save twice and preserve undo/redo after saves 645ms
+packages/office test:  ✓ src/editors/PptxSelectionControls.test.tsx (26 tests) 1433ms
+packages/office test: stderr | src/editors/DocxEditor.outline.test.tsx > leaves reading for explicit in-place editing and keeps focus in the original rich heading when the overlay closes
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/DocxEditor.outline.test.tsx (6 tests) 1536ms
+packages/office test:    ✓ applies to the explicitly selected heading after selection moves, preserves rich text, and undo is one step 421ms
+packages/office test:    ✓ converts a paragraph promoted by a live style definition back to body 442ms
+packages/office test:  ✓ src/editors/DocxListControls.test.tsx (4 tests) 1553ms
+packages/office test:    ✓ real Ribbon opens compact Inspector, applies final text to frozen actual selection once, saves twice and undo/redo exact ZIP entries 667ms
+packages/office test:    ✓ selection moves keep the original target; content edit locks stale draft; Escape restores actual list entry focus and source switch closes it 322ms
+packages/office test:  ✓ src/docx-privacy.test.ts (76 tests) 1473ms
+packages/office test:    ✓ native DOCX final privacy scrub (68)
+packages/office test:      ✓ enforces actual node count and cumulative XML budgets 454ms
+packages/office test:  ✓ src/editors/DocxEditor.compare-split.test.tsx (10 tests) 1309ms
+packages/office test:  ✓ src/editors/XlsxShapeGallery.test.tsx (9 tests) 1361ms
+packages/office test:  ✓ src/agent/docx-agent.test.ts (50 tests) 1155ms
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的控件 > 定位原文进入只读模式；工具栏不提供未验收的替换动作
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的控件 > 裁剪菜单：当前档标出来、超上限的档禁用并说明原因
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的控件 > 纸型下拉：`''` 是一个真的选项值，显示成「原件尺寸」而不是空
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 缩略图选择、复制、上移后保存，复制页的旋转与原页独立
+packages/office test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 缩略图选择、复制、上移后保存，复制页的旋转与原页独立
+packages/office test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 「删除这一页」先弹确认：取消不动、确认才真的删
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 「删除这一页」先弹确认：取消不动、确认才真的删
+packages/office test: An update to PdfThumbnail inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PdfThumbnail inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 切到页面分类后仍可用 Ctrl+F 打开查找
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 弹层面板就地渲染，不 portal 到 body（否则深色下会退回浅色回退值）
+packages/office test: An update to PdfEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-toolbar-render.test.tsx > PdfEditor 工具条的动作 > 弹层面板就地渲染，不 portal 到 body（否则深色下会退回浅色回退值）
+packages/office test: An update to PdfThumbnail inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PdfThumbnail inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-toolbar-render.test.tsx (19 tests) 1097ms
+packages/office test:  ✓ src/editors/PptxEditor.workspace-views.test.tsx (8 tests) 1193ms
+packages/office test:    ✓ PPTX 工作区视图 (8)
+packages/office test:      ✓ 形状填充与背景整合保持内部滚动和独立底部操作，渐变预设明确分两行 434ms
+packages/office test:  ✓ src/editors/HtmlEditor.test.tsx (24 tests) 1189ms
+packages/office test:  ✓ src/docx-protection-password-native.test.ts (16 tests) 1152ms
+packages/office test:    ✓ honors absent native spin as 100000 using an independent vector 741ms
+packages/office test:  ✓ src/editors/pptx-selection-geometry.test.ts (5 tests) 1433ms
+packages/office test:    ✓ persists geometry, rotation and a preset through the actual host without rewriting another child or parent geometry 466ms
+packages/office test:    ✓ persists a raw hosted group flip and keeps the Inspector batch center-preserving through history 669ms
+packages/office test: stderr | src/editors/docx-table-design.test.ts > rejects a different live table selection even when the document bytes are unchanged
+packages/office test: TextSelection endpoint not pointing into a node with inline content (docTableCell)
+packages/office test: 
+packages/office test:  ✓ src/editors/docx-table-design.test.ts (21 tests) 1448ms
+packages/office test:    ✓ look and margins remain native properties, preserve all cells and other ZIP entries, two saves and undo/redo 340ms
+packages/office test:  ✓ src/editors/PptxEditor.zoom-host.test.tsx (2 tests) 1076ms
+packages/office test:    ✓ 真实Editor→handle→host插入slide/section/summary，三模式保存读回且每次仅一步历史 987ms
+packages/office test: stderr | src/editors/DocxReferencesControls.test.tsx > source current values reopen, edits are drafts, cancel returns actual trigger, manual change locks all Selects
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/DocxReferencesControls.test.tsx > caption, field and index show correct previews and native actions without stealing current selected text; document switch closes the stale panel
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/DocxReferencesControls.test.tsx > caption, field and index show correct previews and native actions without stealing current selected text; document switch closes the stale panel
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Select inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxToolbar inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PureEditorContent inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Select inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxToolbar inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxToolbar inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Select inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/DocxReferencesControls.test.tsx > caption, field and index show correct previews and native actions without stealing current selected text; document switch closes the stale panel
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/DocxReferencesControls.test.tsx > caption, field and index show correct previews and native actions without stealing current selected text; document switch closes the stale panel
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/DocxReferencesControls.test.tsx > caption, field and index show correct previews and native actions without stealing current selected text; document switch closes the stale panel
+packages/office test: An update to DocxTableDesignPreview inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/DocxReferencesControls.test.tsx (3 tests) 1168ms
+packages/office test:    ✓ real Ribbon contains full References entries; source and citation apply once with final input, native save/undo/redo exact entries 548ms
+packages/office test:    ✓ caption, field and index show correct previews and native actions without stealing current selected text; document switch closes the stale panel 375ms
+packages/office test:  ✓ src/docx-encryption-native.test.ts (5 tests) 1079ms
+packages/office test:    ✓ actual dedicated production encryption worker with browser Buffer-free CFB path (5)
+packages/office test:      ✓ encrypts with real no-Buffer CFB writer and reopens in a second isolated worker 430ms
+packages/office test:  ✓ src/docx-encryption-check.test.ts (23 tests) 1000ms
+packages/office test:    ✓ stops a real compressed ZIP entry exceeding the streaming expanded-byte budget 991ms
+packages/office test:  ✓ src/docx-encryption-bundle.test.ts (2 tests) 998ms
+packages/office test:    ✓ browser-bundled ESM Worker edits external standard, writes Agile, and decrypts exact native bytes 416ms
+packages/office test:    ✓ browser-bundled ESM Worker edits external agile, writes Agile, and decrypts exact native bytes 531ms
+packages/office test:  ✓ src/editors/DocxEditor.export.test.tsx (7 tests) 1070ms
+packages/office test:    ✓ exports unsaved text, header and native design while preserving the library baseline and history 467ms
+packages/office test:  ✓ src/editors/PptxOutlineControls.test.tsx (7 tests) 977ms
+packages/office test:    ✓ stages native current values and applies width/dash/cap/compound/join in one save, preserving arrow ends and unrelated entries 358ms
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > keeps surviving T editable on the changed raw base; dry-run/failure publish nothing and round undo is exact
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > keeps surviving T editable on the changed raw base; dry-run/failure publish nothing and round undo is exact
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > keeps surviving T editable on the changed raw base; dry-run/failure publish nothing and round undo is exact
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > keeps surviving T editable on the changed raw base; dry-run/failure publish nothing and round undo is exact
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > keeps surviving T editable on the changed raw base; dry-run/failure publish nothing and round undo is exact
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > materializes on page edits and preserves exact one-step save undo redo history
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > materializes on page edits and preserves exact one-step save undo redo history
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/PdfEditor.batch.test.tsx > PDF Editor atomic batch publication > materializes on page edits and preserves exact one-step save undo redo history
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/PdfEditor.batch.test.tsx (8 tests) 995ms
+packages/office test:    ✓ PDF Editor atomic batch publication (8)
+packages/office test:      ✓ reports the original operation index for a form preflight error after staged T removal 323ms
+packages/office test:  ✓ src/pptx-group-picture-native-crop.test.ts (12 tests) 1114ms
+packages/office test:  ✓ src/editors/DocxDesignControls.test.tsx (3 tests) 849ms
+packages/office test:    ✓ shows current values and real theme preview, keeps drafts local, applies once and saves native history 440ms
+packages/office test:    ✓ freezes the selected section while toolbar focus moves and gives explicit all-section and clear actions 310ms
+packages/office test:  ✓ src/editors/XlsxPivotControls.test.tsx (11 tests) 877ms
+packages/office test:    ✓ sends advanced field order, multi-values, group parameters, report fields and stable value-filter references in one operation 316ms
+packages/office test:  ✓ src/editors/PdfInspectorInteractions.test.tsx (15 tests) 857ms
+packages/office test: stderr | src/editors/XlsxEditor.fill.test.tsx > cancels a pending fill when the object Inspector takes over without publishing late bytes
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/XlsxEditor.fill.test.tsx (3 tests) 873ms
+packages/office test:    ✓ paints native range fill, applies one history action, saves twice and preserves complete bytes through undo/save/redo/save 517ms
+packages/office test: stderr | src/editors/DocxImageControls.test.tsx > DOCX compact picture Inspector > reads current values; first apply commits latest number draft and a single undo/redo restores native file
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/DocxImageControls.test.tsx > DOCX compact picture Inspector > reads current values; first apply commits latest number draft and a single undo/redo restores native file
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/DocxImageControls.test.tsx (12 tests) 848ms
+packages/office test:  ✓ src/editors/XlsxShapeGallery.check.test.tsx (4 tests) 822ms
+packages/office test:  ✓ src/docx-protection-password.test.ts (19 tests) 812ms
+packages/office test:    ✓ dedicated local DOCX password worker (19)
+packages/office test:      ✓ matches independently calculated SHA512 vector: 100000 731ms
+packages/office test:  ✓ src/docx-forced-tracking.test.ts (29 tests) 821ms
+packages/office test:  ✓ src/editors/PptxShowControls.test.tsx (10 tests) 775ms
+packages/office test:    ✓ presents actual final dwell for explicit application, applies one atomic batch and preserves two-save native timings 301ms
+packages/office test:  ✓ src/editors/PdfEditor.signature.test.tsx (7 tests) 736ms
+packages/office test:  ✓ src/editors/XlsxFillControls.test.tsx (9 tests) 694ms
+packages/office test:    ✓ shows inherited current values, all patterns, theme/tint, rectangular path and 2–10 stable stops in a fixed-action Inspector 392ms
+packages/office test: stderr | src/editors/XlsxEditor.management-cancel.test.tsx > cancels management through the actual host-busy Editor on task and rejects valid late bytes
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.management-cancel.test.tsx > cancels management through the actual host-busy Editor on task and rejects valid late bytes
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxObjectLayer inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxClipboardControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.management-cancel.test.tsx > cancels management through the actual host-busy Editor on close and rejects valid late bytes
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.management-cancel.test.tsx > cancels management through the actual host-busy Editor on close and rejects valid late bytes
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxObjectLayer inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to Trigger inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxClipboardControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/XlsxEditor.management-cancel.test.tsx (2 tests) 588ms
+packages/office test:    ✓ cancels management through the actual host-busy Editor on task and rejects valid late bytes 360ms
+packages/office test: stderr | src/editors/PptxControlBusy.test.tsx > locks import format while reading the actual source and during one upload, then preserves a refused draft for retry
+packages/office test: An update to PptxImportControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PptxImportControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to PptxImportControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxControlBusy.test.tsx (10 tests) 653ms
+packages/office test: stderr | src/editors/XlsxEditor.sort.test.tsx > cancels pending native sort on range without late publish or history
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.sort.test.tsx > cancels pending native sort on range without late publish or history
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.sort.test.tsx > cancels pending native sort on source without late publish or history
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.sort.test.tsx > cancels pending native sort on source without late publish or history
+packages/office test: An update to XlsxEditor inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/XlsxEditor.sort.test.tsx > cancels pending native sort on inspector without late publish or history
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: An update to BaseSelect inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/XlsxEditor.sort.test.tsx (5 tests) 625ms
+packages/office test:    ✓ applies ordered native sort once, saves/reopens and restores all ZIP entries by undo/save/redo/save; repeat is exact no-op 344ms
+packages/office test:  ✓ src/editors/docx-save.test.ts (22 tests) 581ms
+packages/office test:  ✓ src/editors/PptxScreenRecordControls.test.tsx (6 tests) 602ms
+packages/office test:    ✓ records only after explicit start and stops all tracks with a real WebM file result 552ms
+packages/office test: stderr | src/editors/DocxCaseControls.test.tsx > shows empty/stale disabled reasons, Escape restores the trigger, no-op does not mark dirty
+packages/office test: An update to DocxInkOverlay inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/DocxCaseControls.test.tsx (3 tests) 526ms
+packages/office test:    ✓ real Ribbon has four named actions with examples, freezes the selection, saves/reopens and restores via undo/redo after saving 340ms
+packages/office test:  ✓ src/docx-protected-comments.test.ts (16 tests) 562ms
+packages/office test:  ✓ src/editors/PdfEditor.image-export.test.tsx (4 tests) 602ms
+packages/office test:  ✓ src/editors/PdfEditor.ocr.test.tsx (4 tests) 570ms
+packages/office test:    ✓ PDF temporary OCR integration (4)
+packages/office test:      ✓ shows the fixed action, reads OCR only for copy/search, and leaves version/history/save clean 389ms
+packages/office test:  ✓ src/editors/docx-outline.test.ts (12 tests) 558ms
+packages/office test: stderr | src/editors/PptxGroupTextControls.test.tsx > does not steal external focus when a delayed accepted text apply completes
+packages/office test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxGroupTextControls.test.tsx (5 tests) 508ms
+packages/office test: stderr | src/editors/docx-lists.test.ts > selects actual paragraphs, reports mixed levels, preserves numId/ilvl when adopting an existing definition, and excludes end boundary
+packages/office test: TextSelection endpoint not pointing into a node with inline content (doc)
+packages/office test: 
+packages/office test:  ✓ src/editors/docx-lists.test.ts (26 tests) 528ms
+packages/office test:  ✓ src/editors/DocxEditor.picture-history.test.tsx (1 test) 457ms
+packages/office test:    ✓ real DOCX editor preserves every custom-property entry through picture save → undo/save → redo/save 456ms
+packages/office test:  ✓ src/editors/PptxIconControls.test.tsx (9 tests) 495ms
+packages/office test:  ✓ src/editors/XlsxObjectControls.polish.test.tsx (15 tests) 503ms
+packages/office test:  ✓ src/editors/PdfTextBlockPanel.test.tsx (14 tests) 544ms
+packages/office test:  ✓ src/docx-ink.test.ts (13 tests) 500ms
+packages/office test:  ✓ src/editors/PptxEditor.output.test.tsx (1 test) 476ms
+packages/office test:    ✓ downloads the live native copy without persistence or history reset, then saves and undoes/redoes subsequent edits 475ms
+packages/office test:  ✓ src/editors/pptx-selection.test.ts (5 tests) 480ms
+packages/office test:  ✓ src/editors/PptxOutputControls.test.tsx (4 tests) 414ms
+packages/office test:  ✓ src/editors/docx-references.test.ts (9 tests) 413ms
+packages/office test:  ✓ src/editors/docx-image.test.ts (14 tests) 437ms
+packages/office test:  ✓ src/docx-protected-forms.test.ts (19 tests) 467ms
+packages/office test:  ✓ src/shell/EditorShell.test.tsx (122 tests) 419ms
+packages/office test:  ✓ src/pptx-text-range.test.ts (9 tests) 411ms
+packages/office test:  ✓ src/editors/XlsxFindControls.test.tsx (8 tests) 373ms
+packages/office test:  ✓ src/editors/XlsxDataControls.test.tsx (9 tests) 426ms
+packages/office test:  ✓ src/docx-protected-anchors.test.ts (9 tests) 351ms
+packages/office test:  ✓ src/editors/PptxParagraphControls.test.tsx (5 tests) 376ms
+packages/office test:  ✓ src/pptx-structure.test.ts (7 tests) 302ms
+packages/office test:  ✓ src/editors/pptx-picture-bullets.test.ts (6 tests) 351ms
+packages/office test:  ✓ src/editors/docx-toolbar.test.ts (18 tests) 643ms
+packages/office test:  ✓ src/pptx-save.test.ts (13 tests) 366ms
+packages/office test:  ✓ src/pptx-image-display.test.ts (10 tests) 319ms
+packages/office test:  ✓ src/editors/PptxSelectionGeometryControls.test.tsx (5 tests) 371ms
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > rejects late rewrite success after cancellation, invalid occurrences and stale read versions
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > lists actual native paragraphs; unique anchoring protects repeats while manual exact targets move one full object set
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-block-agent.test.ts > executes actual Agent move with a unique fragment and rejects stale/late host success and invalid deltas
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-block-agent.test.ts (4 tests) 406ms
+packages/office test:    ✓ rewrites Agent paragraphs and selects repeated partial text by occurrence or frozen manual target 322ms
+packages/office test:  ✓ src/docx-image-save.test.ts (6 tests) 355ms
+packages/office test:  ✓ src/docx-protection.test.ts (48 tests) 308ms
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate0/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate90/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate180/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > preserves surviving T and viewport origin at Rotate270/offset CropBox
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > materializes on original geometry before sequential reorder, rotation and deletion
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-batch.test.ts > detached PDF batch candidate > computes a complete dry candidate and returns the exact raw base when all T are removed
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-batch.test.ts (7 tests) 325ms
+packages/office test:  ✓ src/editors/PptxMediaControls.test.tsx (9 tests) 290ms
+packages/office test:  ✓ src/editors/pptx-group-picture-crop.test.ts (6 tests) 276ms
+packages/office test:  ✓ src/editors/PptxEditor.ai-snapshot.test.tsx (3 tests) 264ms
+packages/office test:  ✓ src/editors/PptxClipboardControls.test.tsx (10 tests) 252ms
+packages/office test:  ✓ src/editors/HtmlAgentPrompt.test.tsx (10 tests) 271ms
+packages/office test:  ✓ src/editors/PptxAnimationControls.test.tsx (6 tests) 290ms
+packages/office test:  ✓ src/editors/docx-design.test.ts (16 tests) 340ms
+packages/office test:  ✓ src/editors/PptxPictureCropCanvas.test.tsx (17 tests) 233ms
+packages/office test: stderr | src/editors/PptxImageFormats.test.tsx > previews real gif locally, uploads its original File exactly once on apply
+packages/office test: An update to PptxImageFillControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/PptxImageFormats.test.tsx > previews real bmp locally, uploads its original File exactly once on apply
+packages/office test: An update to PptxImageFillControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test: stderr | src/editors/PptxImageFormats.test.tsx > previews real webp locally, uploads its original File exactly once on apply
+packages/office test: An update to PptxImageFillControls inside a test was not wrapped in act(...).
+packages/office test: 
+packages/office test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/office test: 
+packages/office test: act(() => {
+packages/office test:   /* fire events that update state */
+packages/office test: });
+packages/office test: /* assert on the output */
+packages/office test: 
+packages/office test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxImageFormats.test.tsx (8 tests) 224ms
+packages/office test:  ✓ src/editors/PptxGroupPictureControls.test.tsx (8 tests) 244ms
+packages/office test:  ✓ src/editors/docx-find.test.ts (12 tests) 219ms
+packages/office test:  ✓ src/editors/docx-case.test.ts (25 tests) 243ms
+packages/office test:  ✓ src/editors/docx-compare.test.ts (8 tests) 221ms
+packages/office test:  ✓ src/pptx-output-complete.test.ts (6 tests) 276ms
+packages/office test:  ✓ src/pptx-picture-bullets-preview.test.ts (6 tests) 212ms
+packages/office test:  ✓ src/editors/PptxLocalPanels.test.tsx (5 tests) 201ms
+packages/office test:  ✓ src/agent/pptx-script.test.ts (4 tests) 210ms
+packages/office test:  ✓ src/editors/PptxZoomControls.test.tsx (5 tests) 231ms
+packages/office test:  ✓ src/pptx-group-svg.test.ts (9 tests) 186ms
+packages/office test:  ✓ src/docx-chart-save.test.ts (4 tests) 178ms
+packages/office test:  ✓ src/editors/HtmlEditor.picture.test.tsx (1 test) 181ms
+packages/office test:  ✓ src/agent/pptx-agent.test.ts (6 tests) 191ms
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > replaces and deletes original text and creates all three markup types through Agent argument names
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > anchors a note to a complete text item, replies and edits using stable IDs
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-content-agent.test.ts > PDF Agent content contracts against real bytes > supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-content-agent.test.ts (3 tests) 185ms
+packages/office test:  ✓ src/editors/CompactToolbar.test.tsx (11 tests) 157ms
+packages/office test:  ✓ src/editors/PptxClipboardBridge.test.tsx (7 tests) 145ms
+packages/office test:  ✓ src/docx-styles.test.ts (2 tests) 154ms
+packages/office test:  ✓ src/pptx.test.ts (15 tests) 150ms
+packages/office test:  ✓ src/shell/ToolbarColorPicker.rgb.test.tsx (8 tests) 152ms
+packages/office test:  ✓ src/docx-floating-table-layout.test.ts (14 tests) 190ms
+packages/office test:  ✓ src/pptx-history.test.ts (2 tests) 147ms
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的页序与旋转 > 同一来源页复制后，两份内容都保留且旋转彼此独立
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的页序与旋转 > 倒序 + 旋转 90 度：逐页对（用 pdf.js 读回，不是我们自己的模型）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的页序与旋转 > 插入空白页：位置对、尺寸是 A4、没有内容
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 同一导入页复制后保存并重开，两个页项均有内容
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 同一导入页复制后保存并重开，两个页项均有内容
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > buildPdfBytes 的导入页面 > 导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 裁剪：只改可视区，内容一字未动 > CropBox 按内缩量缩小，而内容流逐字节相同、文字一个点没动
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 裁剪：只改可视区，内容一字未动 > CropBox 按内缩量缩小，而内容流逐字节相同、文字一个点没动
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 裁剪：只改可视区，内容一字未动 > 裁掉的那一块**取不到文字**（pdf.js 按 CropBox 裁文本层，与实际看到的一致）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 换 A4：纸变成 A4，内容是等比放大（取小的一边，不拉伸）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 换 A4：纸变成 A4，内容是等比放大（取小的一边，不拉伸）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 先裁左边 50pt 再换纸型：内容绕**可视区左下角**缩放，不是绕原点
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-pages.test.ts > 纸型：scaleContent 与 setSize 必须配对 > 先裁左边 50pt 再换纸型：内容绕**可视区左下角**缩放，不是绕原点
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-pages.test.ts (34 tests) 102ms
+packages/office test:  ✓ src/agent/pptx-agent.group-selection.test.ts (5 tests) 120ms
+packages/office test:  ✓ src/editors/docx-view.test.ts (14 tests) 102ms
+packages/office test:  ✓ src/xlsx-shape-preview.test.ts (7 tests) 133ms
+packages/office test:  ✓ src/editors/pdf-page-image.test.ts (4 tests) 108ms
+packages/office test:  ✓ src/docx-encryption-container.test.ts (14 tests) 105ms
+packages/office test:  ✓ src/pagination-geometry.test.ts (10 tests) 123ms
+packages/office test:  ✓ src/xlsx-string-display.test.ts (8 tests) 106ms
+packages/office test:  ✓ src/editors/PptxAiControls.test.tsx (9 tests) 125ms
+packages/office test:  ✓ src/editors/pptx-picture-crop.test.ts (32 tests) 95ms
+packages/office test:  ✓ src/editors/XlsxManualControls.test.tsx (5 tests) 91ms
+packages/office test:  ✓ src/docx.test.ts (3 tests) 215ms
+packages/office test:  ✓ src/editors/PptxInkControls.test.tsx (2 tests) 97ms
+packages/office test:  ✓ src/editors/XlsxObjectLayer.test.tsx (5 tests) 93ms
+packages/office test:  ✓ src/pptx-selection-clipboard.test.ts (3 tests) 96ms
+packages/office test:  ✓ src/editors/PdfTextControls.test.tsx (4 tests) 83ms
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > applies a page batch atomically and saves bytes readable by pdf.js
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > inserts through the content hook, rejects a stale version and rolls back its round
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > inserts through the content hook, rejects a stale version and rolls back its round
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > lists, edits, moves and deletes only pending inserted text, with independently readable bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/agent/pdf-agent.test.ts > PDF Agent page canvas > lists, edits, moves and deletes only pending inserted text, with independently readable bytes
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/agent/pdf-agent.test.ts (5 tests) 75ms
+packages/office test:  ✓ src/editors/PptxShapeInsertCanvas.test.tsx (5 tests) 73ms
+packages/office test:  ✓ src/pptx-format-brush.test.ts (3 tests) 78ms
+packages/office test:  ✓ src/xlsx-validation-list.test.ts (6 tests) 76ms
+packages/office test:  ✓ src/editors/PptxTextRangeEditor.test.tsx (5 tests) 95ms
+packages/office test:  ✓ src/editors/xlsx-pivot-controls.test.ts (5 tests) 73ms
+packages/office test: stderr | src/editors/pdf-text.test.ts > buildPdfTextIndex > 取出每页的文字（页序就是布局顺序）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > buildPdfTextIndex > 白色页没有文字：索引里占位，页号不错位
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 点选只返回整段原文和 PDF 用户空间矩形，不使用搜索子串的近似裁切
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 旋转后点选仍指向原始 PDF 坐标；页外与重叠文字不产生候选
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 旋转后点选仍指向原始 PDF 坐标；页外与重叠文字不产生候选
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 不旋转时，命中矩形落在文字实际占的位置上
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 命中落在一段中间：按比例切，不把整段框上
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 旋转 90 度：矩形跟着转（宽高关系反过来）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 矩形：与画面同一套坐标 > 空白页与不存在的来源不会炸，也不报命中
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 空串不报匹配（否则每敲一下都「1 / 2847」）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 不区分大小写是默认；区分大小写时按原样比
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 全词匹配：英文按 ASCII 词边界
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 命中不重叠（`aaaaa` 里找 `aa` 报 2 处，与浏览器一致）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test: stderr | src/editors/pdf-text.test.ts > 搜索 > 命中的 text 是命中处的原文（状态行要显示它）
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-text.test.ts (18 tests) 67ms
+packages/office test:  ✓ src/agent/xlsx-agent.test.ts (15 tests) 68ms
+packages/office test:  ✓ src/editors/DocxDesignPreview.lifecycle.test.tsx (1 test) 56ms
+packages/office test:  ✓ src/pptx-output.test.ts (3 tests) 224ms
+packages/office test:  ✓ src/xlsx-inherited-styles.test.ts (7 tests) 65ms
+packages/office test:  ✓ src/xlsx-edit.test.ts (18 tests) 70ms
+packages/office test:  ✓ src/editors/pptx-ai-snapshot.test.ts (3 tests) 63ms
+packages/office test: stderr | src/editors/pdf-text-blocks.test.ts > groups actual split runs and wrapped lines without bridging interleaved columns, then picks the full paragraph at every page rotation
+packages/office test: Warning: UnknownErrorException: Ensure that the `standardFontDataUrl` API parameter is provided.
+packages/office test: 
+packages/office test:  ✓ src/editors/pdf-text-blocks.test.ts (2 tests) 66ms
+packages/office test:  ✓ src/agent/pdf-page-layout.test.ts (3 tests) 61ms
+packages/office test:  ✓ src/xlsx-range-rule-reading.test.ts (6 tests) 62ms
+packages/office test:  ✓ src/editors/pdf-ocr.test.ts (10 tests) 46ms
+packages/office test:  ✓ src/agent/pdf-working-copy.test.ts (3 tests) 40ms
+packages/office test:  ✓ src/editors/pdf-redaction-copy.test.ts (5 tests) 46ms
+packages/office test:  ✓ src/xlsx-export.test.ts (3 tests) 44ms
+packages/office test:  ✓ src/docx-endnotes.test.ts (2 tests) 41ms
+packages/office test:  ✓ src/xlsx.test.ts (36 tests) 35ms
+packages/office test:  ✓ src/editors/pptx-ai-presets.test.ts (9 tests) 31ms
+packages/office test:  ✓ src/pptx-svg.test.ts (10 tests) 33ms
+packages/office test:  ✓ src/pptx-media-info.test.ts (39 tests) 21ms
+packages/office test:  ✓ src/editors/MarkdownSuggestionPanel.test.tsx (2 tests) 37ms
+packages/office test:  ✓ src/xlsx-fill-layers.test.ts (2 tests) 31ms
+packages/office test:  ✓ src/docx-footnote-gaps.test.ts (3 tests) 23ms
+packages/office test:  ✓ src/editors/xlsx-object-layout.test.tsx (7 tests) 23ms
+packages/office test:  ✓ src/editors/markdown-slash.test.ts (2 tests) 22ms
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > samples scaled page coordinates and commits pen/highlighter once, with alpha preserved in PNG rasterization
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > samples scaled page coordinates and commits pen/highlighter once, with alpha preserved in PNG rasterization
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > samples scaled page coordinates and commits pen/highlighter once, with alpha preserved in PNG rasterization
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > cancels pointercancel, blur, source-version/page/tool changes and Escape without applying
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > cancels pointercancel, blur, source-version/page/tool changes and Escape without applying
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > rejects a second pointer, prevents pending re-entry, aborts late result after changing page, and displays failure
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > hits a stroke crossed between fast samples and sends only own ink ids in one atomic erase
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > hits a stroke crossed between fast samples and sends only own ink ids in one atomic erase
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test: stderr | src/editors/PptxInkCanvas.test.tsx > PPTX pointer ink > hits a stroke crossed between fast samples and sends only own ink ids in one atomic erase
+packages/office test: The current testing environment is not configured to support act(...)
+packages/office test: 
+packages/office test:  ✓ src/editors/PptxInkCanvas.test.tsx (4 tests) 21ms
+packages/office test:  ✓ src/docx-encryption-xml.test.ts (77 tests) 21ms
+packages/office test:  ✓ src/editors/DocxImageCropPreview.test.tsx (5 tests) 21ms
+packages/office test:  ✓ src/agent/html-brief.test.ts (11 tests) 17ms
+packages/office test:  ✓ src/agent/html-agent.test.ts (20 tests) 18ms
+packages/office test:  ✓ src/editors/PptxSelectionCanvas.test.tsx (3 tests) 20ms
+packages/office test:  ✓ src/docx-encryption-controller.test.ts (17 tests) 25ms
+packages/office test:  ✓ src/editors/PdfOcrOverlay.test.tsx (3 tests) 15ms
+packages/office test:  ✓ src/zip-bounds.test.ts (7 tests) 17ms
+packages/office test:  ✓ src/pptx-tiff-safety.test.ts (24 tests) 13ms
+packages/office test:  ✓ src/xlsx-clipboard.test.ts (18 tests) 14ms
+packages/office test:  ✓ src/docx-archive-save.test.ts (2 tests) 14ms
+packages/office test:  ✓ src/editors/markdown-controls.test.ts (5 tests) 6ms
+packages/office test:  ✓ src/pptx-image-info.test.ts (15 tests) 8ms
+packages/office test:  ✓ src/xlsx-format.test.ts (3 tests) 6ms
+packages/office test:  ✓ src/pptx-ink.test.ts (3 tests) 12ms
+packages/office test:  ✓ src/xlsx-fill.test.ts (29 tests) 9ms
+packages/office test:  ✓ src/xlsx-table-styles.test.ts (3 tests) 8ms
+packages/office test:  ✓ src/editors/pdf-image-export.test.ts (3 tests) 6ms
+packages/office test:  ✓ src/xlsx-manual.test.ts (7 tests) 7ms
+packages/office test:  ✓ src/docx-footnote-flow.test.ts (2 tests) 5ms
+packages/office test:  ✓ src/editors/use-pdf-ocr.test.ts (7 tests) 5ms
+packages/office test:  ✓ src/editors/pdf-retention.test.ts (11 tests) 7ms
+packages/office test:  ✓ src/pptx-group-placement.test.ts (10 tests) 4ms
+packages/office test:  ✓ src/agent/pdf-asset-agent.test.ts (4 tests) 6ms
+packages/office test:  ✓ src/editors/pdf-ocr-worker.test.ts (5 tests) 6ms
+packages/office test:  ✓ src/editors/docx-readonly.test.ts (6 tests) 6ms
+packages/office test:  ✓ src/pptx-glb.test.ts (2 tests) 6ms
+packages/office test:  ✓ src/editors/pdf-render.test.ts (1 test) 4ms
+packages/office test:  ✓ src/editors/docx-image-crop.test.ts (13 tests) 3ms
+packages/office test:  ✓ src/xlsx-delimited.test.ts (3 tests) 3ms
+packages/office test:  ✓ src/editors/pptx-chart-colors.test.ts (4 tests) 2ms
+packages/office test:  ✓ src/editors/pdf-drawing-canvas.test.ts (8 tests) 2ms
+packages/office test:  ✓ src/editors/pptx-group-picture-preview.test.ts (11 tests) 2ms
+packages/office test:  ✓ src/pptx-media-frame.test.ts (8 tests) 2ms
+packages/office test:  ✓ src/xlsx-find.test.ts (3 tests) 2ms
+packages/office test:  ✓ src/pptx-paragraph-range.test.ts (3 tests) 2ms
+packages/office test:  ✓ src/xlsx-input.test.ts (1 test) 1ms
+packages/office test:  ✓ src/editors/html-picture-ops.test.ts (1 test) 1ms
+packages/office test:  ✓ src/editors/shortcut-label.test.ts (2 tests) 1ms
+packages/office test: 
+packages/office test:  Test Files  235 passed (235)
+packages/office test:       Tests  2778 passed (2778)
+packages/office test:    Start at  10:30:01
+packages/office test:    Duration  395.21s (tests 62%, import 30%, environment 6%, transform 1%)
+packages/office test: 
+packages/office test:      Import  1030 modules were evaluated 2354 times · 113.24s total, 30% of tracked time
+packages/office test:              ~63.69s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+packages/office test:              learn more: https://vitest.dev/guide/improving-performance#test-isolation
+packages/office test: 
+packages/office test: Done
+packages/renderer test$ vitest run --passWithNoTests
+packages/renderer test: 
+packages/renderer test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+packages/renderer test: 
+packages/renderer test: stderr | src/components/NavSidebar.test.tsx > 工作区读取恢复与账户保护 > 已保存的知识库改名保留脏笔记id与子路径，不触发离开确认
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/NavSidebar.test.tsx (25 tests) 8969ms
+packages/renderer test:    ✓ 统一工作区导航 (9)
+packages/renderer test:      ✓ 级联主题选择关闭全部弹层，重新打开显示当前勾选 1407ms
+packages/renderer test:      ✓ 窄屏覆盖进入焦点，X关闭并恢复触发点，释放滚动锁 1314ms
+packages/renderer test:      ✓ 窄屏 Escape 与遮罩均可关闭 854ms
+packages/renderer test:      ✓ 窄屏抽屉首尾 Tab 循环，阻止焦点进入浏览器外部 675ms
+packages/renderer test:    ✓ 工作区读取恢复与账户保护 (16)
+packages/renderer test:      ✓ 登出通过未保存保护，取消与保存失败均不发请求 460ms
+packages/renderer test:      ✓ 登出pending只发一次，失败原处重试，独立设置仍可用 301ms
+packages/renderer test:      ✓ 登出仅在丢弃改动获准后请求 310ms
+packages/renderer test:      ✓ 主题Escape逐层关闭并回焦，外点关闭不抢新目标焦点 373ms
+packages/renderer test:      ✓ 已保存的知识库改名保留脏笔记id与子路径，不触发离开确认 303ms
+packages/renderer test:      ✓ 登出请求跨rail与Drawer重挂载保持单飞状态 317ms
+packages/renderer test:  ✓ src/editor/diagram-block.test.ts (10 tests) 2483ms
+packages/renderer test:    ✓ keeps normal code highlighting and wavedrom fenced source while rendering diagram previews 467ms
+packages/renderer test:    ✓ keeps normal code highlighting and mermaid fenced source while rendering diagram previews 428ms
+packages/renderer test:    ✓ edits the same wavedrom code block through Agent operations and keeps errors recoverable 677ms
+packages/renderer test:    ✓ edits the same mermaid code block through Agent operations and keeps errors recoverable 636ms
+packages/renderer test: stderr | src/components/CommandPalette.test.tsx > 最近12个ID中的笔记不截成6篇；部分失败保留可用项，403不泄露，重试恢复
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/CommandPalette.test.tsx > 搜索重试立即回到输入框，迟到的成功不会抢走用户后来移动的焦点
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/CommandPalette.test.tsx > 搜索重试立即回到输入框，迟到的成功不会抢走用户后来移动的焦点
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/CommandPalette.test.tsx (15 tests) 1433ms
+packages/renderer test: stderr | src/editor/markdown-controls.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-controls.test.tsx (7 tests) 1220ms
+packages/renderer test:    ✓ markdown 的控件契约（渲染层） (7)
+packages/renderer test:      ✓ 保存失败时状态行给一个可点的 antd 按钮，点它真的重试 1053ms
+packages/renderer test: stderr | src/components/library/LibraryView.interaction.test.tsx > 最后知识库已删除的旧scope显示创建恢复，不误显示空目录
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/library/LibraryView.interaction.test.tsx (13 tests) 775ms
+packages/renderer test:  ✓ src/components/document/DocumentHeader.test.tsx (7 tests) 812ms
+packages/renderer test:  ✓ src/theme/design.test.ts (109 tests) 607ms
+packages/renderer test: stderr | src/editor/MarkdownEditor.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/MarkdownEditor.test.tsx (27 tests) 594ms
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx > tag metadata never applies its body snapshot; failed refresh keeps editor and retries only GET
+packages/renderer test: Each child in a list should have a unique "key" prop.
+packages/renderer test: 
+packages/renderer test: Check the render method of `div`. It was passed a child from DocumentHeader. See https://react.dev/link/warning-keys for more information.
+packages/renderer test: 
+packages/renderer test: stderr | src/components/DocumentPanel.core.test.tsx > tag metadata never applies its body snapshot; failed refresh keeps editor and retries only GET
+packages/renderer test: Each child in a list should have a unique "key" prop.
+packages/renderer test: 
+packages/renderer test: Check the render method of `DocumentHeader`. See https://react.dev/link/warning-keys for more information.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.core.test.tsx (8 tests) 625ms
+packages/renderer test:  ✓ src/components/document/MarkdownBody.test.tsx (5 tests) 552ms
+packages/renderer test:    ✓ renders saved WaveDrom fences read-only and preserves source on a drawing error 471ms
+packages/renderer test: stderr | src/components/KnowledgeBaseCreateModal.test.tsx > 非法名称就地关联错误并聚焦，组合输入不提交；请求失败保留草稿可重试
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/KnowledgeBaseCreateModal.test.tsx (11 tests) 508ms
+packages/renderer test: stderr | src/editor/markdown-save.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-save.test.tsx (11 tests) 532ms
+packages/renderer test:  ✓ src/components/library/LibraryView.test.tsx (6 tests) 515ms
+packages/renderer test:  ✓ src/routes/-app-shell.test.tsx (13 tests) 415ms
+packages/renderer test: stderr | src/editor/markdown-slash-image.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-slash-image.test.tsx (5 tests) 531ms
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx > returns find and replace Escape/close focus to the live Markdown editor without changing content
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/editor/markdown-find-focus.test.tsx > returns find and replace Escape/close focus to the live Markdown editor without changing content
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-find-focus.test.tsx (1 test) 407ms
+packages/renderer test:    ✓ returns find and replace Escape/close focus to the live Markdown editor without changing content 406ms
+packages/renderer test:  ✓ src/components/document/DocumentCommandModal.test.tsx (9 tests) 342ms
+packages/renderer test: stderr | src/components/UnsavedGuard.test.tsx > document leave guard > focuses continue first, excludes IME Escape/Enter and restores invoking focus
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/UnsavedGuard.test.tsx > document leave guard > focuses continue first, excludes IME Escape/Enter and restores invoking focus
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/UnsavedGuard.test.tsx (10 tests) 354ms
+packages/renderer test:  ✓ src/components/settings/SettingControl.test.tsx (10 tests) 293ms
+packages/renderer test:  ✓ src/components/library/SourceReplaceDialog.test.tsx (3 tests) 276ms
+packages/renderer test: stderr | src/editor/markdown-writing.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-writing.test.tsx (5 tests) 272ms
+packages/renderer test:  ✓ src/components/CaptureDialog.test.tsx (6 tests) 343ms
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 提交空表单后聚焦首个错误，输入与错误文本程序化关联
+packages/renderer test: An update to Notification inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 提交空表单后聚焦首个错误，输入与错误文本程序化关联
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 预设下拉填入连接与建议模型，并聚焦下一步显示名
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to ForwardRef inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ProviderForm.test.tsx > 供应商表单反馈 > 重复添加回到现有空模型，稳定输入 ID 也支持校验错误聚焦
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/settings/ProviderForm.test.tsx (4 tests) 280ms
+packages/renderer test: stderr | src/editor/markdown-toolbar.test.ts
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/markdown-toolbar.test.ts (46 tests) 408ms
+packages/renderer test: stderr | src/components/nav/FolderSection.test.tsx > 编辑改名保留子目录位置，可通过专用回调保留打开的笔记：false
+packages/renderer test: `NaN` is an invalid value for the `height` css style property.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/nav/FolderSection.test.tsx (3 tests) 220ms
+packages/renderer test:  ✓ src/components/nav/RecentNotes.test.tsx (1 test) 260ms
+packages/renderer test: stderr | src/routes/-login-recovery.test.tsx > setup error offers plain recovery guidance and retries into the real login form
+packages/renderer test: An update to LoginPage inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/routes/-login-recovery.test.tsx > setup error offers plain recovery guidance and retries into the real login form
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to CSSMotion inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: An update to EllipsisMeasure inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/routes/-login-recovery.test.tsx (4 tests) 187ms
+packages/renderer test: 裁剪样式：1414 → 439 条规则，107 KB
+packages/renderer test: 输出 src/generated/editor.css
+packages/renderer test:  ✓ vite-preset.test.ts (3 tests) 195ms
+packages/renderer test: stderr | src/components/settings/ClientSection.test.tsx > 客户端设置 > 显示真实版本和当前使用方式，关于入口交给桌面路由
+packages/renderer test: An update to ClientSection inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test: stderr | src/components/settings/ClientSection.test.tsx > 客户端设置 > 云端使用方式显示服务器来源
+packages/renderer test: An update to ClientSection inside a test was not wrapped in act(...).
+packages/renderer test: 
+packages/renderer test: When testing, code that causes React state updates should be wrapped into act(...):
+packages/renderer test: 
+packages/renderer test: act(() => {
+packages/renderer test:   /* fire events that update state */
+packages/renderer test: });
+packages/renderer test: /* assert on the output */
+packages/renderer test: 
+packages/renderer test: This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/settings/ClientSection.test.tsx (3 tests) 196ms
+packages/renderer test: stderr | src/components/DocumentPanel.commands.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/components/DocumentPanel.commands.test.tsx (1 test) 276ms
+packages/renderer test:  ✓ src/components/UploadPanel.test.tsx (5 tests) 199ms
+packages/renderer test:  ✓ src/components/document/DocumentTitle.test.tsx (3 tests) 155ms
+packages/renderer test:  ✓ src/components/library/LibraryView.drop.test.tsx (3 tests) 230ms
+packages/renderer test:  ✓ src/components/library/FolderNameModal.test.tsx (3 tests) 163ms
+packages/renderer test:  ✓ src/editor/diagram-pele.test.ts (13 tests) 120ms
+packages/renderer test: stderr | src/editor/MarkdownImage.test.tsx
+packages/renderer test: Warning: KaTeX doesn't work in quirks mode. Make sure your website has a suitable doctype.
+packages/renderer test: 
+packages/renderer test:  ✓ src/editor/MarkdownImage.test.tsx (2 tests) 177ms
+packages/renderer test:  ✓ src/routes/-root-recovery.test.tsx (1 test) 111ms
+[status: running]

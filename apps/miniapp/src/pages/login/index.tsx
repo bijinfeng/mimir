@@ -31,12 +31,18 @@ export default function LoginPage() {
   }
   return (
     <View className="page login-page">
-      <Text className="page-title">登录 Mimir</Text>
+      <View className="login-brand">
+        <View className="brand-mark" aria-hidden="true">
+          m
+        </View>
+        <Text className="brand-word">mimir</Text>
+      </View>
+      <Text className="page-title login-title">登录 Mimir</Text>
       <Text className="block muted section-small">连接固定服务端的现有账号</Text>
       <Text selectable className="server-address">
         {origin || '尚未配置服务端'}
       </Text>
-      <View className="section">
+      <View className="form-card">
         <Text className="field-label">邮箱或用户名</Text>
         <Input
           className="field"
@@ -71,6 +77,9 @@ export default function LoginPage() {
       >
         {busy ? '正在登录…' : '登录'}
       </Action>
+      {!busy && (!identifier.trim() || !password) && (
+        <Text className="block muted section-small login-hint">填写账号和密码后继续</Text>
+      )}
       <Text className="block muted section-small">密码仅用于本次登录，不保存在本机。</Text>
     </View>
   )

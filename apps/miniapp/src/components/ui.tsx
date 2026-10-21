@@ -52,20 +52,43 @@ export function Gate({ children }: PropsWithChildren) {
   const online = useOnline()
   if (!origin)
     return (
-      <View className="page">
-        <Text className="page-title">尚未配置服务端</Text>
-        <Text className="block muted">请在构建时配置固定 HTTPS 域名后重新编译。</Text>
+      <View className="page gate-page">
+        <View className="gate-brand">
+          <View className="brand-mark" aria-hidden="true">
+            m
+          </View>
+          <Text className="brand-word">mimir</Text>
+        </View>
+        <View className="gate-main">
+          <Text className="gate-title">尚未配置服务端</Text>
+          <Text className="gate-desc">请在构建时配置固定 HTTPS 域名后重新编译。</Text>
+        </View>
       </View>
     )
   if (!session)
     return (
-      <View className="page">
-        <Text className="page-title">连接你的知识库</Text>
-        <Text className="block muted">{sessionReason() || '使用服务端现有账号登录。'}</Text>
-        <View className="section">
-          <Action primary onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}>
-            登录
-          </Action>
+      <View className="page gate-page">
+        <View className="gate-brand">
+          <View className="brand-mark" aria-hidden="true">
+            m
+          </View>
+          <Text className="brand-word">mimir</Text>
+        </View>
+        <View className="gate-main">
+          <Text className="gate-title">连接你的知识库</Text>
+          <Text className="gate-desc">{sessionReason() || '使用服务端现有账号登录。'}</Text>
+          <View className="gate-card">
+            <Text className="gate-label">服务端</Text>
+            <Text selectable className="gate-origin">
+              {origin}
+            </Text>
+            <View className="gate-action">
+              <Action primary onClick={() => Taro.navigateTo({ url: '/pages/login/index' })}>
+                登录
+              </Action>
+            </View>
+            <Text className="gate-hint">登录后，笔记、资料和对话都来自这个服务器。</Text>
+          </View>
         </View>
       </View>
     )

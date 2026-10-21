@@ -1,0 +1,14 @@
+[
+  {
+    "id": "gate",
+    "title": "连接门 · 390×671",
+    "before": "before/gate.png",
+    "after": "after/gate.png"
+  },
+  {
+    "id": "login",
+    "title": "登录 · 390×753",
+    "before": "before/login.png",
+    "after": "after/login.png"
+  }
+]

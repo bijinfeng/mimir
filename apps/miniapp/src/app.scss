@@ -583,3 +583,114 @@ scroll-view {
 .sheet-scroll {
   height: 58vh;
 }
+
+/* ── 登录与连接门 ─────────────────────────────────────────── */
+/* 禁用主操作使用中性灰，不沿用 NutUI 的粉色 disabled 填充。 */
+.nut-button.nut-button-disabled {
+  opacity: 1 !important;
+  background: #eff0f0 !important;
+  border-color: #d5d8d6 !important;
+  color: #8c8c8c !important;
+}
+.gate-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+}
+.gate-brand,
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #00834d;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 30px;
+  text-align: center;
+}
+.brand-word {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.gate-main {
+  margin-top: 32px;
+}
+.gate-title {
+  display: block;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.gate-desc {
+  display: block;
+  margin-top: 8px;
+  color: #595959;
+  line-height: 1.75;
+}
+.gate-card {
+  margin-top: 24px;
+  padding: 18px;
+  background: #f7f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+}
+.gate-label {
+  display: block;
+  color: #595959;
+  font-size: 12px;
+}
+.gate-origin {
+  display: block;
+  margin-top: 4px;
+  color: #262626;
+  font-size: 14px;
+  word-break: break-all;
+}
+.gate-action {
+  margin-top: 18px;
+}
+.gate-action .nut-button {
+  width: 100%;
+}
+.gate-hint {
+  display: block;
+  margin-top: 12px;
+  color: #6b6b6b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.login-page {
+  padding-top: 28px;
+}
+.login-title {
+  margin-top: 24px;
+}
+.login-page .server-address {
+  color: #6b6b6b;
+  font-size: 12px;
+}
+.form-card {
+  margin-top: 20px;
+}
+.login-page .nut-button {
+  width: 100%;
+  margin-top: 12px;
+}
+.login-hint {
+  margin-top: 8px;
+  text-align: center;
+}
+.nut-button.nut-button-disabled .nut-button-wrap,
+.nut-button.nut-button-disabled .nut-button-children {
+  color: #8c8c8c !important;
+}
