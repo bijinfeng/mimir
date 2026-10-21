@@ -1,0 +1,21 @@
+{
+  "sameGeometryAsApproved": true,
+  "primary": "#00834d",
+  "whiteOnGreenContrast": 4.82,
+  "darkAccentOnDarkContrast": 7.96,
+  "images": [
+    "preview-light.png",
+    "preview-dark.png",
+    "preview-mobile.png"
+  ],
+  "notProductIntegration": true,
+  "mobileOverflow": false,
+  "previewViewports": [
+    1440,
+    390
+  ],
+  "greenPreviewInspected": [
+    "light",
+    "dark"
+  ]
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.mimirDesktop = {
+        window: {
+          platform: 'win32',
+          isMaximized: async () => false,
+          onMaximizeChange: () => () => {},
+          minimize() {},
+          close() {},
+          toggleMaximize() {},
+        },
+        mode: {
+          get: async () => null,
+          choose: async () => ({ ok: true }),
+          activate: async () => {},
+        },
+      }
+    </script>
+    <script type="module" src="./harness.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+$ vitest run --passWithNoTests
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+
+裁剪样式：1414 → 439 条规则，107 KB
+输出 src/generated/editor.css
+
+ Test Files  86 passed (86)
+      Tests  640 passed (640)
+   Start at  11:31:43
+   Duration  79.43s (import 66%, environment 14%, transform 11%, tests 9%)
+
+    Isolate  86 workers spawned · ~1.49s startup each (spawn + environment, per file)
+             at least ~12.71s faster with isolate: false — reuses workers across files instead of one per file

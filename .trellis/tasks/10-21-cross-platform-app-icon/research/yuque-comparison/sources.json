@@ -1,0 +1,18 @@
+{
+  "retrieved": "2026-10-21",
+  "page": "https://www.yuque.com/",
+  "assets": [
+    {
+      "url": "https://mdn.alipayobjects.com/huamei_0prmtq/afts/img/A*sRUdR543RjcAAAAAAAAAAAAADvuFAQ/original",
+      "path": ".trellis/tasks/10-21-cross-platform-app-icon/research/yuque-comparison/official-asset-1.svg",
+      "mime": "image/svg+xml",
+      "sha256": "d4ceb0d7544da97d57d973292e2bb5e07648d8d70fb668328680ea97ed0c1dd9"
+    },
+    {
+      "url": "https://mdn.alipayobjects.com/huamei_0prmtq/afts/img/A*vMxOQIh4KBMAAAAAAAAAAAAADvuFAQ/original",
+      "path": ".trellis/tasks/10-21-cross-platform-app-icon/research/yuque-comparison/official-asset-2.png",
+      "mime": "image/png",
+      "sha256": "cb1822fdf416a9893e7d35cdf4a689bbf765b71b220bfd01c586b154b76db2a4"
+    }
+  ]
+}

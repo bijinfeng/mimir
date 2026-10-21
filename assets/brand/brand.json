@@ -1,0 +1,8 @@
+{
+  "name": "mimir",
+  "colors": {
+    "primary": "#00834d",
+    "inverse": "#FFFFFF",
+    "onDark": "#6bdaa5"
+  }
+}

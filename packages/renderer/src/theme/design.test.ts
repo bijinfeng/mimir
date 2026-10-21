@@ -4,6 +4,9 @@ import { act, createElement } from 'react'
 import type { ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { BrandMark } from '../components/BrandMark'
+import { BRAND_PATH, BRAND_VIEW_BOX } from '../components/brand.generated'
 import { BADGE_COLORS } from '../components/DocumentBadges'
 import { setThemeMode } from './appearance'
 import type { Appearance } from './appearance'
@@ -645,60 +648,40 @@ describe('样式模板里没有多余的反引号', () => {
   })
 })
 
-/**
- * 取出品牌标记的 path 数据，并规范化空白。
- *
- * 规范化是必需的：`z` 与 `M` 之间空格可有可无，两种写法渲染完全相同，
- * 但逐字比对会把它们当成差异。抹平这一处，其余任何不同都算真分叉。
- */
+/** Follow the actual rendered component, not a literal copied from its source file. */
 function brandPathOf(text: string): string | undefined {
-  const m = text.match(/d="([^"]*M7 2h18[^"]*)"/)
-  return m?.[1]
+  return text
+    .match(/<path[^>]*\sd="([^"]+)"/)?.[1]
     ?.replace(/\s+/g, ' ')
-    .replace(/z(?=M)/g, 'z ')
-    .replace(/\s+/g, ' ')
     .trim()
 }
 
 describe('品牌标记', () => {
-  /**
-   * 标记的两条实现约束，都是**踩过才知道**的：
-   *
-   * 1. 方框内侧必须用 `fill-rule="evenodd"` 挖空，不能拿白色圆形盖上去。
-   *    白圆在白底上看着没问题，但标记放到主色按钮或深色浮层上就会露出白点。
-   * 2. 颜色必须走 `currentColor`。写死 hex 的话，主题换色时 logo 不跟着走，
-   *    于是它成为全站唯一一个「不服从主题」的元素——**深色模式下尤其明显**，
-   *    方框会在深色导航上留下不该有的白色填充。
-   */
-  it('品牌标记是镂空的，且颜色跟随 currentColor', async () => {
-    const { readFile } = await import('node:fs/promises')
-    const src = await readFile('src/components/BrandMark.tsx', 'utf8')
-
-    expect(src, '方框内侧要用 evenodd 挖空，而不是白色圆形覆盖').toContain('evenodd')
-    expect(src, '颜色要走 currentColor，否则主题换色时 logo 不跟随').toContain(
-      'fill="currentColor"',
-    )
-    // 标记自己的 path 里不该出现字面色值
-    expect(src, '标记内部不该出现字面色值').not.toMatch(/fill="#[0-9a-f]{3,6}"/i)
+  it('继承颜色，保留镂空、尺寸与辅助功能语义', () => {
+    const mark = renderToStaticMarkup(createElement(BrandMark, { size: 24, title: 'mimir' }))
+    expect(mark).toContain('fill="currentColor"')
+    expect(mark).toContain('fill-rule="evenodd"')
+    expect(mark).toContain('width="24"')
+    expect(mark).toContain('height="24"')
+    expect(mark).toContain('aria-label="mimir"')
+    expect(mark).toContain('role="img"')
+    expect(mark).toContain(`viewBox="${BRAND_VIEW_BOX}"`)
+    expect(mark).not.toMatch(/fill="#[0-9a-f]{3,6}"/i)
+    const decorative = renderToStaticMarkup(createElement(BrandMark, { title: null }))
+    expect(decorative).toContain('aria-hidden="true"')
+    expect(decorative).not.toContain('role="img"')
   })
 
-  /**
-   * favicon 现在有**两份**（D-103）：浏览器部署与桌面渲染进程各有自己的
-   * `public/`，而两个平台的 HTML 都 `<link>` 它。
-   *
-   * 所以这里守的是三者同形：组件、web 的 favicon、desktop 的 favicon。
-   * 少守一处的代价很具体——某个平台的标签页/任务栏上是另一个形状的 logo，
-   * 而那只有同时打开两个平台才看得出来。
-   */
-  it('两个平台的 favicon 与组件用的是同一个形状', async () => {
+  it('真实组件、生成模块、两个 favicon 与主矢量同形', async () => {
     const { readFile } = await import('node:fs/promises')
-    const component = brandPathOf(await readFile('src/components/BrandMark.tsx', 'utf8'))
-    expect(component).toBeDefined()
-
+    const source = brandPathOf(await readFile('../../assets/brand/mimir-mark.svg', 'utf8'))
+    expect(source).toBeDefined()
+    expect(BRAND_PATH).toBe(source)
+    expect(brandPathOf(renderToStaticMarkup(createElement(BrandMark)))).toBe(source)
     for (const where of ['apps/web', 'apps/desktop']) {
-      const favicon = brandPathOf(await readFile(`../../${where}/public/favicon.svg`, 'utf8'))
-      expect(favicon, `${where} 的 favicon 里找不到品牌 path`).toBeDefined()
-      expect(favicon, `${where} 的 favicon 与组件画的形状不一致`).toBe(component)
+      const favicon = await readFile(`../../${where}/public/favicon.svg`, 'utf8')
+      expect(brandPathOf(favicon), `${where} favicon 几何必须与主矢量同步`).toBe(source)
+      expect(favicon).toContain(`viewBox="${BRAND_VIEW_BOX}"`)
     }
   })
 })

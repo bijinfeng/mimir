@@ -1,0 +1,9 @@
+ M apps/miniapp/config/index.ts
+ M apps/miniapp/package.json
+ M pnpm-lock.yaml
+?? .impeccable/questions/6ffef679.hand.json
+?? .impeccable/questions/6ffef679.state.json
+?? .trellis/tasks/10-21-cross-platform-app-icon/
+?? apps/desktop/.impeccable/questions/
+?? apps/miniapp/dist-h5/
+?? apps/miniapp/src/index.html

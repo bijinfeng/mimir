@@ -1,0 +1,26 @@
+$ pnpm routes:generate && tsc --noEmit && vite build
+$ node ../../packages/renderer/generate-routes.mjs src/routeTree.gen.ts
+路由树已生成 → /Users/admin/Desktop/mimir/packages/renderer/src/routeTree.gen.ts
+路由树已生成 → /Users/admin/Desktop/mimir/apps/web/src/routeTree.gen.ts
+../../packages/office/src/editors/XlsxObjectManagement.tsx(335,9): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").ReactNode'.
+  Type 'bigint' is not assignable to type 'ReactNode'.
+../../packages/office/src/shell/EditorShell.tsx(563,7): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").ReactNode'.
+  Type 'bigint' is not assignable to type 'ReactNode'.
+../../packages/renderer/src/components/confirm-danger.tsx(15,5): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").ReactNode'.
+  Type 'bigint' is not assignable to type 'ReactNode'.
+../../packages/renderer/src/components/confirm-danger.tsx(23,9): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").ReactNode'.
+  Type 'bigint' is not assignable to type 'ReactNode'.
+../../packages/renderer/src/components/nav/NavigationAction.tsx(26,7): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").ReactNode'.
+  Type 'bigint' is not assignable to type 'ReactNode'.
+../../packages/renderer/src/components/settings/UsageHeatmap.tsx(380,13): error TS2322: Type '(props: SVGProps<SVGRectElement>, valueItem: HeatMapValue & { column: number; row: number; index: number; }) => ReactElement<unknown, string | JSXElementConstructor<any>>' is not assignable to type '(data: SVGProps<SVGRectElement>, valueItem: HeatMapValue & { column: number; row: number; index: number; }) => void | ReactElement<any, string | JSXElementConstructor<...>>'.
+  Types of parameters 'props' and 'data' are incompatible.
+    Type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").SVGProps<SVGRectElement>' is not assignable to type 'React.SVGProps<SVGRectElement>'.
+      Types of property 'ref' are incompatible.
+        Type 'LegacyRef<SVGRectElement> | undefined' is not assignable to type 'Ref<SVGRectElement> | undefined'.
+          Type 'string' is not assignable to type 'Ref<SVGRectElement> | undefined'.
+../../packages/renderer/src/theme/MimirProvider.tsx(53,11): error TS2322: Type 'React.ReactNode' is not assignable to type 'import("/Users/admin/Desktop/mimir/node_modules/.pnpm/@types+react@18.3.31/node_modules/@types/react/index").ReactNode'.
+  Type 'bigint' is not assignable to type 'ReactNode'.
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/admin/Desktop/mimir/apps/web

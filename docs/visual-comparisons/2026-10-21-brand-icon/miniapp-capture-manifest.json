@@ -1,0 +1,42 @@
+[
+  {
+    "stage": "before",
+    "view": "gate",
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "errors": [],
+    "sha256": "56279d7d90a9c7948e73bfb9843233dd0d2d8122e37005e303e4beabe0ae147f",
+    "overflow": false
+  },
+  {
+    "stage": "before",
+    "view": "login",
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "errors": [],
+    "sha256": "fea7bf19232b5cbad60a2d140f634d46cd60e1fdd0e0d9f2b50c99f6da84c135",
+    "overflow": false
+  },
+  {
+    "stage": "after",
+    "view": "gate",
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "errors": [],
+    "sha256": "6f4392eff26ad10bf9dbd558eae6413ea4cc9b6c4904e68691611e94b1da4d90",
+    "overflow": false
+  },
+  {
+    "stage": "after",
+    "view": "login",
+    "width": 390,
+    "height": 844,
+    "theme": "light",
+    "errors": [],
+    "sha256": "b7f32578ef75a1ae98e6bc2306348dd301828221611117456bbb7816d7e8e198",
+    "overflow": false
+  }
+]

@@ -1,0 +1,22 @@
+Command: VITEST_MAX_WORKERS=1 pnpm check
+Exit: 1 (initial workspace run; stopped at lint)
+
+Raw log preserved outside repository: /tmp/mimir-icon-workspace-full-check.txt
+SHA-256: 4db29077dfa4ee2405129005f743f04aee2a12e8a3d245d956fdd197255bd8e0
+Raw bytes: 3234346
+
+Representative diagnostics:
+apps/desktop/src/main/brand-assets.test.ts:25:57: error vitest(require-to-throw-message): Require a message for "toThrow". help: Add an error message to "toThrow"
+apps/desktop/src/main/brand-assets.test.ts:26:75: error vitest(require-to-throw-message): Require a message for "toThrow". help: Add an error message to "toThrow"
+apps/miniapp/dist-h5/chunk/279.js:2:2916: error eslint(no-unused-vars): Parameter 'c' is declared but never used. Unused parameters should start with a '_'. help: Consider removing this parameter.
+apps/miniapp/dist-h5/chunk/279.js:2:3421: error eslint(no-unused-vars): Parameter 'h' is declared but never used. Unused parameters should start with a '_'. help: Consider removing this parameter.
+apps/miniapp/dist-h5/chunk/279.js:2:92: error eslint(no-unused-expressions): Expected expression to be used help: Consider using this expression or removing it
+apps/miniapp/dist-h5/chunk/279.js:2:602: error eslint(no-useless-escape): Unnecessary escape character '{' help: Replace `\{` with `{`.
+apps/miniapp/dist-h5/chunk/279.js:2:604: error eslint(no-useless-escape): Unnecessary escape character '}' help: Replace `\}` with `}`.
+apps/miniapp/dist-h5/chunk/279.js:2:831: error eslint(no-unused-expressions): Expected expression to be used help: Consider using this expression or removing it
+apps/miniapp/dist-h5/chunk/279.js:2:1093: error eslint(no-unused-expressions): Expected expression to be used help: Consider using this expression or removing it
+apps/miniapp/dist-h5/chunk/279.js:2:1193: error eslint(no-unused-expressions): Expected expression to be used help: Consider using this expression or removing it
+
+The two local toThrow message errors were fixed, then scoped lint passed.
+The other session's unignored dist-h5 output was not changed.
+Main runs the final task-only gate in a clean managed worktree.

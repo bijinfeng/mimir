@@ -1,0 +1,37 @@
+[
+  {
+    "file": "home-light",
+    "errors": [],
+    "changedPixelRatio": 0.008237654320987654,
+    "images": []
+  },
+  {
+    "file": "samples-dark",
+    "errors": [],
+    "changedPixelRatio": 0.000046296296296296294,
+    "images": []
+  },
+  {
+    "file": "miniapp-login",
+    "errors": [],
+    "changedPixelRatio": 0.00023696682464454977,
+    "images": [
+      {
+        "complete": true,
+        "width": 128
+      },
+      {
+        "complete": true,
+        "width": 0
+      },
+      {
+        "complete": true,
+        "width": 0
+      },
+      {
+        "complete": true,
+        "width": 0
+      }
+    ]
+  }
+]

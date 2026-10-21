@@ -1,139 +1,69 @@
 #!/usr/bin/env node
 /**
- * 生成各平台的应用图标（D-091）。
- *
- * ## 产物
- *
- * ```
- * resources/icon.png    1024×1024   通用（Linux / electron-builder 兜底）
- * resources/icon.icns   macOS       打包 dmg / .app
- * resources/icon.ico    Windows     （当前只打 macOS，留着以免将来漏掉）
- * ```
- *
- * 三个都**提交进仓库**：图标是几乎不变的二进制资产，而生成它需要一条
- * 能画图的链路（见下）。这样 `pnpm install` 出来的环境不必装任何东西
- * 就能打包。
- *
- * ## 为什么不用 Electron / rsvg / ImageMagick
- *
- * 走过三条弯路，都实测过：
- *
- *  1. `rsvg-convert` / `convert` / `magick` —— 本机都没有
- *  2. **Electron 的 Chromium 截图**（最直觉的一条）—— 在 Wayland 上不稳：
- *     `data:` URL 在小尺寸时报 `ERR_FAILED`；每个尺寸开一个窗口时 16px 能过、
- *     24px 起报 `UnknownVizError`；复用一个窗口反复 loadFile 第二次就挂。
- *     折腾完还得依赖「本机能起 Electron」，而做图标的人未必有显示环境
- *  3. **`@napi-rs/canvas`** —— 它已经在依赖树里（`pdfjs-dist` 的可选依赖，
- *     Node 侧渲染 PDF 用的），纯原生、不开窗口、不需要显示环境。
- *     它没有 SVG 解析器，但那不影响我们：**图标的路径是写死的**，
- *     直接用 `Path2D` 的 SVG 路径语法画即可，比先解析 SVG 更直接
- *
- * ## 图形来自 favicon，不在这里另抄一份
- *
- * 品牌标记的路径**在这个脚本运行时从 `apps/web/public/favicon.svg` 读**
- * （解析它的 `<path d="…">`）。两处都需要这份几何，抄一份就有两个真相源——
- * 改了一处忘了另一处，两边的图标会慢慢长得不一样，而那种差异没人会主动
- * 去比对。所以 favicon 是**唯一来源**，这里只加「底色与留白」这层
- * 桌面端特有的处理（favicon 是透明底 + 绿色标记，要能在任意标签栏上活；
- * 应用图标是品牌绿色底 + 白字，要在一块方寸里立住）。
- *
- * 孔的掏空用 `fill(path, 'evenodd')`，与 favicon 的 `fill-rule="evenodd"`
- * 同一条理由：白圆覆盖方案在别的底色上会露馅。
- *
- * 用法：`pnpm --filter @mimir/desktop icons`
+ * Single-source brand assets for web, desktop, fnOS and the miniapp.
+ * Edit assets/brand/mimir-mark.svg / brand.json, then run:
+ * pnpm --filter @mimir/desktop icons
+ * PNGs are rasterized directly at each target resolution. Generated files are committed.
  */
-
 import { createRequire } from 'node:module'
-import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-/**
- * `@napi-rs/canvas` 是**本包的 devDependency**（显式声明，不是因为它在别处
- * 恰好也有）。它同时是 pdfjs-dist 的可选依赖，但靠那个传递关系太脆——
- * 哪天 pdfjs 换掉它，这个脚本会以一个难懂的方式失败。
- */
 const require = createRequire(import.meta.url)
-
-interface Canvas2D {
-  fillStyle: string
-  beginPath(): void
-  roundRect(x: number, y: number, w: number, h: number, r: number): void
-  fill(): void
-  fill(path: unknown, rule: 'evenodd'): void
-  translate(x: number, y: number): void
-  scale(x: number, y: number): void
-}
-
-interface NapiCanvas {
-  createCanvas(
-    width: number,
-    height: number,
-  ): {
-    getContext(type: '2d'): Canvas2D
-    toBuffer(mime: 'image/png'): Buffer
-  }
-  Path2D: new (path: string) => unknown
-}
-
-const { createCanvas, Path2D } = require('@napi-rs/canvas') as NapiCanvas
-
+const { createCanvas, Path2D } = require('@napi-rs/canvas') as typeof import('@napi-rs/canvas')
 const here = dirname(fileURLToPath(import.meta.url))
-const resources = join(here, '..', 'resources')
+const repository = resolve(here, '../../..')
 
-/** 画布边长。各尺寸都由它缩放采样——一次几何、多档输出，不留坐标漂移 */
-const BASE = 1024
-
-/** 品牌绿色，与 `packages/renderer/src/theme/tokens.ts` 的浅色 `colorPrimary` 同值 */
-const BRAND = '#00834d'
-
-/**
- * 标记路径**从 favicon 读**，不在这个脚本里再抄一份。
- *
- * 两个地方都需要这份几何（浏览器标签页用 SVG、桌面图标用 canvas），
- * 抄一份就有两个真相源——改了一处忘了另一处，图标与 favicon 会慢慢长得
- * 不一样，而那种差异没人会主动去比对。所以 `favicon.svg` 是这份路径的
- * **唯一来源**，这里只加「底色与留白」这层桌面端特有的处理。
- *
- * 读不到就抛错而不是退回一个内置的默认路径：那会让「读文件失败」
- * 表现成「图标画出来了但不是最新的」，比直接失败难查得多。
- */
-async function readMarkPath(): Promise<string> {
-  const favicon = await readFile(join(here, '..', '..', 'web', 'public', 'favicon.svg'), 'utf8')
-  // favicon 里只有一个 <path d="…">（方框和字形是**一条**路径）
-  const match = favicon.match(/<path[^>]*\sd="([^"]+)"/)
-  if (!match) {
-    throw new Error('favicon.svg 里没找到 <path d="…">——图形来源变了，改这里的解析')
-  }
-  return match[1]!
+interface BrandColors {
+  primary: string
+  inverse: string
+  onDark: string
+}
+interface BrandSource {
+  path: string
+  viewBox: string
+  colors: BrandColors
 }
 
-/**
- * 画一张图标。
- *
- * 几何（1024 画布）：
- *  - 圆角方底铺满，圆角半径 22.4%（Apple 的 squircle 近似）
- *  - 标记缩放到画布的 82% 并居中——macOS / Windows 的惯例是艺术内容
- *    占约 80%，四周要有留白；82% 再加标记自身的留白，观感接近那个比例
- *  - 标记在 32×32 视框中居中，按网格中心对齐
- */
-function drawIcon(size: number, markPath: string): Buffer {
+/** Deliberately narrow SVG contract: reject extra shapes instead of silently dropping them. */
+export function parseBrandSource(svg: string, metadata: unknown): BrandSource {
+  const match = svg
+    .trim()
+    .match(
+      /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="(0 0 64 64)"><path fill="(#[0-9a-fA-F]{6})" fill-rule="evenodd" d="([^"]+)"\/><\/svg>$/,
+    )
+  if (!match || !/^[Mm][0-9.,\sMmLlHhVvCcSsQqTtAaZz+-]+$/.test(match[3]!)) {
+    throw new Error('Brand SVG must contain one evenodd path in a 64×64 viewBox')
+  }
+  const colors = (metadata as { colors?: BrandColors } | null)?.colors
+  if (
+    !colors ||
+    !['primary', 'inverse', 'onDark'].every((key) =>
+      /^#[0-9a-fA-F]{6}$/.test(colors[key as keyof BrandColors] ?? ''),
+    )
+  ) {
+    throw new Error('brand.json requires primary, inverse and onDark hex colors')
+  }
+  if (colors.primary.toLowerCase() !== match[2]!.toLowerCase()) {
+    throw new Error('Brand SVG fill and brand.json primary color must match')
+  }
+  return { path: match[3]!, viewBox: match[1]!, colors }
+}
+
+function drawIcon(size: number, source: BrandSource, rounded: boolean, padding: number): Buffer {
   const canvas = createCanvas(size, size)
   const ctx = canvas.getContext('2d')
-
   ctx.beginPath()
-  ctx.roundRect(0, 0, size, size, (229 / BASE) * size)
-  ctx.fillStyle = BRAND
+  ctx.roundRect(0, 0, size, size, rounded ? (229 / 1024) * size : 0)
+  ctx.fillStyle = source.colors.primary
   ctx.fill()
-
-  const scale = (size / 32) * 0.82
+  const scale = (size / 64) * padding
   ctx.translate(size / 2, size / 2)
   ctx.scale(scale, scale)
-  ctx.translate(-16, -16)
-
-  ctx.fillStyle = '#ffffff'
-  ctx.fill(new Path2D(markPath), 'evenodd')
-
+  ctx.translate(-32, -32)
+  ctx.fillStyle = source.colors.inverse
+  ctx.fill(new Path2D(source.path), 'evenodd')
   return canvas.toBuffer('image/png')
 }
 
@@ -205,25 +135,62 @@ function buildIco(pngs: Map<number, Buffer>): Buffer {
   return Buffer.concat([header, directory, ...entries.map((size) => pngs.get(size)!)])
 }
 
-/* ── 跑 ─────────────────────────────────────────────────────── */
-
-async function main(): Promise<void> {
-  const markPath = await readMarkPath()
+/** Build bytes without writing, so the same pipeline can verify every committed asset. */
+export async function buildBrandAssets(root = repository): Promise<Map<string, Buffer>> {
+  const source = parseBrandSource(
+    await readFile(join(root, 'assets/brand/mimir-mark.svg'), 'utf8'),
+    JSON.parse(await readFile(join(root, 'assets/brand/brand.json'), 'utf8')),
+  )
+  const assets = new Map<string, Buffer>()
+  const put = (path: string, value: string | Buffer) => assets.set(path, Buffer.from(value))
+  const generated = '// Generated by apps/desktop/scripts/make-icons.ts. Do not edit.\n'
+  put(
+    'packages/renderer/src/components/brand.generated.ts',
+    generated +
+      `export const BRAND_VIEW_BOX = '${source.viewBox}'\n` +
+      `export const BRAND_PATH =\n  '${source.path}'\n` +
+      `export const BRAND_COLORS = {\n  primary: '${source.colors.primary}',\n  inverse: '${source.colors.inverse}',\n  onDark: '${source.colors.onDark}',\n} as const\n`,
+  )
+  const favicon = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="${source.viewBox}">
+  <!-- Generated from assets/brand/mimir-mark.svg. -->
+  <style>
+    path { fill: ${source.colors.primary} }
+    @media (prefers-color-scheme: dark) { path { fill: ${source.colors.onDark} } }
+  </style>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="${source.path}"/>
+</svg>
+`
+  for (const app of ['web', 'desktop']) put(`apps/${app}/public/favicon.svg`, favicon)
   const sizes = [16, 24, 32, 48, 64, 128, 256, 512, 1024]
-  const pngs = new Map<number, Buffer>(sizes.map((size) => [size, drawIcon(size, markPath)]))
-
-  const icns = buildIcns(pngs)
-  const ico = buildIco(pngs)
-  const png1024 = pngs.get(1024)!
-
-  await writeFile(join(resources, 'icon.png'), png1024)
-  await writeFile(join(resources, 'icon.icns'), icns)
-  await writeFile(join(resources, 'icon.ico'), ico)
-
-  console.log('图标已生成：')
-  console.log(`  resources/icon.png   ${png1024.length} B（1024×1024）`)
-  console.log(`  resources/icon.icns  ${icns.length} B`)
-  console.log(`  resources/icon.ico   ${ico.length} B`)
+  // Preserve the desktop resource contract: 22.4% rounded tile and .82 mark scale.
+  const pngs = new Map(sizes.map((size) => [size, drawIcon(size, source, true, 0.82)]))
+  put('apps/desktop/resources/icon.png', pngs.get(1024)!)
+  put('apps/desktop/resources/icon.icns', buildIcns(pngs))
+  put('apps/desktop/resources/icon.ico', buildIco(pngs))
+  for (const [path, size] of [
+    ['apps/fnos/ICON.PNG', 64],
+    ['apps/fnos/ICON_256.PNG', 256],
+    ['apps/fnos/app/ui/images/icon_64.png', 64],
+    ['apps/fnos/app/ui/images/icon_256.png', 256],
+  ] as const)
+    put(path, pngs.get(size)!)
+  // Miniapp Image is cropped by its UI container. Avatar uploads need a full square.
+  put('apps/miniapp/src/assets/brand/icon.png', drawIcon(128, source, false, 1))
+  put('assets/brand/exports/miniapp-avatar.png', drawIcon(1024, source, false, 1))
+  put(
+    'assets/brand/exports/app-icon.svg',
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${source.viewBox}"><rect width="64" height="64" rx="14" fill="${source.colors.primary}"/><path fill="${source.colors.inverse}" fill-rule="evenodd" d="${source.path}"/></svg>\n`,
+  )
+  return assets
 }
 
-void main()
+async function main(): Promise<void> {
+  const assets = await buildBrandAssets()
+  for (const [path, bytes] of assets) {
+    await mkdir(dirname(join(repository, path)), { recursive: true })
+    await writeFile(join(repository, path), bytes)
+  }
+  console.log(`Generated ${assets.size} brand assets from assets/brand/mimir-mark.svg`)
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) void main()

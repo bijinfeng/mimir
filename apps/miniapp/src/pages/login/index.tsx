@@ -5,6 +5,7 @@ import { Action, ErrorNotice } from '../../components/ui'
 import { api, errorMessage } from '../../lib/api'
 import { setSession } from '../../lib/session'
 import { origin } from '../../lib/storage'
+import { MiniappBrandMark } from '../../components/BrandMark'
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -32,9 +33,7 @@ export default function LoginPage() {
   return (
     <View className="page login-page">
       <View className="login-brand">
-        <View className="brand-mark" aria-hidden="true">
-          m
-        </View>
+        <MiniappBrandMark />
         <Text className="brand-word">mimir</Text>
       </View>
       <Text className="page-title login-title">登录 Mimir</Text>

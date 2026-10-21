@@ -607,15 +607,12 @@ scroll-view {
   gap: 8px;
 }
 .brand-mark {
+  display: block;
+  flex: none;
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: #00834d;
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 30px;
-  text-align: center;
+  overflow: hidden;
 }
 .brand-word {
   font-size: 18px;

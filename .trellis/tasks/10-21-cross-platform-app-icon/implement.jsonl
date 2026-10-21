@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "项目范围、文档归属及不混入现有修改"}
+{"file": ".trellis/spec/project/quality.md", "reason": "质量门与真实视觉验收"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "BrandMark 与 React 实现约束"}
+{"file": ".trellis/spec/desktop/runtime/conventions.md", "reason": "桌面资源与打包读取规则"}
+{"file": ".trellis/spec/web/frontend/conventions.md", "reason": "浏览器静态资源入口"}
+{"file": ".trellis/spec/miniapp/frontend/build.md", "reason": "Taro 本地资源及微信构建边界"}
+{"file": ".trellis/tasks/10-21-cross-platform-app-icon/research/icon-evidence.md", "reason": "竞品版本、图形推导和四端来源证据"}
+{"file": ".trellis/spec/project/design.md", "reason": "§9 已批准渡鸦、颜色与单一源派生的现行品牌合同"}

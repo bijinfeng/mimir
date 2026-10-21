@@ -8,6 +8,7 @@ import { useSession, sessionReason } from '../lib/session'
 import { origin } from '../lib/storage'
 import { api, errorMessage } from '../lib/api'
 import { useOnline } from '../lib/network'
+import { MiniappBrandMark } from './BrandMark'
 export { Button }
 export function Action({
   children,
@@ -54,9 +55,7 @@ export function Gate({ children }: PropsWithChildren) {
     return (
       <View className="page gate-page">
         <View className="gate-brand">
-          <View className="brand-mark" aria-hidden="true">
-            m
-          </View>
+          <MiniappBrandMark />
           <Text className="brand-word">mimir</Text>
         </View>
         <View className="gate-main">
@@ -69,9 +68,7 @@ export function Gate({ children }: PropsWithChildren) {
     return (
       <View className="page gate-page">
         <View className="gate-brand">
-          <View className="brand-mark" aria-hidden="true">
-            m
-          </View>
+          <MiniappBrandMark />
           <Text className="brand-word">mimir</Text>
         </View>
         <View className="gate-main">

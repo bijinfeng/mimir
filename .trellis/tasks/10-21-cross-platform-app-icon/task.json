@@ -1,0 +1,73 @@
+{
+  "id": "cross-platform-app-icon",
+  "name": "cross-platform-app-icon",
+  "title": "Mimir 跨平台应用图标重设计",
+  "description": "为桌面端、网页端、fnOS 和微信小程序设计统一品牌图标及平台资源",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-21",
+  "completedAt": null,
+  "branch": "codex/cross-platform-app-icon",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    ".trellis/spec/project/decisions.md",
+    ".trellis/spec/project/design.md",
+    "apps/desktop/public/favicon.svg",
+    "apps/desktop/resources/icon.icns",
+    "apps/desktop/resources/icon.ico",
+    "apps/desktop/resources/icon.png",
+    "apps/desktop/scripts/make-icons.ts",
+    "apps/desktop/src/main/brand-assets.test.ts",
+    "apps/fnos/ICON.PNG",
+    "apps/fnos/ICON_256.PNG",
+    "apps/fnos/app/ui/images/icon_256.png",
+    "apps/fnos/app/ui/images/icon_64.png",
+    "apps/miniapp/scripts/verify-artifact.mjs",
+    "apps/miniapp/src/app.scss",
+    "apps/miniapp/src/assets/brand/icon.png",
+    "apps/miniapp/src/components/BrandMark.tsx",
+    "apps/miniapp/src/components/ui.tsx",
+    "apps/miniapp/src/env.d.ts",
+    "apps/miniapp/src/pages/login/index.tsx",
+    "apps/web/public/favicon.svg",
+    "assets/brand/README.md",
+    "assets/brand/brand.json",
+    "assets/brand/exports/app-icon.svg",
+    "assets/brand/exports/miniapp-avatar.png",
+    "assets/brand/mimir-mark.svg",
+    "packages/renderer/src/components/BrandMark.tsx",
+    "packages/renderer/src/components/brand.generated.ts",
+    "packages/renderer/src/theme/design.test.ts",
+    "docs/visual-comparisons/2026-10-21-brand-icon/comparison.html"
+  ],
+  "notes": "",
+  "meta": {
+    "approvedDesign": {
+      "round": 7,
+      "source": "proposals/round-7-raven/mark.svg",
+      "sha256": "54625fa21ea5aba444d1d1a31bf347db1e068a39770991f51cac0f45d2bde515",
+      "userStatement": "这个版本非常不错，就用这个版本"
+    },
+    "approvedImplementation": {
+      "userStatement": "可以",
+      "review": "final-review.md"
+    },
+    "qualityGate": {
+      "command": "pnpm check",
+      "exitCode": 0,
+      "scope": "clean task-only source snapshot with local offline dependencies",
+      "report": "docs/visual-comparisons/2026-10-21-brand-icon/verification/clean-check.md"
+    }
+  }
+}

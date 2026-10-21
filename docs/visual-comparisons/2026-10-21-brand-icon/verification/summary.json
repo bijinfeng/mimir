@@ -1,0 +1,58 @@
+{
+  "geometry": {
+    "approvedSourceMatchesExactly": true,
+    "sha256": "54625fa21ea5aba444d1d1a31bf347db1e068a39770991f51cac0f45d2bde515"
+  },
+  "generation": {
+    "outputCount": 13,
+    "repeatGenerationVerified": true,
+    "tests": 3
+  },
+  "passed": [
+    "renderer: 86 files / 640 tests",
+    "miniapp: 8 tests",
+    "miniapp WeChat build + enhanced artifact verification: clean task-only snapshot: 7 pages / 670 modules / 471956 raw bytes",
+    "desktop production build",
+    "fnOS: 8 tests",
+    "scoped oxlint (warnings only)",
+    "owned files oxfmt --check",
+    "git diff --check",
+    "clean task-only full pnpm check: lint, style guard, format, all workspace typechecks and tests",
+    "web production build",
+    "desktop: 15 files / 125 tests",
+    "Office: 235 files / 2778 tests",
+    "Server: 123+1+1 files / 1368+10+5 tests",
+    "root Node verification scripts: 80 tests"
+  ],
+  "finalGate": {
+    "status": "passed",
+    "command": "pnpm check (pnpm 12.4.2)",
+    "cwd": "/private/tmp/mimir-icon-full-verification",
+    "exitCode": 0,
+    "report": "clean-check.md",
+    "rawLog": "/tmp/mimir-icon-check-temp-full.log",
+    "sha256": "7d14e8f78502a5f5a9ea29d4eb101d39740460c282784add661660828fc4bfb6",
+    "scheduling": "npm_config_workspace_concurrency=1 was set but ignored by pnpm 12; packages ran with their original scheduling."
+  },
+  "visuals": {
+    "realSharedComponentCaptures": 16,
+    "realTaroH5Captures": 4,
+    "platformResourceBoards": 2,
+    "pageErrors": 0,
+    "horizontalOverflow": false,
+    "offlineChecks": "offline-verification.json",
+    "archiveApproxMiB": 10
+  },
+  "boundaries": [
+    "No native OS install/launcher cache test",
+    "No fnOS device test",
+    "No WeChat device/developer tools test",
+    "No release, upload or backend login performed"
+  ],
+  "ownershipNote": "Other session miniapp H5/config/dependency/NutUI changes remain intact; stage only this task brand hunks.",
+  "initialWorkspaceBlockers": [
+    "Initial full pnpm check stopped at lint: generated dist-h5 from another session plus two local toThrow-message issues (local issues fixed). Raw log in /tmp with hash recorded in verification/full-check.txt.",
+    "Web build hit existing concurrent React18/React19 type resolution mismatch.",
+    "Miniapp typecheck hit concurrent NutUI Input migration props after PNG declaration was fixed."
+  ]
+}

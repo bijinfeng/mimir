@@ -70,6 +70,20 @@ assert.ok(
   modules.some((name) => name.includes('/nutui-react-taro/dist/es/packages/button/')),
   'On-demand NutUI Button is missing',
 )
+assert.ok(
+  modules.some((name) => name.includes('/src/components/BrandMark.tsx')),
+  'The shared native Image brand component is missing',
+)
+assert.deepEqual(
+  await readFile(join(output, 'assets/brand/icon.png')),
+  await readFile(join(root, 'src/assets/brand/icon.png')),
+  'The generated local brand image must enter the WeChat package unchanged',
+)
+assert.match(
+  await readFile(join(output, 'common.js'), 'utf8'),
+  /assets\/brand\/icon\.png/,
+  'The runtime must reference the packaged brand image',
+)
 
 async function collect(directory) {
   const entries = await readdir(directory, { withFileTypes: true })

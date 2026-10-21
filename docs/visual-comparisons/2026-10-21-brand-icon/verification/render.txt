@@ -1,0 +1,2126 @@
+before /var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-DUw0yP
+after /var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN
+vite v8.3.4 building client environment for production...
+transforming...
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/renderer/src/lib/unsaved.tsx:259:8]
+ 258 |           setSaveError(error instanceof Error ? error.message : '保存失败，请重试。')
+ 259 |       } finally {
+     :        ^^^^^^^^^
+ 260 |         if (editorVersion.current === editor) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/renderer/src/components/NavSidebar.tsx:84:10]
+ 83 |           setSignoutError(true)
+ 84 |         } finally {
+    :          ^^^^^^^^^
+ 85 |           signingOutRef.current = false
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/renderer/src/components/KnowledgeBaseCreateModal.tsx:119:6]
+ 118 |       setRecoveryBlocked(true)
+ 119 |     } finally {
+     :      ^^^^^^^^^
+ 120 |       setRecovering(false)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/renderer/src/components/KnowledgeBaseCreateModal.tsx:112:22]
+ 111 |       const resolved = findIdentity(result.items, actual.current)
+ 112 |       if (!resolved) throw new Error('知识库已不可用，请关闭后重新选择')
+     :                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 113 |       const from = actual.current.path
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/MarkdownEditor.tsx:896:22]
+ 895 |                       setActionError(cause instanceof Error ? cause.message : '导出 Markdown 失败')
+ 896 |                     } finally {
+     :                      ^^^^^^^^^
+ 897 |                       setExporting(false)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxEditor.tsx:1936:6]
+ 1935 |         setNotice(cause instanceof Error ? cause.message : String(cause))
+ 1936 |     } finally {
+      :      ^^^^^^^^^
+ 1937 |       if (saveRequest.current === request) saveRequest.current = null
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxEditor.tsx:1980:6]
+ 1979 |         setNotice(`导出失败：${cause instanceof Error ? cause.message : String(cause)}`)
+ 1980 |     } finally {
+      :      ^^^^^^^^^
+ 1981 |       if (exportRequest.current === handle) exportRequest.current = null
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxEditor.tsx:3558:5]
+ 3557 |     setBusy(true)
+ 3558 |     try {
+      :     ^|^
+      :      `-- Unsupported `try` starts here
+ 3559 |       if (await onApply(kind, content.trim(), selection)) onDone()
+ 3560 |     } finally {
+      :      ^^^^|^^^^
+      :          `-- This `finally` clause requires unsupported control flow
+ 3561 |       setBusy(false)
+      `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxEditor.tsx:3611:5]
+ 3610 |     setBusy(true)
+ 3611 |     try {
+      :     ^|^
+      :      `-- Unsupported `try` starts here
+ 3612 |       if (await onApply(comment.trim(), selection)) onDone()
+ 3613 |     } finally {
+      :      ^^^^|^^^^
+      :          `-- This `finally` clause requires unsupported control flow
+ 3614 |       setBusy(false)
+      `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxEditor.tsx:3663:5]
+ 3662 |     setBusy(true)
+ 3663 |     try {
+      :     ^|^
+      :      `-- Unsupported `try` starts here
+ 3664 |       if (await onApply(kind, value)) onDone()
+ 3665 |     } finally {
+      :      ^^^^|^^^^
+      :          `-- This `finally` clause requires unsupported control flow
+ 3666 |       setBusy(false)
+      `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxEditor.tsx:1039:22]
+ 1038 |                       throw error
+ 1039 |                     } finally {
+      :                      ^^^^^^^^^
+ 1040 |                       if (pivotRequest.current === request) pivotRequest.current = null
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] Logical assignment operators (||=, &&=, ??=) are not yet supported
+
+  ! react-compiler(Todo): Logical assignment operators (||=, &&=, ??=) are not
+  | yet supported
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxEditor.tsx:2458:33]
+ 2457 |                               if (event.shiftKey && event.key !== 'Tab' && event.key !== 'Enter') {
+ 2458 |                                 keyboardAnchor.current ??= { row: row.number, col: cell.col }
+      :                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2459 |                                 const a = keyboardAnchor.current
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfEditor.tsx:984:58]
+ 983 |     try {
+ 984 |       if (file.size < 1 || file.size > 50 * 1024 * 1024) throw new Error('请选择 50 MiB 以内的 PDF')
+     :                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 985 |       if (hostLocal) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfEditor.tsx:987:22]
+ 986 |         const handle = agentRef.current
+ 987 |         if (!handle) throw new Error('PDF 原件尚未读取完成')
+     :                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 988 |         const result = await handle.execute(
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfEditor.tsx:997:25]
+ 996 |         )
+ 997 |         if (!result.ok) throw new Error(result.error ?? '导入未应用')
+     :                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 998 |         goTo(at + 1)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfEditor.tsx:1016:9]
+ 1015 |       )
+ 1016 |         throw new Error('导入期间画布已变化，请重新导入')
+      :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 1017 |       if (
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfEditor.tsx:1021:9]
+ 1020 |       )
+ 1021 |         throw new Error('导入后超过 1000 页或导入素材合计超过 50 MiB')
+      :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 1022 |       const key = `import:${file.name}:${bytes.length}:${file.lastModified}`
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfEditor.tsx:2194:6]
+ 2193 |         setNotice(`原文对象未通过核验：${messageOf(cause)}`)
+ 2194 |     } finally {
+      :      ^^^^^^^^^
+ 2195 |       if (request === inspectRequestRef.current) setInspectingText(false)
+      `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/MarkdownWritingPreview.tsx:103:8]
+ 102 |         return { markdown, keptPartial: true }
+ 103 |       } finally {
+     :        ^^^^^^^^^
+ 104 |         signal?.removeEventListener('abort', abort)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/MarkdownWritingPreview.tsx:76:44]
+ 75 |         )
+ 76 |         if (!current() || signal?.aborted) throw new Error('写作已取消')
+    :                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 77 |         return result
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/HtmlWritingPreview.tsx:81:8]
+ 80 |         return { html, complete: false, keptPartial: true }
+ 81 |       } finally {
+    :        ^^^^^^^^^
+ 82 |         input.signal?.removeEventListener('abort', abort)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/HtmlWritingPreview.tsx:62:50]
+ 61 |         })
+ 62 |         if (!current() || input.signal?.aborted) throw new Error('页面写作已取消。')
+    :                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 63 |         if (!result.complete) throw new Error('页面生成未完成。')
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/HtmlWritingPreview.tsx:63:31]
+ 62 |         if (!current() || input.signal?.aborted) throw new Error('页面写作已取消。')
+ 63 |         if (!result.complete) throw new Error('页面生成未完成。')
+    :                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 64 |         return result
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/HtmlAgentPrompt.tsx:172:9]
+ 171 |       if (!draft.core_hook?.trim() || !draft.sections.some((section) => section.title.trim()))
+ 172 |         throw new Error('请填写内容主张和至少一个章节标题')
+     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 173 |       const brief = normalizeHtmlPageBrief({
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxPrivacyControls.tsx:88:44]
+ 87 |     try {
+ 88 |       if (targetVersion !== readVersion()) throw new Error('文档已变化，请重新读取设置')
+    :                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 89 |       setTarget(applyDocxPrivacy(editor, session, target, draft, native.original))
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxListControls.tsx:100:19]
+  99 |     try {
+ 100 |       if (locked) throw new Error('文档已变化，请重新打开列表设置')
+     :                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 101 |       let action: ListApply
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxAdvancedControls.tsx:61:7]
+ 60 |       setBusy(true)
+ 61 |       try {
+    :       ^|^
+    :        `-- Unsupported `try` starts here
+ 62 |         const result = await execute(tool, args, version)
+ 63 |         if (!result) return false
+ 64 |         setVersion(result.version)
+ 65 |         return true
+ 66 |       } finally {
+    :        ^^^^|^^^^
+    :            `-- This `finally` clause requires unsupported control flow
+ 67 |         locked.current = false
+    `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxImageControls.tsx:185:6]
+ 184 |         setError(cause instanceof Error ? cause.message : '处理图片失败，请重试')
+ 185 |     } finally {
+     :      ^^^^^^^^^
+ 186 |       if (pending.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxImageControls.tsx:223:6]
+ 222 |       throw cause
+ 223 |     } finally {
+     :      ^^^^^^^^^
+ 224 |       applying.current = false
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxViewPanel.tsx:110:6]
+ 109 |       if (lifetime.current === request) setNotice((error as Error).message)
+ 110 |     } finally {
+     :      ^^^^^^^^^
+ 111 |       if (lifetime.current === request) setBusy(false)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxViewPanel.tsx:73:24]
+ 72 |       assertDocxOutlineTarget(target, context)
+ 73 |       if (levelReason) throw new Error(levelReason)
+    :                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 74 |       const next = Number(level)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxCompareControls.tsx:81:6]
+ 80 |         setError(cause instanceof Error ? cause.message : '文件无法读取，请重新选择 DOCX')
+ 81 |     } finally {
+    :      ^^^^^^^^^
+ 82 |       if (token === request.current) setBusy(false)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxTableDesignControls.tsx:127:27]
+ 126 |     try {
+ 127 |       if (optionsChanged) throw new Error('文档附加结构已变化，请重新打开面板')
+     :                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 128 |       const next = applyDocxTableDesign(
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxReferencesControls.tsx:158:19]
+ 157 |     try {
+ 158 |       if (locked) throw new Error('文档已变化，请重新打开引用面板')
+     :                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 159 |       let action: ReferenceAction
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxReferencesControls.tsx:166:11]
+ 165 |         if (creating && sources.some((source) => source.tag === sourceDraft.tag))
+ 166 |           throw new Error('标签已存在，请换一个唯一标签')
+     :           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 167 |         action = { kind: 'source', source: sourceDraft, insertCitation: mode === 'citation' }
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxProtectionControls.tsx:92:6]
+ 91 |         })
+ 92 |     } finally {
+    :      ^^^^^^^^^
+ 93 |       if (request.current?.aborter === active) {
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxDesignControls.tsx:76:19]
+ 75 |     try {
+ 76 |       if (locked) throw new Error('文档已变化，请重新打开设计设置')
+    :                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 77 |       const next = applyDocxDesign(context.editor, target, patch, border)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxManualControls.tsx:225:45]
+ 224 |                               const context = document.createElement('canvas').getContext('2d')
+ 225 |                               if (!context) throw new Error('当前环境无法测量字体，请手动设置尺寸')
+     :                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 226 |                               const sizes = xlsxAutoSizes(sheet, range, direction, (text, cell) => {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/use-xlsx-cell-input.ts:155:6]
+ 154 |       }
+ 155 |     } finally {
+     :      ^^^^^^^^^
+ 156 |       if (request.current?.controller === current.controller || !request.current)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxValidationOptionsControls.tsx:166:5]
+ 165 |     request.current = controller
+ 166 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 167 |       if (
+ 168 |         await onApply(
+ 169 |           { op: 'edit_validation_options', sheetId, ruleXml: rule.xml, options },
+ 170 |           controller.signal,
+ 171 |         )
+ 172 |       )
+ 173 |         setFeedback('已应用')
+ 174 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 175 |       lock.current = false
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxFindControls.tsx:117:6]
+ 116 |       setMessage(error instanceof Error ? error.message : '查找失败')
+ 117 |     } finally {
+     :      ^^^^^^^^^
+ 118 |       if (current()) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxDataControls.tsx:206:6]
+ 205 |         setFeedback(error instanceof Error ? error.message : '未应用，请重试')
+ 206 |     } finally {
+     :      ^^^^^^^^^
+ 207 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxFillControls.tsx:224:6]
+ 223 |         )
+ 224 |     } finally {
+     :      ^^^^^^^^^
+ 225 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfTextMarkupPanel.tsx:63:6]
+ 62 |         setFeedback(cause instanceof Error ? cause.message : String(cause))
+ 63 |     } finally {
+    :      ^^^^^^^^^
+ 64 |       if (request.current === controller) {
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfDrawingCanvas.tsx:220:6]
+ 219 |         setError(cause instanceof Error ? cause.message : String(cause))
+ 220 |     } finally {
+     :      ^^^^^^^^^
+ 221 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfRedactionCopy.tsx:305:6]
+ 304 |         }))
+ 305 |     } finally {
+     :      ^^^^^^^^^
+ 306 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfRedactionCopy.tsx:286:9]
+ 285 |       )
+ 286 |         throw new Error('涂黑副本响应无效，请重试')
+     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 287 |       const url = URL.createObjectURL(
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfRedactionCopy.tsx:290:7]
+ 289 |       )
+ 290 |       try {
+     :       ^|^
+     :        `-- Unsupported `try` starts here
+ 291 |         const link = document.createElement('a')
+ 292 |         link.href = url
+ 293 |         link.download = output.name
+ 294 |         link.click()
+ 295 |       } finally {
+     :        ^^^^|^^^^
+     :            `-- This `finally` clause requires unsupported control flow
+ 296 |         setTimeout(() => URL.revokeObjectURL(url), 1000)
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxEditor.tsx:264:5]
+ 263 |     setBusy(true)
+ 264 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 265 |       const applied = await apply({
+ 266 |         op: 'addChart',
+ 267 |         target: { slide },
+ 268 |         kind,
+ 269 |         title: title.trim() || undefined,
+ 270 |         categories,
+ 271 |         series: [
+ 272 |           { name: seriesName.trim(), values },
+ 273 |           ...(combo ? [{ name: lineName.trim(), values: lineValues }] : []),
+ 274 |         ],
+ 275 |         dataSource: 'user',
+ 276 |         offset: {
+ 277 |           x: Math.round(width * 0.1),
+ 278 |           y: Math.round(height * 0.18),
+ 279 |           cx: Math.round(width * 0.8),
+ 280 |           cy: Math.round(height * 0.62),
+ 281 |         },
+ 282 |       })
+ 283 |       if (applied && draftRevision.current === submittedRevision) close()
+ 284 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 285 |       setBusy(false)
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] [PruneHoistedContexts] Unexpected hoisted function
+
+  ! react-compiler(Invariant): [PruneHoistedContexts] Unexpected hoisted
+  | function
+      ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxEditor.tsx:2866:3]
+ 2865 |       }
+ 2866 | ,->   async function applyPanelOps(ops: Record<string, unknown>[]) {
+ 2867 | |       if (!session) return false
+ 2868 | |       if (
+ 2869 | |         session.version() !== panelVersion ||
+ 2870 | |         activeRef.current !== active ||
+ 2871 | |         panelSelectionChanged(ops)
+ 2872 | |       ) {
+ 2873 | |         setPageError('画布已变化，请重新打开工具面板')
+ 2874 | |         return false
+ 2875 | |       }
+ 2876 | |       const handle = agentHandleRef.current,
+ 2877 | |         beforeSelection = selectedDurableRef.current,
+ 2878 | |         inserting = ops.length === 1 && ops[0]?.op === 'addElement',
+ 2879 | |         beforeIds = new Set(
+ 2880 | |           session.slides()[active]?.elements.map((item) => elementDurableId(item) ?? item.id),
+ 2881 | |         )
+ 2882 | |       if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted) return false
+ 2883 | |       const controller = new AbortController()
+ 2884 | |       const pending = { binding: panelWriteBinding, session, controller }
+ 2885 | |       panelWriteAbort.current = pending
+ 2886 | |       let applied: boolean
+ 2887 | |       try {
+ 2888 | |         applied = await runManualTool(
+ 2889 | |           'apply_ops',
+ 2890 | |           { ops },
+ 2891 | |           { expectedVersion: panelVersion, signal: controller.signal },
+ 2892 | |         )
+ 2893 | |       } finally {
+ 2894 | |         if (panelWriteAbort.current === pending) panelWriteAbort.current = null
+ 2895 | |       }
+ 2896 | |       if (
+ 2897 | |         applied &&
+ 2898 | |         inserting &&
+ 2899 | |         agentHandleRef.current === handle &&
+ 2900 | |         activeRef.current === active &&
+ 2901 | |         session.version() === panelVersion + 1 &&
+ 2902 | |         selectedDurableRef.current === beforeSelection
+ 2903 | |       ) {
+ 2904 | |         const slide = session.slides()[active]
+ 2905 | |         const added = slide?.elements.filter(
+ 2906 | |           (item) => !beforeIds.has(elementDurableId(item) ?? item.id),
+ 2907 | |         )
+ 2908 | |         if (added?.length === 1) {
+ 2909 | |           setSelected(added[0]!.id)
+ 2910 | |         }
+ 2911 | |       }
+ 2912 | |       return applied
+ 2913 | `->   }
+ 2914 |       const applyPanelFill = async (input: import('@mimir/shared').PptxManualFill) => {
+      `----
+  help: Please report this internal React Compiler error to Oxc with a
+        minimal reproduction
+  note: This is an internal React Compiler error; the component or hook was
+           not optimized
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfImageExportControls.tsx:99:6]
+  98 |         setError({ identity, message: cause instanceof Error ? cause.message : String(cause) })
+  99 |     } finally {
+     :      ^^^^^^^^^
+ 100 |       if (controllerRef.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfImagePanel.tsx:87:5]
+ 86 |     setPending(true)
+ 87 |     try {
+    :     ^|^
+    :      `-- Unsupported `try` starts here
+ 88 |       await onAction(
+ 89 |         operation === 'replace' ? 'replace_image' : 'insert_image',
+ 90 |         operation === 'replace'
+ 91 |           ? { page, image_number: imageNumber, url }
+ 92 |           : { page, url, width: 180 },
+ 93 |         version,
+ 94 |         controller.signal,
+ 95 |       )
+ 96 |     } finally {
+    :      ^^^^|^^^^
+    :          `-- This `finally` clause requires unsupported control flow
+ 97 |       if (request.current === controller) {
+    `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfImagePanel.tsx:279:6]
+ 278 |         setError(reason instanceof Error ? reason.message : '图片读取失败，请重新选择')
+ 279 |     } finally {
+     :      ^^^^^^^^^
+ 280 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfTextBlockPanel.tsx:64:6]
+ 63 |         setError(cause instanceof Error ? cause.message : String(cause))
+ 64 |     } finally {
+    :      ^^^^^^^^^
+ 65 |       if (request.current === controller) {
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfSignatureCanvas.tsx:152:6]
+ 151 |         setError(e instanceof Error ? e.message : String(e))
+ 152 |     } finally {
+     :      ^^^^^^^^^
+ 153 |       if (request.current === controller) request.current = null
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/DocxProtectionSettingsControls.tsx:150:6]
+ 149 |         setError(cause instanceof Error ? cause.message : '保护设置未应用，请重试')
+ 150 |     } finally {
+     :      ^^^^^^^^^
+ 151 |       if (request.current === aborter) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxShapeGallery.tsx:115:6]
+ 114 |         setError(cause instanceof Error ? cause.message : '形状未插入，请重试')
+ 115 |     } finally {
+     :      ^^^^^^^^^
+ 116 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxObjectManagement.tsx:103:6]
+ 102 |       return false
+ 103 |     } finally {
+     :      ^^^^^^^^^
+ 104 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxPivotControls.tsx:274:22]
+ 273 |   try {
+ 274 |     if (!editSource) throw new Error('来源工作表已失效，请重新选择')
+     :                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 275 |     if (editSource.extras?.protected) throw new Error('来源工作表已保护，请先取消保护')
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxPivotControls.tsx:275:39]
+ 274 |     if (!editSource) throw new Error('来源工作表已失效，请重新选择')
+ 275 |     if (editSource.extras?.protected) throw new Error('来源工作表已保护，请先取消保护')
+     :                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 276 |     fields = xlsxPivotSource(editSource, draft.sourceRange).fields
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/XlsxPivotControls.tsx:343:6]
+ 342 |         setError(cause instanceof Error ? cause.message : '未应用，请重试。')
+ 343 |     } finally {
+     :      ^^^^^^^^^
+ 344 |       if (controller.current === request) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfExternalImageSource.tsx:137:6]
+ 136 |         setError(reason instanceof Error ? reason.message : '图片素材准备失败，请重试')
+ 137 |     } finally {
+     :      ^^^^^^^^^
+ 138 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfExternalImageSource.tsx:119:24]
+ 118 |       if (controller.signal.aborted) return
+ 119 |       if (!result?.ok) throw new Error(result?.error ?? '图片素材准备失败，请重试')
+     :                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 120 |       const value = result.data as PdfAssetData
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfExternalImageSource.tsx:123:27]
+ 122 |       if ('url' in value) {
+ 123 |         if (!previewHost) throw new Error('图片预览宿主未连接')
+     :                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 124 |         const blob = await previewHost({
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxClipboardControls.tsx:180:6]
+ 179 |         setError(cause instanceof Error ? cause.message : '复制粘贴失败，请重试。')
+ 180 |     } finally {
+     :      ^^^^^^^^^
+ 181 |       if (pending.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxDeckWritingPreview.tsx:162:8]
+ 161 |         }
+ 162 |       } finally {
+     :        ^^^^^^^^^
+ 163 |         signal?.removeEventListener('abort', abort)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxDeckWritingPreview.tsx:131:54]
+ 130 |         })
+ 131 |         if (!current() || controller.signal.aborted) throw new PptxDeckStreamError('生成已停止')
+     :                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 132 |         return result
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxZoomControls.tsx:105:6]
+ 104 |         setError(cause instanceof Error ? cause.message : '插入缩放导航失败，请重试')
+ 105 |     } finally {
+     :      ^^^^^^^^^
+ 106 |       if (operation.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxZoomControls.tsx:97:11]
+ 96 |         if (targets.reduce((sum, item) => sum + item.png.length, 0) > PPTX_ZOOM_MAX_BASE64)
+ 97 |           throw new Error('所选快照总大小过大，请减少幻灯片后重试')
+    :           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 98 |       }
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxOutputControls.tsx:94:52]
+ 93 |                 )
+ 94 |       if (!indices.length || indices.length > 200) throw new Error('每次请选择 1–200 页')
+    :                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 95 |       if (indices.some((i) => !deck.slides()[i])) throw new Error('所选幻灯片已不存在，请重新选择')
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxOutputControls.tsx:95:51]
+ 94 |       if (!indices.length || indices.length > 200) throw new Error('每次请选择 1–200 页')
+ 95 |       if (indices.some((i) => !deck.slides()[i])) throw new Error('所选幻灯片已不存在，请重新选择')
+    :                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 96 |       return { indices, error: '', version }
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxOutputControls.tsx:182:6]
+ 181 |       )
+ 182 |     } finally {
+     :      ^^^^^^^^^
+ 183 |       if (controller.current === abort) controller.current = null
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxOutputControls.tsx:147:24]
+ 146 |       if (copy) {
+ 147 |         if (!saveCopy) throw new Error('当前编辑会话不可用，请重新打开文稿')
+     :                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 148 |         const file = await buildPptxCopy(saveCopy, filename, guard)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxOutputControls.tsx:153:30]
+ 152 |       } else {
+ 153 |         if (selection.error) throw new Error(selection.error)
+     :                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 154 |         const indices = [...selection.indices]
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxShowControls.tsx:154:6]
+ 153 |         setError(cause instanceof Error ? cause.message : '换片时间应用失败，请重试')
+ 154 |     } finally {
+     :      ^^^^^^^^^
+ 155 |       lock.current = false
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerExpression) Handle Import expressions
+
+  ! react-compiler(Todo): (BuildHIR::lowerExpression) Handle Import
+  | expressions
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxModelControls.tsx:34:10]
+ 33 |     let cancelled = false
+ 34 |     void import('@google/model-viewer')
+    :          ^^^^^^
+ 35 |       .then(() => {
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxModelControls.tsx:111:9]
+ 110 |       if (file.size < 28 || file.size > 32 * 1024 * 1024)
+ 111 |         throw new Error('GLB 文件须在 28 字节至 32 MiB 内')
+     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 112 |       const bytes = new Uint8Array(await file.arrayBuffer())
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxMasterControls.tsx:95:6]
+ 94 |       setMessage(cause instanceof Error ? cause.message : '母版修改失败，请重试')
+ 95 |     } finally {
+    :      ^^^^^^^^^
+ 96 |       setBusy(false)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxInkCanvas.tsx:180:6]
+ 179 |         setError(cause instanceof Error ? cause.message : '笔迹未应用，请重试')
+ 180 |     } finally {
+     :      ^^^^^^^^^
+ 181 |       if (pending.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxInkCanvas.tsx:174:50]
+ 173 |             }
+ 174 |       if (JSON.stringify(input).length > 950000) throw new Error('这笔内容较大，请分成几笔绘制')
+     :                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 175 |       const changed = await apply(input, current.version, controller.signal)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxGroupPictureControls.tsx:91:11]
+ 90 |         if (!image.naturalWidth || !image.naturalHeight)
+ 91 |           throw new Error('原图尺寸无效，请重新选择图片')
+    :           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 92 |         if (image.naturalWidth * image.naturalHeight > 12_000_000)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxGroupPictureControls.tsx:93:11]
+ 92 |         if (image.naturalWidth * image.naturalHeight > 12_000_000)
+ 93 |           throw new Error('图片超过 1200 万像素，请先缩小后重试')
+    :           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 94 |         const canvas = document.createElement('canvas')
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxGroupPictureControls.tsx:98:23]
+ 97 |         const context = canvas.getContext('2d', { willReadFrequently: true })
+ 98 |         if (!context) throw new Error('无法准备图片预览，请重新打开面板')
+    :                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 99 |         context.drawImage(image, 0, 0)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxGroupPictureControls.tsx:201:6]
+ 200 |         setError(cause instanceof Error ? cause.message : '图片未应用，已保留草稿，请重试')
+ 201 |     } finally {
+     :      ^^^^^^^^^
+ 202 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxShapeInsertCanvas.tsx:141:6]
+ 140 |       if (!controller.signal.aborted) setError('形状未插入，请重试；原有内容已保留')
+ 141 |     } finally {
+     :      ^^^^^^^^^
+ 142 |       if (pending.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxFillControls.tsx:160:6]
+ 159 |         setError(cause instanceof Error ? cause.message : '应用失败，请重试')
+ 160 |     } finally {
+     :      ^^^^^^^^^
+ 161 |       pending.current = false
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxFillControls.tsx:147:51]
+ 146 |       if (!submittedEpoch?.live || operationEpoch.current !== submittedEpoch) return
+ 147 |       if (!Array.isArray(prepared) && !applyFill) throw new Error('当前未连接手动填充宿主')
+     :                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 148 |       if (await (Array.isArray(prepared) ? applyOps(prepared) : applyFill!(prepared))) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionGeometryControls.tsx:112:6]
+ 111 |       if (!controller.signal.aborted) setError('未能应用，已保留草稿，请重试')
+ 112 |     } finally {
+     :      ^^^^^^^^^
+ 113 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxCommentControls.tsx:58:6]
+ 57 |         setError(cause instanceof Error ? cause.message : '批注未更新，请稍后重试。')
+ 58 |     } finally {
+    :      ^^^^^^^^^
+ 59 |       if (!controller.signal.aborted) {
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxPictureCropCanvas.tsx:174:6]
+ 173 |       if (!controller.signal.aborted) setError('裁切未应用，请重试；原图片已保留')
+ 174 |     } finally {
+     :      ^^^^^^^^^
+ 175 |       if (pending.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxOutlineControls.tsx:104:6]
+ 103 |       if (!controller.signal.aborted) setError('修改未应用，已保留草稿，请重试')
+ 104 |     } finally {
+     :      ^^^^^^^^^
+ 105 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAssetControls.tsx:231:16]
+ 230 |                 }
+ 231 |               } finally {
+     :                ^^^^^^^^^
+ 232 |                 if (token.current === request) setBusy(false)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAssetControls.tsx:220:19]
+ 219 |                 if (!file.size || file.size > PPTX_ASSET_MAX_BYTES)
+ 220 |                   throw new Error('源PPTX须为非空文件且不超过32 MiB')
+     :                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 221 |                 const session = await openPptxForEdit(new Uint8Array(await file.arrayBuffer()))
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxShapeGallery.tsx:182:6]
+ 181 |       setStatus('修改未应用，请重试；已保留所选草稿')
+ 182 |     } finally {
+     :      ^^^^^^^^^
+ 183 |       pending.current = false
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAdvancedControls.tsx:421:5]
+ 420 |     setBusy(true)
+ 421 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 422 |       return await apply(op)
+ 423 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 424 |       pending.current = false
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAdvancedControls.tsx:432:5]
+ 431 |     setBusy(true)
+ 432 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 433 |       return await editTiming(patch)
+ 434 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 435 |       pending.current = false
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAdvancedControls.tsx:444:5]
+ 443 |     onPreview?.(null)
+ 444 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 445 |       return await editStyle(input)
+ 446 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 447 |       pending.current = false
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAdvancedControls.tsx:482:6]
+ 481 |       return false
+ 482 |     } finally {
+     :      ^^^^^^^^^
+ 483 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxAdvancedControls.tsx:477:7]
+ 476 |       if (ops.length === 1) return await apply(ops[0]!)
+ 477 |       throw new Error('批量动画宿主不可用，请刷新后重试')
+     :       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 478 |     } catch (cause) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxTableControls.tsx:163:5]
+ 162 |     setBusy(true)
+ 163 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 164 |       const applied = await apply({
+ 165 |         op: 'setTableCell',
+ 166 |         target,
+ 167 |         row: rowIndex,
+ 168 |         col: colIndex,
+ 169 |         paragraphs: edited,
+ 170 |       })
+ 171 |       if (applied && draftRevision.current === submittedRevision) setDraft(null)
+ 172 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 173 |       setBusy(false)
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxTableControls.tsx:180:5]
+ 179 |     setBusy(true)
+ 180 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 181 |       await apply({ ...op, target })
+ 182 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 183 |       setBusy(false)
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxTableControls.tsx:234:5]
+ 233 |     setBusy(true)
+ 234 |     try {
+     :     ^|^
+     :      `-- Unsupported `try` starts here
+ 235 |       if (
+ 236 |         await apply({
+ 237 |           op: 'setTableStyle',
+ 238 |           target,
+ 239 |           ...stylePatch,
+ 240 |           ...(scope === 'cell' && !stylePatch.styleName
+ 241 |             ? { cells: [{ row: rowIndex, col: colIndex }] }
+ 242 |             : {}),
+ 243 |         })
+ 244 |       )
+ 245 |         setStylePatch((current) => (current === stylePatch ? {} : current))
+ 246 |     } finally {
+     :      ^^^^|^^^^
+     :          `-- This `finally` clause requires unsupported control flow
+ 247 |       setBusy(false)
+     `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:323:42]
+ 322 |     try {
+ 323 |       if (size !== null && !size.trim()) throw new Error('请输入字号')
+     :                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 324 |       if (width !== null && !width.trim()) throw new Error('请输入轮廓宽度')
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:324:44]
+ 323 |       if (size !== null && !size.trim()) throw new Error('请输入字号')
+ 324 |       if (width !== null && !width.trim()) throw new Error('请输入轮廓宽度')
+     :                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 325 |       if (imageFill) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:326:26]
+ 325 |       if (imageFill) {
+ 326 |         if (formatDirty) throw new Error('请先应用或重置其他格式草稿')
+     :                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 327 |         if (!applyFill) throw new Error('当前未连接手动填充宿主')
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:327:25]
+ 326 |         if (formatDirty) throw new Error('请先应用或重置其他格式草稿')
+ 327 |         if (!applyFill) throw new Error('当前未连接手动填充宿主')
+     :                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 328 |         if (!fillTargets.length || fillTargets.length > 200)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:329:11]
+ 328 |         if (!fillTargets.length || fillTargets.length > 200)
+ 329 |           throw new Error('请选择1–200个可填充对象')
+     :           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 330 |       } else
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:336:38]
+ 335 |         })
+ 336 |       if (!imageFill && !ops.length) throw new Error('所选对象不支持本次格式，请调整选择')
+     :                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 337 |     } catch (cause) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:386:6]
+ 385 |         )
+ 386 |     } finally {
+     :      ^^^^^^^^^
+ 387 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:355:29]
+ 354 |           const response = await fetch(texture.url, { signal: controller.signal })
+ 355 |           if (!response.ok) throw new Error('纹理载入失败，请重试')
+     :                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 356 |           const bytes = new Uint8Array(await response.arrayBuffer())
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxSelectionControls.tsx:357:60]
+ 356 |           const bytes = new Uint8Array(await response.arrayBuffer())
+ 357 |           if (!bytes.length || bytes.length > 1024 * 1024) throw new Error('纹理资源无效')
+     :                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 358 |           let binary = ''
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfSignaturePanel.tsx:94:6]
+ 93 |       if (token === generation.current) setIssue(e instanceof Error ? e.message : String(e))
+ 94 |     } finally {
+    :      ^^^^^^^^^
+ 95 |       if (token === generation.current) setLoading(false)
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfSignaturePanel.tsx:128:6]
+ 127 |       if (token === generation.current) setIssue(e instanceof Error ? e.message : String(e))
+ 128 |     } finally {
+     :      ^^^^^^^^^
+ 129 |       if (token === generation.current) setLoading(false)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfSignaturePanel.tsx:107:29]
+ 106 |         const points = strokes.flat()
+ 107 |         if (!points.length) throw new Error('请先写下签名')
+     :                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 108 |         const left = Math.min(...points.map((p) => p[0])) - 4,
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfSignaturePanel.tsx:122:21]
+ 121 |       else {
+ 122 |         if (!image) throw new Error('请先选择签名图片')
+     :                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 123 |         source = image
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PdfTextBlockRewriteForm.tsx:109:6]
+ 108 |         setError(cause instanceof Error ? cause.message : String(cause))
+ 109 |     } finally {
+     :      ^^^^^^^^^
+ 110 |       if (request.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxObjectControls.tsx:224:6]
+ 223 |         setError(cause instanceof Error ? cause.message : '段落修改失败，请重试')
+ 224 |     } finally {
+     :      ^^^^^^^^^
+ 225 |       if (operation.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] `try`/`finally` without `catch` is not supported by React Compiler
+
+  ! react-compiler(Todo): `try`/`finally` without `catch` is not supported by
+  | React Compiler
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxControlPanel.tsx:13:5]
+ 12 |     setBusy(true)
+ 13 |     try {
+    :     ^|^
+    :      `-- Unsupported `try` starts here
+ 14 |       return await apply(op)
+ 15 |     } finally {
+    :      ^^^^|^^^^
+    :          `-- This `finally` clause requires unsupported control flow
+ 16 |       pending.current = false
+    `----
+  help: React Compiler cannot analyze this control flow. Refactor the
+        cleanup to avoid `finally`, or suppress this warning if this
+        function should remain uncompiled
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxIconControls.tsx:149:6]
+ 148 |         })
+ 149 |     } finally {
+     :      ^^^^^^^^^
+ 150 |       if (pending.current === token) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+    ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/use-pptx-picture-preview.ts:36:6]
+ 35 |         setError(cause instanceof Error ? cause.message : '无法准备图片预览，请重新选择')
+ 36 |     } finally {
+    :      ^^^^^^^^^
+ 37 |       if (pending.current === controller) {
+    `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxMediaControls.tsx:111:6]
+ 110 |         setError(cause instanceof Error ? cause.message : '媒体读取失败，请重新选择文件')
+ 111 |     } finally {
+     :      ^^^^^^^^^
+ 112 |       if (started === epoch.current) setPreparing(false)
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Support ThrowStatement inside of try/catch
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Support ThrowStatement
+  | inside of try/catch
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxMediaControls.tsx:101:9]
+ 100 |       if (!file.size || file.size > PPTX_ASSET_MAX_BYTES)
+ 101 |         throw new Error('请选择不超过32 MiB的非空音视频文件')
+     :         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 102 |       const bytes = new Uint8Array(await file.arrayBuffer())
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxMediaControls.tsx:146:6]
+ 145 |         setError(cause instanceof Error ? cause.message : '媒体插入失败，请重试')
+ 146 |     } finally {
+     :      ^^^^^^^^^
+ 147 |       if (pending.current === controller) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+[plugin vite:react-compiler] (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause
+
+  ! react-compiler(Todo): (BuildHIR::lowerStatement) Handle TryStatement with
+  | a finalizer ('finally') clause
+     ,-[/Users/admin/Desktop/mimir/packages/office/src/editors/PptxGroupTextControls.tsx:145:6]
+ 144 |       }
+ 145 |     } finally {
+     :      ^^^^^^^^^
+ 146 |       if (!controller.signal.aborted) {
+     `----
+  help: Rewrite the highlighted code using syntax supported by React
+        Compiler
+  note: React Compiler skipped optimizing this component or hook
+
+✓ 5117 modules transformed.
+rendering chunks...
+computing gzip size...
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/docs/visual-comparisons/2026-10-21-brand-icon/harness.html      0.80 kB │ gzip:     0.42 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size3-Regular-CTq5MqoE.woff                        4.42 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2                       4.92 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size2-Regular-Dy4dx90m.woff2                       5.20 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size1-Regular-mCD8mA8B.woff2                       5.46 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size4-Regular-BF-4gkZK.woff                        5.98 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size2-Regular-oD1tc_U0.woff                        6.18 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size1-Regular-C195tn64.woff                        6.49 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2                 6.90 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2                    6.91 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size3-Regular-DgpXs0kz.ttf                         7.58 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff                  7.65 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff                     7.71 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeCheLatinKR-CFVfemg_.woff2                       8.29 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/marble-D7ttTB12.png                                      9.06 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Script-Regular-D3wIWfF6.woff2                      9.64 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2                  10.34 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size4-Regular-DWFBv043.ttf                        10.36 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Script-Regular-D5yQViql.woff                      10.58 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2                    11.31 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2                       11.34 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size2-Regular-B7gKUWhC.ttf                        11.50 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2                   12.02 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2                     12.21 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Size1-Regular-Dbsnue_I.ttf                        12.22 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff                   12.31 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf                  12.34 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf                     12.36 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff                     13.20 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Fraktur-Bold-BsDP51OF.woff                        13.29 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2                 13.56 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Italic-DN2j7dab.woff                    14.11 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficePoppins-Bold-subset-CLJyStaw.woff2             14.12 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficePoppins-Regular-subset-RElVmxhA.woff2          14.16 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff                      14.40 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff                  16.02 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2                    16.40 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Math-Italic-t53AETM-.woff2                        16.44 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Script-Regular-C5JkGWo-.ttf                       16.64 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2                    16.78 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Italic-NWA7e6Wa.woff2                        16.98 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/parchment-BKiptb7w.png                                  17.39 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/login-notebook-lines-fade-BG_7k2QI.png                  18.25 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff                     18.66 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Math-Italic-DA0__PXp.woff                         18.74 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/paper-DUijYpax.png                                      19.39 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-BoldItalic-SpSLRI95.woff                     19.41 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf                    19.43 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Fraktur-Regular-CB_wures.ttf                      19.57 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf                         19.58 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Italic-BMLOBm91.woff                         19.67 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf                     22.36 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/canvas-BRJXZk8M.png                                     22.99 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/wood-D70XEBVa.png                                       23.40 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf                       24.50 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeUIKanaJP-Regular-Bj_7JzTT.woff2                25.28 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Bold-Cx986IdX.woff2                          25.32 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeUIKanaJP-Bold-DbcaglVT.woff2                   26.20 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Regular-B22Nviop.woff2                       26.27 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf                   27.55 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_AMS-Regular-BQhdFMY1.woff2                        28.07 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/denim-DTrT_oct.png                                      29.17 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/cork-BseXy6tu.png                                       29.53 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Bold-Jm3AIy58.woff                           29.91 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Regular-Dr94JaBh.woff                        30.77 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf                      31.19 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Math-Italic-flOr_0UB.ttf                          31.30 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf                      32.96 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeTamil-Regular-DLISHPmH.woff2                   33.07 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_AMS-Regular-DMm9YOAa.woff                         33.51 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Italic-3WenGoN9.ttf                          33.58 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/granite--1xJtYY3.png                                    41.09 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Bold-waoOVXN0.ttf                            51.33 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_Main-Regular-ypZvNtVU.ttf                         53.58 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Caladea-Bold-D8qQyaGr.ttf                               58.89 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Caladea-Regular-BTbwo_Qo.ttf                            58.96 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Caladea-BoldItalic-wZEKqfeH.ttf                         61.82 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Caladea-Italic-B_Jy4Zu6.ttf                             61.86 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KaTeX_AMS-Regular-DRggAlZN.ttf                          63.63 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/NotoSansArabic-Regular-subset-D207GVuU.woff2            63.67 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/NotoNaskhArabic-Regular-subset-DQSqx2ZA.woff2           69.62 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeSansKR-Regular-subset-CVxxonE8.woff2          266.12 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationMono-Italic-BaW6sbi8.ttf                     281.53 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeGothicKR-Regular-subset-Bkvj_MFZ.woff2        281.98 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationMono-BoldItalic-CW50-m9W.ttf                 284.06 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationMono-Bold-JpIqZVyK.ttf                       307.99 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationMono-Regular-CscJ8ftk.ttf                    319.50 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSerif-Bold-CT7WGLoV.ttf                      370.09 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSerif-Italic-Bwtmn-ni.ttf                    375.63 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSerif-BoldItalic-DHf5skZ4.ttf                376.77 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSerif-Regular-DREh6cMU.ttf                   393.57 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSans-BoldItalic-BC07J_j6.ttf                 408.99 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSans-Regular-CqxnOoBp.ttf                    410.71 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSans-Bold-CAnzDFU4.ttf                       414.45 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/LiberationSans-Italic-D6GtLuAT.ttf                     415.81 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GenOfficeSerifKR-Regular-subset-BkQyd75u.woff2         512.43 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Carlito-Italic-KkZUqxJW.ttf                            619.05 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Carlito-Regular-Cbe9FLjp.ttf                           631.71 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Carlito-Bold-BhbXr__n.ttf                              686.24 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Carlito-BoldItalic-0dXjwGA0.ttf                        812.34 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/NotoSansCJKsc-Regular-subset-BuHGXxnc.woff2          2,533.16 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/NotoSerifCJKsc-Regular-subset-CLPB6QGT.woff2         3,495.92 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/WorkbenchDemo-BPeNJVgo.css                             264.83 kB │ gzip:    44.93 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/NV4XNBIS-DEsl0Cmi.js                                     0.05 kB │ gzip:     0.07 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/RVARI57O-CgA1WoRv.js                                     0.15 kB │ gzip:     0.14 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/PUZGS23X-ByJmIf1l.js                                     0.37 kB │ gzip:     0.28 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/MFVI5XKI-Bwrcn5UJ.js                                     0.40 kB │ gzip:     0.30 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/5THPTBWS-Ce_hS451.js                                     0.47 kB │ gzip:     0.29 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/G3MDBVQH-BZmnMkFw.js                                     0.55 kB │ gzip:     0.33 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/UEXXS2NB-C0SA-zTw.js                                     0.60 kB │ gzip:     0.43 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/DKTLEL5E-DciMwFJ1.js                                     0.82 kB │ gzip:     0.39 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/ELSXBIJH-rBaVduq0.js                                     0.97 kB │ gzip:     0.58 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/WEVWDWVA-BttAmxxA.js                                     1.02 kB │ gzip:     0.52 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/rolldown-runtime-C0FnF6B9.js                             1.29 kB │ gzip:     0.71 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/4UF3HTLV-DueAY4J_.js                                     1.39 kB │ gzip:     0.75 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/JZWSX6AR-CLM5mHoc.js                                     1.63 kB │ gzip:     0.92 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/7WLXJQOR-D6QVYUu9.js                                     1.94 kB │ gzip:     0.94 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KQOEJWJY-lbDUUl5O.js                                     2.05 kB │ gzip:     1.03 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/FTXIJQGB-CggtIYAM.js                                     2.54 kB │ gzip:     1.10 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/VMV7XPHP-BEj1t0nA.js                                     3.42 kB │ gzip:     1.60 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/N6DAJLIZ-DcX6wgUg.js                                     4.13 kB │ gzip:     1.93 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/NU5M23IW-Du6skM72.js                                     5.11 kB │ gzip:     2.44 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/XRRJ35LF-DddTJIUo.js                                     5.29 kB │ gzip:     2.63 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KS3BB3KE-Cojx6JKS.js                                     5.78 kB │ gzip:     2.84 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/UHTQJXKL-CvTkLQ7B.js                                     5.96 kB │ gzip:     2.86 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/FKCDD66M-Cj1raau1.js                                     6.19 kB │ gzip:     2.57 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/UXCHDUKG-DAPka05Z.js                                     7.04 kB │ gzip:     3.18 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/FP7KDXVC-CJ6YxnKh.js                                     7.18 kB │ gzip:     3.23 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/ERTIBQVS-B4TYl-y8.js                                     7.29 kB │ gzip:     3.31 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/GY35JXOZ-oveQJEjQ.js                                     7.55 kB │ gzip:     3.47 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/MXGNCBL2-BrdDu9A5.js                                     8.21 kB │ gzip:     3.68 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/RZSVICHU-D3IkGxYU.js                                     8.61 kB │ gzip:     3.86 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/AKE5O7KZ-Bbsbb-tN.js                                     9.28 kB │ gzip:     4.15 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/DR6PKOQU-DpWCOwqT.js                                     9.38 kB │ gzip:     4.19 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/VKNV3BUX-B1C1kEmu.js                                    10.45 kB │ gzip:     4.52 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/ZF3OVT4B-BFVt4O6e.js                                    11.13 kB │ gzip:     4.98 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/H5EEJPP2-BDVHe-BE.js                                    12.04 kB │ gzip:     5.06 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/URA2L2QI-DSPYMxzl.js                                    12.07 kB │ gzip:     3.14 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/OGLU4SIR-CBMbBf2v.js                                    13.45 kB │ gzip:     5.47 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/KXJRRZHI-CCZaJVnN.js                                    14.07 kB │ gzip:     5.83 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/4TTDE5I4-DOs7dAt-.js                                    14.49 kB │ gzip:     6.29 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/FT5I3RHX-C3JU7baW.js                                    15.13 kB │ gzip:     5.86 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/Q3IYVLG5-S6eg7SQ0.js                                    16.39 kB │ gzip:     6.89 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/E4RJ7UJB-DFVn2da-.js                                    19.07 kB │ gzip:     7.39 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/2DXBBFLN-zvvg3lgE.js                                    20.38 kB │ gzip:     7.61 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/PU4ISKXV-BhcWsqpR.js                                    20.77 kB │ gzip:     8.59 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/BNMLP6AG-DZ9w9e-X.js                                    23.03 kB │ gzip:     9.20 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/46IJ22JX-BnDbPwgU.js                                    24.11 kB │ gzip:    10.04 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/YHRE5QGZ-C-Bz3cIS.js                                    27.02 kB │ gzip:    11.08 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/AAXQQPKT-n7PEWPZB.js                                    28.12 kB │ gzip:    10.92 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/HWDLEDTA-D_E6ngzh.js                                    28.45 kB │ gzip:    11.59 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/QYHQDLKZ-PtcmVOCa.js                                    29.56 kB │ gzip:    11.38 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/YFKBLVVN-DDYz9bvL.js                                    30.06 kB │ gzip:    11.40 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/dist-BzLJFgz8.js                                        31.50 kB │ gzip:    10.03 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/N2QHACHQ-BEq3iXo4.js                                    34.07 kB │ gzip:    12.59 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/lazy-Bw9pNJYv.js                                        36.68 kB │ gzip:    15.32 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/MWY2J62P-CgWXD0n2.js                                    39.31 kB │ gzip:    14.63 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/F653G4FO-C0n1hZtv.js                                    41.28 kB │ gzip:    15.47 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/OUNS5N76-bC6BmD1G.js                                    44.02 kB │ gzip:    16.04 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/lib-BOEVuEsi.js                                        100.58 kB │ gzip:    22.53 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/harness-D_wS6yxG.js                                  1,187.39 kB │ gzip:   376.86 kB
+../../../../var/folders/92/c09xsx4s6g34djybsfgz6byc0000gn/T/mimir-brand-render-lSZdhN/assets/WorkbenchDemo-Dticw4mA.js                            3,333.01 kB │ gzip: 1,117.81 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[EVAL] Use of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
+    ╭─[ node_modules/.pnpm/wavedrom@3.7.0/node_modules/wavedrom/lib/eva.js:17:22 ]
+    │
+ 17 │             source = eval('(' + TheTextBox.value + ')');
+    │                      ──┬─
+    │                        ╰─── Use of direct `eval` here.
+    │
+    │ Help: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+────╯
+
+[EVAL] Use of direct `eval` function is strongly discouraged as it poses security risks and may cause issues with minification.
+    ╭─[ node_modules/.pnpm/wavedrom@3.7.0/node_modules/wavedrom/lib/eva.js:23:22 ]
+    │
+ 23 │             source = eval('(' + TheTextBox.innerHTML + ')');
+    │                      ──┬─
+    │                        ╰─── Use of direct `eval` here.
+    │
+    │ Help: Consider using indirect eval. For more information, check the documentation: https://rolldown.rs/guide/troubleshooting#avoiding-direct-eval
+────╯
+
+[INEFFECTIVE_DYNAMIC_IMPORT] packages/office/src/editors/pdf-render.ts is dynamically imported by packages/office/src/agent/pdf-content-agent.ts, packages/office/src/agent/pdf-image-agent.ts but also statically imported by packages/office/src/agent/pdf-batch.ts, packages/office/src/editors/PdfEditor.tsx, packages/office/src/editors/PdfRedactionCopy.tsx, packages/office/src/editors/pdf-image-export.ts, dynamic import will not move module into another chunk.
+
+✓ built in 3.18s
+Captured 16 real component screens; 0 page errors

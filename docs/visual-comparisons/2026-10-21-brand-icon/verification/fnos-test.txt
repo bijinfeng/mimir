@@ -1,0 +1,16 @@
+✔ FPK manifest validates exact application, release version, architecture and runtime (0.698709ms)
+✔ fnpack source is fixed and downloaded bytes fail closed on mismatch (0.492875ms)
+✔ archive paths cannot escape the extraction tree (0.267083ms)
+✔ real nested FPK bytes are extracted and checked before installation smoke (1249.09325ms)
+✔ fnOS install stores owner credentials only in protected persistent config (1290.310917ms)
+✔ fnOS install rejects invalid owner input without writing credentials (155.888ms)
+✔ fnOS package declares the gateway, x86 runtime and icons (3.75075ms)
+✔ fnOS lifecycle starts on a Unix socket and stops idempotently (1767.902ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3388.583625

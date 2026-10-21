@@ -1,0 +1,485 @@
+{
+  "manifest": [
+    {
+      "stage": "before",
+      "view": "samples",
+      "theme": "light",
+      "width": 1200,
+      "height": 720,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "18",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "28",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "48",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "64",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "fc6fcdfb29dd87528c90dc2e761a969e83df253553ac3de2f616870a8ae1a22c"
+    },
+    {
+      "stage": "before",
+      "view": "home",
+      "theme": "light",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "a06f541c56b53ebe691f5677e56360cc225d7c6b294fb0a01c77301ad0d56232"
+    },
+    {
+      "stage": "before",
+      "view": "login",
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "8b1b9462cfa89df67f328008bb7338dc6a2bef672b562ca6048bfaaaaf45dfec"
+    },
+    {
+      "stage": "before",
+      "view": "setup",
+      "theme": "light",
+      "width": 900,
+      "height": 680,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "38",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "8db9f2a98fdded2a7c2cb2aad6b53f19b3242de66a021ac0f6b029a8f3d0131b"
+    },
+    {
+      "stage": "before",
+      "view": "samples",
+      "theme": "dark",
+      "width": 1200,
+      "height": 720,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "18",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "28",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "48",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "64",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "79c6be9abf6cd7d0cfb19eaa90133e9eb02dea93d909fccefb501e7b6ef31a13"
+    },
+    {
+      "stage": "before",
+      "view": "home",
+      "theme": "dark",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 32 32"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "5aa2e4f9f45fc5c7574be7073a8bf46fb68a3f2aba37a45d0381ab8a13db0903"
+    },
+    {
+      "stage": "before",
+      "view": "login",
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "e9724f63b757b58413145012b8ca03d32f3e17722579761dbab1986eac332393"
+    },
+    {
+      "stage": "before",
+      "view": "setup",
+      "theme": "dark",
+      "width": 900,
+      "height": 680,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "38",
+          "viewBox": "0 0 32 32"
+        }
+      ],
+      "sha256": "34ff807a866ee4d18bb023dcb3ddbc008e28d5c0905946565ee95ba129d0fa0e"
+    },
+    {
+      "stage": "after",
+      "view": "samples",
+      "theme": "light",
+      "width": 1200,
+      "height": 720,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "18",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "28",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "48",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "64",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "2a08285c95163ef12960b07636d9cedd08cd4a9b56803126c8da0356af709fa4"
+    },
+    {
+      "stage": "after",
+      "view": "home",
+      "theme": "light",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "5cd0d4a17747859a58a3d9a3106d8a1ebad42adabbdaf5dd23769ebbd18152e2"
+    },
+    {
+      "stage": "after",
+      "view": "login",
+      "theme": "light",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "caaa646fb1b089b7591454e0bcdc9dd445ae4aded5b2277948a984c8e50f8dc9"
+    },
+    {
+      "stage": "after",
+      "view": "setup",
+      "theme": "light",
+      "width": 900,
+      "height": 680,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "38",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "851fc19ef0dbdf0ecbc8d91f3cf16fe2b86f1ec8b1299e3b02906f126bc36acc"
+    },
+    {
+      "stage": "after",
+      "view": "samples",
+      "theme": "dark",
+      "width": 1200,
+      "height": 720,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "18",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "28",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "48",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "64",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "16",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "24",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "32",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "81c9440b52ba3c4b611413b4fd4f17bc1dc0e27ccb8bd89d19db6b204ee57884"
+    },
+    {
+      "stage": "after",
+      "view": "home",
+      "theme": "dark",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "20",
+          "viewBox": "0 0 64 64"
+        },
+        {
+          "width": "22",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "bc8e2a11a3cc20ad7925f8803b2e793a7897256f9bd3b585aef22395d7cf79bc"
+    },
+    {
+      "stage": "after",
+      "view": "login",
+      "theme": "dark",
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "28",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "0cf3600fedb8c57f2a019a81d11b1357e125463f8a6d787d16180c24c604c526"
+    },
+    {
+      "stage": "after",
+      "view": "setup",
+      "theme": "dark",
+      "width": 900,
+      "height": 680,
+      "overflow": false,
+      "marks": [
+        {
+          "width": "38",
+          "viewBox": "0 0 64 64"
+        }
+      ],
+      "sha256": "00c6bc0f9b5f98ac397151ec65cf027f3253df9bad7184c5fdd6460993c6dccd"
+    }
+  ],
+  "errors": []
+}

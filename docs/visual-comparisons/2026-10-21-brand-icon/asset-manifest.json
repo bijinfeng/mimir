@@ -1,0 +1,47 @@
+[
+  {
+    "file": "apps/web/public/favicon.svg",
+    "source": "before",
+    "sha256": "cd078587796e5889ffcc7245527b83d8a626e6c6f0cb9aacf9c360eca5c7003f"
+  },
+  {
+    "file": "apps/desktop/resources/icon.png",
+    "source": "before",
+    "sha256": "acdba76f2b732507db6061f5df720a97adeb1734cc3d65aa64b44e5c67ed9079"
+  },
+  {
+    "file": "apps/fnos/ICON.PNG",
+    "source": "before",
+    "sha256": "2a5b6564a07a85c7e13e7ef8db5f22d04b4c0ccca73405274b8566b485327df5"
+  },
+  {
+    "file": "apps/fnos/ICON_256.PNG",
+    "source": "before",
+    "sha256": "4839f64052c0bbb278bab0aa21facc3c54ed34bbedf8188827bfcf5e5a4b5795"
+  },
+  {
+    "file": "apps/web/public/favicon.svg",
+    "source": "after",
+    "sha256": "f83c98ff62f3c68805d423824552ddb71fc8b9c7112682dbbc96a0be3ff75b4d"
+  },
+  {
+    "file": "apps/desktop/resources/icon.png",
+    "source": "after",
+    "sha256": "70af9ff0527cf5d06efc0ffb0a59a70918f14fa11cd51223ccb1bf584700972e"
+  },
+  {
+    "file": "apps/fnos/ICON.PNG",
+    "source": "after",
+    "sha256": "f396e06df9be4d5249acaaf12e57351d43b0a6bcb3370d9583e3075c507965fd"
+  },
+  {
+    "file": "apps/fnos/ICON_256.PNG",
+    "source": "after",
+    "sha256": "c6f279e4f8565c356ff7d0167cef33f8ff5452b1eb4e3919ca6efea60b84c544"
+  },
+  {
+    "file": "assets/brand/exports/miniapp-avatar.png",
+    "source": "after",
+    "sha256": "f4731e49f65c86e114934662485c3f89d4f5ed030d26fdc1c70f65f16edb611c"
+  }
+]

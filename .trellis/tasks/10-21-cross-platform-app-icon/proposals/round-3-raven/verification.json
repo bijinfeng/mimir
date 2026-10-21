@@ -1,0 +1,21 @@
+{
+  "subject": "raven",
+  "primary": "#00834d",
+  "reverse": "#FFFFFF",
+  "sourceAndAppGeometryMatch": true,
+  "viewportWidths": [
+    1440,
+    390
+  ],
+  "mobileHorizontalOverflow": false,
+  "inspected": [
+    "light",
+    "dark",
+    "mobile",
+    "singleMark",
+    "roundCrop",
+    "16-64px"
+  ],
+  "productResourcesModified": false,
+  "nativePlatformsVerified": false
+}

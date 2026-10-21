@@ -1,0 +1,597 @@
+👽 Taro v4.3.0
+
+Tips:
+1. 建议开启持久化缓存功能，能有效提升二次编译速度，详情请参考: https://docs.taro.zone/docs/config-detail#cache。
+
+
+
+
+● Webpack █████████████████████████  (0%)
+
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 1/1 dependencie
+s 0/1 modules 1 active
+ babel-loader › src/app.config.ts
+
+- 即将开始启动编译，请稍等~
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+● Webpack █████████████████████████ building (10%)
+ ...core@1._81832b081bfadc0d7bd5bce31104a33c/node_modules/babel-loader/lib/ind
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%)
+ ...wc+_fc2c9c6affcdc2859e794fe04b1d978b/node_modules/@tarojs/taro-loader/lib/
+h5.js
+
+- 即将开始启动编译，请稍等~
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+▲ [WARNING] Cannot find base config file "../../tsconfig.base.json" [tsconfig.json]
+
+    tsconfig.json:2:13:
+      2 │   "extends": "../../tsconfig.base.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 1/2 dependencie
+s 0/1 modules 1 active
+ babel-loader › src/app.config.ts
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 11/25 dependenc
+ies 0/11 modules 10 active
+ ...de_modules/.pnpm/react-dom@18.3.1_react@18.3.1/node_modules/react-dom/clie
+nt.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 13/64 dependenc
+ies 0/13 modules 12 active
+ ...admin/Desktop/mimir/node_modules/.pnpm/react@18.3.1/node_modules/react/ind
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 68/123 dependen
+cies 0/24 modules 17 active
+ ...24165e141ffcdc1fb/node_modules/@tarojs/plugin-platform-h5/dist/runtime/ind
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 72/123 dependen
+cies 1/27 modules 24 active
+ ....0__467b6a5f77f36fb520ad81bafb78fc05/node_modules/@tarojs/components/globa
+l.css
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%)
+ ....5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/c
+js.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 86/140 dependen
+cies 1/33 modules 30 active
+ ...3.0_c96cc6144b84721578167124c72f8c0d_/node_modules/@tarojs/router/dist/ind
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 297/352 depende
+ncies 4/156 modules 32 active
+ ...ss
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 532/598 depende
+ncies 11/204 modules 72 active
+ ...m/@babel+runtime@7.29.10/node_modules/@babel/runtime/helpers/esm/regenerat
+or.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 770/868 depende
+ncies 12/223 modules 119 active
+ ...m/@babel+runtime@7.29.10/node_modules/@babel/runtime/helpers/esm/createCla
+ss.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 872/923 depende
+ncies 13/233 modules 133 active
+ ...s/@tarojs/components/dist/components/taro-vertical-drag-gesture-handler-co
+re.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 1190/1276 depen
+dencies 46/244 modules 193 active
+ ...Desktop/mimir/node_modules/.pnpm/hammerjs@2.0.8/node_modules/hammerjs/hamm
+er.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (10%) 0/1 entries 1444/1534 depen
+dencies 86/397 modules 177 active
+ ...WNpcmNsZQR3YXJuC2luZm8tY2lyY2xlBmNhbmNlbAZzZWFyY2gFY2xlYXIEYmFjawZkZWxldGU
+AAAAA
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (11%) 0/1 entries 1509/1560 depen
+dencies 91/429 modules 227 active
+ ...b736a0b28a8d707d3f9d75f/node_modules/@tarojs/taro-h5/dist/api/device/iBeac
+on.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (11%) 0/1 entries 1651/1686 depen
+dencies 116/475 modules 231 active
+ ...75f/node_modules/@tarojs/taro-h5/dist/api/media/image/saveImageToPhotosAlb
+um.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (11%) 0/1 entries 1670/1697 depen
+dencies 120/478 modules 257 active
+ ...8a8d707d3f9d75f/node_modules/@tarojs/taro-h5/dist/api/open-api/license-pla
+te.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (11%) 0/1 entries 1777/1818 depen
+dencies 140/486 modules 281 active
+ ...es/.pnpm/@tarojs+shared@4.3.0/node_modules/@tarojs/shared/dist/event-chann
+el.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (11%) 0/1 entries 1822/1845 depen
+dencies 172/488 modules 260 active
+ ...imir/node_modules/.pnpm/swiper@11.1.15/node_modules/swiper/modules/keyboar
+d.mjs
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (12%) 0/1 entries 1929/1978 depen
+dencies 200/493 modules 263 active
+ ...p/mimir/node_modules/.pnpm/lodash-es@4.17.21/node_modules/lodash-es/_isInd
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (12%) 0/1 entries 2018/2057 depen
+dencies 229/505 modules 273 active
+ ...arojs+runtime@4.3.0_@tarojs+shared@4.3.0/node_modules/@tarojs/api/dist/ind
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (12%) 0/1 entries 2071/2093 depen
+dencies 266/521 modules 254 active
+ ...@babel+runtime@7.29.10/node_modules/@babel/runtime/helpers/esm/superPropBa
+se.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (14%) 0/1 entries 2150/2174 depen
+dencies 434/551 modules 116 active
+ ...dmin/Desktop/mimir/node_modules/.pnpm/ics@3.12.1/node_modules/ics/dist/ind
+ex.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (15%) 0/1 entries 2268/2289 depen
+dencies 514/611 modules 97 active
+ ...e@4.3.0_@tarojs+shared@4.3.0/node_modules/@tarojs/api/dist/interceptor/cha
+in.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (16%) 0/1 entries 2754/2765 depen
+dencies 604/1082 modules 113 active
+ ...aro@4.1.0-beta.1/node_modules/@nutui/icons-react-taro/dist/es/icons/CardLi
+st.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (16%) 0/1 entries 3304/3341 depen
+dencies 606/1107 modules 128 active
+ ...t-taro@4.1.0-beta.1/node_modules/@nutui/icons-react-taro/dist/es/icons/Che
+ck.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (16%) 0/1 entries 3884/3924 depen
+dencies 606/1108 modules 226 active
+ ...ro@4.1.0-beta.1/node_modules/@nutui/icons-react-taro/dist/es/icons/GreenTa
+gF.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (16%) 0/1 entries 4475/4512 depen
+dencies 606/1108 modules 324 active
+ ...-taro@4.1.0-beta.1/node_modules/@nutui/icons-react-taro/dist/es/icons/Orde
+rF.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (16%) 0/1 entries 5029/5106 depen
+dencies 606/1109 modules 423 active
+ ...taro@4.1.0-beta.1/node_modules/@nutui/icons-react-taro/dist/es/icons/Succe
+ss.js
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ building (21%) 0/1 entries 5502/5511 depen
+dencies 1067/1110 modules 43 active
+ ...eact-taro@4.1.0-beta.1/node_modules/@nutui/icons-react-taro/dist/style_ico
+n.css
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ sealing (70%)
+ plugins
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ sealing (88%)
+ runtime requirements
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ sealing (92%) asset processing
+ CssMinimizerPlugin
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ sealing (92%) asset processing
+ HtmlWebpackPlugin
+
+- 即将开始启动编译，请稍等~
+
+● Webpack █████████████████████████ sealing (92%) asset processing
+ RealContentHashPlugin
+
+- 即将开始启动编译，请稍等~
+
+✔ Webpack
+  Compiled successfully in 9.86s
+
+- 即将开始启动编译，请稍等~
+⚠️ Warnings:
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3662, column 17 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3662:17:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3662 |     $text-color: nth($colors, 1);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3663:18  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3663, column 15 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3663:15:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3663 |     $bg-color: nth($colors, 2);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3664:16  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3664, column 25 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3664:25:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3664 |     $outline-text-color: nth($colors, 3);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3665:26  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3665, column 27 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3665:27:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3665 |     $outline-border-color: nth($colors, 4);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3666:28  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3666, column 18 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3666:18:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3666 |     $disabled-bg: nth($colors, 5);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3667:19  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+6 repetitive deprecation warnings omitted.
+
+AssetsOverSizeLimitWarning: asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets:
+  js/app.js (250 KiB)
+
+EntrypointsOverSizeLimitWarning: entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  app (367 KiB)
+      js/696.js
+      css/app.css
+      js/app.js
+
+⚠️  编译警告. 10/21/2026, 11:35:16 AM
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3662, column 17 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3662:17:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3662 |     $text-color: nth($colors, 1);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3663:18  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3663, column 15 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3663:15:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3663 |     $bg-color: nth($colors, 2);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3664:16  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3664, column 25 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3664:25:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3664 |     $outline-text-color: nth($colors, 3);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3665:26  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3665, column 27 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3665:27:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3665 |     $outline-border-color: nth($colors, 4);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3666:28  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3666, column 18 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3666:18:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3666 |     $disabled-bg: nth($colors, 5);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3667:19  root stylesheet
+
+ModuleWarning: Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+6 repetitive deprecation warnings omitted.
+
+AssetsOverSizeLimitWarning: asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets:
+  js/app.js (250 KiB)
+
+EntrypointsOverSizeLimitWarning: entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  app (367 KiB)
+      js/696.js
+      css/app.css
+      js/app.js
+
+assets by path chunk/*.js 671 KiB
+  asset chunk/158.js 138 KiB [emitted] [minimized] 1 related asset
+  asset chunk/823.js 112 KiB [emitted] [minimized] 1 related asset
+  asset chunk/517.js 102 KiB [emitted] [minimized] 1 related asset
+  + 5 assets
+assets by path css/*.css 255 KiB
+  asset css/158.css 35.1 KiB [emitted] [minimized]
+  asset css/438.css 35.1 KiB [emitted] [minimized]
+  asset css/517.css 35.1 KiB [emitted] [minimized]
+  asset css/75.css 35.1 KiB [emitted] [minimized]
+  + 4 assets
+assets by path js/*.js 358 KiB
+  asset js/app.js 250 KiB [emitted] [minimized] [big] (name: app) 1 related asset
+  asset js/696.js 107 KiB [emitted] [minimized] (id hint: taro) 1 related asset
+asset index.html 356 bytes [emitted]
+Entrypoint app [big] 367 KiB = js/696.js 107 KiB css/app.css 9.73 KiB js/app.js 250 KiB
+
+WARNING in ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss (../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss.webpack[javascript/auto]!=!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/css-loader@7.1.5_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__clean-css@5.3.3_c_132c18ebd8ea231c02148616be12255c/node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[2].oneOf[0].use[0]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/resolve-url-loader@5.0.0/node_modules/resolve-url-loader/index.js!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[5].use[1]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss)
+Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3662, column 17 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3662:17:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3662 |     $text-color: nth($colors, 1);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3663:18  root stylesheet
+
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/index.js 1:0-23
+ @ ./src/components/ui.tsx 7:0-63
+ @ ./src/pages/capture/index.tsx
+ @ ./src/app.config.ts 110:15-46
+
+WARNING in ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss (../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss.webpack[javascript/auto]!=!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/css-loader@7.1.5_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__clean-css@5.3.3_c_132c18ebd8ea231c02148616be12255c/node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[2].oneOf[0].use[0]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/resolve-url-loader@5.0.0/node_modules/resolve-url-loader/index.js!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[5].use[1]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss)
+Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3663, column 15 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3663:15:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3663 |     $bg-color: nth($colors, 2);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3664:16  root stylesheet
+
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/index.js 1:0-23
+ @ ./src/components/ui.tsx 7:0-63
+ @ ./src/pages/capture/index.tsx
+ @ ./src/app.config.ts 110:15-46
+
+WARNING in ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss (../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss.webpack[javascript/auto]!=!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/css-loader@7.1.5_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__clean-css@5.3.3_c_132c18ebd8ea231c02148616be12255c/node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[2].oneOf[0].use[0]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/resolve-url-loader@5.0.0/node_modules/resolve-url-loader/index.js!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[5].use[1]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss)
+Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3664, column 25 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3664:25:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3664 |     $outline-text-color: nth($colors, 3);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3665:26  root stylesheet
+
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/index.js 1:0-23
+ @ ./src/components/ui.tsx 7:0-63
+ @ ./src/pages/capture/index.tsx
+ @ ./src/app.config.ts 110:15-46
+
+WARNING in ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss (../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss.webpack[javascript/auto]!=!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/css-loader@7.1.5_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__clean-css@5.3.3_c_132c18ebd8ea231c02148616be12255c/node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[2].oneOf[0].use[0]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/resolve-url-loader@5.0.0/node_modules/resolve-url-loader/index.js!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[5].use[1]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss)
+Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3665, column 27 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3665:27:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3665 |     $outline-border-color: nth($colors, 4);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3666:28  root stylesheet
+
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/index.js 1:0-23
+ @ ./src/components/ui.tsx 7:0-63
+ @ ./src/pages/capture/index.tsx
+ @ ./src/app.config.ts 110:15-46
+
+WARNING in ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss (../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss.webpack[javascript/auto]!=!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/css-loader@7.1.5_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__clean-css@5.3.3_c_132c18ebd8ea231c02148616be12255c/node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[2].oneOf[0].use[0]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/resolve-url-loader@5.0.0/node_modules/resolve-url-loader/index.js!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[5].use[1]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss)
+Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+Deprecation Warning on line 3666, column 18 of file:///Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss:3666:18:
+Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+Use list.nth instead.
+
+More info and automated migrator: https://sass-lang.com/d/import
+
+3666 |     $disabled-bg: nth($colors, 5);
+
+
+/Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss 3667:19  root stylesheet
+
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/index.js 1:0-23
+ @ ./src/components/ui.tsx 7:0-63
+ @ ./src/pages/capture/index.tsx
+ @ ./src/app.config.ts 110:15-46
+
+WARNING in ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss (../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss.webpack[javascript/auto]!=!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/css-loader@7.1.5_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__clean-css@5.3.3_c_132c18ebd8ea231c02148616be12255c/node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[2].oneOf[0].use[0]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/resolve-url-loader@5.0.0/node_modules/resolve-url-loader/index.js!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[5].use[1]!../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss)
+Module Warning (from ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/sass-loader@14.2.1_sass@1.105.2_webpack@5.91.0_@swc+core@1.3.96_@swc+helpers@0.5.23__cl_7e94efd78310dbe8d01200b0a6de23fa/node_modules/sass-loader/dist/cjs.js):
+6 repetitive deprecation warnings omitted.
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/button.scss
+ @ ../../../../../../../Users/admin/Desktop/mimir/node_modules/.pnpm/@nutui+nutui-react-taro@4.0.0-beta.10_@types+react@18.3.31_react-dom@18.3.1_react@18.3._0dc0a3cbb4794ac0a3cf6c11561a63d6/node_modules/@nutui/nutui-react-taro/dist/es/packages/button/style/index.js 1:0-23
+ @ ./src/components/ui.tsx 7:0-63
+ @ ./src/pages/capture/index.tsx
+ @ ./src/app.config.ts 110:15-46
+
+WARNING in asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets:
+  js/app.js (250 KiB)
+
+WARNING in entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  app (367 KiB)
+      js/696.js
+      css/app.css
+      js/app.js
+
+
+webpack 5.91.0 compiled with 8 warnings in 9863 ms

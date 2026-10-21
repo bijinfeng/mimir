@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Mimir 第七版渡鸦 · 真实接入对比</title>
+    <style>
+      body {
+        margin: 0;
+        background: #f7f8f8;
+        color: #262626;
+        font: 15px/1.7 system-ui;
+      }
+      main {
+        max-width: 1440px;
+        margin: auto;
+        padding: 32px;
+      }
+      h1 {
+        font-size: 26px;
+      }
+      h2 {
+        font-size: 19px;
+        margin-top: 40px;
+      }
+      a {
+        color: #007a45;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        margin-bottom: 12px;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+      p {
+        max-width: 850px;
+      }
+      @media (max-width: 680px) {
+        main {
+          padding: 16px;
+        }
+        .pair {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>第七版渡鸦 · 四端接入对比</h1>
+      <p>
+        真实组件前后使用相同内容、尺寸和主题。导航、标题栏、登录、官网、桌面选择页均使用同一
+        BrandMark；小程序来自实际 Taro H5 构建。图标资源对比读取仓库文件。系统原生窗口、fnOS
+        和微信真机尚未验收。
+      </p>
+      <p>
+        <a href="assets.html">查看实际平台资源 / 小程序圆形安全区</a> ·
+        <a href="README.md">覆盖清单、复现方法与验证边界</a>
+      </p>
+      <section>
+        <h2>共享组件 · 浅色</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/samples-light.html">静态真实 DOM</a></figcaption>
+            <a href="before/samples-light.png"
+              ><img loading="lazy" src="before/samples-light.png" alt="共享组件 · 浅色 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>
+              第七版接入后 · <a href="after/samples-light.html">静态真实 DOM</a>
+            </figcaption>
+            <a href="after/samples-light.png"
+              ><img loading="lazy" src="after/samples-light.png" alt="共享组件 · 浅色 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>共享组件 · 深色</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/samples-dark.html">静态真实 DOM</a></figcaption>
+            <a href="before/samples-dark.png"
+              ><img loading="lazy" src="before/samples-dark.png" alt="共享组件 · 深色 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>
+              第七版接入后 · <a href="after/samples-dark.html">静态真实 DOM</a>
+            </figcaption>
+            <a href="after/samples-dark.png"
+              ><img loading="lazy" src="after/samples-dark.png" alt="共享组件 · 深色 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>官网 · 浅色</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/home-light.html">静态真实 DOM</a></figcaption>
+            <a href="before/home-light.png"
+              ><img loading="lazy" src="before/home-light.png" alt="官网 · 浅色 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>第七版接入后 · <a href="after/home-light.html">静态真实 DOM</a></figcaption>
+            <a href="after/home-light.png"
+              ><img loading="lazy" src="after/home-light.png" alt="官网 · 浅色 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>官网 · 深色</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/home-dark.html">静态真实 DOM</a></figcaption>
+            <a href="before/home-dark.png"
+              ><img loading="lazy" src="before/home-dark.png" alt="官网 · 深色 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>第七版接入后 · <a href="after/home-dark.html">静态真实 DOM</a></figcaption>
+            <a href="after/home-dark.png"
+              ><img loading="lazy" src="after/home-dark.png" alt="官网 · 深色 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>登录 · 浅色 / 390px</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/login-light.html">静态真实 DOM</a></figcaption>
+            <a href="before/login-light.png"
+              ><img loading="lazy" src="before/login-light.png" alt="登录 · 浅色 / 390px before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>
+              第七版接入后 · <a href="after/login-light.html">静态真实 DOM</a>
+            </figcaption>
+            <a href="after/login-light.png"
+              ><img loading="lazy" src="after/login-light.png" alt="登录 · 浅色 / 390px after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>登录 · 深色 / 390px</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/login-dark.html">静态真实 DOM</a></figcaption>
+            <a href="before/login-dark.png"
+              ><img loading="lazy" src="before/login-dark.png" alt="登录 · 深色 / 390px before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>第七版接入后 · <a href="after/login-dark.html">静态真实 DOM</a></figcaption>
+            <a href="after/login-dark.png"
+              ><img loading="lazy" src="after/login-dark.png" alt="登录 · 深色 / 390px after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>桌面选择页 · 浅色</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/setup-light.html">静态真实 DOM</a></figcaption>
+            <a href="before/setup-light.png"
+              ><img loading="lazy" src="before/setup-light.png" alt="桌面选择页 · 浅色 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>
+              第七版接入后 · <a href="after/setup-light.html">静态真实 DOM</a>
+            </figcaption>
+            <a href="after/setup-light.png"
+              ><img loading="lazy" src="after/setup-light.png" alt="桌面选择页 · 浅色 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>桌面选择页 · 深色</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/setup-dark.html">静态真实 DOM</a></figcaption>
+            <a href="before/setup-dark.png"
+              ><img loading="lazy" src="before/setup-dark.png" alt="桌面选择页 · 深色 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>第七版接入后 · <a href="after/setup-dark.html">静态真实 DOM</a></figcaption>
+            <a href="after/setup-dark.png"
+              ><img loading="lazy" src="after/setup-dark.png" alt="桌面选择页 · 深色 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>小程序 Gate · Taro H5</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/miniapp-gate.html">静态真实 DOM</a></figcaption>
+            <a href="before/miniapp-gate.png"
+              ><img loading="lazy" src="before/miniapp-gate.png" alt="小程序 Gate · Taro H5 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>
+              第七版接入后 · <a href="after/miniapp-gate.html">静态真实 DOM</a>
+            </figcaption>
+            <a href="after/miniapp-gate.png"
+              ><img loading="lazy" src="after/miniapp-gate.png" alt="小程序 Gate · Taro H5 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+      <section>
+        <h2>小程序登录 · Taro H5</h2>
+        <div class="pair">
+          <figure>
+            <figcaption>接入前 · <a href="before/miniapp-login.html">静态真实 DOM</a></figcaption>
+            <a href="before/miniapp-login.png"
+              ><img loading="lazy" src="before/miniapp-login.png" alt="小程序登录 · Taro H5 before"
+            /></a>
+          </figure>
+          <figure>
+            <figcaption>
+              第七版接入后 · <a href="after/miniapp-login.html">静态真实 DOM</a>
+            </figcaption>
+            <a href="after/miniapp-login.png"
+              ><img loading="lazy" src="after/miniapp-login.png" alt="小程序登录 · Taro H5 after"
+            /></a>
+          </figure>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

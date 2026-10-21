@@ -1,0 +1,23 @@
+{
+  "title": "Mimir 新图标：折带",
+  "question": "审阅对话中的四端预览后，采用海蓝折带并按规划接入四端，或重新探索方向。",
+  "options": [
+    {
+      "id": "folded-ribbon",
+      "label": "采用折带，接入四端",
+      "thesis": "海蓝底与冰白切面轮廓，以 m 为线索表达内容汇拢。",
+      "palette": [
+        "#245D76",
+        "#F7FCFF"
+      ],
+      "materials": [
+        "原创单色矢量",
+        "宽笔画与内折切口"
+      ],
+      "viewport": "桌面 PNG/ICO/ICNS、网页 favicon、fnOS 包根与启动器、小程序原生标记和可上传头像；保留产品名称及现有页面与绿色动作主题。",
+      "risk": "几何 M 的独特性有限；小尺寸折痕会减弱。系统安装、fnOS 与微信真机尚未验证，正式接入后验收。"
+    }
+  ],
+  "reroll": true,
+  "steer": true
+}
