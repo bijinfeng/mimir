@@ -57,4 +57,4 @@
 | 25 共享浮层与短窗 | 已完成 | `docs/visual-comparisons/2026-10-20-shared-dialogs`；全仓 check exit 0 |
 | 26 窄屏工作区 | 已完成 | `docs/visual-comparisons/2026-10-20-narrow-workspace`；待全仓 check |
 | 27 跨模块一致性 | 已完成 | `docs/visual-comparisons/2026-10-20-consistency`；无代码改动 |
-| 28 小程序 | H5 打磨完成，待 WeApp 复核 | 入口 + 6 业务页；NutUI 组件库；`2026-10-20-miniapp-entry`、`2026-10-20-miniapp-pages` |
+| 28 小程序 | 已完成（H5 打磨；WeApp 真机为外部复核） | 入口 + 6 业务页；NutUI 组件库；`2026-10-20-miniapp-entry`、`2026-10-20-miniapp-pages` |
