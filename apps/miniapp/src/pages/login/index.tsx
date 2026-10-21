@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
+import Input from '@nutui/nutui-react-taro/dist/es/packages/input'
+import '@nutui/nutui-react-taro/dist/es/packages/input/style'
 import Taro from '@tarojs/taro'
 import { Action, ErrorNotice } from '../../components/ui'
 import { api, errorMessage } from '../../lib/api'
@@ -46,24 +48,24 @@ export default function LoginPage() {
         <Input
           className="field"
           value={identifier}
-          maxlength={254}
+          maxLength={254}
           disabled={busy}
           placeholder="输入邮箱或用户名"
-          onInput={(event) => setIdentifier(event.detail.value)}
+          onChange={(value) => setIdentifier(value)}
         />
         <Text className="field-label">密码</Text>
         <Input
           className="field"
           value={password}
-          password
+          type="password"
           disabled={busy}
-          maxlength={1024}
+          maxLength={1024}
           placeholder="输入密码"
           confirmType="go"
           onConfirm={() => {
             void login()
           }}
-          onInput={(event) => setPassword(event.detail.value)}
+          onChange={(value) => setPassword(value)}
         />
       </View>
       <ErrorNotice error={error} />

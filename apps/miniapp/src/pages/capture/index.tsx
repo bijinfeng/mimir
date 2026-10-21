@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, Input } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
+import Input from '@nutui/nutui-react-taro/dist/es/packages/input'
+import '@nutui/nutui-react-taro/dist/es/packages/input/style'
 import Taro, { useDidShow, useDidHide, useRouter, useUnload } from '@tarojs/taro'
 import type { MiniappOperation } from '@mimir/shared/miniapp'
 import { Action, Gate, FolderPicker, ErrorNotice, useFolders } from '../../components/ui'
@@ -207,16 +209,15 @@ function Capture({ ownerId, initialFolder }: { ownerId: string; initialFolder: s
   }
   const locked = busy || Boolean(form.requestId)
   return (
-    <View className="page">
+    <View className="page capture-page">
       <Text className="page-title">收集链接</Text>
       <Text className="field-label section">资料链接</Text>
       <Input
-        className="field"
         value={form.url}
-        maxlength={2000}
+        maxLength={2000}
         disabled={locked}
         placeholder="https://"
-        onInput={(event) => update({ ...form, url: event.detail.value })}
+        onChange={(value) => update({ ...form, url: value })}
       />
       <FolderPicker
         folders={folders}
@@ -226,7 +227,7 @@ function Capture({ ownerId, initialFolder }: { ownerId: string; initialFolder: s
       />
       <ErrorNotice error={error || foldersError} />
       {!form.requestId && (
-        <View className="section">
+        <View className="section capture-submit">
           <Action
             primary
             disabled={busy || !form.folder || !form.url.trim()}
@@ -236,6 +237,7 @@ function Capture({ ownerId, initialFolder }: { ownerId: string; initialFolder: s
           >
             收集
           </Action>
+          <Text className="block muted section-small">支持网页、公众号文章和 GitHub 仓库。</Text>
         </View>
       )}
       {form.requestId && (

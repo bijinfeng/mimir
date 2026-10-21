@@ -1,0 +1,62 @@
+[
+  {
+    "id": "chat",
+    "title": "问答 · 390×844",
+    "before": "before/chat.png",
+    "after": "after/chat.png",
+    "before_sha256": "78f9289dff5c2aed726a5c53771e2bccb21fdfc5b7970945194aec32ea6bbcba",
+    "before_bytes": 24614,
+    "after_sha256": "c23ac27408ac466aa6bc402b42531fce7392c94eec888dd07bf93441b450bdcd",
+    "after_bytes": 29435
+  },
+  {
+    "id": "library",
+    "title": "知识库 · 390×844",
+    "before": "before/library.png",
+    "after": "after/library.png",
+    "before_sha256": "0f6b35e7226dba70b0edbb249b452d2b3f602f986e62e6f1bf5429eabca5a1c9",
+    "before_bytes": 71180,
+    "after_sha256": "6c3eb1c3c9808bd70ffe31c4c74eb8120b0975d01c7df52431b65b0f9368b3db",
+    "after_bytes": 71126
+  },
+  {
+    "id": "account",
+    "title": "我的 · 390×844",
+    "before": "before/account.png",
+    "after": "after/account.png",
+    "before_sha256": "5f11693de7cd33b04a5b4eeb4801bca33958ebe428da58ced663c648a70d0382",
+    "before_bytes": 29887,
+    "after_sha256": "279999716998a1e2afac84c67cd3bf25120945671a373192795ba781ec0227f3",
+    "after_bytes": 26044
+  },
+  {
+    "id": "capture",
+    "title": "收集链接 · 390×844",
+    "before": "before/capture.png",
+    "after": "after/capture.png",
+    "before_sha256": "cdce08757148ccf0f6078acf69c85bc5eb224180e1d39b7d0fd9305faf153628",
+    "before_bytes": 19737,
+    "after_sha256": "0a0fbffa29c37b38b85730a0e11edfdfa2becc3495d5d9c56d54c17fa1a5ca21",
+    "after_bytes": 23330
+  },
+  {
+    "id": "reader",
+    "title": "阅读 · 390×844",
+    "before": "before/reader.png",
+    "after": "after/reader.png",
+    "before_sha256": "d3a77002595787ea1be54233cdc4088c7f4ba41eb33c9fc0222ad8a8ceb63338",
+    "before_bytes": 78785,
+    "after_sha256": "a29d70a099ee631fa34cb82102a92445736d74153d011af6a1a315484db87032",
+    "after_bytes": 79223
+  },
+  {
+    "id": "editor",
+    "title": "编辑笔记 · 390×844",
+    "before": "before/editor.png",
+    "after": "after/editor.png",
+    "before_sha256": "4e49b8e2715e4e146b72939f4bacf429dc680275eb91765ae1bc05b5de3033ea",
+    "before_bytes": 79450,
+    "after_sha256": "439e9a2140dc4638dc1baf418b68c7548d9eb70ffd212439945d8a7cea7eab8a",
+    "after_bytes": 70804
+  }
+]

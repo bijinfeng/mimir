@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { View, Text, Textarea, Picker, ScrollView } from '@tarojs/components'
+import { View, Text, ScrollView } from '@tarojs/components'
+import Segmented from '@nutui/nutui-react-taro/dist/es/packages/segmented'
+import TextArea from '@nutui/nutui-react-taro/dist/es/packages/textarea'
+import '@nutui/nutui-react-taro/dist/es/packages/segmented/style'
+import '@nutui/nutui-react-taro/dist/es/packages/textarea/style'
 import Taro, { useDidShow, useDidHide, useUnload } from '@tarojs/taro'
 import type {
   RetrievalScope,
@@ -16,8 +20,10 @@ import {
   Action,
   Gate,
   ErrorNotice,
+  Loading,
   Empty,
   FolderPicker,
+  SelectField,
   useFolders,
   flattenFolders,
 } from '../../components/ui'
@@ -469,13 +475,13 @@ function Chat({ ownerId }: { ownerId: string }) {
           </View>
         </View>
         <View className="toolbar compact">
-          <Picker
-            mode="selector"
-            range={options}
-            value={Math.max(0, scopeIndex)}
+          <SelectField
+            title="检索范围"
+            value={String(Math.max(0, scopeIndex))}
+            options={options.map((option, index) => ({ label: option, value: String(index) }))}
             disabled={running?.state === 'receiving'}
-            onChange={(event) => {
-              const selected = Number(event.detail.value)
+            onChange={(selectedValue) => {
+              const selected = Number(selectedValue)
               if (selected === 0) newConversation({ type: 'all' }, '全库')
               else {
                 const item = flat[selected - 1]
@@ -487,7 +493,7 @@ function Chat({ ownerId }: { ownerId: string }) {
               <Text>范围：{label}</Text>
               <Text className="muted">切换</Text>
             </View>
-          </Picker>
+          </SelectField>
           <Text className="muted small">
             {conversation ? '会话范围已固定' : '切换范围新开会话'}
           </Text>
@@ -505,9 +511,11 @@ function Chat({ ownerId }: { ownerId: string }) {
         }
       >
         <ErrorNotice error={error || folderError} />
-        {loading && <Text className="loading">正在读取…</Text>}
+        {loading && <Loading>正在读取…</Loading>}
         {!messages.length && !running && !loading && (
-          <Empty>继续上次的问题，或输入新的问题。回答会附上知识库来源。</Empty>
+          <View className="chat-empty">
+            <Empty>继续上次的问题，或输入新的问题。回答会附上知识库来源。</Empty>
+          </View>
         )}
         {messages.map((message) => (
           <View
@@ -654,29 +662,23 @@ function Chat({ ownerId }: { ownerId: string }) {
         )}
       </ScrollView>
       <View className="composer">
-        <View className="mode-row">
-          <View
-            className={mode === 'ask' ? 'mode selected' : 'mode'}
-            onClick={() => setMode('ask')}
-          >
-            提问
-          </View>
-          <View
-            className={mode === 'search' ? 'mode selected' : 'mode'}
-            onClick={() => setMode('search')}
-          >
-            只搜索
-          </View>
-        </View>
-        <Textarea
+        <Segmented
+          className="mode-row"
+          options={[
+            { label: '提问', value: 'ask' },
+            { label: '只搜索', value: 'search' },
+          ]}
+          value={mode}
+          onChange={(value) => setMode(value === 'search' ? 'search' : 'ask')}
+        />
+        <TextArea
           value={question}
           className="question-field"
           placeholder={mode === 'ask' ? '问问你的知识库…' : '输入要查找的内容…'}
           maxlength={mode === 'search' ? 500 : 2000}
-          autoHeight
-          adjustPosition
+          autoSize
           disabled={Boolean(running)}
-          onInput={(event) => setQuestion(event.detail.value)}
+          onChange={(value) => setQuestion(value)}
         />
         <View className="composer-bottom">
           <Text className="muted small">{label}</Text>

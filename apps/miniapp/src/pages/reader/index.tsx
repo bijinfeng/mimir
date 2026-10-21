@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow, useRouter } from '@tarojs/taro'
 import type { Citation, MiniappDocument } from '@mimir/shared/miniapp'
-import { Action, Gate, ErrorNotice } from '../../components/ui'
+import { Action, Gate, ErrorNotice, Loading } from '../../components/ui'
 import { Markdown, markdownBlocks } from '../../components/markdown'
 import { api, errorMessage } from '../../lib/api'
 import { useSession, getSession } from '../../lib/session'
@@ -89,7 +89,7 @@ function Reader({
           void load()
         }}
       />
-      {busy && !document && <Text className="loading">正在读取…</Text>}
+      {busy && !document && <Loading>正在读取…</Loading>}
       {document && (
         <>
           <View className="reader-heading">

@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, Text, Input, Textarea } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
+import Input from '@nutui/nutui-react-taro/dist/es/packages/input'
+import Textarea from '@nutui/nutui-react-taro/dist/es/packages/textarea'
+import '@nutui/nutui-react-taro/dist/es/packages/input/style'
+import '@nutui/nutui-react-taro/dist/es/packages/textarea/style'
 import Taro, { useDidHide, useRouter, useUnload } from '@tarojs/taro'
 import type { MiniappDocument, MiniappOperation } from '@mimir/shared/miniapp'
-import { Action, Gate, ErrorNotice, FolderPicker, useFolders } from '../../components/ui'
+import { Action, Gate, ErrorNotice, FolderPicker, Loading, useFolders } from '../../components/ui'
 import { Markdown } from '../../components/markdown'
 import {
   api,
@@ -430,10 +434,10 @@ function Editor({
           <Input
             className="title-field"
             value={draft.title}
-            maxlength={200}
+            maxLength={200}
             disabled={disabled || !ready}
             placeholder="笔记标题"
-            onInput={(event) => change({ title: event.detail.value })}
+            onChange={(value) => change({ title: value })}
           />
           <FolderPicker
             value={draft.folder}
@@ -443,15 +447,14 @@ function Editor({
           />
           <Text className="field-label">标签（用逗号分隔）</Text>
           <Input
-            className="field"
             value={tagText}
             disabled={disabled}
-            maxlength={1020}
+            maxLength={1020}
             placeholder="标签"
-            onInput={(event) => {
-              setTagText(event.detail.value)
+            onChange={(value) => {
+              setTagText(value)
               change({
-                tags: event.detail.value
+                tags: value
                   .split(/[,，]/)
                   .map((tag) => tag.trim())
                   .filter(Boolean),
@@ -461,7 +464,7 @@ function Editor({
         </>
       )}
       <ErrorNotice error={error || folderError} />
-      {!ready && <Text className="loading">正在读取编辑基线…</Text>}
+      {!ready && <Loading>正在读取编辑基线…</Loading>}
       {ready && mode !== 'metadata' && (
         <>
           <View className="toolbar section-small">
@@ -487,12 +490,10 @@ function Editor({
               className="editor-input"
               value={draft.body}
               disabled={disabled}
-              maxlength={-1}
+              maxLength={-1}
               placeholder={mode === 'append' ? '只写需要补充的内容…' : '写下你的笔记…'}
-              autoHeight
-              adjustPosition
-              cursorSpacing={24}
-              onInput={(event) => change({ body: event.detail.value })}
+              autoSize
+              onChange={(value) => change({ body: value })}
             />
           )}
           <View className="action-row editor-tools">

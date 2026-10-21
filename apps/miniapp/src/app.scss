@@ -1,4 +1,5 @@
-page {
+page,
+:root {
   --nutui-color-primary: #00834d;
   --nutui-color-primary-stop-1: #00834d;
   --nutui-color-primary-stop-2: #00834d;
@@ -232,7 +233,8 @@ scroll-view {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 .chat-top {
@@ -546,12 +548,21 @@ scroll-view {
 }
 .editor-input {
   width: 100%;
-  min-height: 300px;
+  height: 320px;
+  min-height: 320px;
   margin-top: 8px;
+  overflow: hidden;
   font-size: 15px;
   line-height: 1.8;
   color: #262626;
   background: #fff;
+}
+.editor-input .nut-textarea-main,
+.editor-input .nut-textarea-native,
+.editor-input textarea {
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow-y: auto;
 }
 .editor-preview {
   padding: 8px 0;
@@ -690,4 +701,140 @@ scroll-view {
 .nut-button.nut-button-disabled .nut-button-wrap,
 .nut-button.nut-button-disabled .nut-button-children {
   color: #8c8c8c !important;
+}
+
+/* NutUI Input/TextArea 使用组件库结构，这里只补产品表面。 */
+.nut-input,
+.nut-textarea {
+  box-sizing: border-box;
+  border: 1px solid #d5d8d6;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 15px;
+}
+.nut-input {
+  height: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  align-items: center;
+}
+.nut-input-main {
+  min-height: 0;
+}
+.nut-input input,
+.nut-textarea textarea {
+  font-size: 15px;
+  color: #262626;
+}
+.nut-textarea {
+  padding: 8px 12px;
+}
+
+/* ── H5 预览与业务页收口 ─────────────────────────────────── */
+/*
+ * H5 的 tabbar 在没有图标资源时会渲染一个空的 <img>，占位成方块。
+ * 小程序原生端没有这个元素；这里只在 H5 结构上隐藏空图标，保持文字 tab。
+ */
+.weui-tabbar__icon:not([src]) {
+  display: none;
+}
+.weui-tabbar__item {
+  padding-top: 8px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom));
+}
+.chat-empty {
+  height: 100%;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-empty .empty {
+  padding: 24px 8px;
+  text-align: center;
+}
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  background: #f7f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+}
+.profile-avatar {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 50%;
+  background: #00834d;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 48px;
+  text-align: center;
+}
+.profile-text {
+  flex: 1;
+  min-width: 0;
+}
+.profile-name {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+}
+.profile-email {
+  display: block;
+  margin-top: 2px;
+  color: #6b6b6b;
+  font-size: 12px;
+  word-break: break-all;
+}
+.profile-status {
+  flex: none;
+  color: #6b6b6b;
+  font-size: 12px;
+}
+.capture-submit .nut-button {
+  width: 100%;
+}
+.capture-submit .muted {
+  text-align: center;
+}
+
+/* NutUI Segmented 在对话输入区占满整行。 */
+.composer > .nut-segmented {
+  display: flex;
+  width: 100%;
+  padding: 3px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  background: #f2f3f2;
+}
+.composer > .nut-segmented .nut-segmented-item {
+  flex: 1;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #595959;
+  font-size: 14px;
+}
+.composer > .nut-segmented .nut-segmented-item-active {
+  background: #fff;
+  color: #262626;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+}
+
+.nut-avatar.profile-avatar {
+  background: #00834d !important;
+  color: #fff !important;
+  font-size: 20px;
+  font-weight: 600;
+}
+.nut-avatar.profile-avatar .nut-avatar-text {
+  color: #fff !important;
 }

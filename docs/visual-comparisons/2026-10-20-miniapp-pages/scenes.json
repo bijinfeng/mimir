@@ -1,0 +1,38 @@
+[
+  {
+    "id": "chat",
+    "title": "问答 · 390×844",
+    "before": "before/chat.png",
+    "after": "after/chat.png"
+  },
+  {
+    "id": "library",
+    "title": "知识库 · 390×844",
+    "before": "before/library.png",
+    "after": "after/library.png"
+  },
+  {
+    "id": "account",
+    "title": "我的 · 390×844",
+    "before": "before/account.png",
+    "after": "after/account.png"
+  },
+  {
+    "id": "capture",
+    "title": "收集链接 · 390×844",
+    "before": "before/capture.png",
+    "after": "after/capture.png"
+  },
+  {
+    "id": "reader",
+    "title": "阅读 · 390×844",
+    "before": "before/reader.png",
+    "after": "after/reader.png"
+  },
+  {
+    "id": "editor",
+    "title": "编辑笔记 · 390×844",
+    "before": "before/editor.png",
+    "after": "after/editor.png"
+  }
+]

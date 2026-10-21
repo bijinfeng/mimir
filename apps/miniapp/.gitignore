@@ -4,3 +4,4 @@ project.private.config.json
 !.env.example
 .temp/
 .swc/
+dist-h5/

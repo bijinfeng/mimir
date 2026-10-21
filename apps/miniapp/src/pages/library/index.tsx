@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState } from 'react'
-import { View, Text, Picker } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
 import Taro, { useDidShow, useReachBottom, usePullDownRefresh } from '@tarojs/taro'
 import type { FolderNode, MiniappDocumentSummary, TagListResponse } from '@mimir/shared/miniapp'
-import { Action, Gate, ErrorNotice, Empty } from '../../components/ui'
+import { Action, Gate, ErrorNotice, Empty, Loading, SelectField } from '../../components/ui'
 import { api, errorMessage } from '../../lib/api'
 import { useSession, getSession } from '../../lib/session'
 import { openReader, editorUrl, askScope } from '../../lib/navigation'
@@ -142,12 +142,17 @@ function Library({ ownerId }: { ownerId: string }) {
           <Text className="count">{item.count} 篇</Text>
         </View>
       ))}
-      <Picker
-        mode="selector"
-        range={['全部标签', ...tags.map((item) => `${item.name} (${item.count})`)]}
-        value={Math.max(0, tags.findIndex((item) => item.name === tag) + 1)}
-        onChange={(event) => {
-          const selected = tags[Number(event.detail.value) - 1]?.name || ''
+      <SelectField
+        title="标签"
+        value={tag}
+        options={[
+          { label: '全部标签', value: '' },
+          ...tags.map((item) => ({
+            label: `${item.name} (${item.count})`,
+            value: item.name,
+          })),
+        ]}
+        onChange={(selected) => {
           setTag(selected)
           setDocuments([])
           void load(folder, selected)
@@ -157,7 +162,7 @@ function Library({ ownerId }: { ownerId: string }) {
           <Text className="muted">标签</Text>
           <Text>{tag || '全部标签'}</Text>
         </View>
-      </Picker>
+      </SelectField>
       <ErrorNotice
         error={error}
         onRetry={() => {
@@ -185,7 +190,7 @@ function Library({ ownerId }: { ownerId: string }) {
       {loaded && !documents.length && (
         <Empty>{tag ? '此标签下暂无资料。' : '这里暂无资料，可以新建笔记或收集链接。'}</Empty>
       )}
-      {busy && <Text className="loading">正在读取…</Text>}
+      {busy && <Loading>正在读取…</Loading>}
       {!busy && next !== null && (
         <Action
           onClick={() => {

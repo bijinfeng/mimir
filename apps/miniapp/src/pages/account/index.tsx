@@ -69,9 +69,22 @@ export default function AccountPage() {
       setBusy(false)
     }
   }
+  const initial = (session?.user.name || session?.user.email || '?').trim().slice(0, 1).toUpperCase()
   return (
     <View className="page">
       <Text className="page-title">我的</Text>
+      {session && (
+        <View className="profile-card">
+          <View className="profile-avatar" aria-hidden="true">
+            {initial}
+          </View>
+          <View className="profile-text">
+            <Text className="profile-name">{session.user.name}</Text>
+            <Text className="profile-email">{session.user.email}</Text>
+          </View>
+          <Text className="profile-status">{status}</Text>
+        </View>
+      )}
       <View className="section">
         <View className="detail-row">
           <Text>服务端</Text>
@@ -79,25 +92,11 @@ export default function AccountPage() {
             {origin || '未配置'}
           </Text>
         </View>
-        <View className="detail-row">
-          <Text>连接状态</Text>
-          <Text>{session ? status : '未登录'}</Text>
-        </View>
         {session && (
-          <>
-            <View className="detail-row">
-              <Text>账号</Text>
-              <Text>{session.user.name}</Text>
-            </View>
-            <View className="detail-row">
-              <Text>邮箱</Text>
-              <Text className="detail-value">{session.user.email}</Text>
-            </View>
-            <View className="detail-row">
-              <Text>凭证到期</Text>
-              <Text>{new Date(session.expiresAt).toLocaleDateString()}</Text>
-            </View>
-          </>
+          <View className="detail-row">
+            <Text>凭证到期</Text>
+            <Text>{new Date(session.expiresAt).toLocaleDateString()}</Text>
+          </View>
         )}
       </View>
       <ErrorNotice error={error || (!session ? sessionReason() : '')} />

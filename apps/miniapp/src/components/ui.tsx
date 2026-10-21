@@ -1,5 +1,11 @@
 import { useEffect, useState, type PropsWithChildren } from 'react'
-import { View, Text, Picker } from '@tarojs/components'
+import { View, Text } from '@tarojs/components'
+import Picker from '@nutui/nutui-react-taro/dist/es/packages/picker'
+import EmptyView from '@nutui/nutui-react-taro/dist/es/packages/empty'
+import LoadingView from '@nutui/nutui-react-taro/dist/es/packages/loading'
+import '@nutui/nutui-react-taro/dist/es/packages/picker/style'
+import '@nutui/nutui-react-taro/dist/es/packages/empty/style'
+import '@nutui/nutui-react-taro/dist/es/packages/loading/style'
 import Taro from '@tarojs/taro'
 import Button from '@nutui/nutui-react-taro/dist/es/packages/button'
 import '@nutui/nutui-react-taro/dist/es/packages/button/style'
@@ -42,9 +48,12 @@ export function ErrorNotice({ error, onRetry }: { error: string; onRetry?: () =>
   )
 }
 export function Empty({ children }: PropsWithChildren) {
+  return <EmptyView className="empty" image={null} description={<Text>{children}</Text>} />
+}
+export function Loading({ children }: PropsWithChildren) {
   return (
-    <View className="empty">
-      <Text>{children}</Text>
+    <View className="loading">
+      <LoadingView>{children}</LoadingView>
     </View>
   )
 }
@@ -101,6 +110,42 @@ export function Gate({ children }: PropsWithChildren) {
 export function flattenFolders(items: FolderNode[]): FolderNode[] {
   return items.flatMap((item) => [item, ...flattenFolders(item.children)])
 }
+export function SelectField({
+  title,
+  value,
+  options,
+  onChange,
+  disabled = false,
+  children,
+}: {
+  title: string
+  value: string
+  options: { label: string; value: string }[]
+  onChange: (value: string) => void
+  disabled?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <View onClick={() => !disabled && setOpen(true)}>{children}</View>
+      <Picker
+        visible={open}
+        title={title}
+        options={[options]}
+        value={[value]}
+        closeOnOverlayClick
+        onConfirm={(_selected, values) => {
+          onChange(String(values[0] ?? ''))
+          setOpen(false)
+        }}
+        onCancel={() => setOpen(false)}
+        onClose={() => setOpen(false)}
+      />
+    </>
+  )
+}
+
 export function FolderPicker({
   value,
   onChange,
@@ -116,24 +161,21 @@ export function FolderPicker({
 }) {
   const flat = flattenFolders(folders)
   return (
-    <Picker
-      mode="selector"
-      range={flat.map((item) => item.path)}
-      value={Math.max(
-        0,
-        flat.findIndex((item) => item.path === value),
-      )}
+    <SelectField
+      title={label}
+      value={value}
+      options={[
+        { label: flat.length ? '选择已有目录' : '尚无目录，请先在电脑端创建', value: '' },
+        ...flat.map((item) => ({ label: item.path, value: item.path })),
+      ]}
       disabled={disabled || flat.length === 0}
-      onChange={(event) => {
-        const item = flat[Number(event.detail.value)]
-        if (item) onChange(item.path)
-      }}
+      onChange={onChange}
     >
       <View className="picker-row">
         <Text className="muted">{label}</Text>
         <Text>{value || (flat.length ? '选择已有目录' : '尚无目录，请先在电脑端创建')}</Text>
       </View>
-    </Picker>
+    </SelectField>
   )
 }
 export function useFolders(enabled = true) {
