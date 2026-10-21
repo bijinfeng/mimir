@@ -1652,3 +1652,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 按发布流程在实际安装环境核对系统图标缓存、fnOS 与微信真机；本次未推送、发布或上传头像。
+
+
+## Session 57: 统一默认用户头像
+<!-- trellis-session: v=2 fp=843066416245acfb -->
+
+**Date**: 2026-10-21
+**Task**: 统一默认用户头像
+**Branch**: `codex/cross-platform-app-icon`
+
+### Summary
+
+以统一绿色圆润人像替换侧栏、账号菜单、设置和小程序的首字母默认头像，保留自定义图片、上传预览及图片失败回退。对齐并行提交后的48px资料卡，仅提交头像相关差异。最终干净实体依赖副本原pnpm check通过，web/desktop与微信/H5构建及资源引用验证通过；14份真实组件HTML离线检查和明暗/小尺寸视觉复核通过。任务与历史对比稿已归档；微信真机、Electron系统窗口及fnOS部署未实测，未推送或发布。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `999f425` | feat(avatar): unify default user avatars across clients |
+
+### Status
+
+[OK] **Completed**
