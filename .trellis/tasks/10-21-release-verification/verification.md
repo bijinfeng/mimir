@@ -17,6 +17,8 @@
 | 桌面开发态 | `pnpm --filter @mimir/desktop build` + `node apps/desktop/scripts/smoke.mjs` | A/B/C 全 PASS；本地宿主是独立 sidecar 子进程，云端不起宿主 |
 | 桌面安装包 | `ELECTRON_MIRROR=… ELECTRON_BUILDER_BINARIES_MIRROR=… pnpm desktop:build` + `verify-package.mjs mac-arm64 0.1.8` | 打包成功；`resources/server/manifest.json` 与 `Resources/renderer/index.html` 存在；`Verified mac-arm64 package 0.1.8` |
 | 打包后 smoke | `MIMIR_SMOKE_EXECUTABLE=<app>/Contents/MacOS/mimir node apps/desktop/scripts/smoke.mjs` | A/B/C 全 PASS；真实安装包内的 sidecar、静态资源、令牌与云端模式均正常 |
+| Docker build | `docker build -t mimir:runtime-test .`（colima Linux arm64） | exit 0；builder 用 `build-runtime` 产出 linux/arm64/glibc、29,646 files；runner 映像导出成功 |
+| Docker run | `docker run` SQLite + owner，`/healthz`、登录、文档/目录、静态、上传/下载 | healthy；health 0.1.8；登录 200；documents/folders 200；`assets/*` immutable；上传后下载字节完全一致 |
 | 版本不匹配 | desktop 单测 + fnOS 生命周期测试 | manifest productVersion/platform/shellAbi 不匹配均在 fork/listen 前失败；sidecar ready 的 shellAbi 不匹配被拒 |
 | CI 配置 | 解析三个 workflow YAML | 通过；桌面矩阵已改为每平台 `build-runtime.mjs`，无 runtime 大 artifact 上传 |
 
@@ -25,15 +27,14 @@ renderer 653、desktop 124、根 node --test 87。
 
 ## 未执行（环境限制，需 CI/实机）
 
-- **Docker build/run**：本机无 daemon。Dockerfile 已改为 bookworm-slim builder
-  `build-runtime.mjs` + runner 整目录复制 + `CMD dist/runtime/cli.js`；需在
-  GitHub Actions/有 Docker 的 Linux 上执行登录、静态、SSE、上传/下载 smoke。
 - **fnOS 真实 FPK**：`build-fnos`/`verify-fnos` 要求 Linux x64 + Node 22 + fnpack；
   本机只验证了 `scripts/fnos-package.test.mjs` 的安装/启动/版本不匹配/Unix Socket
   生命周期 mock。真实包结构、Socket 登录、数据目录与覆盖升级需 CI/fnOS 设备。
 - **Windows NSIS/AppImage 安装包与安装器验收**：本机只构建了 macOS arm64；
   Windows/Linux 安装器需对应原生 runner。
-- **Docker build/run** 与 **fnOS 真实 FPK** 仍受本机环境限制（见上）。
+- **Docker Postgres/SSE**：本次容器用 SQLite 验证了构建、健康、静态、登录与上传/下载；
+  Postgres 连接、SSE 与容器内 `docker compose` 需 CI/完整环境。
+- **fnOS 真实 FPK** 仍受本机环境限制（本机是 macOS arm64；fnOS 要求 Linux x64 + Node 22 + fnpack）。
 - **Windows/macOS 签名与公证、Windows NSIS 安装、真实跨版本升级**：沿用既有发布
   流程，不在本任务替代。
 - **真实浏览器截图**：子任务 4 的证据是构建产物 + runtime 的真实 HTTP 响应；没有
