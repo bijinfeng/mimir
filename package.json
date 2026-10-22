@@ -24,7 +24,7 @@
     "docker:prod": "docker compose --profile prod up -d --build",
     "desktop:dev": "node scripts/desktop-dev.mjs",
     "runtime:build": "node scripts/build-runtime.mjs",
-    "desktop:start": "pnpm --filter @mimir/server build && pnpm --filter @mimir/desktop build && pnpm --filter @mimir/desktop start",
+    "desktop:start": "pnpm --filter @mimir/server build && node apps/desktop/scripts/deploy-server.mjs && pnpm --filter @mimir/desktop build && pnpm --filter @mimir/desktop start",
     "desktop:build": "pnpm --filter @mimir/server build && pnpm --filter @mimir/desktop build && node apps/desktop/scripts/deploy-server.mjs && pnpm --filter @mimir/desktop package",
     "fnos:build": "node scripts/build-fnos.mjs",
     "lint:styles": "node scripts/check-style-backticks.mjs"

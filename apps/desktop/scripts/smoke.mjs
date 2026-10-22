@@ -28,7 +28,7 @@
  * 不进 `pnpm test`：它要跑真实 Electron 与一个真实宿主，不是单元测试的粒度。
  */
 import { spawn } from 'node:child_process'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -49,17 +49,27 @@ const ANSI = new RegExp(`${String.fromCharCode(27)}\\[\\d+m`, 'g')
  */
 async function run({ preset, until, graceMs = 12_000, timeoutMs = 90_000 }) {
   const userData = await mkdtemp(join(tmpdir(), 'mimir-smoke-'))
+  const sidecarLog = join(userData, 'logs', 'runtime.log')
   if (preset) {
     // 文件形状与 config.ts 写出的一致
     await writeFile(join(userData, 'desktop-config.json'), JSON.stringify(preset))
   }
 
+  const childEnv = { ...process.env }
+  // 从 Electron/DSH 继承 ELECTRON_RUN_AS_NODE=1 会让 Electron 按纯 Node 启动，
+  // app 模块不存在；桌面主进程必须是真正的 Electron 进程。
+  delete childEnv.ELECTRON_RUN_AS_NODE
   const child = spawn(
     packagedExecutable ?? join(desktopRoot, 'node_modules', '.bin', 'electron'),
     [...(packagedExecutable ? [] : ['.']), `--user-data-dir=${userData}`],
     // AppImage 是包装进程：只 kill child 会留下真正的 Electron 孙进程，
     // 下一轮首启测试随后复用上一轮单实例，得到假的「已选模式」日志。
-    { cwd: desktopRoot, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' },
+    {
+      cwd: desktopRoot,
+      env: childEnv,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: process.platform !== 'win32',
+    },
   )
 
   const killTree = (signal) => {
@@ -72,12 +82,18 @@ async function run({ preset, until, graceMs = 12_000, timeoutMs = 90_000 }) {
     }
   }
 
-  let log = ''
+  let mainLog = ''
+  let sidecarText = ''
   const collect = (chunk) => {
-    log += chunk.toString()
+    mainLog += chunk.toString()
   }
   child.stdout.on('data', collect)
   child.stderr.on('data', collect)
+  // sidecar 的 stdout/stderr 落 in userData/logs/runtime.log（不进 Electron 的 stdout）
+  const loadSidecarLog = async () => {
+    sidecarText = await readFile(sidecarLog, 'utf8').catch(() => '')
+  }
+  const logNow = () => mainLog + sidecarText
 
   const outcome = await new Promise((resolve) => {
     let pollTimer
@@ -93,7 +109,9 @@ async function run({ preset, until, graceMs = 12_000, timeoutMs = 90_000 }) {
     child.once('exit', onExit)
     if (until) {
       pollTimer = setInterval(() => {
-        if (typeof until === 'function' ? until(log) : until.test(log)) finish('ready')
+        void loadSidecarLog().then(() => {
+          if (typeof until === 'function' ? until(logNow()) : until.test(logNow())) finish('ready')
+        })
       }, 300)
     } else {
       graceTimer = setTimeout(() => finish('waited'), graceMs)
@@ -101,6 +119,8 @@ async function run({ preset, until, graceMs = 12_000, timeoutMs = 90_000 }) {
     const deadlineTimer = setTimeout(() => finish('timeout'), timeoutMs)
   })
 
+  await loadSidecarLog()
+  const log = logNow()
   const alive = child.exitCode === null
   killTree('SIGTERM')
   await new Promise((r) => setTimeout(r, 1500))
@@ -128,6 +148,10 @@ checks.push(
   [served(main.log, 'GET', '/api/auth/get-session'), 'A 本地模式免登录生效（令牌 cookie 带上了）'],
   [served(main.log, 'GET', '/api/documents'), 'A 守卫放行，页面开始取文档（不是停在登录页）'],
   [served(main.log, 'GET', '/api/folders'), 'A 侧栏开始取目录树（应用外壳渲染了）'],
+  [
+    /\[desktop\] 本地模式 sidecar .+（pid \d+）/.test(main.log),
+    'A 本地宿主是独立的 sidecar 子进程（不是主进程内 import）',
+  ],
 )
 
 /* ── B. 首次启动：落在选择页，且宿主不启动 ───────────────── */

@@ -221,6 +221,10 @@ async function main(): Promise<void> {
 
   process.once('SIGTERM', () => void stop('SIGTERM'))
   process.once('SIGINT', () => void stop('SIGINT'))
+  // sidecar 父进程优先用 IPC 关停；信号与断连是兜底
+  process.on('message', (message) => {
+    if ((message as { type?: string } | null)?.type === 'shutdown') void stop('IPC shutdown')
+  })
   // fork 的父进程消失时 IPC 会断开；没有这条，sidecar 会变成孤儿进程
   process.once('disconnect', () => void stop('父进程断开'))
 

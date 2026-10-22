@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>mimir 正在启动</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #18191a;
+        --muted: #6b7280;
+        --line: rgba(0, 0, 0, 0.08);
+        --accent: #1f7a4d;
+        --danger: #b42318;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #18191a;
+          --fg: #f3f4f6;
+          --muted: #9ca3af;
+          --line: rgba(255, 255, 255, 0.1);
+          --accent: #4ade80;
+          --danger: #f97066;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+          'Microsoft YaHei', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+      }
+      main {
+        width: min(360px, calc(100vw - 48px));
+        text-align: center;
+      }
+      .mark {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 18px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: var(--accent);
+        font-size: 22px;
+        font-weight: 700;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      p {
+        margin: 0;
+        min-height: 38px;
+        font-size: 13px;
+        line-height: 1.55;
+        color: var(--muted);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      p.error {
+        color: var(--danger);
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        margin: 18px auto 0;
+        border: 2px solid var(--line);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      body.error .spinner {
+        display: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="mark" aria-hidden="true">m</div>
+      <h1>mimir</h1>
+      <p id="status" role="status" aria-live="polite">正在启动本地服务…</p>
+      <div class="spinner" aria-hidden="true"></div>
+    </main>
+    <script>
+      // 主进程用 executeJavaScript 调用；这个页面没有 preload，也不连任何桥。
+      window.mimirBoot = function (message, isError) {
+        var status = document.getElementById('status')
+        if (!status) return
+        status.textContent = String(message || '')
+        status.classList.toggle('error', Boolean(isError))
+        document.body.classList.toggle('error', Boolean(isError))
+      }
+    </script>
+  </body>
+</html>

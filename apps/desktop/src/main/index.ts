@@ -1,4 +1,4 @@
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, session, shell } from 'electron'
 import {
@@ -9,7 +9,7 @@ import {
 } from '@mimir/shared/desktop'
 import { normalizeCloudUrl, probeCloudUrl } from './cloud.js'
 import { parseModeConfig, readModeConfig, writeModeConfig } from './config.js'
-import { startHost, type HostHandle, type HostPaths } from './host.js'
+import { startSidecar, type SidecarHandle, type SidecarPaths } from './sidecar.js'
 import { installCloseFeedback, WorkspaceTransition } from './workspace-close.js'
 import { HostShutdown } from './host-shutdown.js'
 import { createNativeUpdater } from './native-updater.js'
@@ -18,7 +18,7 @@ import { navigationDecision, partitionFor, type WindowSurface } from './security
 /**
  * 桌面端载体（D-046，分层借鉴 deepseek-harness）。
  *
- * 职责：起宿主（或加载远端）、等就绪、开窗、关停，以及**模式的选择与切换**
+ * 职责：起 sidecar（或加载远端）、等就绪、开窗、关停，以及**模式的选择与切换**
  * （D-100）。页面加载的就是宿主的地址，所以 cookie 会话、SSE 聊天流、文件的
  * Range 请求全部同源原生；IPC 只承载 boot 信息、窗口控制、模式选择与退出
  * （契约见 packages/shared/src/desktop.ts）。
@@ -27,7 +27,7 @@ import { navigationDecision, partitionFor, type WindowSurface } from './security
  *
  * | 模式 | 窗口加载 | 数据 |
  * |---|---|---|
- * | 本地 | 进程内私有宿主（`127.0.0.1:<随机端口>`） | 本机 userData，免登录 |
+ * | 本地 | 独立 sidecar runtime（`127.0.0.1:<随机端口>`） | 本机 userData，免登录 |
  * | 云端 | 用户自部署的地址 | 服务端，登录照旧 |
  *
  * 首次启动加载**选择页**（渲染产物里的 `setup.html`，不依赖任何宿主）；
@@ -68,7 +68,9 @@ if (process.platform === 'linux') {
   app.setDesktopName('mimir.desktop')
 }
 
-let host: HostHandle | null = null
+let host: SidecarHandle | null = null
+let localPaths: SidecarPaths | null = null
+let sidecarRestarting = false
 let shutdown: HostShutdown | null = null
 let updatePreparing = false
 const workspaceTransition = new WorkspaceTransition()
@@ -116,21 +118,26 @@ let setupVisible = false
  * 这一条顺带修掉了旧形态最容易踩的坑：改了前端代码不重新构建 web，
  * 窗口里永远看不到变化。
  */
-function resolvePaths(): { serverDist: string; webDist: string } {
+function resolvePaths(): SidecarPaths {
+  const userData = app.getPath('userData')
+  // asar 里的 dist/renderer：app.getAppPath() 指向 app.asar 自身
+  const webDist = join(app.getAppPath(), 'dist', 'renderer')
   if (app.isPackaged) {
-    const resources = process.resourcesPath
     return {
-      serverDist: join(resources, 'server', 'dist'),
-      // asar 里的 dist/renderer：app.getAppPath() 指向 app.asar 自身
-      webDist: join(app.getAppPath(), 'dist', 'renderer'),
+      runtimeRoot: join(process.resourcesPath, 'server'),
+      webDist,
+      dataDir: join(userData, 'data'),
+      userData,
     }
   }
-  // 仓库内直跑（pnpm desktop:start）：服务端仍是与 Dockerfile 相同的位置，
-  // 渲染产物在本包内
+  // 仓库内直跑（pnpm desktop:start）：runtime-build 由同一套 build-runtime 生成，
+  // 与打包后的 resources/server 布局一致；宿主不再读 apps/server/dist。
   const appDir = app.getAppPath()
   return {
-    serverDist: resolve(appDir, '../server/dist'),
-    webDist: join(appDir, 'dist', 'renderer'),
+    runtimeRoot: join(appDir, 'runtime-build'),
+    webDist,
+    dataDir: join(userData, 'data'),
+    userData,
   }
 }
 
@@ -180,6 +187,7 @@ function windowChromeOptions(surface: WindowSurface): Electron.BrowserWindowCons
 }
 
 function createWindow(url: string, surface: WindowSurface): BrowserWindow {
+  closeBoot()
   const icon = windowIcon()
   const partition = partitionFor(surface, url)
   const browserSession = session.fromPartition(partition)
@@ -446,17 +454,125 @@ function safeOrigin(url: string): string {
   }
 }
 
-/** 起本地宿主（幂等）。**只在这里创建**，这样切换与启动走的是同一条路 */
-async function ensureLocalHost(paths: HostPaths): Promise<HostHandle> {
+/** 极简启动窗：sidecar 就绪前不能把用户留在「只有 Dock 图标」的状态。 */
+let bootWindow: BrowserWindow | null = null
+
+function bootPagePath(): string {
+  return join(app.getAppPath(), 'dist', 'renderer', 'boot.html')
+}
+
+function showBootWindow(): void {
+  if (bootWindow && !bootWindow.isDestroyed()) {
+    bootWindow.show()
+    return
+  }
+  const created = new BrowserWindow({
+    width: 420,
+    height: 240,
+    resizable: false,
+    frame: false,
+    show: true,
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#18191a' : '#ffffff',
+    // 启动窗不装 preload、不调用桌面桥：它只是一块显示启动状态的静态页
+    webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
+  })
+  bootWindow = created
+  created.on('closed', () => {
+    if (bootWindow === created) bootWindow = null
+  })
+  void created.loadFile(bootPagePath()).catch((error: unknown) => {
+    console.warn('[desktop] 启动窗加载失败：', error)
+  })
+}
+
+function updateBoot(message: string, isError = false): void {
+  const target = bootWindow
+  if (!target || target.isDestroyed()) return
+  void target.webContents
+    .executeJavaScript(`window.mimirBoot?.(${JSON.stringify(message)}, ${isError})`)
+    .catch(() => {})
+}
+
+function closeBoot(): void {
+  const target = bootWindow
+  bootWindow = null
+  if (target && !target.isDestroyed()) target.destroy()
+}
+
+/** 起本地 sidecar（幂等）。**只在这里创建**，这样切换与启动走的是同一条路 */
+async function ensureLocalHost(paths: SidecarPaths): Promise<SidecarHandle> {
   if (host) return host
 
-  const created = await startHost(paths, { localMode: true })
-  host = created
-  // 与浏览器部署的启动日志同一组信息（TECH §8.6）：数据全空时第一眼看这里
-  console.log(`[desktop] 本地模式宿主 ${created.origin}`)
-  console.log(`[desktop] 数据目录 ${created.dataDir}`)
-  console.log(`[desktop] 数据库 sqlite（${join(created.dataDir, 'mimir.db')}）`)
-  return created
+  localPaths = paths
+  showBootWindow()
+  updateBoot('正在启动本地服务…')
+  try {
+    const created = await startSidecar(paths, {
+      productVersion: app.getVersion(),
+      localMode: true,
+    })
+    host = created
+    created.onUnexpectedExit((error) => {
+      void handleSidecarCrash(error)
+    })
+    updateBoot('本地服务已就绪，正在打开…')
+    // 与浏览器部署的启动日志同一组信息（TECH §8.6）：数据全空时第一眼看这里
+    console.log(`[desktop] 本地模式 sidecar ${created.origin}（pid ${created.pid}）`)
+    console.log(`[desktop] 数据目录 ${created.dataDir}`)
+    console.log(`[desktop] 数据库 sqlite（${join(created.dataDir, 'mimir.db')}）`)
+    return created
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    updateBoot(detail, true)
+    throw error
+  }
+}
+
+/**
+ * sidecar 在 ready 后异常退出：主进程不退出，按 1s/3s 退避最多重启 2 次。
+ * 重启后重新写 cookie、导航当前窗口；连续失败才显示错误框。
+ */
+async function handleSidecarCrash(reason: Error): Promise<void> {
+  if (sidecarRestarting || updatePreparing || workspaceTransition.transitioning) return
+  const paths = localPaths
+  if (!paths) return
+  sidecarRestarting = true
+  console.error('[desktop] 本地服务异常退出：', reason)
+
+  try {
+    for (const delay of [1000, 3000]) {
+      const crashed = host
+      host = null
+      await crashed?.close().catch(() => {})
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      try {
+        const next = await ensureLocalHost(paths)
+        await injectLocalCookie(next)
+        bootInfo = {
+          mode: 'local',
+          origin: next.origin,
+          dataDir: next.dataDir,
+          version: app.getVersion(),
+        }
+        const target = win
+        if (target && !target.isDestroyed()) {
+          await loadWindow(target, next.origin, 'local')
+          closeBoot()
+        }
+        return
+      } catch (error) {
+        console.error('[desktop] 重启本地服务失败：', error)
+        updateBoot(error instanceof Error ? error.message : String(error), true)
+      }
+    }
+  } finally {
+    sidecarRestarting = false
+  }
+
+  dialog.showErrorBox(
+    '本地服务未能恢复',
+    '本地知识库已连续退出。请查看 logs/runtime.log，或退出客户端后重试。',
+  )
 }
 
 /**
@@ -469,7 +585,7 @@ async function ensureLocalHost(paths: HostPaths): Promise<HostHandle> {
  * `httpOnly` + `SameSite=Lax` 是刻意的：前者让脚本读不到它，后者让**跨站**
  * 请求不会带上它——恶意网页扫到本机端口也只能拿到 401（TECH §14.5）。
  */
-async function injectLocalCookie(handle: HostHandle): Promise<void> {
+async function injectLocalCookie(handle: SidecarHandle): Promise<void> {
   if (!handle.localToken) return
   await session.fromPartition(partitionFor('local', handle.origin)).cookies.set({
     url: handle.origin,
@@ -486,7 +602,7 @@ async function injectLocalCookie(handle: HostHandle): Promise<void> {
  * 返回窗口应当加载的地址。**启动与切换共用它**，两处各抄一份必然会漂移
  * （比如切换时忘了注入 cookie，症状是「切回本地模式却看到登录页」）。
  */
-async function prepareTarget(state: DesktopModeState, paths: HostPaths): Promise<string> {
+async function prepareTarget(state: DesktopModeState, paths: SidecarPaths): Promise<string> {
   if (state.mode === 'local') {
     const handle = await ensureLocalHost(paths)
     await injectLocalCookie(handle)
@@ -499,6 +615,7 @@ async function prepareTarget(state: DesktopModeState, paths: HostPaths): Promise
     return handle.origin
   }
 
+  closeBoot()
   bootInfo = { mode: 'cloud', origin: state.cloudUrl, dataDir: null, version: app.getVersion() }
   return state.cloudUrl
 }
@@ -561,6 +678,7 @@ async function showSetupPage(target: BrowserWindow): Promise<void> {
   if (updatePreparing || workspaceTransition.transitioning) return
   try {
     await loadWindow(target, setupPageUrl(), 'setup')
+    closeBoot()
     setupVisible = true
   } catch (error) {
     console.warn('[desktop] 切换使用方式已取消：', error)
@@ -648,7 +766,7 @@ function sameState(a: DesktopModeState, b: DesktopModeState): boolean {
  * 赛跑——回执还没送到，页面已经被替换掉了。
  *
  */
-function registerModeBridge(paths: HostPaths): void {
+function registerModeBridge(paths: SidecarPaths): void {
   ipcMain.removeHandler('mimir:mode-get')
   ipcMain.removeHandler('mimir:mode-choose')
   ipcMain.removeAllListeners('mimir:mode-activate')
@@ -682,6 +800,7 @@ function registerModeBridge(paths: HostPaths): void {
       try {
         await ensureLocalHost(paths)
       } catch (error) {
+        closeBoot()
         const detail = error instanceof Error ? error.message : String(error)
         return { ok: false, message: `本地知识库启动失败：${detail}` }
       }
@@ -712,8 +831,10 @@ function registerModeBridge(paths: HostPaths): void {
       try {
         const url = await prepareTarget(modeState, paths)
         setupVisible = false
-        if (target && !target.isDestroyed()) await loadWindow(target, url, modeState.mode)
-        else createWindow(url, modeState.mode)
+        if (target && !target.isDestroyed()) {
+          await loadWindow(target, url, modeState.mode)
+          closeBoot()
+        } else createWindow(url, modeState.mode)
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error)
         dialog.showErrorBox('切换失败', detail)
@@ -760,10 +881,7 @@ async function main(): Promise<void> {
   ipcMain.handle('mimir:boot-info', () => bootInfo)
   ipcMain.on('mimir:quit', () => app.quit())
 
-  const paths: HostPaths = {
-    ...resolvePaths(),
-    dataDir: join(app.getPath('userData'), 'data'),
-  }
+  const paths: SidecarPaths = resolvePaths()
   registerModeBridge(paths)
 
   const config = await readModeConfig(app.getPath('userData'))
@@ -784,6 +902,7 @@ async function main(): Promise<void> {
       'mimir 启动失败',
       error instanceof Error ? (error.stack ?? error.message) : String(error),
     )
+    closeBoot()
     app.quit()
   }
 }

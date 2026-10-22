@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createServer } from 'node:http'
-import { pickFreePort } from './host.js'
+import { pickFreePort } from './sidecar.js'
 import { defaultScheme, normalizeCloudUrl, probeCloudUrl } from './cloud.js'
 
 /**
