@@ -1761,3 +1761,46 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 
 - 在 Linux x64/CI 跑 `pnpm fnos:build` + `verify-fnos`，核对 FPK manifest/version/Socket/数据目录。
 - 有 Docker 的 Linux x64 上跑 Postgres compose 与 SSE smoke；Windows runner 验证 NSIS 安装与进程树清理。
+
+## Session 60: 统一 runtime 的全平台验收
+<!-- trellis-session: v=2 fp=8069454348a8003a -->
+
+**Date**: 2026-10-22
+**Task**: 统一 runtime 架构（父任务验收）
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+在 GitHub 原生 runner 上完成 macOS arm64/x64、Windows x64、Linux x64 四平台 runtime + desktop 打包与 Windows NSIS 安装 smoke，fnOS 复用工作流与 aggregate 全部成功；本地补齐 Docker（linux/arm64）、Postgres/SQLite、fnOS x64 FPK、SSE 与真实安装包 sidecar 崩溃重启验证。
+
+### Main Changes
+
+- 修复 `assertDeletableOut` 在 Windows 上 `path.relative` 反斜杠导致的产物目录拒绝；CI 首次运行捕获。
+- `ci.yml` 增加 `workflow_dispatch`，便于对分支手动验证。
+- 文档补齐 Docker/fnOS/Postgres/SSE/sidecar 重启与四平台矩阵证据；父任务完成。
+
+### Git Commits
+
+`938bc66` ci manual run / `aefbc82` SSE+CI docs / `e46f7c4` CI baseline docs /
+`1147da6` Windows path fix / `75d3e59` parent acceptance docs
+
+### Testing
+
+- [OK] GitHub Desktop release run `39733384364` **success**：mac-arm64/mac-x64/win-x64/linux-x64 + fnOS + aggregate。
+- [OK] Windows NSIS 安装、资源 SHA256 校验、安装后 smoke 在 CI 通过。
+- [OK] 本地 `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check` exit 0（含 87 个根 node 测试）。
+- [OK] Docker colima linux/arm64 build/run：健康、登录、静态、上传/下载一致。
+- [OK] fnOS Linux x86_64 VM：真实 FPK 构建（160MB）+ verify（结构/manifest/ELF/Socket HTTP+HTTPS）。
+- [OK] Postgres pgvector + SQLite：server 1385+10+6 通过。
+- [OK] SSE `/api/chat`（scope=search）：TEXT_MESSAGE_CONTENT + RUN_FINISHED。
+- [OK] macOS 真实安装包 smoke A/B/C；kill -9 sidecar 后 1s 重启新端口并重载页面。
+- [WARN] `ci.yml` verify job 仍停在 master 同样失败的 miniapp 头像栅格测试；不是本次改动。fnOS 真机安装/升级、macOS 正式签名/公证未验证。
+
+### Status
+
+[OK] **Completed**（父任务与子任务 1–5）
+
+### Next Steps
+
+- 若要合并：先处理 master 上的 miniapp 头像栅格测试，再开 PR。
+- fnOS 真机与签名发布按 Deferred validation 单独验收。
