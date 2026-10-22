@@ -21,3 +21,38 @@ MIMIR_SMOKE_EXECUTABLE=<abs> node apps/desktop/scripts/smoke.mjs
 ```
 
 回滚点：第 5 步保留 `MIMIR_DESKTOP_HOST=in-process`（dev-only）；第 6 步删除前提交一次。
+
+## 完成记录（2026-10-22）
+
+- 新增 `apps/desktop/src/main/runtime-manifest.ts`：读产物 manifest，校验
+  `required`、平台/架构、`productVersion`、`shellAbi`；错误列缺项与
+  `pnpm desktop:build`。`apps/desktop/src/main/host.ts` 与 `artifacts.ts` 已删除。
+- 新增 `apps/desktop/src/main/sidecar.ts`：
+  - 预选回环端口、0600 原子写 `runtime-config.json`、0600 持久化 auth-secret；
+  - `fork(runtimeEntry, ['--config', path])` + `ELECTRON_RUN_AS_NODE=1` +
+    `stdio: ['ignore','pipe','pipe','ipc']`；env 删除 `MIMIR_*`/`MODEL_*`/
+    `S3_*`/`OWNER_*`/`AUTH_SECRET`/`DATABASE_URL` 等；
+  - IPC `ready`/`error`、20s 超时、`PORT_IN_USE` 三次退避（1s/3s）、
+    `PORT_IN_USE` 之外按稳定 code 映射文案；
+  - `<userData>/logs/runtime.log`，5MB 轮转；stdout/stderr 都落盘；
+  - `close()`：IPC shutdown → 5s → SIGTERM → 2s → SIGTERM/Windows
+    `taskkill /T /F`；幂等；
+  - `onUnexpectedExit()` 给主进程做重启，sidecar 自身不自动循环。
+- `runtime/cli.ts` 新增 IPC `shutdown`；现有 SIGHUP/SIGTERM/disconnect 保留。
+- `index.ts`：`resolvePaths()` 返回 `SidecarPaths`（packaged `resources/server`，
+  dev `apps/desktop/runtime-build`）；`ensureLocalHost` 调 `startSidecar`；
+  `prepareTarget`/cookie/关闭逻辑改类型；启动窗 `public/boot.html` 在 ready 前
+  显示，ready/导航后关闭；sidecar 异常退出后主进程按 1s/3s 最多重启 2 次，
+  重新写 cookie 并重载窗口。
+- `apps/desktop/scripts/smoke.mjs` 改从 `<userData>/logs/runtime.log` 取证，
+  并新增「本地宿主是独立 sidecar 子进程」判据；同时清除继承的
+  `ELECTRON_RUN_AS_NODE`，否则 Electron 会按 Node 启动。
+- 验证：
+  - `pnpm --filter @mimir/desktop typecheck` / `test`：123 通过（新增
+    runtime-manifest 4 + sidecar 6，含真实 fork + IPC ready + SIGKILL 意外退出）。
+  - `node apps/desktop/scripts/smoke.mjs`：A/B/C 全 PASS，包括本地 sidecar 进程、
+    静态资源、本地令牌、云端无宿主。
+  - `pnpm desktop:build` 的 electron-builder 阶段仍因本机下载工具 600s 超时；
+    afterPack 已直接调用验证 `resources/server/manifest.json` 与入口。
+- 交接：崩溃重启的主进程路径只做了代码接线，未在真实包上手动 kill sidecar
+  验证（需要可运行 Electron 的交互环境/CI）；fnOS/Docker 仍是子任务 5 的验证范围。
