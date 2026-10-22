@@ -21,6 +21,7 @@
 | Docker run | `docker run` SQLite + owner，`/healthz`、登录、文档/目录、静态、上传/下载 | healthy；health 0.1.8；登录 200；documents/folders 200；`assets/*` immutable；上传后下载字节完全一致 |
 | fnOS 构建 | 在 Linux x86_64 colima VM 的 amd64 Node 22 容器：`pnpm install` → `pnpm fnos:build` → `node scripts/verify-fnos.mjs 0.1.8` | 生成 `mimir-0.1.8-fnos-x64.fpk`（160MB，SHA-256 `ecde76d4…`）；manifest linux/x64/glibc、29,646 files、4 个 x64 native 二进制 |
 | fnOS 验证 | `verify-fnos.mjs`（安装 procps 以执行 control.mjs 的 PID 检查） | 解包 FPK、版本/manifest/required、ELF、真实 Unix Socket HTTP/HTTPS 登录与 Cookie Path 全部通过；不声称 fnOS 设备安装 |
+| 子路径静态资产 | `curl /app/mimir/{pdfjs/cmaps/…,pdf-ocr/worker.min.js,favicon.svg}` | 均 200；pdf.js/OCR 资产在 `/app/mimir/` 下按原名取到 |
 | Postgres | colima `pgvector/pgvector:pg17` + `TEST_DATABASE_URL=postgres://mimir:mimir@127.0.0.1:5544/mimir_test pnpm --filter @mimir/server test` | 1385 + 10 + 6 通过；同一套断言在 SQLite、Postgres 两种方言下都过 |
 | sidecar 崩溃 | 真实 macOS 安装包本地模式，`kill -9 <sidecar pid>` | Electron 不退出；日志出现「本地服务异常退出（SIGKILL）」；1s 后新 sidecar pid/端口启动，页面重新请求静态资源 |
 | 版本不匹配 | desktop 单测 + fnOS 生命周期测试 | manifest productVersion/platform/shellAbi 不匹配均在 fork/listen 前失败；sidecar ready 的 shellAbi 不匹配被拒 |
