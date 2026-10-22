@@ -1804,3 +1804,16 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 
 - 若要合并：先处理 master 上的 miniapp 头像栅格测试，再开 PR。
 - fnOS 真机与签名发布按 Deferred validation 单独验收。
+
+## Session 61: 修复 CI 跨平台栅格断言
+
+**Date**: 2026-10-22
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+`ci.yml` verify job 连续在 Linux runner 上暴露两处 PNG 字节级断言：miniapp 默认头像与 desktop 品牌图标。根因是 macOS arm64 与 Linux x64 的 Skia/zlib 输出字节不同，但像素内容一致。改为解码后按平均通道差与显著差异像素比例比较；SVG/generated TS 仍逐字节，ICO/ICNS 校验容器结构（含大写 `.PNG`）。CI run 39752713668 全绿。
+
+### Git Commits
+
+`67ddfe4` test(miniapp) / `9f90b3d` test(brand) / `0037b11` test(brand uppercase)

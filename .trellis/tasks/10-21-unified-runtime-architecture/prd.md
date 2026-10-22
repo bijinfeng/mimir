@@ -33,7 +33,7 @@
 - [x] AC4 (R4). 桌面本地模式启动后 runtime 是独立进程；fork 后先显示 boot 窗，收到 `ready` 后开主窗；杀掉 runtime 不会杀掉 Electron；重启策略、端口退避、结构化错误码、日志落盘、退出 5 秒超时强杀均有测试或真实烟测证据；配置文件中无明文密码进入 argv。
 - [x] AC5 (R5). 同一份 `apps/web/dist` 在 `/` 与 `/app/mimir/` 下都能加载首屏、深路由、哈希资源、pdf.js 资产、pdf-ocr、API、SSE、聊天与下载；`packages/renderer`、`packages/chat`、`packages/office` 不再各自用 `BASE_URL` 计算绝对路径；fnOS 不再因 base path 重新构建 Web。root/subpath 的 HTML 注入、哈希资源、pdf.js/OCR 资产、API 已有真实请求证据；SSE 已用 runtime 产物 + `/api/chat` 真实复跑（`TEXT_MESSAGE_CONTENT` / `RUN_FINISHED`）；没有浏览器截图。
 - [x] AC6 (R6). 版本/协议/`shellAbi` 不匹配时 desktop 与 fnOS 在打开页面或开放 Socket 前失败，错误包含期望版本与实际值；匹配时 `/healthz` 返回版本字段且既有探活不回归。
-- [x] AC7 (R7). Docker 构建、`pnpm desktop:build`、`pnpm fnos:build` 全部使用统一脚本；发布工作流每个原生平台用同一脚本构建一次，打包 job 不再出现 `server build` + `deploy-server` 两段；CI 的 runtime/desktop/fnOS 作业通过；不做 900MB 级跨作业 artifact 传递。桌面四平台发布矩阵 run 39733384364 **全部成功**（含 Windows NSIS 安装 smoke、fnOS 复用工作流、aggregate）；`ci.yml` 的 verify job 停在 master 也失败的既有 miniapp 头像栅格测试，非本次改动。
+- [x] AC7 (R7). Docker 构建、`pnpm desktop:build`、`pnpm fnos:build` 全部使用统一脚本；发布工作流每个原生平台用同一脚本构建一次，打包 job 不再出现 `server build` + `deploy-server` 两段；CI 的 runtime/desktop/fnOS 作业通过；不做 900MB 级跨作业 artifact 传递。桌面四平台发布矩阵 run 39733384364 **全部成功**（含 Windows NSIS 安装 smoke、fnOS 复用工作流、aggregate）；`ci.yml` verify job 也已成功（run 39752713668；跨平台 PNG 字节差异改为像素容差比较后全绿）。
 - [x] AC8 (R8). `pnpm check` 通过；桌面本地/云端 smoke、Docker 容器 smoke、fnOS 解包与 Socket 烟测通过；Postgres 与 SQLite 两条测试路径均通过。
 - [x] AC9. 现行契约文档更新：架构 §3/§8/§14、桌面/服务端规范、README 与 fnOS 说明；新增决策记录说明为何采用 runtime 产物与 sidecar，以及被否决的方案。
 - [x] AC10. 每轮实现按 Trellis 提交节奏提交，提交信息写明验证命令与观察结果；未实机验证的 fnOS 项明确标注，不声称通过。
