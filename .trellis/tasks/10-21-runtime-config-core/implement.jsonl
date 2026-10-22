@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/server/backend/conventions.md", "reason": "服务端结构与构建契约"}
+{"file": ".trellis/spec/server/backend/pitfalls.md", "reason": "服务端静默坑"}
+{"file": ".trellis/spec/server/backend/tests.md", "reason": "SQLite/Postgres 测试路径"}
+{"file": ".trellis/spec/project/architecture.md", "reason": "部署、鉴权与桌面宿主拓扑"}

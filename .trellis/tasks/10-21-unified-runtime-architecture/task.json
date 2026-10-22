@@ -1,0 +1,32 @@
+{
+  "id": "unified-runtime-architecture",
+  "name": "unified-runtime-architecture",
+  "title": "统一运行时与宿主架构（C 版）",
+  "description": "把浏览器、桌面与 fnOS 的复用从源码级提升到产物级：一份 runtime 产物、类型化 RuntimeConfig、薄宿主，并完成桌面 sidecar、单 UI 构建、版本握手与全量验收。",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-21",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-21-runtime-config-core",
+    "10-21-runtime-artifact",
+    "10-21-desktop-sidecar",
+    "10-21-web-basepath",
+    "10-21-release-verification"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
