@@ -31,6 +31,18 @@ userData 目录，免登录但仍使用仅本机可用的令牌鉴权；云端�
 页面，不同步或迁移本地数据。桌面端界面改动后需刷新窗口。打包用
 `pnpm desktop:build`。
 
+服务端、桌面、fnOS 共用同一份 runtime 拼装脚本：
+
+```bash
+node scripts/build-runtime.mjs --out /tmp/mimir-runtime --web apps/web/dist
+```
+
+产物根包含 `dist/`、`drizzle*/`、生产 `node_modules/`、可选 `web/` 与
+`manifest.json`；Docker、桌面打包与 fnOS 都只读 manifest，不再各自
+`pnpm deploy`。Docker 镜像基于 Debian slim（glibc），桌面本地模式由独立
+sidecar 进程运行服务端，退出/更新前先关 sidecar。详见
+[技术契约 §8/§14](.trellis/spec/project/architecture.md) 与 D-114。
+
 ## 桌面安装与更新
 
 从[本仓库 Releases](https://github.com/bijinfeng/mimir/releases)下载匹配系统的安装包：

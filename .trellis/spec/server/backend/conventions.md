@@ -8,11 +8,13 @@
 
 ```
 src/
-├── index.ts        生产入口。起 @hono/node-server，监听端口
+├── index.ts        兼容入口：旧 startServer → startRuntime（Docker/桌面/fnOS 旧命令）
 ├── dev.ts          开发入口（Vite 的 dev server 调它）。只导出 app，不监听
 ├── boot.ts         启动准备 + 装配，两个入口共用
 ├── app.ts          路由装配。鉴权中间件在最外层，新增路由默认受保护
-├── env.ts          环境变量集中校验。不要在其他地方直接读 process.env
+├── config.ts       中立 ServerConfig 快照 + getter；core **只从这里**读配置
+├── server-runtime.ts ensureServerRuntime：建 DB/auth（createApp/boot 兜底）
+├── runtime/        RuntimeConfig、CLI、listener、静态、fnOS 网关、版本常量
 ├── db/             schema + 迁移
 ├── lib/            无状态的纯工具（文本、vault、HTTP 辅助）
 ├── plugins/        **装配层**：host.ts（正常宿主装配）+ attachment-parser.ts（隔离 worker 的纯 parser 装配）+ settings-store.ts
@@ -20,6 +22,11 @@ src/
 ├── services/       业务逻辑。文件与数据库的一致性在这一层保证
 └── routes/         只做参数校验与调用 service，不写业务逻辑
 ```
+
+**core 不读 `process.env`，不 import `runtime/`，不知道 fnOS/桌面/静态路径。**
+部署事实由宿主翻译成 `RuntimeConfig`，runtime 收窄成 `ServerConfig` 后调用
+`configureServer()`；core 的业务代码只读 `config.*` / `getServerConfig()`。
+边界测试是 `src/test/runtime-boundary.test.ts`。
 
 分层的判断标准：**route 层不应该知道数据库的存在，service 层不应该知道 HTTP 的存在。**
 
@@ -36,12 +43,12 @@ src/
 配置在 `apps/server/vite.config.ts`，那里的注释写明了三条不能改的契约
 （`preserveModules`、external、workspace 包内联）。
 
-- **插件私有第三方依赖**：Vite 8 SSR 默认 external 检查从 server 根解析，pnpm isolated 下不能看见 storage 插件私有的 `@aws-sdk/client-s3`。该 SDK 显式列在 `ssr.external`，由生产 hoisted deploy 的实际 node_modules 提供；不能把生成到 `dist/node_modules/.pnpm` 的深层 SDK ESM 文件视为可移植替代。保持 `preserveModulesRoot: src`、原生模块 external 和 workspace 编译契约；修改后须干净 server build、迁移后真实 SDK 操作和生产宿主登录验证，Windows 最终仍需 NSIS 安装后资源及 smoke 门。
+- **插件私有第三方依赖**：Vite 8 SSR 默认 external 检查从 server 根解析，pnpm isolated 下不能看见 storage 插件私有的 `@aws-sdk/client-s3`。该 SDK 显式列在 `ssr.external`，由 `scripts/build-runtime.mjs` 的 hoisted deploy 产物提供；不能把生成到 `dist/node_modules/.pnpm` 的深层 SDK ESM 文件视为可移植替代。保持 `preserveModulesRoot: src`、原生模块 external 和 workspace 编译契约；修改后须干净 server build、迁移后真实 SDK 操作和生产宿主登录验证，Windows 最终仍需 NSIS 安装后资源及 smoke 门。
 - **不要在入口里调 `serve()` 两次**：dev 入口只导出 app（`dev.ts`），
-  监听由 Vite 的 dev server 做；生产入口才自己起服务（`index.ts`）
+  监听由 Vite 的 dev server 做；生产由 runtime CLI 监听（`dist/runtime/cli.js`）
 - **加新入口**（比如一个维护脚本）要在 `vite.config.ts` 的
   `rolldownOptions.input` 里加一行。产物必须保持与源码同深度——
-  `lib/static.ts` 与 `db/migrate.ts` 的路径推导依赖它
+  `defaultServerRoot()` 与 worker 的相对定位依赖它
 - **改了这三条契约**：`src/test/plugins.test.ts` 的「构建配置」那组断言会拦下来。
   它们守的是「部署能不能起来」，不是「配置好不好看」
 

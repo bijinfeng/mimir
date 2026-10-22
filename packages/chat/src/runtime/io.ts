@@ -1,4 +1,5 @@
 import type { AgentImageAspectRatio } from '@mimir/shared'
+import { readRuntimeBasePath } from '@mimir/shared/runtime-base'
 import type {
   Message,
   DocumentAgentCreateInput,
@@ -142,6 +143,4 @@ export interface ChatIo {
  * 导出它是为了宿主侧能引用同一个字符串——两处各写一份 `/api/chat` 的
  * 症状是「改了服务端路由、前端还指着旧的」，而那种错误只在运行时出现。
  */
-const viteBaseUrl = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL
-const basePath = viteBaseUrl.startsWith('/') ? viteBaseUrl.replace(/\/+$/, '') : ''
-export const DEFAULT_CHAT_URL = `${basePath}/api/chat`
+export const DEFAULT_CHAT_URL = `${readRuntimeBasePath()}/api/chat`

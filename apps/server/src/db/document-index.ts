@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from './client.js'
 import { chunks, chunkEmbeddings, documents } from './schema.js'
-import { dbDriver } from '../env.js'
+import { config } from '../config.js'
 import { chunkText } from '../lib/chunk.js'
 
 // The program is synchronous: SQLite drains .all() inside its synchronous transaction.
@@ -13,7 +13,7 @@ function* result<T>(statement: PromiseLike<T>): Generator<Statement, T, unknown>
   return (yield statement) as T
 }
 async function atomic<T>(program: (tx: typeof db) => Program<T>): Promise<T> {
-  if (dbDriver === 'postgres') {
+  if (config.dbDriver === 'postgres') {
     return db.transaction(async (tx) => {
       const steps = program(tx as typeof db)
       let step = steps.next()
@@ -35,7 +35,7 @@ async function atomic<T>(program: (tx: typeof db) => Program<T>): Promise<T> {
 }
 function* current(tx: typeof db, id: string) {
   const query = tx.select().from(documents).where(eq(documents.id, id))
-  const rows = yield* result(dbDriver === 'postgres' ? query.for('update') : query)
+  const rows = yield* result(config.dbDriver === 'postgres' ? query.for('update') : query)
   return rows[0]
 }
 export interface IndexIdentity {

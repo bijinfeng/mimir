@@ -68,7 +68,7 @@ it('upgrades both already-applied and skipped old out-of-order SQLite migrations
     ).toEqual({ n: 0 })
     later.close()
     for (const path of [appliedPath, skippedPath, laterPath]) {
-      const script = `const {runMigrations}=await import(${JSON.stringify(resolve(import.meta.dirname, 'migrate.ts'))});await runMigrations();await runMigrations();const {closeDb}=await import(${JSON.stringify(resolve(import.meta.dirname, 'client.ts'))});await closeDb()`
+      const script = `const {loadRuntimeConfigFromEnv,toServerConfig}=await import(${JSON.stringify(resolve(import.meta.dirname, '../runtime/config.ts'))});const {configureServer}=await import(${JSON.stringify(resolve(import.meta.dirname, '../config.ts'))});const {configureDb,closeDb}=await import(${JSON.stringify(resolve(import.meta.dirname, 'client.ts'))});const cfg=loadRuntimeConfigFromEnv({loadEnvFile:false});configureServer(toServerConfig(cfg));configureDb(cfg.database);const {runMigrations}=await import(${JSON.stringify(resolve(import.meta.dirname, 'migrate.ts'))});await runMigrations(cfg.migrations);await runMigrations(cfg.migrations);await closeDb()`
       await execute(
         process.execPath,
         ['--import', require.resolve('tsx'), '--input-type=module', '-e', script],

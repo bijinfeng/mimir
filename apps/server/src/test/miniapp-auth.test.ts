@@ -7,9 +7,11 @@ import { miniappDevices, session } from '../db/schema.js'
 import { app, getAuthCookie, TEST_USER } from './helpers.js'
 
 // Isolated to this test module; other suites keep the production default disabled.
-vi.mock('../env.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../env.js')>()
-  return { ...actual, env: { ...actual.env, miniappEnabled: true } }
+// 配置现在是不可变快照（`configureServer`），不能再 mock env 模块；直接替换
+// core 唯一读取的 `config` 门面，`getServerConfig()` 仍走真实快照。
+vi.mock('../config.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../config.js')>()
+  return { ...actual, config: { ...actual.config, miniappEnabled: true } }
 })
 
 beforeAll(async () => {

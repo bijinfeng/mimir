@@ -1,12 +1,18 @@
 import { afterEach, expect, it, vi } from 'vitest'
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __MIMIR_BASE_PATH__: string | undefined
+}
+
 afterEach(() => {
+  delete globalThis.__MIMIR_BASE_PATH__
   vi.unstubAllEnvs()
   vi.resetModules()
 })
 
 it('routes JSON, multipart, downloads, and server avatar URLs through the gateway', async () => {
-  vi.stubEnv('BASE_URL', '/app/mimir/')
+  globalThis.__MIMIR_BASE_PATH__ = '/app/mimir'
   const { api, configureApiTransport } = await import('./api')
   const fetchImpl = vi.fn<typeof fetch>(async (input) => {
     const url = String(input)

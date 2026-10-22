@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/project/architecture.md", "reason": "部署、发布与桌面更新契约"}
+{"file": ".trellis/spec/desktop/runtime/releases-updates.md", "reason": "发布、签名与更新流程"}
+{"file": "apps/fnos/README.md", "reason": "fnOS 发布与验证"}
+{"file": ".trellis/spec/project/rules.md", "reason": "项目级规则"}

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { localProfileInputSchema } from '@mimir/shared'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { HttpError, parseInput } from '../lib/http.js'
 import { setLocalOwnerName } from '../services/local-mode.js'
 import type { AppEnv } from '../types.js'
@@ -21,7 +21,7 @@ import type { AppEnv } from '../types.js'
 export const localRoute = new Hono<AppEnv>()
 
 localRoute.patch('/profile', async (c) => {
-  if (!env.localMode) {
+  if (!config.localMode) {
     throw new HttpError(404, 'NOT_FOUND', '这个部署没有开启本地模式')
   }
 

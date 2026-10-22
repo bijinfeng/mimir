@@ -37,7 +37,7 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Test fnOS packaging contracts
-        run: node --test scripts/fnos-package.test.mjs scripts/fnos-build.test.mjs
+        run: node --test scripts/fnos-package.test.mjs scripts/fnos-build.test.mjs scripts/runtime-artifact.test.mjs scripts/lib/resource-tree.test.mjs
       - name: Install pinned official fnpack
         run: |
           node scripts/fnos-fnpack.mjs "$RUNNER_TEMP/fnpack"

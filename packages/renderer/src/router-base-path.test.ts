@@ -14,3 +14,13 @@ it('maps deep gateway URLs to internal routes and keeps public links prefixed', 
   expect(location.publicHref).toBe('/app/mimir/docs?scope=all')
   expect(router.buildLocation({ to: '/login' }).publicHref).toBe('/app/mimir/login')
 })
+
+it('keeps root deployment paths at /', () => {
+  const root = createRootRoute()
+  const docs = createRoute({ getParentRoute: () => root, path: '/docs' })
+  const router = buildRouter(root.addChildren([docs]), '/')
+  router.update({ history: createMemoryHistory({ initialEntries: ['/docs?scope=all'] }) })
+  const location = router.parseLocation(router.history.location)
+  expect(location.pathname).toBe('/docs')
+  expect(location.publicHref).toBe('/docs?scope=all')
+})

@@ -141,24 +141,46 @@ test('fnOS lifecycle starts on a Unix socket and stops idempotently', async (t) 
   for (const file of ['install.mjs', 'control.mjs', 'launch.mjs']) {
     await cp(path.join(source, 'app', file), path.join(appDest, file))
   }
-  await mkdir(path.join(mockServer, 'dist'))
+  await mkdir(path.join(mockServer, 'dist/runtime'), { recursive: true })
   await writeFile(path.join(mockServer, 'package.json'), '{"type":"module"}')
   await writeFile(
-    path.join(mockServer, 'dist/index.js'),
+    path.join(mockServer, 'manifest.json'),
+    JSON.stringify({
+      productVersion: '0.1.8',
+      protocolVersion: 1,
+      shellAbi: 1,
+      entry: 'dist/runtime/index.js',
+      required: ['dist/runtime/index.js', 'dist/runtime/version.js'],
+    }),
+  )
+  await writeFile(path.join(appDest, 'version.json'), JSON.stringify({ productVersion: '0.1.8' }))
+  await writeFile(
+    path.join(mockServer, 'dist/runtime/version.js'),
+    'export const PROTOCOL_VERSION = 1\nexport const SHELL_ABI = 1\n',
+  )
+  await writeFile(
+    path.join(mockServer, 'dist/runtime/index.js'),
     `import { createServer } from 'node:net'
      import { writeFile } from 'node:fs/promises'
-     export async function startServer() {
+     export function collectSettingsEnv() { return {} }
+     export async function startRuntime(config) {
        await writeFile(process.env.DATA_DIR + '/boot.json', JSON.stringify({
-         socket: process.env.MIMIR_FNOS_SOCKET,
-         basePath: process.env.MIMIR_BASE_PATH,
-         owner: process.env.OWNER_EMAIL,
-         localMode: process.env.MIMIR_LOCAL_MODE ?? null,
+         socket: config.listener.path,
+         basePath: config.auth.fnosGateway.basePath,
+         owner: config.auth.owner.email,
+         localMode: config.auth.localToken ?? null,
+         version: config.product.version,
+         staticDir: config.static?.dir ?? null,
        }))
        const server = createServer(() => {})
-       await new Promise((resolve) => server.listen(process.env.MIMIR_FNOS_SOCKET, resolve))
-       return { server }
-     }
-     export function closeDb() {}`,
+       await new Promise((resolve) => server.listen(config.listener.path, resolve))
+       return {
+         origin: 'http://localhost',
+         app: null,
+         server,
+         close: () => new Promise((resolve) => server.close(() => resolve())),
+       }
+     }`,
   )
 
   const env = {
@@ -184,9 +206,20 @@ test('fnOS lifecycle starts on a Unix socket and stops idempotently', async (t) 
   assert.equal(boot.basePath, '/app/mimir')
   assert.equal(boot.owner, 'admin@example.com')
   assert.equal(boot.localMode, null)
+  assert.equal(boot.version, '0.1.8')
+  assert.equal(boot.staticDir, null)
 
   assert.equal(run('main', ['stop'], env).status, 0)
   assert.equal(run('main', ['stop'], env).status, 0)
   assert.equal(run('main', ['status'], env).status, 3)
+  await assert.rejects(stat(path.join(appDest, 'app.sock')), { code: 'ENOENT' })
+
+  // 包版本与 runtime manifest 不一致：launch 必须在 listen 之前失败
+  await writeFile(
+    path.join(appDest, 'version.json'),
+    JSON.stringify({ productVersion: '0.0.0-mismatch' }),
+  )
+  const mismatch = run('main', ['start'], env)
+  assert.equal(mismatch.status, 1)
   await assert.rejects(stat(path.join(appDest, 'app.sock')), { code: 'ENOENT' })
 })

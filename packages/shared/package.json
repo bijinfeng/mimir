@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./desktop": "./src/desktop.ts",
-    "./miniapp": "./src/miniapp.ts"
+    "./miniapp": "./src/miniapp.ts",
+    "./runtime-base": "./src/runtime-base.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

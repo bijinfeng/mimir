@@ -1,0 +1,29 @@
+# runtime 产物裁剪。
+#
+# `pnpm deploy` 会按这个文件决定把包根的哪些文件带进产物（`.gitignore` 则不会）。
+# 产物需要的是：
+#   dist/            编译后的入口
+#   drizzle*/        迁移
+#   src/             workspace 包以源码发布（D-023），保留它让产物内的
+#                    包引用/调试与源码布局一致
+#   package.json
+#
+# 其余都是开发期文件：构建配置、测试、验证脚本、public 资源。
+# 漏掉一条的代价是产物变大；保留一条开发文件的代价是产物里出现不该
+# 发布的路径，两者都在 `scripts/runtime-artifact.test.mjs` 的布局断言里守着。
+
+# 验证脚本（手工调试用，不参与运行时）
+_verify*.mjs
+tmp-*.mts
+
+# 构建/测试配置
+*.config.ts
+tsconfig.json
+vite.config.ts
+vitest*.ts
+
+# 测试与开发脚本
+src/test/
+src/**/*.test.ts
+scripts/
+public/

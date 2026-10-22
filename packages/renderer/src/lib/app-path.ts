@@ -1,6 +1,12 @@
-/** electron-vite 的 `./` 用于打包资源；运行中的 HTTP 宿主仍挂在根路径。 */
-const viteBaseUrl = import.meta.env.BASE_URL
-export const appBasePath = viteBaseUrl.startsWith('/') ? viteBaseUrl.replace(/\/+$/, '') : ''
+import { readRuntimeBasePath } from '@mimir/shared/runtime-base'
+
+/**
+ * 当前部署前缀（不带尾斜杠）。
+ *
+ * 运行时由宿主注入；开发/桌面回退 `import.meta.env.BASE_URL`。桌面 renderer 的
+ * `BASE_URL='./'` 不是绝对路径，读出来是空串，仍按根路径处理。
+ */
+export const appBasePath = readRuntimeBasePath()
 
 /** 将应用自己的绝对路径放到当前部署前缀下。 */
 export function appPath(path: `/${string}`): string {

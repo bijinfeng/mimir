@@ -1,4 +1,4 @@
-import { buildRouter, createApp } from '@mimir/renderer'
+import { buildRouter, createApp, runtimeBasePath } from '@mimir/renderer'
 import { createRoot } from 'react-dom/client'
 import { routeTree } from '@/routeTree.gen'
 
@@ -16,7 +16,7 @@ const container = document.getElementById('root')
 if (!container) throw new Error('找不到 #root 挂载点')
 
 createApp(createRoot(container), {
-  router: buildRouter(routeTree, import.meta.env.BASE_URL, { publicHome: true }),
+  router: buildRouter(routeTree, runtimeBasePath(), { publicHome: true }),
   // 浏览器没有窗口可控制、也没有桥——这两件事由判别联合表达，
   // 不是「传 undefined」（见 @mimir/renderer 的 platform.tsx）
   platform: { kind: 'browser' },

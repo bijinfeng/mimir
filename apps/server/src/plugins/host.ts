@@ -23,7 +23,7 @@ import { install as installParser } from '@mimir/plugin-parser'
 import { install as installProvider } from '@mimir/plugin-provider'
 import { install as installStorage } from '@mimir/plugin-storage'
 import { db } from '../db/client.js'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { SettingsTableStore } from './settings-store.js'
 
 /**
@@ -64,9 +64,9 @@ import { SettingsTableStore } from './settings-store.js'
  * sqlite 驱动的行查询走 `db.all`（drizzle 的 sqlite 侧没有 `execute`）。
  */
 const pluginDatabase = {
-  dialect: env.dbDriver,
+  dialect: config.dbDriver,
   async execute<T = unknown>(query: unknown): Promise<T[]> {
-    if (env.dbDriver === 'sqlite') {
+    if (config.dbDriver === 'sqlite') {
       const rows = await (db as never as { all(query: never): Promise<unknown[]> }).all(
         query as never,
       )
@@ -146,7 +146,7 @@ export function assemble(): Assembled {
   const collected: SettingSpec[][] = []
 
   // cipher 在 install 之前就要有——插件的 `fromWire` 钩子需要它
-  const cipher = createSecretCipher(env.authSecret)
+  const cipher = createSecretCipher(config.authSecret)
 
   const host: PluginHost = {
     db: pluginDatabase,
@@ -192,15 +192,15 @@ export function assemble(): Assembled {
   installParser(host)
   installCapturer(host)
   // 存储后端的根由宿主注入：`DATA_DIR` 是部署事实，不是设置键
-  installStorage(host, { dataDir: env.dataDir })
+  installStorage(host, { dataDir: config.dataDir })
 
   // 插件的键收齐了，现在造真正的设置层
   const settings = createSettingsApi({
     store: new SettingsTableStore(),
     registry: createSettingRegistry(collected),
     cipher,
-    // 传一份拷贝：设置层不直接读全局 process.env，测试才能构造任意环境
-    env: { ...process.env },
+    // 传 runtime 过滤后的设置项 env 快照：core 不直接读 process.env
+    env: config.settingsEnv,
   })
 
   holder.current = settings

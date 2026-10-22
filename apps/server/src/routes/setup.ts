@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { hasAnyUser, prefillCredentials } from '../services/bootstrap.js'
 import type { AppEnv } from '../types.js'
 
@@ -21,6 +21,6 @@ setupRoute.get('/state', async (c) =>
      * 本地模式（D-100）。登录页据此说清「凭据由客户端持有，
      * 在这里填密码登录不会成功」——否则用户看到的只是一个永远不对的密码框。
      */
-    localMode: env.localMode,
+    localMode: config.localMode,
   }),
 )

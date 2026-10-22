@@ -4,18 +4,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime/index.ts",
+    "./runtime/config": "./src/runtime/config.ts",
+    "./runtime/version": "./src/runtime/version.ts"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "start": "node dist/index.js",
+    "start:runtime": "node dist/runtime/cli.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && vitest run --config vitest.local.config.ts && vitest run --config vitest.fnos.config.ts && node --test scripts/sqlite-backup.node-test.mjs",
     "db:generate:pg": "drizzle-kit generate",
     "db:generate:sqlite": "drizzle-kit generate --config drizzle-sqlite.config.ts",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:reindex": "tsx src/db/migrate.ts --reindex",
+    "db:migrate": "tsx src/runtime/migrate-cli.ts",
+    "db:reindex": "tsx src/runtime/migrate-cli.ts --reindex",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {

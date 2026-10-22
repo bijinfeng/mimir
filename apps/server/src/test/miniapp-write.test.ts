@@ -12,9 +12,9 @@ import { createFolder } from '../services/folders.js'
 import { readDocumentVersion, updateNote } from '../services/documents.js'
 import { app, getAuthCookie, TEST_USER } from './helpers.js'
 
-vi.mock('../env.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../env.js')>()
-  return { ...actual, env: { ...actual.env, miniappEnabled: true } }
+vi.mock('../config.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../config.js')>()
+  return { ...actual, config: { ...actual.config, miniappEnabled: true } }
 })
 
 let token: string

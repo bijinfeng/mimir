@@ -8,7 +8,7 @@ import {
 } from '../lib/document-publication.js'
 import { db } from '../db/client.js'
 import { chunks, documents } from '../db/schema.js'
-import { dbDriver } from '../env.js'
+import { config } from '../config.js'
 import { contentHash } from '../lib/text.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { extractText } from './extract.js'
@@ -125,7 +125,7 @@ export async function syncChunks(documentId: string, body: string): Promise<Chun
  *   `vec_distance_cosine` 直接吃这个形状
  */
 export function serializeVector(vector: number[]): string | Buffer {
-  if (dbDriver === 'postgres') return `[${vector.join(',')}]`
+  if (config.dbDriver === 'postgres') return `[${vector.join(',')}]`
 
   const floats = new Float32Array(vector)
   return Buffer.from(floats.buffer, floats.byteOffset, floats.byteLength)

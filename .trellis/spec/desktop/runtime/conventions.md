@@ -14,13 +14,13 @@ apps/desktop/
 ├── electron.vite.config.ts   三段的构建编排（main / preload / renderer）
 ├── src/
 │   ├── main/                 主进程
-│   │   ├── index.ts          窗口、两种模式的装配、本地模式 cookie 注入
-│   │   ├── host.ts           进程内私有宿主（D-046，host/carrier 分层）——本地模式的载体
+│   │   ├── index.ts          窗口、两种模式、cookie 注入、启动窗/重启接线
+│   │   ├── sidecar.ts        本地 mode 的 runtime 子进程：配置、fork、IPC、日志、关停
+│   │   ├── runtime-manifest.ts 读产物 manifest 并校验 required/平台/版本/shellAbi
 │   │   ├── cloud.ts          云端模式的地址处理：归一化与探活（不依赖 Electron，可单测）
-│   │   ├── config.ts         模式选择的持久化（<userData>/desktop-config.json，临时文件 + rename）
-│   │   └── artifacts.ts      启动前的产物检查（缺失时给清单式错误）
+│   │   └── config.ts         模式选择的持久化（<userData>/desktop-config.json，临时文件 + rename）
 │   ├── preload/index.ts      沙箱化 preload：只暴露宿主↔载体的握手契约（packages/shared/src/desktop.ts）
-│   └── renderer/             渲染进程——**只有载体独有的**。三个 HTML 入口
+│   └── renderer/             渲染进程——**只有载体独有的**。三个 HTML 入口 + boot.html
 │       ├── index.html        主应用的入口（electron-vite 的约定位置）
 │       ├── index.tsx         注入桌面插槽 → createApp()
 │       ├── setup.html        首启选择页的入口（D-100）
@@ -32,6 +32,10 @@ apps/desktop/
 │       └── lib/              桌面桥的取值（window.mimirDesktop）
 └── scripts/                  图标生成（D-091）、启动自检（smoke.mjs）
 ```
+
+**本地宿主是独立 sidecar 进程**（D-114）：主进程只写 0600 配置、fork runtime
+CLI、等 IPC ready/校验版本、开窗；不再在 Electron 主进程里 import 服务端。
+`host.ts`/`artifacts.ts` 已删除。
 
 **界面与业务代码不在这里**：它们在 `@mimir/renderer`，与浏览器部署共用一份
 源码。这一侧只给两样东西（D-104）：

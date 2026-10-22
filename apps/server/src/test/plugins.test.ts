@@ -6,7 +6,7 @@ import { detectSource } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { settings } from '../db/schema.js'
 import { assemble, resetAssembly } from '../plugins/host.js'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { getAuthCookie, makeClient } from './helpers.js'
 
 /**
@@ -34,7 +34,7 @@ beforeAll(async () => {
   client = makeClient(await getAuthCookie())
 })
 
-const repoRoot = resolve(env.repoRoot)
+const repoRoot = resolve(config.repoRoot)
 
 describe('插件注册表', () => {
   it('五条接缝都有实现，且 id 不重复（重复会在注册时抛错）', () => {
@@ -403,10 +403,10 @@ describe('构建配置（防 D-023 那个坑）', () => {
    * 但并不意味着不用守——把它改成 external 只需要一行配置，而那正是不该有的一行。
    */
   it('构建配置没有把 workspace 包排除在外（那会让生产启动失败）', () => {
-    const config = readFileSync(resolve(repoRoot, 'apps/server/vite.config.ts'), 'utf8')
+    const viteConfig = readFileSync(resolve(repoRoot, 'apps/server/vite.config.ts'), 'utf8')
 
     // 去掉注释再找：注释里出现 `external` 是允许的（本项目的注释密度很高）
-    const code = config.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    const code = viteConfig.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
 
     // 用数组断言而不是 `expect(bool, '原因')`：本项目的 vitest 规则只允许
     // 单参数 expect（`valid-expect`），而失败时能看懂的信息必须留下——

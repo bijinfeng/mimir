@@ -1674,3 +1674,146 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+## Session 58: server core/runtime 配置拆分
+<!-- trellis-session: v=2 fp=587affbd5b19571e -->
+
+**Date**: 2026-10-22
+**Task**: 拆分 server-core/runtime 并引入 RuntimeConfig
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+完成父任务子任务 1：core 只认中立 `ServerConfig`，runtime 负责 env/JSON → `RuntimeConfig`、DB/auth 装配、TCP/Unix 监听、fnOS 网关、静态资源与进程生命周期。Docker/桌面/fnOS 的旧启动命令通过 `index.ts` 兼容适配器继续工作。
+
+### Main Changes
+
+- 新增 `src/config.ts`、`src/server-runtime.ts`、`src/runtime/`；删除 `env.ts`、`lib/static.ts`、`lib/fnos-gateway.ts`。
+- `db`/`auth` 改为 configure 时创建的 live binding；`boot()`/`createApp()` 先 `ensureServerRuntime()`。
+- 新增 `runtime/cli.ts`（ready/error JSON、IPC ready、SIGTERM/SIGINT）与 `runtime/index.ts`。
+- fnOS 的 Origin/Cookie 适配覆盖全部 `/api/auth/*`，补 `sign-in/identifier` HTTP/HTTPS 用例。
+- 新增 runtime 配置、真实 TCP 启动、core/runtime 边界测试；测试 setupFiles 先配置再加载 core。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dd7a443` | docs(runtime): 规划统一 runtime 架构并完成子任务 1 记录 |
+| `1d03cce` | refactor(server): 拆分 ServerConfig/RuntimeConfig 与 runtime 入口 |
+
+### Testing
+
+- [OK] `pnpm --filter @mimir/server typecheck`。
+- [OK] `pnpm --filter @mimir/server test`：1384 + 10 + 6 通过。
+- [OK] `pnpm lint` 0 error、`pnpm format:check`、`pnpm -r typecheck`。
+- [OK] 根 `node --test` 10 个脚本 80/80（需完整文件权限执行 `/bin/ps`）。
+- [OK] `dist/runtime/cli.js` 与旧 `dist/index.js` 的 ready/healthz/SIGTERM 手测；Vite dev `/healthz`。
+- [WARN] 仓库内直接跑 dist 时，workspace 插件依赖（如 `@aws-sdk/client-s3`）不在 server 的 node_modules；留给子任务 2 的产物构建解决。
+
+### Status
+
+[OK] **Completed**（子任务 1；父任务继续）
+
+### Next Steps
+
+- 子任务 2：单 runtime 产物 + `manifest.json`，把插件依赖收进产物。
+- 随后子任务 3/4/5：桌面 sidecar、web base path、发布验证。
+
+## Session 59: 统一 runtime 产物、桌面 sidecar 与单 UI 构建
+<!-- trellis-session: v=2 fp=0d41be7379d8b1d2 -->
+
+**Date**: 2026-10-22
+**Task**: 统一 runtime 架构（子任务 2–5）
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+完成统一 runtime 产物与 manifest、桌面 sidecar、web/fnOS 单 UI 构建与运行时 base path、CI/发布改造和 D-114 文档。macOS arm64 真实安装包与 Linux arm64 Docker 均通过启动/静态/登录/上传 smoke；fnOS 真实 FPK 仍需 Linux x64。
+
+### Main Changes
+
+- `scripts/build-runtime.mjs`：仓库内 `pnpm deploy` → 校验 → web 复制 → 资源树物化 → manifest → 清理 staging；`manifest.json` 含 product/protocol/shell、platform/libc、entry、migrations、web、required、schemaVersion。
+- `apps/server/.npmignore` 裁剪产物；Dockerfile 改 bookworm-slim，runner 整目录复制，CMD `dist/runtime/cli.js`。
+- 桌面：`runtime-manifest.ts` + `sidecar.ts`，0600 配置、fork/IPC、日志轮转、PORT_IN_USE 退避、启动窗、异常重启；删除 host/artifacts；afterPack 复制 runtime 根与 `Resources/renderer`。
+- web：`@mimir/shared/runtime-base`；四个 BASE_URL 漏点统一；`apps/web` base './'；`runtime/static` 注入 base/global 并支持 root/subpath。
+- CI：桌面矩阵每平台 `build-runtime`；CI 增加产物结构/manifest 断言；fnOS 工作流复用同一脚本。
+- D-114 决策、architecture/README/fnOS/server/desktop 规范与验收记录。
+
+### Git Commits
+
+`7e22f04` docs(runtime) / `b053183` feat(runtime) / `02f3099` docs(desktop) / `f2a6305` feat(desktop) /
+`2310332` docs(web) / `fb478a9` feat(web) / `84ac0fb` ci(release) / `f5e7b8d` docs(runtime) /
+`4723bdc` fix(desktop) / `0279816` docs(runtime) / `c862007` docs(runtime)
+
+### Testing
+
+- [OK] `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check` exit 0（lint 0 error、format、全量 typecheck、server 1385+10+6、renderer 653、desktop 125、office 2781、根 node 87）。
+- [OK] `pnpm build` exit 0；runtime 产物 0.1.8 / protocol 1 / shellAbi 1；root 与 `/app/mimir` 注入/静态通过。
+- [OK] 开发态与 macOS arm64 真实安装包 `smoke.mjs` A/B/C 全 PASS；`verify-package mac-arm64` 通过。
+- [OK] Docker（colima linux/arm64）build/run：health 0.1.8、登录、documents/folders、静态 immutable、上传/下载字节一致；容器 healthy。
+- [WARN] fnOS 真实 FPK 需 Linux x64 + Node 22 + fnpack；本机只有 mock/单测。Docker Postgres/SSE、Windows NSIS、macOS 公证未验证。
+
+### Status
+
+[WARN] **In progress**（剩余 fnOS 实机/CI 验收与跨平台安装器）
+
+### Next Steps
+
+- 在 Linux x64/CI 跑 `pnpm fnos:build` + `verify-fnos`，核对 FPK manifest/version/Socket/数据目录。
+- 有 Docker 的 Linux x64 上跑 Postgres compose 与 SSE smoke；Windows runner 验证 NSIS 安装与进程树清理。
+
+## Session 60: 统一 runtime 的全平台验收
+<!-- trellis-session: v=2 fp=8069454348a8003a -->
+
+**Date**: 2026-10-22
+**Task**: 统一 runtime 架构（父任务验收）
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+在 GitHub 原生 runner 上完成 macOS arm64/x64、Windows x64、Linux x64 四平台 runtime + desktop 打包与 Windows NSIS 安装 smoke，fnOS 复用工作流与 aggregate 全部成功；本地补齐 Docker（linux/arm64）、Postgres/SQLite、fnOS x64 FPK、SSE 与真实安装包 sidecar 崩溃重启验证。
+
+### Main Changes
+
+- 修复 `assertDeletableOut` 在 Windows 上 `path.relative` 反斜杠导致的产物目录拒绝；CI 首次运行捕获。
+- `ci.yml` 增加 `workflow_dispatch`，便于对分支手动验证。
+- 文档补齐 Docker/fnOS/Postgres/SSE/sidecar 重启与四平台矩阵证据；父任务完成。
+
+### Git Commits
+
+`938bc66` ci manual run / `aefbc82` SSE+CI docs / `e46f7c4` CI baseline docs /
+`1147da6` Windows path fix / `75d3e59` parent acceptance docs
+
+### Testing
+
+- [OK] GitHub Desktop release run `39733384364` **success**：mac-arm64/mac-x64/win-x64/linux-x64 + fnOS + aggregate。
+- [OK] Windows NSIS 安装、资源 SHA256 校验、安装后 smoke 在 CI 通过。
+- [OK] 本地 `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check` exit 0（含 87 个根 node 测试）。
+- [OK] Docker colima linux/arm64 build/run：健康、登录、静态、上传/下载一致。
+- [OK] fnOS Linux x86_64 VM：真实 FPK 构建（160MB）+ verify（结构/manifest/ELF/Socket HTTP+HTTPS）。
+- [OK] Postgres pgvector + SQLite：server 1385+10+6 通过。
+- [OK] SSE `/api/chat`（scope=search）：TEXT_MESSAGE_CONTENT + RUN_FINISHED。
+- [OK] macOS 真实安装包 smoke A/B/C；kill -9 sidecar 后 1s 重启新端口并重载页面。
+- [WARN] `ci.yml` verify job 仍停在 master 同样失败的 miniapp 头像栅格测试；不是本次改动。fnOS 真机安装/升级、macOS 正式签名/公证未验证。
+
+### Status
+
+[OK] **Completed**（父任务与子任务 1–5）
+
+### Next Steps
+
+- 若要合并：先处理 master 上的 miniapp 头像栅格测试，再开 PR。
+- fnOS 真机与签名发布按 Deferred validation 单独验收。
+
+## Session 61: 修复 CI 跨平台栅格断言
+
+**Date**: 2026-10-22
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+`ci.yml` verify job 连续在 Linux runner 上暴露两处 PNG 字节级断言：miniapp 默认头像与 desktop 品牌图标。根因是 macOS arm64 与 Linux x64 的 Skia/zlib 输出字节不同，但像素内容一致。改为解码后按平均通道差与显著差异像素比例比较；SVG/generated TS 仍逐字节，ICO/ICNS 校验容器结构（含大写 `.PNG`）。CI run 39752713668 全绿。
+
+### Git Commits
+
+`67ddfe4` test(miniapp) / `9f90b3d` test(brand) / `0037b11` test(brand uppercase)

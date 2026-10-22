@@ -47,7 +47,16 @@
     // 开发环境的热重载单例用 __ 前缀标记（见 db/client.ts）
     "no-underscore-dangle": [
       "error",
-      { "allow": ["__mimirSql", "__mimirSqlite", "__mimirPagination", "__mimirPagError"] }
+      {
+        "allow": [
+          "__mimirSql",
+          "__mimirSqlite",
+          "__mimirPagination",
+          "__mimirPagError",
+          // 浏览器 <-> runtime 的 base path 协议（runtime/static.ts 注入，前端只读）
+          "__MIMIR_BASE_PATH__"
+        ]
+      }
     ],
 
     "unicorn/prefer-node-protocol": "error",

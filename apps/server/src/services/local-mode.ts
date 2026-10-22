@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { LOCAL_TOKEN_COOKIE } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { user } from '../db/schema.js'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { auth } from '../auth.js'
 
 /**
@@ -54,7 +54,7 @@ let cached: UserRow | null = null
 let inflight: Promise<UserRow> | null = null
 
 export function ensureLocalOwner(): Promise<UserRow | null> {
-  if (!env.localMode) return Promise.resolve(null)
+  if (!config.localMode) return Promise.resolve(null)
   if (cached) return Promise.resolve(cached)
 
   inflight ??= bootstrapOwner().finally(() => {
@@ -92,14 +92,14 @@ async function bootstrapOwner(): Promise<UserRow> {
  * 所以先比长度（长度本身不是秘密）。
  */
 export function localTokenMatches(cookieHeader: string | undefined): boolean {
-  if (!env.localMode || !env.localToken) return false
+  if (!config.localMode || !config.localToken) return false
   if (!cookieHeader) return false
 
   const presented = readCookie(cookieHeader, LOCAL_TOKEN_COOKIE)
   if (!presented) return false
 
   const a = Buffer.from(presented)
-  const b = Buffer.from(env.localToken)
+  const b = Buffer.from(config.localToken)
   return a.length === b.length && timingSafeEqual(a, b)
 }
 

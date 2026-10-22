@@ -4,7 +4,7 @@ import { request } from 'node:http'
 import { access, mkdir, readFile, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { extractFpk } from './fnos-artifacts.mjs'
-import { finalizeResourceTree } from '../apps/desktop/scripts/resource-tree.mjs'
+import { finalizeResourceTree } from './lib/resource-tree.mjs'
 import { validateCommittedReleaseVersion } from '../apps/desktop/scripts/release-artifacts.mjs'
 
 if (
@@ -31,11 +31,20 @@ const { outer, app } = await extractFpk(
 const server = path.join(app, 'server')
 const tree = await finalizeResourceTree(server)
 assert.equal(tree.materialized, 0, 'Built FPK must already contain physical portable resources')
-for (const entry of ['dist/index.js', 'drizzle-sqlite/meta/_journal.json', 'web/dist/index.html'])
+for (const entry of [
+  'manifest.json',
+  'dist/runtime/cli.js',
+  'dist/runtime/index.js',
+  'drizzle-sqlite/meta/_journal.json',
+  'web/dist/index.html',
+])
   await access(path.join(server, entry))
-assert.ok(
-  (await readFile(path.join(server, 'web/dist/index.html'), 'utf8')).includes('/app/mimir/assets/'),
-)
+const runtimeManifest = JSON.parse(await readFile(path.join(server, 'manifest.json'), 'utf8'))
+assert.equal(runtimeManifest.productVersion, version)
+const packagedVersion = JSON.parse(await readFile(path.join(app, 'version.json'), 'utf8'))
+assert.equal(packagedVersion.productVersion, version)
+for (const entry of runtimeManifest.required) await access(path.join(server, entry))
+assert.ok((await readFile(path.join(server, 'web/dist/index.html'), 'utf8')).includes('./assets/'))
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { stdio: 'inherit', ...options })
   if (result.error) throw result.error

@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 import { sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { toStorageKey } from '../lib/vault.js'
 import { activeStorage } from '../plugins/host.js'
 import { reindexVault } from '../services/vault-index.js'
@@ -32,7 +32,7 @@ import { getAuthCookie, makeClient } from './helpers.js'
 
 /** key → 磁盘上的绝对路径。**只对本地后端成立**，测试环境固定用它 */
 function onDiskPath(vaultPath: string): string {
-  return resolve(env.dataDir, toStorageKey(vaultPath))
+  return resolve(config.dataDir, toStorageKey(vaultPath))
 }
 
 let client: ReturnType<typeof makeClient>
@@ -98,7 +98,7 @@ describe('文件是真相，数据库可重建', () => {
 
     // path（vault 相对）→ key → 磁盘绝对路径
     const abs = onDiskPath(created.body.path)
-    expect(abs.startsWith(resolve(env.dataDir, 'vault'))).toBe(true)
+    expect(abs.startsWith(resolve(config.dataDir, 'vault'))).toBe(true)
     expect(abs.endsWith('.md')).toBe(true)
     expect(created.body.path).toMatch(/^\d{4}\/\d{2}\/.+\.md$/)
 

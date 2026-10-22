@@ -1,88 +1,75 @@
 import { pathToFileURL } from 'node:url'
-import { createAdaptorServer, serve } from '@hono/node-server'
+import type { ServerType } from '@hono/node-server'
 import type { Hono } from 'hono'
-import { boot } from './boot.js'
-import { dbDriver, env } from './env.js'
-import { stripFnosPrefix } from './lib/fnos-gateway.js'
+import { loadRuntimeConfigFromEnv } from './runtime/config.js'
+import { startRuntime } from './runtime/start.js'
 import type { AppEnv } from './types.js'
 
 export { closeDb } from './db/client.js'
 
 /**
- * 生产入口。构建后跑 `node dist/index.js`（Dockerfile 的 CMD）。
+ * 兼容入口：已有宿主（桌面 `apps/desktop`、fnOS `launch.mjs`、Dockerfile）
+ * 仍然 `import { startServer } from './dist/index.js'`，本文件保持它们的调用
+ * 形状不变，内部转发到新的 `startRuntime()`。
  *
- * `startServer` 被拆成**可导入的函数**而不是直接在模块顶层监听，因为
- * 桌面端（`apps/desktop`，D-046）要在**进程内**启动同一个宿主：它需要
- * 拿到 server 句柄做优雅关停，还需要传 `hostname` 把监听收进 127.0.0.1。
- * 浏览器部署的行为不变：本文件被直接执行时自动 startServer。
+ * **新宿主不要用它**：`startRuntime()` 接收显式 `RuntimeConfig`，而这里为了
+ * 兼容只能从 `process.env` 重新构造配置。等子任务 3/5 把桌面与 fnOS 都切到
+ * runtime CLI 后，这个文件只剩 Docker 的旧 CMD 在用。
  */
 
 export interface RunningServer {
   /** @hono/node-server 的句柄，`close()` 用于优雅关停 */
-  server: ReturnType<typeof serve>
+  server: ServerType
   app: Hono<AppEnv>
 }
 
+/**
+ * 启动一个 mimir 服务端。
+ *
+ * `hostname` 是桌面端唯一需要的覆盖项：本地模式必须绑回环（D-100），
+ * 而配置里的 listener 默认跟随 `HOST`。校验放在 `startRuntime()` **之前**：
+ * 监听地址错误不该先跑一遍迁移与装配才报错。
+ */
 export async function startServer(options: { hostname?: string } = {}): Promise<RunningServer> {
-  /**
-   * 本地模式的监听地址**强制回环**（D-100）。
-   *
-   * 免登录建立在「同一台机器」这个前提上：宿主注入了令牌，而令牌只写进
-   * 本机桌面客户端的 cookie jar。一旦绑到 0.0.0.0，局域网里任何人都能
-   * 打开这个地址、走本机用户身份直接读写整个知识库。
-   *
-   * 所以这不是「桌面端碰巧传了 127.0.0.1」，而是本地模式下**无法**监听
-   * 其他地址——把「随机端口 + 回环」从调用方的自觉变成结构性的保证。
-   *
-   * 校验放在 `boot()` **之前**：配置错误不该先跑一遍迁移与装配才报错。
-   */
-  const hostname = options.hostname ?? (env.localMode ? '127.0.0.1' : undefined)
-  if (env.localMode && hostname !== '127.0.0.1' && hostname !== 'localhost') {
-    throw new Error(`本地模式只允许监听回环地址，收到：${hostname}`)
-  }
-  if (env.fnosSocket && options.hostname) {
-    throw new Error('fnOS 模式只允许 Unix Socket，不接受 TCP 监听地址')
-  }
+  const config = loadRuntimeConfigFromEnv()
 
-  const app = await boot()
-
-  if (env.fnosSocket) {
-    const server = createAdaptorServer({
-      fetch: (request) => {
-        const mapped = stripFnosPrefix(request)
-        return mapped ? app.fetch(mapped) : new Response('Not Found', { status: 404 })
-      },
-    })
-    await new Promise<void>((resolve, reject) => {
-      server.once('error', reject)
-      server.listen(env.fnosSocket, () => {
-        server.off('error', reject)
-        resolve()
-      })
-    })
-    console.log(`mimir fnOS 网关监听 Unix Socket ${env.fnosSocket}（${env.fnosBasePath}）`)
-    console.log(`  数据目录 ${env.dataDir}`)
-    console.log(`  数据库 sqlite（${env.databaseFile}）`)
-    return { server, app }
-  }
-
-  const server = serve({ fetch: app.fetch, port: env.port, hostname }, (info) => {
-    console.log(`mimir server 监听 http://localhost:${info.port}`)
-    console.log(`  数据目录 ${env.dataDir}`)
-    // 驱动与库位置必须打在启动日志里：「数据全空」时第一眼要看的就是这行
-    // （DATABASE_URL 漏配会静默换到 SQLite 空库，TECH §10）
-    console.log(
-      dbDriver === 'postgres' ? `  数据库 postgres` : `  数据库 sqlite（${env.databaseFile}）`,
-    )
-    if (env.localMode) {
-      console.log('  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听')
+  if (config.listener.kind === 'unix') {
+    if (options.hostname) {
+      throw new Error('fnOS 模式只允许 Unix Socket，不接受 TCP 监听地址')
     }
-  })
+  } else if (options.hostname) {
+    if (config.auth.localToken && !isLoopback(options.hostname)) {
+      throw new Error(`本地模式只允许监听回环地址，收到：${options.hostname}`)
+    }
+    config.listener.host = options.hostname
+  }
 
-  return { server, app }
+  const handle = await startRuntime(config)
+
+  // 旧入口的启动日志保持不变：Dockerfile 的 `node dist/index.js` 仍靠它看数据目录
+  if (config.listener.kind === 'unix') {
+    console.log(`mimir fnOS 网关监听 Unix Socket ${config.listener.path}（/app/mimir）`)
+  } else {
+    console.log(`mimir server 监听 ${handle.origin}`)
+  }
+  console.log(`  数据目录 ${config.dataDir}`)
+  console.log(
+    config.database.kind === 'postgres'
+      ? '  数据库 postgres'
+      : `  数据库 sqlite（${config.database.file}）`,
+  )
+  if (config.auth.localToken) {
+    console.log('  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听')
+  }
+
+  return { server: handle.server, app: handle.app }
 }
 
-/** CLI 直跑判定（与 migrate.ts 同一模式）：dist 与 src 两种形态都成立 */
+function isLoopback(hostname: string): boolean {
+  return hostname === '127.0.0.1' || hostname === 'localhost' || hostname === '::1'
+}
+
+/** CLI 直跑判定（与 migrate-cli.ts 同一模式）：dist 与 src 两种形态都成立 */
 function invokedDirectly(): boolean {
   const argv = process.argv[1]
   if (!argv) return false

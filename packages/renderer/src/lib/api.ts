@@ -86,7 +86,7 @@ export interface AuthSession {
  *
  * 四点约定：
  *  1. 开发时经 Vite 代理打到后端（见 vite.config.ts），生产由同一个服务提供；
- *     默认请求前缀来自构建的 BASE_URL，根路径部署时为空。
+ *     默认请求前缀来自运行时部署前缀，根路径部署时为空。
  *  2. 一律 credentials: 'include'——鉴权走 cookie，不是 header。
  *  3. 服务端的错误外壳是 { error: { code, message } }，这里统一抛 ApiRequestError，
  *     调用方只需要 catch 一种形状。

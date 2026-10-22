@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid'
 import { auth } from '../auth.js'
 import { db } from '../db/client.js'
 import { account, user } from '../db/schema.js'
-import { env, isOwnerConfigured } from '../env.js'
+import { config, isOwnerConfigured } from '../config.js'
 
 /**
  * 所有者账号的引导。
@@ -104,7 +104,7 @@ export async function ensureOwnerAccount(
   // 测试有自己的账号准备流程（test/helpers.ts 的 getAuthCookie，它先试登录
   // 再试注册）。这里插一脚会先占掉「唯一用户」的名额，让那些测试的注册
   // 分支永远走不到——而那个分支正是被测对象之一。
-  if (env.nodeEnv === 'test' && !options.failClosed) return { skipped: 'test' }
+  if (config.nodeEnv === 'test' && !options.failClosed) return { skipped: 'test' }
 
   try {
     const [existing] = await db.select({ id: user.id, email: user.email }).from(user).limit(1)
@@ -124,14 +124,14 @@ export async function ensureOwnerAccount(
         const ctx = await auth.$context
         passwordMatches = await ctx.password.verify({
           hash: credential.password,
-          password: env.ownerPassword,
+          password: config.ownerPassword,
         })
       }
     }
 
     const action = decideOwnerAction({
       existingEmail: existing?.email ?? null,
-      ownerEmail: env.ownerEmail,
+      ownerEmail: config.ownerEmail,
       passwordMatches,
     })
 
@@ -141,33 +141,33 @@ export async function ensureOwnerAccount(
       }
       // 提示要具体到「怎么改过来」，否则用户只知道没生效
       console.warn(
-        `[owner] 库里已有账号 ${action.existingEmail}，与 OWNER_EMAIL（${env.ownerEmail}）不同，未改动。\n` +
+        `[owner] 库里已有账号 ${action.existingEmail}，与 OWNER_EMAIL（${config.ownerEmail}）不同，未改动。\n` +
           '         想换成环境变量里那个：清空 user 表后重启，或用现有账号登录。',
       )
       return { skipped: 'email-mismatch', email: action.existingEmail }
     }
 
-    if (action.kind === 'noop') return { email: env.ownerEmail }
+    if (action.kind === 'noop') return { email: config.ownerEmail }
 
     if (action.kind === 'create') {
       await auth.api.signUpEmail({
         body: {
-          email: env.ownerEmail,
-          password: env.ownerPassword,
+          email: config.ownerEmail,
+          password: config.ownerPassword,
           // 与登录页一致的推导规则（邮箱前缀）
-          name: env.ownerEmail.split('@')[0] || 'me',
+          name: config.ownerEmail.split('@')[0] || 'me',
         },
       })
       // 明确告知发生了写入。静默成功会让「到底建没建」变成要靠试登录才知道
-      console.log(`[owner] 已按 OWNER_EMAIL 创建账号：${env.ownerEmail}`)
-      return { created: true, email: env.ownerEmail }
+      console.log(`[owner] 已按 OWNER_EMAIL 创建账号：${config.ownerEmail}`)
+      return { created: true, email: config.ownerEmail }
     }
 
     // update-password：同步密码。
     // 只改 password 列与 updatedAt，**不动账号 id**——换 id 会让已登录的
     // session 全部失效，用户会莫名其妙被踢出去
     const ctx = await auth.$context
-    const hash = await ctx.password.hash(env.ownerPassword)
+    const hash = await ctx.password.hash(config.ownerPassword)
 
     if (credentialId) {
       await db
@@ -185,8 +185,8 @@ export async function ensureOwnerAccount(
       })
     }
 
-    console.log(`[owner] OWNER_PASSWORD 与库里的不一致，已同步密码：${env.ownerEmail}`)
-    return { passwordUpdated: true, email: env.ownerEmail }
+    console.log(`[owner] OWNER_PASSWORD 与库里的不一致，已同步密码：${config.ownerEmail}`)
+    return { passwordUpdated: true, email: config.ownerEmail }
   } catch (error) {
     if (options.failClosed) throw error
     // 不抛出：建号失败不该让服务起不来，用户仍可手工注册
@@ -213,7 +213,7 @@ export async function hasAnyUser(): Promise<boolean> {
  * 且目的是省掉每次开浏览器手打密码。
  */
 export function prefillCredentials(): { email: string; password: string } | null {
-  if (env.nodeEnv === 'production') return null
+  if (config.nodeEnv === 'production') return null
   if (!isOwnerConfigured()) return null
-  return { email: env.ownerEmail, password: env.ownerPassword }
+  return { email: config.ownerEmail, password: config.ownerPassword }
 }

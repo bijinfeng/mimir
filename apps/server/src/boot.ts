@@ -1,6 +1,7 @@
 import { recoverChatAttachments, collectChatAttachments } from './services/chat-attachments.js'
-import { createApp } from './app.js'
-import { dbDriver, env, assertOwnerConfigComplete } from './env.js'
+import { createApp, type CreateAppOptions } from './app.js'
+import { config } from './config.js'
+import { ensureServerRuntime } from './server-runtime.js'
 import { runMigrations } from './db/migrate.js'
 import { ensureOwnerAccount, hasAnyUser } from './services/bootstrap.js'
 import { seedDefaultLibrary } from './services/seed.js'
@@ -29,26 +30,26 @@ import { recoverMiniappOperations } from './services/miniapp-operations.js'
  *    建号钩子（`auth.ts`），那条路只对新建的账号有效——本次改动之前
  *    就建过号的实例要靠这里（见 `ensureDefaultContent`）
  */
-export async function boot() {
-  assertOwnerConfigComplete()
-  if (dbDriver === 'sqlite') {
-    await runMigrations()
+export async function boot(options: CreateAppOptions = {}) {
+  ensureServerRuntime()
+  if (config.database.kind === 'sqlite') {
+    await runMigrations(config.migrations)
   }
-  const owner = await ensureOwnerAccount({ failClosed: Boolean(env.fnosSocket) })
-  if (env.fnosSocket && owner.skipped) {
+  const owner = await ensureOwnerAccount({ failClosed: Boolean(config.auth.failClosedOwner) })
+  if (config.auth.failClosedOwner && owner.skipped) {
     throw new Error('fnOS 所有者账号与数据库中已有账号不一致，拒绝启动')
   }
   await ensureDefaultContent()
-  if (env.miniappEnabled) await recoverMiniappOperations()
+  if (config.miniappEnabled) await recoverMiniappOperations()
 
   await recoverChatAttachments()
-  if (env.nodeEnv !== 'test') {
+  if (config.nodeEnv !== 'test') {
     const timer = setInterval(() => {
       void collectChatAttachments().catch((error) => console.warn('会话附件清理失败', error))
     }, 60_000)
     timer.unref()
   }
-  return createApp()
+  return createApp(options)
 }
 
 /**
@@ -72,7 +73,7 @@ async function ensureDefaultContent(): Promise<void> {
   // 测试环境跳过：集成测试有自己的账号与库准备流程，而它们到处是
   // 「库里有几篇文档」这类断言——自动多出两行会让它们以难以定位的方式失败
   // （与 `ensureOwnerAccount` 跳过测试同一条理由）
-  if (env.nodeEnv === 'test') return
+  if (config.nodeEnv === 'test') return
 
   try {
     if (!(await hasAnyUser())) return

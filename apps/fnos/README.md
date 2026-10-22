@@ -15,7 +15,7 @@ node scripts/verify-fnos.mjs <已提交版本号>
 
 `FNOS_FNPACK` 必须显式指定，构建时会再次校验同一个官方二进制。工具下载地址和校验值在 `scripts/fnos-fnpack.mjs` 中维护。构建要求 `apps/fnos/manifest` 与 `apps/desktop/package.json` 的版本完全一致；修改源码并提交版本后再发布，CI 不会临时改版本。
 
-脚本构建带 `/app/mimir/` 前缀的 Web 页面和服务端，仅在打包阶段用 `pnpm deploy --prod --node-linker hoisted` 收集生产依赖，校验资源树不依赖仓库或包缓存，实际加载 SQLite、向量扩展、Jieba 字典和 Canvas，并检查原生 ELF 为 Linux x86_64。中间目录位于 `apps/fnos/staging/`，输出为 `apps/fnos/release/mimir-<版本>-fnos-x64.fpk`，两者均不提交到 Git。
+脚本先构建 base 中立的 Web 页面（资源为 `./assets/`），再调用 `scripts/build-runtime.mjs` 生成与 Docker/桌面同一布局的 runtime 产物（`staging/app/server`，含 `manifest.json`），并写 `staging/app/version.json` 供 `launch.mjs` 做产品版本握手。`launch.mjs` 只读 manifest 与受保护的 `config.json`，构造 `RuntimeConfig` 后调用 `startRuntime()`，不再设置 `MIMIR_FNOS_SOCKET` / `WEB_DIST` / `DATABASE_URL` 等旧环境变量。打包阶段会实际加载 SQLite、向量扩展、Jieba 字典和 Canvas，并检查原生 ELF 为 Linux x86_64。中间目录位于 `apps/fnos/staging/`，输出为 `apps/fnos/release/mimir-<版本>-fnos-x64.fpk`，两者均不提交到 Git。
 
 验证脚本会解包真实 `.fpk`，检查包内版本、架构和运行时声明、资源完整性，再从解包目录启动服务，以统一测试账号验证 Unix Socket 网关、HTTP/HTTPS 代理登录 Cookie 和鉴权。测试配置与数据位于忽略的验证目录中，在打包完成后创建，不进入安装包。Ubuntu 原生构建和宿主烟测不能替代 fnOS 设备安装、桌面入口或覆盖升级验收。
 

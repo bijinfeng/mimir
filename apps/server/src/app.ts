@@ -2,10 +2,10 @@ import { chatAttachmentsRoute } from './routes/chat-attachments.js'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import { auth } from './auth.js'
-import { env } from './env.js'
+import { getAuth } from './auth.js'
+import { config } from './config.js'
+import { ensureServerRuntime } from './server-runtime.js'
 import { errorBody, HttpError } from './lib/http.js'
-import { fnosAuthRequest, fnosAuthResponse } from './lib/fnos-gateway.js'
 import { requireAuth } from './middleware/auth.js'
 import { captureRoute } from './routes/capture.js'
 import { avatarRoute } from './routes/avatar.js'
@@ -24,7 +24,6 @@ import { feedsRoute } from './routes/feeds.js'
 import { localRoute } from './routes/local.js'
 import { authRoute } from './routes/auth.js'
 import { setupRoute } from './routes/setup.js'
-import { mountStatic } from './lib/static.js'
 import { localSessionPayload, localTokenMatches } from './services/local-mode.js'
 import { searchRoute } from './routes/search.js'
 import { miniappRoute } from './routes/miniapp.js'
@@ -32,25 +31,39 @@ import { statsRoute } from './routes/stats.js'
 import type { AppEnv } from './types.js'
 
 async function handleAuth(request: Request): Promise<Response> {
-  if (!env.fnosSocket) return auth.handler(request)
-  const gatewayRequest = fnosAuthRequest(request)
-  if (!gatewayRequest) return new Response('Invalid origin', { status: 403 })
-  return fnosAuthResponse(await auth.handler(gatewayRequest), gatewayRequest)
+  // fnOS 的网关适配在 runtime 层完成；core 始终直接交给 Better Auth
+  return getAuth().handler(request)
 }
 
-export function createApp() {
+export interface CreateAppOptions {
+  /**
+   * runtime 提供的静态中间件。core 不 import static.ts、不知道 WEB_DIST，
+   * 也不知道部署在根路径还是 /app/mimir。
+   */
+  staticMiddleware?: (app: Hono<AppEnv>) => void
+  /** 仅开发期跨源需要；fnOS 同源网关不传 */
+  corsOrigin?: string
+}
+
+export function createApp(options: CreateAppOptions = {}) {
+  // 配置已在 configureServer 中完成；这里兜底创建 DB/auth，供测试/脚本直接 createApp()
+  ensureServerRuntime()
+
   const app = new Hono<AppEnv>()
 
-  if (env.nodeEnv !== 'test') {
+  if (config.nodeEnv !== 'test') {
     app.use('*', logger())
   }
 
+  // 静态资源必须在 API 路由之前挂载；中间件内部对 /api 与 /healthz 放行
+  options.staticMiddleware?.(app)
+
   // 开发时前端在 :5173，正式部署由同一个服务提供静态资源，跨源只在开发期存在
-  if (!env.fnosSocket) {
+  if (options.corsOrigin) {
     app.use(
       '/api/*',
       cors({
-        origin: env.webOrigin,
+        origin: options.corsOrigin,
         credentials: true,
         allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowHeaders: ['Content-Type'],
@@ -61,7 +74,13 @@ export function createApp() {
   }
 
   /** 不需要登录：健康检查 + 认证端点本身 */
-  app.get('/healthz', (c) => c.json({ ok: true }))
+  app.get('/healthz', (c) =>
+    c.json({
+      ok: true,
+      version: config.product.version,
+      protocolVersion: config.product.protocolVersion,
+    }),
+  )
 
   /**
    * 登录页的公开状态（库里有没有账号）。
@@ -131,17 +150,6 @@ export function createApp() {
 
   app.route('/api', api)
 
-  // 只在生产模式下由同一个进程提供前端。
-  // 显式判断 NODE_ENV 而不是「dist 目录存不存在」——后者会让测试的行为
-  // 取决于本地是否跑过构建，属于隐藏依赖。
-  if (env.nodeEnv === 'production') {
-    if (mountStatic(app)) {
-      console.log('已挂载前端静态资源')
-    } else {
-      console.warn('未找到前端构建产物（apps/web/dist），只提供 API')
-    }
-  }
-
   // notFound 只应该命中 /api 下的路径——其他路径要么被静态中间件接走，
   // 要么在开发模式下由 Vite 处理
   app.notFound((c) =>
@@ -160,7 +168,7 @@ export function createApp() {
       {
         error: {
           code: 'INTERNAL_ERROR',
-          message: env.nodeEnv === 'production' ? '服务端错误' : String(error),
+          message: config.nodeEnv === 'production' ? '服务端错误' : String(error),
         },
       },
       500,

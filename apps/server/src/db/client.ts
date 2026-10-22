@@ -1,16 +1,25 @@
+import { mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { createRequire } from 'node:module'
 import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js'
 import Database from 'better-sqlite3'
 import postgres from 'postgres'
-import { dbDriver, env } from '../env.js'
+import { getServerConfig, type DatabaseConfig } from '../config.js'
 import * as pgSchema from './schema.pg.js'
 import * as sqliteSchema from './schema.sqlite.js'
 
 /**
- * 数据库客户端工厂。按 `DATABASE_URL` 协议头判定的驱动（`env.dbDriver`，D-045）
- * 创建 postgres.js 或 better-sqlite3 的 drizzle 实例。
+ * 数据库客户端工厂。按 `ServerConfig.database.kind`（D-045）创建
+ * postgres.js 或 better-sqlite3 的 drizzle 实例。
+ *
+ * 与旧实现的区别：**不在 import 时创建连接**。
+ * `configureDb()` 由 `ensureServerRuntime()` 在 `configureServer()` 之后调用，
+ * 这样 `db/schema.ts` 选方言、`auth.ts` 创建 Better Auth 都不会赶在配置之前。
+ *
+ * `db` 是 ES live binding：现有 `import { db }` 的调用点不用改，但**不能在
+ * 模块顶层使用 db**，只能在函数/请求处理里用。
  *
  * ## 服务层为什么感知不到驱动
  *
@@ -39,27 +48,34 @@ const globalForDb = globalThis as unknown as {
 // production connection, which is deliberately not stored in that cache.
 let pgClient: PgClient | undefined
 let sqliteClient: SqliteClient | undefined
+let activeDatabase: DatabaseConfig | null = null
 
-function createPostgres(): PostgresJsDatabase<typeof pgSchema> {
+export let db: PostgresJsDatabase<typeof pgSchema>
+
+export function isDbConfigured(): boolean {
+  return activeDatabase !== null
+}
+
+function createPostgres(url: string): PostgresJsDatabase<typeof pgSchema> {
   // 单用户自托管，池子不需要大
-  const sql = globalForDb.__mimirSql ?? postgres(env.databaseUrl, { max: 10, onnotice: () => {} })
+  const sql = globalForDb.__mimirSql ?? postgres(url, { max: 10, onnotice: () => {} })
   pgClient = sql
 
-  if (env.nodeEnv !== 'production') {
+  if (getServerConfig().nodeEnv !== 'production') {
     globalForDb.__mimirSql = sql
   }
 
   return drizzlePg(sql, { schema: pgSchema })
 }
 
-function createSqlite(): PostgresJsDatabase<typeof pgSchema> {
-  const sqlite =
-    globalForDb.__mimirSqlite ??
-    // better-sqlite3 不自动创建父目录；env.ts 已经把 DATA_DIR 建好了
-    new Database(env.databaseFile)
+function createSqlite(file: string): PostgresJsDatabase<typeof pgSchema> {
+  // better-sqlite3 不自动创建父目录；这里兜底，正常路径由 RuntimeConfig 建好
+  mkdirSync(dirname(file), { recursive: true })
+
+  const sqlite = globalForDb.__mimirSqlite ?? new Database(file)
   sqliteClient = sqlite
 
-  if (env.nodeEnv !== 'production') {
+  if (getServerConfig().nodeEnv !== 'production') {
     globalForDb.__mimirSqlite = sqlite
   }
 
@@ -101,24 +117,51 @@ function createSqlite(): PostgresJsDatabase<typeof pgSchema> {
   return drizzleSqlite(sqlite, { schema: sqliteSchema }) as never
 }
 
-export const db = dbDriver === 'postgres' ? createPostgres() : createSqlite()
+/**
+ * 创建当前进程唯一的数据库连接。只能在 `configureServer()` 之后调用一次；
+ * 重复调用是组装错误，而不是可热切换的状态。
+ */
+export function configureDb(database: DatabaseConfig = getServerConfig().database): void {
+  if (activeDatabase) {
+    throw new Error('configureDb 已调用；测试若需要新连接，先 closeDb() 并 resetServerConfig()')
+  }
+  activeDatabase = database
+  db = database.kind === 'postgres' ? createPostgres(database.url) : createSqlite(database.file)
+}
 
 /**
  * 进程退出 / 脚本收尾用。dev 热重载不调它（要复用单例）。
  * 关闭后清掉缓存引用——复用一个已关闭的连接是静默的坏行为。
  */
 export async function closeDb(): Promise<void> {
-  if (dbDriver === 'postgres') {
+  if (!activeDatabase) return
+  const database = activeDatabase
+
+  if (database.kind === 'postgres') {
     const sql = pgClient
-    if (!sql) return
+    if (!sql) {
+      activeDatabase = null
+      return
+    }
     await sql.end({ timeout: 1 })
-    if (globalForDb.__mimirSql === sql) globalForDb.__mimirSql = undefined
     pgClient = undefined
+    if (globalForDb.__mimirSql === sql) globalForDb.__mimirSql = undefined
+    activeDatabase = null
     return
   }
+
   const sqlite = sqliteClient
-  if (!sqlite) return
+  if (!sqlite) {
+    activeDatabase = null
+    return
+  }
   sqlite.close()
-  if (globalForDb.__mimirSqlite === sqlite) globalForDb.__mimirSqlite = undefined
   sqliteClient = undefined
+  if (globalForDb.__mimirSqlite === sqlite) globalForDb.__mimirSqlite = undefined
+  activeDatabase = null
+}
+
+/** 仅测试用：判断连接是否已关闭（不暴露内部 client）。 */
+export function isDbClosed(): boolean {
+  return activeDatabase === null
 }

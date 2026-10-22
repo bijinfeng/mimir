@@ -17,7 +17,7 @@ export default defineConfig({
         test: {
           name: 'main',
           environment: 'node',
-          // 只测本包源码：server-deploy/（desktop:build 的 deploy 产物）里带着
+          // 只测本包源码：runtime-build/（desktop:build 的 runtime 产物）里带着
           // 服务端的源文件，不加限定会把它们当成测试扫进来
           include: ['src/main/**/*.test.ts'],
         },

@@ -24,16 +24,16 @@ export default defineConfig(({ mode }) => {
   /**
    * 后端端口**不在前端这里再写一遍**。
    *
-   * 它来自仓库根的 `.env`（与服务端 `src/env.ts` 同源）。写死 3000 的代价是
+   * 它来自仓库根的 `.env`（与服务端 runtime 的配置加载器同源）。写死 3000 的代价是
    * 「改了 `PORT` 只有一半生效」：后端换了端口，代理还指着旧的，
    * 表现为前端所有请求失败，而两个终端都看不出原因。
    */
   const env = { ...loadEnv(mode, repoRoot, ''), ...process.env }
   const apiTarget = env.VITE_API_TARGET ?? `http://localhost:${env.PORT ?? 3000}`
-  const base = env.MIMIR_BASE_PATH ?? '/'
-
   return {
-    base,
+    // 资源用相对路径：同一份产物既能挂根路径（Docker），也能挂 /app/mimir/
+    // （fnOS 网关）。运行时前缀由 index.html 注入，不靠构建参数。
+    base: './',
     plugins: [
       ...rendererPlugins({
         publicDir: resolve(import.meta.dirname, 'public'),

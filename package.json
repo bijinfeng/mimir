@@ -8,7 +8,7 @@
     "dev": "pnpm -r --parallel --stream dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test && node --test scripts/desktop-dev-process.test.mjs scripts/fnos-package.test.mjs scripts/fnos-build.test.mjs scripts/renderer-routes.test.mjs apps/desktop/scripts/release-artifacts.test.mjs apps/desktop/scripts/update-smoke.test.mjs apps/desktop/scripts/resource-tree.test.mjs apps/desktop/scripts/package-resources.test.mjs apps/desktop/scripts/manual-update-smoke.test.mjs apps/desktop/scripts/verify-package-contents.test.mjs",
+    "test": "pnpm -r test && node --test scripts/desktop-dev-process.test.mjs scripts/fnos-package.test.mjs scripts/fnos-build.test.mjs scripts/renderer-routes.test.mjs apps/desktop/scripts/release-artifacts.test.mjs apps/desktop/scripts/update-smoke.test.mjs scripts/lib/resource-tree.test.mjs scripts/runtime-artifact.test.mjs apps/desktop/scripts/package-resources.test.mjs apps/desktop/scripts/manual-update-smoke.test.mjs apps/desktop/scripts/verify-package-contents.test.mjs",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
@@ -23,7 +23,8 @@
     "db:studio": "pnpm --filter @mimir/server db:studio",
     "docker:prod": "docker compose --profile prod up -d --build",
     "desktop:dev": "node scripts/desktop-dev.mjs",
-    "desktop:start": "pnpm --filter @mimir/server build && pnpm --filter @mimir/desktop build && pnpm --filter @mimir/desktop start",
+    "runtime:build": "node scripts/build-runtime.mjs",
+    "desktop:start": "pnpm --filter @mimir/server build && node apps/desktop/scripts/deploy-server.mjs && pnpm --filter @mimir/desktop build && pnpm --filter @mimir/desktop start",
     "desktop:build": "pnpm --filter @mimir/server build && pnpm --filter @mimir/desktop build && node apps/desktop/scripts/deploy-server.mjs && pnpm --filter @mimir/desktop package",
     "fnos:build": "node scripts/build-fnos.mjs",
     "lint:styles": "node scripts/check-style-backticks.mjs"

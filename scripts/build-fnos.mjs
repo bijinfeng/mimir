@@ -1,10 +1,9 @@
 import { spawnSync } from 'node:child_process'
-import { cp, mkdir, readFile, readdir, rename, rm, stat } from 'node:fs/promises'
+import { cp, mkdir, readFile, readdir, rename, rm, stat, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateCommittedReleaseVersion } from '../apps/desktop/scripts/release-artifacts.mjs'
-import { finalizeResourceTree } from '../apps/desktop/scripts/resource-tree.mjs'
 import { verifyFnpack } from './fnos-fnpack.mjs'
 import { verifyFnosManifest } from './fnos-artifacts.mjs'
 
@@ -59,37 +58,36 @@ async function main() {
   await mkdir(staging, { recursive: true })
   await mkdir(release, { recursive: true })
 
-  run('pnpm', ['--filter', '@mimir/web', 'build'], {
-    env: { ...process.env, MIMIR_BASE_PATH: '/app/mimir/' },
-  })
-  run('pnpm', ['--filter', '@mimir/server', 'build'])
+  // Web 产物 base 中立（`./assets`）：fnOS 的前缀由 runtime 注入，不再重跑构建
+  run('pnpm', ['--filter', '@mimir/web', 'build'])
   await copySource()
   const server = path.join(staging, 'app/server')
-  run('pnpm', [
-    '--filter',
-    '@mimir/server',
-    'deploy',
-    '--prod',
-    '--node-linker',
-    'hoisted',
-    path.relative(root, server),
+  // 与 Docker/desktop 同一个拼装实现：manifest、生产依赖、迁移、native 校验
+  // 都在 build-runtime 内完成；fnOS 不再自己 `pnpm deploy`。
+  run(process.execPath, [
+    path.join(root, 'scripts/build-runtime.mjs'),
+    '--out',
+    server,
+    '--web',
+    'apps/web/dist',
   ])
-  await cp(path.join(root, 'apps/web/dist'), path.join(server, 'web/dist'), { recursive: true })
-  console.log('[fnOS] portable resources', await finalizeResourceTree(server))
 
-  for (const file of [
-    'dist/index.js',
-    'drizzle-sqlite/meta/_journal.json',
-    'web/dist/index.html',
-    'node_modules/better-sqlite3/package.json',
-    'node_modules/sqlite-vec/package.json',
-    'node_modules/@node-rs/jieba/package.json',
-  ]) {
-    if (!(await present(path.join(server, file)))) throw new Error(`打包缺少 ${file}`)
-  }
+  const runtimeManifest = JSON.parse(await readFile(path.join(server, 'manifest.json'), 'utf8'))
+  await writeFile(
+    path.join(staging, 'app/version.json'),
+    `${JSON.stringify(
+      {
+        productVersion: runtimeManifest.productVersion,
+        protocolVersion: runtimeManifest.protocolVersion,
+        shellAbi: runtimeManifest.shellAbi,
+      },
+      null,
+      2,
+    )}\n`,
+  )
   const index = await readFile(path.join(server, 'web/dist/index.html'), 'utf8')
-  if (!index.includes('/app/mimir/assets/')) {
-    throw new Error('Web 构建未使用 /app/mimir/ 资源前缀。')
+  if (!index.includes('./assets/') || index.includes('/app/mimir/assets/')) {
+    throw new Error('Web 构建必须是 base 中立的相对资源（./assets/），前缀由 runtime 注入。')
   }
   run(process.execPath, [path.join(root, 'scripts/fnos-native.mjs'), server])
 
