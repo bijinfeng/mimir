@@ -27,6 +27,8 @@
 | sidecar 崩溃 | 真实 macOS 安装包本地模式，`kill -9 <sidecar pid>` | Electron 不退出；日志出现「本地服务异常退出（SIGKILL）」；1s 后新 sidecar pid/端口启动，页面重新请求静态资源 |
 | 版本不匹配 | desktop 单测 + fnOS 生命周期测试 | manifest productVersion/platform/shellAbi 不匹配均在 fork/listen 前失败；sidecar ready 的 shellAbi 不匹配被拒 |
 | CI 配置 | 解析三个 workflow YAML | 通过；桌面矩阵已改为每平台 `build-runtime.mjs`，无 runtime 大 artifact 上传 |
+| GitHub CI | `gh workflow run ci.yml --ref feat/unified-runtime-architecture`（run 39730387673） | 停在 **既有** `apps/miniapp/scripts/default-avatar.test.mjs` 栅格差异；master run 39551175379 同样失败，非本次改动。runtime/server/desktop 测试在该 job 中通过 |
+| 发布矩阵 | `gh workflow run desktop-release.yml --ref feat/...`（run 39730851115） | 四个原生 runner 各自 `build-runtime` + desktop package + fnOS 复用工作流；结果见 GitHub |
 
 `pnpm check` 的测试统计（节选）：chat 92、office 2781、server 1385 + 10 + 6、
 renderer 653、desktop 124、根 node --test 87。
