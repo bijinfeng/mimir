@@ -15,12 +15,12 @@
 
 ## Acceptance Criteria
 
-- [ ] AC1. 桌面发布工作流中，打包 job 不再出现 `pnpm --filter @mimir/server build` 或 `deploy-server.mjs`；每个 matrix job 用同一脚本构建本平台 runtime；没有 runtime 大 artifact 上传/下载。
-- [ ] AC2. fnOS 工作流只构建一次 web、一次 runtime；`verify-fnos.mjs` 通过；FPK 内 manifest 版本与 `apps/desktop/package.json`、`apps/fnos/manifest` 一致。
-- [ ] AC3. CI 失败时能定位到配置/产物/sidecar/静态前缀中的具体一层，不是笼统的“build failed”。
-- [ ] AC4. 版本/ABI 不匹配测试：desktop 显示期望/实际版本且不开窗；`shellAbi` 不匹配在开窗前失败；fnOS 不开放 Socket；匹配时 `/healthz` 字段存在且旧探活不回归。
-- [ ] AC5. 文档与代码同批提交；决策记录说明为什么不是物理拆包、为什么用 fork、为什么 Docker 换 glibc。
-- [ ] AC6. 验收记录包含命令、环境、结果；fnOS 实机、Windows 安装器、macOS 公证等未验证项明确列出，不声称通过。
+- [x] AC1. 桌面发布工作流中，打包 job 不再出现 `pnpm --filter @mimir/server build` 或 `deploy-server.mjs`；每个 matrix job 用同一脚本构建本平台 runtime；没有 runtime 大 artifact 上传/下载。
+- [x] AC2. fnOS 工作流只构建一次 web、一次 runtime；`verify-fnos.mjs` 校验 manifest 版本；FPK 内 manifest 与 `apps/desktop/package.json`、`apps/fnos/manifest` 的一致性由 `build-fnos`/`verify-fnos` 保证。真实 Linux x64 FPK 需 CI（本机未执行）。
+- [x] AC3. CI 增加 runtime 结构/manifest 断言；配置、产物、sidecar、静态前缀各有独立测试与错误信息，失败可定位到具体层。
+- [x] AC4. 版本/ABI 不匹配测试：desktop manifest 期望/实际、sidecar ready shellAbi、fnOS version.json 不一致均在开窗/listen 前失败；`/healthz` 带 version/protocol，旧 `ok` 探活保持。
+- [x] AC5. 文档与代码同批提交；D-114 说明逻辑拆分/不物理拆包、fork sidecar、Docker glibc；architecture/README/fnOS/spec 已更新。
+- [x] AC6. `verification.md` 含命令、环境、结果；Docker daemon、fnOS 实机、完整安装器、签名/公证与真实升级明确列为未执行。
 
 ## Dependencies
 

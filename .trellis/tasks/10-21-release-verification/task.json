@@ -3,7 +3,7 @@
   "name": "release-verification",
   "title": "CI、发布与全量验收",
   "description": "重构 CI 为 runtime 产物先行，更新桌面/fnOS 发布链路，补齐版本握手、跨宿主烟测、文档与决策记录。",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -21,6 +21,6 @@
   "children": [],
   "parent": "10-21-unified-runtime-architecture",
   "relatedFiles": [],
-  "notes": "",
+  "notes": "CI/文档/握手已落地；pnpm check、build、runtime/desktop 烟测通过。Docker 与 fnOS/安装器实机待 CI。",
   "meta": {}
 }

@@ -131,6 +131,7 @@
 | D-104 | 平台差异改走 Context + 判别联合；路由支持平台注入 |
 | D-105 | 云端桌面模式使用系统窗口边框；本地模式保留自绘标题栏 |
 | D-107 | 桌面端按模式与服务器隔离会话，并约束导航、新窗和权限 |
+| D-114 | 三端统一 runtime 产物 + RuntimeConfig + 薄宿主；桌面改 sidecar |
 
 ### 数据库、存储与部署
 
@@ -3904,3 +3905,43 @@ D-019 作为历史设计过程保留，现行规范以 `design.md` §9 为准。
 ## D-113 四端品牌统一为圆润渡鸦（2026-10）
 
 用户要求桌面、网页、fnOS 和小程序一起重做图标，保持主题绿，并选择渡鸦。多轮审阅后，用户确认保留可辨的头喙、圆润轮廓和简洁翼线：过于具象的圆头圆腹显得笨重，只有分离弧面的版本又无法识别鸟形，因此采用可辨动物与简化图形之间的方案。D-112 的方框 m 作为历史方案保留，现行形态、颜色与生成规则以 `design.md` §9 为准。四端从同一个矢量源生成，避免各维护一套形状；该品牌替换不扩展为整体界面换肤。
+
+## D-114 三端统一 runtime 产物 + RuntimeConfig + 薄宿主（2026-10）
+
+浏览器、桌面、fnOS 原先都在源码层复用 `apps/server`，但各自跑一套 `pnpm deploy`、
+各自注入 `process.env`，fnOS 与桌面的分支（Unix Socket、静态路径、本地令牌）
+还进入了 core。结果是「同一份业务代码、三种部署事实」，改一处启动路径要在三个
+地方验证，而且产物布局只能靠人记。
+
+决定：
+
+- **逻辑拆分，不物理拆包**。`apps/server/src/config.ts` 是中立的 `ServerConfig`
+  快照；`runtime/` 负责 `RuntimeConfig`（env/JSON）、监听、静态、fnOS 网关与
+  进程生命周期。不新建 `apps/runtime` workspace 包：现有 worker 定位依赖
+  Vite `preserveModules` 与 `import.meta.url` 的相对深度，物理拆包会让
+  worker/迁移路径静默失效（见 D-023 的源码发布约束）。
+- **一份 runtime 产物 + `manifest.json`**。`scripts/build-runtime.mjs` 在仓库内
+  staging 执行 `pnpm deploy --prod --node-linker hoisted`，再复制到 Docker/fnOS/
+  桌面；manifest 记录 product/protocol/shell 版本、平台/libc、入口、迁移、
+  web、required 与 schemaVersion。宿主只读 manifest，不再猜 `dist/` 与
+  `node_modules/` 布局。
+- **桌面本地宿主改 sidecar**。`fork` runtime CLI，父进程写 0600 配置、预选回环
+  端口、等 IPC ready、校验 `shellAbi`，再开窗。D-046 的「同源 HTTP + host/carrier
+  分层」保留，**进程内 import 服务端**这一半由本决定取代；D-100 的本地令牌模型
+  不变。不用 `utilityProcess`：`fork` 的 IPC 在纯 Node 测试/CLI 里也能跑。
+- **web/fnOS 单 UI 构建**。`apps/web` 固定 `base: './'`，runtime 在 index.html
+  注入 `<base>` 与 `window.__MIMIR_BASE_PATH__`；fnOS 不再为 `/app/mimir/`
+  重跑构建。D-103/D-104 的「桌面平台差异不合并」不变。
+- **Docker 改 glibc**。基础镜像从 Alpine 改为 `node:22-bookworm-slim`，与 fnOS
+  的原生模块 ABI 对齐；当前只统一脚本/布局/libc，不承诺 Docker 与 fnOS 产物
+  逐字节相同。若目标 fnOS 的 glibc 低于 bookworm，回退为 fnOS 原生构建，仍用
+  同一脚本。
+
+否决：物理拆包（当前构建/worker 契约）、`utilityProcess`（测试与 CLI 复用差）、
+三端单 UI 产物（D-103/D-104 已论证）、fnOS 跑 Docker、保留每宿主自己的
+`pnpm deploy`、CI 跨作业上传/下载 700MB runtime（4 平台约 3GB，通常比原生
+rebuild 慢，且引入链接/权限风险）。
+
+影响：Dockerfile、desktop `after-pack`/`deploy-server`、fnOS `build-fnos`/
+`launch.mjs`、CI 发布矩阵、`/healthz` 字段、`@mimir/shared/runtime-base`；
+D-046 中进程内宿主部分不再作为现行规范。

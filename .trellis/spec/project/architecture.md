@@ -110,14 +110,16 @@ mimir/
 ├── apps/
 │   ├── server/                  # 宿主：路由、鉴权、业务逻辑、数据库
 │   │   └── src/
-│   │       ├── index.ts         # 生产入口（起 node-server）
+│   │       ├── index.ts         # 兼容入口（旧 startServer；D-114）
 │   │       ├── dev.ts           # 开发入口（交给 @hono/vite-dev-server）
-│   │       ├── boot.ts          # 两个入口共用：启动准备 + 路由装配
+│   │       ├── boot.ts          # 启动准备 + 路由装配
 │   │       ├── app.ts           # 路由装配
 │   │       ├── auth.ts          # Better Auth 配置
-│   │       ├── env.ts           # 环境变量集中校验
+│   │       ├── config.ts        # 中立 ServerConfig 快照（core 唯一配置入口）
+│   │       ├── server-runtime.ts # ensureServerRuntime：建 DB/auth
+│   │       ├── runtime/         # RuntimeConfig、CLI、listener、静态、fnOS 网关
 │   │       ├── db/              # schema + 迁移 + client
-│   │       ├── lib/             # text / vault / http / static
+│   │       ├── lib/             # text / vault / http
 │   │       ├── search/          # 检索的宿主适配层（注入 snippet 端口）
 │   │       ├── services/        # 业务逻辑（写入路径、问答、抓取编排）
 │   │       ├── routes/          # HTTP 路由
@@ -130,12 +132,13 @@ mimir/
 │   └── desktop/                 # Electron 载体（D-046）。三段由 electron-vite 构建（D-103）
 │       ├── electron.vite.config.ts
 │       └── src/
-│           ├── main/            #   主进程：窗口、两种模式装配、进程内宿主
+│           ├── main/            #   主进程：窗口、模式、sidecar 生命周期
 │           ├── preload/         #   沙箱化 preload（只暴露握手契约）
 │           └── renderer/        #   **只有载体独有的**：标题栏、选择页、
 │                                #   客户端专属路由（/client/*，D-104）
 ├── packages/
 │   ├── shared/                  # 契约：zod schema + 类型 + 插件接口（源码发布）
+│   │   └── src/runtime-base.ts  #   运行时部署前缀（D-114）
 │   ├── core/                    # 插件宿主骨架：注册表 + 配置 + 融合 + 编排
 │   ├── tokenizer/               # 中文分词（写入与检索两侧共用同一份规则）
 │   ├── renderer/                # **界面与业务代码**：两个平台共用一份源码（D-103）
@@ -150,6 +153,9 @@ mimir/
 │   │   └── vite-preset.ts       #   两个平台共用的构建插件（路由生成 / pdf.js 资产）
 │   ├── office/                  # 六种格式的编辑外壳与解析/保存（D-054，见 §15）
 │   └── chat/                    # 对话面板：消息区、检索过程、引用、输入区（D-099）
+├── scripts/
+│   ├── build-runtime.mjs        #   唯一服务端产物拼装（D-114）
+│   └── lib/resource-tree.mjs    #   产物链接物化
 ├── plugins/                     # 插件实现（独立 workspace 包）
 │   ├── capturer/                # URL → 原始内容（网页 / 公众号 / GitHub）
 │   ├── parser/                  # 原始内容 → Markdown（直通 / Readability）
@@ -1238,21 +1244,21 @@ services:
 | `apps/server`（生产）| Vite 的 SSR 构建，把 shared 打进 `dist` |
 
 ```
-pnpm --filter @mimir/web build      ← 内含 tsr generate（路由树）
-pnpm --filter @mimir/server build
+pnpm --filter @mimir/web build      ← 内含 tsr generate（路由树），base 固定 './'
+node scripts/build-runtime.mjs --out <runtime-root> --web apps/web/dist
 ```
 
-这两条互不依赖，先后随意。剩下的顺序约束都在**包的内部**：路由树是生成物，
-必须先 `tsr generate` 再类型检查——这一步写在 web 自己的 build/typecheck 脚本里，
-不需要在镜像构建时手动排。决定与取舍见 D-023。
+web 与 runtime 互不依赖，先后随意；`build-runtime` 内部会先
+`pnpm --filter @mimir/server build`，再在仓库内 `.runtime-staging/` 执行
+`pnpm deploy --prod --node-linker hoisted`，复制到目标并写 `manifest.json`。
+Docker/fnOS/桌面都消费同一个布局（`dist`、`drizzle*`、`node_modules`、可选
+`web/dist`、`manifest.json`），不再各自拼装。决定见 D-114。
 
-镜像里有两个 Node 进程吗？没有，只有一个：`node dist/index.js` 同时提供 API
-与前端静态资源。单用户自托管不值得拆成三个容器加一个反代。
-静态服务对 SPA 深路由返回 `index.html`（`no-cache`）；缺失的静态文件返回 404，
-避免旧页面把 HTML 当成 JS 加载。Vite 生成的哈希资源可以长期缓存。
-
-服务端必须把以源码发布的 workspace 包编译进产物，并保持入口与目录结构；
-原因和构建细节见 D-033、`apps/server/vite.config.ts` 旁的注释。
+镜像里只有一个 Node 进程：`node dist/runtime/cli.js` 同时提供 API 与前端静态
+资源。静态服务对 SPA 深路由返回注入了 `<base>` 的 `index.html`（`no-cache`）；
+缺失的静态文件返回 404，避免旧页面把 HTML 当成 JS 加载。Vite 哈希资源可长期
+缓存。服务端把以源码发布的 workspace 包编译进 dist，并保持入口/目录结构
+（D-033、`apps/server/vite.config.ts`）。
 
 ### 8.4 验证方式
 
@@ -1984,9 +1990,9 @@ dragenter/leave 用计数器防抖。
 
 ---
 
-## 14. 桌面端：Electron 载体 + 进程内私有宿主
+## 14. 桌面端：Electron 载体 + sidecar runtime
 
-> 决策记录见 `.trellis/spec/project/decisions.md` D-046 与 **D-100（两种模式）**；调研与版本快照
+> 决策记录见 `.trellis/spec/project/decisions.md` D-046、**D-100（两种模式）** 与 **D-114（sidecar/runtime 产物）**；调研与版本快照
 > 见 `.trellis/spec/project/research.md` §12。
 > 分层借鉴 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 的
 > host/carrier 拓扑（"Electron starts the private Desktop Host in Electron Node
@@ -1996,16 +2002,17 @@ dragenter/leave 用计数器防抖。
 ### 14.1 结构
 
 ```
-┌─ Electron 载体（apps/desktop）────────────────────────────┐
-│  主进程（Node 模式）                                        │
-│   └─ 本地模式：私有宿主 = apps/server/dist 的 startServer() │
-│       SQLite @ userData/data · 127.0.0.1 随机端口 · 免登录  │
-│   └─ 云端模式：不起宿主，系统边框窗口加载自部署地址（D-105）│
-│  BrowserWindow → 加载宿主地址或远端地址（见 §14.6）          │
-│  IPC 承载：boot、模式、窗口控制、退出与受信任本地更新握手     │
-│  （契约：shared 的 DesktopBootInfo / DesktopModeApi /       │
-│   DesktopWindowApi）                                        │
-└────────────────────────────────────────────────────────────┘
+┌─ Electron 载体（apps/desktop）──────────────────────────────┐
+│  主进程（Node 模式）                                          │
+│   └─ 本地模式：fork sidecar = <runtimeRoot>/<manifest.entry>  │
+│       0600 配置 · SQLite @ userData/data · 127.0.0.1 随机端口 │
+│       父进程等待 IPC ready，校验 protocolVersion/shellAbi      │
+│   └─ 云端模式：不起 sidecar，系统边框窗口加载自部署地址（D-105）│
+│  BrowserWindow → 加载 sidecar 地址或远端地址（见 §14.6）        │
+│  IPC 承载：boot、模式、窗口控制、退出与受信任本地更新握手       │
+│  （契约：shared 的 DesktopBootInfo / DesktopModeApi /         │
+│   DesktopWindowApi）                                          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 **页面与宿主之间不走 IPC**。窗口加载的就是宿主地址：cookie 会话、
@@ -2016,15 +2023,21 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 
 ### 14.2 启动顺序（不可换）
 
-1. **检查必需产物**：`serverDist/index.js`、`db/migrate.js`、`drizzle-sqlite/`、`webDist/index.html`，缺失时给出清单式错误 + 修复命令
-2. `pickFreePort()`：OS 分配空闲端口。随机端口避免与用户自部署的 mimir 服务冲突，也压小本机误触面
-3. **先注入环境变量，再动态 import 服务端**：`env.ts` 与 better-auth 都在模块加载时读取（`trustedOrigins`/`baseURL`/端口），导入选早了配置就定死。注入项：`PORT`、`SERVER_URL`/`WEB_ORIGIN`（= 宿主源）、`DATA_DIR`、`DATABASE_URL=file:<dataDir>/mimir.db`、`WEB_DIST`、`AUTH_SECRET`
-4. `startServer({ hostname: '127.0.0.1' })`——只绑回环地址
-5. 轮询 `/healthz` 就绪后开窗（超时明确报错，不静默等待）
+1. **读 manifest**：`<runtimeRoot>/manifest.json` 的 `required`、platform/arch、
+   `productVersion` 全部校验；缺项清单带 `pnpm desktop:build`
+2. `pickFreePort()`：OS 分配回环端口。随机端口避免与用户自部署的 mimir 冲突，
+   也压小本机误触面；runtime 绑定同一端口，`PORT_IN_USE` 时最多重试 3 次
+3. **写 0600 配置**：`<userData>/runtime-config.json`（临时文件 + rename）；
+   token、AUTH_SECRET、SQLite 路径、静态目录、迁移目录都在这里，**不进 argv/env**
+4. `fork(runtimeEntry, ['--config', configPath], { ELECTRON_RUN_AS_NODE: '1' })`；
+   子进程 env 删掉 `MIMIR_*`/`MODEL_*`/`S3_*`/`OWNER_*`/`AUTH_SECRET`/`DATABASE_URL`
+5. 等 IPC `ready`（20s 超时），校验 `version`/`protocolVersion`/`shellAbi`；
+   通过后才写 cookie、开主窗；启动期间显示 `boot.html` 静态启动窗
+6. `close()`：IPC shutdown → 5s → SIGTERM → 2s → SIGTERM/SIGKILL
+   （Windows `taskkill /T /F`）；异常退出由主进程按 1s/3s 最多重启 2 次
 
-其中 `AUTH_SECRET` 由宿主**持久化**在数据目录（`auth-secret`，0600）：
-会话 cookie 用它签名，每次启动随机的话「重启就要重新登录」。
-生产形态下 `env.ts` 会拒绝默认密钥，桌面宿主用这一步替代部署方配置。
+`AUTH_SECRET` 由 sidecar 持久化在数据目录（`auth-secret`，0600）：
+会话 cookie 用它签名；本地令牌每次启动随机，只在这一进程生命周期内比较。
 
 ### 14.3 通信契约与传输注入
 
@@ -2041,8 +2054,8 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 | 命令 | 做什么 |
 |---|---|
 | `pnpm desktop:dev` | 先完整构建并启动，再 watch 桌面三段产物；改渲染代码后刷新窗口，改 main/preload 后重启。附带进程树清理和 Electron 二进制镜像默认值。本地模式由进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
-| `pnpm desktop:start` | 构建 server/desktop 产物后启动 Electron；桌面渲染进程由本包构建，不依赖 web 产物 |
-| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod --node-linker hoisted` 收集可移植 server 生产依赖 + electron-builder 按宿主平台打包（macOS 为 DMG + ZIP，Windows 为 NSIS，Linux 为 AppImage）；签名与发布契约见[桌面更新规范](../desktop/runtime/releases-updates.md) |
+| `pnpm desktop:start` | 构建 server → `build-runtime` 生成 `runtime-build` → 构建 desktop 后启动 Electron；本地模式由 sidecar 提供 |
+| `pnpm desktop:build` | server → `build-runtime` 产出 `apps/desktop/runtime-build`（含 manifest）→ electron-builder 打包；afterPack 把整个 runtime 根复制到 `resources/server`。签名与发布契约见[桌面更新规范](../desktop/runtime/releases-updates.md) |
 
 Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定二进制来源。
 `desktop:dev` 缺少二进制时默认从 npmmirror 下载（可用 `ELECTRON_MIRROR` 覆盖）；
