@@ -3,14 +3,14 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { auth } from '../auth.js'
 import { db } from '../db/client.js'
 import { account, miniappDevices, session, user } from '../db/schema.js'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { HttpError } from '../lib/http.js'
 import type { MiniappLoginInput, MiniappLoginResponse, MiniappSession } from '@mimir/shared/miniapp'
 
 const TOKEN_AGE_MS = 30 * 24 * 60 * 60 * 1000
 const digest = (value: string) => createHash('sha256').update(value).digest('hex')
 const credentialDigest = (value: string) =>
-  createHmac('sha256', env.authSecret).update(value).digest('hex')
+  createHmac('sha256', config.authSecret).update(value).digest('hex')
 export interface MiniappPrincipal {
   id: string
   ownerId: string

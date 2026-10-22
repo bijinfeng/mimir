@@ -9,28 +9,30 @@ const repoRoot = resolve(import.meta.dirname, '../..')
  *
  *   dev    `vite`        —— 请求交给 `src/dev.ts` 导出的应用。TS（含 workspace
  *                           内的源码包）由 Vite 按需转换，改完下一个请求就生效
- *   build  `vite build`  —— SSR 构建，两个入口：
- *                             dist/index.js       生产服务（node dist/index.js）
- *                             dist/db/migrate.js  迁移脚本
+ *   build  `vite build`  —— SSR 构建，入口：
+ *                             dist/index.js              兼容入口（旧 CMD / 桌面 / fnOS）
+ *                             dist/runtime/cli.js        runtime 进程入口（新宿主）
+ *                             dist/runtime/index.js      runtime 公共 API
+ *                             dist/runtime/migrate-cli.js 迁移/重建索引
+ *                             dist/db/migrate.js         迁移实现（兼容旧路径）
  *
  * ## 三条不能改的契约
  *
  * 1. **产物要一文件对一文件**（`preserveModules`）。
- *    `lib/static.ts` 用「本文件所在目录往上两级」推导前端产物位置，
- *    `db/migrate.ts` 用 `../../drizzle` 找迁移目录。打成 chunk 后
- *    `import.meta.url` 指向重命名后的 chunk，推导出的根会少一级——
- *    **不报错，只是静态资源 404**。preserveModules 让 dist 镜像 src 的目录结构，
- *    这两个推导就与源码位置一致
+ *    `defaultServerRoot()` 用「本文件所在目录往上两级」定位迁移目录与产物根。
+ *    打成 chunk 后 `import.meta.url` 指向重命名后的 chunk，推导出的根会少一级——
+ *    **不报错，只是找不到迁移目录**。preserveModules 让 dist 镜像 src 的目录结构，
+ *    这些推导就与源码位置一致
  * 2. **第三方依赖保持 external**（SSR 构建的默认行为），由运行环境的
  *    node_modules 提供。`@node-rs/jieba` 是原生模块，打进产物会丢掉平台二进制
  * 3. **workspace 包会被编译进产物**：它们以源码发布（见 D-023），而链接的包
  *    默认不 external——编译 shared 的责任因此落在使用方，正好是我们要的
  *
- * 三条都不是风格问题：违反 1 的症状是静默 404，违反 2 的症状是生产启动才炸。
+ * 三条都不是风格问题：违反 1 的症状是启动找不到迁移目录，违反 2 的症状是生产启动才炸。
  */
 export default defineConfig(({ mode }) => {
   /**
-   * 端口必须与 `src/env.ts` 读的是**同一个来源**（仓库根的 `.env`）。
+   * 端口必须与 runtime 的配置加载器读的是**同一个来源**（仓库根的 `.env`）。
    *
    * Vite 只把 `.env` 的 `VITE_*` 给到客户端代码，不放进 `process.env`，
    * 所以这里要显式读一次。不读的后果不是报错，而是**改了一半**：
@@ -89,8 +91,11 @@ export default defineConfig(({ mode }) => {
       rolldownOptions: {
         input: {
           index: 'src/index.ts',
-          // 名字自带一层目录：配合 preserveModules 产出 dist/db/migrate.js，
-          // 与源码同深度——`../../drizzle` 才能指到 apps/server/drizzle
+          'runtime/cli': 'src/runtime/cli.ts',
+          'runtime/index': 'src/runtime/index.ts',
+          'runtime/migrate-cli': 'src/runtime/migrate-cli.ts',
+          // 保留旧入口：外部脚本可能还在 `node dist/db/migrate.js`。
+          // 名字自带一层目录，配合 preserveModules 与源码同深度。
           'db/migrate': 'src/db/migrate.ts',
           'services/chat-attachment-worker': 'src/services/chat-attachment-worker.ts',
           'plugins/attachment-parser': 'src/plugins/attachment-parser.ts',

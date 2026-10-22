@@ -1,11 +1,11 @@
 import { createMiddleware } from 'hono/factory'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { HttpError } from '../lib/http.js'
 import { authenticateMiniapp } from '../services/miniapp-auth.js'
 import type { AppEnv } from '../types.js'
 
 export const miniappEnabled = createMiddleware<AppEnv>(async (_c, next) => {
-  if (!env.miniappEnabled) throw new HttpError(404, 'NOT_FOUND', '接口不存在')
+  if (!config.miniappEnabled) throw new HttpError(404, 'NOT_FOUND', '接口不存在')
   await next()
 })
 export const requireMiniappAuth = createMiddleware<AppEnv>(async (c, next) => {

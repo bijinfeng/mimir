@@ -1,7 +1,7 @@
 import { mkdir, readdir, rm } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { app, getAuthCookie, makeClient, TEST_USER } from './helpers.js'
 import { db } from '../db/client.js'
 import { user } from '../db/schema.js'
@@ -62,8 +62,8 @@ async function listFiles(dir: string): Promise<string[]> {
  * 测试仍然断言**物理目录**，因为「头像不进 vault」这条边界
  * 在本地后端上的表现就是「不在那个目录里」（D-036 的验证方式）。
  */
-const avatarsDir = resolve(env.dataDir, 'avatars')
-const vaultDir = resolve(env.dataDir, 'vault')
+const avatarsDir = resolve(config.dataDir, 'avatars')
+const vaultDir = resolve(config.dataDir, 'vault')
 
 let cookie = ''
 

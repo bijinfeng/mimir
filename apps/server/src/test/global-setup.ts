@@ -79,20 +79,23 @@ export async function setup(project: TestProject) {
     await sql`drop schema if exists drizzle cascade`
     await sql`create schema public`
     await sql.end()
-
-    // 4. 与 SQLite 一样，在导入 env.ts 之前把目标库放进进程环境。
   }
 
   // SQLite 路径：测试库文件在 DATA_DIR 下面，上面清根时已一并删掉。
   // 两条路径都走运行时的 runMigrations()（journal 记账、幂等）。
-  // 动态 import：必须先把当前项目的 env 写进 process.env，env.ts 在模块加载时
-  // 就读取并解析 DATABASE_URL。
+  // 动态 import：runtime 的配置加载器在这里才读 process.env；先配置、再加载 core。
   for (const [key, value] of Object.entries(testEnv)) {
     if (value === undefined) delete process.env[key]
     else process.env[key] = value
   }
+  const { loadRuntimeConfigFromEnv, toServerConfig } = await import('../runtime/config.js')
+  const { configureServer } = await import('../config.js')
+  const runtimeConfig = loadRuntimeConfigFromEnv()
+  configureServer(toServerConfig(runtimeConfig))
+
+  const { configureDb, closeDb } = await import('../db/client.js')
+  configureDb(runtimeConfig.database)
   const { runMigrations } = await import('../db/migrate.js')
-  const { closeDb } = await import('../db/client.js')
-  await runMigrations()
+  await runMigrations(runtimeConfig.migrations)
   await closeDb()
 }

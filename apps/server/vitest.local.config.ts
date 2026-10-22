@@ -16,6 +16,7 @@ export default defineConfig({
   test: {
     fileParallelism: false,
     env: LOCAL_MODE_TEST_ENV,
+    setupFiles: ['./src/test/setup.ts'],
     globalSetup: ['./src/test/global-setup.ts'],
     include: ['src/test/local-mode.test.ts'],
   },

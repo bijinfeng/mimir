@@ -7,7 +7,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { chunkEmbeddings, chunks, documents } from '../db/schema.js'
-import { dbDriver } from '../env.js'
+import { config } from '../config.js'
 import { activeStorage, assemble, executeRaw } from '../plugins/host.js'
 import { contentHash } from '../lib/text.js'
 import { bytesIdentity, readUploadSnapshot } from '../lib/document-publication.js'
@@ -20,6 +20,8 @@ import { searchChunks } from '../search/index.js'
 import * as model from '../services/model.js'
 import { updateNote, createNote } from '../services/documents.js'
 import { app, getAuthCookie } from './helpers.js'
+
+const dbDriver = config.dbDriver
 
 async function ddl(query: ReturnType<typeof sql.raw>): Promise<void> {
   if (dbDriver === 'sqlite') (db as unknown as { run(query: unknown): unknown }).run(query)

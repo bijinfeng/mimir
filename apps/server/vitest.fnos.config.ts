@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     include: ['src/test/fnos-mode.test.ts'],
     env: FNOS_TEST_ENV,
+    setupFiles: ['./src/test/setup.ts'],
     globalSetup: ['./src/test/global-setup.ts'],
   },
 })

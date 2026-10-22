@@ -1,4 +1,4 @@
-import { dbDriver } from '../env.js'
+import { getServerConfig } from '../config.js'
 import * as pg from './schema.pg.js'
 import * as sqlite from './schema.sqlite.js'
 
@@ -16,7 +16,7 @@ import * as sqlite from './schema.sqlite.js'
  * GIN vs FTS5），强行统一会发明一门中间语言。两份**同形**的文件 +
  * 一条守卫测试，比一门中间语言便宜（D-045）。
  */
-const dialect = dbDriver === 'postgres' ? pg : sqlite
+const dialect = getServerConfig().database.kind === 'postgres' ? pg : sqlite
 
 function pick<K extends keyof typeof pg>(key: K): (typeof pg)[K] {
   return dialect[key] as (typeof pg)[K]

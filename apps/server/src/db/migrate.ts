@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
-import { pathToFileURL, fileURLToPath } from 'node:url'
+import { resolve } from 'node:path'
 import { sql as rawSql } from 'drizzle-orm'
 import { migrate as migrateSqlite } from 'drizzle-orm/better-sqlite3/migrator'
 import { migrate as migratePostgres } from 'drizzle-orm/postgres-js/migrator'
-import { dbDriver } from '../env.js'
-import { closeDb, db } from './client.js'
+import { getServerConfig, type ServerMigrationsConfig } from '../config.js'
+import { db } from './client.js'
 
 /**
  * 迁移的**唯一入口**：`pnpm db:migrate`（CLI）与启动钩子（boot.ts，SQLite 路径
@@ -20,18 +20,17 @@ import { closeDb, db } from './client.js'
  * 契约），两种运行形态下都指向 apps/server 的迁移目录。
  */
 
-const migrationsFolder = (name: string): string =>
-  fileURLToPath(new URL(`../../${name}`, import.meta.url))
+const migrationsFolder = (base: string, name: string): string => resolve(base, name)
 
 /** Repair only known already-applied out-of-order journal rows, by exact SQL hash.
  * Otherwise a timestamp correction would replay non-idempotent CREATE/ALTER SQL.
  */
-async function normalizeLegacyMigrationTime(): Promise<void> {
-  const postgres = dbDriver === 'postgres'
+async function normalizeLegacyMigrationTime(migrations: ServerMigrationsConfig): Promise<void> {
+  const postgres = getServerConfig().database.kind === 'postgres'
   const filename = postgres ? '0014_strange_mastermind.sql' : '0012_cuddly_namora.sql'
   const oldTime = postgres ? 1792311284208 : 1792311287590
   const file = await readFile(
-    `${migrationsFolder(postgres ? 'drizzle' : 'drizzle-sqlite')}/${filename}`,
+    resolve(migrationsFolder(postgres ? migrations.postgres : migrations.sqlite, ''), filename),
   )
   const hash = createHash('sha256').update(file).digest('hex')
   try {
@@ -94,8 +93,8 @@ async function normalizeLegacyMigrationTime(): Promise<void> {
   }
 }
 
-export async function runMigrations(): Promise<void> {
-  if (dbDriver === 'postgres') {
+export async function runMigrations(migrations: ServerMigrationsConfig): Promise<void> {
+  if (getServerConfig().database.kind === 'postgres') {
     /**
      * 迁移前先建扩展。顺序不能反：documents 上的 trigram 索引（gin_trgm_ops）
      * 依赖 pg_trgm 已经存在，否则建索引会直接失败。
@@ -104,14 +103,14 @@ export async function runMigrations(): Promise<void> {
     // M1 做向量检索时会用到；现在建好，避免以后改镜像和初始化流程
     await db.execute(rawSql`create extension if not exists vector`)
 
-    await normalizeLegacyMigrationTime()
-    await migratePostgres(db, { migrationsFolder: migrationsFolder('drizzle') })
+    await normalizeLegacyMigrationTime(migrations)
+    await migratePostgres(db, { migrationsFolder: migrations.postgres })
     return
   }
 
-  await normalizeLegacyMigrationTime()
+  await normalizeLegacyMigrationTime(migrations)
   await migrateSqlite(db as never, {
-    migrationsFolder: migrationsFolder('drizzle-sqlite'),
+    migrationsFolder: migrations.sqlite,
   })
 }
 
@@ -122,7 +121,7 @@ export async function runMigrations(): Promise<void> {
  * 兜底——怀疑索引落后（搜不到明明存在的内容）时跑一次。
  */
 export async function reindexSearch(): Promise<void> {
-  if (dbDriver !== 'sqlite') {
+  if (getServerConfig().database.kind !== 'sqlite') {
     throw new Error('db:reindex 只用于 SQLite 路径；Postgres 的全文索引随迁移自动维护')
   }
   // 这里的两个语句只对 sqlite 方言有意义；db 的公开类型是双后端公共形状，
@@ -134,31 +133,4 @@ export async function reindexSearch(): Promise<void> {
   sqliteDb.run(
     rawSql`insert into documents_fts (doc_id, search_text) select id, search_text from documents` as never,
   )
-}
-
-/** CLI 直跑判定：dist/db/migrate.js 与 src/db/migrate.ts 两种形态都成立 */
-function invokedDirectly(): boolean {
-  const argv = process.argv[1]
-  if (!argv) return false
-  return import.meta.url === pathToFileURL(argv).href
-}
-
-async function main() {
-  const reindex = process.argv.includes('--reindex')
-  if (reindex) {
-    await reindexSearch()
-    console.log('FTS 索引已重建')
-  } else {
-    await runMigrations()
-    console.log('迁移完成')
-  }
-  await closeDb()
-}
-
-if (invokedDirectly()) {
-  main().catch(async (error) => {
-    console.error('迁移失败：', error)
-    await closeDb().catch(() => {})
-    process.exit(1)
-  })
 }

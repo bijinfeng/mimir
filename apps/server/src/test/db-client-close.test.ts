@@ -30,7 +30,13 @@ it.each(['production', 'development'])(
           import assert from 'node:assert/strict'
           import Database from 'better-sqlite3'
           import postgres from 'postgres'
-          const { db, closeDb } = await import(${JSON.stringify(new URL('../db/client.ts', import.meta.url).href)})
+          const { loadRuntimeConfigFromEnv, toServerConfig } = await import(${JSON.stringify(new URL('../runtime/config.ts', import.meta.url).href)})
+          const { configureServer } = await import(${JSON.stringify(new URL('../config.ts', import.meta.url).href)})
+          const { configureDb, closeDb } = await import(${JSON.stringify(new URL('../db/client.ts', import.meta.url).href)})
+          const runtimeConfig = loadRuntimeConfigFromEnv({ loadEnvFile: false })
+          configureServer(toServerConfig(runtimeConfig))
+          configureDb(runtimeConfig.database)
+          const { db } = await import(${JSON.stringify(new URL('../db/client.ts', import.meta.url).href)})
           const client = db.$client
           const cacheKey = ${JSON.stringify(isPostgres ? '__mimirSql' : '__mimirSqlite')}
           assert.equal(globalThis[cacheKey], process.env.NODE_ENV === 'production' ? undefined : client)

@@ -1,12 +1,23 @@
-import { env } from '../env.js'
+/**
+ * fnOS 统一网关适配。
+ *
+ * 这些逻辑以前在 core 的 `app.ts` / `auth.ts` / `lib/fnos-gateway.ts` 里，
+ * 现在只在 runtime 包裹 Unix Socket listener 时使用。core 的 `app.ts` 始终
+ * 直接 `auth.handler(request)`，没有 `if (fnosSocket)` 分支。
+ */
 
 /** fnOS forwards the public prefix unchanged to the private application socket. */
-export function stripFnosPrefix(request: Request): Request | null {
+export function stripFnosPrefix(request: Request, basePath: string): Request | null {
   const url = new URL(request.url)
-  const prefix = env.fnosBasePath
+  const prefix = basePath.replace(/\/+$/, '')
   if (url.pathname !== prefix && !url.pathname.startsWith(`${prefix}/`)) return null
   url.pathname = url.pathname.slice(prefix.length) || '/'
   return new Request(url, request)
+}
+
+/** 只有认证路由需要改 Origin/协议并补 Secure cookie。 */
+export function isAuthPath(pathname: string): boolean {
+  return pathname === '/api/auth' || pathname.startsWith('/api/auth/')
 }
 
 /**
@@ -14,7 +25,7 @@ export function stripFnosPrefix(request: Request): Request | null {
  * The hop itself is HTTP, so use the browser's Origin (when present) to retain
  * its actual scheme. Never treat a forwarded fnOS user header as Mimir login.
  */
-export function fnosAuthRequest(request: Request): Request | null {
+export function adaptAuthRequest(request: Request): Request | null {
   const url = new URL(request.url)
   const source = request.headers.get('origin') ?? request.headers.get('referer')
   const fetchSite = request.headers.get('sec-fetch-site')
@@ -50,7 +61,7 @@ export function fnosAuthRequest(request: Request): Request | null {
 }
 
 /** The HTTP gateway must get a usable cookie; HTTPS must mark it Secure. */
-export function fnosAuthResponse(response: Response, request: Request): Response {
+export function adaptAuthResponse(response: Response, request: Request): Response {
   if (new URL(request.url).protocol !== 'https:') return response
   const cookies = response.headers.getSetCookie()
   if (!cookies.length) return response

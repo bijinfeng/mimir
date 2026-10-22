@@ -13,9 +13,9 @@ import { authenticateMiniapp } from '../services/miniapp-auth.js'
 import { beginMiniappOperation, recoverMiniappOperations } from '../services/miniapp-operations.js'
 import { app, getAuthCookie, TEST_USER } from './helpers.js'
 
-vi.mock('../env.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../env.js')>()
-  return { ...actual, env: { ...actual.env, miniappEnabled: true } }
+vi.mock('../config.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../config.js')>()
+  return { ...actual, config: { ...actual.config, miniappEnabled: true } }
 })
 
 let token: string

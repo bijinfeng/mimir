@@ -3,9 +3,12 @@ import { request as httpRequest } from 'node:http'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { startServer, type RunningServer } from '../index.js'
-import { env } from '../env.js'
+import { config } from '../config.js'
 import { db } from '../db/client.js'
 import { user } from '../db/schema.js'
+
+/** Unix Socket 是 runtime 的平台事实，不进 ServerConfig；测试直接读注入的 env。 */
+const fnosSocket = process.env.MIMIR_FNOS_SOCKET ?? ''
 
 function gatewayRequest(
   path: string,
@@ -19,7 +22,7 @@ function gatewayRequest(
   return new Promise((resolve, reject) => {
     const req = httpRequest(
       {
-        socketPath: env.fnosSocket,
+        socketPath: fnosSocket,
         path,
         method: options.method ?? 'GET',
         headers: {
@@ -64,15 +67,15 @@ describe('fnOS 私有网关', () => {
   })
 
   it('即使方言对齐门传入 Postgres，fnOS 仍使用独立 SQLite 测试库与统一账号', () => {
-    expect(env.dbDriver).toBe('sqlite')
-    expect(env.databaseFile).toBe(join(env.repoRoot, 'data/.test-fnos/mimir.db'))
-    expect(env.dataDir).toBe(join(env.repoRoot, 'data/.test-fnos'))
-    expect(env.ownerEmail).toBe('admin@example.com')
-    expect(env.ownerPassword).toBe('12345678')
+    expect(config.dbDriver).toBe('sqlite')
+    expect(config.databaseFile).toBe(join(config.repoRoot, 'data/.test-fnos/mimir.db'))
+    expect(config.dataDir).toBe(join(config.repoRoot, 'data/.test-fnos'))
+    expect(config.ownerEmail).toBe('admin@example.com')
+    expect(config.ownerPassword).toBe('12345678')
   })
 
   it('只在网关前缀下提供页面与 API，业务仍要求 Mimir 会话', async () => {
-    expect(existsSync(env.fnosSocket)).toBe(true)
+    expect(existsSync(fnosSocket)).toBe(true)
     expect((await gatewayRequest('/app/mimir/healthz')).status).toBe(200)
     expect((await gatewayRequest('/healthz')).status).toBe(404)
     expect((await gatewayRequest('/app/mimir/api/documents')).status).toBe(401)
@@ -83,7 +86,7 @@ describe('fnOS 私有网关', () => {
   })
 
   it('拒绝跨源登录，HTTP 登录 Cookie 限于应用路径', async () => {
-    const body = { email: env.ownerEmail, password: env.ownerPassword }
+    const body = { email: config.ownerEmail, password: config.ownerPassword }
     const path = '/app/mimir/api/auth/sign-in/email'
     expect(
       (await gatewayRequest(path, { method: 'POST', origin: 'https://evil.test', body })).status,
@@ -109,10 +112,36 @@ describe('fnOS 私有网关', () => {
     const login = await gatewayRequest('/app/mimir/api/auth/sign-in/email', {
       method: 'POST',
       origin: 'https://nas.example.test',
-      body: { email: env.ownerEmail, password: env.ownerPassword },
+      body: { email: config.ownerEmail, password: config.ownerPassword },
     })
     expect(login.status).toBe(200)
     expect(login.cookies.some((cookie) => cookie.includes('; Secure'))).toBe(true)
+  })
+
+  it('identifier 登录同样经过网关 Origin/Secure 适配', async () => {
+    const path = '/app/mimir/api/auth/sign-in/identifier'
+    const body = { identifier: 'admin', password: config.ownerPassword }
+
+    expect(
+      (await gatewayRequest(path, { method: 'POST', origin: 'https://evil.test', body })).status,
+    ).toBe(403)
+
+    const httpLogin = await gatewayRequest(path, {
+      method: 'POST',
+      origin: 'http://nas.example.test',
+      body,
+    })
+    expect(httpLogin.status).toBe(200)
+    expect(httpLogin.cookies.some((cookie) => cookie.includes('session_token'))).toBe(true)
+    expect(httpLogin.cookies.every((cookie) => !cookie.includes('; Secure'))).toBe(true)
+
+    const httpsLogin = await gatewayRequest(path, {
+      method: 'POST',
+      origin: 'https://nas.example.test',
+      body,
+    })
+    expect(httpsLogin.status).toBe(200)
+    expect(httpsLogin.cookies.some((cookie) => cookie.includes('; Secure'))).toBe(true)
   })
 
   it('数据库账号不匹配时拒绝监听，避免暴露首次注册窗口', async () => {
@@ -120,9 +149,9 @@ describe('fnOS 私有网关', () => {
     await db.update(user).set({ email: 'another-owner@example.com' })
     try {
       await expect(startServer()).rejects.toThrow(/OWNER_EMAIL/)
-      expect(existsSync(env.fnosSocket)).toBe(false)
+      expect(existsSync(fnosSocket)).toBe(false)
     } finally {
-      await db.update(user).set({ email: env.ownerEmail })
+      await db.update(user).set({ email: config.ownerEmail })
     }
   })
 })
