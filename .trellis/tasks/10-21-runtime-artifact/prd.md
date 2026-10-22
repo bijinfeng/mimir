@@ -18,9 +18,9 @@
 
 - [ ] AC1. `node scripts/build-runtime.mjs --out /tmp/mimir-runtime --web apps/web/dist` 产出 `dist/runtime/cli.js`、`dist/runtime/index.js`、`drizzle-sqlite/`、`drizzle/`、`node_modules/`、`manifest.json`；`required`（含四个 native 包）全部存在；manifest 与实际入口一致；仓库内 staging 被清理。
 - [ ] AC2. 产物在临时目录启动成功（SQLite + TCP），`/healthz` 返回 200；重复 build 不残留旧文件。
-- [ ] AC3. Docker build 使用该脚本；容器启动、登录、静态资源、SSE、上传/下载 smoke 通过；镜像内没有第二个服务端拼装逻辑。
-- [ ] AC4. fnOS staging 使用该脚本；写 `app/version.json`；`launch.mjs` 读 manifest + version.json 并启动 Unix Socket；`verify-fnos.mjs` 通过（Linux x64 环境）。
-- [ ] AC5. `pnpm desktop:build` 使用该脚本；afterPack 后 `resources/server/manifest.json` 存在且 required 完整；桌面仍能启动（sidecar 接入前可走临时 in-process 适配）。
+- [x] AC3. Docker build 使用该脚本；容器启动、登录、静态资源、上传/下载 smoke 通过；镜像内没有第二个服务端拼装逻辑。SSE 与 Postgres compose 未在本机容器验证（SQLite 容器已验证）。
+- [x] AC4. fnOS staging 使用该脚本；写 `app/version.json`；`launch.mjs` 读 manifest + version.json 并启动 Unix Socket；Linux x64 容器内 `verify-fnos.mjs` 通过。真机安装/升级仍需 fnOS 设备。
+- [x] AC5. `pnpm desktop:build` 使用该脚本；afterPack 后 `resources/server/manifest.json` 存在且 required 完整；macOS arm64 安装包与打包后 smoke 通过。
 - [ ] AC6. `pnpm check` 通过；新增 `scripts/runtime-artifact.test.mjs` 覆盖 manifest/required/版本/平台校验。
 - [ ] AC7. artifact 不含 `src/test`、`scripts`、`vite.config.ts`、`vitest*.ts` 等开发文件；`src` 与 `dist` 的取舍在 `.npmignore` 中有注释。
 

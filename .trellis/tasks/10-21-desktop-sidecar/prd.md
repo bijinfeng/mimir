@@ -24,7 +24,7 @@
 - [ ] AC3. 杀掉 sidecar 后 Electron 不退出；自动重启一次后窗口重新加载成功；连续失败显示错误；`PORT_IN_USE` 重试 3 次后报错。
 - [ ] AC4. 退出应用后 sidecar 在 5 秒内结束；更新安装前调用 `closeHost`，不留下孤儿进程；Windows 进程树被清理。
 - [ ] AC5. 配置文件权限 0600；`ps` 命令行不含 token/secret/密码；日志不含这些值。
-- [ ] AC6. `pnpm --filter @mimir/desktop test`、`pnpm check` 通过；`smoke.mjs` 在真实包上验证本地模式、静态资源、鉴权与 sidecar 存在。
+- [x] AC6. `pnpm --filter @mimir/desktop test`、`pnpm check` 通过；`smoke.mjs` 在真实 macOS 安装包上验证本地模式、静态资源、鉴权与独立 sidecar 进程。
 - [ ] AC7. 云端模式 smoke 不回退：远端页面加载、系统边框、原生「更换使用方式」菜单可用。
 - [ ] AC8. manifest/ready 的 `shellAbi` 不匹配时，父进程在 fork 前/开窗前明确失败，错误含期望/实际值。
 

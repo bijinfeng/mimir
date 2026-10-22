@@ -27,6 +27,6 @@
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
+  "notes": "子任务 1–5 已落地并提交；macOS/arm64、Linux/arm64 Docker、Linux/x64 fnOS FPK 构建验证、Postgres/SQLite、桌面开发态与真实安装包 smoke 通过。剩余外部验证：Windows x64 runtime/NSIS、GitHub CI、fnOS 真机安装/升级。",
   "meta": {}
 }

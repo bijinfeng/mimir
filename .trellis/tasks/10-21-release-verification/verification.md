@@ -19,6 +19,9 @@
 | 打包后 smoke | `MIMIR_SMOKE_EXECUTABLE=<app>/Contents/MacOS/mimir node apps/desktop/scripts/smoke.mjs` | A/B/C 全 PASS；真实安装包内的 sidecar、静态资源、令牌与云端模式均正常 |
 | Docker build | `docker build -t mimir:runtime-test .`（colima Linux arm64） | exit 0；builder 用 `build-runtime` 产出 linux/arm64/glibc、29,646 files；runner 映像导出成功 |
 | Docker run | `docker run` SQLite + owner，`/healthz`、登录、文档/目录、静态、上传/下载 | healthy；health 0.1.8；登录 200；documents/folders 200；`assets/*` immutable；上传后下载字节完全一致 |
+| fnOS 构建 | 在 Linux x86_64 colima VM 的 amd64 Node 22 容器：`pnpm install` → `pnpm fnos:build` → `node scripts/verify-fnos.mjs 0.1.8` | 生成 `mimir-0.1.8-fnos-x64.fpk`（160MB，SHA-256 `ecde76d4…`）；manifest linux/x64/glibc、29,646 files、4 个 x64 native 二进制 |
+| fnOS 验证 | `verify-fnos.mjs`（安装 procps 以执行 control.mjs 的 PID 检查） | 解包 FPK、版本/manifest/required、ELF、真实 Unix Socket HTTP/HTTPS 登录与 Cookie Path 全部通过；不声称 fnOS 设备安装 |
+| Postgres | colima `pgvector/pgvector:pg17` + `TEST_DATABASE_URL=postgres://mimir:mimir@127.0.0.1:5544/mimir_test pnpm --filter @mimir/server test` | 1385 + 10 + 6 通过；同一套断言在 SQLite、Postgres 两种方言下都过 |
 | 版本不匹配 | desktop 单测 + fnOS 生命周期测试 | manifest productVersion/platform/shellAbi 不匹配均在 fork/listen 前失败；sidecar ready 的 shellAbi 不匹配被拒 |
 | CI 配置 | 解析三个 workflow YAML | 通过；桌面矩阵已改为每平台 `build-runtime.mjs`，无 runtime 大 artifact 上传 |
 
@@ -27,14 +30,11 @@ renderer 653、desktop 124、根 node --test 87。
 
 ## 未执行（环境限制，需 CI/实机）
 
-- **fnOS 真实 FPK**：`build-fnos`/`verify-fnos` 要求 Linux x64 + Node 22 + fnpack；
-  本机只验证了 `scripts/fnos-package.test.mjs` 的安装/启动/版本不匹配/Unix Socket
-  生命周期 mock。真实包结构、Socket 登录、数据目录与覆盖升级需 CI/fnOS 设备。
 - **Windows NSIS/AppImage 安装包与安装器验收**：本机只构建了 macOS arm64；
   Windows/Linux 安装器需对应原生 runner。
-- **Docker Postgres/SSE**：本次容器用 SQLite 验证了构建、健康、静态、登录与上传/下载；
-  Postgres 连接、SSE 与容器内 `docker compose` 需 CI/完整环境。
-- **fnOS 真实 FPK** 仍受本机环境限制（本机是 macOS arm64；fnOS 要求 Linux x64 + Node 22 + fnpack）。
+- **Docker SSE / `docker compose`**：本次容器用 SQLite 验证了构建、健康、静态、登录与上传/下载；
+  Postgres 方言已单独用 pgvector 容器跑通服务器测试，但容器内 compose + SSE 仍建议在 CI 复跑。
+- **fnOS 真机安装/覆盖升级/桌面入口**：已在 Linux x86_64 VM 构建并验证 FPK 结构、Socket 与登录；未在 fnOS 设备安装，不能声称真机通过。
 - **Windows/macOS 签名与公证、Windows NSIS 安装、真实跨版本升级**：沿用既有发布
   流程，不在本任务替代。
 - **真实浏览器截图**：子任务 4 的证据是构建产物 + runtime 的真实 HTTP 响应；没有
