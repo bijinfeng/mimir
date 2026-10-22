@@ -1718,3 +1718,46 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 
 - 子任务 2：单 runtime 产物 + `manifest.json`，把插件依赖收进产物。
 - 随后子任务 3/4/5：桌面 sidecar、web base path、发布验证。
+
+## Session 59: 统一 runtime 产物、桌面 sidecar 与单 UI 构建
+<!-- trellis-session: v=2 fp=0d41be7379d8b1d2 -->
+
+**Date**: 2026-10-22
+**Task**: 统一 runtime 架构（子任务 2–5）
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+完成统一 runtime 产物与 manifest、桌面 sidecar、web/fnOS 单 UI 构建与运行时 base path、CI/发布改造和 D-114 文档。macOS arm64 真实安装包与 Linux arm64 Docker 均通过启动/静态/登录/上传 smoke；fnOS 真实 FPK 仍需 Linux x64。
+
+### Main Changes
+
+- `scripts/build-runtime.mjs`：仓库内 `pnpm deploy` → 校验 → web 复制 → 资源树物化 → manifest → 清理 staging；`manifest.json` 含 product/protocol/shell、platform/libc、entry、migrations、web、required、schemaVersion。
+- `apps/server/.npmignore` 裁剪产物；Dockerfile 改 bookworm-slim，runner 整目录复制，CMD `dist/runtime/cli.js`。
+- 桌面：`runtime-manifest.ts` + `sidecar.ts`，0600 配置、fork/IPC、日志轮转、PORT_IN_USE 退避、启动窗、异常重启；删除 host/artifacts；afterPack 复制 runtime 根与 `Resources/renderer`。
+- web：`@mimir/shared/runtime-base`；四个 BASE_URL 漏点统一；`apps/web` base './'；`runtime/static` 注入 base/global 并支持 root/subpath。
+- CI：桌面矩阵每平台 `build-runtime`；CI 增加产物结构/manifest 断言；fnOS 工作流复用同一脚本。
+- D-114 决策、architecture/README/fnOS/server/desktop 规范与验收记录。
+
+### Git Commits
+
+`7e22f04` docs(runtime) / `b053183` feat(runtime) / `02f3099` docs(desktop) / `f2a6305` feat(desktop) /
+`2310332` docs(web) / `fb478a9` feat(web) / `84ac0fb` ci(release) / `f5e7b8d` docs(runtime) /
+`4723bdc` fix(desktop) / `0279816` docs(runtime) / `c862007` docs(runtime)
+
+### Testing
+
+- [OK] `PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check` exit 0（lint 0 error、format、全量 typecheck、server 1385+10+6、renderer 653、desktop 125、office 2781、根 node 87）。
+- [OK] `pnpm build` exit 0；runtime 产物 0.1.8 / protocol 1 / shellAbi 1；root 与 `/app/mimir` 注入/静态通过。
+- [OK] 开发态与 macOS arm64 真实安装包 `smoke.mjs` A/B/C 全 PASS；`verify-package mac-arm64` 通过。
+- [OK] Docker（colima linux/arm64）build/run：health 0.1.8、登录、documents/folders、静态 immutable、上传/下载字节一致；容器 healthy。
+- [WARN] fnOS 真实 FPK 需 Linux x64 + Node 22 + fnpack；本机只有 mock/单测。Docker Postgres/SSE、Windows NSIS、macOS 公证未验证。
+
+### Status
+
+[WARN] **In progress**（剩余 fnOS 实机/CI 验收与跨平台安装器）
+
+### Next Steps
+
+- 在 Linux x64/CI 跑 `pnpm fnos:build` + `verify-fnos`，核对 FPK manifest/version/Socket/数据目录。
+- 有 Docker 的 Linux x64 上跑 Postgres compose 与 SSE smoke；Windows runner 验证 NSIS 安装与进程树清理。
