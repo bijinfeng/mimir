@@ -157,7 +157,8 @@ export function assertDeletableOut(out) {
     throw new Error(`产物目录不能是仓库的父目录：${target}`)
   }
 
-  const outInsideRepo = path.relative(REPO_ROOT, target)
+  // Windows 的 path.relative 用反斜杠；比较前统一成产物清单里的 `/` 形式
+  const outInsideRepo = path.relative(REPO_ROOT, target).split(path.sep).join('/')
   if (!outInsideRepo.startsWith('..') && !path.isAbsolute(outInsideRepo)) {
     const allowed =
       outInsideRepo === '.runtime-staging' ||
