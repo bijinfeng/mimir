@@ -44,9 +44,7 @@ assert.equal(runtimeManifest.productVersion, version)
 const packagedVersion = JSON.parse(await readFile(path.join(app, 'version.json'), 'utf8'))
 assert.equal(packagedVersion.productVersion, version)
 for (const entry of runtimeManifest.required) await access(path.join(server, entry))
-assert.ok(
-  (await readFile(path.join(server, 'web/dist/index.html'), 'utf8')).includes('/app/mimir/assets/'),
-)
+assert.ok((await readFile(path.join(server, 'web/dist/index.html'), 'utf8')).includes('./assets/'))
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, { stdio: 'inherit', ...options })
   if (result.error) throw result.error

@@ -148,6 +148,7 @@ import './compact-toolbar.css'
 import '../shell/shell.css'
 import './editors.css'
 import './pptx-pdf-toolbar.css'
+import { readRuntimeBasePath } from '@mimir/shared/runtime-base'
 
 /** 画布宽度（px）。与 pptx 同一档，换文件时视觉宽度不变 */
 const FIT_WIDTH_PX = 900
@@ -1294,12 +1295,7 @@ export function PdfEditor({
   )
 
   const ocrIdentity = useMemo(() => ({ documentId, currentBytes }), [documentId, currentBytes])
-  const ocr = usePdfOcr(
-    ocrIdentity,
-    textSources,
-    loadPdfDocument,
-    (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL,
-  )
+  const ocr = usePdfOcr(ocrIdentity, textSources, loadPdfDocument, readRuntimeBasePath())
   const ocrBlocked = !!(
     localMode ||
     imagesOpen ||

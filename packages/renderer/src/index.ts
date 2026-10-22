@@ -14,6 +14,7 @@ import './route-register'
 
 export { createApp } from './main'
 export { buildRouter } from './router'
+export { runtimeBasePath } from '@mimir/shared/runtime-base'
 export { PlatformProvider, useDesktopBridge, useIsDesktop, usePlatform } from './platform'
 export type { Platform, TitleBarSlotProps } from './platform'
 

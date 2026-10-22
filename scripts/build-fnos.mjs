@@ -58,9 +58,8 @@ async function main() {
   await mkdir(staging, { recursive: true })
   await mkdir(release, { recursive: true })
 
-  run('pnpm', ['--filter', '@mimir/web', 'build'], {
-    env: { ...process.env, MIMIR_BASE_PATH: '/app/mimir/' },
-  })
+  // Web 产物 base 中立（`./assets`）：fnOS 的前缀由 runtime 注入，不再重跑构建
+  run('pnpm', ['--filter', '@mimir/web', 'build'])
   await copySource()
   const server = path.join(staging, 'app/server')
   // 与 Docker/desktop 同一个拼装实现：manifest、生产依赖、迁移、native 校验
@@ -87,8 +86,8 @@ async function main() {
     )}\n`,
   )
   const index = await readFile(path.join(server, 'web/dist/index.html'), 'utf8')
-  if (!index.includes('/app/mimir/assets/')) {
-    throw new Error('Web 构建未使用 /app/mimir/ 资源前缀。')
+  if (!index.includes('./assets/') || index.includes('/app/mimir/assets/')) {
+    throw new Error('Web 构建必须是 base 中立的相对资源（./assets/），前缀由 runtime 注入。')
   }
   run(process.execPath, [path.join(root, 'scripts/fnos-native.mjs'), server])
 
