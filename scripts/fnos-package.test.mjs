@@ -213,4 +213,13 @@ test('fnOS lifecycle starts on a Unix socket and stops idempotently', async (t) 
   assert.equal(run('main', ['stop'], env).status, 0)
   assert.equal(run('main', ['status'], env).status, 3)
   await assert.rejects(stat(path.join(appDest, 'app.sock')), { code: 'ENOENT' })
+
+  // 包版本与 runtime manifest 不一致：launch 必须在 listen 之前失败
+  await writeFile(
+    path.join(appDest, 'version.json'),
+    JSON.stringify({ productVersion: '0.0.0-mismatch' }),
+  )
+  const mismatch = run('main', ['start'], env)
+  assert.equal(mismatch.status, 1)
+  await assert.rejects(stat(path.join(appDest, 'app.sock')), { code: 'ENOENT' })
 })

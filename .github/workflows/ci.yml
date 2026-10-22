@@ -70,6 +70,12 @@ jobs:
           PNPM_CONFIG_WORKSPACE_CONCURRENCY: 1
       # @mimir/shared 以源码发布，编译责任在使用方；类型检查不代替构建
       - run: pnpm build
+      # 与桌面/fnOS 相同的拼装脚本：这里只做结构验证，不跑容器
+      - name: Build portable runtime artifact
+        run: node scripts/build-runtime.mjs --out "$RUNNER_TEMP/mimir-runtime" --web apps/web/dist --skip-build
+      - name: Verify runtime manifest
+        run: |
+          node -e "const m=require(process.env.RUNNER_TEMP+'/mimir-runtime/manifest.json'); if (m.name!=='mimir-runtime'||!m.required.includes('dist/runtime/cli.js')||!m.required.includes('web/dist/index.html')) throw new Error('runtime manifest incomplete'); if (m.platform!=='linux'||m.arch!=='x64') throw new Error('runtime manifest platform mismatch'); console.log(JSON.stringify({version:m.productVersion,protocol:m.protocolVersion,shellAbi:m.shellAbi,files:m.required.length}))"
       # 同一套服务端断言在 PG 上复跑，globalSetup 还会从空库执行正式迁移
       - run: pnpm --filter @mimir/server test
         env:

@@ -85,9 +85,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify native ASAR entry paths
         run: node --test apps/desktop/scripts/verify-package-contents.test.mjs
-      - run: pnpm --filter @mimir/server build
+      # 每个原生 runner 用自己的平台构建 runtime；不跨作业传 700MB 产物
+      - run: node scripts/build-runtime.mjs --out apps/desktop/runtime-build --platform ${{ matrix.platform }} --arch ${{ matrix.arch }}
       - run: pnpm --filter @mimir/desktop build
-      - run: node apps/desktop/scripts/deploy-server.mjs
       - name: Package without publishing
         run: pnpm --filter @mimir/desktop package
         env:

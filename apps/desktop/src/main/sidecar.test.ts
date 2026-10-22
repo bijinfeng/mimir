@@ -181,6 +181,27 @@ describe('sidecar lifecycle', () => {
     }
   }, 15_000)
 
+  it('rejects a ready message whose shellAbi disagrees with the manifest', async () => {
+    const { root, paths } = await fixture(
+      `process.send({
+         type: 'ready',
+         origin: 'http://127.0.0.1:1',
+         version: '1.2.3',
+         protocolVersion: 1,
+         shellAbi: 99,
+         pid: process.pid,
+       })
+       setInterval(() => {}, 1000)`,
+    )
+    try {
+      await expect(
+        startSidecar(paths, { productVersion: '1.2.3', localMode: true }),
+      ).rejects.toThrow(/契约不匹配/)
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  }, 10_000)
+
   it('reports an unexpected exit without closing the parent', async () => {
     const { root, paths } = await fixture()
     try {
