@@ -40,5 +40,6 @@ pnpm fnos:build && node scripts/verify-fnos.mjs <version>
 - 文档：D-114、architecture §3/§8.3/§14、README、fnOS README、server/desktop
   规范；本任务 `verification.md` 记录已执行与未执行项。
 - 验收：`PNPM_CONFIG_WORKSPACE_CONCURRENCY=1 pnpm check` exit 0；
-  `pnpm build` exit 0；runtime 产物 root/subpath 烟测通过；desktop smoke A/B/C
-  通过。Docker/fnOS 实机/完整安装器因本机环境未执行，已在记录中明列。
+  `pnpm build` exit 0；runtime 产物 root/subpath 烟测通过；desktop 开发态与
+  macOS arm64 安装包 smoke A/B/C 均通过。打包时需用 npmmirror 覆盖 Electron/
+  electron-builder 二进制下载；Docker/fnOS 实机仍受环境限制，已在记录中明列。

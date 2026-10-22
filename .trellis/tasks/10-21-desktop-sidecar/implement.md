@@ -48,11 +48,16 @@ MIMIR_SMOKE_EXECUTABLE=<abs> node apps/desktop/scripts/smoke.mjs
   并新增「本地宿主是独立 sidecar 子进程」判据；同时清除继承的
   `ELECTRON_RUN_AS_NODE`，否则 Electron 会按 Node 启动。
 - 验证：
-  - `pnpm --filter @mimir/desktop typecheck` / `test`：123 通过（新增
-    runtime-manifest 4 + sidecar 6，含真实 fork + IPC ready + SIGKILL 意外退出）。
+  - `pnpm --filter @mimir/desktop typecheck` / `test`：124 通过（新增
+    runtime-manifest 4 + sidecar 7，含真实 fork + IPC ready + SIGKILL 意外退出
+    + ready shellAbi 不匹配）。
   - `node apps/desktop/scripts/smoke.mjs`：A/B/C 全 PASS，包括本地 sidecar 进程、
     静态资源、本地令牌、云端无宿主。
-  - `pnpm desktop:build` 的 electron-builder 阶段仍因本机下载工具 600s 超时；
-    afterPack 已直接调用验证 `resources/server/manifest.json` 与入口。
-- 交接：崩溃重启的主进程路径只做了代码接线，未在真实包上手动 kill sidecar
-  验证（需要可运行 Electron 的交互环境/CI）；fnOS/Docker 仍是子任务 5 的验证范围。
+  - `pnpm desktop:build`（Electron/electron-builder 走 npmmirror）成功；
+    `verify-package.mjs mac-arm64 0.1.8` 通过；打包后真实 `.app` 的 smoke A/B/C
+    全 PASS。
+  - 发现并修复两个打包态问题：sidecar 读不到 asar 内的 renderer（afterPack 现复制
+    到 `Resources/renderer`）；启动窗先销毁会触发 `window-all-closed`（改成主窗
+    创建后关闭启动窗）。
+- 交接：崩溃重启的主进程路径做了代码接线 + 单元测试，尚未在真实包上手动 kill
+  sidecar 验证（需要交互环境）；fnOS/Docker 仍是子任务 5 的验证范围。

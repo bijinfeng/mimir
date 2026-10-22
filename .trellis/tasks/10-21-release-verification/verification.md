@@ -14,7 +14,9 @@
 | runtime 启动 | 产物根 `dist/runtime/cli.js`，SQLite + TCP + PORT=0 | ready JSON、`/healthz` 200 且 version=0.1.8；SIGTERM 退出 0 |
 | 根路径静态 | 同一产物，`manifest.web` → `/` | `GET /docs` 注入 `<base href="/">` 与 `__MIMIR_BASE_PATH__="/"`；哈希 JS 200 + immutable |
 | 子路径静态 | 同一产物，`MIMIR_BASE_PATH=/app/mimir` | `GET /app/mimir/docs/42` 注入 `<base href="/app/mimir/">`；`HEAD /app/mimir/assets/*` 200 + immutable |
-| 桌面 | `pnpm --filter @mimir/desktop build` + `node apps/desktop/scripts/smoke.mjs` | A/B/C 全 PASS；本地宿主是独立 sidecar 子进程，云端不起宿主 |
+| 桌面开发态 | `pnpm --filter @mimir/desktop build` + `node apps/desktop/scripts/smoke.mjs` | A/B/C 全 PASS；本地宿主是独立 sidecar 子进程，云端不起宿主 |
+| 桌面安装包 | `ELECTRON_MIRROR=… ELECTRON_BUILDER_BINARIES_MIRROR=… pnpm desktop:build` + `verify-package.mjs mac-arm64 0.1.8` | 打包成功；`resources/server/manifest.json` 与 `Resources/renderer/index.html` 存在；`Verified mac-arm64 package 0.1.8` |
+| 打包后 smoke | `MIMIR_SMOKE_EXECUTABLE=<app>/Contents/MacOS/mimir node apps/desktop/scripts/smoke.mjs` | A/B/C 全 PASS；真实安装包内的 sidecar、静态资源、令牌与云端模式均正常 |
 | 版本不匹配 | desktop 单测 + fnOS 生命周期测试 | manifest productVersion/platform/shellAbi 不匹配均在 fork/listen 前失败；sidecar ready 的 shellAbi 不匹配被拒 |
 | CI 配置 | 解析三个 workflow YAML | 通过；桌面矩阵已改为每平台 `build-runtime.mjs`，无 runtime 大 artifact 上传 |
 
@@ -29,10 +31,9 @@ renderer 653、desktop 124、根 node --test 87。
 - **fnOS 真实 FPK**：`build-fnos`/`verify-fnos` 要求 Linux x64 + Node 22 + fnpack；
   本机只验证了 `scripts/fnos-package.test.mjs` 的安装/启动/版本不匹配/Unix Socket
   生命周期 mock。真实包结构、Socket 登录、数据目录与覆盖升级需 CI/fnOS 设备。
-- **`pnpm desktop:build` 完整安装包**：electron-builder 在本机下载工具阶段
-  600s 超时（网络），afterPack 钩子已直接调用并通过
-  `resources/server/manifest.json` + 入口检查；真实 DMG/NSIS/AppImage 与安装器
-  验收需 CI。
+- **Windows NSIS/AppImage 安装包与安装器验收**：本机只构建了 macOS arm64；
+  Windows/Linux 安装器需对应原生 runner。
+- **Docker build/run** 与 **fnOS 真实 FPK** 仍受本机环境限制（见上）。
 - **Windows/macOS 签名与公证、Windows NSIS 安装、真实跨版本升级**：沿用既有发布
   流程，不在本任务替代。
 - **真实浏览器截图**：子任务 4 的证据是构建产物 + runtime 的真实 HTTP 响应；没有

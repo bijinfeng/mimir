@@ -48,9 +48,10 @@ pnpm fnos:build && node scripts/verify-fnos.mjs <version>
   未执行 `docker build`/`docker run`；Dockerfile 的镜像/路径逻辑由产物烟测
   （同一 CLI + web + manifest）覆盖。
 - **桌面**：`deploy-server.mjs` 调统一脚本输出 `apps/desktop/runtime-build`；
-  `after-pack` 整根复制并用 `afterPack` 直接调用验证了
-  `resources/server/manifest.json`。`pnpm desktop:build` 的 electron-builder
-  阶段在下载工具时网络超时（600s），afterPack 之前失败；属于本机网络，不是脚本错误。
+  `after-pack` 整根复制到 `resources/server`，并把 `dist/renderer` 复制到
+  `Resources/renderer`（sidecar 是普通 Node 进程，读不到 asar）。
+  `pnpm desktop:build` 在 Electron/electron-builder 二进制走 npmmirror 后成功；
+  `verify-package mac-arm64` 与打包后 smoke 均通过。
 - **fnOS**：`build-fnos.mjs` 调统一脚本到 `staging/app/server` 并写
   `version.json`；`launch.mjs` 读 manifest/version、校验 required 与契约版本后
   调 `startRuntime()`。Linux x64 的 `fnos:build`/`verify-fnos` 未在本机执行；
