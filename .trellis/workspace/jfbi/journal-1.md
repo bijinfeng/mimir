@@ -1674,3 +1674,47 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+## Session 58: server core/runtime 配置拆分
+<!-- trellis-session: v=2 fp=587affbd5b19571e -->
+
+**Date**: 2026-10-22
+**Task**: 拆分 server-core/runtime 并引入 RuntimeConfig
+**Branch**: `feat/unified-runtime-architecture`
+
+### Summary
+
+完成父任务子任务 1：core 只认中立 `ServerConfig`，runtime 负责 env/JSON → `RuntimeConfig`、DB/auth 装配、TCP/Unix 监听、fnOS 网关、静态资源与进程生命周期。Docker/桌面/fnOS 的旧启动命令通过 `index.ts` 兼容适配器继续工作。
+
+### Main Changes
+
+- 新增 `src/config.ts`、`src/server-runtime.ts`、`src/runtime/`；删除 `env.ts`、`lib/static.ts`、`lib/fnos-gateway.ts`。
+- `db`/`auth` 改为 configure 时创建的 live binding；`boot()`/`createApp()` 先 `ensureServerRuntime()`。
+- 新增 `runtime/cli.ts`（ready/error JSON、IPC ready、SIGTERM/SIGINT）与 `runtime/index.ts`。
+- fnOS 的 Origin/Cookie 适配覆盖全部 `/api/auth/*`，补 `sign-in/identifier` HTTP/HTTPS 用例。
+- 新增 runtime 配置、真实 TCP 启动、core/runtime 边界测试；测试 setupFiles 先配置再加载 core。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `dd7a443` | docs(runtime): 规划统一 runtime 架构并完成子任务 1 记录 |
+| `1d03cce` | refactor(server): 拆分 ServerConfig/RuntimeConfig 与 runtime 入口 |
+
+### Testing
+
+- [OK] `pnpm --filter @mimir/server typecheck`。
+- [OK] `pnpm --filter @mimir/server test`：1384 + 10 + 6 通过。
+- [OK] `pnpm lint` 0 error、`pnpm format:check`、`pnpm -r typecheck`。
+- [OK] 根 `node --test` 10 个脚本 80/80（需完整文件权限执行 `/bin/ps`）。
+- [OK] `dist/runtime/cli.js` 与旧 `dist/index.js` 的 ready/healthz/SIGTERM 手测；Vite dev `/healthz`。
+- [WARN] 仓库内直接跑 dist 时，workspace 插件依赖（如 `@aws-sdk/client-s3`）不在 server 的 node_modules；留给子任务 2 的产物构建解决。
+
+### Status
+
+[OK] **Completed**（子任务 1；父任务继续）
+
+### Next Steps
+
+- 子任务 2：单 runtime 产物 + `manifest.json`，把插件依赖收进产物。
+- 随后子任务 3/4/5：桌面 sidecar、web base path、发布验证。
