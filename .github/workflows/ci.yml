@@ -4,6 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
+  workflow_dispatch:
 
 # 新提交进来时取消上一次未跑完的任务，避免排队
 concurrency:
