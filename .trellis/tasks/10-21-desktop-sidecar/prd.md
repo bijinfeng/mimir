@@ -21,7 +21,7 @@
 
 - [ ] AC1. 本地模式启动后 `ps`/任务管理器能看到独立 runtime 子进程；Electron 主进程不是宿主。
 - [ ] AC2. fork 后先显示 boot 窗；收到 `ready` 后才开主窗；错误路径显示 code 映射文案与重试/退出选项，stderr 尾部只进日志。
-- [ ] AC3. 杀掉 sidecar 后 Electron 不退出；自动重启一次后窗口重新加载成功；连续失败显示错误；`PORT_IN_USE` 重试 3 次后报错。
+- [x] AC3. 杀掉 sidecar 后 Electron 不退出；自动重启一次后窗口重新加载成功；连续失败显示错误；`PORT_IN_USE` 重试 3 次后报错。真实安装包上以 `kill -9` 验证了重启与新端口/新 pid。
 - [ ] AC4. 退出应用后 sidecar 在 5 秒内结束；更新安装前调用 `closeHost`，不留下孤儿进程；Windows 进程树被清理。
 - [ ] AC5. 配置文件权限 0600；`ps` 命令行不含 token/secret/密码；日志不含这些值。
 - [x] AC6. `pnpm --filter @mimir/desktop test`、`pnpm check` 通过；`smoke.mjs` 在真实 macOS 安装包上验证本地模式、静态资源、鉴权与独立 sidecar 进程。

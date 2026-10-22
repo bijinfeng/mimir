@@ -59,5 +59,5 @@ MIMIR_SMOKE_EXECUTABLE=<abs> node apps/desktop/scripts/smoke.mjs
   - 发现并修复两个打包态问题：sidecar 读不到 asar 内的 renderer（afterPack 现复制
     到 `Resources/renderer`）；启动窗先销毁会触发 `window-all-closed`（改成主窗
     创建后关闭启动窗）。
-- 交接：崩溃重启的主进程路径做了代码接线 + 单元测试，尚未在真实包上手动 kill
-  sidecar 验证（需要交互环境）；fnOS/Docker 仍是子任务 5 的验证范围。
+- 交接：真实安装包上 `kill -9` sidecar 已验证主进程不退出、1s 后新 pid/端口重启
+  并重新加载页面；fnOS/Docker 见子任务 5 记录。
