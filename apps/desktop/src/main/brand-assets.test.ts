@@ -140,14 +140,19 @@ describe('single-source brand generation', () => {
 
     // SVG / generated TS 没有 rasterizer 参与，必须逐字节一致
     for (const [path, bytes] of [...assets].filter(
-      ([path]) => !path.endsWith('.png') && !path.endsWith('.ico') && !path.endsWith('.icns'),
+      ([path]) =>
+        !path.toLowerCase().endsWith('.png') &&
+        !path.toLowerCase().endsWith('.ico') &&
+        !path.toLowerCase().endsWith('.icns'),
     )) {
       expect(await readFile(resolve(root, path)), `${path}: regenerate with desktop icons`).toEqual(
         bytes,
       )
     }
     // PNG 由平台 Skia 栅格化，按像素内容比较（见 expectSameRaster）
-    for (const [path, bytes] of [...assets].filter(([path]) => path.endsWith('.png'))) {
+    for (const [path, bytes] of [...assets].filter(([path]) =>
+      path.toLowerCase().endsWith('.png'),
+    )) {
       await expectSameRaster(bytes, await readFile(resolve(root, path)), path)
     }
 
