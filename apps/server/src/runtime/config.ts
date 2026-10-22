@@ -152,7 +152,7 @@ function isLoopback(host: string | undefined): boolean {
   return host === '127.0.0.1' || host === 'localhost' || host === '::1'
 }
 
-function settingsEnvFrom(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+export function collectSettingsEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
   const prefixes = ['MODEL_', 'CAPTURE_', 'RETRIEVAL_', 'STORAGE_', 'S3_']
   const result: Record<string, string | undefined> = {}
   for (const [key, value] of Object.entries(env)) {
@@ -298,7 +298,7 @@ export function loadRuntimeConfigFromEnv(options: LoadRuntimeConfigOptions = {})
     ...(staticDir ? { static: { dir: resolvePath(staticDir, repoRoot), basePath } } : {}),
     migrations: resolveMigrations(serverRoot),
     miniappEnabled: env.MIMIR_MINIAPP_ENABLED === '1',
-    settingsEnv: settingsEnvFrom(env),
+    settingsEnv: collectSettingsEnv(env),
   }
 
   return runtimeConfigSchema.parse(config)

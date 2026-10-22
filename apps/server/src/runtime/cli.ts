@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { loadRuntimeConfigFile, loadRuntimeConfigFromEnv, type RuntimeConfig } from './config.js'
 import { startRuntime, type RuntimeHandle } from './start.js'
@@ -9,7 +10,7 @@ import { startRuntime, type RuntimeHandle } from './start.js'
  *
  * 三种宿主共用它：
  *   - Docker：`node dist/runtime/cli.js`（也兼容旧的 `node dist/index.js`）
- *   - fnOS：`launch.mjs` 在进程内 startServer（兼容入口），后续可切到独立进程
+ *   - fnOS：`launch.mjs` 读产物 manifest 后调用 `startRuntime()`（Unix Socket）
  *   - 桌面：`child_process.fork` 这个文件，用 IPC 收 ready（子任务 3）
  *
  * 输出契约（父进程/部署脚本只依赖这两条）：
@@ -29,6 +30,7 @@ export type RuntimeErrorCode =
   | 'DB_UNAVAILABLE'
   | 'MIGRATION_FAILED'
   | 'NATIVE_MODULE_FAILED'
+  | 'VERSION_MISMATCH'
   | 'BOOT_FAILED'
   | 'UNKNOWN'
 
@@ -66,6 +68,7 @@ export function classifyRuntimeError(error: unknown): RuntimeErrorCode {
   if (text.includes('configureServer') || text.includes('环境变量') || text.includes('配置')) {
     return 'CONFIG_INVALID'
   }
+  if (text.includes('manifest') || text.includes('版本不一致')) return 'VERSION_MISMATCH'
   if (code === 'EADDRINUSE') return 'PORT_IN_USE'
   if (code === 'SQLITE_BUSY' || code === 'SQLITE_LOCKED' || /database is locked/i.test(text)) {
     return 'DB_LOCKED'
@@ -134,6 +137,57 @@ function loadConfig(argv: string[]): RuntimeConfig {
   return loadRuntimeConfigFromEnv()
 }
 
+interface RuntimeManifest {
+  productVersion: string
+  protocolVersion: number
+  shellAbi: number
+  web?: string
+}
+
+/**
+ * 读取与 CLI 同级的 `manifest.json`（产物根 = dist/runtime 的上两级）。
+ *
+ * 源码/仓库内 dist 没有 manifest，返回 null；打包产物必须以 manifest 为准：
+ *   - productVersion 覆盖 `MIMIR_VERSION`/开发默认值，`/healthz` 与宿主握手一致
+ *   - protocolVersion/shellAbi 与二进制常量不一致时拒绝启动（产物拼错）
+ *   - web 目录自动成为静态资源根，Docker 不需要再设 `WEB_DIST`
+ */
+async function applyPackagedManifest(config: RuntimeConfig): Promise<void> {
+  const runtimeRoot = resolve(import.meta.dirname, '../..')
+  const manifestPath = join(runtimeRoot, 'manifest.json')
+  let raw: string
+  try {
+    raw = await readFile(manifestPath, 'utf8')
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ENOENT') return
+    throw error
+  }
+
+  let manifest: RuntimeManifest
+  try {
+    manifest = JSON.parse(raw) as RuntimeManifest
+  } catch {
+    throw new Error(`runtime manifest 不是合法 JSON：${manifestPath}`)
+  }
+  if (typeof manifest.productVersion !== 'string' || !manifest.productVersion) {
+    throw new Error(`runtime manifest 缺少 productVersion：${manifestPath}`)
+  }
+  if (
+    manifest.protocolVersion !== config.product.protocolVersion ||
+    manifest.shellAbi !== config.product.shellAbi
+  ) {
+    throw new Error(
+      `runtime manifest 与二进制版本不一致：manifest ${manifest.protocolVersion}/${manifest.shellAbi}，` +
+        `二进制 ${config.product.protocolVersion}/${config.product.shellAbi}`,
+    )
+  }
+
+  config.product.version = manifest.productVersion
+  if (!config.static && typeof manifest.web === 'string' && manifest.web) {
+    config.static = { dir: resolve(runtimeRoot, manifest.web), basePath: '/' }
+  }
+}
+
 function assertStaticPresent(config: RuntimeConfig): void {
   if (!config.static) return
   if (!existsSync(join(config.static.dir, 'index.html'))) {
@@ -195,6 +249,9 @@ async function main(): Promise<void> {
     // `fail` 已 process.exit；这行只是让 TS 看见「永不返回」
     throw new Error('unreachable')
   })()
+  // 显式 --config 由宿主提供全部事实；env 路径才从产物 manifest 补版本/静态目录
+  if (!parseConfigPath(process.argv.slice(2))) await applyPackagedManifest(config)
+
   try {
     // 静态目录缺失是部署/产物问题，不是配置语法问题；单独归到 STATIC_MISSING
     assertStaticPresent(config)

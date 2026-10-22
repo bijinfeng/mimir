@@ -9,3 +9,11 @@ output
 docs
 *.log
 .DS_Store
+
+# 单 runtime 产物的仓库内 staging（不进 Docker 构建上下文）
+.runtime-staging/
+apps/desktop/runtime-build/
+apps/desktop/server-deploy/
+apps/desktop/release/
+apps/fnos/release/
+apps/fnos/staging/

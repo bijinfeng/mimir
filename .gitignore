@@ -33,6 +33,7 @@ packages/renderer/src/routeTree.gen.ts
 # 桌面端打包产物与 deploy 中转目录（D-046）
 apps/desktop/release/
 apps/desktop/server-deploy/
+apps/desktop/runtime-build/
 
 # fnOS staging and installable package
 apps/fnos/staging/
@@ -63,3 +64,6 @@ apps/desktop/public/pdf-ocr/
 **/.impeccable/live/
 # Impeccable launchers fetch the pinned engine; installed binaries stay local.
 **/skills/impeccable/scripts/bin/
+
+# 单 runtime 产物的仓库内 staging（pnpm deploy 必须落在仓库内，见 scripts/build-runtime.mjs）
+.runtime-staging/

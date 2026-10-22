@@ -45,7 +45,10 @@ for (const file of [
 ])
   extractArchiveFile(asar, file, extractFile)
 for (const file of [
+  'server/manifest.json',
   'server/dist/index.js',
+  'server/dist/runtime/cli.js',
+  'server/dist/runtime/index.js',
   'server/dist/db/migrate.js',
   'server/drizzle-sqlite',
   'server/node_modules',
