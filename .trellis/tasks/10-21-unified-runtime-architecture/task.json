@@ -1,9 +1,9 @@
 {
   "id": "unified-runtime-architecture",
   "name": "unified-runtime-architecture",
-  "title": "统一运行时与宿主架构（C 版）",
-  "description": "把浏览器、桌面与 fnOS 的复用从源码级提升到产物级：一份 runtime 产物、类型化 RuntimeConfig、薄宿主，并完成桌面 sidecar、单 UI 构建、版本握手与全量验收。",
-  "status": "in_progress",
+  "title": "\u7edf\u4e00\u8fd0\u884c\u65f6\u4e0e\u5bbf\u4e3b\u67b6\u6784\uff08C \u7248\uff09",
+  "description": "\u628a\u6d4f\u89c8\u5668\u3001\u684c\u9762\u4e0e fnOS \u7684\u590d\u7528\u4ece\u6e90\u7801\u7ea7\u63d0\u5347\u5230\u4ea7\u7269\u7ea7\uff1a\u4e00\u4efd runtime \u4ea7\u7269\u3001\u7c7b\u578b\u5316 RuntimeConfig\u3001\u8584\u5bbf\u4e3b\uff0c\u5e76\u5b8c\u6210\u684c\u9762 sidecar\u3001\u5355 UI \u6784\u5efa\u3001\u7248\u672c\u63e1\u624b\u4e0e\u5168\u91cf\u9a8c\u6536\u3002",
+  "status": "completed",
   "dev_type": null,
   "scope": null,
   "package": null,
@@ -11,7 +11,7 @@
   "creator": "jfbi",
   "assignee": "jfbi",
   "createdAt": "2026-10-21",
-  "completedAt": null,
+  "completedAt": "2026-10-22",
   "branch": null,
   "base_branch": "master",
   "worktree_path": null,
@@ -27,6 +27,6 @@
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "子任务 1–5 已落地并提交；macOS/arm64、Linux/arm64 Docker、Linux/x64 fnOS FPK 构建验证、Postgres/SQLite、桌面开发态与真实安装包 smoke 通过。剩余外部验证：Windows x64 runtime/NSIS、GitHub CI、fnOS 真机安装/升级。",
+  "notes": "D-114 \u7edf\u4e00 runtime \u4ea7\u7269 + RuntimeConfig + \u8584\u5bbf\u4e3b\u5b8c\u6210\uff1a\u5b50\u4efb\u52a1 1\u20135 \u5747\u5b8c\u6210\u5e76\u63d0\u4ea4\uff1bGitHub \u539f\u751f\u77e9\u9635 mac arm64/x64\u3001win x64\u3001linux x64 + Windows NSIS \u5b89\u88c5 smoke + fnOS FPK \u5168\u90e8\u901a\u8fc7\uff08run 39733384364\uff09\uff1b\u672c\u5730 pnpm check\u3001Docker\u3001Postgres/SQLite\u3001fnOS x64 \u5bb9\u5668\u3001\u684c\u9762\u5f00\u53d1\u6001\u4e0e\u6253\u5305 smoke \u901a\u8fc7\u3002\u4ec5 fnOS \u771f\u673a\u5b89\u88c5/\u8986\u76d6\u5347\u7ea7\u4e0e macOS \u6b63\u5f0f\u7b7e\u540d/\u516c\u8bc1\u4fdd\u7559\u4e3a\u8bbe\u5907/\u8bc1\u4e66\u9a8c\u6536\u3002",
   "meta": {}
 }
