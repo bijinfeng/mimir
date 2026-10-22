@@ -2,6 +2,8 @@
 #
 # 结构：dist/**（主进程、preload **与渲染进程**三段都进 asar——渲染进程自
 # D-103 起是本包 electron-vite 的入口，不再从 apps/web 拷产物）。
+# afterPack 另把 dist/renderer 复制到 Resources/renderer：sidecar 是普通 Node
+# 进程，读不到 asar；主窗口的页面由它提供。
 # 服务端运行所需的整个 runtime 根（dist + drizzle* + 生产 node_modules + manifest）
 # 由 afterPack 钩子（scripts/after-pack.mjs）拷进 Resources——
 # 不用 extraResources 是因为它会跳过点开头的目录（dist/node_modules/.pnpm

@@ -136,7 +136,10 @@ const served = (log, method, path) => new RegExp(`--> ${method} ${path}(\\?[^ ]*
 const checks = []
 
 /* ── A. 已选模式：正常进入主界面 ─────────────────────────── */
-const main = await run({ preset: { mode: 'local' }, until: /GET \/api\/documents/ })
+const main = await run({
+  preset: { mode: 'local' },
+  until: (log) => /--> GET \/api\/documents/.test(log) && /--> GET \/api\/folders/.test(log),
+})
 
 checks.push(
   [main.outcome === 'ready', 'A 已选模式：页面启动流程走到了取数据这一步'],

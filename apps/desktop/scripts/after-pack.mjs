@@ -43,14 +43,18 @@ export default async function afterPack(context) {
   // dist / drizzle* / node_modules / manifest.json 都在一起。这里整体复制，
   // 不再按三件套逐项列路径：宿主只认 manifest，产物布局变了不需要改 afterPack。
   //
-  // **前端产物不在这里拷**（D-103）：渲染进程已经是本包 electron-vite 的第三个
-  // 入口，产物在 `dist/renderer`，由打包配置的 `files: dist/**` 进 asar。
+  // 前端产物仍由 `files: dist/**` 进 asar（主进程的 setup.html 从 asar 加载）；
+  // 同时复制到 Resources/renderer 供 sidecar 的静态服务——sidecar 是普通 Node
+  // 进程，读不到 asar。
   const runtime = path.join(here, '..', 'runtime-build')
   const jobs = [
     // 窗口图标（Linux / Windows 运行时读它；macOS 用 .app 包里的 .icns）。
     // 与打包配置里的 `mac.icon` 是两个用途：那个进 bundle，这个给 BrowserWindow
     [path.join(here, '..', 'resources', 'icon.png'), path.join(resources, 'icon.png')],
     [runtime, path.join(resources, 'server')],
+    // sidecar 是普通 Node 进程，读不到 asar 里的 dist/renderer；静态资源必须
+    // 放在 Resources 下。主进程的 setup.html 仍从 asar 加载（Electron 能读）。
+    [path.join(here, '..', 'dist', 'renderer'), path.join(resources, 'renderer')],
   ]
 
   for (const [from, to] of jobs) {

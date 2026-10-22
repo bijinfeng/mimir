@@ -113,15 +113,17 @@ let setupVisible = false
 /**
  * 宿主要用的两处产物（D-103）。
  *
- * `webDist` 现在是**本包自己的渲染产物**（`dist/renderer`），不再是
- * `apps/web/dist`——渲染进程已经是本包 electron-vite 的第三个入口。
- * 这一条顺带修掉了旧形态最容易踩的坑：改了前端代码不重新构建 web，
- * 窗口里永远看不到变化。
+ * webDist 是**本包自己的渲染产物**：开发时 `dist/renderer`，打包后
+ * `Resources/renderer`（afterPack 复制）。sidecar 是普通 Node 进程，不能从
+ * app.asar 读文件，所以打包态必须用 asar 外的副本。
  */
 function resolvePaths(): SidecarPaths {
   const userData = app.getPath('userData')
-  // asar 里的 dist/renderer：app.getAppPath() 指向 app.asar 自身
-  const webDist = join(app.getAppPath(), 'dist', 'renderer')
+  // 开发时渲染产物在包内；打包后 afterPack 会把 dist/renderer 复制到
+  // Resources/renderer——sidecar 是普通 Node 进程，无法读 app.asar。
+  const webDist = app.isPackaged
+    ? join(process.resourcesPath, 'renderer')
+    : join(app.getAppPath(), 'dist', 'renderer')
   if (app.isPackaged) {
     return {
       runtimeRoot: join(process.resourcesPath, 'server'),
@@ -187,7 +189,6 @@ function windowChromeOptions(surface: WindowSurface): Electron.BrowserWindowCons
 }
 
 function createWindow(url: string, surface: WindowSurface): BrowserWindow {
-  closeBoot()
   const icon = windowIcon()
   const partition = partitionFor(surface, url)
   const browserSession = session.fromPartition(partition)
@@ -218,6 +219,8 @@ function createWindow(url: string, surface: WindowSurface): BrowserWindow {
   })
   win = created
   windowSurface = surface
+  // 必须在主窗创建之后才销毁启动窗：先销毁会让 window-all-closed 在两者之间触发
+  closeBoot()
   windowControls(created)
   installCloseFeedback(
     created,

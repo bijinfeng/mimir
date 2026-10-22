@@ -52,6 +52,7 @@ for (const file of [
   'server/dist/db/migrate.js',
   'server/drizzle-sqlite',
   'server/node_modules',
+  'renderer/index.html',
 ])
   await access(path.join(resources, file))
 // Resolve and execute the deployed native bindings, independently of workspace node_modules.
